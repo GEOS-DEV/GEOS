@@ -80,7 +80,7 @@ struct UpwindingHelper
    * @param[out] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density at this face
    * @param[out] upwViscDofNumber the dof number of the upwind cell at this face
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
@@ -126,7 +126,7 @@ struct UpwindingHelper
    * @param[inout] dUpwPhaseGravCoef_dPres the derivative of the upwinded buoyancy transport coefficient wrt pressure
    * @param[inout] dUpwPhaseGravCoef_dCompDens the derivative of the upwinded buoyancy transport coefficient wrt component density
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
@@ -167,7 +167,7 @@ struct UpwindingHelper
    * @param[inout] dPhaseGravTerm_dCompDens the derivatives of the gravCoef multiplied by the difference in phase densities wrt component
    * density
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
@@ -193,7 +193,7 @@ struct UpwindingHelper
    * @param[inout] dTotalMob_dPres the derivative of the upwinded total mobility wrt pressure
    * @param[inout] dTotalMob_dCompDens the derivative of the upwinded total mobility wrt component density
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
@@ -237,7 +237,7 @@ struct UpwindingHelper
    * @param[out] totalMobIds for each phase, triplet of indices of the upwind element
    * @param[out] totalMobPos for each phase, flag specifying with the upwind element is local or neighbor
    */
-  template< localIndex NP >
+  template< integer NP >
   GEOSX_HOST_DEVICE
   static void
     setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
@@ -286,7 +286,7 @@ struct AssemblerKernelHelper
    * @param[out] dOneSidedVolFlux_dFacePres the derivatives of the vol fluxes wrt to this element's face pressures
    * @param[out] dOneSidedVolFlux_dCompDens the derivatives of the vol fluxes wrt to this element's component density
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     applyGradient( arrayView1d< real64 const > const & facePres,
@@ -338,7 +338,7 @@ struct AssemblerKernelHelper
    * @param[inout] localMatrix the Jacobian matrix
    * @param[inout] localRhs the residual
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -393,7 +393,7 @@ struct AssemblerKernelHelper
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
    * @param[inout] dofColIndicesFaceVars degrees of freedom of the faces involved in the flux divergence
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     assembleViscousFlux( localIndex const ifaceLoc,
@@ -431,7 +431,7 @@ struct AssemblerKernelHelper
    * @param[inout] dDivMassFluxes_dElemVars the derivatives of the flux divergence wrt the element centered vars (pres and comp dens)
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     assembleBuoyancyFlux( localIndex const ifaceLoc,
@@ -459,7 +459,7 @@ struct AssemblerKernelHelper
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -530,7 +530,7 @@ struct AssemblerKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const er, localIndex const esr, localIndex const ei,
@@ -625,7 +625,7 @@ struct FluxKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< localIndex NF, localIndex NC, localIndex NP, typename IP_TYPE >
+  template< integer NF, integer NC, integer NP, typename IP_TYPE >
   static void
   launch( localIndex er, localIndex esr,
           CellElementSubRegion const & subRegion,
@@ -674,7 +674,7 @@ struct FluxKernel
  * @tparam NUM_PHASE number of fluid phases
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
-template< localIndex NUM_COMP, localIndex NUM_PHASE >
+template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseMobilityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
@@ -683,7 +683,7 @@ public:
   using Base::numComp;
 
   /// Compile time value for the number of phases
-  static constexpr localIndex numPhase = NUM_PHASE;
+  static constexpr integer numPhase = NUM_PHASE;
 
   /**
    * @brief Constructor
@@ -694,7 +694,7 @@ public:
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
-    : Base( subRegion ),
+    : Base(),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
     m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
@@ -831,7 +831,6 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
    * @param[in] numComp the number of fluid components
    * @param[in] numPhase the number of fluid phases
    * @param[in] subRegion the element subregion
@@ -840,32 +839,28 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( bool const isIsothermal,
-                   localIndex const numComp,
-                   localIndex const numPhase,
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
-    if( !isIsothermal )
-    { GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " ); }
-
     if( numPhase == 2 )
     {
       CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
-        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY, PhaseMobilityKernel< NUM_COMP, 2 > >( subRegion.size(), kernel );
+        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
     {
       CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
-        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY, PhaseMobilityKernel< NUM_COMP, 3 > >( subRegion.size(), kernel );
+        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
   }
@@ -915,7 +910,7 @@ struct ResidualNormKernel
           {
             // compute a normalizer to obtain a dimensionless norm
             real64 sumMobOld = 0.0;
-            for( localIndex ip = 0; ip < numPhases; ++ip )
+            for( integer ip = 0; ip < numPhases; ++ip )
             {
               sumMobOld += phaseMobOld[er][esr][ei][ip];
             }
@@ -976,7 +971,7 @@ struct SolutionCheckKernel
 struct PrecomputeKernel
 {
 
-  template< typename IP_TYPE, localIndex NF >
+  template< typename IP_TYPE, integer NF >
   static void
   launch( localIndex const subRegionSize,
           localIndex const faceManagerSize,
@@ -1009,7 +1004,7 @@ struct PrecomputeKernel
                                        lengthTolerance,
                                        transMatrix );
 
-      for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+      for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
       {
         mimFaceGravCoefNumerator[elemToFaces[ei][ifaceLoc]] += elemGravCoef[ei] * transMatrix[ifaceLoc][ifaceLoc];
         mimFaceGravCoefDenominator[elemToFaces[ei][ifaceLoc]] += transMatrix[ifaceLoc][ifaceLoc];
@@ -1051,7 +1046,7 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 } // namespace internal
 
 template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
-void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, localIndex numPhases, ARGS && ... args )
+void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhases == 2 )

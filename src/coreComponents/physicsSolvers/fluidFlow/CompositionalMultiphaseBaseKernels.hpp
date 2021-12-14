@@ -60,33 +60,13 @@ struct NoOpFunc
  * @tparam NUM_COMP number of fluid components
  * @brief Define the base interface for the property update kernels
  */
-template< localIndex NUM_COMP >
+template< integer NUM_COMP >
 class PropertyKernelBase
 {
 public:
 
   /// Compile time value for the number of components
-  static constexpr localIndex numComp = NUM_COMP;
-
-  /**
-   * @brief Constructor
-   * @param[in] subRegion the element subregion
-   * @param[in] fluid the fluid model
-   */
-  PropertyKernelBase( dataRepository::Group & subRegion )
-  { GEOSX_UNUSED_VAR( subRegion ); }
-
-  /**
-   * @brief Compute the property in an element
-   * @tparam FUNC the type of the function that can be used to customize the kernel
-   * @param[in] ei the element index
-   * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
-   */
-  template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
-  void compute( localIndex const ei,
-                FUNC && kernelOp = NoOpFunc{} ) const
-  { GEOSX_UNUSED_VAR( ei, kernelOp ); }
+  static constexpr integer numComp = NUM_COMP;
 
   /**
    * @brief Performs the kernel launch
@@ -100,8 +80,6 @@ public:
   launch( localIndex const numElems,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
-
     forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       kernelComponent.compute( ei );
@@ -120,8 +98,6 @@ public:
   launch( SortedArrayView< localIndex const > const & targetSet,
           KERNEL_TYPE const & kernelComponent )
   {
-    GEOSX_MARK_FUNCTION;
-
     forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
     {
       localIndex const ei = targetSet[ i ];
@@ -131,6 +107,34 @@ public:
 
 };
 
+namespace internal
+{
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
+
+  switch( value )
+  {
+    case 1:
+    { lambda( std::integral_constant< T, 1 >() ); return; }
+    case 2:
+    { lambda( std::integral_constant< T, 2 >() ); return; }
+    case 3:
+    { lambda( std::integral_constant< T, 3 >() ); return; }
+    case 4:
+    { lambda( std::integral_constant< T, 4 >() ); return; }
+    case 5:
+    { lambda( std::integral_constant< T, 5 >() ); return; }
+    default:
+    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
+  }
+}
+
+} // namespace internal
+
+
 /******************************** ComponentFractionKernel ********************************/
 
 /**
@@ -138,7 +142,7 @@ public:
  * @tparam NUM_COMP number of fluid components
  * @brief Define the interface for the update kernel in charge of computing the phase volume fractions
  */
-template< localIndex NUM_COMP >
+template< integer NUM_COMP >
 class ComponentFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
 public:
@@ -152,7 +156,7 @@ public:
    * @param[in] fluid the fluid model
    */
   ComponentFractionKernel( ObjectManagerBase & subRegion )
-    : Base( subRegion ),
+    : Base(),
     m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
     m_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >() ),
     m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
@@ -213,34 +217,6 @@ protected:
 
 };
 
-namespace internal
-{
-
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
-    default:
-    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
-  }
-}
-
-} // namespace internal
-
-
 /**
  * @class ComponentFractionKernelFactory
  */
@@ -257,14 +233,14 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( localIndex const numComp,
+  createAndLaunch( integer const numComp,
                    ObjectManagerBase & subRegion )
   {
     internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
     {
-      localIndex constexpr NUM_COMP = NC();
+      integer constexpr NUM_COMP = NC();
       ComponentFractionKernel< NUM_COMP > kernel( subRegion );
-      ComponentFractionKernel< NUM_COMP >::template launch< POLICY, ComponentFractionKernel< NUM_COMP > >( subRegion.size(), kernel );
+      ComponentFractionKernel< NUM_COMP >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 
@@ -278,7 +254,7 @@ public:
  * @tparam NUM_PHASE number of fluid phases
  * @brief Define the interface for the property kernel in charge of computing the phase volume fractions
  */
-template< localIndex NUM_COMP, localIndex NUM_PHASE >
+template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseVolumeFractionKernel : public PropertyKernelBase< NUM_COMP >
 {
 public:
@@ -287,7 +263,7 @@ public:
   using Base::numComp;
 
   /// Compile time value for the number of phases
-  static constexpr localIndex numPhase = NUM_PHASE;
+  static constexpr integer numPhase = NUM_PHASE;
 
   /**
    * @brief Constructor
@@ -296,7 +272,7 @@ public:
    */
   PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
                              MultiFluidBase const & fluid )
-    : Base( subRegion ),
+    : Base(),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
     m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
@@ -433,7 +409,6 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
    * @param[in] numComp the number of fluid components
    * @param[in] numPhase the number of fluid phases
    * @param[in] subRegion the element subregion
@@ -441,31 +416,27 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( bool const isIsothermal,
-                   localIndex const numComp,
-                   localIndex const numPhase,
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
-    if( !isIsothermal )
-    { GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " ); }
-
     if( numPhase == 2 )
     {
       internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
-        PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY, PhaseVolumeFractionKernel< NUM_COMP, 2 > >( subRegion.size(), kernel );
+        PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
     {
       internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
-        PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY, PhaseVolumeFractionKernel< NUM_COMP, 3 > >( subRegion.size(), kernel );
+        PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
   }
@@ -628,19 +599,19 @@ struct CapillaryPressureUpdateKernel
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
-template< localIndex NUM_COMP, localIndex NUM_DOF >
+template< integer NUM_COMP, integer NUM_DOF >
 class ElementBasedAssemblyKernel
 {
 public:
 
   /// Compile time value for the number of components
-  static constexpr localIndex numComp = NUM_COMP;
+  static constexpr integer numComp = NUM_COMP;
 
   /// Compute time value for the number of degrees of freedom
-  static constexpr localIndex numDof = NUM_DOF;
+  static constexpr integer numDof = NUM_DOF;
 
   /// Compute time value for the number of equations
-  static constexpr localIndex numEqn = NUM_DOF;
+  static constexpr integer numEqn = NUM_DOF;
 
   /**
    * @brief Constructor
@@ -946,7 +917,7 @@ public:
 protected:
 
   /// Number of fluid phases
-  localIndex const m_numPhases;
+  integer const m_numPhases;
 
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
@@ -1003,7 +974,6 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
    * @param[in] numComps the number of fluid components
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
@@ -1016,9 +986,8 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( bool const isIsothermal,
-                   localIndex const numComps,
-                   localIndex const numPhases,
+  createAndLaunch( integer const numComps,
+                   integer const numPhases,
                    globalIndex const rankOffset,
                    string const dofKey,
                    ElementSubRegionBase const & subRegion,
@@ -1029,28 +998,11 @@ public:
   {
     internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
-      if( isIsothermal )
-      {
-        localIndex constexpr NUM_COMP = NC();
-        localIndex constexpr NUM_DOF = NC()+1;
-        ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-        kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-        ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-        launch< POLICY, ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
-      }
-      else
-      {
-        GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " );
-        /*
-           TODO: uncomment and move when the thermal kernel is ready
-           localIndex constexpr NUM_COMP = NC();
-           localIndex constexpr NUM_DOF = NC()+2;
-           ThermalElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-           kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
-           ThermalElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template
-           launch< POLICY, ThermalElementBasedAssemblyKernel< NUM_COMP, NUM_DOF > >( subRegion.size(), kernel );
-         */
-      }
+      integer constexpr NUM_COMP = NC();
+      integer constexpr NUM_DOF = NC()+1;
+      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
+      kernel( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 
@@ -1064,7 +1016,7 @@ struct ResidualNormKernel
   template< typename POLICY, typename REDUCE_POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
-                      localIndex const numComponents,
+                      integer const numComponents,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & refPoro,
@@ -1081,7 +1033,7 @@ struct ResidualNormKernel
         localIndex const localRow = dofNumber[ei] - rankOffset;
         real64 const normalizer = totalDensOld[ei] * refPoro[ei] * volume[ei];
 
-        for( localIndex idof = 0; idof < numComponents + 1; ++idof )
+        for( integer idof = 0; idof < numComponents + 1; ++idof )
         {
           real64 const val = localResidual[localRow + idof] / normalizer;
           localSum += val * val;
@@ -1131,7 +1083,7 @@ struct SolutionCheckKernel
         // will be chopped (i.e., set to zero) in ApplySystemSolution)
         if( !allowCompDensChopping )
         {
-          for( localIndex ic = 0; ic < numComponents; ++ic )
+          for( integer ic = 0; ic < numComponents; ++ic )
           {
             real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             check.min( newDens >= 0.0 );
@@ -1140,7 +1092,7 @@ struct SolutionCheckKernel
         else
         {
           real64 totalDens = 0.0;
-          for( localIndex ic = 0; ic < numComponents; ++ic )
+          for( integer ic = 0; ic < numComponents; ++ic )
           {
             real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             totalDens += (newDens > 0.0) ? newDens : 0.0;
@@ -1171,8 +1123,8 @@ struct HydrostaticPressureKernel
 
   template< typename FLUID_WRAPPER >
   static ReturnType
-  computeHydrostaticPressure( localIndex const numComps,
-                              localIndex const numPhases,
+  computeHydrostaticPressure( integer const numComps,
+                              integer const numPhases,
                               integer const ipInit,
                               integer const maxNumEquilIterations,
                               real64 const & equilTolerance,
@@ -1203,7 +1155,7 @@ struct HydrostaticPressureKernel
 
     real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
     real64 const temp = tempTableWrapper.compute( &newElevation );
-    for( localIndex ic = 0; ic < numComps; ++ic )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       compFrac[0][ic] = compFracTableWrappers[ic].compute( &newElevation );
     }
@@ -1229,7 +1181,7 @@ struct HydrostaticPressureKernel
     // Step 4: fixed-point iteration until convergence
 
     bool equilHasConverged = false;
-    for( localIndex eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
+    for( integer eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
     {
 
       // check convergence
@@ -1242,7 +1194,7 @@ struct HydrostaticPressureKernel
         // make sure that the fluid is single-phase, other we have to issue a warning (for now)
         // if only one phase is mobile, we are in good shape (unfortunately it is hard to access relperm from here)
         localIndex numberOfPhases = 0;
-        for( localIndex ip = 0; ip < numPhases; ++ip )
+        for( integer ip = 0; ip < numPhases; ++ip )
         {
           if( phaseFrac[0][0][ip] > MIN_FOR_PHASE_PRESENCE )
           {
@@ -1273,7 +1225,7 @@ struct HydrostaticPressureKernel
     // Step 5: save the hydrostatic pressure and the corresponding density
 
     newPres = pres1;
-    for( localIndex ip = 0; ip < numPhases; ++ip )
+    for( integer ip = 0; ip < numPhases; ++ip )
     {
       newPhaseMassDens[ip] = phaseMassDens[0][0][ip];
     }
@@ -1295,8 +1247,8 @@ struct HydrostaticPressureKernel
   template< typename FLUID_WRAPPER >
   static ReturnType
   launch( localIndex const size,
-          localIndex const numComps,
-          localIndex const numPhases,
+          integer const numComps,
+          integer const numPhases,
           integer const ipInit,
           integer const maxNumEquilIterations,
           real64 const equilTolerance,
@@ -1326,7 +1278,7 @@ struct HydrostaticPressureKernel
     real64 datumTotalDens = 0.0;
 
     real64 const datumTemp = tempTableWrapper.compute( &datumElevation );
-    for( localIndex ic = 0; ic < numComps; ++ic )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       datumCompFrac[0][ic] = compFracTableWrappers[ic].compute( &datumElevation );
     }
@@ -1356,7 +1308,7 @@ struct HydrostaticPressureKernel
     array2d< real64 > phaseMassDens( pressureValues.size(), numPhases );
     // temporary array without permutation to compile on Lassen
     array1d< real64 > datumPhaseMassDensTmp( numPhases );
-    for( localIndex ip = 0; ip < numPhases; ++ip )
+    for( integer ip = 0; ip < numPhases; ++ip )
     {
       datumPhaseMassDensTmp[ip] = datumPhaseMassDens[0][0][ip];
     }
@@ -1461,7 +1413,7 @@ struct HydrostaticPressureKernel
 /******************************** Kernel launch machinery ********************************/
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( localIndex const numComp, ARGS && ... args )
+void KernelLaunchSelector1( integer const numComp, ARGS && ... args )
 {
   internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
   {
@@ -1470,7 +1422,7 @@ void KernelLaunchSelector1( localIndex const numComp, ARGS && ... args )
 }
 
 template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( localIndex const numComp, localIndex const numPhase, ARGS && ... args )
+void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhase == 2 )

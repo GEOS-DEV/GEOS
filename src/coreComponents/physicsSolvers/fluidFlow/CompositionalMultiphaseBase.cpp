@@ -354,9 +354,8 @@ void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & d
   GEOSX_MARK_FUNCTION;
 
   ComponentFractionKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( m_numComponents,
-    dataGroup );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               dataGroup );
 
 }
 
@@ -367,14 +366,11 @@ void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase &
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  bool const isIsothermal = true;
   PhaseVolumeFractionKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( isIsothermal,
-    m_numComponents,
-    m_numPhases,
-    dataGroup,
-    fluid );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               m_numPhases,
+                                               dataGroup,
+                                               fluid );
 
 }
 
@@ -948,19 +944,16 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
     MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidModelNames()[targetIndex] );
     CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    bool const isIsothermal = true;
     ElementBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >
-      ( isIsothermal,
-      m_numComponents,
-      m_numPhases,
-      dofManager.rankOffset(),
-      dofKey,
-      subRegion,
-      fluid,
-      solid,
-      localMatrix,
-      localRhs );
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dofManager.rankOffset(),
+                                                 dofKey,
+                                                 subRegion,
+                                                 fluid,
+                                                 solid,
+                                                 localMatrix,
+                                                 localRhs );
 
   } );
 }

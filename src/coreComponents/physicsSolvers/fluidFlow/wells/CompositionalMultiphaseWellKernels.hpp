@@ -446,7 +446,7 @@ struct RateInitializationKernel
  * @tparam NUM_PHASE number of fluid phases
  * @brief Define the interface for the property kernel in charge of computing the total mass density
  */
-template< localIndex NUM_COMP, localIndex NUM_PHASE >
+template< integer NUM_COMP, integer NUM_PHASE >
 class TotalMassDensityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
@@ -458,7 +458,7 @@ public:
   using Base::numComp;
 
   /// Compile time value for the number of phases
-  static constexpr localIndex numPhase = NUM_PHASE;
+  static constexpr integer numPhase = NUM_PHASE;
 
   /**
    * @brief Constructor
@@ -467,7 +467,7 @@ public:
    */
   TotalMassDensityKernel( dataRepository::Group & subRegion,
                           MultiFluidBase const & fluid )
-    : Base( subRegion ),
+    : Base(),
     m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
     m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
     m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
@@ -562,7 +562,6 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
    * @param[in] numComp the number of fluid components
    * @param[in] numPhase the number of fluid phases
    * @param[in] subRegion the element subregion
@@ -570,31 +569,27 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( bool const isIsothermal,
-                   localIndex const numComp,
-                   localIndex const numPhase,
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
                    dataRepository::Group & subRegion,
                    MultiFluidBase const & fluid )
   {
-    if( !isIsothermal )
-    { GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " ); }
-
     if( numPhase == 2 )
     {
       CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
-        TotalMassDensityKernel< NUM_COMP, 2 >::template launch< POLICY, TotalMassDensityKernel< NUM_COMP, 2 > >( subRegion.size(), kernel );
+        TotalMassDensityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
     {
       CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
-        TotalMassDensityKernel< NUM_COMP, 3 >::template launch< POLICY, TotalMassDensityKernel< NUM_COMP, 3 > >( subRegion.size(), kernel );
+        TotalMassDensityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
   }

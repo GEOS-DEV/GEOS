@@ -524,15 +524,12 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
-  bool const isIsothermal = true;
   PhaseMobilityKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( isIsothermal,
-    m_numComponents,
-    m_numPhases,
-    dataGroup,
-    fluid,
-    relperm );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               m_numPhases,
+                                               dataGroup,
+                                               fluid,
+                                               relperm );
 }
 
 void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,

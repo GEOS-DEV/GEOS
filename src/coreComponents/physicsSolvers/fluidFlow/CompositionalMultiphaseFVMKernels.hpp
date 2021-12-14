@@ -46,7 +46,7 @@ using namespace constitutive;
  * @tparam NUM_PHASE number of fluid phases
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
-template< localIndex NUM_COMP, localIndex NUM_PHASE >
+template< integer NUM_COMP, integer NUM_PHASE >
 class PhaseMobilityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
@@ -55,7 +55,7 @@ public:
   using Base::numComp;
 
   /// Compile time value for the number of phases
-  static constexpr localIndex numPhase = NUM_PHASE;
+  static constexpr integer numPhase = NUM_PHASE;
 
   /**
    * @brief Constructor
@@ -66,7 +66,7 @@ public:
   PhaseMobilityKernel( ObjectManagerBase & subRegion,
                        MultiFluidBase const & fluid,
                        RelativePermeabilityBase const & relperm )
-    : Base( subRegion ),
+    : Base(),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
     m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
@@ -219,7 +219,6 @@ public:
   /**
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
-   * @param[in] isIsothermal flag specifying whether the assembly is isothermal or non-isothermal
    * @param[in] numComp the number of fluid components
    * @param[in] numPhase the number of fluid phases
    * @param[in] subRegion the element subregion
@@ -228,32 +227,28 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( bool const isIsothermal,
-                   localIndex const numComp,
-                   localIndex const numPhase,
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
                    ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid,
                    RelativePermeabilityBase const & relperm )
   {
-    if( !isIsothermal )
-    { GEOSX_ERROR( "CompositionalMultiphaseBase: Thermal simulation is not supported yet: " ); }
-
     if( numPhase == 2 )
     {
       CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
-        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY, PhaseMobilityKernel< NUM_COMP, 2 > >( subRegion.size(), kernel );
+        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
     else if( numPhase == 3 )
     {
       CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
-        localIndex constexpr NUM_COMP = NC();
+        integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
-        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY, PhaseMobilityKernel< NUM_COMP, 3 > >( subRegion.size(), kernel );
+        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
       } );
     }
   }
@@ -276,10 +271,10 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< localIndex NC, localIndex MAX_NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
+  template< integer NC, localIndex MAX_NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
-  compute( localIndex const numPhases,
+  compute( integer const numPhases,
            localIndex const stencilSize,
            localIndex const numFluxElems,
            arraySlice1d< localIndex const > const seri,
@@ -309,9 +304,9 @@ struct FluxKernel
            arraySlice1d< real64 > const localFlux,
            arraySlice2d< real64 > const localFluxJacobian );
 
-  template< localIndex NC, typename STENCILWRAPPER_TYPE >
+  template< integer NC, typename STENCILWRAPPER_TYPE >
   static void
-  launch( localIndex const numPhases,
+  launch( integer const numPhases,
           STENCILWRAPPER_TYPE const & stencilWrapper,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
@@ -361,10 +356,10 @@ struct CFLFluxKernel
   template< typename VIEWTYPE >
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
-  template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
+  template< integer NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
-  compute( localIndex const numPhases,
+  compute( integer const numPhases,
            localIndex const stencilSize,
            real64 const & dt,
            arraySlice1d< localIndex const > const seri,
@@ -382,9 +377,9 @@ struct CFLFluxKernel
            ElementView< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutflux,
            ElementView< arrayView2d< real64, compflow::USD_COMP > > const & compOutflux );
 
-  template< localIndex NC, typename STENCILWRAPPER_TYPE >
+  template< integer NC, typename STENCILWRAPPER_TYPE >
   static void
-  launch( localIndex const numPhases,
+  launch( integer const numPhases,
           real64 const & dt,
           STENCILWRAPPER_TYPE const & stencil,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
@@ -412,7 +407,7 @@ struct CFLKernel
   static constexpr real64 minPhaseMobility = 1e-12;
   static constexpr real64 minComponentFraction = 1e-12;
 
-  template< localIndex NP >
+  template< integer NP >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
@@ -424,7 +419,7 @@ struct CFLKernel
                    arraySlice1d< real64 const, compflow::USD_PHASE- 1 > phaseOutflux,
                    real64 & phaseCFLNumber );
 
-  template< localIndex NC >
+  template< integer NC >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
@@ -434,7 +429,7 @@ struct CFLKernel
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compOutflux,
                   real64 & compCFLNumber );
 
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   static void
   launch( localIndex const size,
           arrayView1d< real64 const > const & volume,
@@ -471,11 +466,11 @@ struct AquiferBCKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< localIndex NC >
+  template< integer NC >
   GEOSX_HOST_DEVICE
   static void
-    compute( localIndex const numPhases,
-             localIndex const ipWater,
+    compute( integer const numPhases,
+             integer const ipWater,
              bool const allowAllPhasesIntoAquifer,
              real64 const & aquiferVolFlux,
              real64 const & dAquiferVolFlux_dPres,
@@ -495,10 +490,10 @@ struct AquiferBCKernel
              real64 ( &localFlux )[NC],
              real64 ( &localFluxJacobian )[NC][NC+1] );
 
-  template< localIndex NC >
+  template< integer NC >
   static void
-  launch( localIndex const numPhases,
-          localIndex const ipWater,
+  launch( integer const numPhases,
+          integer const ipWater,
           bool const allowAllPhasesIntoAquifer,
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,

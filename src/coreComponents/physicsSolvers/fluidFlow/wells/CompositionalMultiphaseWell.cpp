@@ -445,9 +445,8 @@ void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion 
 
   CompositionalMultiphaseBaseKernels::
     ComponentFractionKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( m_numComponents,
-    subRegion );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               subRegion );
 
 }
 
@@ -747,15 +746,12 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-  bool const isIsothermal = true;
   CompositionalMultiphaseBaseKernels::
     PhaseVolumeFractionKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( isIsothermal,
-    m_numComponents,
-    m_numPhases,
-    subRegion,
-    fluid );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               m_numPhases,
+                                               subRegion,
+                                               fluid );
 
 }
 
@@ -765,14 +761,11 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, m_fluidModelNames[targetIndex] );
 
-  bool const isIsothermal = true;
   TotalMassDensityKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( isIsothermal,
-    m_numComponents,
-    m_numPhases,
-    subRegion,
-    fluid );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               m_numPhases,
+                                               subRegion,
+                                               fluid );
 
 }
 

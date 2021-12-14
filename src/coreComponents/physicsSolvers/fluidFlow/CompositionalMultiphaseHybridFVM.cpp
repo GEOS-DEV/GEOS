@@ -895,16 +895,13 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
-  bool const isIsothermal = true;
   CompositionalMultiphaseHybridFVMKernels::
     PhaseMobilityKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >
-    ( isIsothermal,
-    m_numComponents,
-    m_numPhases,
-    dataGroup,
-    fluid,
-    relperm );
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               m_numPhases,
+                                               dataGroup,
+                                               fluid,
+                                               relperm );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseHybridFVM, std::string const &, Group * const )
