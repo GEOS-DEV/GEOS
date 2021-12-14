@@ -17,6 +17,7 @@
 #include "GeosxState.hpp"
 #include "initialization.hpp"
 
+
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
@@ -510,6 +511,8 @@ void ProblemManager::generateMesh()
 
   for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
+
+
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
 
 
@@ -518,32 +521,54 @@ void ProblemManager::generateMesh()
       // clone mesh level
       if( b>0 )
       {
+        //std::cout << "coucou" << std::endl;
+
         meshBody.createMeshLevel( b, 0 );
+        //std::cout << "je suis passé" << std::endl;
       }
+
+
+
       MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( b );
 
       NodeManager & nodeManager = meshLevel.getNodeManager();
       EdgeManager & edgeManager = meshLevel.getEdgeManager();
       FaceManager & faceManager = meshLevel.getFaceManager();
+
+
+
+
       ElementRegionManager & elemManager = meshLevel.getElemManager();
+
 
       GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
 
       MeshUtilities::generateNodesets( geometricObjects, nodeManager );
       nodeManager.constructGlobalToLocalMap();
 
+
+
+      if(b==0)
+      {
       elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( elemManager );
+      }
+
 
       if (b==0)
       {
+        nodeManager.setElementMaps( elemManager );
+      }
+
+       if (b==0)
+       {
         faceManager.buildFaces( nodeManager, elemManager );
         nodeManager.setFaceMaps( faceManager );
-    
+
         edgeManager.buildEdges( nodeManager, faceManager );
         nodeManager.setEdgeMaps( edgeManager );
-      }
-      
+
+       }
+
       meshLevel.generateSets();
 
       elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
@@ -554,13 +579,19 @@ void ProblemManager::generateMesh()
         subRegion.setMaxGlobalIndex();
       } );
 
-      elemManager.setMaxGlobalIndex();
 
-      elemManager.generateCellToEdgeMaps( faceManager );
+       if(b==0)
+      {
+        elemManager.setMaxGlobalIndex();
+
+        elemManager.generateCellToEdgeMaps( faceManager );
+      }
+
 
       elemManager.generateAggregates( faceManager, nodeManager );
 
       elemManager.generateWells( meshManager, meshLevel );
+      
     }
   }
 
