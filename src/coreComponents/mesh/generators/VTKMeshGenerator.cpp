@@ -635,7 +635,8 @@ void importFieldOnCellBlock( string const & name, std::vector< vtkIdType > const
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
       for( vtkDataArray * vtkArray : arraysTobeImported )
       {
-        if( materialWrapperNames.count( vtkArray->GetName() ) == 0  ) continue;
+        if( materialWrapperNames.count( vtkArray->GetName() ) == 0 )
+          continue;
         WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
         if( materialWrapperNames.count( vtkArray->GetName() ) > 0 && wrapper.numArrayDims() > 1 )
         {
