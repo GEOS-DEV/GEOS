@@ -12,6 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 // Source includes
 #include "ProblemManager.hpp"
 #include "GeosxState.hpp"

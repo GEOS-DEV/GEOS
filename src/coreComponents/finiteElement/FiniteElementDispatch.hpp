@@ -57,6 +57,7 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr4 );
   }
+#ifdef GEOSX_DISPATCH_VEM
   else if( auto const * const ptr5 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr5 );
@@ -73,6 +74,7 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr8 );
   }
+#endif
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
@@ -101,6 +103,7 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
+#ifdef GEOSX_COMPILE_VEM
   else if( auto * const ptr5 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr5 );
@@ -117,6 +120,7 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr8 );
   }
+#endif
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );
