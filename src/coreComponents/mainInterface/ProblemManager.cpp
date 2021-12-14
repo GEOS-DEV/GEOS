@@ -17,6 +17,7 @@
 #include "GeosxState.hpp"
 #include "initialization.hpp"
 
+
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/Path.hpp"
 #include "common/TimingMacros.hpp"
@@ -666,11 +667,12 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   MeshUtilities::generateNodesets( geometricObjects, nodeManager );
   nodeManager.constructGlobalToLocalMap();
 
-  elemManager.generateMesh( cellBlockManager );
-  nodeManager.setElementMaps( elemManager );
 
   if( meshLevel.getName() == MeshLevel::viewStructKeys::baseDiscretizationString() )
   {
+    elemManager.generateMesh( cellBlockManager );
+    nodeManager.setElementMaps( elemManager );
+
     faceManager.buildFaces( nodeManager, elemManager );
     nodeManager.setFaceMaps( faceManager );
 
@@ -687,9 +689,11 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
     subRegion.setMaxGlobalIndex();
   } );
 
-  elemManager.setMaxGlobalIndex();
-
-  elemManager.generateCellToEdgeMaps( faceManager );
+  if( meshLevel.getName() == MeshLevel::viewStructKeys::baseDiscretizationString() )
+  {
+    elemManager.setMaxGlobalIndex();
+    elemManager.generateCellToEdgeMaps( faceManager );
+  }
 
   elemManager.generateAggregates( faceManager, nodeManager );
 
