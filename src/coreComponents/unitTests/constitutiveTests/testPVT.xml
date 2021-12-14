@@ -1,0 +1,96 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <PVTDriver
+      name="testHydrogenMixtureA"
+      fluid="hydrogenMixture"
+      feedComposition="{ 0.1, 0.9 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="49" 
+      baseline="testPVT_hydrogenMixtureA.txt"
+      logLevel="1" />
+    <PVTDriver
+      name="testHydrogenMixtureB"
+      fluid="hydrogenMixture"
+      feedComposition="{ 0.5, 0.5 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="49" 
+      baseline="testPVT_hydrogenMixtureB.txt"
+      logLevel="1" />
+    <PVTDriver
+      name="testCO2"
+      fluid="co2Mixture"
+      feedComposition="{ 1.0, 0.0 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="49" 
+      baseline="testPVT_CO2.txt"
+      logLevel="1" />  
+    <PVTDriver
+      name="testBrine"
+      fluid="co2Mixture"
+      feedComposition="{ 0.0, 1.0 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="49" 
+      output="testPVT_brine.txt"
+      logLevel="1" />    </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent name="eventA" target="/Tasks/testHydrogenMixtureA"/>
+    <SoloEvent name="eventB" target="/Tasks/testHydrogenMixtureB"/>
+    <SoloEvent name="eventC" target="/Tasks/testCO2"/>
+    <SoloEvent name="eventD" target="/Tasks/testBrine"/>
+  </Events>
+
+  <Constitutive>
+
+    <CO2BrineFluid name="co2Mixture"
+                   phaseNames="{ gas, water }"
+                   componentNames="{ co2, water }"
+                   componentMolarWeight="{ 44e-3, 18e-3 }"
+                   phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
+                   flashModelParaFile="testPVT_data/carbonDioxideFlash.txt"/>
+
+    <CompositionalMultiphaseFluid name="hydrogenMixture"
+                                  phaseNames="{ oil, gas }"
+                                  equationsOfState="{ SRK, SRK }"
+                                  componentNames="{ H2, CH4 }"
+                                  componentCriticalPressure="{ 12.96e5, 45.99e5 }"
+                                  componentCriticalTemperature="{ 33.15, 190.6 }"
+                                  componentAcentricFactor="{ -0.219, 0.0114 }"
+                                  componentMolarWeight="{ 2.0159e-3, 16.043e-3 }"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 1e6, 50e6 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 350, 350 }"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+</Problem>

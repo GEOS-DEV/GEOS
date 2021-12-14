@@ -1752,9 +1752,30 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="PVTDriverType">
+		<!--baseline => Baseline file-->
+		<xsd:attribute name="baseline" type="path" default="none" />
+		<!--feedComposition => Feed composition array [mol fraction]-->
+		<xsd:attribute name="feedComposition" type="real64_array" use="required" />
+		<!--fluid => Fluid to test-->
+		<xsd:attribute name="fluid" type="string" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--output => Output file-->
+		<xsd:attribute name="output" type="string" default="none" />
+		<!--pressureControl => Function controlling pressure time history-->
+		<xsd:attribute name="pressureControl" type="string" use="required" />
+		<!--steps => Number of load steps to take-->
+		<xsd:attribute name="steps" type="integer" use="required" />
+		<!--temperatureControl => Function controlling temperature time history-->
+		<xsd:attribute name="temperatureControl" type="string" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="PackCollectionType">
 		<!--fieldName => The name of the (packable) field associated with the specified object to retrieve data from-->

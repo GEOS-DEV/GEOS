@@ -512,6 +512,13 @@ Element: PAMELAMeshGenerator
 .. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator.rst
 
 
+.. _XML_PVTDriver:
+
+Element: PVTDriver
+==================
+.. include:: ../../coreComponents/schema/docs/PVTDriver.rst
+
+
 .. _XML_PackCollection:
 
 Element: PackCollection
@@ -1452,6 +1459,13 @@ Datastructure: Outputs
 Datastructure: PAMELAMeshGenerator
 ==================================
 .. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator_other.rst
+
+
+.. _DATASTRUCTURE_PVTDriver:
+
+Datastructure: PVTDriver
+========================
+.. include:: ../../coreComponents/schema/docs/PVTDriver_other.rst
 
 
 .. _DATASTRUCTURE_PackCollection:

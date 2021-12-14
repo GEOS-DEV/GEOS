@@ -22,6 +22,7 @@ set( constitutive_headers
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/BrineCO2Density.hpp
      fluid/PVTFunctions/BrineViscosity.hpp
@@ -104,6 +105,7 @@ set( constitutive_sources
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTDriver.cpp
      fluid/PVTOData.cpp
      fluid/PVTFunctions/BrineCO2Density.cpp
      fluid/PVTFunctions/BrineViscosity.cpp
