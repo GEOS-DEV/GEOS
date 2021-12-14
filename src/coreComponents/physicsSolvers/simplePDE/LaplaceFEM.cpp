@@ -16,8 +16,6 @@
  * @file LaplaceFEM.cpp
  */
 
-#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
-
 // Source includes
 #include "LaplaceFEM.hpp"
 #include "LaplaceFEMKernels.hpp"
