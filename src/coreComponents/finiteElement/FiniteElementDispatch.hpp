@@ -103,7 +103,7 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr4 );
   }
-#ifdef GEOSX_COMPILE_VEM
+#ifdef GEOSX_DISPATCH_VEM
   else if( auto * const ptr5 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
   {
     lambda( *ptr5 );
