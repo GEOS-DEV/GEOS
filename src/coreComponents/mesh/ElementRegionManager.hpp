@@ -907,7 +907,7 @@ public:
 
     /**
      * @brief Constructor for the struct
-     * @param[in] elemManager a reference to the elemRegionManer
+     * @param[in] elemManager a reference to the elemRegionManager
      * @param[in] solverName the name of the solver creating the view accessors
      */
     StencilAccessors( ElementRegionManager const & elemManager,
@@ -927,7 +927,7 @@ public:
 
     /**
      * @brief Constructor for the struct
-     * @param[in] elemManager a reference to the elemRegionManer
+     * @param[in] elemManager a reference to the elemRegionManager
      * @param[in] solverName the name of the solver creating the view accessors
      * @param[in] regionNames the name of the solver target regions
      * @param[in] materialNames the name of the solver material names

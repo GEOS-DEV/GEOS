@@ -849,6 +849,31 @@ struct CFLFluxKernel
   template< typename VIEWTYPE >
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
+  using CompFlowAccessors =
+    ElementRegionManager::
+      StencilAccessors< extrinsicMeshData::flow::pressure, // 0
+                        extrinsicMeshData::flow::gravityCoefficient, // 1
+                        extrinsicMeshData::flow::phaseVolumeFraction, // 2
+                        extrinsicMeshData::flow::phaseOutflux, // 3
+                        extrinsicMeshData::flow::componentOutflux >; // 4
+
+  using MultiFluidAccessors =
+    ElementRegionManager::
+      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseViscosity, // 0
+                                extrinsicMeshData::multifluid::phaseDensity, // 1
+                                extrinsicMeshData::multifluid::phaseMassDensity, // 2
+                                extrinsicMeshData::multifluid::phaseCompFraction >; // 3
+
+  using PermeabilityAccessors =
+    ElementRegionManager::
+      StencilMaterialAccessors< extrinsicMeshData::permeability::permeability, // 0
+                                extrinsicMeshData::permeability::dPerm_dPressure >; // 1
+
+
+  using RelPermAccessors =
+    ElementRegionManager::
+      StencilMaterialAccessors< extrinsicMeshData::relperm::phaseRelPerm >; // 0
+
   template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
   static void
@@ -877,9 +902,9 @@ struct CFLFluxKernel
           STENCILWRAPPER_TYPE const & stencil,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & phaseRelPerm,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseVisc,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
@@ -959,6 +984,26 @@ struct AquiferBCKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  using CompFlowAccessors =
+    ElementRegionManager::
+      StencilAccessors< extrinsicMeshData::ghostRank, // 0
+                        extrinsicMeshData::flow::pressure, // 1
+                        extrinsicMeshData::flow::deltaPressure, // 2
+                        extrinsicMeshData::flow::gravityCoefficient, // 3
+                        extrinsicMeshData::flow::phaseVolumeFraction, // 4
+                        extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure, // 5
+                        extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity, // 6
+                        extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >; // 7
+
+  using MultiFluidAccessors =
+    ElementRegionManager::
+      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseDensity, // 0
+                                extrinsicMeshData::multifluid::dPhaseDensity_dPressure, // 1
+                                extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction, // 2
+                                extrinsicMeshData::multifluid::phaseCompFraction, // 3
+                                extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure, // 4
+                                extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >; // 5
+
   template< localIndex NC >
   GEOSX_HOST_DEVICE
   static void
@@ -991,23 +1036,24 @@ struct AquiferBCKernel
           BoundaryStencil const & stencil,
           globalIndex const rankOffset,
           ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
-          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+
           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
           real64 const & aquiferWaterPhaseDens,
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
           ElementViewConst< arrayView1d< real64 const > > const & dPres,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
+          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
+          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           real64 const & timeAtBeginningOfStep,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,

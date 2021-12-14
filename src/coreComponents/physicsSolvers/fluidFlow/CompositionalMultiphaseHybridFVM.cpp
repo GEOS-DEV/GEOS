@@ -427,6 +427,9 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
   // tolerance for transmissibility calculation
   real64 const lengthTolerance = m_lengthTolerance;
 
+  FluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+  FluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), targetRegionNames(), fluidModelNames() );
+
   forTargetSubRegionsComplete< CellElementSubRegion >( mesh,
                                                        [&]( localIndex const targetIndex,
                                                             localIndex const er,
@@ -460,19 +463,19 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                        faceGravCoef,
                                        mimFaceGravCoef,
                                        transMultiplier,
-                                       m_phaseDens.toNestedViewConst(),
-                                       m_dPhaseDens_dPres.toNestedViewConst(),
-                                       m_dPhaseDens_dComp.toNestedViewConst(),
-                                       m_phaseMassDens.toNestedViewConst(),
-                                       m_dPhaseMassDens_dPres.toNestedViewConst(),
-                                       m_dPhaseMassDens_dComp.toNestedViewConst(),
-                                       m_phaseMob.toNestedViewConst(),
-                                       m_dPhaseMob_dPres.toNestedViewConst(),
-                                       m_dPhaseMob_dCompDens.toNestedViewConst(),
-                                       m_dCompFrac_dCompDens.toNestedViewConst(),
-                                       m_phaseCompFrac.toNestedViewConst(),
-                                       m_dPhaseCompFrac_dPres.toNestedViewConst(),
-                                       m_dPhaseCompFrac_dComp.toNestedViewConst(),
+                                       std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseMobility
+                                       std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseMobility_dPres
+                                       std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseMobility_dCompDens
+                                       std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst(), // dCompFrac_dCompDens
+                                       std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDens
+                                       std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dPres
+                                       std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dCompFrac
+                                       std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseMassDens
+                                       std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseMassDens_dPres
+                                       std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseMassDens_dCompFrac
+                                       std::get< 6 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
+                                       std::get< 7 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dPres
+                                       std::get< 8 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dCompFrac
                                        elemDofNumber.toNestedViewConst(),
                                        dofManager.rankOffset(),
                                        lengthTolerance,
@@ -595,7 +598,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     if( faceGhostRank[iface] < 0 && faceDofNumber[iface] >= 0 )
     {
       real64 const facePres = facePressure[iface] + dFacePressure[iface];
-      real64 const absPresChange = fabs( localSolution[faceDofNumber[iface] - rankOffset] );
+      real64 const absPresChange = LvArray::math::abs( localSolution[faceDofNumber[iface] - rankOffset] );
       if( facePres > eps )
       {
         real64 const relativePresChange = fabs( absPresChange ) / facePres;
@@ -747,6 +750,10 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // local residual
   real64 localResidualNorm = 0;
 
+  ElementRegionManager::
+    StencilAccessors< extrinsicMeshData::flow::phaseMobilityOld >   // 0
+  compFlowAccessors( mesh.getElemManager(), getName() );
+
   // 1. Compute the residual for the mass conservation equations
 
   forTargetSubRegionsComplete( mesh,
@@ -800,7 +807,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                                elemSubRegionList.toNestedViewConst(),
                                                                                                elemList.toNestedViewConst(),
                                                                                                m_volume.toNestedViewConst(),
-                                                                                               m_phaseMobOld.toNestedViewConst(),
+                                                                                               std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseMobilityOld
                                                                                                faceResidualNorm );
   localResidualNorm += faceResidualNorm;
 

@@ -159,6 +159,11 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
+  CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+  CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), targetRegionNames(), fluidModelNames() );
+  CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName(), targetRegionNames(), permeabilityModelNames() );
+  CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName(), targetRegionNames(), relPermModelNames() );
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
                                                  arrayView2d< real64, compflow::USD_PHASE > >( extrinsicMeshData::flow::phaseOutflux::key() );
@@ -176,18 +181,20 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                             m_numPhases,
                                             dt,
                                             stencilWrapper,
-                                            m_pressure.toNestedViewConst(),
-                                            m_gravCoef.toNestedViewConst(),
-                                            m_permeability.toNestedViewConst(),
-                                            m_dPerm_dPressure.toNestedViewConst(),
-                                            m_phaseVolFrac.toNestedViewConst(),
-                                            m_phaseRelPerm.toNestedViewConst(),
-                                            m_phaseVisc.toNestedViewConst(),
-                                            m_phaseDens.toNestedViewConst(),
-                                            m_phaseMassDens.toNestedViewConst(),
-                                            m_phaseCompFrac.toNestedViewConst(),
-                                            phaseOutfluxAccessor.toNestedView(),
-                                            compOutfluxAccessor.toNestedView() );
+                                            std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // pressure
+                                            std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // gravCoef
+                                            std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseVolFrac
+                                            std::get< 0 >( permeabilityAccessors.accessors ).toNestedViewConst(), // permeability
+                                            std::get< 1 >( permeabilityAccessors.accessors ).toNestedViewConst(), // dPerm_dPres
+                                            std::get< 0 >( relPermAccessors.accessors ).toNestedViewConst(), // phaseRelPerm
+                                            std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseViscosity
+                                            std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDensity
+                                            std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseMassDensity
+                                            std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
+                                            phaseOutfluxAccessor.toNestedView(), //std::get< 3 >( compFlowAccessors.accessors
+                                                                                 // ).toNestedView(), // phaseOutflux
+                                            compOutfluxAccessor.toNestedView() );//std::get< 4 >( compFlowAccessors.accessors
+                                                                                 // ).toNestedView() ); // componentOutflux
   } );
 
   // Step 3: finalize the (cell-based) computation of the CFL numbers
@@ -357,7 +364,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
           localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
 
           // compute scaling factor based on relative change in component densities
-          real64 const absCompDensChange = fabs( localSolution[lid] );
+          real64 const absCompDensChange = LvArray::math::abs( localSolution[lid] );
           real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
 
           // This actually checks the change in component fraction, using a lagged total density
@@ -548,6 +555,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
   elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
+  AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+  AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), targetRegionNames(), fluidModelNames() );
+
   fsManager.apply< AquiferBoundaryCondition >( time + dt,
                                                domain,
                                                "faceManager",
@@ -582,7 +592,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     real64 const & aquiferWaterPhaseDens = bc.getWaterPhaseDensity();
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
-    KernelLaunchSelector1< CompositionalMultiphaseFVMKernels::AquiferBCKernel >
+    KernelLaunchSelector1< AquiferBCKernel >
       ( m_numComponents,
       m_numPhases,
       waterPhaseIndex,
@@ -590,23 +600,23 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       stencil,
       dofManager.rankOffset(),
       elemDofNumber.toNestedViewConst(),
-      m_elemGhostRank.toNestedViewConst(),
       aquiferBCWrapper,
       aquiferWaterPhaseDens,
       aquiferWaterPhaseCompFrac,
-      m_pressure.toNestedViewConst(),
-      m_deltaPressure.toNestedViewConst(),
-      m_gravCoef.toNestedViewConst(),
-      m_phaseDens.toNestedViewConst(),
-      m_dPhaseDens_dPres.toNestedViewConst(),
-      m_dPhaseDens_dComp.toNestedViewConst(),
-      m_phaseVolFrac.toNestedViewConst(),
-      m_dPhaseVolFrac_dPres.toNestedViewConst(),
-      m_dPhaseVolFrac_dCompDens.toNestedViewConst(),
-      m_phaseCompFrac.toNestedViewConst(),
-      m_dPhaseCompFrac_dPres.toNestedViewConst(),
-      m_dPhaseCompFrac_dComp.toNestedViewConst(),
-      m_dCompFrac_dCompDens.toNestedViewConst(),
+      std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // ghostRank
+      std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // pressure
+      std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // deltaPressure
+      std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst(), // gravCoef
+      std::get< 4 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseVolFraction
+      std::get< 5 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dPres
+      std::get< 6 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dCompDens
+      std::get< 7 >( compFlowAccessors.accessors ).toNestedViewConst(), // dCompFrac_dCompDens
+      std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDens
+      std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dPres
+      std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dCompFrac
+      std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
+      std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dPres
+      std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dCompFrac
       time,
       dt,
       localMatrix.toViewConstSizes(),

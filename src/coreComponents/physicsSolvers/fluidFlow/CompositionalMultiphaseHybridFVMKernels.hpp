@@ -21,11 +21,14 @@
 
 #include "common/DataTypes.hpp"
 #include "constitutive/fluid/layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
 #include "constitutive/capillaryPressure/layouts.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/relativePermeability/layouts.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+
 
 namespace geosx
 {
@@ -585,6 +588,26 @@ struct FluxKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
+  using CompFlowAccessors =
+    ElementRegionManager::
+      StencilAccessors< extrinsicMeshData::flow::phaseMobility, // 0
+                        extrinsicMeshData::flow::dPhaseMobility_dPressure, // 1
+                        extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity, // 2
+                        extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >; // 3
+
+  using MultiFluidAccessors =
+    ElementRegionManager::
+      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseDensity, // 0
+                                extrinsicMeshData::multifluid::dPhaseDensity_dPressure, // 1
+                                extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction, // 2
+                                extrinsicMeshData::multifluid::phaseMassDensity, // 3
+                                extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure, // 4
+                                extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction, // 5
+                                extrinsicMeshData::multifluid::phaseCompFraction, // 6
+                                extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure, // 7
+                                extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >; // 8
+
+
   /**
    * @brief In a given subRegion, assemble the mass conservation equations and the contribution of the elements of this subRegion  to the
    * face constraints.
@@ -641,16 +664,16 @@ struct FluxKernel
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
+          ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseMassDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseMassDens_dPres,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseMassDens_dCompFrac,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseMob_dPres,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseMob_dCompDens,
-          ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
           ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
