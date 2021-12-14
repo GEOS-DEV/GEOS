@@ -97,7 +97,7 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 
 void CapillaryPressureBase::setLabels()
 {
-  getWrapper< extrinsicMeshData::cappres::phaseCapPressure::type >( extrinsicMeshData::cappres::phaseCapPressure::key() ).
+  getExtrinsicData< extrinsicMeshData::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
 }
 

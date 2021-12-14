@@ -124,21 +124,19 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
 
 void MultiFluidBase::setLabels()
 {
-  using namespace extrinsicMeshData::multifluid;
-
-  getWrapper< phaseFraction::type >( phaseFraction::key() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseFraction >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< phaseDensity::type >( phaseDensity::key() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< phaseMassDensity::type >( phaseMassDensity::key() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseMassDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< phaseViscosity::type >( phaseViscosity::key() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseViscosity >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< phaseCompFraction::type >( phaseCompFraction::key() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseCompFraction >().
     setDimLabels( 2, m_phaseNames ).
     setDimLabels( 3, m_componentNames );
 }

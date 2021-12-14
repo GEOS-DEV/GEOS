@@ -19,7 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDEXTRINSICDATA_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_MULTIFLUIDEXTRINSICDATA_HPP_
 
-#include "common/DataLayouts.hpp"
 #include "constitutive/fluid/layouts.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 
