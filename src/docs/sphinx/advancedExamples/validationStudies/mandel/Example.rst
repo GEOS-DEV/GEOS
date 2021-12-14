@@ -8,7 +8,7 @@ Mandel's Problem
 
 **Context**
 
-In this example, Mandel's 2D consolidation problem, a classic benchmark in poroelasticity, is solved by using a coupled solver. The analytical solution `(Cheng and Detournay, 1988)  <https://onlinelibrary.wiley.com/doi/abs/10.1002/nag.1610120508>`__ is employed to verify the accuracy of the modeling predictions on induced pore pressure and the corresponding settlement. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (pore pressure and displacement field).
+In this example, we use the coupled solvers in GEOSX to solve Mandel's 2D consolidation problem, a classic benchmark in poroelasticity. The analytical solution `(Cheng and Detournay, 1988)  <https://onlinelibrary.wiley.com/doi/abs/10.1002/nag.1610120508>`__ is employed to verify the accuracy of the modeling predictions on induced pore pressure and the corresponding settlement. In this example, the ``TimeHistory`` function and a Python script are used to output and post-process multi-dimensional data (pore pressure and displacement field).
 
 
 **Input file**
@@ -28,7 +28,7 @@ This example uses no external input files and everything required is contained w
 Description of the case
 ------------------------------------------------------------------
 
-We simulate the consolidation of a poroelastic slab between two rigid and impermeable plates subjected to a constant normal force, as shown below. The slab is assumed to be fully saturated, homogeneous, isotropic, and infinitely long in the y-direction. Upon force load (a force per unit length in the y-direction), a compressive stress is uniformly applied in the vertical direction and leads to the change of pore pressure and mechanical deformation of the sample, which evolve with time due to fluid diffusion and coupling effect. For verification purposes, a plane strain deformation and lateral drainage without confinement are considered in this numerical model. Regarding symmetry, only a quarter of the computational domain in the x-z plane is modeled.
+We simulate the consolidation of a poroelastic slab between two rigid and impermeable plates subjected to a constant normal force. The slab is assumed to be fully saturated, homogeneous, isotropic, and infinitely long in the y-direction. We apply a uniform compressive load in the vertical direction. This force leads to a change of pore pressure and mechanical deformations of the sample, evolving with time due to fluid diffusion and coupling effects. The numerical model represents a plane strain deformation and lateral drainage without confinement, showing only a quarter of the computational domain in the x-z plane (the rest follows by symmetry).
 
 .. _problemSketchFig:
 .. figure:: sketch.png
@@ -39,7 +39,7 @@ We simulate the consolidation of a poroelastic slab between two rigid and imperm
    Sketch of the problem
 
 
-In this example, we setup and solve a poroelastic model to obtain the temporal and spatial solutions of pore pressure (:math:`p(x,z,t)`) and displacement field (:math:`u_z(x,z,t)`) for Mandel's problem. These modeling predictions are then compared with the corresponding analytical solution `(Cheng and Detournay, 1988)  <https://onlinelibrary.wiley.com/doi/abs/10.1002/nag.1610120508>`__. 
+In this example, we set up and solve a poroelastic model to obtain the temporal and spatial solutions of pore pressure (:math:`p(x,z,t)`) and displacement field (:math:`u_z(x,z,t)`) for Mandel's problem. These modeling predictions are validated against corresponding analytical solution `(Cheng and Detournay, 1988)  <https://onlinelibrary.wiley.com/doi/abs/10.1002/nag.1610120508>`__. 
 
 .. math::
    p(x,z,t) = 2 p_0 \sum_{n=1}^{\infty}
@@ -142,12 +142,11 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 
 The two single-physics solvers are parameterized as explained
-in their corresponding documents. 
-
-In this example, let us focus on the coupling solver.
-This solver (``poroSolve``) uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
+in their corresponding documentataion pages. 
+We focus on the coupling solver in this example.
+The solver ``poroSolve`` uses a set of attributes that specifically describe the coupling process within a poromechanical framework.
 For instance, we must point this solver to the designated fluid solver (here: ``SinglePhaseFlow``) and solid solver (here: ``lagsolve``).
-These solvers are forced to interact through the ``porousMaterialNames="{ shale }"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Domain``).
+These solvers interact through the ``porousMaterialNames="{ shale }"`` with all the constitutive models. We specify the discretization method (``FE1``, defined in the ``NumericalMethods`` section), and the target regions (here, we only have one, ``Domain``).
 More parameters are required to characterize a coupling procedure (more information at :ref:`PoroelasticSolver`). In this way, the two single-physics solvers will be simultaneously called and executed for solving Mandel's problem here.
 
 
@@ -155,9 +154,9 @@ More parameters are required to characterize a coupling procedure (more informat
 Constitutive laws
 ------------------------------
 
-For this problem, we simulate the poroelastic deformation of a slab under the uniaxial compression. 
+For this problem, we simulate the poroelastic deformation of a slab under uniaxial compression. 
 A homogeneous and isotropic domain with one solid material is assumed, and its mechanical properties and associated fluid rheology are specified in the ``Constitutive`` section. 
-``PorousElasticIsotropic`` model is used to describe the mechanical behavior of ``shaleSolid``, when subjected to loading. The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the response of ``water`` upon consolidation.
+``PorousElasticIsotropic`` model is used to describe the mechanical behavior of ``shaleSolid`` when subjected to loading. The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the response of ``water`` upon consolidation.
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
     :language: xml
@@ -190,12 +189,13 @@ A Python script is prepared to read and plot any specified subset of the time hi
 Initial and boundary conditions
 -----------------------------------------------------------
 
-The next step is to specify fields, including:
+Next, we specify two fields:
 
   - The initial value (the displacements and pore pressure have to be initialized, corresponding to the undrained response),
   - The boundary conditions (the vertical displacement applied at the loaded boundary and the constraints of the outer boundaries have to be set).
 
-In this example, the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition. The lateral surface (``xpos``) is traction free and allows drainage. 
+In this example, the analytical z-displacement is applied at the top surface (``zpos``) of computational domain to enforce the rigid plate condition.
+The lateral surface (``xpos``) is traction-free and allows drainage. 
 The remaining parts of the outer boundaries are subjected to roller constraints.  
 These boundary conditions are set up through the ``FieldSpecifications`` section.
 
@@ -206,10 +206,9 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
     :end-before: <!-- SPHINX_BC_END -->
 
 
-Note that the applied traction has a negative value, due to the negative sign convention for compressive stresses in GEOSX. 
-
  
-The parameters used in the simulation are summarized in the following table.
+The parameters used in the simulation are summarized in the following table. Note that traction has a negative value, due to the negative sign convention for compressive stresses in GEOSX. 
+
 
 +------------------+-------------------------+------------------+--------------------+
 | Symbol           | Parameter               | Unit             | Value              |
@@ -264,7 +263,7 @@ The next figure shows the distribution of vertical displacement (:math:`u_z(x,z,
    Simulation result of vertical displacement at :math:`t=10 s` 
 
 
-The figure below compares the results from GEOSX (marks) and the corresponding analytical solution (solid curves) for the pore pressure along the x-direction and vertical displacement along the z-direction. GEOSX reliably captures the Mandel-Cryer effect at short term and shows excellent agreement with the analytical solution at various times. 
+The figure below compares the results from GEOSX (marks) and the corresponding analytical solution (lines) for the pore pressure along the x-direction and vertical displacement along the z-direction. GEOSX reliably captures the short-term Mandel-Cryer effect and shows excellent agreement with the analytical solution at various times. 
 
 .. _problemVerificationFig3:
 .. figure:: Mandel_Verification.png
