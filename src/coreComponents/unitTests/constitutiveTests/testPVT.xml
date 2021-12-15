@@ -37,7 +37,8 @@
       temperatureControl="temperatureFunction"
       steps="49" 
       baseline="testPVT_brine.txt"
-      logLevel="1" />    </Tasks>
+      logLevel="1" />    
+  </Tasks>
 
   <Events
     maxTime="1">
