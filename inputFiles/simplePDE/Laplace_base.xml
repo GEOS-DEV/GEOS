@@ -1,6 +1,7 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
   <Solvers>
     <LaplaceFEM
       name="laplace"
@@ -12,19 +13,6 @@
         directParallel="0"/>
     </LaplaceFEM>
   </Solvers>
-
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
 
   <Events
     maxTime="2.0">
@@ -49,14 +37,6 @@
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
   </Events>
-
-  <NumericalMethods>
-    <FiniteElements>
-      <FiniteElementSpace
-        name="FE1"
-        order="1"/>
-    </FiniteElements>
-  </NumericalMethods>
 
   <ElementRegions>
     <CellElementRegion
@@ -115,4 +95,5 @@
       coordinates="{ 0.0, 1.0, 2.0 }"
       values="{ 0.0, 3.e2, 4.e3 }"/>
   </Functions>
+
 </Problem>
