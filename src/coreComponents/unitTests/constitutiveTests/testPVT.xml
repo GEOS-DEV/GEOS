@@ -36,7 +36,7 @@
       pressureControl="pressureFunction"
       temperatureControl="temperatureFunction"
       steps="49" 
-      output="testPVT_brine.txt"
+      baseline="testPVT_brine.txt"
       logLevel="1" />    </Tasks>
 
   <Events
@@ -49,12 +49,12 @@
 
   <Constitutive>
 
-    <CO2BrineFluid name="co2Mixture"
-                   phaseNames="{ gas, water }"
-                   componentNames="{ co2, water }"
-                   componentMolarWeight="{ 44e-3, 18e-3 }"
-                   phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
-                   flashModelParaFile="testPVT_data/carbonDioxideFlash.txt"/>
+    <CO2BrinePhillipsFluid name="co2Mixture"
+                           phaseNames="{ gas, water }"
+                           componentNames="{ co2, water }"
+                           componentMolarWeight="{ 44e-3, 18e-3 }"
+                           phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
+                           flashModelParaFile="testPVT_data/carbonDioxideFlash.txt"/>
 
     <CompositionalMultiphaseFluid name="hydrogenMixture"
                                   phaseNames="{ oil, gas }"
