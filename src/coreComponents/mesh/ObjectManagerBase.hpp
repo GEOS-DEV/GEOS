@@ -578,7 +578,7 @@ public:
 
     //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
     // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue() );
 
     return this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).
              setApplyDefaultValue( defaultValue ).
@@ -659,7 +659,7 @@ public:
     string const description = MESH_DATA_TRAIT::description;
 
     // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue() );
 
     return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).
                setApplyDefaultValue( defaultValue ).

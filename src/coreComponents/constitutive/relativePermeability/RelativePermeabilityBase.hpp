@@ -26,6 +26,7 @@
 
 namespace geosx
 {
+
 namespace constitutive
 {
 
@@ -138,9 +139,6 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
-
-    static constexpr char const * phaseRelPermString() { return "phaseRelPerm"; }                                       // Kr
-    static constexpr char const * dPhaseRelPerm_dPhaseVolFractionString() { return "dPhaseRelPerm_dPhaseVolFraction"; } // dKr_p/dS_p
   };
 
 private:

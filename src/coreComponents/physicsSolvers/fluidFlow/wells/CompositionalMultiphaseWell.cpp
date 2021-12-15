@@ -25,8 +25,10 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationData.hpp"
@@ -1650,98 +1652,71 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
 
   }
   {
-    using keys = MultiFluidBase::viewKeyStruct;
-    using namespace multifluid;
+    using namespace extrinsicMeshData::multifluid;
 
     m_resPhaseDens.clear();
-    m_resPhaseDens =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3, LAYOUT_PHASE >( keys::phaseDensityString(),
-                                                                                 flowSolver.targetRegionNames(),
-                                                                                 flowSolver.fluidModelNames() );
-    m_resPhaseDens.setName( getName() + "/accessors/" + keys::phaseDensityString() );
+    m_resPhaseDens = elemManager.constructMaterialExtrinsicAccessor< phaseDensity >( flowSolver.targetRegionNames(),
+                                                                                     flowSolver.fluidModelNames() );
+    m_resPhaseDens.setName( getName() + "/accessors/" + phaseDensity::key() );
 
     m_dResPhaseDens_dPres.clear();
-    m_dResPhaseDens_dPres =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3, LAYOUT_PHASE >( keys::dPhaseDensity_dPressureString(),
-                                                                                 flowSolver.targetRegionNames(),
-                                                                                 flowSolver.fluidModelNames() );
-    m_dResPhaseDens_dPres.setName( getName() + "/accessors/" + keys::dPhaseDensity_dPressureString() );
+    m_dResPhaseDens_dPres = elemManager.constructMaterialExtrinsicAccessor< dPhaseDensity_dPressure >( flowSolver.targetRegionNames(),
+                                                                                                       flowSolver.fluidModelNames() );
+    m_dResPhaseDens_dPres.setName( getName() + "/accessors/" + dPhaseDensity_dPressure::key() );
 
     m_dResPhaseDens_dComp.clear();
-    m_dResPhaseDens_dComp =
-      elemManager.constructMaterialArrayViewAccessor< real64, 4, LAYOUT_PHASE_DC >( keys::dPhaseDensity_dGlobalCompFractionString(),
-                                                                                    flowSolver.targetRegionNames(),
-                                                                                    flowSolver.fluidModelNames() );
-    m_dResPhaseDens_dComp.setName( getName() + "/accessors/" + keys::dPhaseDensity_dGlobalCompFractionString() );
-
+    m_dResPhaseDens_dComp = elemManager.constructMaterialExtrinsicAccessor< dPhaseDensity_dGlobalCompFraction >( flowSolver.targetRegionNames(),
+                                                                                                                 flowSolver.fluidModelNames() );
+    m_dResPhaseDens_dComp.setName( getName() + "/accessors/" + dPhaseDensity_dGlobalCompFraction::key() );
 
     m_resPhaseMassDens.clear();
-    m_resPhaseMassDens =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3, LAYOUT_PHASE >( keys::phaseMassDensityString(),
-                                                                                 flowSolver.targetRegionNames(),
-                                                                                 flowSolver.fluidModelNames() );
-    m_resPhaseMassDens.setName( getName() + "/accessors/" + keys::phaseMassDensityString() );
+    m_resPhaseMassDens = elemManager.constructMaterialExtrinsicAccessor< phaseMassDensity >( flowSolver.targetRegionNames(),
+                                                                                             flowSolver.fluidModelNames() );
+    m_resPhaseMassDens.setName( getName() + "/accessors/" + phaseMassDensity::key() );
 
     m_resPhaseVisc.clear();
-    m_resPhaseVisc =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3, LAYOUT_PHASE >( keys::phaseViscosityString(),
-                                                                                 flowSolver.targetRegionNames(),
-                                                                                 flowSolver.fluidModelNames() );
-    m_resPhaseVisc.setName( getName() + "/accessors/" + keys::phaseViscosityString() );
+    m_resPhaseVisc = elemManager.constructMaterialExtrinsicAccessor< phaseViscosity >( flowSolver.targetRegionNames(),
+                                                                                       flowSolver.fluidModelNames() );
+    m_resPhaseVisc.setName( getName() + "/accessors/" + phaseViscosity::key() );
 
     m_dResPhaseVisc_dPres.clear();
-    m_dResPhaseVisc_dPres =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3, LAYOUT_PHASE >( keys::dPhaseViscosity_dPressureString(),
-                                                                                 flowSolver.targetRegionNames(),
-                                                                                 flowSolver.fluidModelNames() );
-    m_dResPhaseVisc_dPres.setName( getName() + "/accessors/" + keys::dPhaseViscosity_dPressureString() );
+    m_dResPhaseVisc_dPres = elemManager.constructMaterialExtrinsicAccessor< dPhaseViscosity_dPressure >( flowSolver.targetRegionNames(),
+                                                                                                         flowSolver.fluidModelNames() );
+    m_dResPhaseVisc_dPres.setName( getName() + "/accessors/" + dPhaseViscosity_dPressure::key() );
 
     m_dResPhaseVisc_dComp.clear();
-    m_dResPhaseVisc_dComp =
-      elemManager.constructMaterialArrayViewAccessor< real64, 4, LAYOUT_PHASE_DC >( keys::dPhaseViscosity_dGlobalCompFractionString(),
-                                                                                    flowSolver.targetRegionNames(),
-                                                                                    flowSolver.fluidModelNames() );
-    m_dResPhaseVisc_dComp.setName( getName() + "/accessors/" + keys::dPhaseViscosity_dGlobalCompFractionString() );
+    m_dResPhaseVisc_dComp = elemManager.constructMaterialExtrinsicAccessor< dPhaseViscosity_dGlobalCompFraction >( flowSolver.targetRegionNames(),
+                                                                                                                   flowSolver.fluidModelNames() );
+    m_dResPhaseVisc_dComp.setName( getName() + "/accessors/" + dPhaseViscosity_dGlobalCompFraction::key() );
 
     m_resPhaseCompFrac.clear();
-    m_resPhaseCompFrac =
-      elemManager.constructMaterialArrayViewAccessor< real64, 4, LAYOUT_PHASE_COMP >( keys::phaseCompFractionString(),
-                                                                                      flowSolver.targetRegionNames(),
-                                                                                      flowSolver.fluidModelNames() );
-    m_resPhaseCompFrac.setName( getName() + "/accessors/" + keys::phaseCompFractionString() );
+    m_resPhaseCompFrac = elemManager.constructMaterialExtrinsicAccessor< phaseCompFraction >( flowSolver.targetRegionNames(),
+                                                                                              flowSolver.fluidModelNames() );
+    m_resPhaseCompFrac.setName( getName() + "/accessors/" + phaseCompFraction::key() );
 
     m_dResPhaseCompFrac_dPres.clear();
-    m_dResPhaseCompFrac_dPres =
-      elemManager.constructMaterialArrayViewAccessor< real64, 4, LAYOUT_PHASE_COMP >( keys::dPhaseCompFraction_dPressureString(),
-                                                                                      flowSolver.targetRegionNames(),
-                                                                                      flowSolver.fluidModelNames() );
-    m_dResPhaseCompFrac_dPres.setName( getName() + "/accessors/" + keys::dPhaseCompFraction_dPressureString() );
+    m_dResPhaseCompFrac_dPres = elemManager.constructMaterialExtrinsicAccessor< dPhaseCompFraction_dPressure >( flowSolver.targetRegionNames(),
+                                                                                                                flowSolver.fluidModelNames() );
+    m_dResPhaseCompFrac_dPres.setName( getName() + "/accessors/" + dPhaseCompFraction_dPressure::key() );
 
     m_dResPhaseCompFrac_dComp.clear();
-    m_dResPhaseCompFrac_dComp =
-      elemManager.constructMaterialArrayViewAccessor< real64, 5, LAYOUT_PHASE_COMP_DC >( keys::dPhaseCompFraction_dGlobalCompFractionString(),
-                                                                                         flowSolver.targetRegionNames(),
-                                                                                         flowSolver.fluidModelNames() );
-    m_dResPhaseCompFrac_dComp.setName( getName() + "/accessors/" + keys::dPhaseCompFraction_dGlobalCompFractionString() );
+    m_dResPhaseCompFrac_dComp = elemManager.constructMaterialExtrinsicAccessor< dPhaseCompFraction_dGlobalCompFraction >( flowSolver.targetRegionNames(),
+                                                                                                                          flowSolver.fluidModelNames() );
+    m_dResPhaseCompFrac_dComp.setName( getName() + "/accessors/" + dPhaseCompFraction_dGlobalCompFraction::key() );
 
   }
   {
-    using keys = RelativePermeabilityBase::viewKeyStruct;
-    using namespace relperm;
+    using namespace extrinsicMeshData::relperm;
 
     m_resPhaseRelPerm.clear();
-    m_resPhaseRelPerm =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3, LAYOUT_RELPERM >( keys::phaseRelPermString(),
-                                                                                   flowSolver.targetRegionNames(),
-                                                                                   flowSolver.relPermModelNames() );
-    m_resPhaseRelPerm.setName( getName() + "/accessors/" + keys::phaseRelPermString() );
+    m_resPhaseRelPerm = elemManager.constructMaterialExtrinsicAccessor< phaseRelPerm >( flowSolver.targetRegionNames(),
+                                                                                        flowSolver.relPermModelNames() );
+    m_resPhaseRelPerm.setName( getName() + "/accessors/" + phaseRelPerm::key() );
 
     m_dResPhaseRelPerm_dPhaseVolFrac.clear();
-    m_dResPhaseRelPerm_dPhaseVolFrac =
-      elemManager.constructMaterialArrayViewAccessor< real64, 4, LAYOUT_RELPERM_DS >( keys::dPhaseRelPerm_dPhaseVolFractionString(),
-                                                                                      flowSolver.targetRegionNames(),
-                                                                                      flowSolver.relPermModelNames() );
-    m_dResPhaseRelPerm_dPhaseVolFrac.setName( getName() + "/accessors/" + keys::dPhaseRelPerm_dPhaseVolFractionString() );
+    m_dResPhaseRelPerm_dPhaseVolFrac = elemManager.constructMaterialExtrinsicAccessor< dPhaseRelPerm_dPhaseVolFraction >( flowSolver.targetRegionNames(),
+                                                                                                                          flowSolver.relPermModelNames() );
+    m_dResPhaseRelPerm_dPhaseVolFrac.setName( getName() + "/accessors/" + dPhaseRelPerm_dPhaseVolFraction::key() );
 
   }
 }
