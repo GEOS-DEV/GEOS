@@ -245,7 +245,10 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
-          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
+          MeshBody & meshBody = domain.getMeshBody( 0 );
+          meshBody.forSubGroups<MeshLevel>( [&] ( MeshLevel & meshLevel )
+          {
+          dataRepository::Group * targetGroup = &meshLevel;
 
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
@@ -270,6 +273,7 @@ public:
             targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
           }
           applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
+        } );
         }
       }
     } );
@@ -292,14 +296,17 @@ private:
         && target.getName() != ObjectManagerBase::groupKeyStruct::setsString()
         && target.getName() != ObjectManagerBase::groupKeyStruct::neighborDataString() )
     {
-      dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-      string_array setNames = fs.getSetNames();
-      for( auto & setName : setNames )
+      if( target.hasWrapper( targetName ) )
       {
-        if( setGroup.hasWrapper( setName ) )
+        dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+        string_array setNames = fs.getSetNames();
+        for( auto & setName : setNames )
         {
-          SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
-          lambda( fs, setName, targetSet, target, targetName );
+          if( setGroup.hasWrapper( setName ) )
+          {
+            SortedArrayView< localIndex const > const & targetSet = setGroup.getReference< SortedArray< localIndex > >( setName );
+            lambda( fs, setName, targetSet, target, targetName );
+          }
         }
       }
     }

@@ -77,30 +77,32 @@ MeshLevel::MeshLevel( string const & name,
                             + source.m_elementManager.getNumberOfElements()*pow(order-1,3);
 
   m_nodeManager.resize(numNodes);
+  m_edgeManager.resize( source.m_edgeManager.size() );
+  m_faceManager.resize( source.m_faceManager.size() );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
 
-  // {
-  //   Group & nodeSets = m_nodeManager.sets();
-  //   SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
-  //   allNodes.reserve( m_nodeManager.size() );
+   {
+     Group & nodeSets = m_nodeManager.sets();
+     SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+     allNodes.reserve( m_nodeManager.size() );
 
-  //   for( localIndex a=0; a<m_nodeManager.size(); ++a )
-  //   {
-  //     allNodes.insert( a );
-  //   }
+     for( localIndex a=0; a<m_nodeManager.size(); ++a )
+     {
+       allNodes.insert( a );
+     }
 
-  // }
+   }
 
-  // forAll<parallelDevicePolicy<>>( m_nodeManager.size(),
-  //                                   [=]( localIndex const a )
-  // {
-  //   for( localIndex i=0; i<3; ++i )
-  //   {
-  //     refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
-  //   }
-  // });
+//   forAll<parallelDevicePolicy<>>( m_nodeManager.size(),
+//                                     [=]( localIndex const a )
+//   {
+//     for( localIndex i=0; i<3; ++i )
+//     {
+//       refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
+//     }
+//   });
   
 //
 //  EdgeManager const & edgeManagerSource = source.m_edgeManager;

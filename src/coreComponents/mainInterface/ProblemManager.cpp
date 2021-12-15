@@ -539,19 +539,19 @@ void ProblemManager::generateMesh()
                                   &discretization,
                                   regionNames );
 
+    FaceManager & faceManager = mesh.getFaceManager();
+    EdgeManager & edgeManager = mesh.getEdgeManager();
+//    Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+//    integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+//    domain.setupCommunications( useNonblockingMPI );
+    faceManager.setIsExternal();
+    edgeManager.setIsExternal( faceManager );
   }
 
-  MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
-  MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
+//  MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
+//  MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
 
-  FaceManager & faceManager = meshLevel.getFaceManager();
-  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupCommunications( useNonblockingMPI );
-  faceManager.setIsExternal();
-  edgeManager.setIsExternal( faceManager );
 
 
 

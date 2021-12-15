@@ -106,8 +106,8 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
-
-    MeshLevel & meshLevel =  meshBody.getMeshLevel( 1 );
+    meshBody.forSubGroups<MeshLevel>( [&]( MeshLevel & meshLevel )
+    {
 
     NodeManager & nodeManager = meshLevel.getNodeManager();
 
@@ -129,7 +129,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
     } );
-
+    });
   } );
 }
 
@@ -146,7 +146,7 @@ void AcousticWaveEquationSEM::postProcessInput()
                   "Invalid number of physical coordinates for the receivers",
                   InputError );
 
-  localIndex const numNodesPerElem = 8;
+  localIndex const numNodesPerElem = 64;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
   m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
