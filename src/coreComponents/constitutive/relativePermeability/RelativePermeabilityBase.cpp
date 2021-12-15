@@ -94,7 +94,7 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
 void RelativePermeabilityBase::setLabels()
 {
-  getWrapper< extrinsicMeshData::relperm::phaseRelPerm::type >( extrinsicMeshData::relperm::phaseRelPerm::key() ).
+  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
 }
 

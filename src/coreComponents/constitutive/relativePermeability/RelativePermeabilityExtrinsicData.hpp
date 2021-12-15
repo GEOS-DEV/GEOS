@@ -19,7 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYEXTRINSICDATA_HPP_
 #define GEOSX_CONSTITUTIVE_RELATIVEPERMEABILITY_RELATIVEPERMEABILITYEXTRINSICDATA_HPP_
 
-#include "common/DataLayouts.hpp"
 #include "constitutive/relativePermeability/layouts.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 

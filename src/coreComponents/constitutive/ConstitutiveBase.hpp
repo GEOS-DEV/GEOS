@@ -116,6 +116,7 @@ public:
    * @param[in] extrinsicData the extrinsic data struct corresponding to the object being registered
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * TODO: move up to Group
    */
   template< typename TRAIT >
   dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
@@ -128,8 +129,31 @@ public:
              setDescription( TRAIT::description );
   }
 
+  /**
+   * @brief Get a wrapper associated with a trait from the constitutive model
+   * @tparam TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this constitutive model
+   * @return A const reference to a view to const wrapper.
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > const & getExtrinsicData() const
+  {
+    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+  }
 
-protected:
+  /**
+   * @brief Get a wrapper associated with a trait from the constitutive model
+   * @tparam TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this constitutive model
+   * @return A reference to the wrapper.
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & getExtrinsicData()
+  {
+    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+  }
 
 private:
 
