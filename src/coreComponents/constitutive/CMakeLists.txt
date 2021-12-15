@@ -10,6 +10,7 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/CapillaryPressureExtrinsicData.hpp     
      capillaryPressure/TableCapillaryPressure.hpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
@@ -24,6 +25,7 @@ set( constitutive_headers
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
+     fluid/MultiFluidExtrinsicData.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
@@ -36,6 +38,10 @@ set( constitutive_headers
      fluid/PVTFunctions/PVTFunctionBase.hpp
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/BrineEnthalpy.hpp
+     fluid/PVTFunctions/CO2Enthalpy.hpp
+     fluid/PVTFunctions/BrineInternalEnergy.hpp
+     fluid/PVTFunctions/CO2InternalEnergy.hpp
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
@@ -54,7 +60,8 @@ set( constitutive_headers
      permeability/ProppantPermeability.hpp     
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
-     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/RelativePermeabilityBase.hpp 
+     relativePermeability/RelativePermeabilityExtrinsicData.hpp    
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
@@ -120,7 +127,11 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
-     fluid/PVTFunctions/PVTFunctionHelpers.cpp     
+     fluid/PVTFunctions/PVTFunctionHelpers.cpp
+     fluid/PVTFunctions/BrineEnthalpy.cpp
+     fluid/PVTFunctions/CO2Enthalpy.cpp
+     fluid/PVTFunctions/BrineInternalEnergy.cpp
+     fluid/PVTFunctions/CO2InternalEnergy.cpp
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp

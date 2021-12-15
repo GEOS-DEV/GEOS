@@ -122,7 +122,7 @@ Constitutive laws
 
 For this specific problem, we simulate the elastic deformation and fracture slippage caused by uniaxial compression. A homogeneous and isotropic domain with one solid material is assumed, with mechanical properties specified in the ``Constitutive`` section. 
 
-Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction angle ``frictionAngle="0.523598776"`` are specified. 
+Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction coefficient ``frictionCoefficient="0.577350269"`` are specified. 
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
@@ -143,7 +143,7 @@ Time history function
 
 In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
 Either the entire field or specified named sets of indices in the field can be collected. 
-In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="localJump"`` on the fracture surface.
+In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="displacementJump"`` on the fracture surface.
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_SingleFracCompression_base.xml
     :language: xml
@@ -253,13 +253,13 @@ The figure below shows a comparison between the numerical predictions (marks) an
             self.inc = inclination;
             self.stress = stress;
             self.scaling = ( 4 * (1 - nu**2) ) / E;
-            self.frictionAngle = mechanicalParameters["frictionAngle"]
+            self.frictionCoefficient = mechanicalParameters["frictionCoefficient"]
 
         def computeNormalTraction(self, x):
             return -self.stress*pow(sin(self.inc),2);
 
         def computeShearDisplacement(self, x):
-            return self.scaling*(self.stress*sin(self.inc)*(cos(self.inc)-sin(self.inc)*tan(self.frictionAngle)))*pow((self.halfLength**2-(self.halfLength-x-1.)**2),0.5);
+            return self.scaling*(self.stress*sin(self.inc)*(cos(self.inc)-sin(self.inc)*self.frictionCoefficient))*pow((self.halfLength**2-(self.halfLength-x-1.)**2),0.5);
 
 
     def getMechanicalParametersFromXML( xmlFilePath ):
@@ -267,12 +267,12 @@ The figure below shows a comparison between the numerical predictions (marks) an
 
         param = tree.find('Constitutive/ElasticIsotropic')
 
-        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionAngle"])
+        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionCoefficient"])
         mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
         mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
         param = tree.find('Constitutive/Coulomb')
-        mechanicalParameters["frictionAngle"] = float(param.get("frictionAngle"))
+        mechanicalParameters["frictionCoefficient"] = float(param.get("frictionCoefficient"))
         return mechanicalParameters
 
 
@@ -331,7 +331,7 @@ The figure below shows a comparison between the numerical predictions (marks) an
 
         # Local Shear Displacement
         hf = h5py.File(hdf5File2Path, 'r')
-        jump = hf.get('localJump')
+        jump = hf.get('displacementJump')
         jump = np.array(jump)
         displacementJump = jump[0,:,1]
  

@@ -25,7 +25,6 @@
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
