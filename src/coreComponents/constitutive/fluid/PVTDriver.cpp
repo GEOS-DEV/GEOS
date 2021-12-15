@@ -78,7 +78,7 @@ void PVTDriver::postProcessInput()
   m_numComponents = baseFluid.numFluidComponents();
 
   // resize data table to fit number of timesteps and fluid phases:
-  // (numRows,numCols) = (numSteps+1,4+3*numPhases) 
+  // (numRows,numCols) = (numSteps+1,4+3*numPhases)
   // column order = time, pressure, temp, totalDensity, phaseFraction_{1:NP}, phaseDensity_{1:NP}, phaseViscosity_{1:NP}
 
   m_table.resize( m_numSteps+1, 3*m_numPhases+4 );
@@ -112,11 +112,11 @@ void PVTDriver::postProcessInput()
 
 
 bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                   real64 const GEOSX_UNUSED_PARAM( dt ),
-                                   integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                   integer const GEOSX_UNUSED_PARAM( eventCounter ),
-                                   real64 const GEOSX_UNUSED_PARAM( eventProgress ),
-                                   DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                         real64 const GEOSX_UNUSED_PARAM( dt ),
+                         integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                         integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                         real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                         DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   // this code only makes sense in serial
 
@@ -191,7 +191,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
 
   // prefer output in mass
 
-  fluid.setMassFlag(true);
+  fluid.setMassFlag( true );
 
   // get output data views
 
@@ -203,7 +203,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
   // create kernel wrapper
 
   typename FLUID_TYPE::KernelWrapper kernelWrapper = fluid.createKernelWrapper();
-  
+
   // set composition to user specified feed
   // it is more convenient to provide input in molar, so perform molar to mass conversion here
 
@@ -230,14 +230,14 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
   {
     for( integer n=0; n<=m_numSteps; ++n )
     {
-      kernelWrapper.update( ei, 0, table(n,PRES), table(n,TEMP), composition );
+      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition );
       table( n, TEMP+1 ) = totalDensity( ei, 0 );
 
-      for( integer p=0; p<NP; ++p)
+      for( integer p=0; p<NP; ++p )
       {
-        table(n, TEMP+2+p) = phaseFraction( ei, 0, p );
-        table(n, TEMP+2+p+NP) = phaseDensity( ei, 0, p );
-        table(n, TEMP+2+p+2*NP) = phaseViscosity( ei, 0, p );
+        table( n, TEMP+2+p ) = phaseFraction( ei, 0, p );
+        table( n, TEMP+2+p+NP ) = phaseDensity( ei, 0, p );
+        table( n, TEMP+2+p+2*NP ) = phaseViscosity( ei, 0, p );
       }
     }
   } );
@@ -256,13 +256,13 @@ void PVTDriver::outputResults()
   fprintf( fp, "# column 2 = pressure\n" );
   fprintf( fp, "# column 3 = temperature\n" );
   fprintf( fp, "# column 4 = density\n" );
-  fprintf( fp, "# columns %d-%d = phase fractions\n",   5,               4+m_numPhases);
-  fprintf( fp, "# columns %d-%d = phase densities\n",   5+m_numPhases,   4+2*m_numPhases);
-  fprintf( fp, "# columns %d-%d = phase viscosities\n", 5+2*m_numPhases, 4+3*m_numPhases);
+  fprintf( fp, "# columns %d-%d = phase fractions\n", 5, 4+m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase densities\n", 5+m_numPhases, 4+2*m_numPhases );
+  fprintf( fp, "# columns %d-%d = phase viscosities\n", 5+2*m_numPhases, 4+3*m_numPhases );
 
-  for( integer n=0; n<m_table.size(0); ++n )
+  for( integer n=0; n<m_table.size( 0 ); ++n )
   {
-    for( integer col=0; col<m_table.size(1); ++col )
+    for( integer col=0; col<m_table.size( 1 ); ++col )
     {
       fprintf( fp, "%.4e ", m_table( n, col ) );
     }

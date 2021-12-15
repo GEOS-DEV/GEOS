@@ -98,12 +98,12 @@ private:
   integer m_numComponents; ///< Number of fluid components
 
   string m_fluidName;               ///< Fluid identifier
-  string m_pressureFunctionName;    ///< Time-dependent function controlling pressure 
-  string m_temperatureFunctionName; ///< Time-dependent function controlling temperature 
+  string m_pressureFunctionName;    ///< Time-dependent function controlling pressure
+  string m_temperatureFunctionName; ///< Time-dependent function controlling temperature
   string m_outputFile;              ///< Output file (optional, no output if not specified)
 
   array1d< real64 > m_feed;  ///< User specified feed composition
-  array2d< real64 > m_table; ///< Table storing time-history of input/output 
+  array2d< real64 > m_table; ///< Table storing time-history of input/output
 
   Path m_baselineFile; ///< Baseline file (optional, for unit testing of solid models)
 
