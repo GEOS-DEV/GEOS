@@ -65,20 +65,72 @@ MeshLevel::MeshLevel( string const & name,
   MeshLevel( name, parent )
 {
 
-  //  localIndex const numBasisSupportPoints = order+1;
-  //
-  //
-  //  localIndex const numNodesPerEdge = numBasisSupportPoints;
-  //  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
+  localIndex const numBasisSupportPoints = order+1;
+
+
+  // Edges
+  localIndex const numNodesPerEdge = numBasisSupportPoints;
+  localIndex const numNonVertexNodesPerEdge = numNodesPerEdge - 2;
+
+  m_edgeManager.resize( source.m_edgeManager.size() );
+  EdgeManager::NodeMapType const & edgesToNodesSource = source.m_edgeManager.nodeList();
+  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager.nodeList();
+
+  localIndex const numInternalEdgeNodes = m_edgeManager.size() * numNonVertexNodesPerEdge;
+
+  m_faceManager.resize( source.m_faceManager.size() );
+  m_faceManager.edgeList() = source.m_faceManager.edgeList();
+
+  // Faces
+  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager.nodeList().toViewConst();
+  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager.nodeList();
+  ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager.edgeList().toViewConst();
+  localIndex const estimatedNumNodesPerFace = pow(order+1,2);
+  faceToNodeMapNew.resize(faceToNodeMapNew.size(),estimatedNumNodesPerFace);
+
+  // add the number of non-edge face nodes
+  localIndex numInternalFaceNodes = 0;
+  for( localIndex kf=0; kf<m_faceManager.size(); ++kf )
+  {
+    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray(kf);
+    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray(kf);
+    localIndex const numEdgeNodesPerFace = numVertexNodesPerFace + numEdgesPerFace * numNonVertexNodesPerEdge;
+
+    if( numEdgesPerFace==4 )
+    {
+      localIndex const numNonEdgeNodesPerFace = pow(order-1,2);
+      numInternalFaceNodes += numNonEdgeNodesPerFace;
+
+      localIndex const numNodesPerFace = pow(order+1,2);
+      faceToNodeMapNew.resizeArray(kf,numNodesPerFace);
+    }
+    else
+    {
+      GEOSX_ERROR( "need more support for face geometry");
+    }
+  }
+
+  // add the number of non-face element nodes
+  localIndex numInternalElementNodes = 0;
+  source.m_elementManager.forElementRegions<CellElementRegion>([&]( CellElementRegion const & sourceRegion )
+  {
+    sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
+    {
+      if( sourceSubRegion.getElementType() == ElementType::Hexahedron )
+      {
+        numInternalElementNodes += sourceSubRegion.size() * pow(order-1,3);
+      }
+    });
+  });
+
+
 
   localIndex const numNodes = source.m_nodeManager.size()
-                            + source.m_edgeManager.size()*(order-1)
-                            + source.m_faceManager.size()*pow(order-1,2)
-                            + source.m_elementManager.getNumberOfElements()*pow(order-1,3);
+                             + numInternalEdgeNodes
+                             + numInternalFaceNodes
+                             + numInternalElementNodes;
 
   m_nodeManager.resize(numNodes);
-  m_edgeManager.resize( source.m_edgeManager.size() );
-  m_faceManager.resize( source.m_faceManager.size() );
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const refPosSource = source.m_nodeManager.referencePosition();
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const refPosNew = m_nodeManager.referencePosition().toView();
@@ -95,68 +147,10 @@ MeshLevel::MeshLevel( string const & name,
 
    }
 
-//   forAll<parallelDevicePolicy<>>( m_nodeManager.size(),
-//                                     [=]( localIndex const a )
-//   {
-//     for( localIndex i=0; i<3; ++i )
-//     {
-//       refPosNew(a,i) = refPosSource(a,i); // this needs to be another loop with a linear combination of values.
-//     }
-//   });
-  
-//
-//  EdgeManager const & edgeManagerSource = source.m_edgeManager;
-//  m_edgeManager.resize( edgeManagerSource.size() );
-//  EdgeManager::NodeMapType const & edgesToNodesSource = edgeManagerSource.nodeList();
-//  EdgeManager::NodeMapType const & edgesToNodes = m_edgeManager.nodeList();
-//
-//  // start with the number of vertex nodes
-//  localIndex numLocalNodes = source.m_nodeManager.size();
-//
-//  // add the number of non-vertex edge nodes
-//  for( localIndex ke=0 ; ke<m_edgeManager.size(); ++ke )
-//  {
-//    numLocalNodes += numNonVertexNodesPerEdge;
-//  }
-//
-//
-//  FaceManager const & faceManagerSource = source.m_faceManager;
-//  m_faceManager.resize( faceManagerSource.size() );
-//  m_faceManager.edgeList() = source.m_faceManager.edgeList();
-//
-//
-//  ArrayOfArraysView< localIndex const > const facesToNodesMapSource = m_faceManager.nodeList().toViewConst();
-//  ArrayOfArrays< localIndex > faceToNodeMapNew = m_faceManager.nodeList();
-//  ArrayOfArraysView< localIndex const > const & facesToEdges = m_faceManager.edgeList().toViewConst();
-//  localIndex const numNodesPerFace = pow(order+1,2);
-//  faceToNodeMapNew.resize(faceToNodeMapNew.size(),numNodesPerFace);
-//
-//  // add the number of non-edge face nodes
-//  for( localIndex kf=0; kf<m_faceManager.size(); ++kf )
-//  {
-//    localIndex const numEdgesPerFace = facesToEdges.sizeOfArray(kf);
-//    localIndex const numVertexNodesPerFace = facesToNodesMapSource.sizeOfArray(kf);
-//    localIndex const numNonEdgeNodesPerFace = numNodesPerFace - numVertexNodesPerFace - numEdgesPerFace*numNonVertexNodesPerEdge;
-//
-//    numLocalNodes += numNonEdgeNodesPerFace;
-//  }
-//
-//  // add the number of non-face element nodes
+
 
 
   ArrayOfArraysView< localIndex const > const & faceToNodeMapSource = source.m_faceManager.nodeList().toViewConst();
-  ArrayOfArrays< localIndex > & faceToNodeMapNew = m_faceManager.nodeList();
-
-  localIndex const numNodesPerFace = pow(order+1,2);
-  faceToNodeMapNew.resize(faceToNodeMapSource.size(),numNodesPerFace);
-
-  //Resize second dimension
-  for (localIndex i = 0; i < faceToNodeMapSource.size(); ++i)
-  {
-      faceToNodeMapNew.resizeArray(i,numNodesPerFace);
-
-
-  }
     
   FaceManager::ElemMapType const & faceToElem = source.m_faceManager.toElementRelation();
  
