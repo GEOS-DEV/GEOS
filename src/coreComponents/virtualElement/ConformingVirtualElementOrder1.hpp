@@ -21,8 +21,6 @@
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
-#include "mesh/FaceElementSubRegion.hpp" // TBR
-#include "mesh/CellElementSubRegion.hpp" // TBR
 
 namespace geosx
 {
@@ -86,52 +84,86 @@ public:
     arrayView1d< real64 const > cellVolumes;
   };
 
-  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
-  void processLocalGeometry( localIndex const & cellIndex,
-                             InputNodeCoords const & nodesCoords,
-                             InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
-                             InputCellToFaceMap const & elementToFaceMap,
-                             InputFaceToNodeMap const & faceToNodeMap,
-                             InputFaceToEdgeMap const & faceToEdgeMap,
-                             InputEdgeToNodeMap const & edgeToNodeMap,
-                             arrayView2d< real64 const > const faceCenters,
-                             arrayView2d< real64 const > const faceNormals,
-                             arrayView1d< real64 const > const faceAreas,
-                             real64 const (&cellCenter)[3],
-                             real64 const & cellVolume
-                             )
-  {
-    computeProjectors< SUBREGION_TYPE >( cellIndex, nodesCoords, cellToNodeMap,
-                                         elementToFaceMap, faceToNodeMap, faceToEdgeMap,
-                                         edgeToNodeMap, faceCenters, faceNormals,
-                                         faceAreas, cellCenter, cellVolume,
-                                         m_numSupportPoints, m_quadratureWeight, m_basisFunctionsIntegralMean,
-                                         m_stabilizationMatrix, m_basisDerivativesIntegralMean );
-  }
-
-  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual localIndex getMaxSupportPoints() const override
   {
     return maxSupportPoints;
   }
 
   GEOSX_HOST_DEVICE
-  localIndex getNumSupportPoints() const override
-  {
-    return m_numSupportPoints;
-  }
-
-  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static localIndex getNumSupportPoints( StackVariables const & stack )
   {
     return stack.numSupportPoints;
+  }
+
+  /**
+   * @brief Calculate the shape functions projected derivatives wrt the physical
+   *   coordinates.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param gradN Array to contain the shape function projected derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 calcGradN( localIndex const q,
+                           real64 const (&X)[maxSupportPoints][3],
+                           StackVariables const & stack,
+                           real64 ( & gradN )[maxSupportPoints][3] )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      gradN[i][0] = stack.basisDerivativesIntegralMean[i][0];
+      gradN[i][1] = stack.basisDerivativesIntegralMean[i][1];
+      gradN[i][2] = stack.basisDerivativesIntegralMean[i][2];
+    }
+    return transformedQuadratureWeight( q, X, stack );
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
+                     StackVariables const & stack,
+                     real64 ( & N )[maxSupportPoints] )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      N[i] = stack.basisFunctionsIntegralMean[i];
+    }
+  }
+
+  template< typename MATRIXTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
+  {
+    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
+    {
+      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
+      {
+        matrix[i][j] += stack.stabilizationMatrix[i][j];
+      }
+    }
+  }
+
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
+                                             real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
+                                             StackVariables const & stack )
+  {
+    return stack.quadratureWeight;
   }
 
   /**
@@ -143,6 +175,7 @@ public:
    * @param meshData MeshData struct to be filled.
    */
   template< typename SUBREGION_TYPE >
+  GEOSX_FORCE_INLINE
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
@@ -171,6 +204,7 @@ public:
    */
   template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack )
@@ -198,15 +232,21 @@ public:
                                          stack.basisDerivativesIntegralMean );
   }
 
-  // TO BE REMOVED
+  /**
+   * @defgroup DeprecatedSyntax Functions with deprecated syntax
+   *
+   * Functions that are implemented for consistency with other FEM classes but will issue an error
+   * if called
+   *
+   * @{
+   */
+
   GEOSX_HOST_DEVICE
-  void DEPRcalcN( localIndex const GEOSX_UNUSED_PARAM( q ),
-                  real64 ( & N )[maxSupportPoints] ) const
+  GEOSX_FORCE_INLINE
+  localIndex getNumSupportPoints() const override
   {
-    for( localIndex i = 0; i < maxSupportPoints; ++i )
-    {
-      N[i] = m_basisFunctionsIntegralMean[i];
-    }
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    return 0;
   }
 
   GEOSX_HOST_DEVICE
@@ -214,14 +254,15 @@ public:
   static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
                      real64 ( & N )[maxSupportPoints] )
   {
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = 0.0;
     }
-    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
   }
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static real64 invJacobianTransformation( int const GEOSX_UNUSED_PARAM( q ),
                                            real64 const (&GEOSX_UNUSED_PARAM( X ))[numNodes][3],
                                            real64 ( & J )[3][3] )
@@ -235,18 +276,6 @@ public:
       }
     }
     return 0.0;
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
-                     StackVariables const & stack,
-                     real64 ( & N )[maxSupportPoints] )
-  {
-    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
-    {
-      N[i] = stack.basisFunctionsIntegralMean[i];
-    }
   }
 
   GEOSX_HOST_DEVICE
@@ -266,93 +295,54 @@ public:
     return 0.0;
   }
 
-  // TO BE REMOVED
-  GEOSX_HOST_DEVICE
-  real64 DEPRcalcGradN( localIndex const q,
-                        real64 const ( &X )[maxSupportPoints][3],
-                        real64 ( & gradN )[maxSupportPoints][3] ) const
-  {
-    for( localIndex i = 0; i < maxSupportPoints; ++i )
-    {
-      for( localIndex j = 0; j < 3; ++j )
-      {
-        gradN[i][j] = m_basisDerivativesIntegralMean[i][j];
-      }
-    }
-    return transformedQuadratureWeight( q, X );
-  }
-
-  /**
-   * @brief Calculate the shape functions derivatives wrt the physical
-   *   coordinates.
-   * @param q Index of the quadrature point.
-   * @param X Array containing the coordinates of the support points.
-   * @param stack Variables allocated on the stack as filled by @ref setupStack.
-   * @param gradN Array to contain the shape function derivatives for all
-   *   support points at the coordinates of the quadrature point @p q.
-   * @return The determinant of the parent/physical transformation matrix.
-   */
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64 calcGradN( localIndex const q,
-                           real64 const (&X)[maxSupportPoints][3],
-                           StackVariables const & stack,
-                           real64 ( & gradN )[maxSupportPoints][3] )
-  {
-    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
-    {
-      gradN[i][0] = stack.basisDerivativesIntegralMean[i][0];
-      gradN[i][1] = stack.basisDerivativesIntegralMean[i][1];
-      gradN[i][2] = stack.basisDerivativesIntegralMean[i][2];
-    }
-    return transformedQuadratureWeight( q, X, stack );
-  }
-
   GEOSX_HOST_DEVICE
   real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
                                       real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3] ) const
   {
-    return m_quadratureWeight;
+    GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    return 0.0;
   }
 
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
-                                             real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
-                                             StackVariables const & stack )
-  {
-    return stack.quadratureWeight;
-  }
+  /** @} */
+
+private:
 
   GEOSX_HOST_DEVICE
-  real64 calcStabilizationValue( localIndex const iBasisFunction,
-                                 localIndex const jBasisFunction ) const
-  {
-    return m_stabilizationMatrix[iBasisFunction][jBasisFunction];
-  }
+  static void
+    computeFaceIntegrals( InputNodeCoords const & nodesCoords,
+                          localIndex const (&faceToNodes)[MAXFACENODES],
+                          localIndex const (&faceToEdges)[MAXFACENODES],
+                          localIndex const & numFaceVertices,
+                          real64 const & faceArea,
+                          real64 const (&faceCenter)[3],
+                          real64 const (&faceNormal)[3],
+                          InputEdgeToNodeMap const & edgeToNodes,
+                          real64 const & invCellDiameter,
+                          real64 const (&cellCenter)[3],
+                          real64 ( &basisIntegrals )[MAXFACENODES],
+                          real64 ( &threeDMonomialIntegrals )[3] );
 
-  template< typename MATRIXTYPE >
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void addGradGradStabilization( StackVariables const & stack, MATRIXTYPE & matrix )
-  {
-    for( localIndex i = 0; i < stack.numSupportPoints; ++i )
-    {
-      for( localIndex j = 0; j < stack.numSupportPoints; ++j )
-      {
-        matrix[i][j] += stack.stabilizationMatrix[i][j];
-      }
-    }
-  }
-
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static real64 calcStabilizationValue( localIndex const iBasisFunction,
-                                        localIndex const jBasisFunction,
-                                        StackVariables const & stack )
-  {
-    return stack.stabilizationMatrix[iBasisFunction][jBasisFunction];
-  }
+  static void
+    computeProjectors( localIndex const & cellIndex,
+                       InputNodeCoords const & nodesCoords,
+                       InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
+                       InputCellToFaceMap const & elementToFaceMap,
+                       InputFaceToNodeMap const & faceToNodeMap,
+                       InputFaceToEdgeMap const & faceToEdgeMap,
+                       InputEdgeToNodeMap const & edgeToNodeMap,
+                       arrayView2d< real64 const > const faceCenters,
+                       arrayView2d< real64 const > const faceNormals,
+                       arrayView1d< real64 const > const faceAreas,
+                       real64 const (&cellCenter)[3],
+                       real64 const & cellVolume,
+                       localIndex & numSupportPoints,
+                       real64 & quadratureWeight,
+                       real64 ( &basisFunctionsIntegralMean )[MAXCELLNODES],
+                       real64 ( &stabilizationMatrix )[MAXCELLNODES][MAXCELLNODES],
+                       real64 ( &basisDerivativesIntegralMean )[MAXCELLNODES][3]
+                       );
 
   template< localIndex DIMENSION, typename POINT_COORDS_TYPE >
   GEOSX_HOST_DEVICE
@@ -405,61 +395,6 @@ public:
     }
     return LvArray::math::sqrt< real64 >( diameter );
   }
-
-private:
-
-  localIndex m_numSupportPoints;
-  real64 m_quadratureWeight;
-  real64 m_basisFunctionsIntegralMean[MAXCELLNODES];
-  real64 m_stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
-  real64 m_basisDerivativesIntegralMean[MAXCELLNODES][3];
-  InputNodeCoords m_nodesCoords;
-  InputCellToNodeMap< CellElementSubRegion > m_cellToNodeMap;
-  InputCellToFaceMap m_cellToFaceMap;
-  InputFaceToNodeMap m_faceToNodeMap;
-  InputFaceToEdgeMap m_faceToEdgeMap;
-  InputEdgeToNodeMap m_edgeToNodeMap;
-  arrayView2d< real64 const > m_faceCenters;
-  arrayView2d< real64 const > m_faceNormals;
-  arrayView1d< real64 const > m_faceAreas;
-  arrayView2d< real64 const > m_cellCenters;
-  arrayView1d< real64 const > m_cellVolumes;
-
-  GEOSX_HOST_DEVICE
-  static void
-    computeFaceIntegrals( InputNodeCoords const & nodesCoords,
-                          localIndex const (&faceToNodes)[MAXFACENODES],
-                          localIndex const (&faceToEdges)[MAXFACENODES],
-                          localIndex const & numFaceVertices,
-                          real64 const & faceArea,
-                          real64 const (&faceCenter)[3],
-                          real64 const (&faceNormal)[3],
-                          InputEdgeToNodeMap const & edgeToNodes,
-                          real64 const & invCellDiameter,
-                          real64 const (&cellCenter)[3],
-                          real64 ( &basisIntegrals )[MAXFACENODES],
-                          real64 ( &threeDMonomialIntegrals )[3] );
-  template< typename SUBREGION_TYPE >
-  GEOSX_HOST_DEVICE
-  static void
-    computeProjectors( localIndex const & cellIndex,
-                       InputNodeCoords const & nodesCoords,
-                       InputCellToNodeMap< SUBREGION_TYPE > const & cellToNodeMap,
-                       InputCellToFaceMap const & elementToFaceMap,
-                       InputFaceToNodeMap const & faceToNodeMap,
-                       InputFaceToEdgeMap const & faceToEdgeMap,
-                       InputEdgeToNodeMap const & edgeToNodeMap,
-                       arrayView2d< real64 const > const faceCenters,
-                       arrayView2d< real64 const > const faceNormals,
-                       arrayView1d< real64 const > const faceAreas,
-                       real64 const (&cellCenter)[3],
-                       real64 const & cellVolume,
-                       localIndex & numSupportPoints,
-                       real64 & quadratureWeight,
-                       real64 ( &basisFunctionsIntegralMean )[MAXCELLNODES],
-                       real64 ( &stabilizationMatrix )[MAXCELLNODES][MAXCELLNODES],
-                       real64 ( &basisDerivativesIntegralMean )[MAXCELLNODES][3]
-                       );
 };
 
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
