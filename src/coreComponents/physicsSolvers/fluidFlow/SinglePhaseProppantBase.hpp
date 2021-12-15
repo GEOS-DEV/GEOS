@@ -54,7 +54,7 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
+  virtual void updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const override;
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
                                               localIndex const targetIndex ) const override;

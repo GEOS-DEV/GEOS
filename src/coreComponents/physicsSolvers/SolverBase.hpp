@@ -102,20 +102,6 @@ public:
   CRSMatrixView< real64 const, globalIndex const > getLocalMatrix() const { return m_localMatrix.toViewConst(); }
 
   /**
-   * @brief Getter for local rhs vector
-   * @return a reference to linear system right-hand side of this solver
-   */
-  array1d< real64 > & getLocalRhs() { return m_localRhs; }
-  arrayView1d< real64 const > getLocalRhs() const { return m_localRhs; }
-
-  /**
-   * @brief Getter for local solution vector
-   * @return a reference to solution vector of this solver
-   */
-  array1d< real64 > & getLocalSolution() { return m_localSolution; }
-  arrayView1d< real64 const > getLocalSolution() const { return m_localSolution; }
-
-  /**
    * @defgroup Solver Interface Functions
    *
    * These functions provide the primary interface that is required for derived classes
@@ -223,8 +209,8 @@ public:
               DomainPartition & domain,
               DofManager const & dofManager,
               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-              arrayView1d< real64 > const & localRhs,
-              arrayView1d< real64 const > const & localSolution,
+              ParallelVector & rhs,
+              ParallelVector & solution,
               real64 const scaleFactor,
               real64 & lastResidual );
 
@@ -295,8 +281,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = true );
 
   /**
@@ -729,8 +715,6 @@ protected:
 
   /// Local system matrix and rhs
   CRSMatrix< real64, globalIndex > m_localMatrix;
-  array1d< real64 > m_localRhs;
-  array1d< real64 > m_localSolution;
 
   /// Custom preconditioner for the "native" iterative solver
   std::unique_ptr< PreconditionerBase< LAInterface > > m_precond;

@@ -107,7 +107,7 @@ public:
    * @note when build without MPI, may return anything
    *       (MPI_Comm will be a mock type defined in MpiWrapper)
    */
-  virtual MPI_Comm getComm() const = 0;
+  virtual MPI_Comm comm() const = 0;
 };
 
 }
