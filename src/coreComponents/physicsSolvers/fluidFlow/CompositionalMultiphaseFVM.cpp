@@ -105,22 +105,21 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
     FaceBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >
-      ( m_numComponents,
-      m_numPhases,
-      dofManager.rankOffset(),
-      elemDofKey,
-      m_capPressureFlag,
-      getName(),
-      mesh.getElemManager(),
-      stencilWrapper,
-      targetRegionNames(),
-      fluidModelNames(),
-      capPresModelNames(),
-      permeabilityModelNames(),
-      dt,
-      localMatrix.toViewConstSizes(),
-      localRhs.toView() );
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dofManager.rankOffset(),
+                                                 elemDofKey,
+                                                 m_capPressureFlag,
+                                                 getName(),
+                                                 mesh.getElemManager(),
+                                                 stencilWrapper,
+                                                 targetRegionNames(),
+                                                 fluidModelNames(),
+                                                 capPresModelNames(),
+                                                 permeabilityModelNames(),
+                                                 dt,
+                                                 localMatrix.toViewConstSizes(),
+                                                 localRhs.toView() );
   } );
 }
 
@@ -164,6 +163,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName(), targetRegionNames(), permeabilityModelNames() );
   CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName(), targetRegionNames(), relPermModelNames() );
 
+  // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
                                                  arrayView2d< real64, compflow::USD_PHASE > >( extrinsicMeshData::flow::phaseOutflux::key() );
@@ -177,6 +177,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
 
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
+    // While this kernel is waiting for a factory class, pass all the accessors here
     KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
                                             m_numPhases,
                                             dt,
@@ -592,35 +593,35 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     real64 const & aquiferWaterPhaseDens = bc.getWaterPhaseDensity();
     arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
-    KernelLaunchSelector1< AquiferBCKernel >
-      ( m_numComponents,
-      m_numPhases,
-      waterPhaseIndex,
-      allowAllPhasesIntoAquifer,
-      stencil,
-      dofManager.rankOffset(),
-      elemDofNumber.toNestedViewConst(),
-      aquiferBCWrapper,
-      aquiferWaterPhaseDens,
-      aquiferWaterPhaseCompFrac,
-      std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // ghostRank
-      std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // pressure
-      std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // deltaPressure
-      std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst(), // gravCoef
-      std::get< 4 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseVolFraction
-      std::get< 5 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dPres
-      std::get< 6 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dCompDens
-      std::get< 7 >( compFlowAccessors.accessors ).toNestedViewConst(), // dCompFrac_dCompDens
-      std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDens
-      std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dPres
-      std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dCompFrac
-      std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
-      std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dPres
-      std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dCompFrac
-      time,
-      dt,
-      localMatrix.toViewConstSizes(),
-      localRhs.toView() );
+    // While this kernel is waiting for a factory class, pass all the accessors here
+    KernelLaunchSelector1< AquiferBCKernel >( m_numComponents,
+                                              m_numPhases,
+                                              waterPhaseIndex,
+                                              allowAllPhasesIntoAquifer,
+                                              stencil,
+                                              dofManager.rankOffset(),
+                                              elemDofNumber.toNestedViewConst(),
+                                              aquiferBCWrapper,
+                                              aquiferWaterPhaseDens,
+                                              aquiferWaterPhaseCompFrac,
+                                              std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // ghostRank
+                                              std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // pressure
+                                              std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // deltaPressure
+                                              std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst(), // gravCoef
+                                              std::get< 4 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseVolFraction
+                                              std::get< 5 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dPres
+                                              std::get< 6 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dCompDens
+                                              std::get< 7 >( compFlowAccessors.accessors ).toNestedViewConst(), // dCompFrac_dCompDens
+                                              std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDens
+                                              std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dPres
+                                              std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dCompFrac
+                                              std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
+                                              std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dPres
+                                              std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dCompFrac
+                                              time,
+                                              dt,
+                                              localMatrix.toViewConstSizes(),
+                                              localRhs.toView() );
   } );
 }
 

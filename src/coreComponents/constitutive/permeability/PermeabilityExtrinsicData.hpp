@@ -19,7 +19,6 @@
 #ifndef GEOSX_CONSTITUTIVE_PERMEABILITYEXTRINSICDATA_HPP_
 #define GEOSX_CONSTITUTIVE_PERMEABILITYEXTRINSICDATA_HPP_
 
-#include "common/DataLayouts.hpp"
 #include "mesh/ExtrinsicMeshData.hpp"
 
 namespace geosx
@@ -56,7 +55,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dPerm_dAperture,
                            "Derivative of rock permeability with respect to aperture" );
 
 EXTRINSIC_MESH_DATA_TRAIT( permeabilityMultiplier,
-                           "permeabilituMultiplier",
+                           "permeabilityMultiplier",
                            array3d< real64 >,
                            0,
                            NOPLOT,

@@ -1133,15 +1133,13 @@ void ProppantTransport::resetViews( MeshLevel & mesh )
     using namespace extrinsicMeshData::permeability;
 
     m_permeability.clear();
-    m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( permeability::key(),
-                                                                                  targetRegionNames(),
-                                                                                  permeabilityModelNames() );
+    m_permeability = elemManager.constructMaterialExtrinsicAccessor< permeability >( targetRegionNames(),
+                                                                                     permeabilityModelNames() );
     m_permeability.setName( getName() + "/accessors/" + permeability::key() );
 
     m_permeabilityMultiplier.clear();
-    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( permeabilityMultiplier::key(),
-                                                                                            targetRegionNames(),
-                                                                                            permeabilityModelNames() );
+    m_permeabilityMultiplier = elemManager.constructMaterialExtrinsicAccessor< permeabilityMultiplier >( targetRegionNames(),
+                                                                                                         permeabilityModelNames() );
     m_permeabilityMultiplier.setName( getName() + "/accessors/" + permeabilityMultiplier::key() );
   }
 }

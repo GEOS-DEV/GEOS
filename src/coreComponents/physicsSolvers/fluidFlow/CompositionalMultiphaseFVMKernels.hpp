@@ -119,7 +119,7 @@ struct PhaseMobilityKernel
  * @tparam STENCILWRAPPER the type of the stencil wrapper
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
-template< localIndex NUM_COMP, localIndex NUM_DOF, typename STENCILWRAPPER >
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
 class FaceBasedAssemblyKernel
 {
 public:
@@ -170,13 +170,13 @@ public:
 
 
   /// Compile time value for the number of components
-  static constexpr localIndex numComp = NUM_COMP;
+  static constexpr integer numComp = NUM_COMP;
 
   /// Compute time value for the number of degrees of freedom
-  static constexpr localIndex numDof = NUM_DOF;
+  static constexpr integer numDof = NUM_DOF;
 
   /// Compute time value for the number of equations (all of them, except the volume balance equation)
-  static constexpr localIndex numEqn = NUM_DOF-1;
+  static constexpr integer numEqn = NUM_DOF-1;
 
   /// Maximum number of elements at the face
   static constexpr localIndex maxNumElems = STENCILWRAPPER::NUM_POINT_IN_FLUX;
@@ -191,7 +191,6 @@ public:
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] dofKey string to get the element degrees of freedom numbers
    * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
@@ -203,7 +202,7 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  FaceBasedAssemblyKernel( localIndex const numPhases,
+  FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
                            integer const capPressureFlag,
                            STENCILWRAPPER const & stencilWrapper,
@@ -224,10 +223,10 @@ public:
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
     m_sei( stencilWrapper.getElementIndices() ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_ghostRank( std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_gravCoef( std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst() ),
     m_permeability( std::get< 0 >( permeabilityAccessors.accessors ).toNestedViewConst() ),
     m_dPerm_dPres( std::get< 1 >( permeabilityAccessors.accessors ).toNestedViewConst() ),
+    m_ghostRank( std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst() ),
+    m_gravCoef( std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst() ),
     m_pres( std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst() ),
     m_dPres( std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst() ),
     m_dCompFrac_dCompDens( std::get< 4 >( compFlowAccessors.accessors ).toNestedViewConst() ),
@@ -619,7 +618,8 @@ public:
     // call the lambda to allow assembly into the localFluxJacobian
     // possible uses: - assemble the derivatives of compFlux wrt temperature into localFluxJacobian;
     //                - assemble energyFlux into localFlux and localFluxJacobian
-    localFluxJacobianKernelOp();
+    // TODO: this second kernelOp becomes unnecessary if we increment the residual/jacobian directly in the phase loop
+    localFluxJacobianKernelOp( stack.localFlux, stack.localFluxJacobian );
 
   }
 
@@ -713,14 +713,16 @@ private:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
 
-  /// Views on dof numbers and ghost rank numbers
+  /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
-  ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
-  ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
 
   /// Views on permeability
   ElementViewConst< arrayView3d< real64 const > > m_permeability;
   ElementViewConst< arrayView3d< real64 const > > m_dPerm_dPres;
+
+  /// Views on ghost rank numbers and gravity coefficients
+  ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
+  ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
 
   // Primary and secondary variables
 
@@ -790,8 +792,8 @@ public:
    */
   template< typename POLICY, typename STENCILWRAPPER >
   static void
-  createAndLaunch( localIndex const numComps,
-                   localIndex const numPhases,
+  createAndLaunch( integer const numComps,
+                   integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    integer const capPressureFlag,
@@ -808,8 +810,8 @@ public:
   {
     CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
-      localIndex constexpr NUM_COMP = NC();
-      localIndex constexpr NUM_DOF = NC()+1;
+      integer constexpr NUM_COMP = NC();
+      integer constexpr NUM_DOF = NC()+1;
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > dofNumberAccessor =
         elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
@@ -824,7 +826,7 @@ public:
       KERNEL_TYPE kernel( numPhases, rankOffset, capPressureFlag, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                           dt, localMatrix, localRhs );
-      KERNEL_TYPE::template launch< POLICY, KERNEL_TYPE >( stencilWrapper.size(), kernel );
+      KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }
 };

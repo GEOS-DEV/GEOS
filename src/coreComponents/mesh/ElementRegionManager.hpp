@@ -738,6 +738,17 @@ public:
     } );
   }
 
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam TRAIT data type
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructExtrinsicAccessor( string const & neighborName = string() ) const;
+
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
@@ -1239,6 +1250,16 @@ ElementRegionManager::
   return viewAccessor;
 }
 
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructExtrinsicAccessor( string const & neighborName ) const
+{
+  return constructViewAccessor< typename TRAIT::type,
+                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+}
+
+
 template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
@@ -1577,7 +1598,7 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
 namespace internal
 {
 
-// TODO: move this somewhere, ideally to LvArray::typeManipulation
+// TODO: if everyone likes the new accessors, move this somewhere, ideally to LvArray::typeManipulation
 template< class F, class ... Ts, std::size_t ... Is >
 void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F func, std::index_sequence< Is ... > )
 {
@@ -1604,8 +1625,7 @@ ElementRegionManager::StencilAccessors< TRAITS ... >::StencilAccessors( ElementR
     using TRAIT = TYPEOFREF( t );
 
     auto & acc = std::get< idx() >( allAccessors );
-    acc = elemManager.constructViewAccessor< typename TRAIT::type,
-                                             traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
+    acc = elemManager.constructExtrinsicAccessor< TRAIT >();
     acc.setName( solverName + "/accessors/" + TRAIT::key() );
   } );
 }
@@ -1616,6 +1636,10 @@ ElementRegionManager::StencilMaterialAccessors< TRAITS ... >::StencilMaterialAcc
                                                                                         arrayView1d< string const > const & regionNames,
                                                                                         arrayView1d< string const > const & materialNames )
 {
+  if( materialNames.empty() )
+  {
+    return; // if the material model does not exist (i.e., no capillary pressure), do not do anything
+  }
   std::tuple< ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > & allAccessors = accessors;
   internal::forEachArgInTuple( std::tuple< TRAITS ... >{}, [&elemManager, regionNames, materialNames, &solverName, &allAccessors]( auto && t, auto idx )
   {
@@ -1623,12 +1647,10 @@ ElementRegionManager::StencilMaterialAccessors< TRAITS ... >::StencilMaterialAcc
     using TRAIT = TYPEOFREF( t );
 
     auto & acc = std::get< idx() >( allAccessors );
-    bool allowMissingViews = false;
-    acc = elemManager.constructMaterialViewAccessor< typename TRAIT::type,
-                                                     traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
-                                                                                                      regionNames,
-                                                                                                      materialNames,
-                                                                                                      allowMissingViews );
+    bool const allowMissingViews = false;
+    acc = elemManager.constructMaterialExtrinsicAccessor< TRAIT >( regionNames,
+                                                                   materialNames,
+                                                                   allowMissingViews );
     acc.setName( solverName + "/accessors/" + TRAIT::key() );
   } );
 }

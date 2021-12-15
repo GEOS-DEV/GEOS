@@ -1463,10 +1463,10 @@
 		<xsd:attribute name="dPerm_dAperture" type="real64_array3d" />
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeabilituMultiplier => Rock permeability multiplier-->
-		<xsd:attribute name="permeabilituMultiplier" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
+		<!--permeabilityMultiplier => Rock permeability multiplier-->
+		<xsd:attribute name="permeabilityMultiplier" type="real64_array3d" />
 		<!--proppantPackPermeability => (no description available)-->
 		<xsd:attribute name="proppantPackPermeability" type="real64" />
 	</xsd:complexType>
