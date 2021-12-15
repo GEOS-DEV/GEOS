@@ -122,7 +122,7 @@ public:
                                                                            typename TRAIT::type * newObject )
   {
     return registerWrapper( extrinsicDataTrait.key(), newObject ).
-             setApplyDefaultValue( TRAIT::defaultValue ). // TODO: change that
+             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
              setPlotLevel( TRAIT::plotLevel ).
              setRestartFlags( TRAIT::restartFlag ).
              setDescription( TRAIT::description );
