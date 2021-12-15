@@ -66,25 +66,6 @@ public:
   {
     HYPRE_Int const numResLabels = LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] );
 
-    /*
-    // Level 0: eliminate the last density of the reservoir block
-    //m_labels[0].resize( m_numBlocks - 1 );
-    //std::iota( m_labels[0].begin(), m_labels[0].begin() + numResLabels - 1, 0 );
-    //std::iota( m_labels[0].begin() + numResLabels - 1, m_labels[0].end(), numResLabels );
-    // Level 1: eliminate second-to-last density of the reservoir block
-    m_labels[1].resize( m_numBlocks - numResLabels + 2 );
-    m_labels[1][0] = 0;
-    m_labels[1][1] = 1;
-    std::iota( m_labels[1].begin() + 2, m_labels[1].end(), numResLabels );
-    // Level 2: eliminate the last density of the reservoir block
-    m_labels[2].resize( m_numBlocks - numResLabels + 1 );
-    m_labels[2][0] = 0;
-    std::iota( m_labels[2].begin() + 1, m_labels[2].end(), numResLabels );
-    // Level 3: eliminate reservoir pressure
-    m_labels[3].resize( m_numBlocks - numResLabels );
-    std::iota( m_labels[3].begin(), m_labels[3].end(), numResLabels );
-    */
-
     // Level 0: eliminate the well block
     m_labels[0].resize( numResLabels );
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
@@ -96,8 +77,8 @@ public:
 
     setupLabels();
 
-    m_levelCoarseGridMethod[0] = 0; // standard Galerkin
-    m_levelCoarseGridMethod[1] = 0; // standard Galerkin
+    m_levelCoarseGridMethod[0] = 0; // Standard Galerkin
+    m_levelCoarseGridMethod[1] = 0; // Standard Galerkin
     m_levelCoarseGridMethod[2] = 3; // Quasi-IMPES reduction
 
     m_levelInterpType[0] = 12; // Exact well block elimination with block-Jacobi
@@ -128,8 +109,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 0 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 #ifdef GEOSX_USE_HYPRE_CUDA
@@ -137,7 +118,7 @@ public:
 #endif
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );

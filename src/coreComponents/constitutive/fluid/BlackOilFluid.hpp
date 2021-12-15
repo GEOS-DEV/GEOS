@@ -469,7 +469,7 @@ BlackOilFluid::KernelWrapper::
   // 4. Update phase fraction and phase component fractions
 
   // 4.1 The gas phase is present
-  if( ( gasPhaseFraction > 0 ) /*&& ( gasPhaseFraction < 1 )*/ )
+  if( ( gasPhaseFraction > 0 ) && ( gasPhaseFraction < 1 ) )
   {
 
     // phase fractions
@@ -687,11 +687,6 @@ BlackOilFluid::KernelWrapper::
       dRs_dC[icOil] = -densRatio * composition[icGas] / (composition[icOil] * composition[icOil]);
       dRs_dC[icGas] = densRatio  / composition[icOil];
 
-      if( isZero( composition[icOil] ) )
-      {
-	std::cout << "composition = " << composition << std::endl;
-      }
-      
       // compute undersaturated properties (Bo, viscosity) by two-step interpolation in undersaturated tables
       // this part returns numerical derivatives
       computeUndersaturatedBoViscosity( needDerivs, HNC_BO, pressure, Rs, dRs_dC, Bo, dBo_dP, dBo_dC,

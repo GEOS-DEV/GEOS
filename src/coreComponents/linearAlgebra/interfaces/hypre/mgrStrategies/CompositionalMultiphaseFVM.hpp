@@ -58,33 +58,22 @@ public:
     : MGRStrategyBase( LvArray::integerConversion< HYPRE_Int >( numComponentsPerField[0] ) )
   {
     // Level 0: eliminate last density which corresponds to the volume constraint equation
-    /*
     m_labels[0].resize( m_numBlocks - 1 );
-    std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
-    // Level 1: eliminate second-to-last density
-    m_labels[1].resize( m_numBlocks - 2 );
-    std::iota( m_labels[1].begin(), m_labels[1].end(), 0 );
-    // Level 2: eliminate the last density
-    m_labels[2].push_back( 0 );
-    */
-
-    // Level 0: eliminate last density which corresponds to the volume constraint equation
-    m_labels[0].resize( m_numBlocks - 1);
     std::iota( m_labels[0].begin(), m_labels[0].end(), 0 );
     // Level 1: eliminate the rest of the densities
     m_labels[1].push_back( 0 );
 
     setupLabels();
 
-    m_levelInterpType[0] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 0; // standard Galerkin
+    m_levelInterpType[0] = 2;       // Diagonal scaling (Jacobi)
+    m_levelCoarseGridMethod[0] = 0; // Standard Galerkin
     m_levelInterpType[1] = 0;       // Injection
     m_levelCoarseGridMethod[1] = 3; // Non-Galerkin Quasi-IMPES CPR
 
     // Global smoother at each level, only do block-GS for the condensed system
     m_levelSmoothType[1] = 1;
     m_levelSmoothIters[1] = 1;
- }
+  }
 
   /**
    * @brief Setup the MGR strategy.
@@ -103,8 +92,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, 0 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, 1 ));
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
-    GEOSX_LAI_CHECK_ERROR( hypre_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothType( precond.ptr, m_levelSmoothType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelSmoothIters( precond.ptr, m_levelSmoothIters ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // Low tolerance to remove only zeros
 #ifdef GEOSX_USE_HYPRE_CUDA
@@ -112,7 +101,7 @@ public:
 #endif
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetAggNumLevels( mgrData.coarseSolver.ptr, 1 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
