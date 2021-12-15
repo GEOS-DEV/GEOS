@@ -10,6 +10,7 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/CapillaryPressureExtrinsicData.hpp     
      capillaryPressure/TableCapillaryPressure.hpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
@@ -24,6 +25,7 @@ set( constitutive_headers
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
+     fluid/MultiFluidExtrinsicData.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
@@ -59,7 +61,8 @@ set( constitutive_headers
      permeability/ProppantPermeability.hpp     
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
-     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/RelativePermeabilityBase.hpp 
+     relativePermeability/RelativePermeabilityExtrinsicData.hpp    
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
