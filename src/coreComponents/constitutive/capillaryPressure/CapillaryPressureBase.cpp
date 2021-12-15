@@ -17,6 +17,7 @@
  */
 
 #include "CapillaryPressureBase.hpp"
+#include "CapillaryPressureExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -41,10 +42,9 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureString(), &m_phaseCapPressure ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerExtrinsicData( extrinsicMeshData::cappres::phaseCapPressure{}, &m_phaseCapPressure );
+  registerExtrinsicData( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
 
-  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void CapillaryPressureBase::postProcessInput()
@@ -97,7 +97,7 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 
 void CapillaryPressureBase::setLabels()
 {
-  getWrapper< array3d< real64, cappres::LAYOUT_CAPPRES > >( viewKeyStruct::phaseCapPressureString() ).
+  getExtrinsicData< extrinsicMeshData::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
 }
 

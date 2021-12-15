@@ -123,9 +123,6 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
-
-    static constexpr char const * phaseCapPressureString() { return "phaseCapPressure"; }
-    static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
   };
 
 private:

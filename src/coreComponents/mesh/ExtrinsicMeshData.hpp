@@ -53,8 +53,9 @@
     using type = TYPE; \
     /** The template type T for registration of a container<T>. */ \
     using dataType = internal::typeHelper_t< TYPE >; \
-    /** The dataRepository::DefaultValue for NAME. */ \
-    static constexpr dataType defaultValue = DEFAULT; \
+    /** @brief @return The default data value for NAME. */ \
+    static constexpr dataType defaultValue() \
+    { return DEFAULT; } \
     /** The default dataRepository::PlotLevel for NAME. */ \
     static constexpr dataRepository::PlotLevel plotLevel = dataRepository::PlotLevel::PLOTLEVEL; \
     /** The default dataRepository::RestartFlags for NAME. */ \
