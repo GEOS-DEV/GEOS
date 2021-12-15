@@ -13,9 +13,9 @@
       xCoords="{ 0.0, 1.0 }"
       yCoords="{ 0.0, 0.1 }"
       zCoords="{ 0.0, 1.0 }"
-      nx="{ 10 }"
+      nx="{ 20 }"
       ny="{ 1 }"
-      nz="{ 10 }"
+      nz="{ 20 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
   <!-- SPHINX_MESH_END -->
@@ -25,12 +25,12 @@
   
     <PeriodicEvent
       name="outputs"
-      timeFrequency="5.0e-01"
+      timeFrequency="0.05"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="5.0e-01"
+      timeFrequency="0.05"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"
     />

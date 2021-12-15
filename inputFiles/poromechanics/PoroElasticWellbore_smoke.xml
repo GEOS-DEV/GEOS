@@ -36,14 +36,14 @@
 
 <PeriodicEvent
   name="restarts"
-  timeFrequency="80.0"
+  timeFrequency="20.0"
   targetExactTimestep="0"
   target="/Outputs/restartOutput"
 />
 
 <PeriodicEvent 
   name="solverApplication0"
-  forceDt="80"
+  forceDt="10"
   target="/Solvers/PoromechanicsSolver"
 />
 </Events>
