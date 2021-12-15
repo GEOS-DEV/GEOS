@@ -1,0 +1,192 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  
+  <Events
+    maxTime="78.0">
+    <SoloEvent
+      name="initialPlot"
+      target="/Outputs/siloOutput"/>
+
+    <!-- SPHINX_Execution -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.78"
+      target="/Solvers/poroSolve"/>
+
+    <!-- SPHINX_ExecutionEnd -->
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="7.8"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="39.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <!-- SPHINX_FEDiscretization -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <!-- SPHINX_FEDiscretizationEnd -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Omega"
+      cellBlocks="{ cb1 }"
+      materialList="{ porousRock, water }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <!-- SPHINX_Material -->
+    <PorousElasticIsotropic
+      name="porousRock"
+      solidModelName="rock"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <ElasticIsotropic
+      name="rock"
+      defaultDensity="0"
+      defaultBulkModulus="11039657020.4"
+      defaultShearModulus="8662741799.83"/>
+
+    <!--  BiotCoefficient="0.771"
+          BiotModulus=15.8e9 -->
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0e6"
+      compressibility="1.78403329184e-10"
+      viscosibility="0.0"/>
+
+    <BiotPorosity
+      name="rockPorosity"
+      grainBulkModulus="48208109259"
+      defaultReferencePorosity="0.3"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-17, 1.0e-17, 1.0e-17 }"/>
+
+    <!-- SPHINX_MaterialEnd -->
+  </Constitutive>
+
+  <!-- SPHINX_BoundaryConditions -->
+  <FieldSpecifications>
+    <FieldSpecification 
+      name="initialPorosity"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="rockPorosity_porosity"
+      scale="0.3"/>
+
+    <!-- SPHINX_InsituConditions -->
+    <FieldSpecification 
+      name="initialPorePressure"
+      initialCondition="1"
+      setNames="{all}"
+      objectPath="ElementRegions/Omega/cb1"
+      fieldName="pressure"
+      scale="10e6"/>
+
+	<FieldSpecification 
+	  name="Sx"
+	  initialCondition="1"
+	  setNames="{all}"
+	  objectPath="ElementRegions/Omega/cb1"
+	  fieldName="rock_stress"
+	  component="0"
+	  scale="-21.9e6"/>
+
+	<FieldSpecification 
+	  name="Sy"
+	  initialCondition="1"
+	  setNames="{all}"
+	  objectPath="ElementRegions/Omega/cb1"
+	  fieldName="rock_stress"
+	  component="1"
+	  scale="-12.9e6"/>
+
+	<FieldSpecification 
+	  name="Sz"
+	  initialCondition="1"
+	  setNames="{all}"
+	  objectPath="ElementRegions/Omega/cb1"
+	  fieldName="rock_stress"
+	  component="2"
+	  scale="-17.9e6"/>
+
+    <FieldSpecification
+      name="innerPorePressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0e6"
+      setNames="{ rneg }"/>
+    <!-- SPHINX_InsituConditionsEnd -->
+
+    <FieldSpecification
+      name="xConstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg, xpos }"/>
+
+    <FieldSpecification
+      name="yConstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ tneg, tpos, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+  </FieldSpecifications>
+
+  <!-- SPHINX_BoundaryConditionsEnd -->
+
+  <!-- SPHINX_Function -->
+  <!--Functions>
+    <TableFunction 
+      name="timeFunction"
+      inputVarNames="{time}"
+      coordinates="{0.0, 0.1, 1e6}"
+      values="{0.0, 1.0, 1.0}" 
+    />
+  </Functions-->
+  <!-- SPHINX_FunctionEnd -->
+
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      parallelThreads="32"
+      childDirectory="sub"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

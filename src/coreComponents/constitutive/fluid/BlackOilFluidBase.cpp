@@ -15,6 +15,7 @@
 #include "BlackOilFluidBase.hpp"
 
 #include "constitutive/fluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
 
@@ -149,6 +150,12 @@ void BlackOilFluidBase::fillHydrocarbonData( integer const ip,
   tablePVDX_visc.setTableCoordinates( pressureCoords );
   tablePVDX_visc.setTableValues( viscosity );
   tablePVDX_visc.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+}
+
+integer BlackOilFluidBase::getWaterPhaseIndex() const
+{
+  string const expectedWaterPhaseNames[] = { "water" };
+  return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
 void BlackOilFluidBase::postProcessInput()

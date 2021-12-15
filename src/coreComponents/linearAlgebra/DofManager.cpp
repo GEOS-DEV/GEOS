@@ -1036,8 +1036,8 @@ void DofManager::setSparsityPattern( SparsityPattern< globalIndex > & pattern ) 
 namespace
 {
 
-template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR, typename FIELD_VIEW >
-void vectorToFieldKernel( LOCAL_VECTOR const localVector,
+template< typename FIELD_OP, typename POLICY, typename FIELD_VIEW >
+void vectorToFieldKernel( arrayView1d< real64 const > const & localVector,
                           FIELD_VIEW const & field,
                           arrayView1d< globalIndex const > const & dofNumber,
                           arrayView1d< integer const > const & ghostRank,
@@ -1064,8 +1064,8 @@ void vectorToFieldKernel( LOCAL_VECTOR const localVector,
   } );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
-void vectorToFieldImpl( LOCAL_VECTOR const localVector,
+template< typename FIELD_OP, typename POLICY >
+void vectorToFieldImpl( arrayView1d< real64 const > const & localVector,
                         ObjectManagerBase & manager,
                         string const & dofKey,
                         string const & fieldName,
@@ -1095,8 +1095,8 @@ void vectorToFieldImpl( LOCAL_VECTOR const localVector,
   } );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR, typename FIELD_VIEW >
-void fieldToVectorKernel( LOCAL_VECTOR localVector,
+template< typename FIELD_OP, typename POLICY, typename FIELD_VIEW >
+void fieldToVectorKernel( arrayView1d< real64 > const & localVector,
                           FIELD_VIEW const & field,
                           arrayView1d< globalIndex const > const & dofNumber,
                           arrayView1d< integer const > const & ghostRank,
@@ -1123,8 +1123,8 @@ void fieldToVectorKernel( LOCAL_VECTOR localVector,
   } );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
-void fieldToVectorImpl( LOCAL_VECTOR localVector,
+template< typename FIELD_OP, typename POLICY >
+void fieldToVectorImpl( arrayView1d< real64 > const & localVector,
                         ObjectManagerBase const & manager,
                         string const & dofKey,
                         string const & fieldName,
@@ -1156,8 +1156,8 @@ void fieldToVectorImpl( LOCAL_VECTOR localVector,
 
 } // namespace
 
-template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
-void DofManager::vectorToField( LOCAL_VECTOR const localVector,
+template< typename FIELD_OP, typename POLICY >
+void DofManager::vectorToField( arrayView1d< real64 const > const & localVector,
                                 string const & srcFieldName,
                                 string const & dstFieldName,
                                 real64 const scalingFactor,
@@ -1192,21 +1192,6 @@ void DofManager::vectorToField( LOCAL_VECTOR const localVector,
   }
 }
 
-// Copy values from DOFs to nodes
-template< typename VECTOR >
-void DofManager::copyVectorToField( VECTOR const & vector,
-                                    string const & srcFieldName,
-                                    string const & dstFieldName,
-                                    real64 const scalingFactor,
-                                    CompMask const mask ) const
-{
-  vectorToField< FieldSpecificationEqual, parallelHostPolicy >( vector.extractLocalVector(),
-                                                                srcFieldName,
-                                                                dstFieldName,
-                                                                scalingFactor,
-                                                                mask );
-}
-
 void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVector,
                                     string const & srcFieldName,
                                     string const & dstFieldName,
@@ -1218,21 +1203,6 @@ void DofManager::copyVectorToField( arrayView1d< real64 const > const & localVec
                                                                     dstFieldName,
                                                                     scalingFactor,
                                                                     mask );
-}
-
-// Copy values from DOFs to nodes
-template< typename VECTOR >
-void DofManager::addVectorToField( VECTOR const & vector,
-                                   string const & srcFieldName,
-                                   string const & dstFieldName,
-                                   real64 const scalingFactor,
-                                   CompMask const mask ) const
-{
-  vectorToField< FieldSpecificationAdd, parallelHostPolicy >( vector.extractLocalVector(),
-                                                              srcFieldName,
-                                                              dstFieldName,
-                                                              scalingFactor,
-                                                              mask );
 }
 
 void DofManager::addVectorToField( arrayView1d< real64 const > const & localVector,
@@ -1248,8 +1218,8 @@ void DofManager::addVectorToField( arrayView1d< real64 const > const & localVect
                                                                   mask );
 }
 
-template< typename FIELD_OP, typename POLICY, typename LOCAL_VECTOR >
-void DofManager::fieldToVector( LOCAL_VECTOR localVector,
+template< typename FIELD_OP, typename POLICY >
+void DofManager::fieldToVector( arrayView1d< real64 > const & localVector,
                                 string const & srcFieldName,
                                 string const & dstFieldName,
                                 real64 const scalingFactor,
@@ -1284,21 +1254,6 @@ void DofManager::fieldToVector( LOCAL_VECTOR localVector,
   }
 }
 
-// Copy values from nodes to DOFs
-template< typename VECTOR >
-void DofManager::copyFieldToVector( VECTOR & vector,
-                                    string const & srcFieldName,
-                                    string const & dstFieldName,
-                                    real64 const scalingFactor,
-                                    CompMask const mask ) const
-{
-  fieldToVector< FieldSpecificationEqual, parallelHostPolicy >( vector.extractLocalVector(),
-                                                                srcFieldName,
-                                                                dstFieldName,
-                                                                scalingFactor,
-                                                                mask );
-}
-
 void DofManager::copyFieldToVector( arrayView1d< real64 > const & localVector,
                                     string const & srcFieldName,
                                     string const & dstFieldName,
@@ -1310,21 +1265,6 @@ void DofManager::copyFieldToVector( arrayView1d< real64 > const & localVector,
                                                                     dstFieldName,
                                                                     scalingFactor,
                                                                     mask );
-}
-
-// Copy values from nodes to DOFs
-template< typename VECTOR >
-void DofManager::addFieldToVector( VECTOR & vector,
-                                   string const & srcFieldName,
-                                   string const & dstFieldName,
-                                   real64 const scalingFactor,
-                                   CompMask const mask ) const
-{
-  fieldToVector< FieldSpecificationAdd, parallelHostPolicy >( vector.extractLocalVector(),
-                                                              srcFieldName,
-                                                              dstFieldName,
-                                                              scalingFactor,
-                                                              mask );
 }
 
 void DofManager::addFieldToVector( arrayView1d< real64 > const & localVector,
@@ -1487,6 +1427,10 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   restrictor.createWithLocalSize( rowSize, colSize, 1, comm );
   restrictor.open();
 
+  array1d< globalIndex > rows;
+  array1d< globalIndex > cols;
+  array1d< real64 > values;
+
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     FieldDescription const & fieldNew = fieldsSelected[k];
@@ -1498,21 +1442,35 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     CompMask const mask = selection[k].mask;
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
+
+    rows.resize( numLocalNodes*mask.size() );
+    cols.resize( numLocalNodes*mask.size() );
+    values.resize( numLocalNodes*mask.size() );
+
     for( localIndex i = 0; i < numLocalNodes; ++i )
     {
       integer newComp = 0;
       for( integer const oldComp : mask )
       {
-        restrictor.insert( fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp ),
-                           fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp ),
-                           1.0 );
+        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
+        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
+
+        rows( i*mask.size() + newComp ) = row;
+        cols( i*mask.size() + newComp ) = col;
+        values[ i*mask.size() + newComp ] = 1.0;
         ++newComp;
       }
     }
-  }
 
+    restrictor.insert( rows.toViewConst(),
+                       cols.toViewConst(),
+                       values.toViewConst() );
+
+
+  }
   restrictor.close();
 }
+
 
 void DofManager::printFieldInfo( std::ostream & os ) const
 {
@@ -1599,26 +1557,6 @@ void DofManager::printFieldInfo( std::ostream & os ) const
 }
 
 #define MAKE_DOFMANAGER_METHOD_INST( LAI ) \
-  template void DofManager::copyVectorToField( LAI::ParallelVector const &, \
-                                               string const &, \
-                                               string const &, \
-                                               real64 const, \
-                                               CompMask const ) const; \
-  template void DofManager::addVectorToField( LAI::ParallelVector const &, \
-                                              string const &, \
-                                              string const &, \
-                                              real64 const, \
-                                              CompMask const ) const; \
-  template void DofManager::copyFieldToVector( LAI::ParallelVector &, \
-                                               string const &, \
-                                               string const &, \
-                                               real64 const, \
-                                               CompMask const ) const; \
-  template void DofManager::addFieldToVector( LAI::ParallelVector &, \
-                                              string const &, \
-                                              string const &, \
-                                              real64 const, \
-                                              CompMask const ) const; \
   template void DofManager::makeRestrictor( std::vector< SubComponent > const & selection, \
                                             MPI_Comm const & comm, \
                                             bool const transpose, \

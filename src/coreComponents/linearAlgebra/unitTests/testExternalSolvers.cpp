@@ -52,6 +52,17 @@ LinearSolverParameters params_GMRES_ILU()
   return parameters;
 }
 
+LinearSolverParameters params_CG_SGS()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-8;
+  parameters.krylov.maxIterations = 300;
+  parameters.isSymmetric = true;
+  parameters.solverType = LinearSolverParameters::SolverType::cg;
+  parameters.preconditionerType = LinearSolverParameters::PreconditionerType::sgs;
+  return parameters;
+}
+
 LinearSolverParameters params_GMRES_AMG()
 {
   LinearSolverParameters parameters;
@@ -59,7 +70,7 @@ LinearSolverParameters params_GMRES_AMG()
   parameters.krylov.maxIterations = 300;
   parameters.solverType = LinearSolverParameters::SolverType::gmres;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
-  parameters.amg.smootherType = geosx::LinearSolverParameters::AMG::SmootherType::gs;
+  parameters.amg.smootherType = geosx::LinearSolverParameters::AMG::SmootherType::fgs;
   parameters.amg.coarseType = geosx::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
@@ -69,10 +80,10 @@ LinearSolverParameters params_CG_AMG()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 300;
-  parameters.solverType = LinearSolverParameters::SolverType::cg;
   parameters.isSymmetric = true;
+  parameters.solverType = LinearSolverParameters::SolverType::cg;
   parameters.preconditionerType = LinearSolverParameters::PreconditionerType::amg;
-  parameters.amg.smootherType = geosx::LinearSolverParameters::AMG::SmootherType::gs;
+  parameters.amg.smootherType = geosx::LinearSolverParameters::AMG::SmootherType::fgs;
   parameters.amg.coarseType = geosx::LinearSolverParameters::AMG::CoarseType::direct;
   return parameters;
 }
@@ -96,17 +107,17 @@ protected:
   {
     // Create a random "true" solution vector
     Vector sol_true;
-    sol_true.createWithLocalSize( matrix.numLocalCols(), matrix.getComm() );
-    sol_true.rand();
+    sol_true.create( matrix.numLocalCols(), matrix.comm() );
+    sol_true.rand( 1984 );
 
     // Create and compute the right-hand side vector
     Vector rhs;
-    rhs.createWithLocalSize( matrix.numLocalRows(), matrix.getComm() );
+    rhs.create( matrix.numLocalRows(), matrix.comm() );
     matrix.apply( sol_true, rhs );
 
     // Create and zero out the computed solution vector
     Vector sol_comp;
-    sol_comp.createWithLocalSize( sol_true.localSize(), sol_true.getComm() );
+    sol_comp.create( sol_true.localSize(), sol_true.comm() );
     sol_comp.zero();
 
     // Create the solver and solve the system
@@ -150,7 +161,9 @@ TYPED_TEST_SUITE_P( SolverTestLaplace2D );
 
 TYPED_TEST_P( SolverTestLaplace2D, DirectSerial )
 {
-  this->test( params_DirectSerial() );
+  LinearSolverParameters params = params_DirectSerial();
+  params.isSymmetric = true;
+  this->test( params );
 }
 
 TYPED_TEST_P( SolverTestLaplace2D, DirectParallel )
@@ -163,6 +176,11 @@ TYPED_TEST_P( SolverTestLaplace2D, GMRES_ILU )
   this->test( params_GMRES_ILU() );
 }
 
+TYPED_TEST_P( SolverTestLaplace2D, CG_SGS )
+{
+  this->test( params_CG_SGS() );
+}
+
 TYPED_TEST_P( SolverTestLaplace2D, CG_AMG )
 {
   this->test( params_CG_AMG() );
@@ -172,6 +190,7 @@ REGISTER_TYPED_TEST_SUITE_P( SolverTestLaplace2D,
                              DirectSerial,
                              DirectParallel,
                              GMRES_ILU,
+                             CG_SGS,
                              CG_AMG );
 
 #ifdef GEOSX_USE_TRILINOS
@@ -203,17 +222,6 @@ protected:
   {
     globalIndex constexpr n = 100;
     geosx::testing::compute2DElasticityOperator( MPI_COMM_GEOSX, 1.0, 1.0, n, n, 10000., 0.2, this->matrix );
-
-    // Impose Dirichlet boundary conditions: fix domain bottom (first 2*(nCellsX + 1) rows of matrix)
-    this->matrix.open();
-    for( globalIndex iRow = 0; iRow < 2 * (n + 1); ++iRow )
-    {
-      if( this->matrix.getLocalRowID( iRow ) >= 0 )
-      {
-        this->matrix.clearRow( iRow, true );
-      }
-    }
-    this->matrix.close();
     this->cond_est = 1e4; // not a true condition number estimate, but enough to pass tests
   }
 };

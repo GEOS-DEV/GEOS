@@ -161,7 +161,7 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
            timeIntegrationOption::ImplicitTransient ||
            m_timeIntegrationOption == timeIntegrationOption::SteadyState )
   {
-    this->setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution, false );
+    this->setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution, false );
 
     dtReturn = this->nonlinearImplicitStep( time_n,
                                             dt,
@@ -171,24 +171,12 @@ real64 PhaseFieldDamageFEM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-real64 PhaseFieldDamageFEM::explicitStep(
-  real64 const & GEOSX_UNUSED_PARAM( time_n ),
-  real64 const & dt,
-  const int GEOSX_UNUSED_PARAM( cycleNumber ),
-  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+real64 PhaseFieldDamageFEM::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                          real64 const & dt,
+                                          const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                          DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   return dt;
-}
-
-void PhaseFieldDamageFEM::setupSystem( DomainPartition & domain,
-                                       DofManager & dofManager,
-                                       CRSMatrix< real64, globalIndex > & localMatrix,
-                                       array1d< real64 > & localRhs,
-                                       array1d< real64 > & localSolution,
-                                       bool const setSparsity )
-{
-  GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
 }
 
 void PhaseFieldDamageFEM::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),

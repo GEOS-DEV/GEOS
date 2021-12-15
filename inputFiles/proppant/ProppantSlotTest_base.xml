@@ -1,0 +1,230 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Geometry>
+    <!-- An additional column of grid cells is added to the left of the domain to mimic proppant injection boundary conditions -->
+    <Box
+      name="left0"
+      xMin="{ -0.001, -0.001, -0.001 }"
+      xMax="{ 0.001, 0.013, 0.3148 }"/>
+
+    <!-- three injection points at the inlet (left) -->
+    <Box
+      name="left1"
+      xMin="{ -0.001, -0.001, 0.07 }"
+      xMax="{ 0.001, 0.013, 0.09 }"/>
+
+    <Box
+      name="left2"
+      xMin="{ -0.001, -0.001, 0.15 }"
+      xMax="{ 0.001, 0.013, 0.17 }"/>
+
+    <Box
+      name="left3"
+      xMin="{ -0.001, -0.001, 0.22 }"
+      xMax="{ 0.001, 0.013, 0.25 }"/>
+
+    <!-- the outflow boundary at the outlet (right) -->
+    <Box
+      name="right"
+      xMin="{ -0.001, 1.21, 0.22 }"
+      xMax="{ 0.001, 1.2419, 0.25 }"/>
+
+    <!-- fracture plane -->
+    <Box
+      name="fracture"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 0.01, 1.2419, 0.3148 }"/>
+  </Geometry>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+        fieldName="pressure"
+        coefficientName="permeability"
+        coefficientModelNames="{ fracturePerm }"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="region"
+      cellBlocks="{ cb1 }"
+      materialList="{ water, sand }"/>
+
+    <SurfaceElementRegion
+      name="Fracture"
+      defaultAperture="7.62e-3"
+      materialList="{ water, fractureFilling, sand }"/>
+  </ElementRegions>
+
+<!-- SPHINX_PROPPANT_MATERIAL -->
+  <Constitutive>
+    <ProppantSlurryFluid
+      name="water"
+      referencePressure="1e5"
+      referenceDensity="1000"
+      compressibility="0.0"
+      maxProppantConcentration="0.62"
+      referenceViscosity="0.001"
+      referenceProppantDensity="2550.0"/>
+
+    <ParticleFluid
+      name="sand"
+      particleSettlingModel="Stokes"
+      hinderedSettlingCoefficient="4.5"
+      proppantDensity="2550.0"
+      proppantDiameter="4.5e-4"
+      maxProppantConcentration="0.62"/>
+
+    <ProppantSolidProppantPermeability
+      name="fractureFilling"
+      solidModelName="nullSolid"
+      porosityModelName="fracturePorosity"
+      permeabilityModelName="fracturePerm"/>
+    
+    <NullModel
+      name="nullSolid"/>
+
+    <ProppantPorosity
+      name="fracturePorosity"
+      defaultReferencePorosity="1.00"
+      maxProppantConcentration="0.62"/>
+
+    <ProppantPermeability
+      name="fracturePerm"
+      proppantDiameter="4.5e-4"
+      maxProppantConcentration="0.62"/>
+  </Constitutive>
+<!-- SPHINX_PROPPANT_MATERIAL_END -->
+
+<!-- SPHINX_PROPPANT_BC -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="frac"
+      initialCondition="1"
+      setNames="{ fracture }"
+      objectPath="faceManager"
+      fieldName="ruptureState"
+      scale="1"/>
+
+    <FieldSpecification
+      name="fracAp"
+      initialCondition="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="elementAperture"
+      scale="7.62e-3"
+      setNames="{ fracture }"/>
+
+    <FieldSpecification
+      name="frac1"
+      initialCondition="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="0.0"
+      component="0"
+      setNames="{ fracture }"/>
+
+    <FieldSpecification
+      name="frac2"
+      initialCondition="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="proppantConcentration"
+      scale="0.0"
+      component="0"
+      setNames="{ fracture }"/>
+
+    <FieldSpecification
+      name="frac3"
+      initialCondition="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="isProppantBoundary"
+      component="0"
+      setNames="{ fracture }"/>
+
+    <FieldSpecification
+      name="frac4"
+      initialCondition="1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="isProppantBoundary"
+      scale="1"
+      component="0"
+      setNames="{ left0 }"/>
+
+    <SourceFlux
+      name="left1a"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="-0.14"
+      component="0"
+      setNames="{ left1 }"/>
+
+    <FieldSpecification
+      name="left1b"
+      objectPath="ElementRegions/Fracture"
+      fieldName="proppantConcentration"
+      scale="0.07"
+      component="0"
+      setNames="{ left1 }"/>
+
+    <SourceFlux
+      name="left2a"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="-0.14"
+      component="0"
+      setNames="{ left2 }"/>
+
+    <FieldSpecification
+      name="left2b"
+      objectPath="ElementRegions/Fracture"
+      fieldName="proppantConcentration"
+      scale="0.07"
+      component="0"
+      setNames="{ left2 }"/>
+
+    <SourceFlux
+      name="left3a"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="-0.14"
+      component="0"
+      setNames="{ left3 }"/>
+
+    <FieldSpecification
+      name="left3b"
+      objectPath="ElementRegions/Fracture"
+      fieldName="proppantConcentration"
+      scale="0.07"
+      component="0"
+      setNames="{ left3 }"/>
+
+    <FieldSpecification
+      name="right1"
+      objectPath="ElementRegions/Fracture"
+      fieldName="pressure"
+      scale="0.0"
+      component="0"
+      setNames="{ right }"/>
+
+    <FieldSpecification
+      name="right2"
+      objectPath="ElementRegions/Fracture"
+      fieldName="proppantConcentration"
+      scale="0.0"
+      component="0"
+      setNames="{ right }"/>
+  </FieldSpecifications>
+<!-- SPHINX_PROPPANT_BC_END -->
+
+
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

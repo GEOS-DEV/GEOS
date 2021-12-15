@@ -59,8 +59,6 @@ public:
   using BASE::m_rhs;
   using BASE::m_solution;
   using BASE::m_localMatrix;
-  using BASE::m_localRhs;
-  using BASE::m_localSolution;
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
 
@@ -156,8 +154,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = true ) override;
 
   virtual void
@@ -205,6 +203,14 @@ public:
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   /**@}*/
+
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void initializePreSubGroups() override;
 

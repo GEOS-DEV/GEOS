@@ -18,7 +18,11 @@ contained within a single xml file that is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+  inputFiles/proppant/ProppantSlotTest_base.xml
+
+.. code-block:: console
+
+  inputFiles/proppant/ProppantSlotTest_benchmark.xml
 
 
 ------------------------------------------------------------------
@@ -64,7 +68,7 @@ Here, a structured three-dimensional mesh is generated with ``C3D8`` as the elem
 This mesh is defined as a cell block with the name ``cb1``.
 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_MESH -->
   :end-before: <!-- SPHINX_PROPPANT_MESH_END -->
@@ -87,7 +91,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 - the proppant transport solver for the fracture region, a solver of type ``ProppantTransport`` called here ``ProppantTransport`` (see :ref:`ProppantTransport` for more information),
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
   :end-before: <!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
@@ -95,7 +99,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 - the single-phase flow solver, a solver of type ``SinglePhaseProppantFVM`` called here ``SinglePhaseFVM``,
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_FLOWSOLVER -->
   :end-before: <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
@@ -103,7 +107,7 @@ As demonstrated in this example, to setup a coupled proppant transport solver, w
 
 - the coupling solver (``FlowProppantTransport``) that binds the two single-physics solvers above, which is named as ``FlowProppantTransport``
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
   :end-before: <!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
@@ -121,7 +125,7 @@ For this slot test, 30/50 mesh proppant is injected via the three inlets and flo
 The viscosity of carrying fluid is 0.001 Pa.s to resemble slickwater fracturing. In this example, the solid and fluid materials are named as ``sand`` and ``water`` respectively. 
 Proppant characterization and fluid rheology are specified in the ``Constitutive`` section: 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_base.xml
     :language: xml
     :start-after: <!-- SPHINX_PROPPANT_MATERIAL -->
     :end-before: <!-- SPHINX_PROPPANT_MATERIAL_END -->
@@ -143,7 +147,7 @@ These boundary conditions are set up through the ``FieldSpecifications`` section
 At a constant injection rate, the slurry is equally flowing into the open channel through three inlets.
 
 
-.. literalinclude:: ../../../../../../src/coreComponents/physicsSolvers/multiphysics/benchmarks/Proppant-transport-validation-case.xml
+.. literalinclude:: ../../../../../../inputFiles/proppant/ProppantSlotTest_base.xml
     :language: xml
     :start-after: <!-- SPHINX_PROPPANT_BC -->
     :end-before: <!-- SPHINX_PROPPANT_BC_END -->

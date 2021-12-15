@@ -7,21 +7,25 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
+     fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
      fluidFlow/CompositionalMultiphaseBaseKernels.hpp
      fluidFlow/CompositionalMultiphaseFVM.hpp
      fluidFlow/CompositionalMultiphaseFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseHybridFVM.hpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
+     fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/FlowSolverBase.hpp
+     fluidFlow/FlowSolverBaseExtrinsicData.hpp
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp          
      fluidFlow/proppantTransport/ProppantTransport.hpp
      fluidFlow/proppantTransport/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
+     fluidFlow/SinglePhaseBaseExtrinsicData.hpp     
      fluidFlow/SinglePhaseBaseKernels.hpp
      fluidFlow/SinglePhaseFVM.hpp
      fluidFlow/SinglePhaseFVMKernels.hpp          
-     fluidFlow/SinglePhaseHybridFVM.hpp     
+     fluidFlow/SinglePhaseHybridFVM.hpp
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
@@ -66,7 +70,9 @@ set( physicsSolvers_headers
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.hpp
      surfaceGeneration/ParallelTopologyChange.hpp
      surfaceGeneration/SurfaceGenerator.hpp
+     wavePropagation/WaveSolverBase.hpp
      wavePropagation/AcousticWaveEquationSEM.hpp
+     wavePropagation/AcousticWaveEquationSEMKernel.hpp
    )
 
 #
@@ -119,6 +125,7 @@ set( physicsSolvers_sources
      surfaceGeneration/EmbeddedSurfacesParallelSynchronization.cpp
      surfaceGeneration/ParallelTopologyChange.cpp
      surfaceGeneration/SurfaceGenerator.cpp
+     wavePropagation/WaveSolverBase.cpp
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 

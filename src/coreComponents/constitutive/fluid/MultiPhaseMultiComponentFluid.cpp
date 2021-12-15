@@ -35,14 +35,24 @@ template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, ty
   TwoPhaseCatalogNames {};
 
 template<> class
-  TwoPhaseCatalogNames< PVTProps::BrineCO2Density,
-                        PVTProps::BrineViscosity,
+  TwoPhaseCatalogNames< PVTProps::PhillipsBrineDensity,
+                        PVTProps::PhillipsBrineViscosity,
                         PVTProps::SpanWagnerCO2Density,
                         PVTProps::FenghourCO2Viscosity,
                         PVTProps::CO2Solubility >
 {
 public:
-  static string name() { return "CO2BrineFluid"; }
+  static string name() { return "CO2BrinePhillipsFluid"; }
+};
+template<> class
+  TwoPhaseCatalogNames< PVTProps::EzrokhiBrineDensity,
+                        PVTProps::EzrokhiBrineViscosity,
+                        PVTProps::SpanWagnerCO2Density,
+                        PVTProps::FenghourCO2Viscosity,
+                        PVTProps::CO2Solubility >
+{
+public:
+  static string name() { return "CO2BrineEzrokhiFluid"; }
 };
 } // end namespace
 
@@ -84,6 +94,14 @@ deliverClone( string const & name, Group * const parent ) const
 
   return clone;
 }
+
+template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
+integer MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::getWaterPhaseIndex() const
+{
+  string const expectedWaterPhaseNames[] =  { "Water", "water", "Liquid", "liquid" };
+  return PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
+}
+
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 void MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::postProcessInput()
@@ -249,14 +267,21 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
   m_flash( flashWrapper.createKernelWrapper() )
 {}
 
-// explicit instantiation of the model template; unfortunately we can't use CO2BrineFluid alias for this
-template class MultiPhaseMultiComponentFluid< PVTProps::BrineCO2Density,
-                                              PVTProps::BrineViscosity,
+// explicit instantiation of the model template; unfortunately we can't use CO2BrinePhillipsFluid alias for this
+template class MultiPhaseMultiComponentFluid< PVTProps::PhillipsBrineDensity,
+                                              PVTProps::PhillipsBrineViscosity,
                                               PVTProps::SpanWagnerCO2Density,
                                               PVTProps::FenghourCO2Viscosity,
                                               PVTProps::CO2Solubility >;
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineFluid, string const &, Group * const )
+template class MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
+                                              PVTProps::EzrokhiBrineViscosity,
+                                              PVTProps::SpanWagnerCO2Density,
+                                              PVTProps::FenghourCO2Viscosity,
+                                              PVTProps::CO2Solubility >;
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrinePhillipsFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineEzrokhiFluid, string const &, Group * const )
 
 } //namespace constitutive
 

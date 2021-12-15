@@ -25,7 +25,6 @@
 #include "constitutive/capillaryPressure/layouts.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
@@ -904,59 +903,65 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
 void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, localIndex numPhases, ARGS && ... args )
 {
-  internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+  // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
+  if( numPhases == 2 )
   {
-    if( numPhases == 2 )
+    if( numComps == 2 )
     {
-      if( numComps == 2 )
-      {
-        KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else if( numComps == 3 )
-      {
-        KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else if( numComps == 4 )
-      {
-        KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else if( numComps == 5 )
-      {
-        KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else
-      {
-        GEOSX_ERROR( "Unsupported number of components: " << numComps );
-      }
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 2, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
-    else if( numPhases == 3 )
+    else if( numComps == 3 )
     {
-      if( numComps == 2 )
-      {
-        KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else if( numComps == 3 )
-      {
-        KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else if( numComps == 4 )
-      {
-        KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else if( numComps == 5 )
-      {
-        KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... );
-      }
-      else
-      {
-        GEOSX_ERROR( "Unsupported number of components: " << numComps );
-      }
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 3, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 4 )
+    {
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 4, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 5 )
+    {
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 5, 2, IP_TYPE >( std::forward< ARGS >( args )... ); } );
     }
     else
     {
-      GEOSX_ERROR( "Unsupported number of phases: " << numPhases );
+      GEOSX_ERROR( "Unsupported number of components: " << numComps );
     }
-  } );
+  }
+  else if( numPhases == 3 )
+  {
+    if( numComps == 2 )
+    {
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 2, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 3 )
+    {
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 3, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 4 )
+    {
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 4, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else if( numComps == 5 )
+    {
+      internal::KernelLaunchSelectorFaceSwitch( numFacesInElem, [&] ( auto NF )
+      { KERNELWRAPPER::template launch< NF(), 5, 3, IP_TYPE >( std::forward< ARGS >( args )... ); } );
+    }
+    else
+    {
+      GEOSX_ERROR( "Unsupported number of components: " << numComps );
+    }
+  }
+  else
+  {
+    GEOSX_ERROR( "Unsupported number of phases: " << numPhases );
+  }
 }
 
 } // namespace CompositionalMultiphaseHybridFVMKernels

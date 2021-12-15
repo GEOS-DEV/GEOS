@@ -1,0 +1,112 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./ProppantSlotTest_base.xml"/>
+  </Included>
+ 
+<!-- SPHINX_PROPPANT_MESH -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ 0, 1.2319 }"
+      zCoords="{ 0, 0.3048 }"
+      nx="{ 2 }"
+      ny="{ 97 }"
+      nz="{ 24 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+<!-- SPHINX_PROPPANT_MESH_END -->
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="preFracture"
+      target="/Solvers/SurfaceGen"/>
+
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="0.1"
+      target="/Solvers/FlowProppantTransport"/>
+
+    <PeriodicEvent
+      name="outputs"
+      target="/Outputs/siloOutput"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
+  </Events>
+
+  <Solvers>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
+    <ProppantTransport
+      name="ProppantTransport"
+      logLevel="1"
+      updateProppantPacking="1"
+      proppantDiameter="4.5e-4"
+      frictionCoefficient="0.04"
+      criticalShieldsNumber="0.0"
+      maxProppantConcentration="0.62"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      proppantNames="{ sand }"
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="None"
+        maxTimeStepCuts="5"/>
+      <LinearSolverParameters
+        solverType="direct"
+        krylovTol="1.0e-7"/>
+    </ProppantTransport>
+<!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
+
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
+    <FlowProppantTransport
+      name="FlowProppantTransport"
+      proppantSolverName="ProppantTransport"
+      flowSolverName="SinglePhaseFVM"
+      targetRegions="{ Fracture }"
+      logLevel="1"/>
+<!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
+
+
+<!-- SPHINX_PROPPANT_FLOWSOLVER -->
+    <SinglePhaseProppantFVM
+      name="SinglePhaseFVM"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"
+      fluidNames="{ water }"
+      solidNames="{ fractureFilling }"
+      permeabilityNames="{ fracturePerm }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"
+        lineSearchAction="None"
+        newtonMinIter="0"/>
+      <LinearSolverParameters
+        solverType="direct"	 
+        krylovTol="1.0e-7"/>
+    </SinglePhaseProppantFVM>
+<!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Fracture }"
+      solidMaterialNames="{ granite }"
+      rockToughness="1e6"
+      mpiCommOrder="1"/>
+  </Solvers>
+ 
+</Problem>

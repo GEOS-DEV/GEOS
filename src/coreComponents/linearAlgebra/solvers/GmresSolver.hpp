@@ -59,11 +59,6 @@ public:
                LinearOperator< Vector > const & matrix,
                LinearOperator< Vector > const & precond );
 
-  /**
-   * @brief Virtual destructor.
-   */
-  virtual ~GmresSolver() override;
-
   ///@}
 
   /**
@@ -103,7 +98,7 @@ protected:
   array1d< VectorTemp > m_kspace;
 
   /// Flag indicating whether kspace vectors have been created
-  bool m_kspaceInitialized;
+  bool mutable m_kspaceInitialized;
 };
 
 } // namespace geosx
