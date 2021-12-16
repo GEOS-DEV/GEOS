@@ -33,14 +33,14 @@ This makes it easy to go back and forth between calibration and simulation.
 The first step is to define a parameterized fluid model to test.
 Here, we create a particular type of CO2-Brine mixture:
 
-.. literalinclue:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_END -->
 
 We also define two time-history functions for the pressure (Pascal units) and temperature (Kelvin units) conditions we want to explore.
 
-.. literalinclue:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_FUNCTIONS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_FUNCTIONS_END -->
@@ -51,7 +51,7 @@ Here, we fix the temperature at 350K and simply ramp up pressure from 1 MPa to 5
 
 A ``PVTDriver`` is then added as a ``Task``, a particular type of executable event often used for simple actions. 
 
-.. literalinclue:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_TASKS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_TASKS_END -->
@@ -65,7 +65,7 @@ The ``logLevel`` parameter controls the verbosity of log output during execution
 The driver task is added as a ``SoloEvent`` to the event queue.  
 This leads to a trivial event queue, since all we do is launch the driver and then quit.
 
-.. literalinclue:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
+.. literalinclude:: ../../unitTests/constitutiveTests/testPVT_docExample.xml
   :language: xml
   :start-after: <!-- SPHINX_PVTDRIVER_EVENTS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_EVENTS_END -->
