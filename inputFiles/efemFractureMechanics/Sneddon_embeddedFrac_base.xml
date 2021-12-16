@@ -2,7 +2,8 @@
 
 <Problem>
   <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
+    gravityVector="{0.0, 0.0, 0.0}">
+  <!-- SPHINX_SNEDDON_SOLVER -->
     <SolidMechanicsEmbeddedFractures
       name="mechSolve"
       targetRegions="{ Domain, Fracture }"
@@ -16,7 +17,9 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        directParallel="0"/>
+        solverType="direct"
+        directParallel="0"
+        logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
     <SolidMechanicsLagrangianSSLE
@@ -35,6 +38,19 @@
       logLevel="1"
       mpiCommOrder="1"/>
   </Solvers>
+  <!-- SPHINX_SNEDDON_SOLVER_END -->
+
+  <!-- SPHINX_SNEDDON_GEOMETRY -->
+  <Geometry>
+    <BoundedPlane
+      name="FracturePlane"
+      normal="{1.0, 0.0, 0.0}"
+      origin="{0.0, 0.0, 0.0}"
+      lengthVector="{0.0, 1.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{ 2, 10 }"/>
+  </Geometry>
+  <!-- SPHINX_SNEDDON_GEOMETRY_END -->  
 
   <NumericalMethods>
     <FiniteElements>
@@ -54,26 +70,33 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ }"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
   <!-- SPHINX_SNEDDON_REGIONS_END -->
   
 
-
+  <!-- SPHINX_SNEDDON_MATERIAL-->
   <Constitutive>
     <ElasticIsotropic
       name="rock"
       defaultDensity="2700"
-      defaultBulkModulus="5.5556e9"
-      defaultShearModulus="4.16667e9"/>
+      defaultBulkModulus="16.66666666666666e9"
+      defaultShearModulus="1.0e10"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>
-
   </Constitutive>
+  <!-- SPHINX_SNEDDON_MATERIAL_END-->
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>
+  </Functions>
 
   <!-- SPHINX_SNEDDON_BC -->
   <FieldSpecifications>
@@ -91,15 +114,7 @@
       fieldName="TotalDisplacement"
       component="1"
       scale="0.0"
-      setNames="{ ypos }"/>
-
-    <FieldSpecification
-      name="ynegconstraint"
-      objectPath="nodeManager"
-      fieldName="TotalDisplacement"
-      component="1"
-      scale="-0.0"
-      setNames="{ yneg }"/>
+      setNames="{ yneg, ypos }"/>
 
     <FieldSpecification
       name="zconstraint"
@@ -108,17 +123,16 @@
       component="2"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
-
-    <FieldSpecification
+      
+      <FieldSpecification
       name="Traction"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
       fieldName="fractureTraction"
       component="0"
-      scale="-1.00e5"/>
+      scale="-2.0e6"/>      
   </FieldSpecifications>
   <!-- SPHINX_SNEDDON_BC_END -->
-
 
   <Functions>
     <TableFunction
@@ -127,25 +141,27 @@
       values="{ 1.0e-6, 1.0e-4 }"/>
   </Functions>
   
+  <!-- SPHINX_SNEDDON_TASK -->
   <Tasks>
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="displacementJump"/>
+      fieldName="displacementJump"/>   
   </Tasks>
-  
+  <!-- SPHINX_SNEDDON_TASK_END -->
+
   <Outputs>
     <VTK
       name="vtkOutput"
-      plotFileRoot="Sneddon"
+      plotLevel="2"
       writeBinaryData="0"/>
-
-    <Restart
-      name="restartOutput"/>
       
     <TimeHistory
       name="timeHistoryOutput"
-      sources="{ /Tasks/displacementJumpCollection }"
-      filename="displacementJump_history"/>  
+      sources="{/Tasks/displacementJumpCollection}"
+      filename="displacementJump_embeddedFrac" />
+      
+     <Restart
+      name="restartOutput"/> 
   </Outputs>
 </Problem>

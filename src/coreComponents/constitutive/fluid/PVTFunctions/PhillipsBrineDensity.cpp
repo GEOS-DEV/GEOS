@@ -13,10 +13,10 @@
  */
 
 /**
- * @file BrineCO2Density.cpp
+ * @file PhillipsBrineDensity.cpp
  */
 
-#include "constitutive/fluid/PVTFunctions/BrineCO2Density.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
 
 #include "functions/FunctionManager.hpp"
 
@@ -112,10 +112,10 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 
 } // namespace
 
-BrineCO2Density::BrineCO2Density( string const & name,
-                                  string_array const & inputParams,
-                                  string_array const & componentNames,
-                                  array1d< real64 > const & componentMolarWeight ):
+PhillipsBrineDensity::PhillipsBrineDensity( string const & name,
+                                            string_array const & inputParams,
+                                            string_array const & componentNames,
+                                            array1d< real64 > const & componentMolarWeight ):
   PVTFunctionBase( name,
                    componentNames,
                    componentMolarWeight )
@@ -129,8 +129,8 @@ BrineCO2Density::BrineCO2Density( string const & name,
   m_brineDensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-BrineCO2Density::KernelWrapper
-BrineCO2Density::createKernelWrapper() const
+PhillipsBrineDensity::KernelWrapper
+PhillipsBrineDensity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_brineDensityTable,
@@ -138,7 +138,7 @@ BrineCO2Density::createKernelWrapper() const
                         m_waterIndex );
 }
 
-REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineCO2Density, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, PhillipsBrineDensity, string const &, string_array const &, string_array const &, array1d< real64 > const & )
 
 } // namespace PVTProps
 

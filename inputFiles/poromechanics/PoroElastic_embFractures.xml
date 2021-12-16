@@ -106,7 +106,7 @@
         name="singlePhaseTPFA"
         fieldName="pressure"
         coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm }"/>
+        coefficientModelNames="{ rockPerm, fracturePerm, fractureContact }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -119,7 +119,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling }"
+      materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -172,7 +172,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

@@ -578,7 +578,7 @@ public:
 
     //constexpr typename MESH_DATA_TRAIT::DataType defaultValue = MESH_DATA_TRAIT::defaultValue;
     // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+    typename MESH_DATA_TRAIT::dataType defaultValue( MESH_DATA_TRAIT::defaultValue() );
 
     return this->registerWrapper< typename MESH_DATA_TRAIT::type >( MESH_DATA_TRAIT::key() ).
              setApplyDefaultValue( defaultValue ).
@@ -648,7 +648,7 @@ public:
   template< typename MESH_DATA_TRAIT >
   dataRepository::Wrapper< typename MESH_DATA_TRAIT::Type > &
   registerExtrinsicData( string const & nameOfRegisteringObject,
-                         MESH_DATA_TRAIT const & extrinisicDataTrait )
+                         MESH_DATA_TRAIT const & extrinsicDataTrait )
   {
     // These are required to work-around the need for instantiation of
     // the static constexpr trait components. This will not be required once
@@ -659,9 +659,9 @@ public:
     string const description = MESH_DATA_TRAIT::description;
 
     // This is required for the Tensor classes.
-    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue );
+    typename MESH_DATA_TRAIT::DataType defaultValue( MESH_DATA_TRAIT::defaultValue() );
 
-    return *(this->registerWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).
+    return *(this->registerWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).
                setApplyDefaultValue( defaultValue ).
                setPlotLevel( plotLevel ).
                setDescription( description ).
@@ -670,27 +670,27 @@ public:
 
   template< typename MESH_DATA_TRAIT0, typename MESH_DATA_TRAIT1, typename ... MESH_DATA_TRAITS >
   void registerExtrinsicData( string const & nameOfRegisteringObject,
-                              MESH_DATA_TRAIT0 const & extrinisicDataTrait0,
-                              MESH_DATA_TRAIT1 const & extrinisicDataTrait1,
-                              MESH_DATA_TRAITS && ... extrinisicDataTraits )
+                              MESH_DATA_TRAIT0 const & extrinsicDataTrait0,
+                              MESH_DATA_TRAIT1 const & extrinsicDataTrait1,
+                              MESH_DATA_TRAITS && ... extrinsicDataTraits )
   {
-    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject, extrinisicDataTrait0 );
+    registerExtrinsicData< MESH_DATA_TRAIT0 >( nameOfRegisteringObject, extrinsicDataTrait0 );
     registerExtrinsicData< MESH_DATA_TRAIT1,
                            MESH_DATA_TRAITS... >( nameOfRegisteringObject,
-                                                  extrinisicDataTrait1,
-                                                  std::forward< MESH_DATA_TRAITS >( extrinisicDataTraits )... );
+                                                  extrinsicDataTrait1,
+                                                  std::forward< MESH_DATA_TRAITS >( extrinsicDataTraits )... );
   }
 
   template< typename MESH_DATA_TRAIT >
-  auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait ) const
+  auto const & getExtrinsicData( MESH_DATA_TRAIT const & extrinsicDataTrait ) const
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).referenceAsView();
   }
 
   template< typename MESH_DATA_TRAIT >
-  auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinisicDataTrait )
+  auto & getExtrinsicData( MESH_DATA_TRAIT const & extrinsicDataTrait )
   {
-    return this->getWrapper< typename MESH_DATA_TRAIT::Type >( extrinisicDataTrait.viewKey ).referenceAsView();
+    return this->getWrapper< typename MESH_DATA_TRAIT::type >( extrinsicDataTrait.key() ).referenceAsView();
   }
 #endif
 

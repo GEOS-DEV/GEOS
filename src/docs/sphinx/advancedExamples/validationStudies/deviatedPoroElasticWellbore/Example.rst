@@ -48,19 +48,19 @@ Poroelastic solver
 
 The coupled ``Poroelastic`` solver, that defines a coupling strategy between the solid mechanics solver ``SolidMechanicsLagrangianSSLE`` and the single phase flow solver ``SinglePhaseFVM``, is required for solving this wellbore problem.
 
-.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_PoroelasticSolver -->
   :end-before: <!-- SPHINX_PoroelasticSolverEnd -->
 
 
-.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SolidMechanicsSolver -->
   :end-before: <!-- SPHINX_SolidMechanicsSolverEnd -->
 
 
-.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_base.xml
+.. literalinclude:: ../../../../../../inputFiles/wellbore/DeviatedPoroElasticWellbore_Injection_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_SinglePhaseFVM -->
   :end-before: <!-- SPHINX_SinglePhaseFVMEnd -->

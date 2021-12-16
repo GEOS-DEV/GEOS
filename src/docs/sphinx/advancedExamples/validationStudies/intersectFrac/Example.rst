@@ -122,7 +122,7 @@ Constitutive laws
 For this problem, we simulate the elastic deformation and fracture slippage caused by the uniaxial compression.
 A homogeneous and isotropic domain with one solid material is assumed, and its mechanical properties are specified in the ``Constitutive`` section. 
 
-Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction angle ``frictionAngle="0.523598776"`` are specified. 
+Fracture surface slippage is assumed to be governed by the Coulomb failure criterion. The contact constitutive behavior is named ``fractureMaterial`` in the ``Coulomb`` block, where cohesion ``cohesion="0.0"`` and friction coefficient ``frictionCoefficient="0.577350269"`` are specified. 
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
     :language: xml
@@ -143,7 +143,7 @@ Time history function
 
 In the ``Tasks`` section, ``PackCollection`` tasks are defined to collect time history information from fields. 
 Either the entire field or specified named sets of indices in the field can be collected. 
-In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="localJump"`` on the fracture surface.
+In this example, ``tractionCollection`` and ``displacementJumpCollection`` tasks are specified to output the local traction ``fieldName="traction"`` and relative displacement ``fieldName="displacementJump"`` on the fracture surface.
 
 .. literalinclude:: ../../../../../../inputFiles/lagrangianContactMechanics/ContactMechanics_TFrac_base.xml
     :language: xml
@@ -191,7 +191,7 @@ The parameters used in the simulation are summarized in the following table.
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\sigma_y` | Remote Stress           | [MPa]            | -100.0             |
 +------------------+-------------------------+------------------+--------------------+
-| :math:`P_in`     | Internal Pressure       | [MPa]            | -100.0             |
+| :math:`P_{in}`   | Internal Pressure       | [MPa]            | -100.0             |
 +------------------+-------------------------+------------------+--------------------+
 | :math:`\theta`   | Friction Angle          | [Degree]         | 30.0               |
 +------------------+-------------------------+------------------+--------------------+
@@ -263,12 +263,12 @@ The figure below compares the results from GEOSX (marks) and the corresponding l
 
         param = tree.find('Constitutive/ElasticIsotropic')
 
-        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionAngle"])
+        mechanicalParameters = dict.fromkeys(["bulkModulus", "shearModulus", "frictionCoefficient"])
         mechanicalParameters["bulkModulus"] = float(param.get("defaultBulkModulus"))
         mechanicalParameters["shearModulus"] = float(param.get("defaultShearModulus"))
 
         param = tree.find('Constitutive/Coulomb')
-        mechanicalParameters["frictionAngle"] = float(param.get("frictionAngle"))
+        mechanicalParameters["frictionCoefficient"] = float(param.get("frictionCoefficient"))
         return mechanicalParameters
 
 
@@ -342,7 +342,7 @@ The figure below compares the results from GEOSX (marks) and the corresponding l
 
         # Local Shear Displacement
         hf = h5py.File(hdf5File2Path, 'r')
-        jump = hf.get('localJump')
+        jump = hf.get('displacementJump')
         jump = np.array(jump)
         displacementJump = jump[-1,:,1]
         aperture = jump[-1,:,0]

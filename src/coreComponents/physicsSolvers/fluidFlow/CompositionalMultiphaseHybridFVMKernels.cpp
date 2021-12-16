@@ -23,6 +23,7 @@
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
 namespace geosx
@@ -1533,9 +1534,9 @@ FluxKernel::
 
   // get the cell-centered pressures
   arrayView1d< real64 const > const & elemPres  =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
   arrayView1d< real64 const > const & dElemPres =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
@@ -1550,7 +1551,7 @@ FluxKernel::
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::gravityCoefString() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::gravityCoefficient::key() );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces

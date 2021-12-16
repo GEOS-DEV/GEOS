@@ -71,13 +71,6 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
-                            bool const setSparsity ) override;
-
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
