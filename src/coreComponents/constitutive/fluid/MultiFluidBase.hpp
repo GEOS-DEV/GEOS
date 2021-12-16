@@ -67,8 +67,8 @@ public:
   arrayView1d< string const > componentNames() const { return m_componentNames; }
 
   /**
-   * @param ic component index
-   * @return molar weight of ic-th fluid component
+   * @brief Getter for the fluid component molar weights
+   * @return an arrayView1d storing the component molar weights
    */
   arrayView1d< real64 const > componentMolarWeights() const { return m_componentMolarWeight; }
 
