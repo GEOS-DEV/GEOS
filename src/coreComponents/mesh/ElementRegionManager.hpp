@@ -922,50 +922,6 @@ public:
   ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
   constructFullConstitutiveAccessor( constitutive::ConstitutiveManager const & cm );
 
-  /**
-   * @brief A struct to automatically construct and store element view accessors
-   * @struct StencilAccessors
-   * @tparam TRAITS the pack containing the types of the fields
-   */
-  template< typename ... TRAITS >
-  struct StencilAccessors
-  {
-    /// the tuple storing all the accessors
-    std::tuple< ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > accessors;
-
-    /**
-     * @brief Constructor for the struct
-     * @param[in] elemManager a reference to the elemRegionManager
-     * @param[in] solverName the name of the solver creating the view accessors
-     */
-    StencilAccessors( ElementRegionManager const & elemManager,
-                      string const & solverName );
-  };
-
-  /**
-   * @brief A struct to automatically construct and store material view accessors
-   * @struct StencilMaterialAccessors
-   * @tparam TRAITS the pack containing the types of the material fields
-   */
-  template< typename ... TRAITS >
-  struct StencilMaterialAccessors
-  {
-    /// the tuple storing all the material accessors
-    std::tuple< ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > accessors;
-
-    /**
-     * @brief Constructor for the struct
-     * @param[in] elemManager a reference to the elemRegionManager
-     * @param[in] solverName the name of the solver creating the view accessors
-     * @param[in] regionNames the name of the solver target regions
-     * @param[in] materialNames the name of the solver material names
-     */
-    StencilMaterialAccessors( ElementRegionManager const & elemManager,
-                              string const & solverName,
-                              arrayView1d< string const > const & regionNames,
-                              arrayView1d< string const > const & materialNames );
-  };
-
   using Group::packSize;
   using Group::pack;
   using ObjectManagerBase::packGlobalMapsSize;
@@ -1593,68 +1549,6 @@ ElementRegionManager::constructFullConstitutiveAccessor( constitutive::Constitut
   }
   return accessor;
 }
-
-
-namespace internal
-{
-
-// TODO: if everyone likes the new accessors, move this somewhere, ideally to LvArray::typeManipulation
-template< class F, class ... Ts, std::size_t ... Is >
-void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F func, std::index_sequence< Is ... > )
-{
-  using expander = int[];
-  (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
-}
-
-template< class F, class ... Ts >
-void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
-{
-  forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
-}
-
-}
-
-template< typename ... TRAITS >
-ElementRegionManager::StencilAccessors< TRAITS ... >::StencilAccessors( ElementRegionManager const & elemManager,
-                                                                        string const & solverName )
-{
-  std::tuple< ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > & allAccessors = accessors;
-  internal::forEachArgInTuple( std::tuple< TRAITS ... >{}, [&elemManager, &solverName, &allAccessors]( auto && t, auto idx )
-  {
-    GEOSX_UNUSED_VAR( t );
-    using TRAIT = TYPEOFREF( t );
-
-    auto & acc = std::get< idx() >( allAccessors );
-    acc = elemManager.constructExtrinsicAccessor< TRAIT >();
-    acc.setName( solverName + "/accessors/" + TRAIT::key() );
-  } );
-}
-
-template< typename ... TRAITS >
-ElementRegionManager::StencilMaterialAccessors< TRAITS ... >::StencilMaterialAccessors( ElementRegionManager const & elemManager,
-                                                                                        string const & solverName,
-                                                                                        arrayView1d< string const > const & regionNames,
-                                                                                        arrayView1d< string const > const & materialNames )
-{
-  if( materialNames.empty() )
-  {
-    return; // if the material model does not exist (i.e., no capillary pressure), do not do anything
-  }
-  std::tuple< ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > & allAccessors = accessors;
-  internal::forEachArgInTuple( std::tuple< TRAITS ... >{}, [&elemManager, regionNames, materialNames, &solverName, &allAccessors]( auto && t, auto idx )
-  {
-    GEOSX_UNUSED_VAR( t );
-    using TRAIT = TYPEOFREF( t );
-
-    auto & acc = std::get< idx() >( allAccessors );
-    bool const allowMissingViews = false;
-    acc = elemManager.constructMaterialExtrinsicAccessor< TRAIT >( regionNames,
-                                                                   materialNames,
-                                                                   allowMissingViews );
-    acc.setName( solverName + "/accessors/" + TRAIT::key() );
-  } );
-}
-
 
 }
 #endif /* GEOSX_MESH_ELEMENTREGIONMANAGER_HPP */

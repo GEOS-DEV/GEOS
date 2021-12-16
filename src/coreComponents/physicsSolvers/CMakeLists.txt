@@ -29,6 +29,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
+     fluidFlow/StencilAccessors.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/SinglePhaseWell.hpp

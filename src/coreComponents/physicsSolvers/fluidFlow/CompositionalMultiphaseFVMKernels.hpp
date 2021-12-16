@@ -28,12 +28,13 @@
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "mesh/ElementRegionManager.hpp"
-#include "mesh/utilities/MeshMapUtilities.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
 namespace geosx
@@ -113,14 +114,10 @@ struct PhaseMobilityKernel
 /******************************** FaceBasedAssemblyKernel ********************************/
 
 /**
- * @class FaceBasedAssemblyKernel
- * @tparam NUM_COMP number of fluid components
- * @tparam NUM_DOF number of degrees of freedom
- * @tparam STENCILWRAPPER the type of the stencil wrapper
- * @brief Define the interface for the assembly kernel in charge of flux terms
+ * @brief Base class for FaceBasedAssemblyKernel that holds all data not dependent
+ *        on template parameters (like stencil type and number of components/dofs).
  */
-template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel
+class FaceBasedAssemblyKernelBase
 {
 public:
 
@@ -133,41 +130,136 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using DofNumberAccessor =
-    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
+  using DofNumberAccessor = ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >;
 
   using CompFlowAccessors =
-    ElementRegionManager::
-      StencilAccessors< extrinsicMeshData::ghostRank,   // 0
-                        extrinsicMeshData::flow::gravityCoefficient,   // 1
-                        extrinsicMeshData::flow::pressure,   // 2
-                        extrinsicMeshData::flow::deltaPressure,   // 3
-                        extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,   // 4
-                        extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,   // 5
-                        extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,   // 6
-                        extrinsicMeshData::flow::phaseMobility,   // 7
-                        extrinsicMeshData::flow::dPhaseMobility_dPressure,   // 8
-                        extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >;   // 9
+    StencilAccessors< extrinsicMeshData::ghostRank,
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::phaseMobility,
+                      extrinsicMeshData::flow::dPhaseMobility_dPressure,
+                      extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseMassDensity,   // 0
-                                extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,   // 1
-                                extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,   // 2
-                                extrinsicMeshData::multifluid::phaseCompFraction,   // 3
-                                extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,   // 4
-                                extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;   // 5
+    StencilAccessors< extrinsicMeshData::multifluid::phaseMassDensity,
+                      extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseCompFraction,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
   using CapPressureAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::cappres::phaseCapPressure,   // 0
-                                extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;   // 1
+    StencilAccessors< extrinsicMeshData::cappres::phaseCapPressure,
+                      extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
-  using PermeabilityAccessors
-    = ElementRegionManager::
-        StencilMaterialAccessors< extrinsicMeshData::permeability::permeability, // 0
-                                  extrinsicMeshData::permeability::dPerm_dPressure >; // 1
+  using PermeabilityAccessors =
+    StencilAccessors< extrinsicMeshData::permeability::permeability,
+                      extrinsicMeshData::permeability::dPerm_dPressure >;
 
+  /**
+   * @brief Constructor for the kernel interface
+   * @param[in] numPhases the number of fluid phases
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
+   * @param[in] dofNumberAccessor
+   * @param[in] compFlowAccessors
+   * @param[in] multiFluidAccessors
+   * @param[in] capPressureAccessors
+   * @param[in] permeabilityAccessors
+   * @param[in] dt time step size
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  FaceBasedAssemblyKernelBase( integer const numPhases,
+                               globalIndex const rankOffset,
+                               integer const capPressureFlag,
+                               DofNumberAccessor const & dofNumberAccessor,
+                               CompFlowAccessors const & compFlowAccessors,
+                               MultiFluidAccessors const & multiFluidAccessors,
+                               CapPressureAccessors const & capPressureAccessors,
+                               PermeabilityAccessors const & permeabilityAccessors,
+                               real64 const & dt,
+                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                               arrayView1d< real64 > const & localRhs );
+
+protected:
+
+  /// Number of fluid phases
+  localIndex const m_numPhases;
+
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;
+
+  /// Flag to specify whether capillary pressure is used or not
+  integer const m_capPressureFlag;
+
+  /// Time step size
+  real64 const m_dt;
+
+  /// Views on dof numbers
+  ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
+
+  /// Views on permeability
+  ElementViewConst< arrayView3d< real64 const > > m_permeability;
+  ElementViewConst< arrayView3d< real64 const > > m_dPerm_dPres;
+
+  /// Views on ghost rank numbers and gravity coefficients
+  ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
+  ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
+
+  // Primary and secondary variables
+
+  /// Views on pressure
+  ElementViewConst< arrayView1d< real64 const > > const m_pres;
+  ElementViewConst< arrayView1d< real64 const > > const m_dPres;
+
+  /// Views on derivatives of phase volume fractions and comp fractions
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseVolFrac_dPres;
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseVolFrac_dCompDens;
+
+  /// Views on phase mobilities
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseMob;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dPres;
+  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseMob_dCompDens;
+
+  /// Views on phase mass densities
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseMassDens;
+  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseMassDens_dPres;
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseMassDens_dComp;
+
+  /// Views on phase component fractions
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_dPhaseCompFrac_dPres;
+  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac_dComp;
+
+  /// Views on phase capillary pressure
+  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
+  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
+
+  // Residual and jacobian
+
+  /// View on the local CRS matrix
+  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  /// View on the local RHS
+  arrayView1d< real64 > const m_localRhs;
+};
+
+/**
+ * @class FaceBasedAssemblyKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_DOF number of degrees of freedom
+ * @tparam STENCILWRAPPER the type of the stencil wrapper
+ * @brief Define the interface for the assembly kernel in charge of flux terms
+ */
+template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
+{
+public:
 
   /// Compile time value for the number of components
   static constexpr integer numComp = NUM_COMP;
@@ -214,37 +306,21 @@ public:
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
-    : m_numPhases( numPhases ),
-    m_rankOffset( rankOffset ),
-    m_capPressureFlag( capPressureFlag ),
-    m_dt( dt ),
+    : FaceBasedAssemblyKernelBase( numPhases,
+                                   rankOffset,
+                                   capPressureFlag,
+                                   dofNumberAccessor,
+                                   compFlowAccessors,
+                                   multiFluidAccessors,
+                                   capPressureAccessors,
+                                   permeabilityAccessors,
+                                   dt,
+                                   localMatrix,
+                                   localRhs ),
     m_stencilWrapper( stencilWrapper ),
     m_seri( stencilWrapper.getElementRegionIndices() ),
     m_sesri( stencilWrapper.getElementSubRegionIndices() ),
-    m_sei( stencilWrapper.getElementIndices() ),
-    m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
-    m_permeability( std::get< 0 >( permeabilityAccessors.accessors ).toNestedViewConst() ),
-    m_dPerm_dPres( std::get< 1 >( permeabilityAccessors.accessors ).toNestedViewConst() ),
-    m_ghostRank( std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_gravCoef( std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_pres( std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_dPres( std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_dCompFrac_dCompDens( std::get< 4 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseVolFrac_dPres( std::get< 5 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseVolFrac_dCompDens( std::get< 6 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_phaseMob( std::get< 7 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseMob_dPres( std::get< 8 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseMob_dCompDens( std::get< 9 >( compFlowAccessors.accessors ).toNestedViewConst() ),
-    m_phaseMassDens( std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseMassDens_dPres( std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseMassDens_dComp( std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst() ),
-    m_phaseCompFrac( std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseCompFrac_dPres( std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseCompFrac_dComp( std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst() ),
-    m_phaseCapPressure( std::get< 0 >( capPressureAccessors.accessors ).toNestedViewConst() ),
-    m_dPhaseCapPressure_dPhaseVolFrac( std::get< 1 >( capPressureAccessors.accessors ).toNestedViewConst() ),
-    m_localMatrix( localMatrix ),
-    m_localRhs( localRhs )
+    m_sei( stencilWrapper.getElementIndices() )
   {}
 
   /**
@@ -691,18 +767,6 @@ public:
 
 private:
 
-  /// Number of fluid phases
-  localIndex const m_numPhases;
-
-  /// Offset for my MPI rank
-  globalIndex const m_rankOffset;
-
-  /// Flag to specify whether capillary pressure is used or not
-  integer const m_capPressureFlag;
-
-  /// Time step size
-  real64 const m_dt;
-
   // Stencil information
 
   /// Reference to the stencil wrapper
@@ -712,55 +776,6 @@ private:
   typename STENCILWRAPPER::IndexContainerViewConstType const m_seri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sesri;
   typename STENCILWRAPPER::IndexContainerViewConstType const m_sei;
-
-  /// Views on dof numbers
-  ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
-
-  /// Views on permeability
-  ElementViewConst< arrayView3d< real64 const > > m_permeability;
-  ElementViewConst< arrayView3d< real64 const > > m_dPerm_dPres;
-
-  /// Views on ghost rank numbers and gravity coefficients
-  ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
-  ElementViewConst< arrayView1d< real64 const > > const m_gravCoef;
-
-  // Primary and secondary variables
-
-  /// Views on pressure
-  ElementViewConst< arrayView1d< real64 const > > const m_pres;
-  ElementViewConst< arrayView1d< real64 const > > const m_dPres;
-
-  /// Views on derivatives of phase volume fractions and comp fractions
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseVolFrac_dPres;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseVolFrac_dCompDens;
-
-  /// Views on phase mobilities
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseMob;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dPres;
-  ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const m_dPhaseMob_dCompDens;
-
-  /// Views on phase mass densities
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseMassDens;
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseMassDens_dPres;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseMassDens_dComp;
-
-  /// Views on phase component fractions
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_phaseCompFrac;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_dPhaseCompFrac_dPres;
-  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const m_dPhaseCompFrac_dComp;
-
-  /// Views on phase capillary pressure
-  ElementViewConst< arrayView3d< real64 const, cappres::USD_CAPPRES > > const m_phaseCapPressure;
-  ElementViewConst< arrayView4d< real64 const, cappres::USD_CAPPRES_DS > > const m_dPhaseCapPressure_dPhaseVolFrac;
-
-  // Residual and jacobian
-
-  /// View on the local CRS matrix
-  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
-  /// View on the local RHS
-  arrayView1d< real64 > const m_localRhs;
-
 };
 
 /**
@@ -852,29 +867,25 @@ struct CFLFluxKernel
   using ElementView = ElementRegionManager::ElementView< VIEWTYPE >;
 
   using CompFlowAccessors =
-    ElementRegionManager::
-      StencilAccessors< extrinsicMeshData::flow::pressure, // 0
-                        extrinsicMeshData::flow::gravityCoefficient, // 1
-                        extrinsicMeshData::flow::phaseVolumeFraction, // 2
-                        extrinsicMeshData::flow::phaseOutflux, // 3
-                        extrinsicMeshData::flow::componentOutflux >; // 4
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::flow::phaseVolumeFraction,
+                      extrinsicMeshData::flow::phaseOutflux,
+                      extrinsicMeshData::flow::componentOutflux >;
 
   using MultiFluidAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseViscosity, // 0
-                                extrinsicMeshData::multifluid::phaseDensity, // 1
-                                extrinsicMeshData::multifluid::phaseMassDensity, // 2
-                                extrinsicMeshData::multifluid::phaseCompFraction >; // 3
+    StencilAccessors< extrinsicMeshData::multifluid::phaseViscosity,
+                      extrinsicMeshData::multifluid::phaseDensity,
+                      extrinsicMeshData::multifluid::phaseMassDensity,
+                      extrinsicMeshData::multifluid::phaseCompFraction >;
 
   using PermeabilityAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::permeability::permeability, // 0
-                                extrinsicMeshData::permeability::dPerm_dPressure >; // 1
+    StencilAccessors< extrinsicMeshData::permeability::permeability,
+                      extrinsicMeshData::permeability::dPerm_dPressure >;
 
 
   using RelPermAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::relperm::phaseRelPerm >; // 0
+    StencilAccessors< extrinsicMeshData::relperm::phaseRelPerm >;
 
   template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
@@ -987,24 +998,22 @@ struct AquiferBCKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    ElementRegionManager::
-      StencilAccessors< extrinsicMeshData::ghostRank, // 0
-                        extrinsicMeshData::flow::pressure, // 1
-                        extrinsicMeshData::flow::deltaPressure, // 2
-                        extrinsicMeshData::flow::gravityCoefficient, // 3
-                        extrinsicMeshData::flow::phaseVolumeFraction, // 4
-                        extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure, // 5
-                        extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity, // 6
-                        extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >; // 7
+    StencilAccessors< extrinsicMeshData::ghostRank,
+                      extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::flow::phaseVolumeFraction,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseDensity, // 0
-                                extrinsicMeshData::multifluid::dPhaseDensity_dPressure, // 1
-                                extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction, // 2
-                                extrinsicMeshData::multifluid::phaseCompFraction, // 3
-                                extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure, // 4
-                                extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >; // 5
+    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseCompFraction,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE

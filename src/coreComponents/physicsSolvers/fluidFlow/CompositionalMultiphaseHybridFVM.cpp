@@ -463,19 +463,19 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                        faceGravCoef,
                                        mimFaceGravCoef,
                                        transMultiplier,
-                                       std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseMobility
-                                       std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseMobility_dPres
-                                       std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseMobility_dCompDens
-                                       std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst(), // dCompFrac_dCompDens
-                                       std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDens
-                                       std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dPres
-                                       std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dCompFrac
-                                       std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseMassDens
-                                       std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseMassDens_dPres
-                                       std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseMassDens_dCompFrac
-                                       std::get< 6 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
-                                       std::get< 7 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dPres
-                                       std::get< 8 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dCompFrac
+                                       compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility{} ),
+                                       compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure{} ),
+                                       compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
+                                       compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
                                        elemDofNumber.toNestedViewConst(),
                                        dofManager.rankOffset(),
                                        lengthTolerance,
@@ -750,8 +750,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // local residual
   real64 localResidualNorm = 0;
 
-  ElementRegionManager::
-    StencilAccessors< extrinsicMeshData::flow::phaseMobilityOld >   // 0
+  StencilAccessors< extrinsicMeshData::flow::phaseMobilityOld >
   compFlowAccessors( mesh.getElemManager(), getName() );
 
   // 1. Compute the residual for the mass conservation equations
@@ -796,19 +795,20 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
   // 2. Compute the residual for the face-based constraints
   real64 faceResidualNorm = 0.0;
-  CompositionalMultiphaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                                       parallelDeviceReduce >( localRhs,
-                                                                                               rankOffset,
-                                                                                               numFluidPhases(),
-                                                                                               faceDofNumber.toNestedViewConst(),
-                                                                                               faceGhostRank.toNestedViewConst(),
-                                                                                               m_regionFilter.toViewConst(),
-                                                                                               elemRegionList.toNestedViewConst(),
-                                                                                               elemSubRegionList.toNestedViewConst(),
-                                                                                               elemList.toNestedViewConst(),
-                                                                                               m_volume.toNestedViewConst(),
-                                                                                               std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseMobilityOld
-                                                                                               faceResidualNorm );
+  CompositionalMultiphaseHybridFVMKernels::
+    ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                parallelDeviceReduce >( localRhs,
+                                                        rankOffset,
+                                                        numFluidPhases(),
+                                                        faceDofNumber.toNestedViewConst(),
+                                                        faceGhostRank.toNestedViewConst(),
+                                                        m_regionFilter.toViewConst(),
+                                                        elemRegionList.toNestedViewConst(),
+                                                        elemSubRegionList.toNestedViewConst(),
+                                                        elemList.toNestedViewConst(),
+                                                        m_volume.toNestedViewConst(),
+                                                        compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
+                                                        faceResidualNorm );
   localResidualNorm += faceResidualNorm;
 
   // 3. Combine the two norms

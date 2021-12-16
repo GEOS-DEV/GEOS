@@ -28,6 +28,7 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
 namespace geosx
@@ -589,23 +590,21 @@ struct FluxKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   using CompFlowAccessors =
-    ElementRegionManager::
-      StencilAccessors< extrinsicMeshData::flow::phaseMobility, // 0
-                        extrinsicMeshData::flow::dPhaseMobility_dPressure, // 1
-                        extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity, // 2
-                        extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >; // 3
+    StencilAccessors< extrinsicMeshData::flow::phaseMobility,
+                      extrinsicMeshData::flow::dPhaseMobility_dPressure,
+                      extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    ElementRegionManager::
-      StencilMaterialAccessors< extrinsicMeshData::multifluid::phaseDensity, // 0
-                                extrinsicMeshData::multifluid::dPhaseDensity_dPressure, // 1
-                                extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction, // 2
-                                extrinsicMeshData::multifluid::phaseMassDensity, // 3
-                                extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure, // 4
-                                extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction, // 5
-                                extrinsicMeshData::multifluid::phaseCompFraction, // 6
-                                extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure, // 7
-                                extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >; // 8
+    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseMassDensity,
+                      extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseCompFraction,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
 
   /**

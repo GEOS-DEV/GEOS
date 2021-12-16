@@ -255,6 +255,48 @@ INST_PhaseMobilityKernel( 5, 3 );
 
 #undef INST_PhaseMobilityKernel
 
+/******************************** FaceBasedAssemblyKernel ********************************/
+
+FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases,
+                                                          globalIndex const rankOffset,
+                                                          integer const capPressureFlag,
+                                                          DofNumberAccessor const & dofNumberAccessor,
+                                                          CompFlowAccessors const & compFlowAccessors,
+                                                          MultiFluidAccessors const & multiFluidAccessors,
+                                                          CapPressureAccessors const & capPressureAccessors,
+                                                          PermeabilityAccessors const & permeabilityAccessors,
+                                                          real64 const & dt,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs )
+  : m_numPhases( numPhases ),
+  m_rankOffset( rankOffset ),
+  m_capPressureFlag( capPressureFlag ),
+  m_dt( dt ),
+  m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
+  m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
+  m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),
+  m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
+  m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
+  m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
+  m_dPres( compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure {} ) ),
+  m_dCompFrac_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity {} ) ),
+  m_dPhaseVolFrac_dPres( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure {} ) ),
+  m_dPhaseVolFrac_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity {} ) ),
+  m_phaseMob( compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility {} ) ),
+  m_dPhaseMob_dPres( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure {} ) ),
+  m_dPhaseMob_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity {} ) ),
+  m_phaseMassDens( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity {} ) ),
+  m_dPhaseMassDens_dPres( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure {} ) ),
+  m_dPhaseMassDens_dComp( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction {} ) ),
+  m_phaseCompFrac( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction {} ) ),
+  m_dPhaseCompFrac_dPres( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure {} ) ),
+  m_dPhaseCompFrac_dComp( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction {} ) ),
+  m_phaseCapPressure( capPressureAccessors.get( extrinsicMeshData::cappres::phaseCapPressure {} ) ),
+  m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
+  m_localMatrix( localMatrix ),
+  m_localRhs( localRhs )
+{}
+
 /******************************** CFLFluxKernel ********************************/
 
 template< localIndex NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >

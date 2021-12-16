@@ -164,11 +164,11 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName(), targetRegionNames(), relPermModelNames() );
 
   // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const & phaseOutfluxAccessor =
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_PHASE >,
                                                  arrayView2d< real64, compflow::USD_PHASE > >( extrinsicMeshData::flow::phaseOutflux::key() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const & compOutfluxAccessor =
+  ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_COMP > > const compOutfluxAccessor =
     mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
                                                  arrayView2d< real64, compflow::USD_COMP > >( extrinsicMeshData::flow::componentOutflux::key() );
 
@@ -182,16 +182,16 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                             m_numPhases,
                                             dt,
                                             stencilWrapper,
-                                            std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // pressure
-                                            std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // gravCoef
-                                            std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseVolFrac
-                                            std::get< 0 >( permeabilityAccessors.accessors ).toNestedViewConst(), // permeability
-                                            std::get< 1 >( permeabilityAccessors.accessors ).toNestedViewConst(), // dPerm_dPres
-                                            std::get< 0 >( relPermAccessors.accessors ).toNestedViewConst(), // phaseRelPerm
-                                            std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseViscosity
-                                            std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDensity
-                                            std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseMassDensity
-                                            std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
+                                            compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                            compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
+                                            compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                            permeabilityAccessors.get( extrinsicMeshData::permeability::permeability{} ),
+                                            permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure{} ),
+                                            relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
+                                            multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
+                                            multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                            multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
+                                            multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
                                             phaseOutfluxAccessor.toNestedView(), //std::get< 3 >( compFlowAccessors.accessors
                                                                                  // ).toNestedView(), // phaseOutflux
                                             compOutfluxAccessor.toNestedView() );//std::get< 4 >( compFlowAccessors.accessors
@@ -604,20 +604,20 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                               aquiferBCWrapper,
                                               aquiferWaterPhaseDens,
                                               aquiferWaterPhaseCompFrac,
-                                              std::get< 0 >( compFlowAccessors.accessors ).toNestedViewConst(), // ghostRank
-                                              std::get< 1 >( compFlowAccessors.accessors ).toNestedViewConst(), // pressure
-                                              std::get< 2 >( compFlowAccessors.accessors ).toNestedViewConst(), // deltaPressure
-                                              std::get< 3 >( compFlowAccessors.accessors ).toNestedViewConst(), // gravCoef
-                                              std::get< 4 >( compFlowAccessors.accessors ).toNestedViewConst(), // phaseVolFraction
-                                              std::get< 5 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dPres
-                                              std::get< 6 >( compFlowAccessors.accessors ).toNestedViewConst(), // dPhaseVolFraction_dCompDens
-                                              std::get< 7 >( compFlowAccessors.accessors ).toNestedViewConst(), // dCompFrac_dCompDens
-                                              std::get< 0 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseDens
-                                              std::get< 1 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dPres
-                                              std::get< 2 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseDens_dCompFrac
-                                              std::get< 3 >( multiFluidAccessors.accessors ).toNestedViewConst(), // phaseCompFrac
-                                              std::get< 4 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dPres
-                                              std::get< 5 >( multiFluidAccessors.accessors ).toNestedViewConst(), // dPhaseCompFrac_dCompFrac
+                                              compFlowAccessors.get( extrinsicMeshData::ghostRank{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
+                                              compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
+                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
+                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
                                               time,
                                               dt,
                                               localMatrix.toViewConstSizes(),
