@@ -74,8 +74,8 @@ public:
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual real64
@@ -270,7 +270,7 @@ public:
    * @param dataGroup group that contains the fields
    */
   void
-  updateFluidState( Group & subRegion ) const;
+  updateFluidState( ObjectManagerBase & subRegion ) const;
 
 
   /**
@@ -278,27 +278,14 @@ public:
    * @param dataGroup group that contains the fields
    */
   virtual void
-  updateFluidModel( Group & dataGroup ) const;
+  updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
   void
-  updateMobility( Group & dataGroup ) const;
-
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
-  {
-    // used for face-based BC
-    static constexpr char const * facePressureString() { return "facePressure"; }
-
-    // intermediate fields
-    static constexpr char const * mobilityString() { return "mobility"; }
-    static constexpr char const * dMobility_dPressureString() { return "dMobility_dPressure"; }
-
-    // backup fields
-    static constexpr char const * densityOldString() { return "densityOld"; }
-  };
+  updateMobility( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -308,6 +295,11 @@ public:
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term

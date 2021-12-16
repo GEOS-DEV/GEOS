@@ -21,7 +21,7 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -257,7 +257,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return FlowSolverBase::viewKeyStruct::gravityCoefString(); }
+    static constexpr char const * gravityCoefString() { return extrinsicMeshData::flow::gravityCoefficient::key(); }
 
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }

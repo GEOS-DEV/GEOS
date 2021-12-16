@@ -489,7 +489,7 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
     implicitStepSetup( time_n, dt, domain );
     for( int solveIter=0; solveIter<maxNumResolves; ++solveIter )
     {
-      setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+      setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
       dtReturn = nonlinearImplicitStep( time_n,
                                         dt,
@@ -918,12 +918,12 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
                                                DofManager & dofManager,
                                                CRSMatrix< real64, globalIndex > & localMatrix,
-                                               array1d< real64 > & localRhs,
-                                               array1d< real64 > & localSolution,
+                                               ParallelVector & rhs,
+                                               ParallelVector & solution,
                                                bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
                                                   dofManager.numGlobalDofs(),
@@ -1066,7 +1066,7 @@ SolidMechanicsLagrangianFEM::
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
     fsManager.applyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
-    applyChomboPressure( dofManager, domain, m_localRhs );
+    applyChomboPressure( dofManager, domain, localRhs );
   }
 
   applyDisplacementBCImplicit( time_n + dt, dofManager, domain, localMatrix, localRhs );
