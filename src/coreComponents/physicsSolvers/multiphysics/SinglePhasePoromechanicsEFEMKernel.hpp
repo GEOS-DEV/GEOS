@@ -18,9 +18,11 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEFEMKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSEFEMKERNEL_HPP_
+
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "SinglePhasePoromechanicsKernel.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 
 namespace geosx
@@ -114,10 +116,10 @@ public:
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( embeddedSurfSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_fluidDensityOld( embeddedSurfSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
     m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
-    m_matrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaMatrixPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) ),
+    m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
     m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
     m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
@@ -128,7 +130,7 @@ public:
     m_surfaceCenter( embeddedSurfSubRegion.getElementCenter() ),
     m_surfaceArea( embeddedSurfSubRegion.getElementArea() ),
     m_elementVolume( elementSubRegion.getElementVolume() ),
-    m_deltaVolume( elementSubRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() ) ),
+    m_deltaVolume( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >() ),
     m_fracturedElems( elementSubRegion.fracturedElementsList() ),
     m_cellsToEmbeddedSurfaces( elementSubRegion.embeddedSurfacesList().toViewConst() ),
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
@@ -601,7 +603,7 @@ struct StateUpdateKernel
    * @param[in] volume the volume
    * @param[out] deltaVolume the change in volume
    * @param[out] aperture the aperture
-   * @param[out] effectiveAperture the effecture aperture
+   * @param[out] hydraulicAperture the effecture aperture
    * @param[out] fractureTraction the fracture traction
    * @param[out] dFractureTraction_dPressure the derivative of the fracture traction wrt pressure
    */
@@ -616,7 +618,7 @@ struct StateUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
-          arrayView1d< real64 > const & effectiveAperture,
+          arrayView1d< real64 > const & hydraulicAperture,
           arrayView2d< real64 > const & fractureTraction,
           arrayView1d< real64 > const & dFractureTraction_dPressure )
   {
@@ -625,16 +627,14 @@ struct StateUpdateKernel
       // update aperture to be equal to the normal displacement jump
       aperture[k] = dispJump[k][0]; // the first component of the jump is the normal one.
 
-      real64 dEffectiveAperture_dAperture = 0;
-      effectiveAperture[k] = contactWrapper.computeEffectiveAperture( aperture[k],
-                                                                      dEffectiveAperture_dAperture );
+      real64 dHydraulicAperture_dAperture = 0;
+      hydraulicAperture[k] = contactWrapper.computeHydraulicAperture( aperture[k],
+                                                                      dHydraulicAperture_dAperture );
 
-      deltaVolume[k] = effectiveAperture[k] * area[k] - volume[k];
+      deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
 
       // traction on the fracture to include the pressure contribution
-      bool const isOpen = ( aperture[k] >= 0 );
       contactWrapper.addPressureToTraction( pressure[k] + deltaPressure[k],
-                                            isOpen,
                                             fractureTraction[k],
                                             dFractureTraction_dPressure[k] );
     } );

@@ -60,23 +60,6 @@ public:
    */
   static string catalogName() { return "SinglePhaseReservoir"; }
 
-  /**
-   * @defgroup Solver Interface Functions
-   *
-   * These functions provide the primary interface that is required for derived classes
-   */
-  /**@{*/
-
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
-               bool const setSparsity = true ) override;
-
-  /**@}*/
-
   virtual void addCouplingSparsityPattern( DomainPartition const & domain,
                                            DofManager const & dofManager,
                                            SparsityPatternView< globalIndex > const & pattern ) const override;

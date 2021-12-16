@@ -59,6 +59,12 @@
       name="displacementHistoryOutput"
       timeFrequency="0.2"
       targetExactTimestep="0"
-      target="/Outputs/displacementOutput"/>   
+      target="/Outputs/displacementOutput"/>
+      
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="0.2"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>     
   </Events>
 </Problem>

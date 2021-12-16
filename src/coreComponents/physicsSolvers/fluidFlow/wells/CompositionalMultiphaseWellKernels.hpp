@@ -368,9 +368,9 @@ struct VolumeBalanceKernel
 
 };
 
-/******************************** PresCompFracInitializationKernel ********************************/
+/******************************** PresTempCompFracInitializationKernel ********************************/
 
-struct PresCompFracInitializationKernel
+struct PresTempCompFracInitializationKernel
 {
 
   /**
@@ -391,7 +391,8 @@ struct PresCompFracInitializationKernel
           localIndex const numPerforations,
           WellControls const & wellControls,
           real64 const & currentTime,
-          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          ElementViewConst< arrayView1d< real64 const > > const & resPres,
+          ElementViewConst< arrayView1d< real64 const > > const & resTemp,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const & resCompDens,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & resPhaseMassDens,
@@ -399,7 +400,8 @@ struct PresCompFracInitializationKernel
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & wellElemGravCoef,
-          arrayView1d< real64 > const & wellElemPressure,
+          arrayView1d< real64 > const & wellElemPres,
+          arrayView1d< real64 > const & wellElemTemp,
           arrayView2d< real64, compflow::USD_COMP > const & wellElemCompFrac );
 
 };

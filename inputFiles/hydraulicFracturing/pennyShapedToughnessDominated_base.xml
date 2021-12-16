@@ -111,7 +111,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="1.0e0"
       apertureTableName="apertureTable"/>

@@ -63,7 +63,7 @@ public:
 
     PreconditionerBase< LAI >::setup( mat );
 
-    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
+    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.comm() );
     m_blockDiag.open();
 
     array1d< globalIndex > idxBlk( m_blockSize );
@@ -78,7 +78,7 @@ public:
       {
         globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
         idxBlk[j] = iRow;
-        localIndex const rowLength = mat.globalRowLength( iRow );
+        localIndex const rowLength = mat.rowLength( iRow );
         cols.resize( rowLength );
         vals.resize( rowLength );
         mat.getRowCopy( iRow, cols, vals );

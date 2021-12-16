@@ -86,7 +86,7 @@ void PetscSolver::setup( PetscMatrix const & mat )
 
   m_precond.setup( mat );
 
-  createPetscKrylovSolver( m_params, mat.getComm(), m_solver );
+  createPetscKrylovSolver( m_params, mat.comm(), m_solver );
   GEOSX_LAI_CHECK_ERROR( KSPSetPC( m_solver, m_precond.unwrapped() ) );
 
   // display output
@@ -108,6 +108,7 @@ void PetscSolver::apply( PetscVector const & rhs,
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
   GEOSX_LAI_CHECK_ERROR( KSPSolve( m_solver, rhs.unwrapped(), sol.unwrapped() ) );
+  sol.touch();
 }
 
 void PetscSolver::solve( PetscVector const & rhs,
