@@ -45,7 +45,7 @@ We also define two time-history functions for the pressure (Pascal units) and te
   :start-after: <!-- SPHINX_PVTDRIVER_FUNCTIONS_START --> 
   :end-before: <!-- SPHINX_PVTDRIVER_FUNCTIONS_END -->
 
-Note that the time-axis here is just a pseudo-time, allowing us to `parameterize<https://en.wikipedia.org/wiki/Parametric_equation>`_ arbitrarily complicated paths through a (pressure,temperature) diagram.
+Note that the time-axis here is just a pseudo-time, allowing us to `parameterize <https://en.wikipedia.org/wiki/Parametric_equation>`_ arbitrarily complicated paths through a (pressure,temperature) diagram.
 The actual time values have no impact on the resulting fluid properties.
 Here, we fix the temperature at 350K and simply ramp up pressure from 1 MPa to 50 MPa:
 
