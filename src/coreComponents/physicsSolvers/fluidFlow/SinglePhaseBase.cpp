@@ -225,20 +225,16 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     {
       // Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
       computeHydrostaticEquilibrium();
-
+      // 1. update porosity, permeability, and density/viscosity
       SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
       real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
       subRegion.template getWrapper< array1d< real64 > >( extrinsicMeshData::flow::densityOld::key() ).setDefaultValue( defaultDensity );
-
-      // 1. update porosity, permeability, and density/viscosity
-      real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
-      subRegion.template getWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() ).setDefaultValue( defaultDensity );
 
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
 
       // 2. save the initial density (for use in the single-phase poromechanics solver to compute the deltaBodyForce)
-      singleFluid.initializeState();
+      fluid.initializeState();
 
       // 3. save the initial/old porosity
       CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::solidNamesString() ) );
@@ -264,7 +260,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
     } );
 
     // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
-    mesh.getElemManager().forElementRegions( regionNames, [&]( localIndex const,
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
@@ -546,20 +542,14 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                                                   auto & subRegion )
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const dPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
       arrayView1d< real64 const > const dVol = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
 
       arrayView1d< real64 > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
-
-      arrayView1d< real64 const > const dPres = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
-      arrayView1d< real64 const > const dVol = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::deltaVolumeString() );
-
-      arrayView1d< real64 > const pres = subRegion.template getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-      arrayView1d< real64 > const vol = subRegion.template getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
