@@ -150,36 +150,34 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updateVolRatesForConstraint( WellElementSubRegion & subRegion,
-                                    localIndex const targetIndex );
+  void updateVolRatesForConstraint( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the current BHP pressure
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updateBHPForConstraint( WellElementSubRegion & subRegion,
-                               localIndex const targetIndex );
+  void updateBHPForConstraint( WellElementSubRegion & subRegion );
 
   /**
    * @brief Update all relevant fluid models using current values of pressure and composition
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void updateFluidModel( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute phase volume fractions (saturations) from constitutive and primary variables
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  void updatePhaseVolumeFraction( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  void updatePhaseVolumeFraction( WellElementSubRegion & subRegion ) const;
 
   /**
    * @brief Recompute total mass densities from mass density and phase volume fractions
    * @param subRegion the well subregion containing all the primary and dependent fields
    */
-  void updateTotalMassDensity( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  void updateTotalMassDensity( WellElementSubRegion & subRegion ) const;
 
 
   /**
@@ -187,7 +185,7 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -260,7 +258,7 @@ public:
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh reference to the mesh
    */
-  void backupFields( MeshLevel & mesh ) const override;
+  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const override;
 
 
   arrayView1d< string const > relPermModelNames() const { return m_relPermModelNames; }
@@ -370,20 +368,20 @@ protected:
    * (fluid, relperm) is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
-  void validateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
+  // void validateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)
    * @param meshLevel reference to the mesh
    */
-  void validateInjectionStreams( MeshLevel const & meshLevel ) const;
+  void validateInjectionStreams( WellElementSubRegion const & subRegion ) const;
 
   /**
    * @brief Make sure that the well constraints are compatible
    * @param meshLevel the mesh level object (to loop over wells)
    * @param fluid the fluid model (to get the target phase index)
    */
-  void validateWellConstraints( MeshLevel const & meshLevel, constitutive::MultiFluidBase const & fluid );
+  void validateWellConstraints( WellElementSubRegion const & subRegion );
 
 private:
 
@@ -392,7 +390,7 @@ private:
    * @param subRegion the well element region for which the fields are resized
    * @param targetIndex index of the target region
    */
-  void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void computePerforationRates( WellElementSubRegion & subRegion );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
@@ -432,6 +430,9 @@ private:
 
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
+
+  /// name of the fluid constitutive model used as a reference for component/phase description
+  string m_referenceFluidModelName;
 
   /// views into reservoir primary variable fields
 

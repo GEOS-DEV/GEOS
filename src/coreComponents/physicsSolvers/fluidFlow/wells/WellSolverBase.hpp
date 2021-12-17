@@ -244,15 +244,13 @@ public:
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
    * @param well the well containing all the primary and dependent fields
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh reference to the mesh
    */
-  virtual void backupFields( MeshLevel & mesh ) const = 0;
-
-  arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
+  virtual void backupFields( MeshLevel & mesh, arrayView1d<string const > const & regionNames ) const = 0;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -297,9 +295,6 @@ protected:
 
   /// name of the flow solver
   string m_flowSolverName;
-
-  /// names of the fluid constitutive models
-  array1d< string > m_fluidModelNames;
 
   /// the number of Degrees of Freedom per well element
   integer m_numDofPerWellElement;
