@@ -19,7 +19,7 @@
 #ifndef GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 #define GEOSX_VIRTUALELEMENT_CONFORMINGVIRTUALELEMENTORDER1_HPP_
 
-#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
+#include "FiniteElementBase.hpp"
 #include "codingUtilities/traits.hpp"
 
 namespace geosx

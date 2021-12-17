@@ -26,7 +26,7 @@
 #include "elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
-#include "virtualElement/ConformingVirtualElementOrder1.hpp"
+#include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "LvArray/src/system.hpp"
 
 
