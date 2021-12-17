@@ -67,6 +67,12 @@ public:
   arrayView1d< string const > componentNames() const { return m_componentNames; }
 
   /**
+   * @brief Getter for the fluid component molar weights
+   * @return an arrayView1d storing the component molar weights
+   */
+  arrayView1d< real64 const > componentMolarWeights() const { return m_componentMolarWeight; }
+
+  /**
    * @return number of fluid phases in the model
    */
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
