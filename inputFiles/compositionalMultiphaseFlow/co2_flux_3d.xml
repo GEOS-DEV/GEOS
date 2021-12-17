@@ -229,6 +229,7 @@
 
     <Aquifer
       name="aquiferBC1"
+      logLevel="1"	
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
       aquiferInitialPressure="8e6"
@@ -245,6 +246,7 @@
 
     <Aquifer
       name="aquiferBC2"
+      logLevel="1"	
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
       aquiferInitialPressure="8e6"
