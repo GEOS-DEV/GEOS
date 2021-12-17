@@ -1506,7 +1506,7 @@ ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT
 ElementRegionManager::
   constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
 {
-  return constructMaterialViewAccessor< typename MATERIALTYPE, typename TRAIT::type,
+  return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
                                         traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
 }
 

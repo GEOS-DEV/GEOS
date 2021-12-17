@@ -93,11 +93,7 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.getWrapper< array2d< real64 > >( SlurryFluidBase::viewKeyStruct::viscosityString() ).getDefaultValue() };
 }
 
-<<<<<<< HEAD
-void SinglePhaseProppantBase::updateFluidModel( Group & dataGroup ) const
-=======
-void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const
->>>>>>> origin/develop
+void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
