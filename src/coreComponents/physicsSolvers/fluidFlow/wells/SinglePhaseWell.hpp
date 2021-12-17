@@ -148,23 +148,21 @@ public:
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion,
-                                           localIndex const targetIndex );
+  virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the BHP pressure that is used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateBHPForConstraint( WellElementSubRegion & subRegion,
-                                       localIndex const targetIndex );
+  virtual void updateBHPForConstraint( WellElementSubRegion & subRegion );
 
   /**
    * @brief Update fluid constitutive model state
    * @param dataGroup group that contains the fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateFluidModel( WellElementSubRegion & subRegion, localIndex const targetIndex ) const;
+  virtual void updateFluidModel( WellElementSubRegion & subRegion ) const;
 
 
   /**
@@ -172,7 +170,7 @@ public:
    * @param subRegion the well subRegion containing the well elements and their associated fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -230,7 +228,7 @@ public:
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh reference to the mesh
    */
-  void backupFields( MeshLevel & mesh ) const override;
+  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const override;
 
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
@@ -269,7 +267,7 @@ private:
    * @brief Compute all the perforation rates for this well
    * @param well the well with its perforations
    */
-  void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void computePerforationRates( WellElementSubRegion & subRegion );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step
@@ -287,7 +285,7 @@ private:
    * @brief Make sure that the well constraints are compatible
    * @param meshLevel the mesh level object (to loop over wells)
    */
-  void validateWellConstraints( MeshLevel const & meshLevel ) const;
+  void validateWellConstraints( WellElementSubRegion const & subRegion ) const;
 
 private:
 

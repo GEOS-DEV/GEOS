@@ -39,10 +39,6 @@ WellSolverBase::WellSolverBase( string const & name,
   m_currentTime( 0 ),
   m_currentDt( 0 )
 {
-  this->registerWrapper( viewKeyStruct::fluidNamesString(), &m_fluidModelNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of fluid constitutive object to use for this solver." );
-
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 }
@@ -73,7 +69,6 @@ WellSolverBase::~WellSolverBase() = default;
 void WellSolverBase::postProcessInput()
 {
   SolverBase::postProcessInput();
-  checkModelNames( m_fluidModelNames, viewKeyStruct::fluidNamesString() );
 }
 
 void WellSolverBase::registerDataOnMesh( Group & meshBodies )
@@ -83,19 +78,24 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
 
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
-                                    arrayView1d<string const> const & regionNames )
+                                    arrayView1d< string const > const & regionNames )
   {
 
     ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementSubRegions< WellElementSubRegion >( regionNames,
                                                                        [&]( localIndex const,
-                                                                           WellElementSubRegion & subRegion )
-  {
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+                                                                            WellElementSubRegion & subRegion )
+    {
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
 
-    PerforationData * const perforationData = subRegion.getPerforationData();
-    perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
-  } );
+      subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+
+      PerforationData * const perforationData = subRegion.getPerforationData();
+      perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+    } );
   } );
 }
 
@@ -105,18 +105,18 @@ void WellSolverBase::setupDofs( DomainPartition const & domain,
   map< string, array1d< string > > meshTargets;
   forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                 MeshLevel const & meshLevel,
-                                                arrayView1d<string const> const & regionNames )
+                                                arrayView1d< string const > const & regionNames )
   {
     array1d< string > regions;
     ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
     elementRegionManager.forElementRegions< WellElementRegion >( regionNames,
-                                                                    [&]( localIndex const,
-                                                                         WellElementRegion const & region )
+                                                                 [&]( localIndex const,
+                                                                      WellElementRegion const & region )
     {
       regions.emplace_back( region.getName() );
-    });
+    } );
     meshTargets[meshBodyName] = std::move( regions );
-  });
+  } );
 
   dofManager.addField( wellElementDofName(),
                        DofManager::Location::Elem,
@@ -149,8 +149,12 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   resetStateToBeginningOfStep( domain );
 
   // backup fields used in time derivative approximation
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  backupFields( mesh );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    backupFields( mesh, regionNames );
+  } );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,
@@ -176,26 +180,23 @@ void WellSolverBase::assembleSystem( real64 const time,
 void WellSolverBase::updateState( DomainPartition & domain )
 {
 
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
-                                                               WellElementSubRegion & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    updateSubRegionState( subRegion, targetIndex );
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
+      updateSubRegionState( subRegion );
+    } );
   } );
+
 
 }
 
 void WellSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
-
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
-  {
-    MeshLevel & meshLevel = dynamicCast< MeshBody * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping( meshLevel.getElemManager(), m_fluidModelNames );
-  }
 
   FlowSolverBase const & flowSolver = getParent().getGroup< FlowSolverBase >( getFlowSolverName() );
   m_numDofPerResElement = flowSolver.numDofPerCell();
@@ -208,13 +209,16 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
   // make sure that nextWellElementIndex is up-to-date (will be used in well initialization and assembly)
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const,
-                                                          WellElementSubRegion & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    subRegion.reconstructLocalConnectivity();
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
+      subRegion.reconstructLocalConnectivity();
+    } );
   } );
-
   // bind the stored reservoir views to the current domain
   resetViews( domain );
 
@@ -225,41 +229,43 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
 void WellSolverBase::precomputeData( DomainPartition & domain )
 {
   R1Tensor const gravVector = gravityVector();
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  // loop over the wells
-  forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
-                                                               WellElementSubRegion & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel const & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    PerforationData & perforationData = *subRegion.getPerforationData();
-    WellControls & wellControls = getWellControls( subRegion );
-    real64 const refElev = wellControls.getReferenceElevation();
-
-    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
-    arrayView1d< real64 > const wellElemGravCoef =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
-
-    arrayView2d< real64 const > const perfLocation =
-      perforationData.getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString() );
-
-    arrayView1d< real64 > const perfGravCoef =
-      perforationData.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
-
-    forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
     {
-      // precompute the depth of the perforations
-      perfGravCoef[iperf] = LvArray::tensorOps::AiBi< 3 >( perfLocation[iperf], gravVector );
+      PerforationData & perforationData = *subRegion.getPerforationData();
+      WellControls & wellControls = getWellControls( subRegion );
+      real64 const refElev = wellControls.getReferenceElevation();
+
+      arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
+      arrayView1d< real64 > const wellElemGravCoef =
+        subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+
+      arrayView2d< real64 const > const perfLocation =
+        perforationData.getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString() );
+
+      arrayView1d< real64 > const perfGravCoef =
+        perforationData.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+
+      forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
+      {
+        // precompute the depth of the perforations
+        perfGravCoef[iperf] = LvArray::tensorOps::AiBi< 3 >( perfLocation[iperf], gravVector );
+      } );
+
+      forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
+      {
+        // precompute the depth of the well elements
+        wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
+      } );
+
+      // set the reference well element where the BHP control is applied
+      wellControls.setReferenceGravityCoef( refElev * gravVector[ 2 ] );
+
     } );
-
-    forAll< serialPolicy >( subRegion.size(), [=]( localIndex const iwelem )
-    {
-      // precompute the depth of the well elements
-      wellElemGravCoef[iwelem] = LvArray::tensorOps::AiBi< 3 >( wellElemLocation[iwelem], gravVector );
-    } );
-
-    // set the reference well element where the BHP control is applied
-    wellControls.setReferenceGravityCoef( refElev * gravVector[ 2 ] );
-
   } );
 }
 
