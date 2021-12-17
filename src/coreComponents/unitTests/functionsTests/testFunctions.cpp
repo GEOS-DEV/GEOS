@@ -18,6 +18,7 @@
 #include "functions/FunctionManager.hpp"
 #include "functions/FunctionBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "functions/MultivariableTableFunction.hpp"
 #include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
@@ -86,9 +87,14 @@ TEST( FunctionTests, 1DTable )
   values[3] = 7.0;
 
   TableFunction & table_a = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_a" ) );
+  MultivariableTableFunction & table_b = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_b" ) );
   table_a.setTableCoordinates( coordinates );
   table_a.setTableValues( values );
   table_a.reInitializeFunction();
+  table_b.setTableCoordinates( coordinates );
+  table_b.setTableValues( values );
+  table_b.reInitializeFunction();
+
 
   // Setup testing coordinates, expected values
   real64_array testCoordinates( Ntest );
@@ -109,7 +115,10 @@ TEST( FunctionTests, 1DTable )
   testExpected[5] = 7.0;
   table_a.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_a.reInitializeFunction();
+  table_b.setInterpolationMethod( MultivariableTableFunction::InterpolationType::Linear );
+  table_b.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
+  evaluate1DFunction( table_b, testCoordinates, testExpected );
 
   // Upper
   testExpected[0] = 1.0;
