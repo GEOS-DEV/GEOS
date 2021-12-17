@@ -153,10 +153,10 @@ void MultivariableTableFunction::reInitializeFunction()
   m_kernelWrapper = createKernelWrapper();
 }
 
-MultivariableTableFunction::KernelWrapper MultivariableTableFunction::createKernelWrapper() const
+MultivariableTableFunction::KernelWrapper< 2, 3 > MultivariableTableFunction::createKernelWrapper() const
 {
-  return KernelWrapper( m_coordinates.toViewConst(),
-                        m_values.toViewConst() );
+  return KernelWrapper< 2, 3 >( m_coordinates.toViewConst(),
+                                m_values.toViewConst() );
 }
 
 real64 MultivariableTableFunction::evaluate( real64 const * const input ) const
@@ -164,12 +164,7 @@ real64 MultivariableTableFunction::evaluate( real64 const * const input ) const
   return m_kernelWrapper.compute( input );
 }
 
-MultivariableTableFunction::KernelWrapper::KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
-                                                          arrayView1d< real64 const > const & values )
-  :
-  m_coordinates( coordinates ),
-  m_values( values )
-{}
+
 
 REGISTER_CATALOG_ENTRY( FunctionBase, MultivariableTableFunction, string const &, Group * const )
 

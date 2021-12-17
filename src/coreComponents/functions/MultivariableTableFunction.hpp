@@ -39,13 +39,34 @@ public:
   /// maximum dimensions for the coordinates in the table
   static constexpr integer maxDimensions = 4;
 
+
+
+  /**
+   * @class KernelWrapperBase
+   *
+   * A nested base class for the kernel function doing the interpolation in the table
+   */
+  class KernelWrapperBase
+  {
+public:
+
+    /// @cond DO_NOT_DOCUMENT
+    /// We need these SMFs to enable array1d< KernelWrapper > and avoid
+    /// host-device errors with CUDA. Otherwise rule of 0 would be fine.
+
+    KernelWrapperBase() = default;
+    /// @endcond
+
+  };
+
+
   /**
    * @class KernelWrapper
    *
    * A nested class encapsulating the kernel function doing the interpolation in the table
    */
-  //template< integer NUM_DIMS, integer NUM_OPS >
-  class KernelWrapper
+  template< integer NUM_DIMS, integer NUM_OPS >
+  class KernelWrapper : public KernelWrapperBase
   {
 public:
 
@@ -76,7 +97,10 @@ public:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
-    real64 compute( IN_ARRAY const & input ) const;
+    real64 compute( IN_ARRAY const & input ) const
+    {
+      return interpolateLinear( input );
+    }
 
     /**
      * @brief Interpolate in the table.
@@ -133,7 +157,74 @@ private:
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
     real64
-    interpolateLinear( IN_ARRAY const & input ) const;
+    interpolateLinear( IN_ARRAY const & input ) const
+    {
+      integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
+      localIndex bounds[maxDimensions][2]{};
+      real64 weights[maxDimensions][2]{};
+
+      // Determine position, weights
+      for( localIndex dim = 0; dim < numDimensions; ++dim )
+      {
+        arraySlice1d< real64 const > const coords = m_coordinates[dim];
+        if( input[dim] <= coords[0] )
+        {
+          // Coordinate is to the left of this axis
+          bounds[dim][0] = 0;
+          bounds[dim][1] = 0;
+          weights[dim][0] = 0.0;
+          weights[dim][1] = 1.0;
+        }
+        else if( input[dim] >= coords[coords.size() - 1] )
+        {
+          // Coordinate is to the right of this axis
+          bounds[dim][0] = coords.size() - 1;
+          bounds[dim][1] = bounds[dim][0];
+          weights[dim][0] = 1.0;
+          weights[dim][1] = 0.0;
+        }
+        else
+        {
+          // Find the coordinate index
+          ///TODO make this fast
+          // Note: find uses a binary search...  If we assume coordinates are
+          // evenly spaced, we can speed things up considerably
+          auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
+          bounds[dim][1] = LvArray::integerConversion< localIndex >( lower );
+          bounds[dim][0] = bounds[dim][1] - 1;
+
+          real64 const dx = coords[bounds[dim][1]] - coords[bounds[dim][0]];
+          weights[dim][0] = 1.0 - ( input[dim] - coords[bounds[dim][0]]) / dx;
+          weights[dim][1] = 1.0 - weights[dim][0];
+        }
+      }
+
+      // Calculate the result
+      real64 value = 0.0;
+      integer const numCorners = 1 << numDimensions;
+      for( integer point = 0; point < numCorners; ++point )
+      {
+        // Find array index
+        localIndex tableIndex = 0;
+        localIndex stride = 1;
+        for( integer dim = 0; dim < numDimensions; ++dim )
+        {
+          integer const corner = (point >> dim) & 1;
+          tableIndex += bounds[dim][corner] * stride;
+          stride *= m_coordinates.sizeOfArray( dim );
+        }
+
+        // Determine weighted value
+        real64 cornerValue = m_values[tableIndex];
+        for( integer dim = 0; dim < numDimensions; ++dim )
+        {
+          integer const corner = (point >> dim) & 1;
+          cornerValue *= weights[dim][corner];
+        }
+        value += cornerValue;
+      }
+      return value;
+    }
 
     /// An array of table axes
     ArrayOfArraysView< real64 const > m_coordinates;
@@ -231,7 +322,7 @@ private:
    * @brief Create an instance of the kernel wrapper
    * @return the kernel wrapper
    */
-  KernelWrapper createKernelWrapper() const;
+  KernelWrapper< 2, 3 > createKernelWrapper() const;
 
   /// Struct containing lookup keys for data repository wrappers
   struct viewKeyStruct
@@ -276,95 +367,37 @@ private:
   array1d< real64 > m_values;
 
   /// Kernel wrapper object used in evaluate() interface
-  KernelWrapper m_kernelWrapper;
+  KernelWrapper< 2, 3 > m_kernelWrapper;
 
 };
 
-template< typename IN_ARRAY >
-GEOSX_HOST_DEVICE
-real64
-MultivariableTableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
-{
-  return interpolateLinear( input );
-}
-
-template< typename IN_ARRAY >
-GEOSX_HOST_DEVICE
-real64
-MultivariableTableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
-{
-  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-  localIndex bounds[maxDimensions][2]{};
-  real64 weights[maxDimensions][2]{};
-
-  // Determine position, weights
-  for( localIndex dim = 0; dim < numDimensions; ++dim )
-  {
-    arraySlice1d< real64 const > const coords = m_coordinates[dim];
-    if( input[dim] <= coords[0] )
-    {
-      // Coordinate is to the left of this axis
-      bounds[dim][0] = 0;
-      bounds[dim][1] = 0;
-      weights[dim][0] = 0.0;
-      weights[dim][1] = 1.0;
-    }
-    else if( input[dim] >= coords[coords.size() - 1] )
-    {
-      // Coordinate is to the right of this axis
-      bounds[dim][0] = coords.size() - 1;
-      bounds[dim][1] = bounds[dim][0];
-      weights[dim][0] = 1.0;
-      weights[dim][1] = 0.0;
-    }
-    else
-    {
-      // Find the coordinate index
-      ///TODO make this fast
-      // Note: find uses a binary search...  If we assume coordinates are
-      // evenly spaced, we can speed things up considerably
-      auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
-      bounds[dim][1] = LvArray::integerConversion< localIndex >( lower );
-      bounds[dim][0] = bounds[dim][1] - 1;
-
-      real64 const dx = coords[bounds[dim][1]] - coords[bounds[dim][0]];
-      weights[dim][0] = 1.0 - ( input[dim] - coords[bounds[dim][0]]) / dx;
-      weights[dim][1] = 1.0 - weights[dim][0];
-    }
-  }
-
-  // Calculate the result
-  real64 value = 0.0;
-  integer const numCorners = 1 << numDimensions;
-  for( integer point = 0; point < numCorners; ++point )
-  {
-    // Find array index
-    localIndex tableIndex = 0;
-    localIndex stride = 1;
-    for( integer dim = 0; dim < numDimensions; ++dim )
-    {
-      integer const corner = (point >> dim) & 1;
-      tableIndex += bounds[dim][corner] * stride;
-      stride *= m_coordinates.sizeOfArray( dim );
-    }
-
-    // Determine weighted value
-    real64 cornerValue = m_values[tableIndex];
-    for( integer dim = 0; dim < numDimensions; ++dim )
-    {
-      integer const corner = (point >> dim) & 1;
-      cornerValue *= weights[dim][corner];
-    }
-    value += cornerValue;
-  }
-  return value;
-}
-
-template< typename IN_ARRAY, typename OUT_ARRAY >
-GEOSX_HOST_DEVICE
-void
-MultivariableTableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
+template< integer NUM_DIMS, integer NUM_OPS >
+MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
+                                                                               arrayView1d< real64 const > const & values )
+  :
+  m_coordinates( coordinates ),
+  m_values( values )
 {}
+
+// template< typename IN_ARRAY, integer NUM_DIMS, integer NUM_OPS >
+// GEOSX_HOST_DEVICE
+// real64
+// MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::compute( IN_ARRAY const & input ) const
+// {
+//   return interpolateLinear( input );
+// }
+
+// template< typename IN_ARRAY, integer NUM_DIMS, integer NUM_OPS >
+// GEOSX_HOST_DEVICE
+// real64
+// MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::interpolateLinear( IN_ARRAY const & input ) const
+// {}
+
+// template< typename IN_ARRAY, typename OUT_ARRAY, integer NUM_DIMS, integer NUM_OPS >
+// GEOSX_HOST_DEVICE
+// void
+// MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
+// {}
 
 
 } /* namespace geosx */
