@@ -116,11 +116,6 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void resetViews( MeshLevel & mesh );
-
 protected:
 
   virtual void precomputeData( MeshLevel & mesh,
