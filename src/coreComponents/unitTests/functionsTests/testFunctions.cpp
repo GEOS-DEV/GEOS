@@ -115,8 +115,6 @@ TEST( FunctionTests, 1DTable )
   testExpected[5] = 7.0;
   table_a.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_a.reInitializeFunction();
-  table_b.setInterpolationMethod( MultivariableTableFunction::InterpolationType::Linear );
-  table_b.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
   evaluate1DFunction( table_b, testCoordinates, testExpected );
 

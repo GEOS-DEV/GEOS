@@ -36,14 +36,6 @@ class MultivariableTableFunction : public FunctionBase
 {
 public:
 
-/// Enumerator of available interpolation types
-  enum class InterpolationType : integer
-  {
-    Linear,
-    Nearest,
-    Upper,
-    Lower
-  };
   /// maximum dimensions for the coordinates in the table
   static constexpr integer maxDimensions = 4;
 
@@ -90,6 +82,8 @@ public:
      * @brief Interpolate in the table.
      * @tparam IN_ARRAY type of input value array
      * @param[in] input vector of input value
+     * @param[out] values vector of interpolated values
+     *
      * @return interpolated value
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
@@ -99,7 +93,8 @@ public:
     /**
      * @brief Interpolate in the table with derivatives.
      * @param[in] input vector of input value
-     * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in input
+     * @param[out] values vector of interpolated values
+     * @param[out] derivatives vector of derivatives of interpolated values wrt the variables present in input
      * @return interpolated value
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
@@ -125,19 +120,11 @@ private:
 
     /**
      * @brief The constructor of the kernel wrapper
-     * @param[in] interpolationMethod table interpolation method
      * @param[in] coordinates array of table axes
      * @param[in] values table values (in fortran order)
-     * @param[in] dimensions number of active table dimensions
-     * @param[in] size size of the table
-     * @param[in] indexIncrement array used to locate values within ND tables
-     * @param[in] corners corners of the box that surround the value in N dimensions
-     * @param[in] numCorners number of active table corners
      */
-    KernelWrapper( InterpolationType interpolationMethod,
-                   ArrayOfArraysView< real64 const > const & coordinates,
+    KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
                    arrayView1d< real64 const > const & values );
-
     /**
      * @brief Interpolate in the table using linear method.
      * @param[in] input vector of input value
@@ -147,41 +134,6 @@ private:
     GEOSX_HOST_DEVICE
     real64
     interpolateLinear( IN_ARRAY const & input ) const;
-
-    /**
-     * @brief Interpolate in the table with derivatives using linear method.
-     * @param[in] input vector of input value
-     * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in input
-     * @return interpolated value
-     */
-    template< typename IN_ARRAY, typename OUT_ARRAY >
-    GEOSX_HOST_DEVICE
-    real64
-    interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
-
-    /**
-     * @brief Interpolate in the table by rounding to an exact point
-     * @param[in] input vector of input value
-     * @return interpolated value
-     */
-    template< typename IN_ARRAY >
-    GEOSX_HOST_DEVICE
-    real64
-    interpolateRound( IN_ARRAY const & input ) const;
-
-    /**
-     * @brief Interpolate in the table with derivatives using linear method.
-     * @param[in] input vector of input value
-     * @param[out] derivatives vector of derivatives of interpolated value wrt the variables present in input
-     * @return interpolated value
-     */
-    template< typename IN_ARRAY, typename OUT_ARRAY >
-    GEOSX_HOST_DEVICE
-    real64
-    interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
-
-    /// Table interpolation method
-    MultivariableTableFunction::InterpolationType m_interpolationMethod = InterpolationType::Linear;
 
     /// An array of table axes
     ArrayOfArraysView< real64 const > m_coordinates;
@@ -264,18 +216,6 @@ private:
   array1d< real64 > & getValues() { return m_values; }
 
   /**
-   * @brief Get the interpolation method
-   * @return The interpolation method
-   */
-  InterpolationType getInterpolationMethod() const { return m_interpolationMethod; }
-
-  /**
-   * @brief Set the interpolation method
-   * @param method The interpolation method
-   */
-  void setInterpolationMethod( InterpolationType const method );
-
-  /**
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions
    */
@@ -329,9 +269,6 @@ private:
   /// Table voxel file names
   Path m_voxelFile;
 
-  /// Table interpolation method
-  InterpolationType m_interpolationMethod;
-
   /// An array of table axes
   ArrayOfArrays< real64 > m_coordinates;
 
@@ -348,14 +285,7 @@ GEOSX_HOST_DEVICE
 real64
 MultivariableTableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
-  if( m_interpolationMethod == MultivariableTableFunction::InterpolationType::Linear )
-  {
-    return interpolateLinear( input );
-  }
-  else // Nearest, Upper, Lower interpolation methods
-  {
-    return interpolateRound( input );
-  }
+  return interpolateLinear( input );
 }
 
 template< typename IN_ARRAY >
@@ -430,200 +360,12 @@ MultivariableTableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & i
   return value;
 }
 
-template< typename IN_ARRAY >
-GEOSX_HOST_DEVICE
-real64
-MultivariableTableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
-{
-  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-
-  // Determine the index to the nearest table entry
-  localIndex tableIndex = 0;
-  localIndex stride = 1;
-  for( integer dim = 0; dim < numDimensions; ++dim )
-  {
-    arraySlice1d< real64 const > const coords = m_coordinates[dim];
-    // Determine the index along each table axis
-    localIndex subIndex;
-    if( input[dim] <= coords[0] )
-    {
-      // Coordinate is to the left of the table axis
-      subIndex = 0;
-    }
-    else if( input[dim] >= coords[coords.size() - 1] )
-    {
-      // Coordinate is to the right of the table axis
-      subIndex = coords.size() - 1;
-    }
-    else
-    {
-      // Coordinate is within the table axis
-      // Note: find() will return the index of the upper table vertex
-      auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
-      subIndex = LvArray::integerConversion< localIndex >( lower );
-
-      // Interpolation types:
-      //   - Nearest returns the value of the closest table vertex
-      //   - Upper returns the value of the next table vertex
-      //   - Lower returns the value of the previous table vertex
-      if( m_interpolationMethod == MultivariableTableFunction::InterpolationType::Nearest )
-      {
-        if( ( input[dim] - coords[subIndex - 1]) <= ( coords[subIndex] - input[dim]) )
-        {
-          --subIndex;
-        }
-      }
-      else if( m_interpolationMethod == MultivariableTableFunction::InterpolationType::Lower )
-      {
-        if( subIndex > 0 )
-        {
-          --subIndex;
-        }
-      }
-    }
-
-    // Increment the global table index
-    tableIndex += subIndex * stride;
-    stride *= coords.size();
-  }
-
-  // Retrieve the nearest value
-  return m_values[tableIndex];
-}
-
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
 void
 MultivariableTableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
-{
-  // Linear interpolation
-  if( m_interpolationMethod == MultivariableTableFunction::InterpolationType::Linear )
-  {
-    return interpolateLinear( input, derivatives );
-  }
-  // Nearest, Upper, Lower interpolation methods
-  else
-  {
-    return interpolateRound( input, derivatives );
-  }
-}
+{}
 
-template< typename IN_ARRAY, typename OUT_ARRAY >
-GEOSX_HOST_DEVICE
-real64
-MultivariableTableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
-{
-  integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-
-  localIndex bounds[maxDimensions][2]{};
-  real64 weights[maxDimensions][2]{};
-  real64 dWeights_dInput[maxDimensions][2]{};
-
-  // Determine position, weights
-  for( integer dim = 0; dim < numDimensions; ++dim )
-  {
-    arraySlice1d< real64 const > const coords = m_coordinates[dim];
-    if( input[dim] <= coords[0] )
-    {
-      // Coordinate is to the left of this axis
-      bounds[dim][0] = 0;
-      bounds[dim][1] = 0;
-      weights[dim][0] = 0;
-      weights[dim][1] = 1;
-      dWeights_dInput[dim][0] = 0;
-      dWeights_dInput[dim][1] = 0;
-    }
-    else if( input[dim] >= coords[coords.size() - 1] )
-    {
-      // Coordinate is to the right of this axis
-      bounds[dim][0] = coords.size() - 1;
-      bounds[dim][1] = bounds[dim][0];
-      weights[dim][0] = 1;
-      weights[dim][1] = 0;
-      dWeights_dInput[dim][0] = 0;
-      dWeights_dInput[dim][1] = 0;
-    }
-    else
-    {
-      // Find the coordinate index
-      ///TODO make this fast
-      // Note: find uses a binary search...  If we assume coordinates are
-      // evenly spaced, we can speed things up considerably
-      auto lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
-      bounds[dim][1] = LvArray::integerConversion< localIndex >( lower );
-      bounds[dim][0] = bounds[dim][1] - 1;
-
-      real64 const dx = coords[bounds[dim][1]] - coords[bounds[dim][0]];
-      weights[dim][0] = 1.0 - ( input[dim] - coords[bounds[dim][0]]) / dx;
-      weights[dim][1] = 1.0 - weights[dim][0];
-      dWeights_dInput[dim][0] = -1.0 / dx;
-      dWeights_dInput[dim][1] = -dWeights_dInput[dim][0];
-    }
-  }
-
-  // Calculate the result
-  real64 value = 0.0;
-  for( integer dim = 0; dim < numDimensions; ++dim )
-  {
-    derivatives[dim] = 0.0;
-  }
-
-  integer const numCorners = 1 << numDimensions;
-  for( integer point = 0; point < numCorners; ++point )
-  {
-    // Find array index
-    localIndex tableIndex = 0;
-    localIndex stride = 1;
-    for( integer dim = 0; dim < numDimensions; ++dim )
-    {
-      integer const corner = (point >> dim) & 1;
-      tableIndex += bounds[dim][corner] * stride;
-      stride *= m_coordinates.sizeOfArray( dim );
-    }
-
-    // Determine weighted value
-    real64 cornerValue = m_values[tableIndex];
-    real64 dCornerValue_dInput[maxDimensions];
-    for( integer dim = 0; dim < numDimensions; ++dim )
-    {
-      dCornerValue_dInput[dim] = cornerValue;
-    }
-
-    for( integer dim = 0; dim < numDimensions; ++dim )
-    {
-      integer const corner = (point >> dim) & 1;
-      cornerValue *= weights[dim][corner];
-      for( integer kk = 0; kk < numDimensions; ++kk )
-      {
-        dCornerValue_dInput[kk] *= ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
-      }
-    }
-
-    for( integer dim = 0; dim < numDimensions; ++dim )
-    {
-      derivatives[dim] += dCornerValue_dInput[dim];
-    }
-    value += cornerValue;
-  }
-  return value;
-}
-
-template< typename IN_ARRAY, typename OUT_ARRAY >
-GEOSX_HOST_DEVICE
-real64
-MultivariableTableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
-{
-  GEOSX_UNUSED_VAR( input, derivatives );
-  GEOSX_ERROR( "Rounding interpolation with derivatives not implemented" );
-  return 0.0;
-}
-
-/// Declare strings associated with enumeration values.
-ENUM_STRINGS( MultivariableTableFunction::InterpolationType,
-              "linear",
-              "nearest",
-              "upper",
-              "lower" );
 
 } /* namespace geosx */
 

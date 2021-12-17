@@ -26,9 +26,8 @@ namespace geosx
 using namespace dataRepository;
 
 MultivariableTableFunction::MultivariableTableFunction( const string & name,
-                              Group * const parent ):
+                                                        Group * const parent ):
   FunctionBase( name, parent ),
-  m_interpolationMethod( InterpolationType::Linear ),
   m_kernelWrapper( createKernelWrapper() )
 {
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
@@ -48,11 +47,6 @@ MultivariableTableFunction::MultivariableTableFunction( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Voxel file name for ND Table" );
-
-  registerWrapper( viewKeyStruct::interpolationString(), &m_interpolationMethod ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Interpolation method. Valid options:\n* " + EnumStrings< InterpolationType >::concat( "\n* " ) ).
-    setApplyDefaultValue( m_interpolationMethod );
 }
 
 template< typename T >
@@ -85,11 +79,6 @@ void MultivariableTableFunction::parseFile( string const & filename, array1d< T 
   inputStream.close();
 }
 
-void MultivariableTableFunction::setInterpolationMethod( InterpolationType const method )
-{
-  m_interpolationMethod = method;
-  reInitializeFunction();
-}
 
 void MultivariableTableFunction::setTableCoordinates( array1d< real64_array > const & coordinates )
 {
@@ -166,8 +155,7 @@ void MultivariableTableFunction::reInitializeFunction()
 
 MultivariableTableFunction::KernelWrapper MultivariableTableFunction::createKernelWrapper() const
 {
-  return KernelWrapper( m_interpolationMethod,
-                        m_coordinates.toViewConst(),
+  return KernelWrapper( m_coordinates.toViewConst(),
                         m_values.toViewConst() );
 }
 
@@ -176,11 +164,9 @@ real64 MultivariableTableFunction::evaluate( real64 const * const input ) const
   return m_kernelWrapper.compute( input );
 }
 
-MultivariableTableFunction::KernelWrapper::KernelWrapper( InterpolationType const interpolationMethod,
-                                             ArrayOfArraysView< real64 const > const & coordinates,
-                                             arrayView1d< real64 const > const & values )
+MultivariableTableFunction::KernelWrapper::KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
+                                                          arrayView1d< real64 const > const & values )
   :
-  m_interpolationMethod( interpolationMethod ),
   m_coordinates( coordinates ),
   m_values( values )
 {}
