@@ -18,9 +18,10 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -112,11 +113,13 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
+    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
+    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressureOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
+    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
+    m_fluidPressureOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() )
   {}
 
   //*****************************************************************************
@@ -280,14 +283,16 @@ public:
     // Evaluate conserved quantities (total stress and fluid mass content) and their derivatives
     m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
                                                        q,
+													   m_initialFluidPressure[k],
                                                        m_fluidPressureOld[k],
                                                        m_deltaFluidPressure[k],
                                                        strainIncrement,
                                                        m_gravityAcceleration,
                                                        m_gravityVector,
                                                        m_solidDensity( k, q ),
-                                                       m_fluidDensity( k, q ),
+													   m_initialFluidDensity( k, q ),
                                                        m_fluidDensityOld( k ),
+                                                       m_fluidDensity( k, q ),
                                                        m_dFluidDensity_dPressure( k, q ),
                                                        totalStress,
                                                        dTotalStress_dPressure,
@@ -422,16 +427,21 @@ protected:
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
   arrayView1d< real64 const > const m_fluidDensityOld;
+  arrayView2d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;
+
+  /// The rank-global initial fluid pressure array
+  arrayView1d< real64 const > const m_initialFluidPressure;
 
   /// The rank-global fluid pressure array.
   arrayView1d< real64 const > const m_fluidPressureOld;
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
+
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,

@@ -201,7 +201,7 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
   }
 
   GEOSX_THROW_IF( count == maxIter,
-                  "SpanWagnerCO2Density: Newton convergence fails in CO2 solubility computation: " << "dre = " << dre << ", tolerance = " << tolerance,
+                  GEOSX_FMT( "SpanWagnerCO2Density: Newton convergence fails in CO2 solubility computation: dre = {}, tolerance = {}", dre, tolerance ),
                   InputError );
   return rho;
 }
@@ -224,7 +224,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
   catch( const std::invalid_argument & e )
   {
-    GEOSX_THROW( functionName << ": invalid property argument: " << e.what(), InputError );
+    GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value: {}", functionName, e.what() ), InputError );
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
@@ -277,12 +277,13 @@ SpanWagnerCO2Density::SpanWagnerCO2Density( string const & name,
                    componentMolarWeight )
 {
   string const expectedCO2ComponentNames[] = { "CO2", "co2" };
-  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames );
+  m_CO2Index = PVTFunctionHelpers::findName( componentNames, expectedCO2ComponentNames, "componentNames" );
 
   m_CO2DensityTable = makeDensityTable( inputParams, m_functionName, FunctionManager::getInstance() );
 }
 
-SpanWagnerCO2Density::KernelWrapper SpanWagnerCO2Density::createKernelWrapper() const
+SpanWagnerCO2Density::KernelWrapper
+SpanWagnerCO2Density::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
                         *m_CO2DensityTable,

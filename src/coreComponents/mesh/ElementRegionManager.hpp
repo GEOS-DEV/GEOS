@@ -770,7 +770,7 @@ public:
    * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
    */
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
@@ -822,6 +822,23 @@ public:
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
    * regions/materials.
+   * @tparam TRAIT mesh data trait
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
+
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
@@ -867,7 +884,7 @@ public:
    * @return MaterialViewAccessor that contains the data views
    */
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
                                       arrayView1d< string const > const & materialNames,
@@ -1177,13 +1194,13 @@ ElementRegionManager::
 }
 
 template< typename T, int NDIM, typename PERM >
-ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
   constructArrayViewAccessor( string const & name, string const & neighborName ) const
 {
   return constructViewAccessor< Array< T, NDIM, PERM >,
-         ArrayView< T const, NDIM, getUSD( PERM{} ) >
-         >( name, neighborName );
+                                ArrayView< T const, NDIM, getUSD< PERM > >
+                                >( name, neighborName );
 }
 
 template< typename VIEWTYPE >
@@ -1413,8 +1430,23 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   return accessor;
 }
 
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
+                                                                                         regionNames,
+                                                                                         materialNames,
+                                                                                         allowMissingViews );
+}
+
+
 template< typename T, int NDIM, typename PERM >
-ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
@@ -1422,11 +1454,11 @@ ElementRegionManager::
                                       bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< Array< T, NDIM, PERM >,
-         ArrayView< T const, NDIM, getUSD( PERM{} ) >
-         >( viewName,
-            regionNames,
-            materialNames,
-            allowMissingViews );
+                                        ArrayView< T const, NDIM, getUSD< PERM > >
+                                        >( viewName,
+                                           regionNames,
+                                           materialNames,
+                                           allowMissingViews );
 }
 
 template< typename CONSTITUTIVE_TYPE >

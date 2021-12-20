@@ -149,7 +149,7 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
           ++ownIdx;
         }
       }
-      localIndex newSetSize = ownedIndices.size( );
+      localIndex newSetSize = ownIdx;
       if( oldSetSizes[ setIdx ] != newSetSize )
       {
         m_setChanged = true;
@@ -165,13 +165,10 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
           }
         }
       }
-      m_setsIndices[ setIdx ].reserve( newSetSize );
-      if( newSetSize > 0 )
+      m_setsIndices[ setIdx ].resize( newSetSize );
+      for( localIndex idx = 0; idx < newSetSize; ++idx )
       {
-        for( localIndex idx = 0; idx < newSetSize; ++idx )
-        {
-          m_setsIndices[ setIdx ][ idx ] = ownedIndices[ idx ];
-        }
+        m_setsIndices[ setIdx ][ idx ] = ownedIndices[ idx ];
       }
     }
   }
@@ -240,7 +237,7 @@ void PackCollection::collect( DomainPartition & domain,
   //  this will only happen when we're not targeting a mesh object since in that case while setnames size is 0,
   //  setsIndices[0] is the entire non-ghost index set, so all mesh object collection goes to packbyindex and any
   //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
-  else if( m_setNames.size() == 0 )
+  else if( !m_targetIsMeshObject && m_setNames.size() == 0 )
   {
     target.pack( buffer, false, true, events );
   }

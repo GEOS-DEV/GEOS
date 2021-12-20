@@ -37,7 +37,7 @@ std::unique_ptr< ConstitutiveBase >
 ParallelPlatesPermeability::deliverClone( string const & name,
                                           Group * const parent ) const
 {
-  return ConstitutiveBase::deliverClone( name, parent );
+  return PermeabilityBase::deliverClone( name, parent );
 }
 
 void ParallelPlatesPermeability::allocateConstitutiveData( dataRepository::Group & parent,

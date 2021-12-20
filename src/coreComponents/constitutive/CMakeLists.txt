@@ -10,27 +10,39 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
+     capillaryPressure/CapillaryPressureExtrinsicData.hpp     
+     capillaryPressure/TableCapillaryPressure.hpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
-     contact/ContactRelationBase.hpp
-     contact/Coulomb.hpp
+     contact/ContactBase.hpp
+     contact/CoulombContact.hpp
+     contact/ContactSelector.hpp
+     contact/FrictionlessContact.hpp
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
+     fluid/MultiFluidExtrinsicData.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
-     fluid/PVTFunctions/BrineCO2Density.hpp
-     fluid/PVTFunctions/BrineViscosity.hpp
+     fluid/PVTFunctions/PhillipsBrineDensity.hpp
+     fluid/PVTFunctions/PhillipsBrineViscosity.hpp
+     fluid/PVTFunctions/EzrokhiBrineDensity.hpp
+     fluid/PVTFunctions/EzrokhiBrineViscosity.hpp
      fluid/PVTFunctions/CO2Solubility.hpp
      fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
      fluid/PVTFunctions/PVTFunctionBase.hpp
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
+     fluid/PVTFunctions/BrineEnthalpy.hpp
+     fluid/PVTFunctions/CO2Enthalpy.hpp
+     fluid/PVTFunctions/BrineInternalEnergy.hpp
+     fluid/PVTFunctions/CO2InternalEnergy.hpp
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
@@ -49,7 +61,8 @@ set( constitutive_headers
      permeability/ProppantPermeability.hpp     
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
-     relativePermeability/RelativePermeabilityBase.hpp
+     relativePermeability/RelativePermeabilityBase.hpp 
+     relativePermeability/RelativePermeabilityExtrinsicData.hpp    
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
@@ -65,13 +78,17 @@ set( constitutive_headers
      solid/DamageVolDev.hpp
      solid/DruckerPrager.hpp
      solid/DruckerPragerExtended.hpp
+     solid/ModifiedCamClay.hpp
+     solid/DelftEgg.hpp
      solid/ElasticIsotropic.hpp
+     solid/ElasticIsotropicPressureDependent.hpp
      solid/ElasticTransverseIsotropic.hpp
      solid/ElasticOrthotropic.hpp
      solid/InvariantDecompositions.hpp
      solid/PorousSolid.hpp
      solid/PropertyConversions.hpp
      solid/SolidBase.hpp
+     solid/SolidInternalEnergy.hpp
      solid/SolidModelDiscretizationOps.hpp
      solid/SolidModelDiscretizationOpsFullyAnisotroipic.hpp
      solid/SolidModelDiscretizationOpsIsotropic.hpp
@@ -92,22 +109,31 @@ set( constitutive_sources
      NullModel.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/TableCapillaryPressure.cpp
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
-     contact/ContactRelationBase.cpp
-     contact/Coulomb.cpp
+     contact/ContactBase.cpp
+     contact/CoulombContact.cpp
+     contact/FrictionlessContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
      fluid/MultiPhaseMultiComponentFluid.cpp
+     fluid/PVTDriver.cpp
      fluid/PVTOData.cpp
-     fluid/PVTFunctions/BrineCO2Density.cpp
-     fluid/PVTFunctions/BrineViscosity.cpp
+     fluid/PVTFunctions/PhillipsBrineDensity.cpp
+     fluid/PVTFunctions/PhillipsBrineViscosity.cpp
+     fluid/PVTFunctions/EzrokhiBrineDensity.cpp
+     fluid/PVTFunctions/EzrokhiBrineViscosity.cpp
      fluid/PVTFunctions/CO2Solubility.cpp
      fluid/PVTFunctions/FenghourCO2Viscosity.cpp
      fluid/PVTFunctions/SpanWagnerCO2Density.cpp
-     fluid/PVTFunctions/PVTFunctionHelpers.cpp     
+     fluid/PVTFunctions/PVTFunctionHelpers.cpp
+     fluid/PVTFunctions/BrineEnthalpy.cpp
+     fluid/PVTFunctions/CO2Enthalpy.cpp
+     fluid/PVTFunctions/BrineInternalEnergy.cpp
+     fluid/PVTFunctions/CO2InternalEnergy.cpp
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
@@ -132,11 +158,15 @@ set( constitutive_sources
      solid/DamageVolDev.cpp
      solid/DruckerPrager.cpp
      solid/DruckerPragerExtended.cpp
+     solid/ModifiedCamClay.cpp
+     solid/DelftEgg.cpp
      solid/ElasticIsotropic.cpp
+     solid/ElasticIsotropicPressureDependent.cpp
      solid/ElasticTransverseIsotropic.cpp
      solid/ElasticOrthotropic.cpp
      solid/PorousSolid.cpp
      solid/SolidBase.cpp
+     solid/SolidInternalEnergy.cpp
      solid/TriaxialDriver.cpp
      solid/porosity/BiotPorosity.cpp
      solid/porosity/PorosityBase.cpp

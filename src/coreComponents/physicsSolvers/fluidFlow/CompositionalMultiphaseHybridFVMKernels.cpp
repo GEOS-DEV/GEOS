@@ -17,11 +17,13 @@
  */
 
 #include "CompositionalMultiphaseHybridFVMKernels.hpp"
+#include "CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/mimeticInnerProducts/MimeticInnerProductBase.hpp"
 #include "finiteVolume/mimeticInnerProducts/BdVLMInnerProduct.hpp"
 #include "finiteVolume/mimeticInnerProducts/TPFAInnerProduct.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
 namespace geosx
@@ -726,6 +728,7 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
+  using namespace CompositionalMultiphaseUtilities;
   localIndex constexpr NDOF = NC+1;
 
   // dof numbers
@@ -861,6 +864,12 @@ AssemblerKernelHelper::
                                         dDivMassFluxes_dElemVars );
 
   }
+
+  // Apply equation/variable change transformation(s)
+  real64 work[NDOF*(NF+1)];
+  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NDOF * ( NF + 1 ), dDivMassFluxes_dElemVars, work );
+  shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NF, dDivMassFluxes_dFaceVars, work );
+  shiftElementsAheadByOneAndReplaceFirstElementWithSum( NC, divMassFluxes );
 
   // we are ready to assemble the local flux and its derivatives
   // no need for atomic adds - each row is assembled by a single thread
@@ -1525,9 +1534,9 @@ FluxKernel::
 
   // get the cell-centered pressures
   arrayView1d< real64 const > const & elemPres  =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::pressureString() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
   arrayView1d< real64 const > const & dElemPres =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::deltaPressureString() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
@@ -1542,7 +1551,7 @@ FluxKernel::
 
   // get the cell-centered depth
   arrayView1d< real64 const > const & elemGravCoef =
-    subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseBase::viewKeyStruct::gravityCoefString() );
+    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::gravityCoefficient::key() );
 
   // assemble the residual and Jacobian element by element
   // in this loop we assemble both equation types: mass conservation in the elements and constraints at the faces

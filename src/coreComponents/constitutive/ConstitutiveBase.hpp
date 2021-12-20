@@ -47,7 +47,7 @@ public:
   ConstitutiveBase( string const & name,
                     Group * const parent );
 
-  virtual ~ConstitutiveBase() override;
+  virtual ~ConstitutiveBase() override = default;
 
   /**
    * @brief create a clone of this constitutive model
@@ -104,24 +104,62 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
-  {
-    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
-    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
-  };
+  {};
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
+
+  virtual std::vector< string > getSubRelationNames() const { return {}; }
+
+  /**
+   * @brief Helper function to register extrinsic data on a constitutive model
+   * @tparam TRAIT the type of extrinsic data
+   * @param[in] extrinsicData the extrinsic data struct corresponding to the object being registered
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
+                                                                           typename TRAIT::type * newObject )
+  {
+    return registerWrapper( extrinsicDataTrait.key(), newObject ).
+             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
+             setPlotLevel( TRAIT::plotLevel ).
+             setRestartFlags( TRAIT::restartFlag ).
+             setDescription( TRAIT::description );
+  }
+
+  /**
+   * @brief Get a wrapper associated with a trait from the constitutive model
+   * @tparam TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this constitutive model
+   * @return A const reference to a view to const wrapper.
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > const & getExtrinsicData() const
+  {
+    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+  }
+
+  /**
+   * @brief Get a wrapper associated with a trait from the constitutive model
+   * @tparam TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this constitutive model
+   * @return A reference to the wrapper.
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & getExtrinsicData()
+  {
+    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+  }
 
 protected:
 
 private:
+
   localIndex m_numQuadraturePoints;
-  Group * m_constitutiveDataGroup = nullptr;
-
-  ConstitutiveBase( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase( ConstitutiveBase && ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase && ) = delete;
-
 };
 
 

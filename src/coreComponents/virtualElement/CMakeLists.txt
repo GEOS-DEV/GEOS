@@ -2,12 +2,11 @@
 # Specify all headers
 #
 set( virtualElement_headers
-     ConformingVirtualElementOrder1.hpp
-     ConformingVirtualElementOrder1_impl.hpp
-     VirtualElementBase.hpp
-   )
+  ConformingVirtualElementOrder1.hpp
+  ConformingVirtualElementOrder1_impl.hpp
+  )
 
-set( dependencyList mesh )
+set( dependencyList mesh finiteElement mesh )
 
 blt_add_library( NAME        virtualElement
                  HEADERS     ${virtualElement_headers}

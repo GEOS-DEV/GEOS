@@ -1,0 +1,158 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="flowSolver"
+      discretization="tpfaFlow"
+      targetRegions="{ Region1, Region2 }"
+      fluidNames="{ fluid }"
+      solidNames="{ rock1, rock2 }"
+      permeabilityNames="{ rockPerm }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 5, 5 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ block1, block2 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 1.01, 1.01, 1.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 1.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="2e3">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="100.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1e2"
+      target="/Solvers/flowSolver"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e3"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="tpfaFlow"
+        fieldName="pressure"
+        coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ block1 }"
+      materialList="{ fluid, rock1 }"/>
+
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ block2 }"
+      materialList="{ fluid, rock2 }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="fluid"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="0.0"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock1"
+      solidModelName="nullSolid"
+      porosityModelName="rock1Porosity"
+      permeabilityModelName="rockPerm"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock2"
+      solidModelName="nullSolid"
+      porosityModelName="rock2Porosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rock1Porosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-8"/>
+
+    <PressurePorosity
+      name="rock2Porosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="0.0"
+      compressibility="1.0e-10"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-16, 2.0e-16, 2.0e-16 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="5e6"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkTerm"
+      objectPath="ElementRegions"
+      fieldName="pressure"
+      scale="-5e6"
+      setNames="{ sink }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

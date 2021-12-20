@@ -15,6 +15,8 @@ Contributing
 
    UnitTests.rst
 
+   InputFiles.rst
+
    IntegratedTests.rst
 
    Benchmarks.rst
@@ -22,3 +24,5 @@ Contributing
    Caliper.rst
 
    UsingDocker.rst
+
+   InstallWin.rst

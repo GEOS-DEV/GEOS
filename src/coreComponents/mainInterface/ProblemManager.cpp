@@ -23,6 +23,7 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "dataRepository/ConduitRestart.hpp"
 #include "dataRepository/RestartFlags.hpp"
+#include "dataRepository/KeyNames.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "events/tasks/TasksManager.hpp"
 #include "events/EventManager.hpp"
@@ -32,13 +33,11 @@
 #include "fileIO/Outputs/OutputBase.hpp"
 #include "fileIO/Outputs/OutputManager.hpp"
 #include "functions/FunctionManager.hpp"
-#include "mainInterface/initialization.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/utilities/MeshUtilities.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
-#include "mesh/simpleGeometricObjects/SimpleGeometricObjectBase.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
@@ -48,9 +47,6 @@
 // System includes
 #include <vector>
 #include <regex>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <algorithm>
 
 namespace geosx
 {
@@ -58,12 +54,8 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-class CellElementSubRegion;
-class FaceElementSubRegion;
-
-
 ProblemManager::ProblemManager( conduit::Node & root ):
-  dataRepository::Group( "Problem", root ),
+  dataRepository::Group( dataRepository::keys::ProblemManager, root ),
   m_physicsSolverManager( nullptr ),
   m_eventManager( nullptr ),
   m_functionManager( nullptr ),
@@ -184,8 +176,12 @@ void ProblemManager::parseCommandLineInput()
   commandLine.getReference< integer >( viewKeys.useNonblockingMPI ) = opts.useNonblockingMPI;
   commandLine.getReference< integer >( viewKeys.suppressPinned ) = opts.suppressPinned;
 
+  string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
+  outputDirectory = opts.outputDirectory;
+  OutputBase::setOutputDirectory( outputDirectory );
+
   string & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
-  xmlWrapper::buildMultipleInputXML( opts.inputFileNames, inputFileName );
+  inputFileName = xmlWrapper::buildMultipleInputXML( opts.inputFileNames, outputDirectory );
 
   string & schemaName = commandLine.getReference< string >( viewKeys.schemaFileName );
   schemaName = opts.schemaName;
@@ -193,10 +189,6 @@ void ProblemManager::parseCommandLineInput()
   string & problemName = commandLine.getReference< string >( viewKeys.problemName );
   problemName = opts.problemName;
   OutputBase::setFileNameRoot( problemName );
-
-  string & outputDirectory = commandLine.getReference< string >( viewKeys.outputDirectory );
-  outputDirectory = opts.outputDirectory;
-  OutputBase::setOutputDirectory( outputDirectory );
 
   if( schemaName.empty())
   {
@@ -312,10 +304,10 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 
   // Add entries that are only used in the pre-processor
-  Group & IncludedList = this->registerGroup< Group >( "Included" );
+  Group & IncludedList = this->registerGroup< Group >( xmlWrapper::includedListTag );
   IncludedList.setInputFlags( InputFlags::OPTIONAL );
 
-  Group & includedFile = IncludedList.registerGroup< Group >( "File" );
+  Group & includedFile = IncludedList.registerGroup< Group >( xmlWrapper::includedFileTag );
   includedFile.setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   schemaUtilities::SchemaConstruction( IncludedList, schemaRoot, targetChoiceNode, documentationType );
@@ -373,28 +365,45 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ProblemManager::parseInputFile()
 {
-  DomainPartition & domain = getDomainPartition();
-
-  Group & commandLine = getGroup< Group >( groupKeys.commandLine );
+  Group & commandLine = getGroup( groupKeys.commandLine );
   string const & inputFileName = commandLine.getReference< string >( viewKeys.inputFileName );
 
-  // Load preprocessed xml file and check for errors
-  xmlResult = xmlDocument.load_file( inputFileName.c_str() );
-  if( !xmlResult )
-  {
-    GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-    GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-    GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-  }
+  // Load preprocessed xml file
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult const xmlResult = xmlDocument.load_file( inputFileName.c_str() );
+  GEOSX_THROW_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML file {}\nDescription: {}\nOffset: {}",
+                                         inputFileName, xmlResult.description(), xmlResult.offset ), InputError );
 
-  string::size_type const pos=inputFileName.find_last_of( '/' );
-  string path = inputFileName.substr( 0, pos + 1 );
-  xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ) = path.c_str();
-  xmlProblemNode = xmlDocument.child( this->getName().c_str());
+  // Add path information to the file
+  xmlDocument.append_child( xmlWrapper::filePathString ).append_attribute( xmlWrapper::filePathString ).set_value( inputFileName.c_str() );
+
+  // Parse the results
+  parseXMLDocument( xmlDocument );
+}
+
+
+void ProblemManager::parseInputString( string const & xmlString )
+{
+  // Load preprocessed xml file
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( xmlString.c_str(), xmlString.length() );
+  GEOSX_THROW_IF( !xmlResult, GEOSX_FMT( "Errors found while parsing XML string\nDescription: {}\nOffset: {}",
+                                         xmlResult.description(), xmlResult.offset ), InputError );
+
+  // Parse the results
+  parseXMLDocument( xmlDocument );
+}
+
+
+void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument )
+{
+  // Extract the problem node and begin processing the user inputs
+  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str() );
   processInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
+    DomainPartition & domain = getDomainPartition();
     ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
     xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
     constitutiveManager.processInputFileRecursive( topLevelNode );
@@ -600,7 +609,7 @@ map< std::pair< string, string >, localIndex > ProblemManager::calculateRegionQu
 
     if( solver != nullptr )
     {
-      string const discretizationName = solver->getDiscretization();
+      string const discretizationName = solver->getDiscretizationName();
       arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
       FiniteElementDiscretizationManager const &

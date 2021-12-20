@@ -212,7 +212,7 @@ protected:
                                         string const & setName ) const = 0;
 
   /**
-   * @brief Allocate and populate a stencil to be used in boundary condition application
+   * @brief Allocate and populate a stencil to be used in dirichlet boundary condition application
    * @param mesh the target mesh level
    * @param setName name of the face set, to be used as wrapper name for the produced stencil
    * @param faceSet set of face indices to use
@@ -220,6 +220,23 @@ protected:
   virtual void computeBoundaryStencil( MeshLevel & mesh,
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const = 0;
+
+  /**
+   * @brief Register the wrapper for aquifer stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
+   * @param setName the face set name (used as the wrapper name)
+   */
+  virtual void registerAquiferStencil( Group & stencilGroup,
+                                       string const & setName ) const = 0;
+
+  /**
+   * @brief Allocate and populate a stencil to be used in aquifer boundary condition application
+   * @param domain the domain partion
+   * @param mesh the target mesh level
+   */
+  virtual void computeAquiferStencil( DomainPartition & domain,
+                                      MeshLevel & mesh ) const = 0;
+
 
   /// name of the primary solution field
   string m_fieldName;

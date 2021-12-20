@@ -84,8 +84,8 @@ void MultiphasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
 void MultiphasePoromechanicsSolver::setupSystem( DomainPartition & domain,
                                                  DofManager & dofManager,
                                                  CRSMatrix< real64, globalIndex > & localMatrix,
-                                                 array1d< real64 > & localRhs,
-                                                 array1d< real64 > & localSolution,
+                                                 ParallelVector & rhs,
+                                                 ParallelVector & solution,
                                                  bool const setSparsity )
 {
 //  if( m_precond )
@@ -94,7 +94,7 @@ void MultiphasePoromechanicsSolver::setupSystem( DomainPartition & domain,
 //  }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
 //  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
 //  {
@@ -155,8 +155,8 @@ real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
   setupSystem( domain,
                m_dofManager,
                m_localMatrix,
-               m_localRhs,
-               m_localSolution );
+               m_rhs,
+               m_solution );
 
   implicitStepSetup( time_n, dt, domain );
 
@@ -252,12 +252,7 @@ real64 MultiphasePoromechanicsSolver::calculateResidualNorm( DomainPartition con
   // compute norm of mass balance residual equations
   real64 const massResidualNorm = m_flowSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    char output[200] = {0};
-    sprintf( output, "    ( Rsolid, Rfluid ) = ( %4.2e, %4.2e )", momementumResidualNorm, massResidualNorm );
-    std::cout << output << std::endl;
-  }
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rsolid, Rfluid ) = ( {:4.2e}, {:4.2e} )", momementumResidualNorm, massResidualNorm ) );
 
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }

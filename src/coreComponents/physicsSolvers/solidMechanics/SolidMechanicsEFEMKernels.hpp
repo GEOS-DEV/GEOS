@@ -347,7 +347,7 @@ public:
     // TODO: asking for the stiffness here will only work for elastic models.  most other models
     //       need to know the strain increment to compute the current stiffness value.
 
-    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
     SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,
@@ -483,6 +483,41 @@ using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          CRSMatrixView< real64, globalIndex const > const &,
                                                          arrayView1d< real64 > const &,
                                                          real64 const (&) [3] >;
+
+
+/**
+ * @brief A struct to update fracture traction
+ */
+struct StateUpdateKernel
+{
+
+  /**
+   * @brief Launch the kernel function doing fracture traction updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] contactWrapper the wrapper implementing the contact relationship
+   * @param[in] jump the displacement jump
+   * @param[out] fractureTraction the fracture traction
+   * @param[out] dFractureTraction_dJump the derivative of the fracture traction wrt displacement jump
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & oldJump,
+          arrayView2d< real64 const > const & jump,
+          arrayView2d< real64 > const & fractureTraction,
+          arrayView3d< real64 > const & dFractureTraction_dJump )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      contactWrapper.computeTraction( k, oldJump[k], jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
+    } );
+  }
+
+};
+
 
 } // namespace SolidMechanicsEFEMKernels
 

@@ -16,7 +16,9 @@
  * @file MultiFluidBase.cpp
  */
 
+
 #include "MultiFluidBase.hpp"
+#include "MultiFluidExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -45,62 +47,40 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
-  registerWrapper( viewKeyStruct::phaseFractionString(), &m_phaseFraction.value ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseFraction_dPressureString(), &m_phaseFraction.dPres ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseFraction_dTemperatureString(), &m_phaseFraction.dTemp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseFraction_dGlobalCompFractionString(), &m_phaseFraction.dComp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-  registerWrapper( viewKeyStruct::phaseDensityString(), &m_phaseDensity.value ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseDensity_dPressureString(), &m_phaseDensity.dPres ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseDensity_dTemperatureString(), &m_phaseDensity.dTemp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseDensity_dGlobalCompFractionString(), &m_phaseDensity.dComp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-  registerWrapper( viewKeyStruct::phaseMassDensityString(), &m_phaseMassDensity.value ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseMassDensity_dPressureString(), &m_phaseMassDensity.dPres ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseMassDensity_dTemperatureString(), &m_phaseMassDensity.dTemp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseMassDensity_dGlobalCompFractionString(), &m_phaseMassDensity.dComp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-  registerWrapper( viewKeyStruct::phaseViscosityString(), &m_phaseViscosity.value ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseViscosity_dPressureString(), &m_phaseViscosity.dPres ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseViscosity_dTemperatureString(), &m_phaseViscosity.dTemp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseViscosity_dGlobalCompFractionString(), &m_phaseViscosity.dComp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-  registerWrapper( viewKeyStruct::phaseCompFractionString(), &m_phaseCompFraction.value ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseCompFraction_dPressureString(), &m_phaseCompFraction.dPres ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseCompFraction_dTemperatureString(), &m_phaseCompFraction.dTemp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dPhaseCompFraction_dGlobalCompFractionString(), &m_phaseCompFraction.dComp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
-  registerWrapper( viewKeyStruct::totalDensityString(), &m_totalDensity.value )
-    .setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dTotalDensity_dPressureString(), &m_totalDensity.dPres ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dTotalDensity_dTemperatureString(), &m_totalDensity.dTemp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-  registerWrapper( viewKeyStruct::dTotalDensity_dGlobalCompFractionString(), &m_totalDensity.dComp ).
-    setRestartFlags( RestartFlags::NO_WRITE );
-
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseFraction{}, &m_phaseFraction.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction_dPressure{}, &m_phaseFraction.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction_dTemperature{}, &m_phaseFraction.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction_dGlobalCompFraction{}, &m_phaseFraction.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseDensity{}, &m_phaseDensity.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{}, &m_phaseDensity.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity_dTemperature{}, &m_phaseDensity.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{}, &m_phaseDensity.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseMassDensity{}, &m_phaseMassDensity.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{}, &m_phaseMassDensity.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity_dTemperature{}, &m_phaseMassDensity.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{}, &m_phaseMassDensity.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseViscosity{}, &m_phaseViscosity.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dPressure{}, &m_phaseViscosity.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dTemperature{}, &m_phaseViscosity.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction{}, &m_phaseViscosity.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseCompFraction{}, &m_phaseCompFraction.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{}, &m_phaseCompFraction.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dTemperature{}, &m_phaseCompFraction.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{}, &m_phaseCompFraction.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::totalDensity{}, &m_totalDensity.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity_dPressure{}, &m_totalDensity.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity_dTemperature{}, &m_totalDensity.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity_dGlobalCompFraction{}, &m_totalDensity.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::initialTotalMassDensity{}, &m_initialTotalMassDensity );
 
 }
 
@@ -138,23 +118,25 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity.dPres.resize( size, numPts );
   m_totalDensity.dTemp.resize( size, numPts );
   m_totalDensity.dComp.resize( size, numPts, numComp );
+
+  m_initialTotalMassDensity.resize( size, numPts );
 }
 
 void MultiFluidBase::setLabels()
 {
-  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseFractionString() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseFraction >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseDensityString() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseMassDensityString() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseMassDensity >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< array3d< real64, multifluid::LAYOUT_PHASE > >( viewKeyStruct::phaseViscosityString() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseViscosity >().
     setDimLabels( 2, m_phaseNames );
 
-  getWrapper< array4d< real64, multifluid::LAYOUT_PHASE_COMP > >( viewKeyStruct::phaseCompFractionString() ).
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseCompFraction >().
     setDimLabels( 2, m_phaseNames ).
     setDimLabels( 3, m_componentNames );
 }
@@ -173,14 +155,20 @@ void MultiFluidBase::postProcessInput()
   integer const numComp = numFluidComponents();
   integer const numPhase = numFluidPhases();
 
-  GEOSX_THROW_IF( numComp< 1 || numComp > MAX_NUM_COMPONENTS,
-                  getFullName() << ": number of fluid components must be between 1 and " << MAX_NUM_COMPONENTS << ", got " << numComp,
-                  InputError );
-  GEOSX_THROW_IF( numPhase< 1 || numPhase > MAX_NUM_PHASES,
-                  getFullName() << ": number of fluid phases must be between 1 and " << MAX_NUM_PHASES << ", got " << numPhase,
-                  InputError );
+  GEOSX_THROW_IF_LT_MSG( numComp, 1,
+                         GEOSX_FMT( "{}: invalid number of components", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_GT_MSG( numComp, MAX_NUM_COMPONENTS,
+                         GEOSX_FMT( "{}: invalid number of components", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_LT_MSG( numPhase, 1,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_GT_MSG( numPhase, MAX_NUM_PHASES,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
   GEOSX_THROW_IF_NE_MSG( m_componentMolarWeight.size(), numComp,
-                         getFullName() << ": invalid number of entries in " << viewKeyStruct::componentMolarWeightString() << " attribute",
+                         GEOSX_FMT( "{}: invalid number of values in attribute '{}'", getFullName(), viewKeyStruct::componentMolarWeightString() ),
                          InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object

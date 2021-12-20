@@ -9,8 +9,20 @@ set( gtest_geosx_tests
    )
 
 set( gtest_triaxial_xmls
-     testTriaxial_elasticIsotropic.xml
      testTriaxial_druckerPragerExtended.xml
+     testTriaxial_elasticIsotropic.xml
+     testTriaxial_elasticIsotropicPressureDependent.xml
+     testTriaxial_modifiedCamClay.xml
+     testTriaxial_delftEggUseLinear.xml
+     testTriaxial_modifiedCamClayVolumetric.xml
+     testTriaxial_delftEggLoadPathDryUseLinear.xml
+     testTriaxial_delftEggLoadPathWetUseLinear.xml
+     testTriaxial_delftEggCase1.xml
+     testTriaxial_delftEggCase2.xml
+   )
+
+set( gtest_pvt_xmls
+     testPVT.xml
    )
 
 set( dependencyList gtest )
@@ -51,7 +63,6 @@ foreach(test ${gtest_geosx_tests})
 
 endforeach()
 
-
 #
 # Add triaxial xml based tests
 #
@@ -66,5 +77,22 @@ foreach(test ${gtest_triaxial_xmls})
     get_filename_component( test_name ${test} NAME_WE )
     blt_add_test( NAME ${test_name} 
                   COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test}
+                  )
+endforeach()
+
+#
+# Add pvtdriver xml based tests
+#
+
+blt_add_executable( NAME testPVT
+                    SOURCES testPVT.cpp
+                    OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
+                    DEPENDS_ON ${dependencyList} "-lz"
+                  )
+
+foreach(test ${gtest_pvt_xmls})
+    get_filename_component( test_name ${test} NAME_WE )
+    blt_add_test( NAME ${test_name} 
+                  COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test}
                   )
 endforeach()

@@ -108,8 +108,6 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-  virtual ~CapillaryPressureBase() override = default;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -125,9 +123,6 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
-
-    static constexpr char const * phaseCapPressureString() { return "phaseCapPressure"; }
-    static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
   };
 
 private:

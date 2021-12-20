@@ -25,6 +25,7 @@
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
 
@@ -118,7 +119,7 @@ char const * xmlInput =
   "  <ElementRegions>\n"
   "    <CellElementRegion name=\"Region1\"\n"
   "                       cellBlocks=\"{cb1}\"\n"
-  "                       materialList=\"{water, rock,  rockPerm, rockPorosity, nullSolid}\"/>\n"
+  "                       materialList=\"{water, rock}\"/>\n"
   "    <WellElementRegion name=\"wellRegion1\"\n"
   "                       materialList=\"{water}\"/> \n"
   "    <WellElementRegion name=\"wellRegion2\"\n"
@@ -166,7 +167,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
   SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.getFlowSolver() );
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
-  array1d< real64 > const & residual = solver.getLocalRhs();
+  array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
@@ -209,9 +210,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
       // get the primary variables on reservoir elements
       arrayView1d< real64 const > const & pres =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 > const & dPres =
-        subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -265,9 +266,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
     // get the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 > const & dWellElemPressure =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
     wellElemPressure.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 const > const & connRate =
@@ -363,8 +364,8 @@ protected:
     solver->setupSystem( domain,
                          solver->getDofManager(),
                          solver->getLocalMatrix(),
-                         solver->getLocalRhs(),
-                         solver->getLocalSolution() );
+                         solver->getSystemRhs(),
+                         solver->getSystemSolution() );
 
     solver->implicitStepSetup( time, dt, domain );
   }

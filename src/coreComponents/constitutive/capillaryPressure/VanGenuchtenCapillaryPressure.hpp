@@ -94,8 +94,6 @@ public:
   VanGenuchtenCapillaryPressure( string const & name,
                                  dataRepository::Group * const parent );
 
-  virtual ~VanGenuchtenCapillaryPressure() override;
-
   static string catalogName() { return "VanGenuchtenCapillaryPressure"; }
 
   virtual string getCatalogName() const override { return catalogName(); }
