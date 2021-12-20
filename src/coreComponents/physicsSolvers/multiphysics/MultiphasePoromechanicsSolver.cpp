@@ -251,6 +251,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                  gravityVectorData,
                                                                  numComponents,
                                                                  numPhases,
+                                                                 FlowSolverBase::viewKeyStruct::fluidNamesString(),
                                                                  localMatrix,
                                                                  localRhs );
 

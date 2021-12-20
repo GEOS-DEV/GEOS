@@ -431,7 +431,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
                                                                   localRhs,
-                                                                  gravityVectorData );
+                                                                  gravityVectorData,
+                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     m_solidSolver->getMaxForce() =
       finiteElement::
@@ -451,7 +452,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
                                                                           dofManager.rankOffset(),
                                                                           localMatrix,
                                                                           localRhs,
-                                                                          gravityVectorData );
+                                                                          gravityVectorData,
+                                                                          FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     real64 maxTraction =
       finiteElement::
