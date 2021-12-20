@@ -66,4 +66,4 @@ Example
   </Constitutive>
 
 
-.. _Petrowiki: https://petrowiki.org/Phase_behavior_in_reservoir_simulation#Equation-of-state_models
+.. _Petrowiki: https://petrowiki.spe.org/Phase_behavior_in_reservoir_simulation#Equation-of-state_models
