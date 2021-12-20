@@ -17,6 +17,8 @@
  */
 
 #include "MultivariableTableFunction.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+
 #include "common/DataTypes.hpp"
 #include <algorithm>
 
@@ -27,8 +29,7 @@ using namespace dataRepository;
 
 MultivariableTableFunction::MultivariableTableFunction( const string & name,
                                                         Group * const parent ):
-  FunctionBase( name, parent ),
-  m_kernelWrapper( createKernelWrapper() )
+  FunctionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -148,20 +149,43 @@ void MultivariableTableFunction::reInitializeFunction()
                            catalogName() << " " << getName() << ": number of values does not match total number of table coordinates",
                            InputError );
   }
-
-  // Create the kernel wrapper
-  m_kernelWrapper = createKernelWrapper();
-}
-
-MultivariableTableFunction::KernelWrapper< 2, 3 > MultivariableTableFunction::createKernelWrapper() const
-{
-  return KernelWrapper< 2, 3 >( m_coordinates.toViewConst(),
-                                m_values.toViewConst() );
 }
 
 real64 MultivariableTableFunction::evaluate( real64 const * const input ) const
 {
-  return m_kernelWrapper.compute( input );
+  return 0;
+}
+
+real64 MultivariableTableFunction::evaluate( arrayView1d< real64 const > const & input ) const
+{
+  createAndLaunch< parallelDevicePolicy<> >( input, m_coordinates.toViewConst(), m_values.toView() );
+  return 0;
+}
+
+template< typename POLICY >
+void
+MultivariableTableFunction::createAndLaunch( arrayView1d< real64 const > const & input,
+                                             ArrayOfArraysView< real64 const > const & coordinates,
+                                             arrayView1d< real64 > const & values )
+{
+  if( 0 )
+  {
+    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto NC )
+    {
+      integer constexpr NUM_COMP = NC();
+      MultivariableTableFunction::KernelWrapper< NUM_COMP, 2 > kernel( input, coordinates, values );
+      MultivariableTableFunction::KernelWrapper< NUM_COMP, 2 >::template launch< POLICY >( input.size(), kernel );
+    } );
+  }
+  else if( 1 )
+  {
+    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto NC )
+    {
+      integer constexpr NUM_COMP = NC();
+      MultivariableTableFunction::KernelWrapper< NUM_COMP, 3 > kernel( input, coordinates, values );
+      //MultivariableTableFunction::KernelWrapper< NUM_COMP, 3 >::template launch< POLICY >( input.size(), kernel );
+    } );
+  }
 }
 
 

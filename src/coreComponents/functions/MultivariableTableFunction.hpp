@@ -95,11 +95,17 @@ public:
      * @param[in] input vector of input value
      * @return interpolated value
      */
-    template< typename IN_ARRAY >
+    // template< typename IN_ARRAY >
+    // GEOSX_HOST_DEVICE
+    // real64 compute( IN_ARRAY const & input ) const
+    // {
+    //   return interpolateLinear( input );
+    // }
+
     GEOSX_HOST_DEVICE
-    real64 compute( IN_ARRAY const & input ) const
+    void compute( localIndex const ei ) const
     {
-      return interpolateLinear( input );
+      interpolateLinear( m_input );
     }
 
     /**
@@ -112,7 +118,13 @@ public:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
-    void compute( IN_ARRAY const & input, OUT_ARRAY && values ) const;
+    void compute( IN_ARRAY const & input, OUT_ARRAY && values ) const
+    {
+      for( integer op = 0; op < NUM_OPS; ++op )
+      {
+        values[op] = interpolateLinear( input );
+      }
+    }
 
     /**
      * @brief Interpolate in the table with derivatives.
@@ -138,6 +150,18 @@ public:
       m_values.move( space, touch );
     }
 
+    template< typename POLICY, typename KERNEL_TYPE >
+    static void
+    launch( localIndex const numElems,
+            KERNEL_TYPE const & kernelComponent )
+    {
+      forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        kernelComponent.compute( ei );
+      } );
+    }
+
+
 private:
 
     friend class MultivariableTableFunction; // Allow only parent class to construct the wrapper
@@ -147,8 +171,9 @@ private:
      * @param[in] coordinates array of table axes
      * @param[in] values table values (in fortran order)
      */
-    KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
-                   arrayView1d< real64 const > const & values );
+    KernelWrapper( arrayView1d< real64 const > const & input,
+                   ArrayOfArraysView< real64 const > const & coordinates,
+                   arrayView1d< real64 > const & values );
     /**
      * @brief Interpolate in the table using linear method.
      * @param[in] input vector of input value
@@ -226,11 +251,16 @@ private:
       return value;
     }
 
+    /// Input array view
+    arrayView1d< real64 const > m_input;
+
     /// An array of table axes
     ArrayOfArraysView< real64 const > m_coordinates;
 
     /// Table values (in fortran order)
     arrayView1d< real64 const > m_values;
+
+
   };
 
   /**
@@ -279,6 +309,9 @@ private:
    */
   virtual real64 evaluate( real64 const * const input ) const override final;
 
+
+  real64 evaluate( arrayView1d< real64 const > const & input ) const;
+
   /**
    * @brief @return Number of table dimensions
    */
@@ -318,11 +351,11 @@ private:
    */
   void setTableValues( real64_array values );
 
-  /**
-   * @brief Create an instance of the kernel wrapper
-   * @return the kernel wrapper
-   */
-  KernelWrapper< 2, 3 > createKernelWrapper() const;
+  // /**
+  //  * @brief Create an instance of the kernel wrapper
+  //  * @return the kernel wrapper
+  //  */
+  // KernelWrapper< 2, 3 > createKernelWrapper() const;
 
   /// Struct containing lookup keys for data repository wrappers
   struct viewKeyStruct
@@ -351,6 +384,19 @@ private:
   template< typename T >
   void parseFile( string const & filename, array1d< T > & target );
 
+  template< typename POLICY >
+  static void
+  createAndLaunch( arrayView1d< real64 const > const & input,
+                   ArrayOfArraysView< real64 const > const & coordinates,
+                   arrayView1d< real64 > const & values );
+
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent );
+
+
+
   /// Coordinates for 1D table
   array1d< real64 > m_tableCoordinates1D;
 
@@ -367,14 +413,16 @@ private:
   array1d< real64 > m_values;
 
   /// Kernel wrapper object used in evaluate() interface
-  KernelWrapper< 2, 3 > m_kernelWrapper;
+  //KernelWrapper< 2, 3 > m_kernelWrapper;
 
 };
 
 template< integer NUM_DIMS, integer NUM_OPS >
-MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
-                                                                               arrayView1d< real64 const > const & values )
+MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::KernelWrapper( arrayView1d< real64 const > const & input,
+                                                                               ArrayOfArraysView< real64 const > const & coordinates,
+                                                                               arrayView1d< real64 > const & values )
   :
+  m_input( input ),
   m_coordinates( coordinates ),
   m_values( values )
 {}
