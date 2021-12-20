@@ -93,7 +93,8 @@ public:
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
-               real64 const (&inputGravityVector)[3] ):
+               real64 const (&inputGravityVector)[3],
+               string const & fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -111,10 +112,10 @@ public:
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( FlowSolverBase::viewKeyStruct::fluidNamesString() ) ).density() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( fluidModelKey) ).density() ),
     m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
-    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>(FlowSolverBase::viewKeyStruct::fluidNamesString() ) ).initialDensity() ),
-    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>(FlowSolverBase::viewKeyStruct::fluidNamesString() ) ).dDensity_dPressure() ),
+    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( fluidModelKey ) ).initialDensity() ),
+    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
     m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
@@ -423,7 +424,8 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                globalIndex const,
                                                                CRSMatrixView< real64, globalIndex const > const &,
                                                                arrayView1d< real64 > const &,
-                                                               real64 const (&)[3] >;
+                                                               real64 const (&)[3],
+                                                               string const & >;
 
 } // namespace PoroelasticKernels
 
