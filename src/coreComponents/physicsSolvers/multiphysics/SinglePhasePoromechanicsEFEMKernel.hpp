@@ -95,8 +95,7 @@ public:
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3],
-               string const & fluidModelKey,
- ):
+               string const & fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
