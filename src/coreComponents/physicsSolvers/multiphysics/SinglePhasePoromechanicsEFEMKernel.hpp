@@ -94,8 +94,7 @@ public:
                globalIndex const rankOffset,
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
-               real64 const (&inputGravityVector)[3],
-               arrayView1d< string const > const & fluidModelNames ):
+               real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -115,9 +114,9 @@ public:
     m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
+    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() ) ).density() ),
     m_fluidDensityOld( embeddedSurfSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
-    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() ) ).dDensity_dPressure() ),
     m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
@@ -581,8 +580,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                globalIndex const,
                                                                CRSMatrixView< real64, globalIndex const > const &,
                                                                arrayView1d< real64 > const &,
-                                                               real64 const (&)[3],
-                                                               arrayView1d< string const > const >;
+                                                               real64 const (&)[3] >;
 
 /**
  * @brief A struct to perform volume, aperture and fracture traction updates
