@@ -43,6 +43,8 @@ public:
    */
   static string catalogName() { return "SinglePhasePoromechanics"; }
 
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
+
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
@@ -124,6 +126,8 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void initializePreSubGroups() override;
 
   string m_solidSolverName;
   string m_flowSolverName;
