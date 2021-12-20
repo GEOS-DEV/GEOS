@@ -95,7 +95,6 @@ public:
               real64 const (&inputGravityVector)[3],
               localIndex const numComponents,
               localIndex const numPhases,
-              arrayView1d< string const > const fluidModelNames,
               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
               arrayView1d< real64 > const & inputRhs ):
     Base( nodeManager,
@@ -125,8 +124,9 @@ public:
 
     // extract fluid constitutive data views
     {
+      string const fluidModelName = elementSubRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
       constitutive::MultiFluidBase const & fluid =
-        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] );
+        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
       m_dFluidPhaseDensity_dPressure = fluid.dPhaseDensity_dPressure();
@@ -603,7 +603,6 @@ using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
                                                               real64 const (&)[3],
                                                               localIndex const,
                                                               localIndex const,
-                                                              arrayView1d< string const > const,
                                                               CRSMatrixView< real64, globalIndex const > const &,
                                                               arrayView1d< real64 > const & >;
 

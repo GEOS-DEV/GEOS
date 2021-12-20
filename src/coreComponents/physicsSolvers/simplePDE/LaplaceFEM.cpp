@@ -98,27 +98,30 @@ void LaplaceFEM::setupSystem( DomainPartition & domain,
   GEOSX_MARK_FUNCTION;
   SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  string const dofKey = dofManager.getKey( m_fieldName );
-  arrayView1d< globalIndex const > const &
-  dofIndex = nodeManager.getReference< globalIndex_array >( dofKey );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    string const dofKey = dofManager.getKey( m_fieldName );
+    arrayView1d< globalIndex const > const &
+    dofIndex = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
-                                                  dofManager.numGlobalDofs(),
-                                                  8*8*3 );
+    SparsityPattern< globalIndex > sparsityPattern( dofManager.numLocalDofs(),
+                                                    dofManager.numGlobalDofs(),
+                                                    8*8*3 );
 
-  finiteElement::fillSparsity< CellElementSubRegion,
-                               LaplaceFEMKernel >( mesh,
-                                                   targetRegionNames(),
-                                                   this->getDiscretizationName(),
-                                                   dofIndex,
-                                                   dofManager.rankOffset(),
-                                                   sparsityPattern );
+    finiteElement::fillSparsity< CellElementSubRegion,
+                                 LaplaceFEMKernel >( mesh,
+                                                     regionNames,
+                                                     this->getDiscretizationName(),
+                                                     dofIndex,
+                                                     dofManager.rankOffset(),
+                                                     sparsityPattern );
 
-  sparsityPattern.compress();
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
-
+    sparsityPattern.compress();
+    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
+  } );
 }
 
 
@@ -146,24 +149,28 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager & nodeManager = mesh.getNodeManager();
+    string const dofKey = dofManager.getKey( m_fieldName );
+    arrayView1d< globalIndex const > const &
+    dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
-  NodeManager & nodeManager = mesh.getNodeManager();
-  string const dofKey = dofManager.getKey( m_fieldName );
-  arrayView1d< globalIndex const > const &
-  dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
+    LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
+    
+    string const dummyString = "dummy"; 
+    finiteElement::
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            this->getDiscretizationName(),
+                                                            dummyString,
+                                                            kernelFactory );
 
-
-  LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
-
-  finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          targetRegionNames(),
-                                                          this->getDiscretizationName(),
-                                                          arrayView1d< string const >(),
-                                                          kernelFactory );
+  } );
 
 }
 //END_SPHINX_INCLUDE_ASSEMBLY
