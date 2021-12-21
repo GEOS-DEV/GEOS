@@ -13,11 +13,11 @@
  */
 
 /**
- * @file SolidMechanicsLagrangianFEM.hpp
+ * @file SolidMechanicsMPM.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSLAGRANGIANFEM_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_MPM_HPP_
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "common/TimingMacros.hpp"
@@ -32,11 +32,11 @@ namespace geosx
 {
 
 /**
- * @class SolidMechanicsLagrangianFEM
+ * @class SolidMechanicsMPM
  *
- * This class implements a finite element solution to the equations of motion.
+ * This class implements a material point method solution to the equations of motion.
  */
-class SolidMechanicsLagrangianFEM : public SolverBase
+class SolidMechanicsMPM : public SolverBase
 {
 public:
 
@@ -57,25 +57,25 @@ public:
    * @param name The name of the solver instance
    * @param parent the parent group of the solver
    */
-  SolidMechanicsLagrangianFEM( const string & name,
+  SolidMechanicsMPM( const string & name,
                                Group * const parent );
 
 
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM( SolidMechanicsLagrangianFEM && ) = default;
+  SolidMechanicsMPM( SolidMechanicsMPM const & ) = delete;
+  SolidMechanicsMPM( SolidMechanicsMPM && ) = default;
 
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM const & ) = delete;
-  SolidMechanicsLagrangianFEM & operator=( SolidMechanicsLagrangianFEM && ) = delete;
+  SolidMechanicsMPM & operator=( SolidMechanicsMPM const & ) = delete;
+  SolidMechanicsMPM & operator=( SolidMechanicsMPM && ) = delete;
 
   /**
    * destructor
    */
-  virtual ~SolidMechanicsLagrangianFEM() override;
+  virtual ~SolidMechanicsMPM() override;
 
   /**
    * @return The string that may be used to generate a new instance from the SolverBase::CatalogInterface::CatalogType
    */
-  static string catalogName() { return "SolidMechanics_LagrangianFEM"; }
+  static string catalogName() { return "SolidMechanics_MPM"; }
 
   virtual void initializePreSubGroups() override;
 
@@ -102,66 +102,11 @@ public:
                        integer const cycleNumber,
                        DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepSetup( real64 const & time_n,
-                     real64 const & dt,
-                     DomainPartition & domain ) override;
-
-  virtual void
-  setupDofs( DomainPartition const & domain,
-             DofManager & dofManager ) const override;
-
-  virtual void
-  setupSystem( DomainPartition & domain,
-               DofManager & dofManager,
-               CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
-               bool const setSparsity = false ) override;
-
-  virtual void
-  assembleSystem( real64 const time,
-                  real64 const dt,
-                  DomainPartition & domain,
-                  DofManager const & dofManager,
-                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                  arrayView1d< real64 > const & localRhs ) override;
-
-  virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
-
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       DomainPartition & domain ) override;
-
   virtual void updateState( DomainPartition & domain ) override final
   {
     // There should be nothing to update
     GEOSX_UNUSED_VAR( domain );
   };
-
-  virtual void applyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
-
-  virtual real64
-  calculateResidualNorm( DomainPartition const & domain,
-                         DofManager const & dofManager,
-                         arrayView1d< real64 const > const & localRhs ) override;
-
-  virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
-
-  virtual void implicitStepComplete( real64 const & time,
-                                     real64 const & dt,
-                                     DomainPartition & domain ) override;
 
   /**@}*/
 
@@ -193,31 +138,6 @@ public:
    * @param rhs the system right-hand side vector
    * @param solution the solution vector
    */
-  void applyDisplacementBCImplicit( real64 const time,
-                                    DofManager const & dofManager,
-                                    DomainPartition & domain,
-                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                    arrayView1d< real64 > const & localRhs );
-
-  void applyTractionBC( real64 const time,
-                        DofManager const & dofManager,
-                        DomainPartition & domain,
-                        arrayView1d< real64 > const & localRhs );
-
-  void applyChomboPressure( DofManager const & dofManager,
-                            DomainPartition & domain,
-                            arrayView1d< real64 > const & localRhs );
-
-
-  void applyContactConstraint( DofManager const & dofManager,
-                               DomainPartition & domain,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs );
-
-  virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
-                            DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -283,7 +203,7 @@ public:
 protected:
   virtual void postProcessInput() override final;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
+//  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
@@ -293,7 +213,7 @@ protected:
   integer m_useVelocityEstimateForQS;
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
-  integer m_strainTheory;
+  integer m_strainTheory = 0;
   array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
 //  SortedArray< localIndex > m_sendOrReceiveNodes;
@@ -306,7 +226,7 @@ protected:
 
 };
 
-ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
+ENUM_STRINGS( SolidMechanicsMPM::TimeIntegrationOption,
               "QuasiStatic",
               "ImplicitDynamic",
               "ExplicitDynamic" );
@@ -315,45 +235,6 @@ ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
 //**********************************************************************************************************************
 //**********************************************************************************************************************
 
-
-template< typename CONSTITUTIVE_BASE,
-          typename KERNEL_WRAPPER,
-          typename ... PARAMS >
-void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs,
-                                                  PARAMS && ... params )
-{
-  GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  NodeManager const & nodeManager = mesh.getNodeManager();
-
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-
-  KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                dofManager.rankOffset(),
-                                localMatrix,
-                                localRhs,
-                                gravityVectorData,
-                                std::forward< PARAMS >( params )... );
-
-  m_maxForce = finiteElement::
-                 regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               CONSTITUTIVE_BASE,
-                                               CellElementSubRegion >( mesh,
-                                                                       targetRegionNames(),
-                                                                       this->getDiscretizationName(),
-                                                                       m_solidMaterialNames,
-                                                                       kernelWrapper );
-
-
-  applyContactConstraint( dofManager, domain, localMatrix, localRhs );
-}
 
 } /* namespace geosx */
 
