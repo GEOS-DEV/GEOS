@@ -16,7 +16,8 @@
  * @file PermeabilityBase.cpp
  */
 
-#include "../permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -32,15 +33,8 @@ PermeabilityBase::PermeabilityBase( string const & name, Group * const parent ):
   m_permeability(),
   m_dPerm_dPressure()
 {
-  registerWrapper( viewKeyStruct::permeabilityString(), &m_permeability ).
-    setPlotLevel( PlotLevel::LEVEL_0 ).
-    setDescription( " permeability of the rock." ).
-    setApplyDefaultValue( -1.0 );   // will be overwritten
-
-  registerWrapper( viewKeyStruct::dPerm_dPressureString(), &m_dPerm_dPressure ).
-    setPlotLevel( PlotLevel::LEVEL_3 ).
-    setDescription( " dPerm_dPressure of the rock." ).
-    setApplyDefaultValue( 0.0 );     // will be overwritten
+  registerExtrinsicData( extrinsicMeshData::permeability::permeability{}, &m_permeability );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dPressure{}, &m_dPerm_dPressure );
 }
 
 std::unique_ptr< ConstitutiveBase >
