@@ -57,6 +57,7 @@ set( constitutive_headers
      permeability/ConstantPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
+     permeability/PermeabilityExtrinsicData.hpp     
      permeability/StrainDependentPermeability.hpp
      permeability/ProppantPermeability.hpp     
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp

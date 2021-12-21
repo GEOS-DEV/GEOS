@@ -21,7 +21,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -240,7 +240,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(),
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames );
 
@@ -298,7 +298,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(),
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames,
                                                                            true );
@@ -351,7 +351,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString(),
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(),
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames );
 
