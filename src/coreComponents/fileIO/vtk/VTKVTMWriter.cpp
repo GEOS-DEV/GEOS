@@ -59,11 +59,18 @@ void VTKVTMWriter::addSubBlock( string const & blockName, string const & subBloc
   subBlockNode.append_attribute( "name" ) = subBlockName.c_str();
 }
 
-void VTKVTMWriter::addDataToSubBlock( string const & blockName, string const & subBlockName, string const & filePath, int mpiRank ) const
+void VTKVTMWriter::addSubSubBlock( string const & blockName, string const & subBlockName, string const & subSubBlockName ) const
 {
-  auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );
-  auto subBlockNode = blockNode.find_child_by_attribute( "Block", "name", subBlockName.c_str() );
-  auto dataNode = subBlockNode.append_child( "DataSet" );
+  auto subBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() ).find_child_by_attribute( "Block", "name", subBlockName.c_str() );
+  auto subSubBlockNode = subBlockNode.append_child( "Block" );
+  subSubBlockNode.append_attribute( "name" ) = (blockName + "_" + subSubBlockName).c_str();
+}
+
+void VTKVTMWriter::addDataToSubSubBlock( string const & blockName, string const & subBlockName, string const & subSubBlockName, string const & filePath, int mpiRank ) const
+{
+  auto subBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() ).find_child_by_attribute( "Block", "name", subBlockName.c_str() );
+  auto subSubBlockNode = subBlockNode.find_child_by_attribute( "Block", "name", (blockName + "_" + subSubBlockName).c_str() );
+  auto dataNode = subSubBlockNode.append_child( "DataSet" );
   string name = "rank_" + std::to_string( mpiRank );
   dataNode.append_attribute( "name" ) = name.c_str();
   dataNode.append_attribute( "file" ) = filePath.c_str();

@@ -567,6 +567,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
 
   MeshBody & meshBody = domain.getMeshBody( this->getName() );
+  GEOSX_LOG_RANK("Generating mesh for "+meshBody.getName());
   MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
   NodeManager & nodeManager = meshLevel0.getNodeManager();
 
@@ -745,8 +746,8 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-  localIndex numNodes = 1;
-  integer numNodesInDir[3] = { 1, 1, 1 };
+  localIndex numNodes = 0;
+  integer numNodesInDir[3] = { 0, 0, 0 };
 
   for( int i = 0; i < m_dim; ++i )
   {
@@ -760,6 +761,11 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
 
+//  GEOSX_LOG_RANK("Number of nodes in x: "+std::to_string(numNodesInDir[0]));
+//  GEOSX_LOG_RANK("Number of nodes in y: "+std::to_string(numNodesInDir[1]));
+//  GEOSX_LOG_RANK("Number of nodes in z: "+std::to_string(numNodesInDir[2]));
+
+  //if(meshBody has nodes in this partition)
   {
     localIndex localNodeIndex = 0;
     for( int i = 0; i < numNodesInDir[0]; ++i )
