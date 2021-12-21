@@ -771,6 +771,13 @@ Element: SolidMechanics_LagrangianFEM
 .. include:: ../../coreComponents/schema/docs/SolidMechanics_LagrangianFEM.rst
 
 
+.. _XML_SolidMechanics_MPM:
+
+Element: SolidMechanics_MPM
+===========================
+.. include:: ../../coreComponents/schema/docs/SolidMechanics_MPM.rst
+
+
 .. _XML_SoloEvent:
 
 Element: SoloEvent
@@ -1725,6 +1732,13 @@ Datastructure: SolidMechanicsLagrangianSSLE
 Datastructure: SolidMechanics_LagrangianFEM
 ===========================================
 .. include:: ../../coreComponents/schema/docs/SolidMechanics_LagrangianFEM_other.rst
+
+
+.. _DATASTRUCTURE_SolidMechanics_MPM:
+
+Datastructure: SolidMechanics_MPM
+=================================
+.. include:: ../../coreComponents/schema/docs/SolidMechanics_MPM_other.rst
 
 
 .. _DATASTRUCTURE_SoloEvent:
