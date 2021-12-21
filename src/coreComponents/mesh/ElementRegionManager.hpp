@@ -738,6 +738,17 @@ public:
     } );
   }
 
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam TRAIT data type
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructExtrinsicAccessor( string const & neighborName = string() ) const;
+
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
@@ -1128,6 +1139,8 @@ private:
    * @return reference to this object
    */
   ElementRegionManager & operator=( const ElementRegionManager & );
+
+
 };
 
 
@@ -1192,6 +1205,16 @@ ElementRegionManager::
   }
   return viewAccessor;
 }
+
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructExtrinsicAccessor( string const & neighborName ) const
+{
+  return constructViewAccessor< typename TRAIT::type,
+                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+}
+
 
 template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
