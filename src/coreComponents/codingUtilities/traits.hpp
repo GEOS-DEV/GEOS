@@ -216,7 +216,7 @@ namespace internal
 {
 
 template< typename T, typename U >
-constexpr std::size_t type_list_index( T, U ) { return -1; }
+constexpr std::size_t type_list_index( T, U ) { return -1ull; }
 
 template< typename T, template< typename ... > class L, typename ... Ts >
 constexpr std::size_t type_list_index( T, L< T, Ts ... > ) { return 0; }

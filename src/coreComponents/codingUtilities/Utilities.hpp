@@ -161,7 +161,7 @@ std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
 namespace internal
 {
 template< class F, class ... Ts, std::size_t ... Is >
-void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F func, std::index_sequence< Is ... > )
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::index_sequence< Is ... > )
 {
   using expander = int[];
   (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
