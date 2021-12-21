@@ -44,6 +44,18 @@ void evaluate1DFunction( FunctionBase & function,
   }
 }
 
+void evaluate1DMutivariableFunction( MultivariableTableFunction & function,
+                                     arrayView1d< real64 const > const & inputs,
+                                     arrayView1d< real64 const > const & outputs )
+{
+  real64_array predicted( inputs.size() );
+  function.evaluate( inputs, predicted );
+  for( localIndex ii=0; ii<inputs.size(); ++ii )
+  {
+    ASSERT_NEAR( predicted[ii], outputs[ii], 1e-10 );
+  }
+}
+
 void checkDirectionalDerivative( real64 const (&input)[4],
                                  real64 (& perturbedInput)[4],
                                  real64 const & val,
@@ -116,7 +128,7 @@ TEST( FunctionTests, 1DTable )
   table_a.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_a.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
-  evaluate1DFunction( table_b, testCoordinates, testExpected );
+  evaluate1DMutivariableFunction( table_b, testCoordinates, testExpected );
 
   // Upper
   testExpected[0] = 1.0;

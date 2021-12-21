@@ -156,34 +156,37 @@ real64 MultivariableTableFunction::evaluate( real64 const * const input ) const
   return 0;
 }
 
-real64 MultivariableTableFunction::evaluate( arrayView1d< real64 const > const & input ) const
+real64 MultivariableTableFunction::evaluate( arrayView1d< real64 const > const & input,
+                                             arrayView1d< real64 > const & output ) const
 {
-  createAndLaunch< parallelDevicePolicy<> >( input, m_coordinates.toViewConst(), m_values.toView() );
-  return 0;
+  createAndLaunch< parallelDevicePolicy<> >( m_coordinates.toViewConst(), m_values.toView(), input, output, output );
+  return 2;
 }
 
 template< typename POLICY >
 void
-MultivariableTableFunction::createAndLaunch( arrayView1d< real64 const > const & input,
-                                             ArrayOfArraysView< real64 const > const & coordinates,
-                                             arrayView1d< real64 > const & values )
+MultivariableTableFunction::createAndLaunch( ArrayOfArraysView< real64 const > const & coordinates,
+                                             arrayView1d< real64 > const & values,
+                                             arrayView1d< real64 const > const & input,
+                                             arrayView1d< real64 > const & output,
+                                             arrayView1d< real64 > const & output_derivatives )
 {
   if( 0 )
   {
-    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto NC )
+    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto ND )
     {
-      integer constexpr NUM_COMP = NC();
-      MultivariableTableFunction::KernelWrapper< NUM_COMP, 2 > kernel( input, coordinates, values );
-      MultivariableTableFunction::KernelWrapper< NUM_COMP, 2 >::template launch< POLICY >( input.size(), kernel );
+      integer constexpr NUM_DIMS = ND();
+      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 2 > kernel( coordinates, values, input, output, output_derivatives );
+      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 2 >::template launch< POLICY >( input.size() / NUM_DIMS, kernel );
     } );
   }
   else if( 1 )
   {
-    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto NC )
+    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto ND )
     {
-      integer constexpr NUM_COMP = NC();
-      MultivariableTableFunction::KernelWrapper< NUM_COMP, 3 > kernel( input, coordinates, values );
-      //MultivariableTableFunction::KernelWrapper< NUM_COMP, 3 >::template launch< POLICY >( input.size(), kernel );
+      integer constexpr NUM_DIMS = ND();
+      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 3 > kernel( coordinates, values, input, output, output_derivatives );
+      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 3 >::template launch< POLICY >( input.size() / NUM_DIMS, kernel );
     } );
   }
 }

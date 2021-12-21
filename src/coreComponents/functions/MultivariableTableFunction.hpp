@@ -105,7 +105,7 @@ public:
     GEOSX_HOST_DEVICE
     void compute( localIndex const ei ) const
     {
-      interpolateLinear( m_input );
+      m_output[ei] = interpolateLinear( &m_input[ei * NUM_DIMS] );
     }
 
     /**
@@ -171,9 +171,11 @@ private:
      * @param[in] coordinates array of table axes
      * @param[in] values table values (in fortran order)
      */
-    KernelWrapper( arrayView1d< real64 const > const & input,
-                   ArrayOfArraysView< real64 const > const & coordinates,
-                   arrayView1d< real64 > const & values );
+    KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
+                   arrayView1d< real64 > const & values,
+                   arrayView1d< real64 const > const & input,
+                   arrayView1d< real64 > const & output,
+                   arrayView1d< real64 > const & output_derivatives );
     /**
      * @brief Interpolate in the table using linear method.
      * @param[in] input vector of input value
@@ -251,14 +253,22 @@ private:
       return value;
     }
 
-    /// Input array view
-    arrayView1d< real64 const > m_input;
+
 
     /// An array of table axes
     ArrayOfArraysView< real64 const > m_coordinates;
 
     /// Table values (in fortran order)
     arrayView1d< real64 const > m_values;
+
+    /// Input array view
+    arrayView1d< real64 const > m_input;
+
+    /// Output array view
+    arrayView1d< real64 > m_output;
+
+    /// Output derivative array view
+    arrayView1d< real64 > m_output_derivatives;
 
 
   };
@@ -310,7 +320,8 @@ private:
   virtual real64 evaluate( real64 const * const input ) const override final;
 
 
-  real64 evaluate( arrayView1d< real64 const > const & input ) const;
+  real64 evaluate( arrayView1d< real64 const > const & input,
+                   arrayView1d< real64 > const & output ) const;
 
   /**
    * @brief @return Number of table dimensions
@@ -386,9 +397,11 @@ private:
 
   template< typename POLICY >
   static void
-  createAndLaunch( arrayView1d< real64 const > const & input,
-                   ArrayOfArraysView< real64 const > const & coordinates,
-                   arrayView1d< real64 > const & values );
+  createAndLaunch( ArrayOfArraysView< real64 const > const & coordinates,
+                   arrayView1d< real64 > const & values,
+                   arrayView1d< real64 const > const & input,
+                   arrayView1d< real64 > const & output,
+                   arrayView1d< real64 > const & output_derivatives );
 
   template< typename POLICY, typename KERNEL_TYPE >
   static void
@@ -418,13 +431,17 @@ private:
 };
 
 template< integer NUM_DIMS, integer NUM_OPS >
-MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::KernelWrapper( arrayView1d< real64 const > const & input,
-                                                                               ArrayOfArraysView< real64 const > const & coordinates,
-                                                                               arrayView1d< real64 > const & values )
+MultivariableTableFunction::KernelWrapper< NUM_DIMS, NUM_OPS >::KernelWrapper( ArrayOfArraysView< real64 const > const & coordinates,
+                                                                               arrayView1d< real64 > const & values,
+                                                                               arrayView1d< real64 const > const & input,
+                                                                               arrayView1d< real64 > const & output,
+                                                                               arrayView1d< real64 > const & output_derivatives )
   :
-  m_input( input ),
   m_coordinates( coordinates ),
-  m_values( values )
+  m_values( values ),
+  m_input( input ),
+  m_output( output ),
+  m_output_derivatives( output_derivatives )
 {}
 
 // template< typename IN_ARRAY, integer NUM_DIMS, integer NUM_OPS >
