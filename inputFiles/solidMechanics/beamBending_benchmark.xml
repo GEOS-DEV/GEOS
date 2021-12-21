@@ -16,15 +16,17 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }">
+      solidMaterialNames="{ shale }"
+      logLevel="3">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        preconditionerType="amg"/>
+        krylovTol="1.0e-6"
+        preconditionerType="amg"
+        logLevel="3"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -36,9 +38,9 @@
       xCoords="{ 0, 80 }"
       yCoords="{ 0, 8 }"
       zCoords="{ 0, 4 }"
-      nx="{ 160 }"
-      ny="{ 16 }"
-      nz="{ 8 }"
+      nx="{ 80 }"
+      ny="{ 8 }"
+      nz="{ 4 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 

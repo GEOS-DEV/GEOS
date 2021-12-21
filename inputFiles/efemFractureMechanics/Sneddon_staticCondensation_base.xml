@@ -13,12 +13,12 @@
       logLevel="1"
       useStaticCondensation="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-5"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         directParallel="0"
-        solverType="direct"
+        solverType="gmres"
         preconditionerType="amg"
         amgAggresiveCoarseningLevels="1"
         logLevel="0"/>
@@ -58,7 +58,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ }"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -69,7 +69,7 @@
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

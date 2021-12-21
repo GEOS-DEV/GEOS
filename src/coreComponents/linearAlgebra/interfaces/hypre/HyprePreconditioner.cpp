@@ -462,6 +462,11 @@ HypreMatrix const & HyprePreconditioner::setupPreconditioningMatrix( HypreMatrix
   {
     Stopwatch timer( m_componentFilterTime );
     mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
+    if (!m_printed)
+    {
+      m_precondMatrix.write("preconditionedMatrix", LAIOutputFormat::NATIVE_ASCII);
+      m_printed = true;
+    }
     return m_precondMatrix;
   }
   return mat;

@@ -152,6 +152,8 @@ private:
 
   /// Timing of the cost of applying the restrictor matrix to the system
   real64 m_computeAuuTime = 0.0;
+
+  bool m_printed = false;
 };
 
 }
