@@ -26,6 +26,14 @@ namespace geosx
 {
 namespace finiteElement
 {
+/**
+ * This class contains the kernel accessible functions specific to the H1-conforming nodal Virtual
+ * Element Method of order 1, with a 1-point Gaussian quadrature rule.
+ *
+ * @tparam MAXCELLNODES The maximum number of nodes per cell that the class expects (used to
+ * pre-allocate stack arrays).
+ * @tparam MAXFACENODES The maximum number of nodes per face that the class expects.
+ */
 template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public FiniteElementBase
 {
@@ -46,6 +54,14 @@ public:
 
   virtual ~ConformingVirtualElementOrder1() = default;
 
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables allocated on the stack.
+   *
+   * It holds the computed projections of basis functions and basis function derivatives and the
+   * stabilization matrix. Arrays are pre-allocated using @ref MAXCELLNODES.
+   * @sa setupStack.
+   */
   struct StackVariables : public FiniteElementBase::StackVariables
   {
     /**
@@ -55,13 +71,26 @@ public:
     StackVariables()
     {}
 
+    /// The number of support points.
     localIndex numSupportPoints;
+    /// The quadrature weight.
     real64 quadratureWeight;
+    /// Array holding the integral mean of basis functions in the first @ref numSupportPoints
+    /// positions.
     real64 basisFunctionsIntegralMean[MAXCELLNODES];
+    /// The stabilization matrix. Valid values will be in the upper left @ref numSupportPoints x
+    /// @ref numSupportPoints block.
     real64 stabilizationMatrix[MAXCELLNODES][MAXCELLNODES];
+    /// Array holding the integral mean of derivatives of basis functions in the first @ref
+    /// numSupportPoints position of the first dimension.
     real64 basisDerivativesIntegralMean[MAXCELLNODES][3];
   };
 
+  /**
+   * @struct MeshData
+   * @brief Variables used to call the @ref setupStack method.
+   * @tparam SUBREGION_TYPE The type of mesh sub-region.
+   */
   template< typename SUBREGION_TYPE >
   struct MeshData : public FiniteElementBase::MeshData< SUBREGION_TYPE >
   {
@@ -71,16 +100,27 @@ public:
     MeshData()
     {}
 
+    /// View to the array containing nodes coordinates.
     InputNodeCoords nodesCoords;
+    /// View to the cell-to-node map in the sub-region.
     InputCellToNodeMap< SUBREGION_TYPE > cellToNodeMap;
+    /// View to the cell-to-face map in the sub-region.
     InputCellToFaceMap cellToFaceMap;
+    /// View to the face-to-node map in the sub-region.
     InputFaceToNodeMap faceToNodeMap;
+    /// View to the face-to-edge map in the sub-region.
     InputFaceToEdgeMap faceToEdgeMap;
+    /// View to the edge-to-node map in the sub-region.
     InputEdgeToNodeMap edgeToNodeMap;
+    /// View to the array of face centers.
     arrayView2d< real64 const > faceCenters;
+    /// View to the array of face normals.
     arrayView2d< real64 const > faceNormals;
+    /// View to the array of face areas.
     arrayView1d< real64 const > faceAreas;
+    /// View to the array of cell centers.
     arrayView2d< real64 const > cellCenters;
+    /// View to the array of cell volumes.
     arrayView1d< real64 const > cellVolumes;
   };
 
@@ -131,18 +171,33 @@ public:
     return transformedQuadratureWeight( q, X, stack );
   }
 
+  /**
+   * @brief Calculate shape functions values for each support point at a
+   *   quadrature point.
+   * @param q Index of the quadrature point.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
+  static void calcN( localIndex const q,
                      StackVariables const & stack,
                      real64 ( & N )[maxSupportPoints] )
   {
+    GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < stack.numSupportPoints; ++i )
     {
       N[i] = stack.basisFunctionsIntegralMean[i];
     }
   }
 
+  /**
+   * @brief Adds a grad-grad stabilization to @p matrix.
+   * @tparam MATRIXTYPE The type of @p matrix.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param matrix The matrix that needs to be stabilized.
+   */
   template< typename MATRIXTYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -157,12 +212,21 @@ public:
     }
   }
 
+  /**
+   * @brief Calculate the integration weights for a quadrature point.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @return The product of the quadrature rule weight and the determinate of
+   *   the parent/physical transformation matrix.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
-                                             real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
+  static real64 transformedQuadratureWeight( localIndex const q,
+                                             real64 const ( &X )[maxSupportPoints][3],
                                              StackVariables const & stack )
   {
+    GEOSX_UNUSED_VAR( q, X );
     return stack.quadratureWeight;
   }
 
@@ -200,6 +264,7 @@ public:
    * @brief Setup method.
    * @param cellIndex The index of the cell with respect to the cell sub region to which the element
    * has been initialized previously (see @ref fillMeshData).
+   * @param meshData Object previously initialized by @ref fillMeshData.
    * @param stack Object that holds stack variables.
    */
   template< typename SUBREGION_TYPE >
@@ -233,10 +298,10 @@ public:
   }
 
   /**
-   * @defgroup DeprecatedSyntax Functions with deprecated syntax
+   * @defgroup DeprecatedSyntax Functions with deprecated syntax.
    *
    * Functions that are implemented for consistency with other FEM classes but will issue an error
-   * if called
+   * if called.
    *
    * @{
    */
@@ -249,25 +314,42 @@ public:
     return 0;
   }
 
+  /**
+   * @brief This function returns an error, since to get projection of basis functions with VEM you
+   * have to use the StackVariables version of this function.
+   * @param q The quadrature point index in 3d space.
+   * @param N Array to store the values of shape functions.
+   * @return A zero array.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void calcN( localIndex const GEOSX_UNUSED_PARAM( q ),
+  static void calcN( localIndex const q,
                      real64 ( & N )[maxSupportPoints] )
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( q );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       N[i] = 0.0;
     }
   }
 
+  /**
+   * @brief This function returns an error, since there is no reference element defined in the VEM
+   * context. It is kept for consistency with other finite element classes.
+   * @param q The quadrature point index in 3d space.
+   * @param X Array containing the coordinates of the support points.
+   * @param J Array to store the Jacobian transformation.
+   * @return A zero matrix.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 invJacobianTransformation( int const GEOSX_UNUSED_PARAM( q ),
-                                           real64 const (&GEOSX_UNUSED_PARAM( X ))[numNodes][3],
+  static real64 invJacobianTransformation( int const q,
+                                           real64 const ( &X )[numNodes][3],
                                            real64 ( & J )[3][3] )
   {
     GEOSX_ERROR( "No reference element map is defined for VEM classes" );
+    GEOSX_UNUSED_VAR( q, X );
     for( localIndex i = 0; i < 3; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
@@ -278,13 +360,22 @@ public:
     return 0.0;
   }
 
+  /**
+   * @brief This function returns an error, since to get projection of gradients with VEM you have
+   * to use the StackVariables version of this function.
+   * @param q The quadrature point index in 3d space.
+   * @param X Array containing the coordinates of the support points.
+   * @param gradN Array to store the gradients of shape functions.
+   * @return A zero matrix.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static real64 calcGradN( localIndex const GEOSX_UNUSED_PARAM( q ),
-                           real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3],
+  static real64 calcGradN( localIndex const q,
+                           real64 const ( &X )[maxSupportPoints][3],
                            real64 ( & gradN )[maxSupportPoints][3] )
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( q, X );
     for( localIndex i = 0; i < maxSupportPoints; ++i )
     {
       for( localIndex j = 0; j < 3; ++j )
@@ -295,11 +386,19 @@ public:
     return 0.0;
   }
 
+  /**
+   * @brief This function returns an error, since to get the quadrature weight with VEM you have to
+   * use the StackVariables version of this function.
+   * @param q The quadrature point index in 3d space.
+   * @param X Array containing the coordinates of the support points.
+   * @return Zero.
+   */
   GEOSX_HOST_DEVICE
-  real64 transformedQuadratureWeight( localIndex const GEOSX_UNUSED_PARAM( q ),
-                                      real64 const ( &GEOSX_UNUSED_PARAM( X ) )[maxSupportPoints][3] ) const
+  real64 transformedQuadratureWeight( localIndex const q,
+                                      real64 const ( &X )[maxSupportPoints][3] ) const
   {
     GEOSX_ERROR( "VEM functions have to be called with the StackVariables syntax" );
+    GEOSX_UNUSED_VAR( q, X );
     return 0.0;
   }
 
@@ -397,9 +496,13 @@ private:
   }
 };
 
+/// Convenience typedef for VEM on tetrahedra.
 using H1_Tetrahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 4, 4 >;
+/// Convenience typedef for VEM on hexahedra.
 using H1_Hexahedron_VEM_Gauss1 = ConformingVirtualElementOrder1< 8, 6 >;
+/// Convenience typedef for VEM on pyramids.
 using H1_Pyramid_VEM_Gauss1 = ConformingVirtualElementOrder1< 5, 5 >;
+/// Convenience typedef for VEM on wedges.
 using H1_Wedge_VEM_Gauss1 = ConformingVirtualElementOrder1< 6, 5 >;
 }
 }
