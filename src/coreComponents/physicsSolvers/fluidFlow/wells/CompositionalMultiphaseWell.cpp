@@ -758,7 +758,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
 
 }
 
-void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex )
+void CompositionalMultiphaseWell::updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex )
 {
   // update properties
   updateComponentFraction( subRegion );
@@ -776,7 +776,7 @@ void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & s
   updateBHPForConstraint( subRegion, targetIndex );
 
   // update perforation rates
-  computePerforationRates( subRegion, targetIndex );
+  computePerforationRates( meshLevel, subRegion, targetIndex );
 }
 
 void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
@@ -871,7 +871,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     // 5) Recompute the pressure-dependent properties
     // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
     //       to better initialize the rates
-    updateSubRegionState( subRegion, targetIndex );
+    updateSubRegionState( meshLevel, subRegion, targetIndex );
 
     // 6) Estimate the well rates
     // TODO: initialize rates using perforation rates
@@ -1231,7 +1231,8 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
   return MpiWrapper::min( localCheck );
 }
 
-void CompositionalMultiphaseWell::computePerforationRates( WellElementSubRegion & subRegion,
+void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & GEOSX_UNUSED_PARAM( meshLevel ),
+                                                           WellElementSubRegion & subRegion,
                                                            localIndex const GEOSX_UNUSED_PARAM( targetIndex ) )
 {
   GEOSX_MARK_FUNCTION;

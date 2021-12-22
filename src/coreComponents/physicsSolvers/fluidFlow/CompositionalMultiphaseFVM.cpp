@@ -192,7 +192,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                             multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
                                             multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
                                             multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                            phaseOutfluxAccessor.toNestedView(), 
+                                            phaseOutfluxAccessor.toNestedView(),
                                             compOutfluxAccessor.toNestedView() );
   } );
 

@@ -19,9 +19,12 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
@@ -157,6 +160,16 @@ struct PerforationKernel
 
   using TAG = SinglePhaseWellKernels::SubRegionTag;
 
+  using SinglePhaseFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure >;
+
+  using SingleFluidAccessors =
+    StencilAccessors< extrinsicMeshData::singlefluid::density,
+                      extrinsicMeshData::singlefluid::dDensity_dPressure,
+                      extrinsicMeshData::singlefluid::viscosity,
+                      extrinsicMeshData::singlefluid::dViscosity_dPressure >;
+
   /**
    * @brief The type for element-based non-constitutive data parameters.
    * Consists entirely of ArrayView's.
@@ -239,6 +252,12 @@ struct AccumulationKernel
 
 struct PresInitializationKernel
 {
+
+  using SinglePhaseFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure >;
+
+  using SingleFluidAccessors =
+    StencilAccessors< extrinsicMeshData::singlefluid::density >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.

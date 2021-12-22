@@ -170,10 +170,11 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
+   * @param meshLevel the mesh level
    * @param subRegion the well subregion containing all the primary and dependent fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
@@ -330,10 +331,11 @@ private:
 
   /**
    * @brief Compute all the perforation rates for this well
+   * @param meshLevel the mesh level
    * @param subRegion the well element region for which the fields are resized
    * @param targetIndex index of the target region
    */
-  void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
+  void computePerforationRates( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Setup stored reservoir views into domain data for the current step

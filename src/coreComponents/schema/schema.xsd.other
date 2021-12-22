@@ -1107,15 +1107,15 @@
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--dDensity_dPressure => (no description available)-->
+		<!--dDensity_dPressure => Derivative of density with respect to pressure-->
 		<xsd:attribute name="dDensity_dPressure" type="real64_array2d" />
-		<!--dViscosity_dPressure => (no description available)-->
+		<!--dViscosity_dPressure => Derivative of viscosity with respect to pressure-->
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
-		<!--density => (no description available)-->
+		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-		<!--initialDensity => (no description available)-->
+		<!--initialDensity => Initial density-->
 		<xsd:attribute name="initialDensity" type="real64_array2d" />
-		<!--viscosity => (no description available)-->
+		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType" />

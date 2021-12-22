@@ -156,10 +156,11 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @param meshLevel the mesh level
    * @param subRegion the well subRegion containing the well elements and their associated fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -235,23 +236,17 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
-
   virtual void initializePreSubGroups() override;
 
 private:
 
   /**
    * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
+   * @param meshLevel the mesh level
+   * @param subRegion the well element subRegion
+   * @param targetIndex the targetIndex
    */
-  void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
-
-  /**
-   * @brief Setup stored reservoir views into domain data for the current step
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void resetViews( DomainPartition & domain ) override;
+  void computePerforationRates( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
@@ -264,21 +259,6 @@ private:
    * @param meshLevel the mesh level object (to loop over wells)
    */
   void validateWellConstraints( MeshLevel const & meshLevel ) const;
-
-private:
-
-  /// views into reservoir primary variable fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPressure;
-
-  /// views into reservoir material fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resViscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResVisc_dPres;
 
 };
 

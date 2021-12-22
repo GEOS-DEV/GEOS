@@ -299,7 +299,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           wellSolver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver.updateSubRegionState( subRegion3, targetIndex3 );
+            wellSolver.updateSubRegionState( mesh, subRegion3, targetIndex3 );
           } );
 
 
@@ -391,7 +391,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -412,7 +412,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dWellElemCompDens.move( LvArray::MemorySpace::host, true );
         dWellElemCompDens[iwelem][jc] = dRho;
 
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -437,7 +437,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
         dConnRate.move( LvArray::MemorySpace::host, true );
         dConnRate[iwelem] = dRate;
 
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();

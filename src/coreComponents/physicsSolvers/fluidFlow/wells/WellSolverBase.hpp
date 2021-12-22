@@ -226,9 +226,11 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
-   * @param well the well containing all the primary and dependent fields
+   * @param meshLevel the mesh level
+   * @param subRegion the well subRegion containing the well elements and their associated fields
+   * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term

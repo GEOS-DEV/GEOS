@@ -169,7 +169,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
                                                                WellElementSubRegion & subRegion )
   {
-    updateSubRegionState( subRegion, targetIndex );
+    updateSubRegionState( meshLevel, subRegion, targetIndex );
   } );
 
 }

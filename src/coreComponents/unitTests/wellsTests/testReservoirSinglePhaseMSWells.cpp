@@ -237,7 +237,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
           wellSolver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver.updateSubRegionState( subRegion3, targetIndex3 );
+            wellSolver.updateSubRegionState( mesh, subRegion3, targetIndex3 );
           } );
 
           residual.zero();
@@ -291,7 +291,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -319,7 +319,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dConnRate[iwelem] = dRate;
 
         // after perturbing, update the rate-dependent quantities in the well (well controls)
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
