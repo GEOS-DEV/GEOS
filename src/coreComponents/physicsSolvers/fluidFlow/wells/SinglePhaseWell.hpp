@@ -236,10 +236,6 @@ public:
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
-    // primary solution field
-    static constexpr char const * connRateString() { return "connectionRate"; }
-    static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
-
     // backup field for the accumulation term
     static constexpr char const * densityOldString() { return extrinsicMeshData::flow::densityOld::key(); }
 

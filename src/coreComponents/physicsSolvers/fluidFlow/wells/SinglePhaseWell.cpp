@@ -30,6 +30,7 @@
 #include "mesh/WellElementSubRegion.hpp"
 #include "mesh/PerforationData.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
@@ -65,10 +66,12 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const,
                                                                WellElementSubRegion & subRegion )
   {
+    // TODO: change from flow:: to well::
     subRegion.registerWrapper< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() ).setPlotLevel( PlotLevel::LEVEL_0 );
     subRegion.registerWrapper< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::connRateString() ).setPlotLevel( PlotLevel::LEVEL_0 );
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::deltaConnRateString() );
+
+    subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate >( getName() );
+    subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >( getName() );
 
     subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
@@ -203,9 +206,9 @@ void SinglePhaseWell::updateVolRateForConstraint( WellElementSubRegion & subRegi
     subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
   arrayView1d< real64 const > const & connRate =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString() );
+    subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
   arrayView1d< real64 const > const & dConnRate =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString() );
+    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
 
   // fluid data
 
@@ -321,9 +324,9 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
 
     // get well primary variables on well elements
     arrayView1d< real64 > const wellElemPressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >(); // TODO: change to well
     arrayView1d< real64 > const connRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
 
     // get the element region, subregion, index
     arrayView1d< localIndex const > const resElementRegion =
@@ -389,10 +392,10 @@ void SinglePhaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time_n
       subRegion.getReference< array1d< localIndex > >( WellElementSubRegion::viewKeyStruct::nextWellElementIndexString() );
 
     // get a reference to the primary variables on well elements
-    arrayView1d< real64 const > const & connRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString() );
-    arrayView1d< real64 const > const & dConnRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString() );
+    arrayView1d< real64 const > const connRate =
+      subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
+    arrayView1d< real64 const > const dConnRate =
+      subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
 
     FluxKernel::launch( subRegion.size(),
                         dofManager.rankOffset(),
@@ -724,13 +727,13 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 
   dofManager.addVectorToField( localSolution,
                                wellElementDofName(),
-                               viewKeyStruct::deltaConnRateString(),
+                               extrinsicMeshData::well::deltaConnectionRate::key(),
                                scalingFactor,
                                { m_numDofPerWellElement, 1, m_numDofPerWellElement } );
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::flow::deltaPressure::key() ) );
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaConnRateString() ) );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::well::deltaConnectionRate::key() );
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
@@ -752,7 +755,7 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
     arrayView1d< real64 > const & dWellElemPressure =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
     arrayView1d< real64 > const & dConnRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
@@ -858,9 +861,9 @@ void SinglePhaseWell::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( t
     arrayView1d< real64 const > const dWellElemPressure =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
     arrayView1d< real64 > const connRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::connRateString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
     arrayView1d< real64 const > const dConnRate =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::deltaConnRateString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {

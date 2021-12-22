@@ -33,6 +33,7 @@ set( physicsSolvers_headers
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
+     fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp     
      fluidFlow/wells/SinglePhaseWellKernels.hpp     
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
