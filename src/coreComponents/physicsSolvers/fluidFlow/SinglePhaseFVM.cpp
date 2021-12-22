@@ -21,7 +21,7 @@
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
-#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
@@ -253,7 +253,6 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
   string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
@@ -263,7 +262,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString() );
+      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key() );
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
@@ -325,7 +324,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
     jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString() );
+      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(), true );
 
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
@@ -382,7 +381,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( PermeabilityBase::viewKeyStruct::dPerm_dApertureString() );
+      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key() );
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {

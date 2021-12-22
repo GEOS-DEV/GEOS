@@ -21,7 +21,7 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
-#include "constitutive/permeability/ProppantPermeability.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/solid/ProppantSolid.hpp"
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
@@ -184,11 +184,9 @@ void SinglePhaseProppantBase::resetViewsPrivate( ElementRegionManager const & el
   }
 
   {
-    using keys = ProppantPermeability::viewKeyStruct;
-
     m_permeabilityMultiplier.clear();
-    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< ProppantPermeability, real64, 3 >( keys::permeabilityMultiplierString() );
-    m_permeabilityMultiplier.setName( getName() + "/accessors/" + keys::permeabilityMultiplierString() );
+    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor<ProppantPermeability, real64, 3 >( extrinsicMeshData::permeability::permeabilityMultiplier::key() );
+    m_permeabilityMultiplier.setName( getName() + "/accessors/" + extrinsicMeshData::permeability::permeabilityMultiplier::key() );
   }
 }
 

@@ -234,7 +234,7 @@ public:
    */
   void initializeFluidState( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
-   /**
+  /**
    * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
    */
   void computeHydrostaticEquilibrium();
@@ -313,11 +313,6 @@ protected:
    */
   void validateConstitutiveModels( DomainPartition & domain );
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void resetViews( MeshLevel & mesh ) override;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -348,41 +343,8 @@ protected:
   /// name of the fluid constitutive model used as a reference for component/phase description
   string m_referenceFluidModelName;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseMob_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > m_phaseRelPerm;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseVisc;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dPhaseDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseMassDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dPhaseMassDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dPhaseMassDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_phaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_dPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > m_dPhaseCompFrac_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > m_phaseCapPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > m_dPhaseCapPressure_dPhaseVolFrac;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_totalDensOld;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMobOld;
-
 private:
   void setFluidNames( ElementSubRegionBase & subRegion ) const override;
-
 
 };
 

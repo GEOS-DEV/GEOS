@@ -90,6 +90,13 @@ template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
 
+EXTRINSIC_MESH_DATA_TRAIT( ghostRank,
+                           "ghostRank",
+                           array1d< integer >,
+                           -2,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Ghost rank." );
 
 EXTRINSIC_MESH_DATA_TRAIT( ParentIndex,
                            "parentIndex",

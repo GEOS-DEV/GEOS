@@ -155,8 +155,6 @@ public:
     return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
   }
 
-protected:
-
 private:
 
   localIndex m_numQuadraturePoints;
