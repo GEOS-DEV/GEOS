@@ -334,6 +334,7 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
     arrayView1d< localIndex const > const resElementIndex =
       perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
+    // TODO: change the way we access the flowSolver here
     SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
     PresInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
     PresInitializationKernel::SingleFluidAccessors resSingleFluidAccessors( meshLevel.getElemManager(), flowSolver.getName(), flowSolver.targetRegionNames(), flowSolver.fluidModelNames() );
@@ -599,7 +600,8 @@ void SinglePhaseWell::computePerforationRates( MeshLevel const & meshLevel, Well
   arrayView1d< localIndex const > const resElementIndex =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
-  SinglePhaseBase & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
+  // TODO: change the way we access the flowSolver here
+  SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
   PerforationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
   PerforationKernel::SingleFluidAccessors resSingleFluidAccessors( meshLevel.getElemManager(), flowSolver.getName(), flowSolver.targetRegionNames(), flowSolver.fluidModelNames() );
 

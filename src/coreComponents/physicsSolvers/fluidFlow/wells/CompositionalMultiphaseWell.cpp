@@ -137,8 +137,7 @@ void CompositionalMultiphaseWell::registerDataOnMesh( Group & meshBodies )
     subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() );
     subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaPressure >( getName() );
 
-    subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::temperatureString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 );
+    subRegion.registerExtrinsicData< extrinsicMeshData::well::temperature >( getName() );
 
     // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
     // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
@@ -533,7 +532,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
     subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
   arrayView1d< real64 const > const & temp =
-    subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+    subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
 
   arrayView1d< real64 const > const & connRate =
     subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
@@ -708,7 +707,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
 
   arrayView1d< real64 const > const & pres = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
   arrayView1d< real64 const > const & dPres = subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
-  arrayView1d< real64 const > const & temp = subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+  arrayView1d< real64 const > const & temp = subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
   arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
     subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompFraction >();
 
@@ -801,7 +800,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
       subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
 
     arrayView1d< real64 > const & wellElemTemp =
-      subRegion.getReference< array1d< real64 > >( viewKeyStruct::temperatureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
 
     arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
       subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
@@ -822,6 +821,11 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
     arrayView1d< localIndex const > const & resElementIndex =
       perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
+    // TODO: change the way we access the flowSolver here
+    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+    PresTempCompFracInitializationKernel::CompFlowAccessors resCompFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
+    PresTempCompFracInitializationKernel::MultiFluidAccessors resMultiFluidAccessors( meshLevel.getElemManager(), flowSolver.getName(), flowSolver.targetRegionNames(), flowSolver.fluidModelNames() );
+
     // 1) Loop over all perforations to compute an average mixture density and component fraction
     // 2) Initialize the reference pressure
     // 3) Estimate the pressures in the well elements using the average density
@@ -832,11 +836,11 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                                                   perforationData.getNumPerforationsGlobal(),
                                                   wellControls,
                                                   0.0, // initialization done at t = 0
-                                                  m_resPres.toNestedViewConst(),
-                                                  m_resTemp.toNestedViewConst(),
-                                                  m_resCompDens.toNestedViewConst(),
-                                                  m_resPhaseVolFrac.toNestedViewConst(),
-                                                  m_resPhaseMassDens.toNestedViewConst(),
+                                                  resCompFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                                  resCompFlowAccessors.get( extrinsicMeshData::flow::temperature{} ),
+                                                  resCompFlowAccessors.get( extrinsicMeshData::flow::globalCompDensity{} ),
+                                                  resCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                                  resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
                                                   resElementRegion,
                                                   resElementSubRegion,
                                                   resElementIndex,
@@ -1231,7 +1235,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
   return MpiWrapper::min( localCheck );
 }
 
-void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & GEOSX_UNUSED_PARAM( meshLevel ),
+void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & meshLevel,
                                                            WellElementSubRegion & subRegion,
                                                            localIndex const GEOSX_UNUSED_PARAM( targetIndex ) )
 {
@@ -1297,27 +1301,33 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & GEO
   arrayView1d< localIndex const > const & resElementIndex =
     perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
+  // TODO: change the way we access the flowSolver here
+  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  PerforationKernel::CompFlowAccessors resCompFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
+  PerforationKernel::MultiFluidAccessors resMultiFluidAccessors( meshLevel.getElemManager(), flowSolver.getName(), flowSolver.targetRegionNames(), flowSolver.fluidModelNames() );
+  PerforationKernel::RelPermAccessors resRelPermAccessors( meshLevel.getElemManager(), flowSolver.getName(), flowSolver.targetRegionNames(), flowSolver.relPermModelNames() );
+
   CompositionalMultiphaseBaseKernels::
     KernelLaunchSelector2< PerforationKernel >( numFluidComponents(),
                                                 numFluidPhases(),
                                                 perforationData->size(),
-                                                m_resPres.toNestedViewConst(),
-                                                m_deltaResPres.toNestedViewConst(),
-                                                m_resPhaseVolFrac.toNestedViewConst(),
-                                                m_dResPhaseVolFrac_dPres.toNestedViewConst(),
-                                                m_dResPhaseVolFrac_dCompDens.toNestedViewConst(),
-                                                m_dResCompFrac_dCompDens.toNestedViewConst(),
-                                                m_resPhaseDens.toNestedViewConst(),
-                                                m_dResPhaseDens_dPres.toNestedViewConst(),
-                                                m_dResPhaseDens_dComp.toNestedViewConst(),
-                                                m_resPhaseVisc.toNestedViewConst(),
-                                                m_dResPhaseVisc_dPres.toNestedViewConst(),
-                                                m_dResPhaseVisc_dComp.toNestedViewConst(),
-                                                m_resPhaseCompFrac.toNestedViewConst(),
-                                                m_dResPhaseCompFrac_dPres.toNestedViewConst(),
-                                                m_dResPhaseCompFrac_dComp.toNestedViewConst(),
-                                                m_resPhaseRelPerm.toNestedViewConst(),
-                                                m_dResPhaseRelPerm_dPhaseVolFrac.toNestedViewConst(),
+                                                resCompFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                                resCompFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                                resCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                                resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
+                                                resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
+                                                resCompFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity_dPressure{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                                resRelPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
+                                                resRelPermAccessors.get( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{} ),
                                                 wellElemGravCoef,
                                                 wellElemPres,
                                                 dWellElemPres,
@@ -1504,130 +1514,6 @@ void CompositionalMultiphaseWell::backupFields( MeshLevel & mesh ) const
     } );
   } );
 }
-
-
-void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
-{
-  WellSolverBase::resetViews( domain );
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  CompositionalMultiphaseBase & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-
-  {
-    using namespace extrinsicMeshData::well;
-    using namespace compflow;
-
-    m_resPres.clear();
-    m_resPres = elemManager.constructArrayViewAccessor< real64, 1 >( pressure::key() );
-    m_resPres.setName( getName() + "/accessors/" + pressure::key() );
-
-    m_deltaResPres.clear();
-    m_deltaResPres =
-      elemManager.constructArrayViewAccessor< real64, 1 >( deltaPressure::key() );
-    m_deltaResPres.setName( getName() + "/accessors/" + deltaPressure::key() );
-
-    m_resTemp.clear();
-    m_resTemp = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::temperature::key() );
-    m_resTemp.setName( getName() + "/accessors/" + extrinsicMeshData::flow::temperature::key() );
-
-    m_resCompDens.clear();
-    m_resCompDens =
-      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_COMP >( globalCompDensity::key() );
-    m_resCompDens.setName( getName() + "/accessors/" + globalCompDensity::key() );
-
-    m_dResCompFrac_dCompDens.clear();
-    m_dResCompFrac_dCompDens =
-      elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_COMP_DC >( dGlobalCompFraction_dGlobalCompDensity::key() );
-    m_dResCompFrac_dCompDens.setName( getName() + "/accessors/" + dGlobalCompFraction_dGlobalCompDensity::key() );
-
-    m_resPhaseVolFrac.clear();
-    m_resPhaseVolFrac =
-      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( phaseVolumeFraction::key() );
-    m_resPhaseVolFrac.setName( getName() + "/accessors/" + phaseVolumeFraction::key() );
-
-    m_dResPhaseVolFrac_dPres.clear();
-    m_dResPhaseVolFrac_dPres =
-      elemManager.constructArrayViewAccessor< real64, 2, LAYOUT_PHASE >( dPhaseVolumeFraction_dPressure::key() );
-    m_dResPhaseVolFrac_dPres.setName( getName() + "/accessors/" + dPhaseVolumeFraction_dPressure::key() );
-
-    m_dResPhaseVolFrac_dCompDens.clear();
-    m_dResPhaseVolFrac_dCompDens =
-      elemManager.constructArrayViewAccessor< real64, 3, LAYOUT_PHASE_DC >( dPhaseVolumeFraction_dGlobalCompDensity::key() );
-    m_dResPhaseVolFrac_dCompDens.setName( getName() + "/accessors/" + dPhaseVolumeFraction_dGlobalCompDensity::key() );
-
-  }
-  {
-    using namespace extrinsicMeshData::multifluid;
-
-    m_resPhaseDens.clear();
-    m_resPhaseDens = elemManager.constructMaterialExtrinsicAccessor< phaseDensity >( flowSolver.targetRegionNames(),
-                                                                                     flowSolver.fluidModelNames() );
-    m_resPhaseDens.setName( getName() + "/accessors/" + phaseDensity::key() );
-
-    m_dResPhaseDens_dPres.clear();
-    m_dResPhaseDens_dPres = elemManager.constructMaterialExtrinsicAccessor< dPhaseDensity_dPressure >( flowSolver.targetRegionNames(),
-                                                                                                       flowSolver.fluidModelNames() );
-    m_dResPhaseDens_dPres.setName( getName() + "/accessors/" + dPhaseDensity_dPressure::key() );
-
-    m_dResPhaseDens_dComp.clear();
-    m_dResPhaseDens_dComp = elemManager.constructMaterialExtrinsicAccessor< dPhaseDensity_dGlobalCompFraction >( flowSolver.targetRegionNames(),
-                                                                                                                 flowSolver.fluidModelNames() );
-    m_dResPhaseDens_dComp.setName( getName() + "/accessors/" + dPhaseDensity_dGlobalCompFraction::key() );
-
-    m_resPhaseMassDens.clear();
-    m_resPhaseMassDens = elemManager.constructMaterialExtrinsicAccessor< phaseMassDensity >( flowSolver.targetRegionNames(),
-                                                                                             flowSolver.fluidModelNames() );
-    m_resPhaseMassDens.setName( getName() + "/accessors/" + phaseMassDensity::key() );
-
-    m_resPhaseVisc.clear();
-    m_resPhaseVisc = elemManager.constructMaterialExtrinsicAccessor< phaseViscosity >( flowSolver.targetRegionNames(),
-                                                                                       flowSolver.fluidModelNames() );
-    m_resPhaseVisc.setName( getName() + "/accessors/" + phaseViscosity::key() );
-
-    m_dResPhaseVisc_dPres.clear();
-    m_dResPhaseVisc_dPres = elemManager.constructMaterialExtrinsicAccessor< dPhaseViscosity_dPressure >( flowSolver.targetRegionNames(),
-                                                                                                         flowSolver.fluidModelNames() );
-    m_dResPhaseVisc_dPres.setName( getName() + "/accessors/" + dPhaseViscosity_dPressure::key() );
-
-    m_dResPhaseVisc_dComp.clear();
-    m_dResPhaseVisc_dComp = elemManager.constructMaterialExtrinsicAccessor< dPhaseViscosity_dGlobalCompFraction >( flowSolver.targetRegionNames(),
-                                                                                                                   flowSolver.fluidModelNames() );
-    m_dResPhaseVisc_dComp.setName( getName() + "/accessors/" + dPhaseViscosity_dGlobalCompFraction::key() );
-
-    m_resPhaseCompFrac.clear();
-    m_resPhaseCompFrac = elemManager.constructMaterialExtrinsicAccessor< phaseCompFraction >( flowSolver.targetRegionNames(),
-                                                                                              flowSolver.fluidModelNames() );
-    m_resPhaseCompFrac.setName( getName() + "/accessors/" + phaseCompFraction::key() );
-
-    m_dResPhaseCompFrac_dPres.clear();
-    m_dResPhaseCompFrac_dPres = elemManager.constructMaterialExtrinsicAccessor< dPhaseCompFraction_dPressure >( flowSolver.targetRegionNames(),
-                                                                                                                flowSolver.fluidModelNames() );
-    m_dResPhaseCompFrac_dPres.setName( getName() + "/accessors/" + dPhaseCompFraction_dPressure::key() );
-
-    m_dResPhaseCompFrac_dComp.clear();
-    m_dResPhaseCompFrac_dComp = elemManager.constructMaterialExtrinsicAccessor< dPhaseCompFraction_dGlobalCompFraction >( flowSolver.targetRegionNames(),
-                                                                                                                          flowSolver.fluidModelNames() );
-    m_dResPhaseCompFrac_dComp.setName( getName() + "/accessors/" + dPhaseCompFraction_dGlobalCompFraction::key() );
-
-  }
-  {
-    using namespace extrinsicMeshData::relperm;
-
-    m_resPhaseRelPerm.clear();
-    m_resPhaseRelPerm = elemManager.constructMaterialExtrinsicAccessor< phaseRelPerm >( flowSolver.targetRegionNames(),
-                                                                                        flowSolver.relPermModelNames() );
-    m_resPhaseRelPerm.setName( getName() + "/accessors/" + phaseRelPerm::key() );
-
-    m_dResPhaseRelPerm_dPhaseVolFrac.clear();
-    m_dResPhaseRelPerm_dPhaseVolFrac = elemManager.constructMaterialExtrinsicAccessor< dPhaseRelPerm_dPhaseVolFraction >( flowSolver.targetRegionNames(),
-                                                                                                                          flowSolver.relPermModelNames() );
-    m_dResPhaseRelPerm_dPhaseVolFrac.setName( getName() + "/accessors/" + dPhaseRelPerm_dPhaseVolFraction::key() );
-
-  }
-}
-
 
 void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition const & domain,
                                                              DofManager const & dofManager,

@@ -263,11 +263,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  virtual void resetViews( DomainPartition & domain );
-
-  /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
@@ -297,8 +292,6 @@ protected:
   /// copy of the time step size saved in this class for residual normalization
   real64 m_currentDt;
 
-  /// views into reservoir constant data fields
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_resGravCoef;
 };
 
 }

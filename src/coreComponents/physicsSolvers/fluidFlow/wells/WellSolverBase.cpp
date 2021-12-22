@@ -121,9 +121,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
-  // bind the stored reservoir views to the current domain
-  resetViews( domain );
-
   // saved time and current dt for residual normalization and time-dependent tables
   m_currentDt = dt;
   m_currentTime = time_n;
@@ -204,9 +201,6 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
     subRegion.reconstructLocalConnectivity();
   } );
 
-  // bind the stored reservoir views to the current domain
-  resetViews( domain );
-
   // Precompute solver-specific constant data (e.g. gravity-coefficient)
   precomputeData( domain );
 }
@@ -250,17 +244,6 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
     wellControls.setReferenceGravityCoef( refElev * gravVector[ 2 ] );
 
   } );
-}
-
-void WellSolverBase::resetViews( DomainPartition & domain )
-{
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  m_resGravCoef.clear();
-  m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::gravityCoefficient::key() );
-  m_resGravCoef.setName( getName() + "/accessors/" + extrinsicMeshData::flow::gravityCoefficient::key() );
-
 }
 
 WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion )

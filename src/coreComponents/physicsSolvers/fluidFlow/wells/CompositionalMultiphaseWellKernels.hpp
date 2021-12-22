@@ -22,10 +22,14 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
@@ -221,6 +225,30 @@ struct PerforationKernel
 
   using TAG = CompositionalMultiphaseWellKernels::SubRegionTag;
 
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::phaseVolumeFraction,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+
+  using MultiFluidAccessors =
+    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseViscosity,
+                      extrinsicMeshData::multifluid::dPhaseViscosity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseCompFraction,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+
+  using RelPermAccessors =
+    StencilAccessors< extrinsicMeshData::relperm::phaseRelPerm,
+                      extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+
+
   /**
    * @brief The type for element-based non-constitutive data parameters.
    * Consists entirely of ArrayView's.
@@ -404,6 +432,16 @@ struct VolumeBalanceKernel
 
 struct PresTempCompFracInitializationKernel
 {
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::temperature,
+                      extrinsicMeshData::flow::globalCompDensity,
+                      extrinsicMeshData::flow::phaseVolumeFraction >;
+
+  using MultiFluidAccessors =
+    StencilAccessors< extrinsicMeshData::multifluid::phaseMassDensity >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.

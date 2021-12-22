@@ -258,8 +258,6 @@ public:
 
     // inputs
 
-    static constexpr char const * temperatureString() { return "wellTemperature"; }
-
     static constexpr char const * useMassFlagString() { return CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(); }
 
     static constexpr char const * relPermNamesString() { return CompositionalMultiphaseBase::viewKeyStruct::relPermNamesString(); }
@@ -271,6 +269,7 @@ public:
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
     // control data (not registered on the mesh)
+
     static constexpr char const * currentBHPString() { return "currentBHP"; }
 
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
@@ -338,12 +337,6 @@ private:
   void computePerforationRates( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
-   * @brief Setup stored reservoir views into domain data for the current step
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void resetViews( DomainPartition & domain ) override;
-
-  /**
    * @brief Initialize all the primary and secondary variables in all the wells
    * @param domain the domain containing the well manager to access individual wells
    */
@@ -375,42 +368,6 @@ private:
 
   /// index of the target phase, used to impose the phase rate constraint
   localIndex m_targetPhaseIndex;
-
-  /// views into reservoir primary variable fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPres;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resTemp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_COMP > > m_resCompDens;
-
-  /// views into other reservoir variable fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_resPhaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dResPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dResPhaseVolFrac_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dResCompFrac_dCompDens;
-
-  /// views into reservoir material fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dResPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dResPhaseDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseMassDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_resPhaseVisc;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dResPhaseVisc_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dResPhaseVisc_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_resPhaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_dResPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > m_dResPhaseCompFrac_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > m_resPhaseRelPerm;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::relperm::USD_RELPERM_DS > > m_dResPhaseRelPerm_dPhaseVolFrac;
 
 };
 
