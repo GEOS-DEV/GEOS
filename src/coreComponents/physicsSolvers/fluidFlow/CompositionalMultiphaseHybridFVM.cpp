@@ -443,8 +443,12 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList().toViewConst();
     arrayView2d< localIndex const > const & elemList          = faceManager.elementList().toViewConst();
 
+
     // tolerance for transmissibility calculation
     real64 const lengthTolerance = m_lengthTolerance;
+    
+    FluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+    FluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), regionNames, fluidModelNames() );
 
     mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
                                                                                 [&]( localIndex const,
@@ -453,52 +457,47 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                                                                      ElementRegionBase const &,
                                                                                      CellElementSubRegion const & subRegion )
     {
-
       PermeabilityBase const & permeabilityModel =
         getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
-
-      mimeticInnerProductReducedDispatch( mimeticInnerProductBase,
-                                          [&] ( auto const mimeticInnerProduct )
-      {
-        using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
-        KernelLaunchSelector< FluxKernel,
-                              IP_TYPE >( subRegion.numFacesPerElement(),
-                                         m_numComponents, m_numPhases,
-                                         er, esr, subRegion,
-                                         permeabilityModel,
-                                         m_regionFilter.toViewConst(),
-                                         nodePosition,
-                                         elemRegionList,
-                                         elemSubRegionList,
-                                         elemList,
-                                         faceToNodes,
-                                         faceDofNumber,
-                                         faceGhostRank,
-                                         facePres,
-                                         dFacePres,
-                                         faceGravCoef,
-                                         mimFaceGravCoef,
-                                         transMultiplier,
-                                         m_phaseDens.toNestedViewConst(),
-                                         m_dPhaseDens_dPres.toNestedViewConst(),
-                                         m_dPhaseDens_dComp.toNestedViewConst(),
-                                         m_phaseMassDens.toNestedViewConst(),
-                                         m_dPhaseMassDens_dPres.toNestedViewConst(),
-                                         m_dPhaseMassDens_dComp.toNestedViewConst(),
-                                         m_phaseMob.toNestedViewConst(),
-                                         m_dPhaseMob_dPres.toNestedViewConst(),
-                                         m_dPhaseMob_dCompDens.toNestedViewConst(),
-                                         m_dCompFrac_dCompDens.toNestedViewConst(),
-                                         m_phaseCompFrac.toNestedViewConst(),
-                                         m_dPhaseCompFrac_dPres.toNestedViewConst(),
-                                         m_dPhaseCompFrac_dComp.toNestedViewConst(),
-                                         elemDofNumber.toNestedViewConst(),
-                                         dofManager.rankOffset(),
-                                         lengthTolerance,
-                                         dt,
-                                         localMatrix,
-                                         localRhs );
-      } );
+        
+      using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
+      KernelLaunchSelector< FluxKernel,
+                            IP_TYPE >( subRegion.numFacesPerElement(),
+                                       m_numComponents, m_numPhases,
+                                       er, esr, subRegion,
+                                       permeabilityModel,
+                                       m_regionFilter.toViewConst(),
+                                       nodePosition,
+                                       elemRegionList,
+                                       elemSubRegionList,
+                                       elemList,
+                                       faceToNodes,
+                                       faceDofNumber,
+                                       faceGhostRank,
+                                       facePres,
+                                       dFacePres,
+                                       faceGravCoef,
+                                       mimFaceGravCoef,
+                                       transMultiplier,
+                                       compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility{} ),
+                                       compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure{} ),
+                                       compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
+                                       compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
+                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                       elemDofNumber.toNestedViewConst(),
+                                       dofManager.rankOffset(),
+                                       lengthTolerance,
+                                       dt,
+                                       localMatrix,
+                                       localRhs );
     } );
 
   } );
@@ -784,6 +783,9 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
+    StencilAccessors< extrinsicMeshData::flow::phaseMobilityOld >
+    compFlowAccessors( mesh.getElemManager(), getName() );
+
     // 1. Compute the residual for the mass conservation equations
 
     mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
@@ -818,6 +820,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
       localResidualNorm += subRegionResidualNorm;
     } );
 
+<<<<<<< HEAD
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
     arrayView1d< globalIndex const > const & faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
@@ -844,6 +847,33 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     localResidualNorm += faceResidualNorm;
 
   } );
+=======
+  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
+  arrayView1d< globalIndex const > const & faceDofNumber =
+    faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+
+  arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
+
+  // 2. Compute the residual for the face-based constraints
+  real64 faceResidualNorm = 0.0;
+  CompositionalMultiphaseHybridFVMKernels::
+    ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                parallelDeviceReduce >( localRhs,
+                                                        rankOffset,
+                                                        numFluidPhases(),
+                                                        faceDofNumber.toNestedViewConst(),
+                                                        faceGhostRank.toNestedViewConst(),
+                                                        m_regionFilter.toViewConst(),
+                                                        elemRegionList.toNestedViewConst(),
+                                                        elemSubRegionList.toNestedViewConst(),
+                                                        elemList.toNestedViewConst(),
+                                                        m_volume.toNestedViewConst(),
+                                                        compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
+                                                        faceResidualNorm );
+  localResidualNorm += faceResidualNorm;
+>>>>>>> origin/develop
 
   // 3. Combine the two norms
 
@@ -936,6 +966,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
 {
   GEOSX_MARK_FUNCTION;
 
+<<<<<<< HEAD
   // note that the phase mobility computed here does NOT include phase density
 
   // outputs
@@ -974,24 +1005,18 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
   RelativePermeabilityBase const & relperm =
     getConstitutiveModel< RelativePermeabilityBase >( dataGroup,
                                                       dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() ) );
+=======
+  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+  RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
+>>>>>>> origin/develop
 
-  arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm = relperm.phaseRelPerm();
-  arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac = relperm.dPhaseRelPerm_dPhaseVolFraction();
-
-  KernelLaunchSelector2< PhaseMobilityKernel >( m_numComponents, m_numPhases,
-                                                dataGroup.size(),
-                                                dCompFrac_dCompDens,
-                                                phaseVisc,
-                                                dPhaseVisc_dPres,
-                                                dPhaseVisc_dComp,
-                                                phaseRelPerm,
-                                                dPhaseRelPerm_dPhaseVolFrac,
-                                                phaseVolFrac,
-                                                dPhaseVolFrac_dPres,
-                                                dPhaseVolFrac_dComp,
-                                                phaseMob,
-                                                dPhaseMob_dPres,
-                                                dPhaseMob_dComp );
+  CompositionalMultiphaseHybridFVMKernels::
+    PhaseMobilityKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                               m_numPhases,
+                                               dataGroup,
+                                               fluid,
+                                               relperm );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, CompositionalMultiphaseHybridFVM, std::string const &, Group * const )

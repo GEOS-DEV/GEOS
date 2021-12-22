@@ -29,6 +29,7 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseHybridFVMKernels.hpp     
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
+     fluidFlow/StencilAccessors.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
@@ -84,7 +85,6 @@ set( physicsSolvers_sources
      PhysicsSolverManager.cpp
      SolverBase.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
-     fluidFlow/CompositionalMultiphaseBaseKernels.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseFVMKernels.cpp
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
@@ -93,7 +93,6 @@ set( physicsSolvers_sources
      fluidFlow/proppantTransport/ProppantTransport.cpp
      fluidFlow/proppantTransport/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
-     fluidFlow/SinglePhaseBaseKernels.cpp
      fluidFlow/SinglePhaseFVM.cpp
      fluidFlow/SinglePhaseHybridFVM.cpp     
      fluidFlow/SinglePhaseProppantBase.cpp     
