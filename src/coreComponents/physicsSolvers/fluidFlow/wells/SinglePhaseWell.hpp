@@ -46,19 +46,6 @@ class SinglePhaseWell : public WellSolverBase
 {
 public:
 
-  // define the column offset of the derivatives
-  struct ColOffset
-  {
-    static constexpr integer DPRES = 0;
-    static constexpr integer DRATE = 1;
-  };
-
-  // define the row offset of the residual equations
-  struct RowOffset
-  {
-    static constexpr integer CONTROL = 0;
-    static constexpr integer MASSBAL = 1;
-  };
 
   /**
    * @brief main constructor for Group Objects
@@ -137,7 +124,7 @@ public:
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return extrinsicMeshData::flow::pressure::key(); }
+  virtual string resElementDofName() const override;
 
   virtual localIndex numFluidComponents() const override { return 1; }
 
@@ -236,14 +223,7 @@ public:
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
-    // backup field for the accumulation term
-    static constexpr char const * densityOldString() { return extrinsicMeshData::flow::densityOld::key(); }
-
-    // perforation rates
-    static constexpr char const * perforationRateString() { return "perforationRate"; }
-    static constexpr char const * dPerforationRate_dPresString() { return "dPerforationRate_dPres"; }
-
-    // control data
+    // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
 

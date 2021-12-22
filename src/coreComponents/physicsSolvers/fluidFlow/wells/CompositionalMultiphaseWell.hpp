@@ -43,20 +43,6 @@ class CompositionalMultiphaseWell : public WellSolverBase
 {
 public:
 
-  // define the column offset of the derivatives
-  struct ColOffset
-  {
-    static constexpr integer DPRES = 0;
-    static constexpr integer DCOMP = 1;
-  };
-
-  // define the row offset of the residual equations
-  struct RowOffset
-  {
-    static constexpr integer CONTROL = 0;
-    static constexpr integer MASSBAL = 1;
-  };
-
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
@@ -283,52 +269,7 @@ public:
 
     static constexpr char const * allowLocalCompDensChoppingString() { return CompositionalMultiphaseBase::viewKeyStruct::allowLocalCompDensChoppingString(); }
 
-    // primary solution field
-    static constexpr char const * globalCompDensityString() { return extrinsicMeshData::flow::globalCompDensity::key(); }
-
-    static constexpr char const * deltaGlobalCompDensityString() { return extrinsicMeshData::flow::deltaGlobalCompDensity::key(); }
-
-    static constexpr char const * mixtureConnRateString() { return "wellElementMixtureConnectionRate"; }
-
-    static constexpr char const * deltaMixtureConnRateString() { return "deltaWellElementMixtureConnectionRate"; }
-
-    // saturations
-    static constexpr char const * phaseVolumeFractionString() { return extrinsicMeshData::flow::phaseVolumeFraction::key(); }
-
-    static constexpr char const * dPhaseVolumeFraction_dPressureString() { return extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure::key(); }
-
-    static constexpr char const * dPhaseVolumeFraction_dGlobalCompDensityString() { return extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity::key(); }
-
-    // global component fractions
-    static constexpr char const * globalCompFractionString() { return extrinsicMeshData::flow::globalCompFraction::key(); }
-
-    static constexpr char const * dGlobalCompFraction_dGlobalCompDensityString() { return extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity::key(); }
-
-    // total mass densities
-    static constexpr char const * totalMassDensityString() { return "totalMassDensity"; }
-
-    static constexpr char const * dTotalMassDensity_dPressureString() { return "dTotalMassDensity_dPressure"; }
-
-    static constexpr char const * dTotalMassDensity_dGlobalCompDensityString() { return "dTotalMassDensity_dComp"; }
-
-    // these are used to store last converged time step values
-    static constexpr char const * phaseVolumeFractionOldString() { return extrinsicMeshData::flow::phaseVolumeFractionOld::key(); }
-
-    static constexpr char const * phaseDensityOldString() { return extrinsicMeshData::flow::phaseDensityOld::key(); }
-
-    static constexpr char const * totalDensityOldString() { return extrinsicMeshData::flow::totalDensityOld::key(); }
-
-    static constexpr char const * phaseComponentFractionOldString() { return extrinsicMeshData::flow::phaseComponentFractionOld::key(); }
-
-
-    // perforation rates and derivatives
-    static constexpr char const * compPerforationRateString() { return "compPerforationRate"; }
-
-    static constexpr char const * dCompPerforationRate_dPresString() { return "dCompPerforationRate_dPres"; }
-
-    static constexpr char const * dCompPerforationRate_dCompString() { return "dCompPerforationRate_dComp"; }
-
-    // control data
+    // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
 
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }

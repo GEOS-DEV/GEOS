@@ -20,8 +20,6 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_WELLSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -39,20 +37,6 @@ class WellElementSubRegion;
 class WellSolverBase : public SolverBase
 {
 public:
-
-  // tag to access well and reservoir elements in perforation rates computation
-  struct SubRegionTag
-  {
-    static constexpr integer RES  = 0;
-    static constexpr integer WELL = 1;
-  };
-
-  // tag to access the next and current well elements of a connection
-  struct ElemTag
-  {
-    static constexpr integer CURRENT = 0;
-    static constexpr integer NEXT    = 1;
-  };
 
   /**
    * @brief main constructor for Group Objects
@@ -258,10 +242,6 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return extrinsicMeshData::flow::gravityCoefficient::key(); }
-
-    // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
   };
 

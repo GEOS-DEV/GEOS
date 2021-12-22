@@ -48,6 +48,29 @@ EXTRINSIC_MESH_DATA_TRAIT( deltaConnectionRate,
                            WRITE_AND_READ,
                            "Accumulated connection rate updates" );
 
+EXTRINSIC_MESH_DATA_TRAIT( densityOld,
+                           "densityOld",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Density at the previous converged time step" );
+
+EXTRINSIC_MESH_DATA_TRAIT( perforationRate,
+                           "perforationRate",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Perforation rate" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPerforationRate_dPres,
+                           "dPerforationRate_dPres",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of perforation rate with respect to pressure" );
 
 }
 
