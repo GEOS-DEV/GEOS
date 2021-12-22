@@ -159,7 +159,7 @@ public:
     // 1. dMixtureDens_dVolStrainIncrement is neglected,
     // 2. grains are assumed incompressible
     real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity + porosity * fluidDensity;
-    real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity + porosity * initialFluidDensity;
+    real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity + porosityInit * initialFluidDensity;
     real64 const mixtureDensityIncrement = mixtureDensity - initialMixtureDensity;
 
     real64 const dMixtureDens_dVolStrainIncrement = 0.0;
