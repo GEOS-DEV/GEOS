@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -940,29 +941,31 @@ void SinglePhaseBase::resetViews( MeshLevel & mesh )
 
 void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManager )
 {
+  using namespace extrinsicMeshData::singlefluid;
+
   m_density.clear();
-  m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::densityString(),
+  m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( density::key(),
                                                                            targetRegionNames(),
                                                                            fluidModelNames() );
-  m_density.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::densityString() );
+  m_density.setName( getName() + "/accessors/" + density::key() );
 
   m_dDens_dPres.clear();
-  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::dDens_dPresString(),
+  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( dDensity_dPressure::key(),
                                                                                targetRegionNames(),
                                                                                fluidModelNames() );
-  m_dDens_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dDens_dPresString() );
+  m_dDens_dPres.setName( getName() + "/accessors/" + dDensity_dPressure::key() );
 
   m_viscosity.clear();
-  m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::viscosityString(),
+  m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( viscosity::key(),
                                                                              targetRegionNames(),
                                                                              fluidModelNames() );
-  m_viscosity.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::viscosityString() );
+  m_viscosity.setName( getName() + "/accessors/" + viscosity::key() );
 
   m_dVisc_dPres.clear();
-  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( SingleFluidBase::viewKeyStruct::dVisc_dPresString(),
+  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( dViscosity_dPressure::key(),
                                                                                targetRegionNames(),
                                                                                fluidModelNames() );
-  m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
+  m_dVisc_dPres.setName( getName() + "/accessors/" + dViscosity_dPressure::key() );
 
 }
 
