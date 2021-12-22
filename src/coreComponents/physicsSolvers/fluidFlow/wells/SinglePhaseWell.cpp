@@ -61,7 +61,8 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
                                                                WellElementSubRegion & subRegion )
   {
     subRegion.registerExtrinsicData< extrinsicMeshData::well::pressure >( getName() );
-    subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaPressure >( getName() );
+    subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaPressure >( getName() ).
+      setRestartFlags( RestartFlags::WRITE_AND_READ );
 
     subRegion.registerExtrinsicData< extrinsicMeshData::well::connectionRate >( getName() );
     subRegion.registerExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >( getName() );

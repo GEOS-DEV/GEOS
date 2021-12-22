@@ -43,7 +43,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dDensity_dPressure,
                            array2d< real64 >,
                            0,
                            NOPLOT,
-                           NO_WRITE,
+                           WRITE_AND_READ,
                            "Derivative of density with respect to pressure" );
 
 EXTRINSIC_MESH_DATA_TRAIT( initialDensity,
@@ -51,7 +51,7 @@ EXTRINSIC_MESH_DATA_TRAIT( initialDensity,
                            array2d< real64 >,
                            0,
                            NOPLOT,
-                           NO_WRITE,
+                           WRITE_AND_READ,
                            "Initial density" );
 
 EXTRINSIC_MESH_DATA_TRAIT( viscosity,
@@ -59,7 +59,7 @@ EXTRINSIC_MESH_DATA_TRAIT( viscosity,
                            array2d< real64 >,
                            0,
                            NOPLOT,
-                           NO_WRITE,
+                           WRITE_AND_READ,
                            "Viscosity" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dPressure,
@@ -67,7 +67,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dViscosity_dPressure,
                            array2d< real64 >,
                            0,
                            NOPLOT,
-                           NO_WRITE,
+                           WRITE_AND_READ,
                            "Derivative of viscosity with respect to pressure" );
 
 

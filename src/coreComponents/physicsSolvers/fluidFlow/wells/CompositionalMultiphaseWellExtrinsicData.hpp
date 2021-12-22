@@ -170,7 +170,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dTotalMassDensity_dPressure,
                            "Derivative of total mass density with respect to pressure" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dTotalMassDensity_dGlobalCompDensity,
-                           "dTotalMassDensity_dGlobalCompDensity",
+                           "dTotalMassDensity_dComp", // to avoid a rebaseline
                            array2dLayoutFluid_dC,
                            0,
                            NOPLOT,
