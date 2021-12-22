@@ -52,8 +52,9 @@ public:
                                                                 CONSTITUTIVE_TYPE,
                                                                 FE_TYPE >;
 
-  /// Number of nodes per element...which is equal to the
-  /// maxNumTestSupportPointPerElem and maxNumTrialSupportPointPerElem by definition.
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;

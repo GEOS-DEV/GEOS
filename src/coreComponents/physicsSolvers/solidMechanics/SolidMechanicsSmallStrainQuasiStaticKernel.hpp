@@ -68,8 +68,9 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// maxNumTestSupportPointPerElem and maxNumTrialSupportPointPerElem by definition.
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
