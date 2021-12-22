@@ -33,6 +33,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsEmbeddedFractures.hpp"
@@ -110,7 +111,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
 
   // Add coupling between displacement and cell pressures
   dofManager.addCoupling( keys::TotalDisplacement,
-                          FlowSolverBase::viewKeyStruct::pressureString(),
+                          extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem );
 
   // Add coupling between fracture pressure and displacement jump
@@ -122,7 +123,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::setupDofs( DomainPartition
     regions.emplace_back( region.getName() );
   } );
 
-  dofManager.addCoupling( FlowSolverBase::viewKeyStruct::pressureString(),
+  dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
                           SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString(),
                           DofManager::Connector::Elem,
                           regions );
@@ -196,7 +197,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
-  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -296,7 +297,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   string const jumpDofKey = dofManager.getKey( SolidMechanicsEmbeddedFractures::viewKeyStruct::dispJumpString() );
-  string const pressureDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pressureDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -410,7 +411,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
   arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
   arrayView1d< globalIndex const > const & jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
@@ -590,12 +591,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
 
     arrayView1d< real64 > const hydraulicAperture =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::hydraulicApertureString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
 
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
     arrayView1d< real64 > const deltaVolume =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea().toViewConst();
 
     arrayView2d< real64 > const & fractureTraction =
@@ -605,10 +606,10 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       subRegion.template getReference< array1d< real64 > >( viewKeyStruct::dTraction_dPressureString() );
 
     arrayView1d< real64 const > const & pressure =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::pressureString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
     arrayView1d< real64 const > const & deltaPressure =
-      subRegion.template getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaPressureString() );
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
 

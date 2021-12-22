@@ -123,7 +123,7 @@ public:
 
 
   virtual void
-  updatePhaseMobility( Group & dataGroup, localIndex const targetIndex ) const override;
+  updatePhaseMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const override;
 
   virtual void
   applyAquiferBC( real64 const time,

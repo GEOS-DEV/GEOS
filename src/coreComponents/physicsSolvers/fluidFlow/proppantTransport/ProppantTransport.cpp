@@ -23,11 +23,12 @@
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
 #include "constitutive/fluid/particleFluidSelector.hpp"
-#include "constitutive/permeability/ProppantPermeability.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportKernels.hpp"
 
 /**
@@ -190,8 +191,8 @@ void ProppantTransport::updateFluidModel( Group & dataGroup, localIndex const ta
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres  = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+  arrayView1d< real64 const > const pres  = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   arrayView2d< real64 const > const componentConc  = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString() );
   arrayView2d< real64 const > const dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString() );
@@ -213,8 +214,8 @@ void ProppantTransport::updateComponentDensity( Group & dataGroup, localIndex co
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::pressureString() );
-  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( viewKeyStruct::deltaPressureString() );
+  arrayView1d< real64 const > const pres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+  arrayView1d< real64 const > const dPres = dataGroup.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
   arrayView2d< real64 const > const componentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString() );
   arrayView2d< real64 const > const dComponentConc = dataGroup.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString() );
@@ -949,12 +950,12 @@ void ProppantTransport::resetViews( MeshLevel & mesh )
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   m_pressure.clear();
-  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::pressureString() );
-  m_pressure.setName( getName() + "/accessors/" + viewKeyStruct::pressureString() );
+  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::pressure::key() );
+  m_pressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure::key() );
 
   m_deltaPressure.clear();
-  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::deltaPressureString() );
-  m_deltaPressure.setName( getName() + "/accessors/" + viewKeyStruct::deltaPressureString() );
+  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::deltaPressure::key() );
+  m_deltaPressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::deltaPressure::key() );
 
   m_proppantConcentration.clear();
   m_proppantConcentration = elemManager.constructArrayViewAccessor< real64, 1 >( viewKeyStruct::proppantConcentrationString() );
@@ -1128,21 +1129,20 @@ void ProppantTransport::resetViews( MeshLevel & mesh )
     m_dCollisionFactor_dProppantConcentration.setName( getName() + "/accessors/" + keys::dCollisionFactor_dProppantConcentrationString() );
   }
 
+  {
+    using namespace extrinsicMeshData::permeability;
 
-  m_permeability.clear();
-  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( ProppantPermeability::viewKeyStruct::permeabilityString(),
-                                                                                targetRegionNames(),
-                                                                                permeabilityModelNames() );
-  m_permeability.setName( getName() + "/accessors/" + ProppantPermeability::viewKeyStruct::permeabilityString() );
+    m_permeability.clear();
+    m_permeability = elemManager.constructMaterialExtrinsicAccessor< permeability >( targetRegionNames(),
+                                                                                     permeabilityModelNames() );
+    m_permeability.setName( getName() + "/accessors/" + permeability::key() );
 
-  m_permeabilityMultiplier.clear();
-  m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( ProppantPermeability::viewKeyStruct::permeabilityMultiplierString(),
-                                                                                          targetRegionNames(),
-                                                                                          permeabilityModelNames() );
-  m_permeabilityMultiplier.setName( getName() + "/accessors/" + ProppantPermeability::viewKeyStruct::permeabilityMultiplierString() );
+    m_permeabilityMultiplier.clear();
+    m_permeabilityMultiplier = elemManager.constructMaterialExtrinsicAccessor< permeabilityMultiplier >( targetRegionNames(),
+                                                                                                         permeabilityModelNames() );
+    m_permeabilityMultiplier.setName( getName() + "/accessors/" + permeabilityMultiplier::key() );
+  }
 }
-
-
 
 void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                              DomainPartition & domain )
