@@ -38,16 +38,25 @@ template< localIndex MAXCELLNODES, localIndex MAXFACENODES >
 class ConformingVirtualElementOrder1 final : public FiniteElementBase
 {
 public:
+  /// Type of MeshData::nodesCoords.
   using InputNodeCoords = arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD >;
+  /// Type of MeshData::cellToNodeMap.
   template< typename SUBREGION_TYPE >
   using InputCellToNodeMap = traits::ViewTypeConst< typename SUBREGION_TYPE::NodeMapType >;
+  /// Type of MeshData::cellToFaceMap.
   using InputCellToFaceMap = arrayView2d< localIndex const >;
+  /// Type of MeshData::faceToNodeMap.
   using InputFaceToNodeMap = ArrayOfArraysView< localIndex const >;
+  /// Type of MeshData::faceToEdgeMap.
   using InputFaceToEdgeMap = ArrayOfArraysView< localIndex const >;
+  /// Type of MeshData::edgeToNodeMap.
   using InputEdgeToNodeMap = arrayView2d< localIndex const >;
 
+  /// The maximum number of support points per element.
   static constexpr localIndex maxSupportPoints = MAXCELLNODES;
+  /// Static property kept for consistency with other finite element classes.
   static constexpr localIndex numNodes = MAXCELLNODES;
+  /// The number of quadrature points per element.
   static constexpr localIndex numQuadraturePoints = 1;
 
   ConformingVirtualElementOrder1() = default;
@@ -59,7 +68,7 @@ public:
    * @brief Kernel variables allocated on the stack.
    *
    * It holds the computed projections of basis functions and basis function derivatives and the
-   * stabilization matrix. Arrays are pre-allocated using @ref MAXCELLNODES.
+   * stabilization matrix. Arrays are pre-allocated using @p MAXCELLNODES.
    * @sa setupStack.
    */
   struct StackVariables : public FiniteElementBase::StackVariables
@@ -138,6 +147,11 @@ public:
     return maxSupportPoints;
   }
 
+  /**
+   * @brief Get the number of support points.
+   * @param stack Object that holds stack variables.
+   * @return The number of support points.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static localIndex getNumSupportPoints( StackVariables const & stack )
@@ -298,7 +312,7 @@ public:
   }
 
   /**
-   * @defgroup DeprecatedSyntax Functions with deprecated syntax.
+   * @defgroup DeprecatedSyntax VEM functions with deprecated syntax.
    *
    * Functions that are implemented for consistency with other FEM classes but will issue an error
    * if called.
@@ -306,6 +320,11 @@ public:
    * @{
    */
 
+  /**
+   * @brief This function returns an error, since to get the number of support points with VEM you
+   * have to use the StackVariables version of this function.
+   * @return Zero.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   localIndex getNumSupportPoints() const override
@@ -318,8 +337,7 @@ public:
    * @brief This function returns an error, since to get projection of basis functions with VEM you
    * have to use the StackVariables version of this function.
    * @param q The quadrature point index in 3d space.
-   * @param N Array to store the values of shape functions.
-   * @return A zero array.
+   * @param N Array to store the values of shape functions, that is actually set to zero.
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -421,6 +439,15 @@ private:
                           real64 ( &basisIntegrals )[MAXFACENODES],
                           real64 ( &threeDMonomialIntegrals )[3] );
 
+  /**
+   * @brief This function contains the kernel computations required to compute projections of
+   * basis functions and basis function derivatives.
+   *
+   * It is called by @ref setupStack and outputs are written on the suitable fields of a
+   * StackVariables struct.
+   * @tparam SUBREGION_TYPE The type of subregion to be processed.
+   * @param cellIndex The index of the cell to be processed
+   */
   template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   static void

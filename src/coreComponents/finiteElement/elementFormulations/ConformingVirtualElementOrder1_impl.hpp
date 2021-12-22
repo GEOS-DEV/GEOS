@@ -21,6 +21,9 @@ namespace geosx
 {
 namespace finiteElement
 {
+/**
+ * \private
+ */
 template< localIndex MCN, localIndex MFN >
 template< typename SUBREGION_TYPE >
 GEOSX_HOST_DEVICE
