@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,6 +18,8 @@
 
 #include "ConstantPlusParallelPlatesPermeability.hpp"
 
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -30,7 +32,7 @@ namespace constitutive
 ConstantPlusParallelPlatesPermeability::ConstantPlusParallelPlatesPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::dPerm_dApertureString(), &m_dPerm_dAperture );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dAperture{}, &m_dPerm_dAperture );
 
   registerWrapper( viewKeyStruct::defaultConductivityString(), &m_defaultConductivity ).
     setInputFlag( InputFlags::REQUIRED ).
