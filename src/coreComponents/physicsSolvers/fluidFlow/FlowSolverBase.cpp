@@ -291,59 +291,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   } );
 }
 
-//void FlowSolverBase::resetViews( MeshLevel & mesh )
-//{
-//  ElementRegionManager const & elemManager = mesh.getElemManager();
-//
-//  {
-//    using namespace extrinsicMeshData::flow;
-//
-//    m_pressure.clear();
-//    m_pressure = elemManager.constructExtrinsicAccessor< pressure >();
-//    m_pressure.setName( getName() + "/accessors/" + pressure::key() );
-//
-//    m_deltaPressure.clear();
-//    m_deltaPressure = elemManager.constructExtrinsicAccessor< deltaPressure >();
-//    m_deltaPressure.setName( getName() + "/accessors/" + deltaPressure::key() );
-//
-//    m_elemGhostRank.clear();
-//    m_elemGhostRank = elemManager.constructExtrinsicAccessor< extrinsicMeshData::ghostRank >();
-//    m_elemGhostRank.setName( getName() + "/accessors/" + extrinsicMeshData::ghostRank::key() );
-//
-//    m_volume.clear();
-//    m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-//    m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-//
-//    m_gravCoef.clear();
-//    m_gravCoef = elemManager.constructExtrinsicAccessor< gravityCoefficient >();
-//    m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
-//  }
-//
-//  {
-//    using namespace extrinsicMeshData::permeability;
-//
-//    m_permeability.clear();
-//    m_permeability = elemManager.constructMaterialExtrinsicAccessor< permeability >( targetRegionNames(),
-//                                                                                     m_permeabilityModelNames );
-//    m_permeability.setName( getName() + "/accessors/" + permeability::key() );
-//
-//    m_dPerm_dPressure.clear();
-//    m_dPerm_dPressure = elemManager.constructMaterialExtrinsicAccessor< dPerm_dPressure >( targetRegionNames(),
-//                                                                                           m_permeabilityModelNames );
-//    m_dPerm_dPressure.setName( getName() + "/accessors/" + dPerm_dPressure::key() );
-//  }
-//
-//#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-//  m_elementSeparationCoefficient.clear();
-//  m_elementSeparationCoefficient = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString() );
-//  m_elementSeparationCoefficient.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::separationCoeffString() );
-//
-//  m_element_dSeparationCoefficient_dAperture.clear();
-//  m_element_dSeparationCoefficient_dAperture = elemManager.constructArrayViewAccessor< real64, 1 >(
-//    FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString() );
-//  m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString() );
-//#endif
-//}
 
 std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
 {

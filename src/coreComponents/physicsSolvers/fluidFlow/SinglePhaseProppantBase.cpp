@@ -151,43 +151,5 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
 
 }
 
-//void SinglePhaseProppantBase::resetViewsPrivate( ElementRegionManager const & elemManager )
-//{
-//  {
-//    using keys = SlurryFluidBase::viewKeyStruct;
-//
-//    m_density.clear();
-//    m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( keys::densityString(),
-//                                                                             targetRegionNames(),
-//                                                                             fluidModelNames() );
-//    m_density.setName( getName() + "/accessors/" + keys::densityString() );
-//
-//    m_dDens_dPres.clear();
-//    m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( keys::dDens_dPresString(),
-//                                                                                 targetRegionNames(),
-//                                                                                 fluidModelNames() );
-//    m_dDens_dPres.setName( getName() + "/accessors/" + keys::dDens_dPresString() );
-//
-//    m_viscosity.clear();
-//    m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( keys::viscosityString(),
-//                                                                               targetRegionNames(),
-//                                                                               fluidModelNames() );
-//    m_viscosity.setName( getName() + "/accessors/" + keys::viscosityString() );
-//
-//    m_dVisc_dPres.clear();
-//    m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( keys::dVisc_dPresString(),
-//                                                                                 targetRegionNames(),
-//                                                                                 fluidModelNames() );
-//    m_dVisc_dPres.setName( getName() + "/accessors/" + keys::dVisc_dPresString() );
-//  }
-//
-//  {
-//    m_permeabilityMultiplier.clear();
-//    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::permeabilityMultiplier::key(),
-//                                                                                            targetRegionNames(),
-//                                                                                            m_permeabilityModelNames );
-//    m_permeabilityMultiplier.setName( getName() + "/accessors/" + extrinsicMeshData::permeability::permeabilityMultiplier::key() );
-//  }
-//}
 
 }
