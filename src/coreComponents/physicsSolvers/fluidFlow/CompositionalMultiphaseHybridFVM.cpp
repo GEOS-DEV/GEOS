@@ -446,9 +446,9 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
 
     // tolerance for transmissibility calculation
     real64 const lengthTolerance = m_lengthTolerance;
-    
+
     FluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    FluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), regionNames, fluidModelNames() );
+    FluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
 
     mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
                                                                                 [&]( localIndex const,
@@ -459,45 +459,50 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
     {
       PermeabilityBase const & permeabilityModel =
         getConstitutiveModel< PermeabilityBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() ) );
-        
-      using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
-      KernelLaunchSelector< FluxKernel,
-                            IP_TYPE >( subRegion.numFacesPerElement(),
-                                       m_numComponents, m_numPhases,
-                                       er, esr, subRegion,
-                                       permeabilityModel,
-                                       m_regionFilter.toViewConst(),
-                                       nodePosition,
-                                       elemRegionList,
-                                       elemSubRegionList,
-                                       elemList,
-                                       faceToNodes,
-                                       faceDofNumber,
-                                       faceGhostRank,
-                                       facePres,
-                                       dFacePres,
-                                       faceGravCoef,
-                                       mimFaceGravCoef,
-                                       transMultiplier,
-                                       compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility{} ),
-                                       compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure{} ),
-                                       compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
-                                       compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
-                                       multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
-                                       elemDofNumber.toNestedViewConst(),
-                                       dofManager.rankOffset(),
-                                       lengthTolerance,
-                                       dt,
-                                       localMatrix,
-                                       localRhs );
+
+      mimeticInnerProductReducedDispatch( mimeticInnerProductBase,
+                                          [&] ( auto const mimeticInnerProduct )
+      {
+        using IP_TYPE = TYPEOFREF( mimeticInnerProduct );
+        KernelLaunchSelector< FluxKernel,
+                              IP_TYPE >( subRegion.numFacesPerElement(),
+                                         m_numComponents, m_numPhases,
+                                         er, esr, subRegion,
+                                         permeabilityModel,
+                                         m_regionFilter.toViewConst(),
+                                         nodePosition,
+                                         elemRegionList,
+                                         elemSubRegionList,
+                                         elemList,
+                                         faceToNodes,
+                                         faceDofNumber,
+                                         faceGhostRank,
+                                         facePres,
+                                         dFacePres,
+                                         faceGravCoef,
+                                         mimFaceGravCoef,
+                                         transMultiplier,
+                                         compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility{} ),
+                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure{} ),
+                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
+                                         compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                         elemDofNumber.toNestedViewConst(),
+                                         dofManager.rankOffset(),
+                                         lengthTolerance,
+                                         dt,
+                                         localMatrix,
+                                         localRhs );
+
+      } );
     } );
 
   } );
@@ -820,7 +825,6 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
       localResidualNorm += subRegionResidualNorm;
     } );
 
-<<<<<<< HEAD
     arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
     arrayView1d< globalIndex const > const & faceDofNumber =
       faceManager.getReference< array1d< globalIndex > >( faceDofKey );
@@ -831,49 +835,23 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
     // 2. Compute the residual for the face-based constraints
     real64 faceResidualNorm = 0.0;
-    CompositionalMultiphaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                                         parallelDeviceReduce >( localRhs,
-                                                                                                 rankOffset,
-                                                                                                 numFluidPhases(),
-                                                                                                 faceDofNumber.toNestedViewConst(),
-                                                                                                 faceGhostRank.toNestedViewConst(),
-                                                                                                 m_regionFilter.toViewConst(),
-                                                                                                 elemRegionList.toNestedViewConst(),
-                                                                                                 elemSubRegionList.toNestedViewConst(),
-                                                                                                 elemList.toNestedViewConst(),
-                                                                                                 m_volume.toNestedViewConst(),
-                                                                                                 m_phaseMobOld.toNestedViewConst(),
-                                                                                                 faceResidualNorm );
+    CompositionalMultiphaseHybridFVMKernels::
+      ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                  parallelDeviceReduce >( localRhs,
+                                                          rankOffset,
+                                                          numFluidPhases(),
+                                                          faceDofNumber.toNestedViewConst(),
+                                                          faceGhostRank.toNestedViewConst(),
+                                                          m_regionFilter.toViewConst(),
+                                                          elemRegionList.toNestedViewConst(),
+                                                          elemSubRegionList.toNestedViewConst(),
+                                                          elemList.toNestedViewConst(),
+                                                          m_volume.toNestedViewConst(),
+                                                          compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
+                                                          faceResidualNorm );
     localResidualNorm += faceResidualNorm;
 
   } );
-=======
-  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-  arrayView1d< globalIndex const > const & faceDofNumber =
-    faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-
-  arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
-  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
-  arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
-
-  // 2. Compute the residual for the face-based constraints
-  real64 faceResidualNorm = 0.0;
-  CompositionalMultiphaseHybridFVMKernels::
-    ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                parallelDeviceReduce >( localRhs,
-                                                        rankOffset,
-                                                        numFluidPhases(),
-                                                        faceDofNumber.toNestedViewConst(),
-                                                        faceGhostRank.toNestedViewConst(),
-                                                        m_regionFilter.toViewConst(),
-                                                        elemRegionList.toNestedViewConst(),
-                                                        elemSubRegionList.toNestedViewConst(),
-                                                        elemList.toNestedViewConst(),
-                                                        m_volume.toNestedViewConst(),
-                                                        compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
-                                                        faceResidualNorm );
-  localResidualNorm += faceResidualNorm;
->>>>>>> origin/develop
 
   // 3. Combine the two norms
 
@@ -966,49 +944,12 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
 {
   GEOSX_MARK_FUNCTION;
 
-<<<<<<< HEAD
-  // note that the phase mobility computed here does NOT include phase density
-
-  // outputs
-
-  arrayView2d< real64, compflow::USD_PHASE > const phaseMob =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
-
-  arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dPres =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >();
-
-  arrayView3d< real64, compflow::USD_PHASE_DC > const dPhaseMob_dComp =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >();
-
-  // inputs
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-
-  arrayView2d< real64 const, compflow::USD_PHASE > const dPhaseVolFrac_dPres =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >();
-
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > const dPhaseVolFrac_dComp =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >();
-
-  arrayView3d< real64 const, compflow::USD_COMP_DC > const dCompFrac_dCompDens =
-    dataGroup.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >();
-
   MultiFluidBase const & fluid =
     getConstitutiveModel< MultiFluidBase >( dataGroup,
                                             dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc = fluid.phaseViscosity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseVisc_dPres = fluid.dPhaseViscosity_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp = fluid.dPhaseViscosity_dGlobalCompFraction();
-
   RelativePermeabilityBase const & relperm =
     getConstitutiveModel< RelativePermeabilityBase >( dataGroup,
                                                       dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() ) );
-=======
-  MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
-  RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
->>>>>>> origin/develop
 
   CompositionalMultiphaseHybridFVMKernels::
     PhaseMobilityKernelFactory::

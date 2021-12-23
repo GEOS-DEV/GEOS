@@ -324,7 +324,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
     jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(), true );
+      mesh.getElemManager().constructMaterialArrayViewAccessor< PermeabilityBase, real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key() );
 
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
