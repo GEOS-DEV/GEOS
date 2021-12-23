@@ -88,9 +88,12 @@ public:
   ArrayOfArrays< real64 > & getCoordinates() { return m_coordinates; }
 
   /**
-   * @copydoc getValues() const
+   * @brief Get the Values object
+   * 
+   * @return array1d< real64 >& a reference to an array where table values are stored in fortran order
    */
   array1d< real64 > & getValues() { return m_values; }
+
   /**
    * @brief Set the table coordinates
    * @param coordinates An array of arrays containing table coordinate definitions

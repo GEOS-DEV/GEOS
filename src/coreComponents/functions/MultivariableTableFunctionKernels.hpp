@@ -69,22 +69,27 @@ public:
     m_outputDerivatives( outputDerivatives )
   {};
 
-
+  /**
+   * @brief Compute interpolation element-wise using host or device execution space
+   * 
+   * @param ei Index of element
+   */
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei ) const
   {
     m_output[ei] = interpolateLinear( &m_input[ei * NUM_DIMS] );
   }
 
-  /**
-   * @brief Interpolate in the table using linear method.
-   * @param[in] input vector of input value
-   * @return interpolated value
-   */
-
   /// maximum dimensions for the coordinates in the table
   static constexpr integer maxDimensions = 5;
-
+  /**
+   * 
+   * @brief Linear interpolation (to be replaced)
+   * 
+   * @tparam IN_ARRAY array type of input coordinates
+   * @param input input coordinates
+   * @return interpolated value
+   */
   template< typename IN_ARRAY >
   GEOSX_HOST_DEVICE
   real64
