@@ -26,7 +26,7 @@
 #include "constitutive/solid/ProppantSolid.hpp"
 #include "constitutive/solid/porosity/ProppantPorosity.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransport.hpp"
+#include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseProppantBaseKernels.hpp"
 
 namespace geosx
@@ -95,19 +95,19 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup, l
     dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
   arrayView1d< real64 const > const proppantConcentration =
-    dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantConcentrationString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
 
   arrayView1d< real64 const > const dProppantConcentration =
-    dataGroup.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::deltaProppantConcentrationString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::proppant::deltaProppantConcentration >();
 
   arrayView2d< real64 const > const componentConcentration =
-    dataGroup.getReference< array2d< real64 > >( ProppantTransport::viewKeyStruct::componentConcentrationString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
 
   arrayView2d< real64 const > const cellBasedFlux =
-    dataGroup.getReference< array2d< real64 > >( ProppantTransport::viewKeyStruct::cellBasedFluxString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::proppant::cellBasedFlux >();
 
   arrayView1d< integer const > const isProppantBoundaryElement =
-    dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString() );
+    dataGroup.getExtrinsicData< extrinsicMeshData::proppant::isProppantBoundary >();
 
   SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
@@ -132,12 +132,12 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const proppantPackVolumeFraction =
-    subRegion.getReference< array1d< real64 > >( ProppantTransport::viewKeyStruct::proppantPackVolumeFractionString() );
+    subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantPackVolumeFraction >();
 
   arrayView1d< real64 const > const newHydraulicAperture =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::hydraulicAperture::key() );
+    subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
   arrayView1d< real64 const > const oldHydraulicAperture =
-    subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::aperture0::key() );
+    subRegion.getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
 
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
 

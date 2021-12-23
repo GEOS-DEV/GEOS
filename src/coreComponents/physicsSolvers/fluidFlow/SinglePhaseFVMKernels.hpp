@@ -63,7 +63,7 @@ struct FluxKernel
                       extrinsicMeshData::flow::deltaPressure,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::mobility,
-                      extrinsicMeshData::flow::dMobility_dPressure>;
+                      extrinsicMeshData::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
     StencilAccessors< extrinsicMeshData::singlefluid::density,
