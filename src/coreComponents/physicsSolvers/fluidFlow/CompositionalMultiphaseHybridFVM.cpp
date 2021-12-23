@@ -736,6 +736,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   FaceManager const & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   // here we compute the cell-centered residual norm in the derived class
   // to avoid duplicating a synchronization point
@@ -792,6 +793,9 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
   arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
   arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
+  auto m_volume = elemManager.template constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+  m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+
 
   // 2. Compute the residual for the face-based constraints
   real64 faceResidualNorm = 0.0;
