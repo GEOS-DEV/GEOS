@@ -29,7 +29,6 @@
 #include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
-#include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
@@ -46,7 +45,7 @@ static constexpr real64 minDensForDivision = 1e-10;
 /**
  * @brief Internal struct to provide no-op defaults used in the inclusion
  *   of lambda functions into kernel component functions.
- * @struct NoOpFuncs
+ * @struct NoOpFunc
  */
 struct NoOpFunc
 {
@@ -443,6 +442,7 @@ public:
   }
 };
 
+
 /******************************** RelativePermeabilityUpdateKernel ********************************/
 
 struct RelativePermeabilityUpdateKernel
@@ -611,7 +611,7 @@ public:
     /// C-array storage for the element local residual vector (all equations except volume balance)
     real64 localResidual[numEqn]{};
 
-    /// C-array storage for the element local Jacobian matrix (all equations except volume balance, all dogs)
+    /// C-array storage for the element local Jacobian matrix (all equations except volume balance, all dofs)
     real64 localJacobian[numEqn][numDof]{};
 
   };
@@ -622,7 +622,7 @@ public:
    * @return the ghost rank of the element
    */
   GEOSX_HOST_DEVICE
-  integer getElemGhostRank( localIndex const ei ) const
+  integer elemGhostRank( localIndex const ei ) const
   { return m_elemGhostRank( ei ); }
 
 
@@ -824,7 +824,7 @@ public:
 
     forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( kernelComponent.getElemGhostRank( ei ) >= 0 )
+      if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
         return;
       }

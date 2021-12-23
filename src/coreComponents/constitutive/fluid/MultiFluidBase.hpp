@@ -208,7 +208,6 @@ public:
     static constexpr char const * componentNamesString() { return "componentNames"; }
     static constexpr char const * componentMolarWeightString() { return "componentMolarWeight"; }
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
-
     static constexpr char const * useMassString() { return "useMass"; }
   };
 

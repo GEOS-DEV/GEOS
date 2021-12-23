@@ -55,7 +55,6 @@ EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
                            NO_WRITE,
                            "Accumulated temperature updates" );
 
-
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
                            array2dLayoutComp,
