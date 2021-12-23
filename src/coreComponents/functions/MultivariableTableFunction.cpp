@@ -17,7 +17,6 @@
  */
 
 #include "MultivariableTableFunction.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 
 #include "common/DataTypes.hpp"
 #include <algorithm>
@@ -30,25 +29,7 @@ using namespace dataRepository;
 MultivariableTableFunction::MultivariableTableFunction( const string & name,
                                                         Group * const parent ):
   FunctionBase( name, parent )
-{
-  registerWrapper( viewKeyStruct::coordinatesString(), &m_tableCoordinates1D ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Coordinates inputs for 1D tables" );
-
-  registerWrapper( viewKeyStruct::valuesString(), &m_values ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Values for 1D tables" );
-
-  registerWrapper( viewKeyStruct::coordinateFilesString(), &m_coordinateFiles ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "List of coordinate file names for ND Table" );
-
-  registerWrapper( viewKeyStruct::voxelFileString(), &m_voxelFile ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Voxel file name for ND Table" );
-}
+{}
 
 template< typename T >
 void MultivariableTableFunction::parseFile( string const & filename, array1d< T > & target )
@@ -105,32 +86,15 @@ void MultivariableTableFunction::setTableValues( real64_array values )
 
 void MultivariableTableFunction::initializeFunction()
 {
-  // Read in data
-  if( m_coordinates.size() > 0 )
-  {
-    // This function appears to be already initialized
-    // Apparently, this can be called multiple times during unit tests?
-  }
-  else if( m_coordinateFiles.empty() )
-  {
-    // 1D Table
-    m_coordinates.appendArray( m_tableCoordinates1D.begin(), m_tableCoordinates1D.end() );
-    GEOSX_THROW_IF_NE_MSG( m_tableCoordinates1D.size(), m_values.size(),
-                           catalogName() << " " << getName() << ": 1D table function coordinates and values must have the same length",
-                           InputError );
-  }
-  else
-  {
-    // ND Table
-    parseFile( m_voxelFile, m_values );
-    array1d< real64 > tmp;
-    for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
-    {
-      tmp.clear();
-      parseFile( m_coordinateFiles[ii], tmp );
-      m_coordinates.appendArray( tmp.begin(), tmp.end() );
-    }
-  }
+  // ND Table
+  // parseFile( m_voxelFile, m_values );
+  // array1d< real64 > tmp;
+  // for( localIndex ii = 0; ii < m_coordinateFiles.size(); ++ii )
+  // {
+  //   tmp.clear();
+  //   parseFile( m_coordinateFiles[ii], tmp );
+  //   m_coordinates.appendArray( tmp.begin(), tmp.end() );
+  // }
 
   reInitializeFunction();
 }
@@ -150,48 +114,6 @@ void MultivariableTableFunction::reInitializeFunction()
                            InputError );
   }
 }
-
-real64 MultivariableTableFunction::evaluate( real64 const * const input ) const
-{
-  return 0;
-}
-
-real64 MultivariableTableFunction::evaluate( arrayView1d< real64 const > const & input,
-                                             arrayView1d< real64 > const & output ) const
-{
-  createAndLaunch< parallelDevicePolicy<> >( m_coordinates.toViewConst(), m_values.toView(), input, output, output );
-  return 2;
-}
-
-template< typename POLICY >
-void
-MultivariableTableFunction::createAndLaunch( ArrayOfArraysView< real64 const > const & coordinates,
-                                             arrayView1d< real64 > const & values,
-                                             arrayView1d< real64 const > const & input,
-                                             arrayView1d< real64 > const & output,
-                                             arrayView1d< real64 > const & output_derivatives )
-{
-  if( 0 )
-  {
-    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto ND )
-    {
-      integer constexpr NUM_DIMS = ND();
-      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 2 > kernel( coordinates, values, input, output, output_derivatives );
-      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 2 >::template launch< POLICY >( input.size() / NUM_DIMS, kernel );
-    } );
-  }
-  else if( 1 )
-  {
-    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( coordinates.size(), [&] ( auto ND )
-    {
-      integer constexpr NUM_DIMS = ND();
-      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 3 > kernel( coordinates, values, input, output, output_derivatives );
-      MultivariableTableFunction::KernelWrapper< NUM_DIMS, 3 >::template launch< POLICY >( input.size() / NUM_DIMS, kernel );
-    } );
-  }
-}
-
-
 
 REGISTER_CATALOG_ENTRY( FunctionBase, MultivariableTableFunction, string const &, Group * const )
 

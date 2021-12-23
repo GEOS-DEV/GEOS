@@ -19,6 +19,7 @@
 #include "functions/FunctionBase.hpp"
 #include "functions/TableFunction.hpp"
 #include "functions/MultivariableTableFunction.hpp"
+#include "functions/MultivariableTableFunctionKernels.hpp"
 #include "mainInterface/GeosxState.hpp"
 
 #ifdef GEOSX_USE_MATHPRESSO
@@ -41,18 +42,6 @@ void evaluate1DFunction( FunctionBase & function,
     real64 expected = outputs[ii];
 
     ASSERT_NEAR( predicted, expected, 1e-10 );
-  }
-}
-
-void evaluate1DMutivariableFunction( MultivariableTableFunction & function,
-                                     arrayView1d< real64 const > const & inputs,
-                                     arrayView1d< real64 const > const & outputs )
-{
-  real64_array predicted( inputs.size() );
-  function.evaluate( inputs, predicted );
-  for( localIndex ii=0; ii<inputs.size(); ++ii )
-  {
-    ASSERT_NEAR( predicted[ii], outputs[ii], 1e-10 );
   }
 }
 
@@ -99,14 +88,9 @@ TEST( FunctionTests, 1DTable )
   values[3] = 7.0;
 
   TableFunction & table_a = dynamicCast< TableFunction & >( *functionManager->createChild( "TableFunction", "table_a" ) );
-  MultivariableTableFunction & table_b = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_b" ) );
   table_a.setTableCoordinates( coordinates );
   table_a.setTableValues( values );
   table_a.reInitializeFunction();
-  table_b.setTableCoordinates( coordinates );
-  table_b.setTableValues( values );
-  table_b.reInitializeFunction();
-
 
   // Setup testing coordinates, expected values
   real64_array testCoordinates( Ntest );
@@ -128,7 +112,6 @@ TEST( FunctionTests, 1DTable )
   table_a.setInterpolationMethod( TableFunction::InterpolationType::Linear );
   table_a.reInitializeFunction();
   evaluate1DFunction( table_a, testCoordinates, testExpected );
-  evaluate1DMutivariableFunction( table_b, testCoordinates, testExpected );
 
   // Upper
   testExpected[0] = 1.0;
@@ -594,6 +577,86 @@ TEST( FunctionTests, 4DTable_symbolic )
 
 #endif
 
+template< integer NUM_DIMS, integer NUM_OPS >
+void testMutivariableFunction( MultivariableTableFunction & function,
+                               arrayView1d< real64 const > const & inputs,
+                               arrayView1d< real64 const > const & expectedOutputs )
+{
+  localIndex const numElems = inputs.size() / NUM_DIMS;
+
+  ASSERT_EQ( numElems * NUM_DIMS, inputs.size());
+  ASSERT_EQ( numElems * NUM_OPS, expectedOutputs.size());
+
+  real64_array evaluatedOutputs( expectedOutputs.size() );
+  arrayView1d< real64 > evaluatedOutputsView = evaluatedOutputs.toView(),
+                        evaluatedOutputsDerivativesView = evaluatedOutputs.toView();
+
+
+  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getCoordinates().toViewConst(),
+                                                                      function.getValues().toViewConst(),
+                                                                      inputs, evaluatedOutputsView, evaluatedOutputsDerivativesView );
+  // Loop over cells on the device.
+  forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
+                                       ( localIndex const elemIndex )
+  {
+    kernel.compute( elemIndex );
+  } );
+
+  // Perform checks.
+  forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
+  {
+    ASSERT_NEAR( expectedOutputs[elemIndex], evaluatedOutputsView[elemIndex], 1e-10 );
+  } );
+}
+
+TEST( FunctionTests, 1DMultivariableTable )
+{
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+
+  // 1D table, various interpolation methods
+  localIndex const Naxis = 4;
+  localIndex const Ntest = 6;
+
+  // Setup table
+  array1d< real64_array > coordinates;
+  coordinates.resize( 1 );
+  coordinates[0].resize( Naxis );
+  coordinates[0][0] = -1.0;
+  coordinates[0][1] = 0.0;
+  coordinates[0][2] = 2.0;
+  coordinates[0][3] = 5.0;
+
+  real64_array values( Naxis );
+  values[0] = 1.0;
+  values[1] = 3.0;
+  values[2] = -5.0;
+  values[3] = 7.0;
+
+  MultivariableTableFunction & table_f = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
+  table_f.setTableCoordinates( coordinates );
+  table_f.setTableValues( values );
+  table_f.reInitializeFunction();
+
+
+  // Setup testing coordinates, expected values
+  real64_array testCoordinates( Ntest );
+  testCoordinates[0] = -1.1;
+  testCoordinates[1] = -0.5;
+  testCoordinates[2] = 0.2;
+  testCoordinates[3] = 2.0;
+  testCoordinates[4] = 4.0;
+  testCoordinates[5] = 10.0;
+
+  // Linear Interpolation
+  real64_array testExpected( Ntest );
+  testExpected[0] = 1.0;
+  testExpected[1] = 2.0;
+  testExpected[2] = 2.2;
+  testExpected[3] = -5.0;
+  testExpected[4] = 3.0;
+  testExpected[5] = 7.0;
+  testMutivariableFunction< 1, 1 >( table_f, testCoordinates, testExpected );
+}
 
 int main( int argc, char * * argv )
 {
