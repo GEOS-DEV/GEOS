@@ -141,7 +141,6 @@ public:
   using Base::m_dPhaseCompFrac_dComp;
   using Base::m_localMatrix;
   using Base::m_localRhs;
-  using keys = CompositionalMultiphaseBase::viewKeyStruct;
 
   /**
    * @brief Constructor
@@ -163,10 +162,10 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
-    m_dPhaseVolFrac_dTemp( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dTemperatureString() ) ),
+    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
     m_dPhaseDens_dTemp( fluid.dPhaseDensity_dTemperature() ),
     m_dPhaseCompFrac_dTemp( fluid.dPhaseCompFraction_dTemperature() ),
-    m_phaseInternalEnergyOld( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseInternalEnergyOldString() ) ),
+    m_phaseInternalEnergyOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseInternalEnergyOld >() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy_dPres( fluid.dPhaseInternalEnergy_dPressure() ),
     m_dPhaseInternalEnergy_dTemp( fluid.dPhaseInternalEnergy_dTemperature() ),

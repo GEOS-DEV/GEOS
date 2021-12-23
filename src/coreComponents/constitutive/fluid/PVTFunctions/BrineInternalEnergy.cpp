@@ -13,15 +13,32 @@
  */
 
 /**
- * @file SinglePhaseBaseKernels.cpp
+ * @file BrineInternalEnergy.cpp
  */
 
-#include "SinglePhaseBaseKernels.hpp"
+#include "constitutive/fluid/PVTFunctions/BrineInternalEnergy.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseBaseKernels
-{} // namespace SinglePhaseBaseKernels
+using namespace stringutilities;
+
+namespace constitutive
+{
+
+namespace PVTProps
+{
+
+BrineInternalEnergy::KernelWrapper
+BrineInternalEnergy::createKernelWrapper() const
+{
+  return KernelWrapper( m_componentMolarWeight );
+}
+
+REGISTER_CATALOG_ENTRY( PVTFunctionBase, BrineInternalEnergy, string const &, string_array const &, string_array const &, array1d< real64 > const & )
+
+} // namespace PVTProps
+
+} // namespace constitutive
 
 } // namespace geosx

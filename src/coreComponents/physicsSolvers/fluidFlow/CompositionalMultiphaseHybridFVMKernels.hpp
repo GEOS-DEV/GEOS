@@ -20,13 +20,14 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEHYBRIDFVMKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "constitutive/fluid/layouts.hpp"
-#include "constitutive/relativePermeability/layouts.hpp"
-#include "constitutive/capillaryPressure/layouts.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "mesh/MeshLevel.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+
+#include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+
 
 namespace geosx
 {
@@ -79,7 +80,7 @@ struct UpwindingHelper
    * @param[out] dUpwPhaseViscCoef_dCompDens the derivatives of the upwind viscous transport coef wrt component density at this face
    * @param[out] upwViscDofNumber the dof number of the upwind cell at this face
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     upwindViscousCoefficient( localIndex const (&localIds)[ 3 ],
@@ -125,7 +126,7 @@ struct UpwindingHelper
    * @param[inout] dUpwPhaseGravCoef_dPres the derivative of the upwinded buoyancy transport coefficient wrt pressure
    * @param[inout] dUpwPhaseGravCoef_dCompDens the derivative of the upwinded buoyancy transport coefficient wrt component density
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     upwindBuoyancyCoefficient( localIndex const (&localIds)[ 3 ],
@@ -166,7 +167,7 @@ struct UpwindingHelper
    * @param[inout] dPhaseGravTerm_dCompDens the derivatives of the gravCoef multiplied by the difference in phase densities wrt component
    * density
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     computePhaseGravTerm( localIndex const (&localIds)[ 3 ],
@@ -192,7 +193,7 @@ struct UpwindingHelper
    * @param[inout] dTotalMob_dPres the derivative of the upwinded total mobility wrt pressure
    * @param[inout] dTotalMob_dCompDens the derivative of the upwinded total mobility wrt component density
    */
-  template< localIndex NC, localIndex NP >
+  template< integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     computeUpwindedTotalMobility( localIndex const (&localIds)[ 3 ],
@@ -236,7 +237,7 @@ struct UpwindingHelper
    * @param[out] totalMobIds for each phase, triplet of indices of the upwind element
    * @param[out] totalMobPos for each phase, flag specifying with the upwind element is local or neighbor
    */
-  template< localIndex NP >
+  template< integer NP >
   GEOSX_HOST_DEVICE
   static void
     setIndicesForTotalMobilityUpwinding( localIndex const (&localIds)[ 3 ],
@@ -285,7 +286,7 @@ struct AssemblerKernelHelper
    * @param[out] dOneSidedVolFlux_dFacePres the derivatives of the vol fluxes wrt to this element's face pressures
    * @param[out] dOneSidedVolFlux_dCompDens the derivatives of the vol fluxes wrt to this element's component density
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     applyGradient( arrayView1d< real64 const > const & facePres,
@@ -337,7 +338,7 @@ struct AssemblerKernelHelper
    * @param[inout] localMatrix the Jacobian matrix
    * @param[inout] localRhs the residual
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
   assembleFluxDivergence( localIndex const (&localIds)[ 3 ],
@@ -392,7 +393,7 @@ struct AssemblerKernelHelper
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
    * @param[inout] dofColIndicesFaceVars degrees of freedom of the faces involved in the flux divergence
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     assembleViscousFlux( localIndex const ifaceLoc,
@@ -430,7 +431,7 @@ struct AssemblerKernelHelper
    * @param[inout] dDivMassFluxes_dElemVars the derivatives of the flux divergence wrt the element centered vars (pres and comp dens)
    * @param[inout] dofColIndicesElemVars degrees of freedom of the cells involved in the flux divergence
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
     assembleBuoyancyFlux( localIndex const ifaceLoc,
@@ -458,7 +459,7 @@ struct AssemblerKernelHelper
    * @param[inout] matrix the jacobian matrix
    * @param[inout] rhs the residual
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
   assembleFaceConstraints( arrayView1d< globalIndex const > const & faceDofNumber,
@@ -529,7 +530,7 @@ struct AssemblerKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< localIndex NF, localIndex NC, localIndex NP >
+  template< integer NF, integer NC, integer NP >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const er, localIndex const esr, localIndex const ei,
@@ -624,7 +625,7 @@ struct FluxKernel
    * @param[inout] matrix the system matrix
    * @param[inout] rhs the system right-hand side vector
    */
-  template< localIndex NF, localIndex NC, localIndex NP, typename IP_TYPE >
+  template< integer NF, integer NC, integer NP, typename IP_TYPE >
   static void
   launch( localIndex er, localIndex esr,
           CellElementSubRegion const & subRegion,
@@ -668,59 +669,204 @@ struct FluxKernel
 /******************************** PhaseMobilityKernel ********************************/
 
 /**
- * @brief Functions to compute phase mobilities and derivatives from viscosity and relperm
+ * @class PhaseMobilityKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
-struct PhaseMobilityKernel
+template< integer NUM_COMP, integer NUM_PHASE >
+class PhaseMobilityKernel : public IsothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
-  template< localIndex NC, localIndex NP >
+public:
+
+  using Base = IsothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base::numComp;
+
+  /// Compile time value for the number of phases
+  static constexpr integer numPhase = NUM_PHASE;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] relperm the relperm model
+   */
+  PhaseMobilityKernel( ObjectManagerBase & subRegion,
+                       MultiFluidBase const & fluid,
+                       RelativePermeabilityBase const & relperm )
+    : Base(),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseVisc( fluid.phaseViscosity() ),
+    m_dPhaseVisc_dPres( fluid.dPhaseViscosity_dPressure() ),
+    m_dPhaseVisc_dComp( fluid.dPhaseViscosity_dGlobalCompFraction() ),
+    m_phaseRelPerm( relperm.phaseRelPerm() ),
+    m_dPhaseRelPerm_dPhaseVolFrac( relperm.dPhaseRelPerm_dPhaseVolFraction() ),
+    m_phaseMob( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >() ),
+    m_dPhaseMob_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >() ),
+    m_dPhaseMob_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >() )
+  {}
+
+  /**
+   * @brief Compute the phase mobilities in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] phaseMobilityKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  static void
-  compute( arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseVisc,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseVisc_dPres,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dComp,
-           arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-           arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseMob,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & dPhaseMob_dPres,
-           arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const & dPhaseMob_dComp );
+  void compute( localIndex const ei,
+                FUNC && phaseMobilityKernelOp = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+  {
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseVisc_dPres = m_dPhaseVisc_dPres[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc_dComp = m_dPhaseVisc_dComp[ei][0];
+    arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const phaseRelPerm = m_phaseRelPerm[ei][0];
+    arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac_dComp = m_dPhaseVolFrac_dComp[ei];
+    arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseMob = m_phaseMob[ei];
+    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseMob_dPres = m_dPhaseMob_dPres[ei];
+    arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseMob_dComp = m_dPhaseMob_dComp[ei];
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( localIndex const size,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseVisc_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
-          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
-          arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
-          arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseMob_dPres,
-          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseMob_dComp );
+    real64 dRelPerm_dC[numComp]{};
+    real64 dVisc_dC[numComp]{};
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseVisc,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseVisc_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseVisc_dComp,
-          arrayView3d< real64 const, relperm::USD_RELPERM > const & phaseRelPerm,
-          arrayView4d< real64 const, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp,
-          arrayView2d< real64, compflow::USD_PHASE > const & phaseMob,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseMob_dPres,
-          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseMob_dComp );
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      // compute the phase mobility only if the phase is present
+      bool const phaseExists = (phaseVolFrac[ip] > 0);
+      if( !phaseExists )
+      {
+        phaseMob[ip] = 0.;
+        dPhaseMob_dPres[ip] = 0.;
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dPhaseMob_dComp[ip][jc] = 0.;
+        }
+        continue;
+      }
+
+      real64 const viscosity = phaseVisc[ip];
+      real64 const dVisc_dP = dPhaseVisc_dPres[ip];
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseVisc_dComp[ip], dVisc_dC );
+
+      real64 const relPerm = phaseRelPerm[ip];
+      real64 dRelPerm_dP = 0.0;
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        dRelPerm_dC[ic] = 0.0;
+      }
+
+      for( integer jp = 0; jp < numPhase; ++jp )
+      {
+        real64 const dRelPerm_dS = dPhaseRelPerm_dPhaseVolFrac[ip][jp];
+        dRelPerm_dP += dRelPerm_dS * dPhaseVolFrac_dPres[jp];
+
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          dRelPerm_dC[jc] += dRelPerm_dS * dPhaseVolFrac_dComp[jp][jc];
+        }
+      }
+
+      real64 const mobility = relPerm / viscosity;
+
+      phaseMob[ip] = mobility;
+      dPhaseMob_dPres[ip] = dRelPerm_dP / viscosity
+                            - mobility * dVisc_dP / viscosity;
+
+      // compositional derivatives
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        dPhaseMob_dComp[ip][jc] = dRelPerm_dC[jc] / viscosity
+                                  - mobility * dVisc_dC[jc] / viscosity;
+      }
+
+      // call the lambda in the phase loop to allow the reuse of the relperm, viscosity, and mobility
+      // possible use: assemble the derivatives wrt temperature
+      phaseMobilityKernelOp( ip, phaseMob[ip], dPhaseMob_dPres[ip], dPhaseMob_dComp[ip] );
+    }
+  }
+
+
+protected:
+
+  // inputs
+
+  /// Views on the phase volume fractions
+  arrayView2d< real64 const, compflow::USD_PHASE > m_phaseVolFrac;
+  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dComp;
+  arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
+
+  /// Views on the phase viscosities
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseVisc;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseVisc_dPres;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseVisc_dComp;
+
+  /// Views on the phase relative permeabilities
+  arrayView3d< real64 const, relperm::USD_RELPERM > m_phaseRelPerm;
+  arrayView4d< real64 const, relperm::USD_RELPERM_DS > m_dPhaseRelPerm_dPhaseVolFrac;
+
+  // outputs
+
+  /// Views on the phase mobilities
+  arrayView2d< real64, compflow::USD_PHASE > m_phaseMob;
+  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseMob_dPres;
+  arrayView3d< real64, compflow::USD_PHASE_DC > m_dPhaseMob_dComp;
+
 };
 
+/**
+ * @class PhaseMobilityKernelFactory
+ */
+class PhaseMobilityKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numComp the number of fluid components
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] relperm the relperm model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
+                   ObjectManagerBase & subRegion,
+                   MultiFluidBase const & fluid,
+                   RelativePermeabilityBase const & relperm )
+  {
+    if( numPhase == 2 )
+    {
+      IsothermalCompositionalMultiphaseBaseKernels::
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
+        PhaseMobilityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+    else if( numPhase == 3 )
+    {
+      IsothermalCompositionalMultiphaseBaseKernels::
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
+        PhaseMobilityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+  }
+};
 
 /******************************** ResidualNormKernel ********************************/
 
@@ -766,7 +912,7 @@ struct ResidualNormKernel
           {
             // compute a normalizer to obtain a dimensionless norm
             real64 sumMobOld = 0.0;
-            for( localIndex ip = 0; ip < numPhases; ++ip )
+            for( integer ip = 0; ip < numPhases; ++ip )
             {
               sumMobOld += phaseMobOld[er][esr][ei][ip];
             }
@@ -827,7 +973,7 @@ struct SolutionCheckKernel
 struct PrecomputeKernel
 {
 
-  template< typename IP_TYPE, localIndex NF >
+  template< typename IP_TYPE, integer NF >
   static void
   launch( localIndex const subRegionSize,
           localIndex const faceManagerSize,
@@ -860,7 +1006,7 @@ struct PrecomputeKernel
                                        lengthTolerance,
                                        transMatrix );
 
-      for( localIndex ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
+      for( integer ifaceLoc = 0; ifaceLoc < NF; ++ifaceLoc )
       {
         mimFaceGravCoefNumerator[elemToFaces[ei][ifaceLoc]] += elemGravCoef[ei] * transMatrix[ifaceLoc][ifaceLoc];
         mimFaceGravCoefDenominator[elemToFaces[ei][ifaceLoc]] += transMatrix[ifaceLoc][ifaceLoc];
@@ -902,7 +1048,7 @@ void KernelLaunchSelectorFaceSwitch( T value, LAMBDA && lambda )
 } // namespace internal
 
 template< typename KERNELWRAPPER, typename IP_TYPE, typename ... ARGS >
-void KernelLaunchSelector( localIndex numFacesInElem, localIndex numComps, localIndex numPhases, ARGS && ... args )
+void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer numPhases, ARGS && ... args )
 {
   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
   if( numPhases == 2 )
