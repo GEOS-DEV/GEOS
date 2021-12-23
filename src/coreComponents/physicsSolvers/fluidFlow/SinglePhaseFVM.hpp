@@ -71,24 +71,24 @@ public:
   using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
   using BASE::m_fluxEstimate;
-  using BASE::m_elemGhostRank;
-  using BASE::m_volume;
-  using BASE::m_gravCoef;
+//  using BASE::m_elemGhostRank;
+//  using BASE::m_volume;
+//  using BASE::m_gravCoef;
 
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't
   // have to use this->member etc.
-  using BASE::m_pressure;
-  using BASE::m_deltaPressure;
-  using BASE::m_deltaVolume;
-  using BASE::m_permeability;
-  using BASE::m_dPerm_dPressure;
-  using BASE::m_mobility;
-  using BASE::m_dMobility_dPres;
-  using BASE::m_density;
-  using BASE::m_dDens_dPres;
-  using BASE::m_viscosity;
-  using BASE::m_dVisc_dPres;
+//  using BASE::m_pressure;
+//  using BASE::m_deltaPressure;
+//  using BASE::m_deltaVolume;
+//  using BASE::m_permeability;
+//  using BASE::m_dPerm_dPressure;
+//  using BASE::m_mobility;
+//  using BASE::m_dMobility_dPres;
+//  using BASE::m_density;
+//  using BASE::m_dDens_dPres;
+//  using BASE::m_viscosity;
+//  using BASE::m_dVisc_dPres;
 
   /**
    * @brief main constructor for Group Objects

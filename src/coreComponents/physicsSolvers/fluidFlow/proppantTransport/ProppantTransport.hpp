@@ -242,11 +242,6 @@ protected:
 private:
 
   /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void resetViews( MeshLevel & mesh ) override;
-
-  /**
    * @brief Function to update fluid properties
    * @param domain the domain
    */

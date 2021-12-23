@@ -69,7 +69,7 @@ protected:
 
 private:
 
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
+//  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

@@ -197,8 +197,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
-  resetViews( mesh );
-
   // Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
   computeHydrostaticEquilibrium();
 
@@ -464,7 +462,6 @@ void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   SolverBase::setupSystem( domain,
                            dofManager,
@@ -479,8 +476,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                          DomainPartition & domain )
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  resetViews( mesh );
 
   forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
                                                                                    auto & subRegion )
@@ -912,61 +907,61 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh ) const
     } );
   } );
 }
-
-void SinglePhaseBase::resetViews( MeshLevel & mesh )
-{
-  FlowSolverBase::resetViews( mesh );
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  using namespace extrinsicMeshData::flow;
-
-  m_volume.clear();
-  m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-  m_volume.setName( string( "accessors/" ) + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-
-  m_deltaVolume.clear();
-  m_deltaVolume = elemManager.constructArrayViewAccessor< real64, 1 >( deltaVolume::key() );
-  m_deltaVolume.setName( getName() + "/accessors/" + deltaVolume::key() );
-
-  m_mobility.clear();
-  m_mobility = elemManager.constructArrayViewAccessor< real64, 1 >( mobility::key() );
-  m_mobility.setName( getName() + "/accessors/" + mobility::key() );
-
-  m_dMobility_dPres.clear();
-  m_dMobility_dPres = elemManager.constructArrayViewAccessor< real64, 1 >( dMobility_dPressure::key() );
-  m_dMobility_dPres.setName( getName() + "/accessors/" + dMobility_dPressure::key() );
-
-  resetViewsPrivate( elemManager );
-}
-
-void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManager )
-{
-  using namespace extrinsicMeshData::singlefluid;
-
-  m_density.clear();
-  m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( density::key(),
-                                                                           targetRegionNames(),
-                                                                           fluidModelNames() );
-  m_density.setName( getName() + "/accessors/" + density::key() );
-
-  m_dDens_dPres.clear();
-  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( dDensity_dPressure::key(),
-                                                                               targetRegionNames(),
-                                                                               fluidModelNames() );
-  m_dDens_dPres.setName( getName() + "/accessors/" + dDensity_dPressure::key() );
-
-  m_viscosity.clear();
-  m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( viscosity::key(),
-                                                                             targetRegionNames(),
-                                                                             fluidModelNames() );
-  m_viscosity.setName( getName() + "/accessors/" + viscosity::key() );
-
-  m_dVisc_dPres.clear();
-  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( dViscosity_dPressure::key(),
-                                                                               targetRegionNames(),
-                                                                               fluidModelNames() );
-  m_dVisc_dPres.setName( getName() + "/accessors/" + dViscosity_dPressure::key() );
-
-}
+//
+//void SinglePhaseBase::resetViews( MeshLevel & mesh )
+//{
+//  FlowSolverBase::resetViews( mesh );
+//  ElementRegionManager const & elemManager = mesh.getElemManager();
+//
+//  using namespace extrinsicMeshData::flow;
+//
+//  m_volume.clear();
+//  m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+//  m_volume.setName( string( "accessors/" ) + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+//
+//  m_deltaVolume.clear();
+//  m_deltaVolume = elemManager.constructArrayViewAccessor< real64, 1 >( deltaVolume::key() );
+//  m_deltaVolume.setName( getName() + "/accessors/" + deltaVolume::key() );
+//
+//  m_mobility.clear();
+//  m_mobility = elemManager.constructArrayViewAccessor< real64, 1 >( mobility::key() );
+//  m_mobility.setName( getName() + "/accessors/" + mobility::key() );
+//
+//  m_dMobility_dPres.clear();
+//  m_dMobility_dPres = elemManager.constructArrayViewAccessor< real64, 1 >( dMobility_dPressure::key() );
+//  m_dMobility_dPres.setName( getName() + "/accessors/" + dMobility_dPressure::key() );
+//
+//  resetViewsPrivate( elemManager );
+//}
+//
+//void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManager )
+//{
+//  using namespace extrinsicMeshData::singlefluid;
+//
+//  m_density.clear();
+//  m_density = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( density::key(),
+//                                                                           targetRegionNames(),
+//                                                                           fluidModelNames() );
+//  m_density.setName( getName() + "/accessors/" + density::key() );
+//
+//  m_dDens_dPres.clear();
+//  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( dDensity_dPressure::key(),
+//                                                                               targetRegionNames(),
+//                                                                               fluidModelNames() );
+//  m_dDens_dPres.setName( getName() + "/accessors/" + dDensity_dPressure::key() );
+//
+//  m_viscosity.clear();
+//  m_viscosity = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( viscosity::key(),
+//                                                                             targetRegionNames(),
+//                                                                             fluidModelNames() );
+//  m_viscosity.setName( getName() + "/accessors/" + viscosity::key() );
+//
+//  m_dVisc_dPres.clear();
+//  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< real64, 2 >( dViscosity_dPressure::key(),
+//                                                                               targetRegionNames(),
+//                                                                               fluidModelNames() );
+//  m_dVisc_dPres.setName( getName() + "/accessors/" + dViscosity_dPressure::key() );
+//
+//}
 
 } /* namespace geosx */
