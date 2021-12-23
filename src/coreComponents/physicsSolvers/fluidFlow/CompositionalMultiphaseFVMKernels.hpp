@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/capillaryPressure/CapillaryPressureExtrinsicData.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
@@ -294,22 +295,24 @@ public:
                       extrinsicMeshData::flow::phaseMobility,
                       extrinsicMeshData::flow::dPhaseMobility_dPressure,
                       extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >;
-
   using MultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseMassDensity,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseCompFraction,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseMassDensity,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
   using CapPressureAccessors =
-    StencilAccessors< extrinsicMeshData::cappres::phaseCapPressure,
-                      extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;
+    StencilMaterialAccessors< CapillaryPressureBase,
+                              extrinsicMeshData::cappres::phaseCapPressure,
+                              extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
   using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure >;
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -948,10 +951,6 @@ public:
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] targetRegionNames names of the target regions
-   * @param[in] fluidModelNames names of the fluid models
-   * @param[in] capPresModelNames names of the capillary pressure models
-   * @param[in] permeabilityModelNames names of the permeability models
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -966,10 +965,6 @@ public:
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                   arrayView1d< string const > const & targetRegionNames,
-                   arrayView1d< string const > const & fluidModelNames,
-                   arrayView1d< string const > const & capPresModelNames,
-                   arrayView1d< string const > const & permeabilityModelNames,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -985,9 +980,9 @@ public:
 
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName, targetRegionNames, fluidModelNames );
-      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName, targetRegionNames, capPresModelNames );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName, targetRegionNames, permeabilityModelNames );
+      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, capPressureFlag, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
@@ -1025,18 +1020,20 @@ struct CFLFluxKernel
                       extrinsicMeshData::flow::componentOutflux >;
 
   using MultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseViscosity,
-                      extrinsicMeshData::multifluid::phaseDensity,
-                      extrinsicMeshData::multifluid::phaseMassDensity,
-                      extrinsicMeshData::multifluid::phaseCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseViscosity,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::phaseMassDensity,
+                              extrinsicMeshData::multifluid::phaseCompFraction >;
 
   using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure >;
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure >;
 
 
   using RelPermAccessors =
-    StencilAccessors< extrinsicMeshData::relperm::phaseRelPerm >;
+    StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm >;
 
   template< integer NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
   GEOSX_HOST_DEVICE
@@ -1159,12 +1156,13 @@ struct AquiferBCKernel
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseCompFraction,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
   template< integer NC >
   GEOSX_HOST_DEVICE

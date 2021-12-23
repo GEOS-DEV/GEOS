@@ -92,7 +92,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   GEOSX_MARK_FUNCTION;
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
-                                               MeshLevel & mesh,
+                                               MeshLevel const & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
@@ -117,10 +117,6 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                    getName(),
                                                    mesh.getElemManager(),
                                                    stencilWrapper,
-                                                   regionNames,
-                                                   fluidModelNames(),
-                                                   capPresModelNames(),
-                                                   permeabilityModelNames(),
                                                    dt,
                                                    localMatrix.toViewConstSizes(),
                                                    localRhs.toView() );
@@ -168,9 +164,9 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), regionNames, fluidModelNames() );
-    CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName(), regionNames, permeabilityModelNames() );
-    CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName(), regionNames, relPermModelNames() );
+    CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+    CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
+    CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
 
     // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
@@ -554,7 +550,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
     elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
     AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName(), regionNames, fluidModelNames() );
+    AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
 
     fsManager.apply< AquiferBoundaryCondition >( time + dt,
                                                  domain,
