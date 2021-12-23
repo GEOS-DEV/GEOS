@@ -89,7 +89,7 @@ public:
 
   /**
    * @brief Get the Values object
-   * 
+   *
    * @return array1d< real64 >& a reference to an array where table values are stored in fortran order
    */
   array1d< real64 > & getValues() { return m_values; }

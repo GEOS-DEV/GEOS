@@ -71,7 +71,7 @@ public:
 
   /**
    * @brief Compute interpolation element-wise using host or device execution space
-   * 
+   *
    * @param ei Index of element
    */
   GEOSX_HOST_DEVICE
@@ -83,9 +83,9 @@ public:
   /// maximum dimensions for the coordinates in the table
   static constexpr integer maxDimensions = 5;
   /**
-   * 
+   *
    * @brief Linear interpolation (to be replaced)
-   * 
+   *
    * @tparam IN_ARRAY array type of input coordinates
    * @param input input coordinates
    * @return interpolated value
