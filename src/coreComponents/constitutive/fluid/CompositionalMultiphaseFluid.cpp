@@ -34,7 +34,8 @@ using namespace dataRepository;
 namespace constitutive
 {
 
-CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name, Group * const parent )
+template< typename VISCOSITY_MODEL >
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::CompositionalMultiphaseFluid( string const & name, Group * const parent )
   : MultiFluidBase( name, parent )
 {
   getWrapperBase( viewKeyStruct::componentNamesString() ).setInputFlag( InputFlags::REQUIRED );
@@ -53,6 +54,10 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component critical temperatures" );
 
+  registerWrapper( viewKeyStruct::componentCriticalVolumeString(), &m_componentCriticalVolume ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Component critical volumes" );
+
   registerWrapper( viewKeyStruct::componentAcentricFactorString(), &m_componentAcentricFactor ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Component acentric factors" );
@@ -66,13 +71,16 @@ CompositionalMultiphaseFluid::CompositionalMultiphaseFluid( string const & name,
     setDescription( "Table of binary interaction coefficients" );
 }
 
-integer CompositionalMultiphaseFluid::getWaterPhaseIndex() const
+template< typename VISCOSITY_MODEL >
+integer CompositionalMultiphaseFluid< VISCOSITY_MODEL >::getWaterPhaseIndex() const
 {
   string const expectedWaterPhaseNames[] = { "water" };
   return PVTProps::PVTFunctionHelpers::findName( m_phaseNames, expectedWaterPhaseNames, viewKeyStruct::phaseNamesString() );
 }
 
-void CompositionalMultiphaseFluid::postProcessInput()
+
+template< typename VISCOSITY_MODEL >
+void CompositionalMultiphaseFluid< VISCOSITY_MODEL >::postProcessInput()
 {
   MultiFluidBase::postProcessInput();
 
@@ -106,6 +114,19 @@ void CompositionalMultiphaseFluid::postProcessInput()
   checkInputSize( m_componentAcentricFactor, NC, viewKeyStruct::componentAcentricFactorString() );
   checkInputSize( m_equationsOfState, NP, viewKeyStruct::equationsOfStateString() );
 
+  // if unspecified, estimate critical volume using Ihmels' (2010) correlation 
+  // reference: http://dx.doi.org/10.1021/je100167w
+
+  if( m_componentCriticalVolume.empty() )
+  {
+    m_componentCriticalVolume.resize( NC );
+    for(localIndex c=0; c<NC; ++c)
+    {
+      m_componentCriticalVolume[c] = 2.215e-6 * m_componentCriticalTemperature[c] / (0.025 + 1e-6*m_componentCriticalPressure[c] ); // m^3/mol
+    }
+  }
+  checkInputSize( m_componentCriticalVolume, NC, viewKeyStruct::componentCriticalVolumeString() );
+
   if( m_componentVolumeShift.empty() )
   {
     m_componentVolumeShift.resize( NC );
@@ -121,13 +142,15 @@ void CompositionalMultiphaseFluid::postProcessInput()
   checkInputSize( m_componentBinaryCoeff, NC * NC, viewKeyStruct::componentBinaryCoeffString() );
 }
 
-void CompositionalMultiphaseFluid::initializePostSubGroups()
+template< typename VISCOSITY_MODEL >
+void CompositionalMultiphaseFluid< VISCOSITY_MODEL >::initializePostSubGroups()
 {
   MultiFluidBase::initializePostSubGroups();
   createFluid();
 }
 
-void CompositionalMultiphaseFluid::createFluid()
+template< typename VISCOSITY_MODEL >
+void CompositionalMultiphaseFluid< VISCOSITY_MODEL >::createFluid()
 {
   auto const getCompositionalEosType = [&]( string const & name )
   {
@@ -151,11 +174,22 @@ void CompositionalMultiphaseFluid::createFluid()
 
   m_fluid = pvt::MultiphaseSystemBuilder::buildCompositional( pvt::COMPOSITIONAL_FLASH_TYPE::NEGATIVE_OIL_GAS, phases, eos,
                                                               components, Mw, Tc, Pc, Omega );
+
+  m_viscosity = std::make_unique< VISCOSITY_MODEL >( getName() + '_' + VISCOSITY_MODEL::catalogName(), 
+                                                     m_componentNames, 
+                                                     m_componentMolarWeight,
+                                                     m_componentCriticalPressure,
+                                                     m_componentCriticalTemperature,
+                                                     m_componentCriticalVolume,
+                                                     m_componentAcentricFactor,
+                                                     m_componentVolumeShift,
+                                                     m_componentBinaryCoeff );
 }
 
+template< typename VISCOSITY_MODEL >
 std::unique_ptr< ConstitutiveBase >
-CompositionalMultiphaseFluid::deliverClone( string const & name,
-                                            Group * const parent ) const
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::deliverClone( string const & name,
+                                                               Group * const parent ) const
 {
   std::unique_ptr< ConstitutiveBase > clone = MultiFluidBase::deliverClone( name, parent );
   CompositionalMultiphaseFluid & fluid = dynamicCast< CompositionalMultiphaseFluid & >( *clone );
@@ -164,8 +198,10 @@ CompositionalMultiphaseFluid::deliverClone( string const & name,
   return clone;
 }
 
-CompositionalMultiphaseFluid::KernelWrapper::
+template< typename VISCOSITY_MODEL >
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::KernelWrapper::
   KernelWrapper( pvt::MultiphaseSystem & fluid,
+                 VISCOSITY_MODEL const & viscosity,
                  arrayView1d< pvt::PHASE_TYPE > const & phaseTypes,
                  arrayView1d< geosx::real64 const > const & componentMolarWeight,
                  bool useMass,
@@ -184,13 +220,16 @@ CompositionalMultiphaseFluid::KernelWrapper::
                                    std::move( phaseCompFraction ),
                                    std::move( totalDensity ) ),
   m_fluid( fluid ),
+  m_viscosity( viscosity.createKernelWrapper() ),
   m_phaseTypes( phaseTypes )
 {}
 
-CompositionalMultiphaseFluid::KernelWrapper
-CompositionalMultiphaseFluid::createKernelWrapper()
+template< typename VISCOSITY_MODEL >
+typename CompositionalMultiphaseFluid< VISCOSITY_MODEL >::KernelWrapper
+CompositionalMultiphaseFluid< VISCOSITY_MODEL >::createKernelWrapper()
 {
   return KernelWrapper( *m_fluid,
+                        *m_viscosity,
                         m_phaseTypes,
                         m_componentMolarWeight,
                         m_useMass,
@@ -202,7 +241,9 @@ CompositionalMultiphaseFluid::createKernelWrapper()
                         m_totalDensity.toView() );
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluid, string const &, Group * const )
+template class CompositionalMultiphaseFluid< PVTProps::LohrenzBrayClarkViscosity >;
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompositionalMultiphaseFluidLBC, string const &, Group * const )
 
 } // namespace constitutive
 

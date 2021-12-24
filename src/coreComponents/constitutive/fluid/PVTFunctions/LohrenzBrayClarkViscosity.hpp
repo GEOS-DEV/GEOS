@@ -62,7 +62,7 @@ public:
   {
     GEOSX_UNUSED_VAR( pressure, temperature, phaseDensity, phaseComposition );
 
-    auto setConstant = []( real64 & val ){ val = 0.001; };
+    auto setConstant = []( real64 & val ){ val = 1.234; };
     LvArray::forValuesInSlice( phaseViscosity, setConstant );
   }
 
