@@ -247,18 +247,13 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
   elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(),
-                                                                 targetRegionNames(),
-                                                                 m_permeabilityModelNames );
-
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
     typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
-    typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, getName(), targetRegionNames(), fluidModelNames() );
-    typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, getName(), targetRegionNames(), permeabilityModelNames() );
+    typename FluxKernel::SlurryFluidAccessors fluidAccessors( elemManager, getName(), targetRegionNames(), fluidModelNames() );
+    typename FluxKernel::ProppantPermeabilityAccessors permAccessors( elemManager, getName(), targetRegionNames(), permeabilityModelNames() );
 
 
     FaceElementFluxKernel::launch( stencilWrapper,
@@ -269,14 +264,14 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                    flowAccessors.get< extrinsicMeshData::flow::pressure >(),
                                    flowAccessors.get< extrinsicMeshData::flow::deltaPressure >(),
                                    flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                   fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                   fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
+                                   fluidAccessors.get< extrinsicMeshData::slurryfluid::density >(),
+                                   fluidAccessors.get< extrinsicMeshData::slurryfluid::dDensity_dPressure >(),
                                    flowAccessors.get< extrinsicMeshData::flow::mobility >(),
                                    flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
                                    permAccessors.get< extrinsicMeshData::permeability::permeability >(),
                                    permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                   dPerm_dAper.toNestedViewConst(),
-                                   SinglePhaseProppantBase::m_permeabilityMultiplier.toNestedViewConst(),
+                                   permAccessors.get< extrinsicMeshData::permeability::dPerm_dAperture >(),
+                                   permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
                                    this->gravityVector(),
                                    localMatrix,
                                    localRhs );
@@ -539,13 +534,24 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   } );
 }
 
-template< typename BASE >
-void SinglePhaseFVM< BASE >::applyAquiferBC( real64 const time,
-                                             real64 const dt,
-                                             DomainPartition & domain,
-                                             DofManager const & dofManager,
-                                             CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                             arrayView1d< real64 > const & localRhs ) const
+template<>
+void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOSX_UNUSED_PARAM( time ),
+                                                                real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                                DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                                                DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                                                CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                                                arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) const
+{
+  // Aquifer does not make sense for proppant flow in fractures
+}
+
+template<>
+void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
+                                                        real64 const dt,
+                                                        DomainPartition & domain,
+                                                        DofManager const & dofManager,
+                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                        arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 

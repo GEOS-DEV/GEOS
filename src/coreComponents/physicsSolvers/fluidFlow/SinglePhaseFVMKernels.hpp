@@ -23,6 +23,7 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
@@ -30,7 +31,6 @@
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
@@ -69,9 +69,20 @@ struct FluxKernel
     StencilAccessors< extrinsicMeshData::singlefluid::density,
                       extrinsicMeshData::singlefluid::dDensity_dPressure >;
 
+  using SlurryFluidAccessors =
+    StencilAccessors< extrinsicMeshData::slurryfluid::density,
+                      extrinsicMeshData::slurryfluid::dDensity_dPressure >;
+
   using PermeabilityAccessors =
     StencilAccessors< extrinsicMeshData::permeability::permeability,
                       extrinsicMeshData::permeability::dPerm_dPressure >;
+
+  using ProppantPermeabilityAccessors =
+    StencilAccessors< extrinsicMeshData::permeability::permeability,
+                      extrinsicMeshData::permeability::dPerm_dPressure,
+                      extrinsicMeshData::permeability::dPerm_dAperture,
+                      extrinsicMeshData::permeability::permeabilityMultiplier >;
+
 
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.

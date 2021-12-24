@@ -39,7 +39,7 @@ EXTRINSIC_MESH_DATA_TRAIT( density,
                            "Density" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dDensity_dPressure,
-                           "dDensity_dPres",
+                           "dDens_dPres",
                            array2d< real64 >,
                            0,
                            NOPLOT,
@@ -47,7 +47,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dDensity_dPressure,
                            "Derivative of density with respect to pressure" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dDensity_dProppantConcentration,
-                           "dDensity_dProppantConc",
+                           "dDens_dProppantConc",
                            array2d< real64 >,
                            0,
                            NOPLOT,
@@ -55,7 +55,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dDensity_dProppantConcentration,
                            "Derivative of density with respect to proppant concentration" );
 
 EXTRINSIC_MESH_DATA_TRAIT( dDensity_dComponentConcentration,
-                           "dDensity_dCompConc",
+                           "dDens_dCompConc",
                            array3d< real64 >,
                            0,
                            NOPLOT,
