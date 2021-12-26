@@ -67,7 +67,7 @@
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
         solverType="direct"
-        krylovTol="1.0e-7"/>
+        directParallel="0"/>
     </ProppantTransport>
 <!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
 
@@ -97,7 +97,7 @@
         newtonMinIter="0"/>
       <LinearSolverParameters
         solverType="direct"	 
-        krylovTol="1.0e-7"/>
+        directParallel="0"/>
     </SinglePhaseProppantFVM>
 <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
 

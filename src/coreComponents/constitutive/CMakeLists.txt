@@ -47,7 +47,9 @@ set( constitutive_headers
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
      fluid/SingleFluidBase.hpp
+     fluid/SingleFluidExtrinsicData.hpp
      fluid/SlurryFluidBase.hpp
+     fluid/SlurryFluidExtrinsicData.hpp     
      fluid/layouts.hpp
      fluid/multiFluidSelector.hpp
      fluid/particleFluidSelector.hpp

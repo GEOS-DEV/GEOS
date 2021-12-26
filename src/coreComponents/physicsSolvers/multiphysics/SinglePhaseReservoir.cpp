@@ -23,6 +23,8 @@
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
@@ -146,9 +148,9 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  using TAG = WellSolverBase::SubRegionTag;
-  using ROFFSET = SinglePhaseWell::RowOffset;
-  using COFFSET = SinglePhaseWell::ColOffset;
+  using TAG = SinglePhaseWellKernels::SubRegionTag;
+  using ROFFSET = SinglePhaseWellKernels::RowOffset;
+  using COFFSET = SinglePhaseWellKernels::ColOffset;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
@@ -182,9 +184,9 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
 
     // get well variables on perforations
     arrayView1d< real64 const > const perfRate =
-      perforationData->getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::perforationRateString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
     arrayView2d< real64 const > const dPerfRate_dPres =
-      perforationData->getReference< array2d< real64 > >( SinglePhaseWell::viewKeyStruct::dPerforationRate_dPresString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
 
     arrayView1d< localIndex const > const perfWellElemIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );

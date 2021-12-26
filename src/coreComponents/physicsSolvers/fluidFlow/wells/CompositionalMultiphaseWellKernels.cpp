@@ -17,7 +17,10 @@
  */
 
 #include "CompositionalMultiphaseWellKernels.hpp"
+
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+// TODO: move keys to WellControls
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 
 namespace geosx
 {

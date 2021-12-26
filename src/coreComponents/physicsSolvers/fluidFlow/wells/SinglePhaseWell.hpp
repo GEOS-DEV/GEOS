@@ -46,19 +46,6 @@ class SinglePhaseWell : public WellSolverBase
 {
 public:
 
-  // define the column offset of the derivatives
-  struct ColOffset
-  {
-    static constexpr integer DPRES = 0;
-    static constexpr integer DRATE = 1;
-  };
-
-  // define the row offset of the residual equations
-  struct RowOffset
-  {
-    static constexpr integer CONTROL = 0;
-    static constexpr integer MASSBAL = 1;
-  };
 
   /**
    * @brief main constructor for Group Objects
@@ -137,7 +124,7 @@ public:
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
 
-  virtual string resElementDofName() const override { return extrinsicMeshData::flow::pressure::key(); }
+  virtual string resElementDofName() const override;
 
   virtual localIndex numFluidComponents() const override { return 1; }
 
@@ -169,10 +156,11 @@ public:
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
+   * @param meshLevel the mesh level
    * @param subRegion the well subRegion containing the well elements and their associated fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
+  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -236,18 +224,7 @@ public:
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }
 
-    // primary solution field
-    static constexpr char const * connRateString() { return "connectionRate"; }
-    static constexpr char const * deltaConnRateString() { return "deltaConnectionRate"; }
-
-    // backup field for the accumulation term
-    static constexpr char const * densityOldString() { return extrinsicMeshData::flow::densityOld::key(); }
-
-    // perforation rates
-    static constexpr char const * perforationRateString() { return "perforationRate"; }
-    static constexpr char const * dPerforationRate_dPresString() { return "dPerforationRate_dPres"; }
-
-    // control data
+    // control data (not registered on the mesh)
     static constexpr char const * currentBHPString() { return "currentBHP"; }
     static constexpr char const * dCurrentBHP_dPresString() { return "dCurrentBHP_dPres"; }
 
@@ -259,23 +236,17 @@ public:
 
 protected:
 
-  virtual void postProcessInput() override;
-
   virtual void initializePreSubGroups() override;
 
 private:
 
   /**
    * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
+   * @param meshLevel the mesh level
+   * @param subRegion the well element subRegion
+   * @param targetIndex the targetIndex
    */
-  void computePerforationRates( WellElementSubRegion & subRegion, localIndex const targetIndex );
-
-  /**
-   * @brief Setup stored reservoir views into domain data for the current step
-   * @param domain the domain containing the well manager to access individual wells
-   */
-  void resetViews( DomainPartition & domain ) override;
+  void computePerforationRates( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
@@ -288,21 +259,6 @@ private:
    * @param meshLevel the mesh level object (to loop over wells)
    */
   void validateWellConstraints( MeshLevel const & meshLevel ) const;
-
-private:
-
-  /// views into reservoir primary variable fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_resPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaResPressure;
-
-  /// views into reservoir material fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_resViscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dResVisc_dPres;
 
 };
 
