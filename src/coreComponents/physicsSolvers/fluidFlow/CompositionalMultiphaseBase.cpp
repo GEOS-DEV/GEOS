@@ -892,14 +892,6 @@ CompositionalMultiphaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARA
 {
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  // bind the stored views to the current domain
-  static bool viewsSet = false;
-  if( !viewsSet )
-  {
-    resetViews( mesh );
-    viewsSet = true;
-  }
-
   // set deltas to zero and recompute dependent quantities
   resetStateToBeginningOfStep( domain );
 

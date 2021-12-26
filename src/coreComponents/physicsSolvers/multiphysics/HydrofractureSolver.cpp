@@ -225,7 +225,6 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         {
           GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
         }
-        m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
       }
     }
 
@@ -475,7 +474,6 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   GEOSX_UNUSED_VAR( setSparsity );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  m_flowSolver->resetViews( mesh );
 
   dofManager.setMesh( mesh );
 
@@ -670,8 +668,6 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                  dofManager,
                                  localMatrix,
                                  localRhs );
-
-  m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   m_flowSolver->assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
                                                                      dofManager,

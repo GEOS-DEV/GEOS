@@ -190,13 +190,7 @@ public:
   struct viewKeyStruct
   {
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }
-    static constexpr char const * densityString() { return "density"; }
-    static constexpr char const * dDens_dPresString() { return "dDensity_dPressure"; }
-    static constexpr char const * initialDensityString() { return "initialDensity"; }
-
     static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
-    static constexpr char const * viscosityString() { return "viscosity"; }
-    static constexpr char const * dVisc_dPresString() { return "dViscosity_dPressure"; }
   };
 
 protected:
