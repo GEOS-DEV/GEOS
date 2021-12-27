@@ -88,7 +88,7 @@ void CornerPointMeshGenerator::postProcessInput()
     GEOSX_THROW( "This unit for coordinates is not supported", InputError );
   }
 
-
+  // Isaac: call buildMesh method to get all maps needed
   m_cpMeshBuilder->buildMesh( m_filePath );
 }
 

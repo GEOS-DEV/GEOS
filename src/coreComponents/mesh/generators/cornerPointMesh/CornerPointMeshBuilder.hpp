@@ -290,6 +290,12 @@ private:
                                  ArrayOfArrays< localIndex > & faceToVertices );
 
 
+  /**
+   * @brief append top and bottom auxillary layers for processing outer boundary at faults
+   * @brief the method will manipulate m_parser.zcorn and m_parser.actnum
+   */
+  void appendAuxillaryLayer();
+
   /// Object holding the mesh (and MPI partition) dimensions
   CornerPointMeshDimensions m_dims;
 
@@ -314,6 +320,8 @@ private:
   /// Name of the mesh
   string m_meshName;
 
+  /// offset for obtaining auxillary layers (default value = 1.0)
+  real64 m_offset;
 };
 
 } // namespace CornerPointMesh

@@ -37,7 +37,8 @@ CornerPointMeshBuilder::CornerPointMeshBuilder( string const & name )
   :
   m_parser( name ),
   m_partition( name ),
-  m_meshName( name )
+  m_meshName( name ),
+  m_offset( 1.0 )
 {}
 
 void CornerPointMeshBuilder::buildMesh( Path const & filePath )
@@ -105,11 +106,14 @@ void CornerPointMeshBuilder::buildCornerPointCells()
   localIndex const nXLocal = m_dims.nXLocal();
   localIndex const nYLocal = m_dims.nYLocal();
   localIndex const nZLocal = m_dims.nZLocal();
+
+  // Auxillary layers need to be appended to coord, zcorn, and actnum before computing vertice coordinates
+  appendAuxillaryLayer();
+
   localIndex const nLocalCells = nXLocal*nYLocal*nZLocal;
   localIndex constexpr nCPVerticesPerCell = 8;
   localIndex const nCPVertices = nCPVerticesPerCell*nLocalCells;
 
-  // corner-point mesh file information
   array1d< localIndex > const & actnum = m_parser.actnum();
   array1d< real64 > const & coord = m_parser.coord();
   array1d< real64 > const & zcorn = m_parser.zcorn();
@@ -220,6 +224,75 @@ void CornerPointMeshBuilder::populateReverseCellMaps( localIndex const nCells,
   {
     activeCellToOwnedActiveCell( ownedActiveCellToActiveCell( iOwnedActiveCell ) ) = iOwnedActiveCell;
   }
+}
+
+void CornerPointMeshBuilder::appendAuxillaryLayer()
+{
+  // Append top and bottom auxillary layers to zcorn and adjust actnum
+  array1d< localIndex > & actnum = m_parser.actnum();
+  array1d< real64 > & coord = m_parser.coord();
+  array1d< real64 > & zcorn = m_parser.zcorn();
+  localIndex const nXLocal = m_dims.nXLocal();
+  localIndex const nYLocal = m_dims.nYLocal();
+  localIndex layerZcornSize = 4 * nXLocal * nYLocal;
+
+  // step 1: Find highest and lowest points to set as up and bottom boundaries
+  real64 minZcorn = *( std::min_element( zcorn.begin(), zcorn.end() ) ) - m_offset;
+  real64 maxZcorn = *( std::max_element( zcorn.begin(), zcorn.end() ) ) + m_offset;
+
+  array1d< real64 > topLayer( layerZcornSize );
+  array1d< real64 > bottomLayer( layerZcornSize );
+  topLayer.resizeDefault( layerZcornSize, maxZcorn );
+  bottomLayer.resizeDefault( layerZcornSize, minZcorn );
+
+  // Step 2: duplicate original top and bottom layer of points
+  array1d< real64 > origTopLayer( layerZcornSize );
+  array1d< real64 > origBottomLayer( layerZcornSize );
+
+  // loop over all zcorns of elements at top/bottom layer in the MPI domain, including overlaps
+  localIndex count = 0;
+  localIndex const k = m_dims.nZLocal();
+
+  // TODO: discuss with Francois to see if it is better to use multidimensional vectors
+  for( localIndex j = 0; j < 2 * nYLocal; ++j )
+  {
+    for( localIndex i = 0; i < 2 * nXLocal; ++i )
+    {
+      // compute explicit local and global indices using the ijk structure
+      localIndex const iLocalTopZcorn = j*nXLocal + i;
+      localIndex const iLocalBottomZcorn = k * nYLocal * nXLocal + iLocalTopZcorn;
+      origTopLayer( count ) = zcorn( iLocalTopZcorn );
+      origBottomLayer( count ) = zcorn( iLocalBottomZcorn );
+      ++ count;
+    }
+  }
+
+  localIndex startZcornPos = 0;
+  localIndex endZcornPos = zcorn.size();
+  // Step 3: Append four new layers of zcorns to zcorn vector (TODO: better way?)
+  zcorn.insert( endZcornPos, origBottomLayer.begin(), origBottomLayer.end());
+  zcorn.insert( endZcornPos + layerZcornSize, bottomLayer.begin(), bottomLayer.end());
+  zcorn.insert( startZcornPos, origTopLayer.begin(), origTopLayer.end());
+  zcorn.insert( startZcornPos, topLayer.begin(), topLayer.end());
+
+  // Debugging: print out zcorn's new size
+  std::cout<< "The new zcorn has size of " << zcorn.size() <<std::endl;
+
+  // Step 4: assign auxillary cells with being inactive
+  localIndex const layerCellSize = nXLocal * nYLocal;
+  array1d< localIndex > topCellActnum;
+  array1d< localIndex > bottomCellActnum;
+  localIndex const inactiveness = -1;
+  topCellActnum.resizeDefault( layerCellSize, inactiveness);
+  bottomCellActnum.resizeDefault( layerCellSize, inactiveness);
+
+  localIndex startActnumPos = 0;
+  localIndex endActnumPos = actnum.size();
+  actnum.insert( endActnumPos, bottomCellActnum.begin(), bottomCellActnum.end());
+  actnum.insert( startActnumPos, topCellActnum.begin(), topCellActnum.end());
+
+  // Debugging: print out zcorn's new size
+  std::cout<< "The new actnum has size of " << actnum.size() <<std::endl;
 }
 
 bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,
