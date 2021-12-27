@@ -26,6 +26,34 @@
 namespace geosx
 {
 
+///////////////////////
+namespace BilinearForms
+{
+template< typename MATRIX,
+          typename TEST_BASIS_VECTOR_GRADIENT,
+		  typename TRIAL_BASIS_SCALAR,
+		  typename SECOND_ORDER_TENSOR >
+GEOSX_HOST_DEVICE
+void B1( integer const numTestDOF,
+		 integer const numTrialDOF,
+		 MATRIX && mat,
+		 TEST_BASIS_VECTOR_GRADIENT && dNdX,
+		 TRIAL_BASIS_SCALAR && Np,
+		 SECOND_ORDER_TENSOR &&  A)
+{
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      for( int b = 0; b < numTrialDOF; ++b )
+      {
+        mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A[0] * Np[b] + dNdX[a][1] * A[5] * Np[b] + dNdX[a][2] * A[4] * Np[b];
+        mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][0] * A[5] * Np[b] + dNdX[a][1] * A[1] * Np[b] + dNdX[a][2] * A[3] * Np[b];
+        mat[a*3+2][b] = mat[a*3+2][b] + dNdX[a][0] * A[4] * Np[b] + dNdX[a][1] * A[3] * Np[b] + dNdX[a][2] * A[2] * Np[b];
+      }
+    }
+}
+}
+///////////////////////
+
 namespace PoromechanicsKernels
 {
 
@@ -145,6 +173,7 @@ public:
             uhat_local(),
             localFlowResidual{ 0.0 },
       localDispFlowJacobian{ {0.0} },
+	  localDispFlowJacobianNew{ {0.0} },
       localFlowDispJacobian{ {0.0} },
       localFlowFlowJacobian{ {0.0} },
       localFlowDofIndex{ 0 }
@@ -166,6 +195,7 @@ public:
 
     real64 localFlowResidual[1];
     real64 localDispFlowJacobian[numDispDofPerElem][1];
+    real64 localDispFlowJacobianNew[numDispDofPerElem][1];
     real64 localFlowDispJacobian[1][numDispDofPerElem];
     real64 localFlowFlowJacobian[1][1];
 
@@ -230,7 +260,7 @@ public:
     //   fluidMassContent = fluidMassContent( strainIncrement, pressure)
     //   fluidMassFlux    = fludiMassFlux( pressure)
     //
-    // Note that the fluidMassFlux will dependend on the straiIncrement if a stress-dependent constitutive
+    // Note that the fluidMassFlux will depend on the straiIncrement if a stress-dependent constitutive
     // model is assumed. A dependency on pressure can also occur in the source term of the mass
     // balance equation, e.g. if a Peaceman well model is used.
     //
@@ -255,16 +285,16 @@ public:
     //   dRmas_dPressure  = \int \chi dFluidMassContent_dPressure
     //
     // with \eta and \chi test basis functions for the displacement and pressure field, respectively.
-    // A continuous interpolation is used for the displacement, with \eta continous finite element
+    // A continuous interpolation is used for the displacement, with \eta continuous finite element
     // basis functions. A piecewise-constant approximation is used for the pressure.
 
-    real64 strainIncrement[6] = {0.0};
-    real64 totalStress[6];
+    real64 strainIncrement[6]{};
+    real64 totalStress[6]{};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness; // Could this be called dTotalStress_dStrainIncrement?
-    real64 dTotalStress_dPressure[6] = {0.0};
-    real64 bodyForce[3] = {0.0};
-    real64 dBodyForce_dVolStrainIncrement[3] = {0.0};
-    real64 dBodyForce_dPressure[3] = {0.0};
+    real64 dTotalStress_dPressure[6]{};
+    real64 bodyForce[3]{};
+    real64 dBodyForce_dVolStrainIncrement[3]{};
+    real64 dBodyForce_dPressure[3]{};
     real64 fluidMassContent;
     real64 fluidMassContentOld;
     real64 dFluidMassContent_dPressure;
@@ -305,7 +335,7 @@ public:
                                                        dFluidMassContent_dVolStrainIncrement,
                                                        stiffness );
 
-    // Perform scalign needed for numerical integration
+    // Perform scaling needed for numerical integration
     LvArray::tensorOps::scale< 6 >( totalStress, -detJxW );  // (s.p.d. vs s.n.d striffness matrix)
     LvArray::tensorOps::scale< 3 >( bodyForce, detJxW );
     LvArray::tensorOps::scale< 6 >( dTotalStress_dPressure, -detJxW );
@@ -324,12 +354,31 @@ public:
 
     // Compute dRmom_dVolStrain
     stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+
+//  BTDB per tutti i modelli costitutivi:
+//	(1) se simmetrici --> upper BTDB
+//	(2) se non symmetrici --> full
+//
+//	Aggiungi complete che e` noop per problemi non simmetrici
+
+
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute dRmom_dPressure
     FE_TYPE::plusGradNajAij( dNdX,
                              dTotalStress_dPressure,
                              reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
+
+    ///////////////////////////
+    int Np[1] = { 1 };
+    BilinearForms::B1( numDispDofPerElem,
+					   1,
+					   stack.localDispFlowJacobianNew,
+					   dNdX,
+					   Np,
+					   dTotalStress_dPressure);
+    ///////////////////////////
+
     if( m_gravityAcceleration > 0.0 )
     {
       FE_TYPE::plusNaFi( N,
@@ -383,7 +432,7 @@ public:
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localFlowDofIndex,
-                                                                                stack.localDispFlowJacobian[numDofPerTestSupportPoint * localNode + dim],
+                                                                                stack.localDispFlowJacobianNew[numDofPerTestSupportPoint * localNode + dim],
                                                                                 1 );
 
       }
