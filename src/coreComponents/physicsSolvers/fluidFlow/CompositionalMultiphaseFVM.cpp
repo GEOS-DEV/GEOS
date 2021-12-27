@@ -192,10 +192,8 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
                                             multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
                                             multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
                                             multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                            phaseOutfluxAccessor.toNestedView(), //std::get< 3 >( compFlowAccessors.accessors
-                                                                                 // ).toNestedView(), // phaseOutflux
-                                            compOutfluxAccessor.toNestedView() );//std::get< 4 >( compFlowAccessors.accessors
-                                                                                 // ).toNestedView() ); // componentOutflux
+                                            phaseOutfluxAccessor.toNestedView(),
+                                            compOutfluxAccessor.toNestedView() );
   } );
 
   // Step 3: finalize the (cell-based) computation of the CFL numbers
