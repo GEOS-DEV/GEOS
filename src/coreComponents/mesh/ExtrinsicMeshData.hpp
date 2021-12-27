@@ -90,6 +90,29 @@ template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
 
+EXTRINSIC_MESH_DATA_TRAIT( ghostRank,
+                           "ghostRank",
+                           array1d< integer >,
+                           -2,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Ghost rank." );
+
+EXTRINSIC_MESH_DATA_TRAIT( elementVolume,
+                           "elementVolume",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Element volume." );
+
+EXTRINSIC_MESH_DATA_TRAIT( elementAperture,
+                           "elementAperture",
+                           array1d< real64 >,
+                           1e-5,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Element aperture." );
 
 EXTRINSIC_MESH_DATA_TRAIT( ParentIndex,
                            "parentIndex",

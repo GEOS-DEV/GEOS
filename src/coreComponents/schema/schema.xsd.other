@@ -724,10 +724,12 @@
 	</xsd:complexType>
 	<xsd:complexType name="TasksType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="PVTDriver" type="PVTDriverType" />
 			<xsd:element name="PackCollection" type="PackCollectionType" />
 			<xsd:element name="TriaxialDriver" type="TriaxialDriverType" />
 		</xsd:choice>
 	</xsd:complexType>
+	<xsd:complexType name="PVTDriverType" />
 	<xsd:complexType name="PackCollectionType" />
 	<xsd:complexType name="TriaxialDriverType" />
 	<xsd:complexType name="commandLineType">
@@ -1045,9 +1047,9 @@
 	<xsd:complexType name="CarmanKozenyPermeabilityType">
 		<!--dPerm_dPorosity => (no description available)-->
 		<xsd:attribute name="dPerm_dPorosity" type="real64_array3d" />
-		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the rock.-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFluidType">
@@ -1105,24 +1107,24 @@
 		<xsd:attribute name="useMass" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSinglePhaseFluidType">
-		<!--dDensity_dPressure => (no description available)-->
+		<!--dDensity_dPressure => Derivative of density with respect to pressure-->
 		<xsd:attribute name="dDensity_dPressure" type="real64_array2d" />
-		<!--dViscosity_dPressure => (no description available)-->
+		<!--dViscosity_dPressure => Derivative of viscosity with respect to pressure-->
 		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
-		<!--density => (no description available)-->
+		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-		<!--initialDensity => (no description available)-->
+		<!--initialDensity => Initial density-->
 		<xsd:attribute name="initialDensity" type="real64_array2d" />
-		<!--viscosity => (no description available)-->
+		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
 	<xsd:complexType name="ConstantPermeabilityType">
-		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the rock.-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
@@ -1412,33 +1414,33 @@
 	</xsd:complexType>
 	<xsd:complexType name="NullModelType" />
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
-		<!--dPerm_dAperture => (no description available)-->
+		<!--dPerm_dAperture => Derivative of rock permeability with respect to aperture-->
 		<xsd:attribute name="dPerm_dAperture" type="real64_array3d" />
-		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the rock.-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="ParticleFluidType">
-		<!--collisionFactor => (no description available)-->
+		<!--collisionFactor => Collision factor-->
 		<xsd:attribute name="collisionFactor" type="real64_array" />
-		<!--dCollisionFactor_dProppantConcentration => (no description available)-->
+		<!--dCollisionFactor_dProppantConcentration => Derivative of collision factor with respect to proppant concentration-->
 		<xsd:attribute name="dCollisionFactor_dProppantConcentration" type="real64_array" />
-		<!--dSettlingFactor_dComponentConcentration => (no description available)-->
+		<!--dSettlingFactor_dComponentConcentration => Derivative of settling factor with respect to component concentration-->
 		<xsd:attribute name="dSettlingFactor_dComponentConcentration" type="real64_array2d" />
-		<!--dSettlingFactor_dPressure => (no description available)-->
+		<!--dSettlingFactor_dPressure => Derivative of settling factor with respect to pressure-->
 		<xsd:attribute name="dSettlingFactor_dPressure" type="real64_array" />
-		<!--dSettlingFactor_dProppantConcentration => (no description available)-->
+		<!--dSettlingFactor_dProppantConcentration => Derivative of settling factor with respect to proppant concentration-->
 		<xsd:attribute name="dSettlingFactor_dProppantConcentration" type="real64_array" />
-		<!--proppantPackPermeability => (no description available)-->
+		<!--proppantPackPermeability => Proppant pack permeability-->
 		<xsd:attribute name="proppantPackPermeability" type="real64_array" />
-		<!--settlingFactor => (no description available)-->
+		<!--settlingFactor => Settling factor-->
 		<xsd:attribute name="settlingFactor" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="PermeabilityBaseType">
-		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the rock.-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="PorousDruckerPragerType" />
@@ -1459,13 +1461,13 @@
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPermeabilityType">
-		<!--dPerm_dAperture => (no description available)-->
+		<!--dPerm_dAperture => Derivative of rock permeability with respect to aperture-->
 		<xsd:attribute name="dPerm_dAperture" type="real64_array3d" />
-		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the rock.-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
-		<!--permeabilityMultiplier => (no description available)-->
+		<!--permeabilityMultiplier => Rock permeability multiplier-->
 		<xsd:attribute name="permeabilityMultiplier" type="real64_array3d" />
 		<!--proppantPackPermeability => (no description available)-->
 		<xsd:attribute name="proppantPackPermeability" type="real64" />
@@ -1483,46 +1485,46 @@
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSlurryFluidType">
-		<!--FluidDensity => (no description available)-->
+		<!--FluidDensity => Fluid density-->
 		<xsd:attribute name="FluidDensity" type="real64_array2d" />
-		<!--FluidViscosity => (no description available)-->
+		<!--FluidViscosity => Fluid viscosity-->
 		<xsd:attribute name="FluidViscosity" type="real64_array2d" />
-		<!--componentDensity => (no description available)-->
+		<!--componentDensity => Component density-->
 		<xsd:attribute name="componentDensity" type="real64_array3d" />
-		<!--dCompDens_dCompConc => (no description available)-->
+		<!--dCompDens_dCompConc => Derivative of component density with respect to component concentration-->
 		<xsd:attribute name="dCompDens_dCompConc" type="real64_array4d" />
-		<!--dCompDens_dPres => (no description available)-->
+		<!--dCompDens_dPres => Derivative of component density with respect to pressure-->
 		<xsd:attribute name="dCompDens_dPres" type="real64_array3d" />
-		<!--dDens_dCompConc => (no description available)-->
+		<!--dDens_dCompConc => Derivative of density with respect to component concentration-->
 		<xsd:attribute name="dDens_dCompConc" type="real64_array3d" />
-		<!--dDens_dPres => (no description available)-->
+		<!--dDens_dPres => Derivative of density with respect to pressure-->
 		<xsd:attribute name="dDens_dPres" type="real64_array2d" />
-		<!--dDens_dProppantConc => (no description available)-->
+		<!--dDens_dProppantConc => Derivative of density with respect to proppant concentration-->
 		<xsd:attribute name="dDens_dProppantConc" type="real64_array2d" />
-		<!--dFluidDens_dCompConc => (no description available)-->
+		<!--dFluidDens_dCompConc => Derivative of fluid density with respect to component concentration-->
 		<xsd:attribute name="dFluidDens_dCompConc" type="real64_array3d" />
-		<!--dFluidDens_dPres => (no description available)-->
+		<!--dFluidDens_dPres => Derivative of fluid density with respect to pressure-->
 		<xsd:attribute name="dFluidDens_dPres" type="real64_array2d" />
-		<!--dFluidVisc_dCompConc => (no description available)-->
+		<!--dFluidVisc_dCompConc => Derivative of fluid viscosity with respect to component concentration-->
 		<xsd:attribute name="dFluidVisc_dCompConc" type="real64_array3d" />
-		<!--dFluidVisc_dPres => (no description available)-->
+		<!--dFluidVisc_dPres => Derivative of fluid viscosity with respect to pressure-->
 		<xsd:attribute name="dFluidVisc_dPres" type="real64_array2d" />
-		<!--dVisc_dCompConc => (no description available)-->
+		<!--dVisc_dCompConc => Derivative of viscosity with respect to component concentration-->
 		<xsd:attribute name="dVisc_dCompConc" type="real64_array3d" />
-		<!--dVisc_dPres => (no description available)-->
+		<!--dVisc_dPres => Derivative of viscosity with respect to pressure-->
 		<xsd:attribute name="dVisc_dPres" type="real64_array2d" />
-		<!--dVisc_dProppantConc => (no description available)-->
+		<!--dVisc_dProppantConc => Derivative of viscosity with respect to proppant concentration-->
 		<xsd:attribute name="dVisc_dProppantConc" type="real64_array2d" />
-		<!--density => (no description available)-->
+		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
-		<!--viscosity => (no description available)-->
+		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType" />
 	<xsd:complexType name="StrainDependentPermeabilityType">
-		<!--dPerm_dPressure =>  dPerm_dPressure of the rock.-->
+		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the rock.-->
+		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
