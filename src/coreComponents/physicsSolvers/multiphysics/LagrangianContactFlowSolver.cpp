@@ -730,7 +730,7 @@ void LagrangianContactFlowSolver::assembleSystem( real64 const time,
   //                              localMatrix,
   //                              localRhs );
 
-  m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
+  //m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   m_flowSolver->assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
                                                                      dofManager,
