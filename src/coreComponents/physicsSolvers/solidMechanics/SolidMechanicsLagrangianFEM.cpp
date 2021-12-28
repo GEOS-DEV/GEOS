@@ -251,6 +251,13 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
+void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+  solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
+}
 
 void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {

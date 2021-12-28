@@ -1027,7 +1027,6 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
-
     arrayView1d< globalIndex const > const & dispDofNumber =
       nodeManager.getReference< array1d< globalIndex > >( dofManager.getKey( keys::TotalDisplacement ) );
 
@@ -1127,7 +1126,6 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
                                         globalResidualNorm[0],
                                         globalResidualNorm[1],
                                         globalResidualNorm[2] ) );
-
   return globalResidualNorm[2];
 }
 

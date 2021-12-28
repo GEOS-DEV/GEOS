@@ -219,7 +219,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   // TODO: can we look this up better?
   string const & meshBodyName = mesh.getParent().getParent().getName();
   arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
-  arrayView1d< string const > const coeffModelNames = m_coefficientModelNames.at( meshBodyName );
+  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
     elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
@@ -871,7 +871,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   // TODO: can we look this up better?
   string const & meshBodyName = mesh.getParent().getParent().getName();
   arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
-  arrayView1d< string const > const coeffModelNames = m_coefficientModelNames.at( meshBodyName );
+  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
     elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,

@@ -155,8 +155,9 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;
 #endif
 
+
 private:
-  virtual void setFluidNames( ElementSubRegionBase & subRegion ) const = 0;
+  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
 };
 
 
