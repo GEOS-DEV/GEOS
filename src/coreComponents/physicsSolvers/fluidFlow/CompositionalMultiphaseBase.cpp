@@ -319,34 +319,20 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition & 
                                                                   ElementSubRegionBase & subRegion )
     {
       {
-        string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-        fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-        GEOSX_THROW_IF( fluidName.empty(),
-                        GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                        InputError );
-
+        string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
         MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
         compareMultiphaseModels( fluid, referenceFluid );
         compareMulticomponentModels( fluid, referenceFluid );
       }
       {
-        string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-        relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
-        GEOSX_THROW_IF( relPermName.empty(),
-                        GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
-                        InputError );
-
+        string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
         RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
         compareMultiphaseModels( relPerm, referenceFluid );
       }
 
       if( m_capPressureFlag )
       {
-        string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-        capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-        GEOSX_THROW_IF( capPresName.empty(),
-                        GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
-                        InputError );
+        string const & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
 
         CapillaryPressureBase const & capPres = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPresName );
         compareMultiphaseModels( capPres, referenceFluid );
@@ -355,10 +341,30 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition & 
   } );
 }
 
-void CompositionalMultiphaseBase::setFluidNames( ElementSubRegionBase & subRegion ) const
+void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidMaterialName = SolverBase::getConstitutiveName< MultiFluidBase >( subRegion );
+//  FlowSolverBase::setConstitutiveNames(subRegion);
+
+  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+  GEOSX_THROW_IF( fluidName.empty(),
+                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                  InputError );
+
+  string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+  relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
+  GEOSX_THROW_IF( relPermName.empty(),
+                  GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
+                  InputError );
+
+  if( m_capPressureFlag )
+  {
+    string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+    capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
+    GEOSX_THROW_IF( capPresName.empty(),
+                    GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+  }
 }
 
 void CompositionalMultiphaseBase::initializePreSubGroups()

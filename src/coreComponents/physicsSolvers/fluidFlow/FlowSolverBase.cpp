@@ -153,6 +153,19 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
+
+void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  string & solidName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
+  solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
+  GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+
+  string & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
+  permName = getConstitutiveName< PermeabilityBase >( subRegion );
+  GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+}
+
+
 void FlowSolverBase::initializePreSubGroups()
 {
   SolverBase::initializePreSubGroups();
@@ -168,13 +181,7 @@ void FlowSolverBase::initializePreSubGroups()
                                                                        [&]( localIndex const,
                                                                             ElementSubRegionBase & subRegion )
     {
-      string & solidName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
-      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
-
-      string & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
-      permName = getConstitutiveName< PermeabilityBase >( subRegion );
-      GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+      setConstitutiveNames( subRegion );
     } );
   } );
 
@@ -228,15 +235,6 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    ElementRegionManager & elementRegionManager = mesh.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            CellElementSubRegion & subRegion )
-    {
-      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
-      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
-    });
-
     resetViews( mesh ); // TODO: won't work with multiple meshes
     precomputeData( mesh, regionNames );
   } );

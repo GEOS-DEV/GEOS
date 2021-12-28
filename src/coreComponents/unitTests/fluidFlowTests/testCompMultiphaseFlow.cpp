@@ -167,14 +167,20 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 {
   localIndex const NC = solver.numFluidComponents();
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d<string const> const & regionNames )
   {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+      {
     SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
-    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
 
@@ -231,6 +237,7 @@ void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                          components );
       } );
     }
+      } );
   } );
 }
 
@@ -245,12 +252,19 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d<string const> const & regionNames )
   {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+      {
     SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
-    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
@@ -293,7 +307,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -325,7 +339,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -345,6 +359,7 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
                          phases );
       } );
     }
+      });
   } );
 }
 
@@ -358,12 +373,19 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d<string const> const & regionNames )
   {
-    SCOPED_TRACE( subRegion.getParent().getName() + "/" + subRegion.getName() );
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+      {
+    SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
-    string const & fluidName = solver.fluidModelNames()[targetIndex];
+    string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
     arrayView1d< string const > const & components = fluid.componentNames();
     arrayView1d< string const > const & phases = fluid.phaseNames();
@@ -406,7 +428,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -438,7 +460,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
       } );
 
       // recompute component fractions
-      solver.updateFluidState( subRegion, targetIndex );
+      solver.updateFluidState( subRegion );
 
       // check values in each cell
       forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
@@ -458,6 +480,7 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
                          phases );
       } );
     }
+  });
   } );
 }
 
@@ -473,8 +496,6 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
@@ -495,9 +516,16 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
 
   string const dofKey = dofManager.getKey( CompositionalMultiphaseFVM::viewKeyStruct::elemDofFieldString() );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d<string const> const & regionNames )
   {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+      {
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView1d< globalIndex const > const & dofNumber =
@@ -539,11 +567,21 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
 #if defined(GEOSX_USE_CUDA)
         dPres.move( LvArray::MemorySpace::cuda, false );
 #endif
-        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
-                                               ElementSubRegionBase & subRegion2 )
+
+
+        solver.forMeshTargets( domain.getMeshBodies(),
+                               [&]( string const,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
         {
-          solver.updateFluidState( subRegion2, targetIndex2 );
+          ElementRegionManager & elementRegionManager = mesh.getElemManager();
+          elementRegionManager.forElementSubRegions( regionNames,
+                                                     [&]( localIndex const,
+                                                          ElementSubRegionBase & subRegion2 )
+            {
+          solver.updateFluidState( subRegion2 );
         } );
+        });
 
         residual.zero();
         jacobian.zero();
@@ -564,11 +602,19 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
         dCompDens.move( LvArray::MemorySpace::host, true );
         dCompDens[ei][jc] = dRho;
 
-        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
-                                               ElementSubRegionBase & subRegion2 )
+        solver.forMeshTargets( domain.getMeshBodies(),
+                               [&]( string const,
+                                    MeshLevel & mesh,
+                                    arrayView1d<string const> const & regionNames )
         {
-          solver.updateFluidState( subRegion2, targetIndex2 );
+          ElementRegionManager & elementRegionManager = mesh.getElemManager();
+          elementRegionManager.forElementSubRegions( regionNames,
+                                                     [&]( localIndex const,
+                                                          ElementSubRegionBase & subRegion2 )
+            {
+          solver.updateFluidState( subRegion2 );
         } );
+        });
 
         residual.zero();
         jacobian.zero();
@@ -581,6 +627,7 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
                                jacobianFD.toViewConstSizes() );
       }
     }
+  });
   } );
 
   // assemble the analytical jacobian

@@ -867,12 +867,13 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
 {
   WellSolverBase::resetViews( domain );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  SinglePhaseBase & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
-
+  forMeshTargets( domain.getMeshBodies(),
+                  [&] ( string const &,
+                        MeshLevel & mesh,
+                        arrayView1d<string const> const & regionNames )
   {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
     m_resPressure.clear();
     m_resPressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::pressure::key() );
     m_resPressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure::key() );
@@ -881,10 +882,10 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
     m_deltaResPressure = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::deltaPressure::key() );
     m_deltaResPressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::deltaPressure::key() );
 
-  }
-  {
-    using keys = SingleFluidBase::viewKeyStruct;
 
+    {
+
+      using keys = SingleFluidBase::viewKeyStruct;
     m_resDensity.clear();
     m_resDensity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::densityString() );
     m_resDensity.setName( getName() + "/accessors/" + keys::densityString() );
@@ -901,7 +902,8 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
     m_dResVisc_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::dVisc_dPresString() );
     m_dResVisc_dPres.setName( getName() + "/accessors/" + keys::dVisc_dPresString() );
 
-  }
+    }
+  });
 }
 
 void SinglePhaseWell::implicitStepSetup( real64 const & time,

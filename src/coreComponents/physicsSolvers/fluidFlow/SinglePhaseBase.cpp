@@ -140,11 +140,13 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
            singleFluid.defaultViscosity() };
 }
 
-void SinglePhaseBase::setFluidNames( ElementSubRegionBase & subRegion ) const
+void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
+  string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
+  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 }
+
 
 void SinglePhaseBase::initializePreSubGroups()
 {

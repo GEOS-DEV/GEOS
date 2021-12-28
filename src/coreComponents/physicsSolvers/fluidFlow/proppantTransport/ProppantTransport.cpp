@@ -139,10 +139,21 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void ProppantTransport::setFluidNames( ElementSubRegionBase & subRegion ) const
+
+void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidMaterialName = SolverBase::getConstitutiveName< SlurryFluidBase >( subRegion );
+  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
+  GEOSX_THROW_IF( fluidName.empty(),
+                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                  InputError );
+
+  string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
+  proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
+  GEOSX_THROW_IF( proppantName.empty(),
+                  GEOSX_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
+                  InputError );
+
 }
 
 
@@ -160,18 +171,7 @@ void ProppantTransport::initializePreSubGroups()
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
-      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
-      GEOSX_THROW_IF( fluidName.empty(),
-                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                      InputError );
-
-      string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
-      proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
-      GEOSX_THROW_IF( proppantName.empty(),
-                      GEOSX_FMT( "Proppant model not found on subregion {}", subRegion.getName() ),
-                      InputError );
-
+      setConstitutiveNames(subRegion);
     } );
 
     if( m_numComponents > 0 )

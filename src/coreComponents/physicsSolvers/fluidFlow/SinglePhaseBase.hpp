@@ -361,8 +361,8 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
 private:
+  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
 
-  virtual void setFluidNames( ElementSubRegionBase & subRegion ) const override;
 
   virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
