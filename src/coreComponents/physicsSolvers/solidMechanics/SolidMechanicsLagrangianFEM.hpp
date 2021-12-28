@@ -303,6 +303,9 @@ protected:
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
+private:
+  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
+
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,

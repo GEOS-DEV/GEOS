@@ -260,8 +260,7 @@ private:
   void updateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
 
-  void setFluidNames( ElementSubRegionBase & subRegion ) const override;
-
+  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
 
   /// views into primary variable fields
 

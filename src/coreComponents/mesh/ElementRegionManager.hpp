@@ -887,7 +887,7 @@ public:
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+                                 string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
   /**
@@ -905,7 +905,7 @@ public:
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+                                 string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
   /**
@@ -923,7 +923,7 @@ public:
   ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+                                      string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
 
   /**
@@ -1417,10 +1417,9 @@ template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+                                                     string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
-  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
   ElementViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
@@ -1444,8 +1443,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
                                              ElementSubRegionBase const & subRegion )
       {
-        dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
-        dataRepository::Group const & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+        string const & materialName = subRegion.getReference<string>( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
 
         dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1454,7 +1453,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
         }
       } );
     }
@@ -1466,10 +1465,9 @@ template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+                                                     string const & materialKeyName,
                                                      bool const allowMissingViews )
 {
-  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
   ElementViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
@@ -1492,8 +1490,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
       {
-        dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
-        dataRepository::Group & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+        string const & materialName = subRegion.getReference<string>( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
 
         dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1502,7 +1500,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
         }
       } );
     }
@@ -1539,12 +1537,12 @@ ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PER
 ElementRegionManager::
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+                                      string const & materialKeyName,
                                       bool const allowMissingViews ) const
 {
   return constructMaterialViewAccessor< Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName,
                                                                                                               regionNames,
-                                                                                                              materialNames,
+                                                                                                              materialKeyName,
                                                                                                               allowMissingViews );
 }
 
