@@ -30,16 +30,16 @@ namespace geosx
 namespace BilinearForms
 {
 template< typename MATRIX,
-          typename TEST_BASIS_VECTOR_GRADIENT,
-		  typename TRIAL_BASIS_SCALAR,
-		  typename SECOND_ORDER_TENSOR >
+          typename GRADIENT_VECTOR_TEST_BASIS,
+		  typename SECOND_ORDER_TENSOR,
+		  typename SCALAR_TRIAL_BASIS >
 GEOSX_HOST_DEVICE
-void B1( integer const numTestDOF,
+void symmetricGradientScalar( integer const numTestDOF,
 		 integer const numTrialDOF,
 		 MATRIX && mat,
-		 TEST_BASIS_VECTOR_GRADIENT && dNdX,
-		 TRIAL_BASIS_SCALAR && Np,
-		 SECOND_ORDER_TENSOR &&  A)
+		 GRADIENT_VECTOR_TEST_BASIS && dNdX,
+		 SECOND_ORDER_TENSOR &&  A,
+		 SCALAR_TRIAL_BASIS && Np )
 {
     for( int a = 0; a < numTestDOF/3; ++a )
     {
@@ -51,6 +51,52 @@ void B1( integer const numTestDOF,
       }
     }
 }
+
+template< typename MATRIX,
+          typename SCALAR_TEST_BASIS,
+		  typename DIVERGENCE_VECTOR_TEST_BASIS >
+GEOSX_HOST_DEVICE
+void scalarDivergence( integer const numTestDOF,
+		               integer const numTrialDOF,
+		               MATRIX && mat,
+		               SCALAR_TEST_BASIS && Np,
+		               real64 A,
+		               DIVERGENCE_VECTOR_TEST_BASIS && dNdX )
+{
+	for( int a = 0; a < numTestDOF; ++a )
+	{
+		for( integer b = 0; b < numTrialDOF/3; ++b )
+		{
+		  mat[a][b*3+0] = mat[a][b*3+0] + A * dNdX[b][0];
+		  mat[a][b*3+1] = mat[a][b*3+1] + A * dNdX[b][1];
+		  mat[a][b*3+2] = mat[a][b*3+2] + A * dNdX[b][2];
+		}
+	}
+}
+
+template< typename MATRIX,
+          typename VECTOR_TEST_BASIS,
+		  typename VECTOR,
+		  typename SCALAR_TEST_BASIS >
+GEOSX_HOST_DEVICE
+void vectorScalar( integer const numTestDOF,
+				   integer const numTrialDOF,
+				   MATRIX && mat,
+				   VECTOR_TEST_BASIS && N,
+				   VECTOR && v,
+				   SCALAR_TEST_BASIS && Np )
+{
+	for( int a = 0; a < numTestDOF/3; ++a )
+	{
+	  for( int b = 0; b < numTrialDOF; ++b )
+	  {
+		mat[a*3+0][b] = mat[a*3+0][b] + N[a] * v[0] * Np[b];
+		mat[a*3+1][b] = mat[a*3+1][b] + N[a] * v[1] * Np[b];
+		mat[a*3+2][b] = mat[a*3+2][b] + N[a] * v[2] * Np[b];
+	  }
+	}
+}
+
 }
 ///////////////////////
 
@@ -173,7 +219,6 @@ public:
             uhat_local(),
             localFlowResidual{ 0.0 },
       localDispFlowJacobian{ {0.0} },
-	  localDispFlowJacobianNew{ {0.0} },
       localFlowDispJacobian{ {0.0} },
       localFlowFlowJacobian{ {0.0} },
       localFlowDofIndex{ 0 }
@@ -195,7 +240,6 @@ public:
 
     real64 localFlowResidual[1];
     real64 localDispFlowJacobian[numDispDofPerElem][1];
-    real64 localDispFlowJacobianNew[numDispDofPerElem][1];
     real64 localFlowDispJacobian[1][numDispDofPerElem];
     real64 localFlowFlowJacobian[1][1];
 
@@ -365,25 +409,22 @@ public:
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute dRmom_dPressure
-    FE_TYPE::plusGradNajAij( dNdX,
-                             dTotalStress_dPressure,
-                             reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
-
-    ///////////////////////////
     int Np[1] = { 1 };
-    BilinearForms::B1( numDispDofPerElem,
-					   1,
-					   stack.localDispFlowJacobianNew,
-					   dNdX,
-					   Np,
-					   dTotalStress_dPressure);
-    ///////////////////////////
+    BilinearForms::symmetricGradientScalar( stack.numDispDofPerElem,
+			                                1,
+					                        stack.localDispFlowJacobian,
+					                        dNdX,
+					                        dTotalStress_dPressure,
+					                        Np );
 
     if( m_gravityAcceleration > 0.0 )
     {
-      FE_TYPE::plusNaFi( N,
-                         dBodyForce_dPressure,
-                         reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localDispFlowJacobian) );
+      BilinearForms::vectorScalar( stack.numDispDofPerElem,
+      				               1,
+								   stack.localDispFlowJacobian,
+      				               N,
+								   dBodyForce_dPressure,
+      				               Np );
     }
 
 
@@ -391,12 +432,12 @@ public:
     stack.localFlowResidual[0] += ( fluidMassContent - fluidMassContentOld );
 
     // Compute dRmas_dVolStrain
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localFlowDispJacobian[0][a*3+0] += dFluidMassContent_dVolStrainIncrement * dNdX[a][0];
-      stack.localFlowDispJacobian[0][a*3+1] += dFluidMassContent_dVolStrainIncrement * dNdX[a][1];
-      stack.localFlowDispJacobian[0][a*3+2] += dFluidMassContent_dVolStrainIncrement * dNdX[a][2];
-    }
+    BilinearForms::scalarDivergence( 1,
+    		                         stack.numDispDofPerElem,
+			              		     stack.localFlowDispJacobian,
+		  	                		 Np,
+			                		 dFluidMassContent_dVolStrainIncrement,
+			              		     dNdX );
 
     // Compute dRmas_dPressure
     stack.localFlowFlowJacobian[0][0] += dFluidMassContent_dPressure;
@@ -432,7 +473,7 @@ public:
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localFlowDofIndex,
-                                                                                stack.localDispFlowJacobianNew[numDofPerTestSupportPoint * localNode + dim],
+                                                                                stack.localDispFlowJacobian[numDofPerTestSupportPoint * localNode + dim],
                                                                                 1 );
 
       }
