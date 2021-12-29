@@ -296,6 +296,9 @@ private:
    */
   void appendAuxillaryLayer();
 
+  // a temporary method for debugging
+  void printDataForDebugging();
+
   /// Object holding the mesh (and MPI partition) dimensions
   CornerPointMeshDimensions m_dims;
 

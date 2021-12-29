@@ -105,7 +105,7 @@ void CornerPointMeshBuilder::buildCornerPointCells()
 
   localIndex const nXLocal = m_dims.nXLocal();
   localIndex const nYLocal = m_dims.nYLocal();
-  localIndex const nZLocal = m_dims.nZLocal();
+  localIndex const nZLocal = m_dims.nZLocal() + 2; // add two layers of auxillary cells for building faces
 
   // Auxillary layers need to be appended to coord, zcorn, and actnum before computing vertice coordinates
   appendAuxillaryLayer();
@@ -150,32 +150,39 @@ void CornerPointMeshBuilder::buildCornerPointCells()
       for( localIndex i = 0; i < nXLocal; ++i )
       {
         bool isValid = false;
-
         // compute explicit local and global indices using the ijk structure
         localIndex const iLocalCell = k*nXLocal*nYLocal + j*nXLocal + i;
         globalIndex const iGlobalCell = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + (i+iMinLocal);
-
-        if( actnum( iLocalCell ) == 1 )
-        {
-          // compute the positions of the eight vertices
-          isValid =
-            computeCellCoordinates( i, j, k, nXLocal, nYLocal,
-                                    iMinOverlap, iMaxOverlap, jMinOverlap, jMaxOverlap,
-                                    coord, zcorn,
-                                    xPos, yPos, zPos, cpVertexIsInside );
-        }
+        // TODO: inactive cells' vertex information is important for finding intersection points (discuss with francois)
+        //        if( actnum( iLocalCell ) == 1 )
+        //        {
+        //          // compute the positions of the eight vertices
+        //          isValid =
+        //            computeCellCoordinates( i, j, k, nXLocal, nYLocal,
+        //                                    iMinOverlap, iMaxOverlap, jMinOverlap, jMaxOverlap,
+        //                                    coord, zcorn,
+        //                                    xPos, yPos, zPos, cpVertexIsInside );
+        //        }
+        //compute the positions of the eight vertices
+        isValid =
+          computeCellCoordinates( i, j, k, nXLocal, nYLocal,
+                                  iMinOverlap, iMaxOverlap, jMinOverlap, jMaxOverlap,
+                                  coord, zcorn,
+                                  xPos, yPos, zPos, cpVertexIsInside );
 
         if( isValid )
         {
           // cell maps
-
           // assign local and global indices
-          activeCellToCell.emplace_back( iLocalCell );
-          // decide flag specifying whether the cell is in the overlap or not
-          if( m_dims.columnIsInsidePartition( i, j ) )
+          if( actnum( iLocalCell ) == 1 )
           {
-            ownedActiveCellToActiveCell.emplace_back( activeCellToCell.size()-1 );
-            ownedActiveCellToGlobalCell.emplace_back( iGlobalCell );
+            activeCellToCell.emplace_back( iLocalCell );
+            // decide flag specifying whether the cell is in the overlap or not
+            if( m_dims.columnIsInsidePartition( i, j ) )
+            {
+              ownedActiveCellToActiveCell.emplace_back( activeCellToCell.size()-1 );
+              ownedActiveCellToGlobalCell.emplace_back( iGlobalCell );
+            }
           }
 
           // vertex maps
@@ -230,20 +237,23 @@ void CornerPointMeshBuilder::appendAuxillaryLayer()
 {
   // Append top and bottom auxillary layers to zcorn and adjust actnum
   array1d< localIndex > & actnum = m_parser.actnum();
-  array1d< real64 > & coord = m_parser.coord();
   array1d< real64 > & zcorn = m_parser.zcorn();
-  localIndex const nXLocal = m_dims.nXLocal();
-  localIndex const nYLocal = m_dims.nYLocal();
-  localIndex layerZcornSize = 4 * nXLocal * nYLocal;
+  localIndex const nXLocal = m_dims.nXLocal() * 2;
+  localIndex const nYLocal = m_dims.nYLocal() * 2;
+  localIndex const nZLocal = m_dims.nZLocal() * 2;
+  localIndex layerZcornSize = nXLocal * nYLocal;
 
   // step 1: Find highest and lowest points to set as up and bottom boundaries
-  real64 minZcorn = *( std::min_element( zcorn.begin(), zcorn.end() ) ) - m_offset;
-  real64 maxZcorn = *( std::max_element( zcorn.begin(), zcorn.end() ) ) + m_offset;
+  real64 const minZcorn = *( std::min_element( zcorn.begin(), zcorn.end() ) ) - m_offset;
+  real64 const maxZcorn = *( std::max_element( zcorn.begin(), zcorn.end() ) ) + m_offset;
 
   array1d< real64 > topLayer( layerZcornSize );
   array1d< real64 > bottomLayer( layerZcornSize );
-  topLayer.resizeDefault( layerZcornSize, maxZcorn );
-  bottomLayer.resizeDefault( layerZcornSize, minZcorn );
+  // TODO: resizeDefault seems not to assign the given value to each element. The interesting finding is
+  //       topCellActnum works fine with resizeDefault. It appears to me resizeDefault does not work well
+  //       with real64.
+  //topLayer.resizeDefault( layerZcornSize, maxZcorn );
+  //bottomLayer.resizeDefault( layerZcornSize, minZcorn );
 
   // Step 2: duplicate original top and bottom layer of points
   array1d< real64 > origTopLayer( layerZcornSize );
@@ -251,48 +261,89 @@ void CornerPointMeshBuilder::appendAuxillaryLayer()
 
   // loop over all zcorns of elements at top/bottom layer in the MPI domain, including overlaps
   localIndex count = 0;
-  localIndex const k = m_dims.nZLocal();
+  localIndex const k = nZLocal - 1; // lower layer
 
   // TODO: discuss with Francois to see if it is better to use multidimensional vectors
-  for( localIndex j = 0; j < 2 * nYLocal; ++j )
+  for( localIndex j = 0; j < nYLocal; ++j )
   {
-    for( localIndex i = 0; i < 2 * nXLocal; ++i )
+    for( localIndex i = 0; i < nXLocal; ++i )
     {
       // compute explicit local and global indices using the ijk structure
       localIndex const iLocalTopZcorn = j*nXLocal + i;
       localIndex const iLocalBottomZcorn = k * nYLocal * nXLocal + iLocalTopZcorn;
       origTopLayer( count ) = zcorn( iLocalTopZcorn );
       origBottomLayer( count ) = zcorn( iLocalBottomZcorn );
-      ++ count;
+      topLayer( count ) = minZcorn;
+      bottomLayer( count ) = maxZcorn;
+      count += 1;
     }
   }
 
   localIndex startZcornPos = 0;
-  localIndex endZcornPos = zcorn.size();
+  localIndex const endZcornPos = zcorn.size();
   // Step 3: Append four new layers of zcorns to zcorn vector (TODO: better way?)
   zcorn.insert( endZcornPos, origBottomLayer.begin(), origBottomLayer.end());
   zcorn.insert( endZcornPos + layerZcornSize, bottomLayer.begin(), bottomLayer.end());
   zcorn.insert( startZcornPos, origTopLayer.begin(), origTopLayer.end());
   zcorn.insert( startZcornPos, topLayer.begin(), topLayer.end());
 
-  // Debugging: print out zcorn's new size
-  std::cout<< "The new zcorn has size of " << zcorn.size() <<std::endl;
-
-  // Step 4: assign auxillary cells with being inactive
-  localIndex const layerCellSize = nXLocal * nYLocal;
+  // Step 4: assign auxillary cells with being inactive and region numbers
+  array1d< localIndex > & regionId = m_parser.regionId();
+  localIndex const layerCellSize = m_dims.nXLocal() * m_dims.nYLocal();
   array1d< localIndex > topCellActnum;
   array1d< localIndex > bottomCellActnum;
+  array1d< localIndex > topCellReginId;
+  array1d< localIndex > bottomCellReginId;
+  // TODO: hard-coded activeness and regionId
   localIndex const inactiveness = -1;
   topCellActnum.resizeDefault( layerCellSize, inactiveness);
   bottomCellActnum.resizeDefault( layerCellSize, inactiveness);
+  topCellReginId.resize(layerCellSize);
+  bottomCellReginId.resize(layerCellSize);
 
   localIndex startActnumPos = 0;
   localIndex endActnumPos = actnum.size();
   actnum.insert( endActnumPos, bottomCellActnum.begin(), bottomCellActnum.end());
   actnum.insert( startActnumPos, topCellActnum.begin(), topCellActnum.end());
 
-  // Debugging: print out zcorn's new size
-  std::cout<< "The new actnum has size of " << actnum.size() <<std::endl;
+  regionId.insert( endActnumPos, bottomCellReginId.begin(), bottomCellReginId.end());
+  regionId.insert( startActnumPos, topCellReginId.begin(), topCellReginId.end());
+
+  //printDataForDebugging();
+}
+
+void CornerPointMeshBuilder::printDataForDebugging()
+{
+  localIndex const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  if( rank == 0 )
+  {
+    std::string folderName = "debugPrintout";
+    std::cout << "Creating the " << folderName << " directory. System call returned: " << std::endl
+              << system( ( "mkdir -p " + folderName ).c_str() )
+              << std::endl;
+
+    array1d< localIndex > & actnum = m_parser.actnum();
+    array1d< real64 > & zcorn = m_parser.zcorn();
+    // Debugging:
+    std::cout<< "Saving zcorn... " <<std::endl;
+    std::ofstream outfile_;
+
+    std::vector<std::string> fileNameList = {"zcorn", "actnum"};
+    outfile_.open( folderName + "/" + fileNameList[0] + ".txt", std::ios::out | std::ios::binary );
+    outfile_ << "The new zcorn has size of " << zcorn.size() <<std::endl;
+    for( localIndex index = 0 ; index < zcorn.size() ; index++ )
+      outfile_ << zcorn( index ) << std::endl;
+
+    outfile_.close();
+    std::cout<< "zcorn saved. Saving actnum... " <<std::endl;
+    outfile_.open( folderName + "/" + fileNameList[1] + ".txt", std::ios::out | std::ios::binary );
+    outfile_ << "The new zcorn has size of " << actnum.size() <<std::endl;
+    for( localIndex index = 0 ; index < actnum.size() ; index++ )
+      outfile_ << actnum( index ) << std::endl;
+
+    outfile_.close();
+    std::cout<< "actnum saved." <<std::endl;
+  }
 }
 
 bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,
@@ -460,6 +511,7 @@ void CornerPointMeshBuilder::filterVertices()
   array1d< globalIndex > const & cpVertexToGlobalCPVertex = m_vertices.m_cpVertexToGlobalCPVertex;
   array1d< localIndex > & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
   cpVertexToVertex.resize( cpVertexPositions.size() );
+  // TODO: cpVertexToVertex.resize( cpVertexPositions.size( 0 ) );
 
   // First step: filter the unique vertices using a set
 
