@@ -22,6 +22,103 @@
 namespace geosx
 {
 
+GEOSX_HOST_DEVICE integer getAxisIntervalIndexLowMult( real64 const axis_value,
+                                                       real64 const axis_min,
+                                                       real64 const axis_max,
+                                                       real64 const axis_step,
+                                                       real64 const axis_step_inv,
+                                                       integer const axis_points,
+                                                       // OUTPUT:
+                                                       real64 & axis_low,
+                                                       real64 & axis_mult )
+{
+  integer axis_interval_index = integer((axis_value - axis_min) * axis_step_inv );
+
+  // check that axis_idx is within interpolation interval: valid axis_idx is between [0; axis_points - 2],
+  // since there are axis_points-1 intervals along the axis
+  if( axis_interval_index < 0 )
+  {
+    axis_interval_index = 0;
+    if( axis_value < axis_min )
+    {
+      printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axis_min, axis_max, axis_value );
+    }
+  }
+  else if( axis_interval_index > (axis_points - 2))
+  {
+    axis_interval_index = axis_points - 2;
+    if( axis_value > axis_max )
+    {
+      printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axis_min, axis_max, axis_value );
+    }
+  }
+
+  axis_low = axis_interval_index * axis_step + axis_min;
+  axis_mult = (axis_value - *axis_low) * axis_step_inv;
+  return axis_interval_index;
+}
+
+template< integer N_DIMS, integer N_OPS >
+GEOSX_HOST_DEVICE void interpolate_point_with_derivatives( real64 const *axis_values,
+                                                           real64 const *body_data,
+                                                           real64 const *axis_low,
+                                                           real64 const *axis_mult,
+                                                           real64 const *axis_step_inv,
+                                                           // OUTPUT:
+                                                           real64 *interp_values, real64 *interp_derivs )
+{
+  static const integer N_VERTS = 1 << N_DIMS;
+  integer pwr = N_VERTS / 2; // distance between high and low values
+  real64 workspace[(2 * N_VERTS - 1) * N_OPS];
+
+  // copy operator values for all vertices
+  for( integer i = 0; i < N_VERTS * N_OPS; ++i )
+  {
+    workspace[i] = body_data[i];
+  }
+
+  for( integer i = 0; i < N_DIMS; ++i )
+  {
+    //printf ("i = %d, N_VERTS = %d, New offset: %d\n", i, N_VERTS, 2 * N_VERTS - (N_VERTS>>i));
+
+    for( integer j = 0; j < pwr; ++j )
+    {
+      for( integer op = 0; op < N_OPS; ++op )
+      {
+        // update own derivative
+        workspace[(2 * N_VERTS - (N_VERTS >> i) + j) * N_OPS + op] = (workspace[(j + pwr) * N_OPS + op] - workspace[j * N_OPS + op]) * axis_step_inv[i];
+      }
+
+      // update all dependent derivatives
+      for( integer k = 0; k < i; k++ )
+      {
+        for( integer op = 0; op < N_OPS; ++op )
+        {
+          workspace[(2 * N_VERTS - (N_VERTS >> k) + j) * N_OPS + op] = workspace[(2 * N_VERTS - (N_VERTS >> k) + j) * N_OPS + op] + axis_mult[i] *
+                                                                       (workspace[(2 * N_VERTS - (N_VERTS >> k) + j + pwr) * N_OPS + op] - workspace[(2 * N_VERTS - (N_VERTS >> k) + j) * N_OPS + op]);
+        }
+      }
+
+      for( integer op = 0; op < N_OPS; ++op )
+      {
+        // interpolate value
+        workspace[j * N_OPS + op] = workspace[j * N_OPS + op] + (axis_values[i] - axis_low[i]) * workspace[(2 * N_VERTS - (N_VERTS >> i) + j) * N_OPS + op];
+      }
+    }
+    pwr /= 2;
+  }
+  for( integer op = 0; op < N_OPS; ++op )
+  {
+    interp_values[op] = workspace[op];
+    for( integer i = 0; i < N_DIMS; ++i )
+    {
+      interp_derivs[op * N_DIMS + i] = workspace[(2 * N_VERTS - (N_VERTS >> i)) * N_OPS + op];
+    }
+  }
+}
+
+
+
 /**
  * @class KernelWrapper
  *
