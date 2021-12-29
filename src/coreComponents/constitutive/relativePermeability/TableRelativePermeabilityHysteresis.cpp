@@ -88,6 +88,11 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
     setApplyDefaultValue( 0.0 ).
     setDescription( "Second parameter introduced by Jerauld (see RTD documentation)." );
 
+  registerWrapper( viewKeyStruct::alphaParameter2String(), &m_alphaParam_2 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 1.0 ).
+    setDescription( "Second parameter introduced by Jerauld (see RTD documentation)." );
+
   // internal class data
 
   registerWrapper( viewKeyStruct::drainagePhaseMinVolumeFractionString(), &m_drainagePhaseMinVolFraction ).
@@ -220,6 +225,13 @@ void TableRelativePermeabilityHysteresis::postProcessInput()
                              getFullName(),
                              viewKeyStruct::jerauldParameterBString() ),
                   InputError );
+
+  GEOSX_THROW_IF( m_alphaParam_2 < 0,
+                  GEOSX_FMT( "{}: the paramater {} must be postitive",
+                             getFullName(),
+                             viewKeyStruct::alphaParameter2String() ),
+                  InputError );
+
 }
 
 void TableRelativePermeabilityHysteresis::initializePreSubGroups()
@@ -511,10 +523,14 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   // Step 2: Land parameter for the non-wetting phase
 
   {
-    real64 const Smx = m_drainagePhaseMaxVolFraction[ipNonWetting];
+    real64 const Smxd = m_drainagePhaseMaxVolFraction[ipNonWetting];
+    real64 const Smxd = m_imbibitionPhaseMaxVolFraction[ipNonWetting];
     real64 const Scrd = m_drainagePhaseMinVolFraction[ipNonWetting];
     real64 const Scri = m_imbibitionPhaseMinVolFraction[IPT::NONWETTING];
-    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
+    assert( Scrd==Scri );
+    real64 const Swc = Scrd;
+//    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
+    m_landParam[IPT::NONWETTING] = ( Smxd - Swc ) / ( Smxd - Smxi ) - 1.0;
   }
 
   // Step 3: make sure that they match for two-phase flow
@@ -601,6 +617,7 @@ TableRelativePermeabilityHysteresis::createKernelWrapper()
                         m_imbibitionRelPermKernelWrappers,
                         m_jerauldParam_a,
                         m_jerauldParam_b,
+                        m_alphaParam_2,
                         m_phaseHasHysteresis,
                         m_landParam,
                         m_drainagePhaseMinVolFraction,
@@ -675,6 +692,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                  arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
                  real64 const & jerauldParam_a,
                  real64 const & jerauldParam_b,
+                 real64 const & alphaParam_2,
                  arrayView1d< integer const > const & phaseHasHysteresis,
                  arrayView1d< real64 const > const & landParam,
                  arrayView1d< real64 const > const & drainagePhaseMinVolFraction,
@@ -697,6 +715,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   m_imbibitionRelPermKernelWrappers( imbibitionRelPermKernelWrappers ),
   m_jerauldParam_a( jerauldParam_a ),
   m_jerauldParam_b( jerauldParam_b ),
+  m_alphaParam_2( alphaParam_2 ),
   m_phaseHasHysteresis( phaseHasHysteresis ),
   m_landParam( landParam ),
   m_drainagePhaseMinVolFraction( drainagePhaseMinVolFraction ),

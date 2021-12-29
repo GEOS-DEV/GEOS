@@ -80,6 +80,7 @@ public:
                    arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
                    real64 const & jerauldParam_a,
                    real64 const & jerauldParam_b,
+                   real64 const & alphaParam_2,
                    arrayView1d< integer const > const & phaseHasHysteresis,
                    arrayView1d< real64 const > const & landParam,
                    arrayView1d< real64 const > const & drainageMinPhaseVolFraction,
@@ -186,6 +187,9 @@ private:
     /// Parameter b introduced by Jerauld in the Land model
     real64 const m_jerauldParam_b;
 
+    /// Parameter alpha_2 introduced for wetting phase hysteresis in Killough
+    real64 const m_alphaParam_2;
+
     /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
     arrayView1d< integer const > m_phaseHasHysteresis;
 
@@ -239,6 +243,7 @@ private:
     static constexpr char const * phaseHasHysteresisString() { return "phaseHasHysteresis"; }
     static constexpr char const * jerauldParameterAString() { return "jerauldParameterA"; }
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
+    static constexpr char const * alphaParameter2String() { return "alphaParameter2"; }
     static constexpr char const * landParameterString() { return "landParameter"; }
 
     static constexpr char const * imbibitionPhaseMinVolumeFractionString() { return "imbibitionPhaseMinVolumeFraction"; }
@@ -352,6 +357,9 @@ private:
   /// Parameter b introduced by Jerauld in the Land model
   real64 m_jerauldParam_b;
 
+  /// Parameter alpha2 in Killough wetting phase hysteresis (enpoints durvatures)
+  real64 m_alphaParam_2;
+
   /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
   array1d< integer > m_phaseHasHysteresis;
 
@@ -426,7 +434,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
 //0. preparing keypoints in the (S,kr) plan
 //real64 const Scri = imbibitionPhaseMinVolNonWettingFraction;
-//if consistify should be equal to 1-imbibitionPhaseMinVolNonWettingFraction
+//if consistify should be equal to 1. - imbibitionPhaseMinVolNonWettingFraction
 //but wetting and nonwetting are implemented decoupled
   real64 const Smxi = imbibitionPhaseMaxVolFraction;
   real64 const Smxd = drainagePhaseMaxVolFraction;
@@ -452,10 +460,10 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const Scrt = Swc + numerator / denom;
 
   //c. Finding the new endpoint
-  real64 const alpha2 = 1.0;// todo jacques as a parameter defaulted to 1.0
+//  real64 const alpha2 = 1.0;// todo jacques as a parameter defaulted to 1.0
   //this is the saturation for the scanning curve endpoint
   real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
-  real64 const krwieStar = krwedAtScrt + deltak * pow( ((1.-Scrt) - Scrd) / (Scri - Scrd), alpha2 );
+  real64 const krwieStar = krwedAtScrt + deltak * pow( ((1.-Scrt) - Scrd) / (Scri - Scrd), m_alphaParam_2 );
 
   //2. Get the normalized value of sat
   real64 const S = phaseVolFraction;
@@ -630,12 +638,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   }
   else
   {
-//    computeImbibitionWettingRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
-//                                     m_imbibitionRelPermKernelWrappers[IPT::WETTING],
-//                                     phaseVolFraction[ipWetting],
-//                                     phaseMinHistoricalVolFraction[ipWetting],
-//                                     phaseRelPerm[ipWetting],
-//                                     dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
 
     computeImbibitionWettingRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                                      m_imbibitionRelPermKernelWrappers[IPT::WETTING],
@@ -647,7 +649,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                      phaseVolFraction[ipWetting],
                                      phaseMinHistoricalVolFraction[ipWetting],
                                      m_imbibitionPhaseMinVolFraction[IPT::WETTING],
-                                     m_drainagePhaseMaxVolFraction[IPT::WETTING],
+                                     m_drainagePhaseMaxVolFraction[TPT::WETTING],
                                      m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
                                      phaseRelPerm[ipWetting],
                                      dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
