@@ -22,101 +22,6 @@
 namespace geosx
 {
 
-GEOSX_HOST_DEVICE integer getAxisIntervalIndexLowMult( real64 const axis_value,
-                                                       real64 const axis_min,
-                                                       real64 const axis_max,
-                                                       real64 const axis_step,
-                                                       real64 const axis_step_inv,
-                                                       integer const axis_points,
-                                                       // OUTPUT:
-                                                       real64 & axis_low,
-                                                       real64 & axis_mult )
-{
-  integer axis_interval_index = integer((axis_value - axis_min) * axis_step_inv );
-
-  // check that axis_idx is within interpolation interval: valid axis_idx is between [0; axis_points - 2],
-  // since there are axis_points-1 intervals along the axis
-  if( axis_interval_index < 0 )
-  {
-    axis_interval_index = 0;
-    if( axis_value < axis_min )
-    {
-      printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axis_min, axis_max, axis_value );
-    }
-  }
-  else if( axis_interval_index > (axis_points - 2))
-  {
-    axis_interval_index = axis_points - 2;
-    if( axis_value > axis_max )
-    {
-      printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axis_min, axis_max, axis_value );
-    }
-  }
-
-  axis_low = axis_interval_index * axis_step + axis_min;
-  axis_mult = (axis_value - *axis_low) * axis_step_inv;
-  return axis_interval_index;
-}
-
-template< integer N_DIMS, integer N_OPS >
-GEOSX_HOST_DEVICE void interpolate_point_with_derivatives( real64 const *axis_values,
-                                                           real64 const *body_data,
-                                                           real64 const *axis_low,
-                                                           real64 const *axis_mult,
-                                                           real64 const *axis_step_inv,
-                                                           // OUTPUT:
-                                                           real64 *interp_values, real64 *interp_derivs )
-{
-  static const integer N_VERTS = 1 << N_DIMS;
-  integer pwr = N_VERTS / 2; // distance between high and low values
-  real64 workspace[(2 * N_VERTS - 1) * N_OPS];
-
-  // copy operator values for all vertices
-  for( integer i = 0; i < N_VERTS * N_OPS; ++i )
-  {
-    workspace[i] = body_data[i];
-  }
-
-  for( integer i = 0; i < N_DIMS; ++i )
-  {
-    //printf ("i = %d, N_VERTS = %d, New offset: %d\n", i, N_VERTS, 2 * N_VERTS - (N_VERTS>>i));
-
-    for( integer j = 0; j < pwr; ++j )
-    {
-      for( integer op = 0; op < N_OPS; ++op )
-      {
-        // update own derivative
-        workspace[(2 * N_VERTS - (N_VERTS >> i) + j) * N_OPS + op] = (workspace[(j + pwr) * N_OPS + op] - workspace[j * N_OPS + op]) * axis_step_inv[i];
-      }
-
-      // update all dependent derivatives
-      for( integer k = 0; k < i; k++ )
-      {
-        for( integer op = 0; op < N_OPS; ++op )
-        {
-          workspace[(2 * N_VERTS - (N_VERTS >> k) + j) * N_OPS + op] = workspace[(2 * N_VERTS - (N_VERTS >> k) + j) * N_OPS + op] + axis_mult[i] *
-                                                                       (workspace[(2 * N_VERTS - (N_VERTS >> k) + j + pwr) * N_OPS + op] - workspace[(2 * N_VERTS - (N_VERTS >> k) + j) * N_OPS + op]);
-        }
-      }
-
-      for( integer op = 0; op < N_OPS; ++op )
-      {
-        // interpolate value
-        workspace[j * N_OPS + op] = workspace[j * N_OPS + op] + (axis_values[i] - axis_low[i]) * workspace[(2 * N_VERTS - (N_VERTS >> i) + j) * N_OPS + op];
-      }
-    }
-    pwr /= 2;
-  }
-  for( integer op = 0; op < N_OPS; ++op )
-  {
-    interp_values[op] = workspace[op];
-    for( integer i = 0; i < N_DIMS; ++i )
-    {
-      interp_derivs[op * N_DIMS + i] = workspace[(2 * N_VERTS - (N_VERTS >> i)) * N_OPS + op];
-    }
-  }
-}
-
 
 
 /**
@@ -154,16 +59,26 @@ public:
    * @param[out] output values of interpolated operators
    * @param[out] outputDerivatives derivatives of interpolated operators w.r.t. input
    */
-  MultivariableTableFunctionStaticKernel( ArrayOfArraysView< real64 const > const & coordinates,
-                                          arrayView1d< real64 const > const & values,
-                                          arrayView1d< real64 const > const & input,
-                                          arrayView1d< real64 > const & output,
-                                          arrayView1d< real64 > const & outputDerivatives ):
-    m_coordinates( coordinates ),
-    m_values( values ),
-    m_input( input ),
-    m_output( output ),
-    m_outputDerivatives( outputDerivatives )
+  MultivariableTableFunctionStaticKernel( arrayView1d< real64 const > const & axisMinimums,
+                                          arrayView1d< real64 const > const & axisMaximums,
+                                          arrayView1d< integer const > const & axisPoints,
+                                          arrayView1d< real64 const > const & axisSteps,
+                                          arrayView1d< real64 const > const & axisStepInvs,
+                                          arrayView1d< globalIndex const > const & axisHypercubeMults,
+                                          arrayView1d< real64 const > const & hypercubeData,
+                                          arrayView1d< real64 const > const & coordinates,
+                                          arrayView1d< real64 > const & values,
+                                          arrayView1d< real64 > const & derivatives ):
+    m_axisMinimums ( axisMinimums ),
+    m_axisMaximums ( axisMaximums ),
+    m_axisPoints ( axisPoints ),
+    m_axisSteps ( axisSteps ),
+    m_axisStepInvs ( axisStepInvs ),
+    m_axisHypercubeMults ( axisHypercubeMults ),
+    m_hypercubeData ( hypercubeData ),
+    m_coordinates ( coordinates ),
+    m_values ( values ),
+    m_derivatives ( derivatives )
   {};
 
   /**
@@ -172,9 +87,10 @@ public:
    * @param ei Index of element
    */
   GEOSX_HOST_DEVICE
-  void compute( localIndex const ei ) const
+  void
+  compute( localIndex const ei ) const
   {
-    m_output[ei] = interpolateLinear( &m_input[ei * NUM_DIMS] );
+    interpolatePoint( &m_coordinates[ei * NUM_DIMS], &m_values[ei * NUM_OPS], &m_derivatives[ei * NUM_OPS] );
   }
 
   /// maximum dimensions for the coordinates in the table
@@ -187,99 +103,185 @@ public:
    * @param input input coordinates
    * @return interpolated value
    */
-  template< typename IN_ARRAY >
   GEOSX_HOST_DEVICE
-  real64
-  interpolateLinear( IN_ARRAY const & input ) const
+  void
+  interpolatePoint( real64 const *coordinates,
+                    real64 *values,
+                    real64 *derivatives ) const
   {
-    integer const numDimensions = LvArray::integerConversion< integer >( m_coordinates.size() );
-    localIndex bounds[maxDimensions][2]{};
-    real64 weights[maxDimensions][2]{};
+    globalIndex hypercubeIndex = 0;
+    real64 axisLows[NUM_DIMS];
+    real64 axisMults[NUM_DIMS];
 
-    // Determine position, weights
-    for( localIndex dim = 0; dim < numDimensions; ++dim )
+    for( int i = 0; i < NUM_DIMS; ++i )
     {
-      arraySlice1d< real64 const > const coords = m_coordinates[dim];
-      if( input[dim] <= coords[0] )
-      {
-        // Coordinate is to the left of this axis
-        bounds[dim][0] = 0;
-        bounds[dim][1] = 0;
-        weights[dim][0] = 0.0;
-        weights[dim][1] = 1.0;
-      }
-      else if( input[dim] >= coords[coords.size() - 1] )
-      {
-        // Coordinate is to the right of this axis
-        bounds[dim][0] = coords.size() - 1;
-        bounds[dim][1] = bounds[dim][0];
-        weights[dim][0] = 1.0;
-        weights[dim][1] = 0.0;
-      }
-      else
-      {
-        // Find the coordinate index
-        ///TODO make this fast
-        // Note: find uses a binary search...  If we assume coordinates are
-        // evenly spaced, we can speed things up considerably
-        auto const lower = LvArray::sortedArrayManipulation::find( coords.begin(), coords.size(), input[dim] );
-        bounds[dim][1] = LvArray::integerConversion< localIndex >( lower );
-        bounds[dim][0] = bounds[dim][1] - 1;
-
-        real64 const dx = coords[bounds[dim][1]] - coords[bounds[dim][0]];
-        weights[dim][0] = 1.0 - ( input[dim] - coords[bounds[dim][0]]) / dx;
-        weights[dim][1] = 1.0 - weights[dim][0];
-      }
+      integer axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
+                                                       m_axisMinimums[i], m_axisMaximums[i],
+                                                       m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                       axisLows[i], axisMults[i] );
+      hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
     }
 
-    // Calculate the result
-    real64 value = 0.0;
-    integer const numCorners = 1 << numDimensions;
-    for( integer point = 0; point < numCorners; ++point )
-    {
-      // Find array index
-      localIndex tableIndex = 0;
-      localIndex stride = 1;
-      for( integer dim = 0; dim < numDimensions; ++dim )
-      {
-        integer const corner = (point >> dim) & 1;
-        tableIndex += bounds[dim][corner] * stride;
-        stride *= m_coordinates.sizeOfArray( dim );
-      }
+    interpolatePointWithDerivatives( coordinates,
+                                     getHypercubeData( hypercubeIndex ),
+                                     &axisLows[0], &axisMults[0],
+                                     &m_axisStepInvs[0],
+                                     values,
+                                     derivatives );
 
-      // Determine weighted value
-      real64 cornerValue = m_values[tableIndex];
-      for( integer dim = 0; dim < numDimensions; ++dim )
-      {
-        integer const corner = (point >> dim) & 1;
-        cornerValue *= weights[dim][corner];
-      }
-      value += cornerValue;
-    }
-    return value;
   }
 
 protected:
 
-  // inputs
+  GEOSX_HOST_DEVICE
+  real64 const *
+  getHypercubeData( globalIndex const hypercubeIndex ) const
+  {
+    static constexpr integer NUM_VERTS = 1 << NUM_DIMS;
+    return &m_hypercubeData[hypercubeIndex * NUM_VERTS * NUM_OPS];
+  }
 
-  /// An array of table axes
-  ArrayOfArraysView< real64 const > m_coordinates;
 
-  /// Table values (in fortran order)
-  arrayView1d< real64 const > m_values;
+  GEOSX_HOST_DEVICE
+  integer
+  getAxisIntervalIndexLowMult( real64 const axisCoordinate,
+                               real64 const axisMin,
+                               real64 const axisMax,
+                               real64 const axisStep,
+                               real64 const axisStepInv,
+                               integer const axisPoints,
+                               // OUTPUT:
+                               real64 & axisLow,
+                               real64 & axisMult ) const
+  {
+    integer axisIntervalIndex = integer((axisCoordinate - axisMin) * axisStepInv );
 
-  /// Input array view
-  arrayView1d< real64 const > m_input;
+    // check that axisindex is within interpolation interval: valid axisindex is between 0 and (axisPoints - 2),
+    // since there are axisPoints-1 intervals along the axis
+
+    if( axisIntervalIndex < 0 )
+    {
+      axisIntervalIndex = 0;
+      if( axisCoordinate < axisMin )
+      {
+        printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+      }
+    }
+    else if( axisIntervalIndex > (axisPoints - 2))
+    {
+      axisIntervalIndex = axisPoints - 2;
+      if( axisCoordinate > axisMax )
+      {
+        printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+      }
+    }
+
+    axisLow = axisIntervalIndex * axisStep + axisMin;
+    axisMult = (axisCoordinate - axisLow) * axisStepInv;
+    return axisIntervalIndex;
+  }
+
+  GEOSX_HOST_DEVICE
+  void
+  interpolatePointWithDerivatives( real64 const *axisCoordinates,
+                                   real64 const *hypercubeData,
+                                   real64 const *axisLows,
+                                   real64 const *axisMults,
+                                   real64 const *axisStepInvs,
+                                   // OUTPUT:
+                                   real64 *values,
+                                   real64 *derivatives ) const
+  {
+    static constexpr integer NUM_VERTS = 1 << NUM_DIMS;
+    integer pwr = NUM_VERTS / 2;   // distance between high and low values
+    real64 workspace[(2 * NUM_VERTS - 1) * NUM_OPS];
+
+    // copy operator values for all vertices
+    for( integer i = 0; i < NUM_VERTS * NUM_OPS; ++i )
+    {
+      workspace[i] = hypercubeData[i];
+    }
+
+    for( integer i = 0; i < NUM_DIMS; ++i )
+    {
+      //printf ("i = %d, NUM_VERTS = %d, New offset: %d\n", i, NUM_VERTS, 2 * NUM_VERTS - (NUM_VERTS>>i));
+
+      for( integer j = 0; j < pwr; ++j )
+      {
+        for( integer op = 0; op < NUM_OPS; ++op )
+        {
+          // update own derivative
+          workspace[(2 * NUM_VERTS - (NUM_VERTS >> i) + j) * NUM_OPS + op] = (workspace[(j + pwr) * NUM_OPS + op] - workspace[j * NUM_OPS + op]) * axisStepInvs[i];
+        }
+
+        // update all dependent derivatives
+        for( integer k = 0; k < i; k++ )
+        {
+          for( integer op = 0; op < NUM_OPS; ++op )
+          {
+            workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j) * NUM_OPS + op] = workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j) * NUM_OPS + op] + axisMults[i] *
+                                                                               (workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j + pwr) * NUM_OPS + op] -
+                                                                                workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j) * NUM_OPS + op]);
+          }
+        }
+
+        for( integer op = 0; op < NUM_OPS; ++op )
+        {
+          // interpolate value
+          workspace[j * NUM_OPS + op] = workspace[j * NUM_OPS + op] + (axisCoordinates[i] - axisLows[i]) * workspace[(2 * NUM_VERTS - (NUM_VERTS >> i) + j) * NUM_OPS + op];
+        }
+      }
+      pwr /= 2;
+    }
+    for( integer op = 0; op < NUM_OPS; ++op )
+    {
+      values[op] = workspace[op];
+      for( integer i = 0; i < NUM_DIMS; ++i )
+      {
+        derivatives[op * NUM_DIMS + i] = workspace[(2 * NUM_VERTS - (NUM_VERTS >> i)) * NUM_OPS + op];
+      }
+    }
+  }
+
+  // inputs : table discretization data
+
+  /// Array [NUM_DIMS] of axis minimum values
+  arrayView1d< real64 const > m_axisMinimums;
+
+  /// Array [NUM_DIMS] of axis maximum values
+  arrayView1d< real64 const > m_axisMaximums;
+
+  /// Array [NUM_DIMS] of axis discretization points
+  arrayView1d< integer const > m_axisPoints;
+
+  // inputs : service data derived from table discretization data
+
+  ///  Array [NUM_DIMS] of axis interval lengths (axes are discretized uniformly)
+  arrayView1d< real64 const > m_axisSteps;
+
+  ///  Array [NUM_DIMS] of inversions of axis interval lengths (axes are discretized uniformly)
+  arrayView1d< real64 const > m_axisStepInvs;
+
+  ///  Array [NUM_DIMS] of hypercube index mult factors for each axis
+  arrayView1d< globalIndex const > m_axisHypercubeMults;
+
+  // inputs: operator sample data
+
+  ///  Main table data stored per hypercube: all values required for interpolation withing give hypercube are stored contiguously
+  arrayView1d< real64 const > m_hypercubeData;
+
+  // inputs: where to interpolate
+
+  /// Coordinates in NUM_DIMS-dimensional space where interpolation is requested
+  arrayView1d< real64 const > m_coordinates;
 
   // outputs
 
-  /// Output array view
-  arrayView1d< real64 > m_output;
+  /// Interpolated values
+  arrayView1d< real64 > m_values;
 
-  /// Output derivative array view
-  arrayView1d< real64 > m_outputDerivatives;
-
+  /// /// Interpolated derivatives
+  arrayView1d< real64 > m_derivatives;
 };
 
 } /* namespace geosx */

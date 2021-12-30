@@ -580,21 +580,30 @@ TEST( FunctionTests, 4DTable_symbolic )
 template< integer NUM_DIMS, integer NUM_OPS >
 void testMutivariableFunction( MultivariableTableFunction & function,
                                arrayView1d< real64 const > const & inputs,
-                               arrayView1d< real64 const > const & expectedOutputs )
+                               arrayView1d< real64 const > const & expectedValues,
+                               arrayView1d< real64 const > const & expectedDerivatives )
 {
   localIndex const numElems = inputs.size() / NUM_DIMS;
 
   ASSERT_EQ( numElems * NUM_DIMS, inputs.size());
-  ASSERT_EQ( numElems * NUM_OPS, expectedOutputs.size());
+  ASSERT_EQ( numElems * NUM_OPS, expectedValues.size());
 
-  real64_array evaluatedOutputs( expectedOutputs.size() );
-  arrayView1d< real64 > evaluatedOutputsView = evaluatedOutputs.toView(),
-                        evaluatedOutputsDerivativesView = evaluatedOutputs.toView();
+  real64_array evaluatedValues( numElems * NUM_OPS );
+  real64_array evaluatedDerivatives( numElems * NUM_OPS * NUM_OPS );
+  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView(),
+                        evaluatedDerivativesView = evaluatedDerivatives.toView();
 
 
-  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getCoordinates().toViewConst(),
-                                                                      function.getValues().toViewConst(),
-                                                                      inputs, evaluatedOutputsView, evaluatedOutputsDerivativesView );
+  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums().toViewConst(),
+                                                                      function.getAxisMaximums().toViewConst(),
+                                                                      function.getAxisPoints().toViewConst(),
+                                                                      function.getAxisSteps().toViewConst(),
+                                                                      function.getAxisStepInvs().toViewConst(),
+                                                                      function.getAxisHypercubeMults().toViewConst(),
+                                                                      function.getHypercubeData().toViewConst(),
+                                                                      inputs,
+                                                                      evaluatedValuesView,
+                                                                      evaluatedDerivativesView );
   // Loop over cells on the device.
   forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const elemIndex )
@@ -605,7 +614,13 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   // Perform checks.
   forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
   {
-    ASSERT_NEAR( expectedOutputs[elemIndex], evaluatedOutputsView[elemIndex], 1e-10 );
+    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], 1e-10 );
+  } );
+
+  // Perform checks.
+  forAll< serialPolicy >( numElems * NUM_DIMS, [=] ( localIndex const elemDerivIndex )
+  {
+    ASSERT_NEAR( expectedDerivatives[elemDerivIndex], evaluatedDerivativesView[elemDerivIndex], 1e-10 );
   } );
 }
 
@@ -613,49 +628,50 @@ TEST( FunctionTests, 1DMultivariableTable )
 {
   FunctionManager * functionManager = &FunctionManager::getInstance();
 
-  // 1D table, various interpolation methods
-  localIndex const Naxis = 4;
-  localIndex const Ntest = 6;
+  // 1D table
+  localIndex constexpr nDims = 1;
+  localIndex constexpr nOps = 1;
+  localIndex const nTest = 7;
 
   // Setup table
-  array1d< real64_array > coordinates;
-  coordinates.resize( 1 );
-  coordinates[0].resize( Naxis );
-  coordinates[0][0] = -1.0;
-  coordinates[0][1] = 0.0;
-  coordinates[0][2] = 2.0;
-  coordinates[0][3] = 5.0;
+  real64_array axisMins;
+  real64_array axisMaxs;
+  integer_array axisPoints;
+  axisMins.resize( nDims );
+  axisMaxs.resize( nDims );
+  axisPoints.resize( nDims );
+  axisMins[0] = 1;
+  axisMaxs[0] = 100;
+  axisPoints[0] = 100;
 
-  real64_array values( Naxis );
-  values[0] = 1.0;
-  values[1] = 3.0;
-  values[2] = -5.0;
-  values[3] = 7.0;
+  real64_array values( axisPoints[0] );
+  // set this up so that values are equal to coordinate: f(x) = x
+  for( auto i = 0; i < axisPoints[0]; i++ )
+    values[i] = i + 1;
 
   MultivariableTableFunction & table_f = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
-  table_f.setTableCoordinates( coordinates );
+  table_f.setTableCoordinates( nDims, nOps, axisMins, axisMaxs, axisPoints );
   table_f.setTableValues( values );
-  table_f.reInitializeFunction();
+  table_f.initializeFunction();
 
 
   // Setup testing coordinates, expected values
-  real64_array testCoordinates( Ntest );
+  real64_array testCoordinates( nTest );
   testCoordinates[0] = -1.1;
-  testCoordinates[1] = -0.5;
-  testCoordinates[2] = 0.2;
-  testCoordinates[3] = 2.0;
-  testCoordinates[4] = 4.0;
-  testCoordinates[5] = 10.0;
+  testCoordinates[1] = 0.0;
+  testCoordinates[2] = 1.0;
+  testCoordinates[3] = 2.8;
+  testCoordinates[4] = 99.3;
+  testCoordinates[5] = 100.0;
+  testCoordinates[6] = 11234.534;
 
-  // Linear Interpolation
-  real64_array testExpected( Ntest );
-  testExpected[0] = 1.0;
-  testExpected[1] = 2.0;
-  testExpected[2] = 2.2;
-  testExpected[3] = -5.0;
-  testExpected[4] = 3.0;
-  testExpected[5] = 7.0;
-  testMutivariableFunction< 1, 1 >( table_f, testCoordinates, testExpected );
+  real64_array testExpectedValues( testCoordinates );
+  real64_array testExpectedDerivatives( nTest * nDims * nOps );
+  for( auto i = 0; i < nTest * nDims * nOps; i++ )
+    testExpectedDerivatives[i] = 1;
+
+
+  testMutivariableFunction< nDims, nOps >( table_f, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
 int main( int argc, char * * argv )
