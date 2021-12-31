@@ -39,7 +39,8 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
     setDescription( "List of materials present in this region" );
 
   registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue("").
     setDescription( "Mesh body that contains this region" );
 
 }
@@ -47,6 +48,40 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
 
 ElementRegionBase::~ElementRegionBase()
 {}
+
+
+void ElementRegionBase::postProcessInput()
+{
+  Group const & meshBody = this->getParent().getParent().getParent().getParent().getParent();
+  string const & meshBodyName = meshBody.getName();
+  Group const & meshBodies = meshBody.getParent();
+  localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
+
+  if( numberOfMeshBodies == 1 )
+  {
+    if( m_meshBody=="" )
+    {
+      m_meshBody = meshBodyName;
+    }
+    GEOSX_ERROR_IF_EQ_MSG( m_meshBody,
+                           meshBodyName,
+                           "MeshBody specified does not match MeshBody in hierarchy.");
+  }
+  else
+  {
+    bool meshBodyFound = false;
+    meshBodies.forSubGroups( [&] ( Group const & meshBody )
+    {
+      if( meshBody.getName()==m_meshBody )
+      {
+        meshBodyFound = true;
+      }
+    });
+    GEOSX_ERROR_IF( !meshBodyFound, "MeshBody was not found");
+  }
+
+
+}
 
 
 }
