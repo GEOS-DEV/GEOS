@@ -23,6 +23,7 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "CellBlockManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 // PAMELA includes
 #include "Elements/Element.hpp"
@@ -385,11 +386,8 @@ void importRegularField( PAMELA::VariableDouble & source,
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
                            objectName << ": mismatch in number of components for field " << source.Label );
 
-    // Sanity check, shouldn't happen
-    GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           objectName << ": mismatch in size for field " << source.Label );
-
-    for( int i = 0; i < view.size( 0 ); ++i )
+    // the assumption here is that before this step, GEOSX has added ghost elements **at the end** of the view
+    for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( indexMap.size() ); ++i )
     {
       // get_data() currently returns a new vector for each cell, but auto const & makes sure
       // this code keeps working if/when PAMELA is fixed to return a more reasonable type (span/pointer)
@@ -421,11 +419,8 @@ void importMaterialField( PAMELA::VariableDouble & source,
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
                            objectName << ": mismatch in number of components for field " << source.Label );
 
-    // Sanity check, shouldn't happen
-    GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           objectName << ": mismatch in size for field " << source.Label );
-
-    for( int i = 0; i < view.size( 0 ); ++i )
+    // the assumption here is that before this step, GEOSX has added ghost elements **at the end** of the view
+    for( localIndex i = 0; i < LvArray::integerConversion< localIndex >( indexMap.size() ); ++i )
     {
       // get_data() currently returns a new vector for each cell, but auto const & makes sure
       // this code keeps working if/when PAMELA is fixed to return a more reasonable type (span/pointer)
@@ -516,6 +511,19 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
       }
     }
   } );
+
+  // this is needed to avoid breaking the unit test testPamelaImport, in which CommunicationTools is not setup
+  if( MpiWrapper::commSize( MPI_COMM_GEOSX ) > 1 )
+  {
+    std::map< string, string_array > fieldNames;
+    for( localIndex fieldIndex = 0; fieldIndex < m_fieldsToImport.size(); fieldIndex++ )
+    {
+      string const & wrapperName = m_fieldNamesInGEOSX[fieldIndex];
+      fieldNames["elems"].emplace_back( wrapperName );
+    }
+    CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
+  }
+
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, string const &, Group * const )
