@@ -614,13 +614,13 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   // Perform checks.
   forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
   {
-    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], 1e-10 );
+    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], 1e-3 );
   } );
 
   // Perform checks.
   forAll< serialPolicy >( numElems * NUM_DIMS, [=] ( localIndex const elemDerivIndex )
   {
-    ASSERT_NEAR( expectedDerivatives[elemDerivIndex], evaluatedDerivativesView[elemDerivIndex], 1e-10 );
+    ASSERT_NEAR( expectedDerivatives[elemDerivIndex], evaluatedDerivativesView[elemDerivIndex], 1e-2 );
   } );
 }
 
@@ -672,6 +672,89 @@ TEST( FunctionTests, 1DMultivariableTable )
 
 
   testMutivariableFunction< nDims, nOps >( table_f, testCoordinates, testExpectedValues, testExpectedDerivatives );
+}
+
+real64 operator1 ( real64 const x, real64 const y ) { return 2 * x + 3 * y * y; }
+real64 dOperator1_dx ( real64 const x, real64 const y ) { return 2; }
+real64 dOperator1_dy ( real64 const x, real64 const y ) { return 6 * y; }
+real64 operator2 ( real64 const x, real64 const y ) { return 2 * x * x + 3 / (y + 1); }
+real64 dOperator2_dx ( real64 const x, real64 const y ) { return 4 * x; }
+real64 dOperator2_dy ( real64 const x, real64 const y ) { return -3 / ((y + 1) * (y + 1)); }
+real64 operator3 ( real64 const x, real64 const y ) { return 2 * x + 3; }
+real64 dOperator3_dx ( real64 const x, real64 const y ) { return 2; }
+real64 dOperator3_dy ( real64 const x, real64 const y ) { return 0; }
+
+TEST( FunctionTests, 2DMultivariableTable )
+{
+  FunctionManager * functionManager = &FunctionManager::getInstance();
+
+
+  // 1D table
+  localIndex constexpr nDims = 2;
+  localIndex constexpr nOps = 3;
+  localIndex const nTest = 3;
+
+  // Setup table
+  real64_array axisMins( nDims );
+  real64_array axisMaxs( nDims );
+  integer_array axisPoints( nDims );
+
+
+  axisMins[0] = 1;
+  axisMins[1] = 0;
+  axisMaxs[0] = 2;
+  axisMaxs[1] = 1;
+  axisPoints[0] = 1000;
+  axisPoints[1] = 1100;
+
+  real64_array axisSteps( nDims );
+  for( auto i = 0; i < nDims; i++ )
+    axisSteps[i] = (axisMaxs[i] - axisMins[i]) /  axisPoints[i];
+
+  real64_array values( axisPoints[0] * axisPoints[1] * nOps );
+  for( auto i = 0; i < axisPoints[0]; i++ )
+    for( auto j = 0; j < axisPoints[1]; j++ )
+    {
+      auto x = axisMins[0] + i * axisSteps[0];
+      auto y = axisMins[1] + j * axisSteps[1];
+
+      values[( i * axisPoints[1] + j ) * nOps] = operator1( x, y );
+      values[( i * axisPoints[1] + j ) * nOps + 1] = operator2( x, y );
+      values[( i * axisPoints[1] + j ) * nOps + 2] = operator3( x, y );
+    }
+
+  MultivariableTableFunction & table_g = dynamicCast< MultivariableTableFunction & >( *functionManager->createChild( "MultivariableTableFunction", "table_f" ) );
+  table_g.setTableCoordinates( nDims, nOps, axisMins, axisMaxs, axisPoints );
+  table_g.setTableValues( values );
+  table_g.initializeFunction();
+
+
+  // Setup testing coordinates, expected values
+  real64_array testCoordinates( nTest * nDims );
+  testCoordinates[0] = 1.2334;
+  testCoordinates[1] = 0.1232;
+  testCoordinates[2] = 1.7342;
+  testCoordinates[3] = 0.2454;
+  testCoordinates[4] = 2.0;
+  testCoordinates[5] = 0.7745;
+
+  real64_array testExpectedValues( nTest * nOps );
+  real64_array testExpectedDerivatives( nTest * nOps * nDims );
+  for( auto i = 0; i < nTest; i++ )
+  {
+    testExpectedValues[i * nOps] = operator1( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedValues[i * nOps + 1] = operator2( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedValues[i * nOps + 2] = operator3( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims] = dOperator1_dx( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 1] = dOperator1_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 2] = dOperator2_dx( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 3] = dOperator2_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 4] = dOperator3_dx( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+    testExpectedDerivatives[i * nOps * nDims + 5] = dOperator3_dy( testCoordinates[i * nDims], testCoordinates[i * nDims + 1] );
+  }
+
+
+  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
 int main( int argc, char * * argv )

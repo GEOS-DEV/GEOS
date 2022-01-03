@@ -90,7 +90,7 @@ public:
   void
   compute( localIndex const ei ) const
   {
-    interpolatePoint( &m_coordinates[ei * NUM_DIMS], &m_values[ei * NUM_OPS], &m_derivatives[ei * NUM_OPS] );
+    interpolatePoint( &m_coordinates[ei * NUM_DIMS], &m_values[ei * NUM_OPS], &m_derivatives[ei * NUM_OPS * NUM_DIMS] );
   }
 
   /// maximum dimensions for the coordinates in the table
