@@ -154,14 +154,6 @@ public:
 
   static constexpr localIndex MAX_NUM_COMPONENTS = 4;
 
-  // *** Data repository keys
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
-    static constexpr char const * isCollisionalSlipString() { return "isCollisionalSlip"; }
-  };
-
 protected:
 
   virtual void postProcessInput() override;
@@ -179,6 +171,15 @@ protected:
   integer m_isCollisionalSlip;
 
   real64 m_maxProppantConcentration;
+
+private:
+
+  // *** Data repository keys
+  struct viewKeyStruct
+  {
+    static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
+    static constexpr char const * isCollisionalSlipString() { return "isCollisionalSlip"; }
+  };
 
 };
 
