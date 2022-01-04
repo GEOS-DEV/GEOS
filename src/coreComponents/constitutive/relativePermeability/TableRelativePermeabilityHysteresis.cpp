@@ -474,13 +474,18 @@ void TableRelativePermeabilityHysteresis::validateRelPermTable( TableFunction co
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
-    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
+//    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
+    GEOSX_THROW_IF(  (relPerm[i] - relPerm[i-1]) < -1e-10,
                     GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), relPermTable.getName() ),
                     InputError );
 
     if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
     {
       phaseMinVolFrac = phaseVolFrac[i-1];
+    }
+    if( !isZero( relPerm[i-1] ) && isZero( relPerm[i] - relPerm[i-1] ) )
+    {
+      phaseMaxVolFrac = phaseVolFrac[i-1];
     }
   }
 
@@ -514,36 +519,51 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   using IPT = TableRelativePermeabilityHysteresis::ImbibitionPhasePairPhaseType;
 
   {
-    real64 const Smx = m_drainagePhaseMaxVolFraction[ipWetting];
-    real64 const Scrd = m_drainagePhaseMinVolFraction[ipWetting];
+
+    real64 const Smxd = m_drainagePhaseMaxVolFraction[ipWetting];
+    real64 const Smxi = m_imbibitionPhaseMaxVolFraction[ipWetting];
+    real64 const Scrd = m_drainagePhaseMinVolFraction[IPT::WETTING];
     real64 const Scri = m_imbibitionPhaseMinVolFraction[IPT::WETTING];
-    m_landParam[IPT::WETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
+    real64 const Swc = Scrd;
+    GEOSX_ERROR_IF(  (Smxi - Smxd) > 0,
+     GEOSX_FMT( string("{}: For wetting phase hysteresis, imbibition end-point Smxi( {} ) is larger than drainage one Smxd( {} ).\n") +
+                string("Crossing curves.\n"),
+                getFullName(),
+                Smxi,
+                Smxd )
+      );
+
+    m_landParam[IPT::WETTING] = ( Smxd - Swc ) / ( Smxd - Smxi ) - 1.0;
   }
 
   // Step 2: Land parameter for the non-wetting phase
 
   {
-    real64 const Smxd = m_drainagePhaseMaxVolFraction[ipNonWetting];
-    real64 const Smxd = m_imbibitionPhaseMaxVolFraction[ipNonWetting];
+    real64 const Smx = m_drainagePhaseMaxVolFraction[ipNonWetting];
     real64 const Scrd = m_drainagePhaseMinVolFraction[ipNonWetting];
     real64 const Scri = m_imbibitionPhaseMinVolFraction[IPT::NONWETTING];
-    assert( Scrd==Scri );
-    real64 const Swc = Scrd;
-//    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
-    m_landParam[IPT::NONWETTING] = ( Smxd - Swc ) / ( Smxd - Smxi ) - 1.0;
+    GEOSX_ERROR_IF( (Scrd - Scri) > 0,
+      GEOSX_FMT(string("{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) is larger than imbibition one Scri( {} ).\n") +
+                string("Crossing curves.\n"),
+                getFullName(),
+                Scrd,
+                Scri )
+    );
+
+    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
   }
 
   // Step 3: make sure that they match for two-phase flow
 
   if( m_phaseHasHysteresis[IPT::WETTING] && m_phaseHasHysteresis[IPT::NONWETTING] )
   {
-    GEOSX_THROW_IF( numPhases == 2 && !isZero( m_landParam[IPT::WETTING] - m_landParam[IPT::NONWETTING] ),
+    GEOSX_WARNING_IF( numPhases == 2 && !isZero( m_landParam[IPT::WETTING] - m_landParam[IPT::NONWETTING] ),
                     GEOSX_FMT( string( "{}: For two-phase flow, the Land parameters computed from the wetting and non-wetting relperm curves must match.\n" )
-                               + string( "However, we found that the drainage Land parameter is {}, " )
-                               + string( "whereas the imbibition Land parameter is {}" ),
+                               + string( "However, we found that the wetting Land parameter is {}, " )
+                               + string( "whereas the nonwetting Land parameter is {}. " )
+                               + string( "This might result in inconsistency." ),
                                getFullName(),
-                               m_landParam[IPT::WETTING], m_landParam[IPT::NONWETTING] ),
-                    InputError );
+                               m_landParam[IPT::WETTING], m_landParam[IPT::NONWETTING] ) );
   }
 }
 

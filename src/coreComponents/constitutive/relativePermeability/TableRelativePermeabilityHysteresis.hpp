@@ -425,12 +425,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                    real64 & phaseRelPerm,
                                    real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-//  GEOSX_UNUSED_VAR( imbibitionRelPermKernelWrapper, phaseMinHistoricalVolFraction );
-
-  // for now, we neglect hysteresis on the wetting phase (this is just a placeholder)
-//  phaseRelPerm =
-//    drainageRelPermKernelWrapper.compute( &phaseVolFraction,
-//                                          &dPhaseRelPerm_dPhaseVolFrac );
 
 //0. preparing keypoints in the (S,kr) plan
 //real64 const Scri = imbibitionPhaseMinVolNonWettingFraction;
@@ -438,8 +432,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 //but wetting and nonwetting are implemented decoupled
   real64 const Smxi = imbibitionPhaseMaxVolFraction;
   real64 const Smxd = drainagePhaseMaxVolFraction;
-  real64 const Scri = 1. - Smxi;
-  real64 const Scrd = 1. - Smxd;
+//  real64 const Scri = 1. - Smxi;
+//  real64 const Scrd = 1. - Smxd;
   // Swc is the common end min endpoint sat for wetting curves
   real64 const Swc = imbibitionMinPhaseWettingVolFraction;
 
@@ -453,28 +447,31 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
   //b. get the trapped from wetting data
   real64 const Shy = phaseMinHistoricalVolFraction;
-  real64 const A = 1 + jerauldParam_a * ( Smxd - Shy );
+  real64 const A = 1 + jerauldParam_a * ( Shy - Swc );
   real64 const numerator = (Shy - Smxd);
   real64 const denom = A + landParam * pow( (Smxd-Shy)/(Smxd-Swc), 1 + jerauldParam_b/landParam );
   assert(numerator < 0 && denom > 1.0 );
-  real64 const Scrt = Swc + numerator / denom;
+  real64 const Scrt = Smxd + numerator / denom;
+
+  GEOSX_ERROR_IF( Scrt < Smxi,
+                 GEOSX_FMT( string( "For wetting phase hysteresis, trapping saturation (1-Srt): {} ") +
+                 string(" should be greater or equal to maximium for imbibition Smxi: {}"),
+                 Scrt, Smxi)
+                  );
 
   //c. Finding the new endpoint
-//  real64 const alpha2 = 1.0;// todo jacques as a parameter defaulted to 1.0
   //this is the saturation for the scanning curve endpoint
   real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
-  real64 const krwieStar = krwedAtScrt + deltak * pow( ((1.-Scrt) - Scrd) / (Scri - Scrd), m_alphaParam_2 );
+  real64 const krwieStar = krwedAtScrt + deltak * pow( ( Smxd - Scrt) / (Smxd - Smxi), m_alphaParam_2 );
 
   //2. Get the normalized value of sat
   real64 const S = phaseVolFraction;
-  real64 const ratio = ( (1. - Swc) - Scri ) / ( Shy - Scrt );
-  real64 const Snorm = 1. - ( Scri + ( (1. - S) - Scrt ) * ratio); // normalized saturation from equation 2.166
-  real64 const dSnorm_dS =  ratio;
+  real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
+  real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
+  real64 const dSnorm_dS =  - ratio;
   real64 dkri_dSnorm = 0.0;
   real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute(&Snorm, &dkri_dSnorm );
   real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;
-
-  real64 const krwiAtSwc = imbibitionRelPermKernelWrapper.compute( &Swc );
 
   //3. Get the final value at evaluated sat
   real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy );
@@ -520,6 +517,14 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const ratio = ( Smx - Scri ) / ( Shy - Scrt );
   real64 const Snorm = Scri + ( S - Scrt ) * ratio; // normalized saturation from equation 2.166
   real64 const dSnorm_dS = ratio;
+
+
+  GEOSX_ERROR_IF( Scrt > Scri,
+                  GEOSX_FMT( string( "For non-wetting phase hysteresis, trapping saturation Snrt: {} ") +
+                             string(" should be less or equal to the trapping sat for imbibition Sncri: {}"),
+                             Scrt, Scri)
+  );
+
 
   // Step 3: evaluate the imbibition relperm, kri(Snorm), at the normalized saturation, Snorm.
   real64 dkri_dSnorm = 0;
