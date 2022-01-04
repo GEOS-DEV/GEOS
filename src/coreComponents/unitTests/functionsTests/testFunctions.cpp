@@ -594,13 +594,13 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                         evaluatedDerivativesView = evaluatedDerivatives.toView();
 
 
-  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums().toViewConst(),
-                                                                      function.getAxisMaximums().toViewConst(),
-                                                                      function.getAxisPoints().toViewConst(),
-                                                                      function.getAxisSteps().toViewConst(),
-                                                                      function.getAxisStepInvs().toViewConst(),
-                                                                      function.getAxisHypercubeMults().toViewConst(),
-                                                                      function.getHypercubeData().toViewConst(),
+  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums(),
+                                                                      function.getAxisMaximums(),
+                                                                      function.getAxisPoints(),
+                                                                      function.getAxisSteps(),
+                                                                      function.getAxisStepInvs(),
+                                                                      function.getAxisHypercubeMults(),
+                                                                      function.getHypercubeData(),
                                                                       inputs,
                                                                       evaluatedValuesView,
                                                                       evaluatedDerivativesView );

@@ -30,7 +30,7 @@ namespace geosx
 /**
  * @class MultivariableTableFunction
  *
- * An interface class for multivariable table function (function with multiple inputs and outputs)
+ * An interface class for multivariable table function (function with multiple inputs and outputs) with uniform discretization
  * Prepares input data for MultivariableStaticInterpolatorKernel, which performes actual interpolation
  */
 
@@ -53,100 +53,124 @@ public:
   static string catalogName() { return "MultivariableTableFunction"; }
 
   /**
-   * @brief Initialize the table function
-   */
-  virtual void initializeFunction() override;
-
-  void evaluate( dataRepository::Group const & group,
-                 real64 const time,
-                 SortedArrayView< localIndex const > const & set,
-                 real64_array & result ) const
-  {};
-
-  /**
-   * @brief Method to evaluate a function
-   * @param input a scalar input
-   * @return the function evaluation
-   */
-  virtual real64 evaluate( real64 const * const input ) const
-  {
-    return 0;
-  };
-
-  /**
-   * @brief Get the table axes definitions
-   * @return a reference to an array of arrays that define each table axis
-   */
-  real64_array & getAxisMinimums() { return m_axisMinimums; }
-
-  /**
-   * @brief Get the table axes definitions
-   * @return a reference to an array of arrays that define each table axis
-   */
-  real64_array & getAxisMaximums() { return m_axisMaximums; }
-
-  /**
-   * @brief Get the table axes definitions
-   * @return a reference to an array of arrays that define each table axis
-   */
-  integer_array & getAxisPoints() { return m_axisPoints; }
-
-
-  /**
-   * @brief Get the table axes definitions
-   * @return a reference to an array of arrays that define each table axis
-   */
-  real64_array & getAxisSteps() { return m_axisSteps; }
-
-  /**
-   * @brief Get the table axes definitions
-   * @return a reference to an array of arrays that define each table axis
-   */
-  real64_array & getAxisStepInvs() { return m_axisStepInvs; }
-
-
-  globalIndex_array & getAxisHypercubeMults() { return m_axisHypercubeMults; }
-  /**
-   * @brief Get the Values object
+   * @brief Set table coordinates
    *
-   * @return real64_array& a reference to an array where table values are stored in fortran order
-   */
-  real64_array & getHypercubeData() { return m_hypercubeData; }
-
-  /**
-   * @brief Set the table coordinates
+   * @param[in] numDims number of table dimensions (number of inputs)
+   * @param[in] numOps number of functions to interpolate (number of outputs)
+   * @param[in] axisMinimums minimum coordinate for each axis
+   * @param[in] axisMaximums maximum coordinate for each axis
+   * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
    */
   void setTableCoordinates( integer const numDims,
                             integer const numOps,
                             real64_array const & axisMinimums,
-                            real64_array const & m_axisMaximums,
-                            integer_array const & m_axisPoints );
+                            real64_array const & axisMaximums,
+                            integer_array const & axisPoints );
 
   /**
    * @brief Set the table values
-   * @param values An array of table values in fortran order
+   * @param values An array of table values in C order (the most rapidly changing index is the last)
    */
-  void setTableValues( real64_array values );
+  void setTableValues( real64_array const values );
+
+
+
+  /**
+   * @brief Initialize the table function after setting table coordinates and values
+   */
+  virtual void initializeFunction() override;
+
+  /**
+   * @brief Initialize the table function using data from file
+   * @param[in] filename The name of the file to read.
+   */
+  void initializeFunctionFromFile( string const & filename );
+
+
+  /**
+   * @brief Method to evaluate a function on a target object (not supported)
+   * @param[in] group a pointer to the object holding the function arguments
+   * @param[in] time current time
+   * @param[in] set the subset of nodes to apply the function to
+   * @param[out] result an array to hold the results of the function
+   */
+  void evaluate( dataRepository::Group const & group,
+                 real64 const time,
+                 SortedArrayView< localIndex const > const & set,
+                 real64_array & result ) const
+  {
+    GEOSX_ERROR( "This method is not supported by MultivariableTableFunction" );
+
+  };
+
+  /**
+   * @brief Method to evaluate a function (not supported)
+   * @param[in] input a scalar input
+   * @return the function evaluation
+   */
+  virtual real64 evaluate( real64 const * const input ) const
+  {
+    GEOSX_ERROR( "This method is not supported by MultivariableTableFunction" );
+    return 0;
+  };
+
+  /**
+   * @brief Get the table axes minimums
+   * @return a reference to an array of table axes minimums
+   */
+  arrayView1d< real64 const > getAxisMinimums() const { return m_axisMinimums.toViewConst(); }
+
+  /**
+   * @brief Get the table axes maximums
+   * @return a reference to an array of table axes maximums
+   */
+  arrayView1d< real64 const > getAxisMaximums() const { return m_axisMaximums.toViewConst(); }
+
+  /**
+   * @brief Get the table axes discretization points numbers
+   * @return a reference to an array of table axes discretization points numbers
+   */
+  arrayView1d< integer const > getAxisPoints() const { return m_axisPoints.toViewConst(); }
+
+
+  /**
+   * @brief Get the table axes step sizes
+   * @return a reference to an array of table axes step sizes
+   */
+  arrayView1d< real64 const > getAxisSteps() const { return m_axisSteps.toViewConst(); }
+
+  /**
+   * @brief Get the table axes step sizes inversions
+   * @return a reference to an array of table axes step sizes inversions
+   */
+  arrayView1d< real64 const > getAxisStepInvs() const { return m_axisStepInvs.toViewConst(); }
+
+  /**
+   * @brief Get the table axes hypercube index multiplicators
+   * @return a reference to an array of table axes hypercube index multiplicators
+   */
+  arrayView1d< globalIndex const > getAxisHypercubeMults() const { return m_axisHypercubeMults.toViewConst(); }
+
+  /**
+   * @brief Get the table values stored per-hypercube
+   * @return a reference to an array of table values stored per-hypercube
+   */
+  arrayView1d< real64 const > getHypercubeData() const { return m_hypercubeData.toViewConst(); }
 
 private:
 
   /**
-   * @brief Parse a table file.
-   * @tparam T The type for table or axis values.
-   * @param[in] target The place to store values.
-   * @param[in] filename The name of the file to read.
-   * @param[in] delimiter The delimiter used for file entries.
+   * @brief Get indexes of all vertices of a hypercube
+   *
+   * @param[in] hypercubeIndex index of a hypercube
+   * @param[out] hypercubePoints array of indexes of hypercube vertexes
    */
-  template< typename T >
-  void parseFile( string const & filename, array1d< T > & target );
+  void getHypercubePoints( globalIndex const hypercubeIndex, globalIndex_array & hypercubePoints ) const;
 
-
-  void getHypercubePoints( globalIndex hypercubeIndex, globalIndex_array & hypercubePoints );
-
-  /// Number of table dimensions
+  /// Number of table dimensions (inputs)
   integer m_numDims;
 
-  /// Number of operators - functions to interpolate
+  /// Number of operators (functions to interpolate - ouputs)
   integer m_numOps;
 
   /// Number of vertices in each hypercube
@@ -158,10 +182,10 @@ private:
   /// Array [numDims] of axis maximum values
   real64_array m_axisMaximums;
 
-  /// Array [numDims] of axis discretization points
+  /// Array [numDims] of axis discretization points numbers
   integer_array m_axisPoints;
 
-  // inputs : service data derived from table discretization data
+  // inputs : data derived from table coordinates data
 
   ///  Array [numDims] of axis interval lengths (axes are discretized uniformly)
   real64_array m_axisSteps;
@@ -182,7 +206,6 @@ private:
 
   ///  Main table data stored per hypercube: all values required for interpolation withing give hypercube are stored contiguously
   real64_array m_hypercubeData;
-
 };
 
 

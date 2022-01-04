@@ -31,34 +31,33 @@ MultivariableTableFunction::MultivariableTableFunction( const string & name,
   FunctionBase( name, parent )
 {}
 
-template< typename T >
-void MultivariableTableFunction::parseFile( string const & filename, array1d< T > & target )
+void MultivariableTableFunction::initializeFunctionFromFile( string const & filename )
 {
   std::ifstream inputStream( filename.c_str() );
   GEOSX_THROW_IF( !inputStream, catalogName() << " " << getName() << ": could not read input file " << filename, InputError );
 
   // Read the file
   // TODO: Update this to handle large parallel jobs
-  string lineString;
-  while( std::getline( inputStream, lineString ) )
-  {
-    std::istringstream ss( lineString );
-    while( ss.peek() == ',' || ss.peek() == ' ' )
-    {
-      ss.ignore();
-    }
-    T value;
-    while( ss >> value )
-    {
-      target.emplace_back( value );
-      while( ss.peek() == ',' || ss.peek() == ' ' )
-      {
-        ss.ignore();
-      }
-    }
-  }
+  // string lineString;
+  // while( std::getline( inputStream, lineString ) )
+  // {
+  //   std::istringstream ss( lineString );
+  //   while( ss.peek() == ',' || ss.peek() == ' ' )
+  //   {
+  //     ss.ignore();
+  //   }
+  //   T value;
+  //   while( ss >> value )
+  //   {
+  //     target.emplace_back( value );
+  //     while( ss.peek() == ',' || ss.peek() == ' ' )
+  //     {
+  //       ss.ignore();
+  //     }
+  //   }
+  // }
 
-  inputStream.close();
+  // inputStream.close();
 }
 
 
@@ -81,7 +80,7 @@ void MultivariableTableFunction::setTableValues( real64_array values )
 {
   m_pointData = std::move( values );
 }
-void MultivariableTableFunction::getHypercubePoints( globalIndex hypercubeIndex, globalIndex_array & hypercubePoints )
+void MultivariableTableFunction::getHypercubePoints( globalIndex const hypercubeIndex, globalIndex_array & hypercubePoints ) const
 {
   auto remainder = hypercubeIndex;
   auto pwr = m_numVerts;
@@ -174,22 +173,6 @@ void MultivariableTableFunction::initializeFunction()
   }
 
 }
-
-// void MultivariableTableFunction::reInitializeFunction()
-// {
-// Setup index increment (assume data is in Fortran array order)
-// localIndex increment = 1;
-// for( localIndex ii = 0; ii < m_coordinates.size(); ++ii )
-// {
-//   increment *= m_coordinates.sizeOfArray( ii );
-// }
-// if( m_coordinates.size() > 0 && !m_values.empty() ) // coordinates and values have been set
-// {
-//   GEOSX_THROW_IF_NE_MSG( increment, m_values.size(),
-//                          catalogName() << " " << getName() << ": number of values does not match total number of table coordinates",
-//                          InputError );
-// }
-// }
 
 REGISTER_CATALOG_ENTRY( FunctionBase, MultivariableTableFunction, string const &, Group * const )
 

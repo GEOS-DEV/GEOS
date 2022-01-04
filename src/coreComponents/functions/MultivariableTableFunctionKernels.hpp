@@ -36,28 +36,33 @@ namespace geosx
  * A class for multivariable piecewise interpolation with static storage
  * All functions are interpolated using the same uniformly discretized space
  *
- * @tparam NUM_DIMS number of dimensions
- * @tparam NUM_OPS number of interpolated functions
+ * @tparam NUM_DIMS number of dimensions (inputs)
+ * @tparam NUM_OPS number of interpolated functions (outputs)
  */
 template< integer NUM_DIMS, integer NUM_OPS >
 class MultivariableTableFunctionStaticKernel
 {
 public:
 
-  /// Compile time value for the number of table dimensions
+  /// Compile time value for the number of table dimensions (inputs)
   static constexpr integer numDims = NUM_DIMS;
 
-  /// Compile time value for the number of table outputs (operators)
+  /// Compile time value for the number of operators (interpolated functions, outputs)
   static constexpr integer numOps = NUM_OPS;
 
   /**
-   * @brief Constructor
+   * @brief Construct a new Multivariable Table Function Static Kernel object
    *
-   * @param[in] coordinates space discretization parameters
-   * @param[in] values values of operators at supporting points
-   * @param[in] input points where interpolation is requested
-   * @param[out] output values of interpolated operators
-   * @param[out] outputDerivatives derivatives of interpolated operators w.r.t. input
+   * @param[in] axisMinimums  minimum coordinate for each axis
+   * @param[in] axisMaximums maximum coordinate for each axis
+   * @param[in] axisPoints number of discretization points between minimum and maximum for each axis
+   * @param[in] axisSteps axis interval lengths (axes are discretized uniformly)
+   * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
+   * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
+   * @param[in] hypercubeData table data stored per hypercube
+   * @param[in] coordinates array of coordinates of points where interpolation is required
+   * @param[in] values array of interpolated operator values (all operators are interpolated at each point)
+   * @param[in] derivatives  array of derivatives of interpolated operators (all derivatives for all operators are computed at each point)
    */
   MultivariableTableFunctionStaticKernel( arrayView1d< real64 const > const & axisMinimums,
                                           arrayView1d< real64 const > const & axisMaximums,
@@ -84,7 +89,7 @@ public:
   /**
    * @brief Compute interpolation element-wise using host or device execution space
    *
-   * @param ei Index of element
+   * @param[in] ei Index of element
    */
   GEOSX_HOST_DEVICE
   void
@@ -93,16 +98,13 @@ public:
     interpolatePoint( &m_coordinates[ei * NUM_DIMS], &m_values[ei * NUM_OPS], &m_derivatives[ei * NUM_OPS * NUM_DIMS] );
   }
 
-  /// maximum dimensions for the coordinates in the table
-  static constexpr integer maxDimensions = 5;
-  /**
-   *
-   * @brief Linear interpolation (to be replaced)
-   *
-   * @tparam IN_ARRAY array type of input coordinates
-   * @param input input coordinates
-   * @return interpolated value
-   */
+/**
+ * @brief interpolate operators at a given point
+ *
+ * @param[in] coordinates point coordinates
+ * @param[out] values interpolated operator values
+ * @param[out] derivatives derivatives of interpolated operators
+ */
   GEOSX_HOST_DEVICE
   void
   interpolatePoint( real64 const *coordinates,
@@ -133,7 +135,14 @@ public:
 
 protected:
 
+  /**
+   * @brief Get pointer to hypercube data
+   *
+   * @param[in] hypercubeIndex
+   * @return pointer to hypercube data
+   */
   GEOSX_HOST_DEVICE
+  inline
   real64 const *
   getHypercubeData( globalIndex const hypercubeIndex ) const
   {
@@ -141,8 +150,21 @@ protected:
     return &m_hypercubeData[hypercubeIndex * NUM_VERTS * NUM_OPS];
   }
 
-
+  /**
+   * @brief Get the interval index, low and mult values for a given axis coordinate
+   *
+   * @param[in] axisCoordinate coordinate on a given axis
+   * @param[in] axisMin minimum value on a given axis
+   * @param[in] axisMax maximum value on a given axis
+   * @param[in] axisStep interval length for a given axis
+   * @param[in] axisStepInv inversion of the interval length for a given axis
+   * @param[in] axisPoints number of discretization points for a given axis
+   * @param[out] axisLow left coordinate of target axis interval
+   * @param[out] axisMult weight of the right coordinate of target axis interval
+   * @return integer target axis interval index
+   */
   GEOSX_HOST_DEVICE
+  inline
   integer
   getAxisIntervalIndexLowMult( real64 const axisCoordinate,
                                real64 const axisMin,
@@ -150,7 +172,6 @@ protected:
                                real64 const axisStep,
                                real64 const axisStepInv,
                                integer const axisPoints,
-                               // OUTPUT:
                                real64 & axisLow,
                                real64 & axisMult ) const
   {
@@ -181,14 +202,26 @@ protected:
     return axisIntervalIndex;
   }
 
+
+  /**
+   * @brief interpolate all operator values and derivatives at a given point
+   *
+   * @param[in] axisCoordinates coordinates of a point
+   * @param[in] hypercubeData data of target hypercube
+   * @param[in] axisLows array of left coordinates of target axis intervals
+   * @param[in] axisMults array of weights of right coordinates of target axis intervals
+   * @param[in] axisStepInvs array of inversions of axis steps
+   * @param[out] values interpolated operator values
+   * @param[out] derivatives derivatives of interpolated operators
+   */
   GEOSX_HOST_DEVICE
+  inline
   void
-  interpolatePointWithDerivatives( real64 const *axisCoordinates,
-                                   real64 const *hypercubeData,
-                                   real64 const *axisLows,
-                                   real64 const *axisMults,
-                                   real64 const *axisStepInvs,
-                                   // OUTPUT:
+  interpolatePointWithDerivatives( real64 const * const axisCoordinates,
+                                   real64 const * const hypercubeData,
+                                   real64 const * const axisLows,
+                                   real64 const * const axisMults,
+                                   real64 const * const axisStepInvs,
                                    real64 *values,
                                    real64 *derivatives ) const
   {
@@ -204,7 +237,6 @@ protected:
 
     for( integer i = 0; i < NUM_DIMS; ++i )
     {
-      //printf ("i = %d, NUM_VERTS = %d, New offset: %d\n", i, NUM_VERTS, 2 * NUM_VERTS - (NUM_VERTS>>i));
 
       for( integer j = 0; j < pwr; ++j )
       {
