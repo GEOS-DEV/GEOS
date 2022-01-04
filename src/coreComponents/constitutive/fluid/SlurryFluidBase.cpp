@@ -18,6 +18,8 @@
 
 #include "SlurryFluidBase.hpp"
 
+#include "SlurryFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -47,7 +49,6 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default value for viscosity." );
 
-
   registerWrapper( viewKeyStruct::flowBehaviorIndexString(), &m_nIndices ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flow behavior index" );
@@ -56,27 +57,27 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flow consistency index" );
 
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDens_dPres );
-  registerWrapper( viewKeyStruct::dDens_dProppantConcString(), &m_dDens_dProppantConc );
-  registerWrapper( viewKeyStruct::dDens_dCompConcString(), &m_dDens_dCompConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::density{}, &m_density );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dDensity_dPressure{}, &m_dDens_dPres );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration{}, &m_dDens_dProppantConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration{}, &m_dDens_dCompConc );
 
-  registerWrapper( viewKeyStruct::fluidDensityString(), &m_fluidDensity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dFluidDens_dPresString(), &m_dFluidDens_dPres );
-  registerWrapper( viewKeyStruct::dFluidDens_dCompConcString(), &m_dFluidDens_dCompConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::fluidDensity{}, &m_fluidDensity );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidDensity_dPressure{}, &m_dFluidDens_dPres );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration{}, &m_dFluidDens_dCompConc );
 
-  registerWrapper( viewKeyStruct::fluidViscosityString(), &m_fluidViscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dFluidVisc_dPresString(), &m_dFluidVisc_dPres );
-  registerWrapper( viewKeyStruct::dFluidVisc_dCompConcString(), &m_dFluidVisc_dCompConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::fluidViscosity{}, &m_fluidViscosity );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidViscosity_dPressure{}, &m_dFluidVisc_dPres );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dFluidViscosity_dComponentConcentration{}, &m_dFluidVisc_dCompConc );
 
-  registerWrapper( viewKeyStruct::componentDensityString(), &m_componentDensity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dCompDens_dPresString(), &m_dCompDens_dPres );
-  registerWrapper( viewKeyStruct::dCompDens_dCompConcString(), &m_dCompDens_dCompConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::componentDensity{}, &m_componentDensity );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dComponentDensity_dPressure{}, &m_dCompDens_dPres );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration{}, &m_dCompDens_dCompConc );
 
-  registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dVisc_dPres );
-  registerWrapper( viewKeyStruct::dVisc_dProppantConcString(), &m_dVisc_dProppantConc );
-  registerWrapper( viewKeyStruct::dVisc_dCompConcString(), &m_dVisc_dCompConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::viscosity{}, &m_viscosity );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dViscosity_dPressure{}, &m_dVisc_dPres );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration{}, &m_dVisc_dProppantConc );
+  registerExtrinsicData( extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration{}, &m_dVisc_dCompConc );
 }
 
 SlurryFluidBase::~SlurryFluidBase() = default;

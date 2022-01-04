@@ -89,9 +89,18 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
-      frictionAngle="0.523598776"/>
+      frictionCoefficient="0.577350269"
+      apertureTableName="apertureTable"/>
   </Constitutive>
 <!-- SPHINX_MATERIAL_END -->
+
+
+  <Functions>
+    <TableFunction
+      name="apertureTable"
+      coordinates="{ -1.0e-3, 0.0 }"
+      values="{ 0.002e-3, 0.02e-3 }"/>      
+  </Functions>
 
 <!-- SPHINX_BC -->
   <FieldSpecifications>
@@ -156,7 +165,7 @@
     <PackCollection
       name="displacementJumpCollection"
       objectPath="ElementRegions/Fracture/faceElementSubRegion"
-      fieldName="localJump"/>   
+      fieldName="displacementJump"/>   
     </Tasks>
 <!-- SPHINX_TASKS_END -->
 
@@ -174,6 +183,9 @@
     <TimeHistory
       name="timeHistoryOutput1"
       sources="{/Tasks/displacementJumpCollection}"
-      filename="displacementJump_history" />     
+      filename="displacementJump_history" /> 
+      
+    <Restart
+      name="restartOutput"/>      
     </Outputs>
 </Problem>

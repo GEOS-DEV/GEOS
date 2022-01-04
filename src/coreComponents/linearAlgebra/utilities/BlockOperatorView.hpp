@@ -176,9 +176,9 @@ public:
    * @note when build without MPI, may return anything
    *       (MPI_Comm will be a mock type defined in MpiWrapper)
    */
-  virtual MPI_Comm getComm() const override
+  virtual MPI_Comm comm() const override
   {
-    return m_operators( 0, 0 )->getComm();
+    return m_operators( 0, 0 )->comm();
   }
 
   ///@}

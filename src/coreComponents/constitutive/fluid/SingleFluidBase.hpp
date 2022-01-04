@@ -156,6 +156,11 @@ public:
    */
   SingleFluidBase( string const & name, Group * const parent );
 
+  /**
+   * @brief Save the current density into the initial density (needed for single-phase poromechanics)
+   */
+  void initializeState() const;
+
   // *** ConstitutiveBase interface
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
@@ -169,6 +174,8 @@ public:
   arrayView2d< real64 > dDensity_dPressure() { return m_dDensity_dPressure; }
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
+  arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
+
   arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
 
@@ -177,19 +184,6 @@ public:
 
   real64 defaultDensity() const { return m_defaultDensity; }
   real64 defaultViscosity() const { return m_defaultViscosity; }
-
-  // *** Data repository keys
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
-    static constexpr char const * densityString() { return "density"; }
-    static constexpr char const * dDens_dPresString() { return "dDensity_dPressure"; }
-
-    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
-    static constexpr char const * viscosityString() { return "viscosity"; }
-    static constexpr char const * dVisc_dPresString() { return "dViscosity_dPressure"; }
-  };
 
 protected:
 
@@ -201,9 +195,19 @@ protected:
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;
 
+  array2d< real64 > m_initialDensity;
+
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
 
+private:
+
+  // *** Data repository keys
+  struct viewKeyStruct
+  {
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+  };
 };
 
 } //namespace constitutive
