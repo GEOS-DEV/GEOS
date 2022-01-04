@@ -97,7 +97,7 @@ public:
   void evaluate( dataRepository::Group const & group,
                  real64 const time,
                  SortedArrayView< localIndex const > const & set,
-                 real64_array & result ) const
+                 real64_array & result ) const override final
   {
     GEOSX_UNUSED_VAR( group );
     GEOSX_UNUSED_VAR( time );
@@ -113,7 +113,7 @@ public:
    * @param[in] input a scalar input
    * @return the function evaluation
    */
-  virtual real64 evaluate( real64 const * const input ) const
+  virtual real64 evaluate( real64 const * const input ) const override final
   {
     GEOSX_UNUSED_VAR( input );
 
