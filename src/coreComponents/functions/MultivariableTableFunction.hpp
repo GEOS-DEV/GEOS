@@ -99,6 +99,11 @@ public:
                  SortedArrayView< localIndex const > const & set,
                  real64_array & result ) const
   {
+    GEOSX_UNUSED_VAR( group );
+    GEOSX_UNUSED_VAR( time );
+    GEOSX_UNUSED_VAR( set );
+    GEOSX_UNUSED_VAR( result );
+
     GEOSX_ERROR( "This method is not supported by MultivariableTableFunction" );
 
   };
@@ -110,6 +115,8 @@ public:
    */
   virtual real64 evaluate( real64 const * const input ) const
   {
+    GEOSX_UNUSED_VAR( input );
+
     GEOSX_ERROR( "This method is not supported by MultivariableTableFunction" );
     return 0;
   };
