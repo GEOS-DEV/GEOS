@@ -38,8 +38,8 @@ EdgeManager::EdgeManager( string const & name,
   m_fractureConnectorsEdgesToEdges(),
   m_fractureConnectorEdgesToFaceElements()
 {
-  this->registerWrapper( viewKeyStruct::nodeListString(), &this->m_toNodesRelation );
-  this->registerWrapper( viewKeyStruct::faceListString(), &this->m_toFacesRelation );
+  this->registerWrapper( viewKeyStruct::nodeListString(), &this->m_toNodesRelation ).setSizedFromParent( 0 );
+  this->registerWrapper( viewKeyStruct::faceListString(), &this->m_toFacesRelation ).setSizedFromParent( 0 );
 
   m_toNodesRelation.resize( 0, 2 );
 
@@ -66,7 +66,7 @@ EdgeManager::~EdgeManager()
 
 void EdgeManager::resize( localIndex const newSize )
 {
-  m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
+//  m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
   ObjectManagerBase::resize( newSize );
 }
 
@@ -77,15 +77,13 @@ void EdgeManager::buildEdges( CellBlockManagerABC const & cellBlockManager,
   GEOSX_MARK_FUNCTION;
 
   faceManager.edgeList().setRelatedObject( *this );
-
-  m_toNodesRelation.setRelatedObject( nodeManager );
   m_toFacesRelation.setRelatedObject( faceManager );
+  m_toNodesRelation.setRelatedObject( nodeManager );
 
   resize( cellBlockManager.numEdges() );
 
   faceManager.edgeList().base() = cellBlockManager.getFaceToEdges();
   m_toFacesRelation.base() = cellBlockManager.getEdgeToFaces();
-
   m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
 
   // make sets from nodesets
@@ -117,12 +115,14 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                                              faceToEdgeMap,
                                              m_toFacesRelation,
                                              m_toNodesRelation );
-  m_toNodesRelation.resize( numEdges );
+
+  resize( numEdges );
+
+//  m_toNodesRelation.resize( numEdges );
 //  m_edgesToFractureConnectorsEdges.resize( numEdges );
   m_fractureConnectorsEdgesToEdges.resize( numEdges );
   m_fractureConnectorEdgesToFaceElements.resize( numEdges );
 }
-
 
 void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
 {
