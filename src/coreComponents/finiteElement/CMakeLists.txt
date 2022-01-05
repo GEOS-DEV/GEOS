@@ -2,6 +2,7 @@
 # Specify all headers
 #
 set( finiteElement_headers
+     BilinearFormUtilities.hpp
      FiniteElementDiscretization.hpp
      FiniteElementDiscretizationManager.hpp
      FiniteElementDispatch.hpp

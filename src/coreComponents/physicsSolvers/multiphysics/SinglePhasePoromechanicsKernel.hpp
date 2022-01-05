@@ -19,86 +19,13 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 
+#include "finiteElement/BilinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 namespace geosx
 {
-
-///////////////////////
-namespace BilinearForms
-{
-template< typename MATRIX,
-          typename GRADIENT_VECTOR_TEST_BASIS,
-          typename SECOND_ORDER_TENSOR,
-          typename SCALAR_TRIAL_BASIS >
-GEOSX_HOST_DEVICE
-void symmetricGradientScalar( integer const numTestDOF,
-                              integer const numTrialDOF,
-                              MATRIX && mat,
-                              GRADIENT_VECTOR_TEST_BASIS && dNdX,
-                              SECOND_ORDER_TENSOR && A,
-                              SCALAR_TRIAL_BASIS && Np )
-{
-  for( int a = 0; a < numTestDOF/3; ++a )
-  {
-    for( int b = 0; b < numTrialDOF; ++b )
-    {
-      mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A[0] * Np[b] + dNdX[a][1] * A[5] * Np[b] + dNdX[a][2] * A[4] * Np[b];
-      mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][0] * A[5] * Np[b] + dNdX[a][1] * A[1] * Np[b] + dNdX[a][2] * A[3] * Np[b];
-      mat[a*3+2][b] = mat[a*3+2][b] + dNdX[a][0] * A[4] * Np[b] + dNdX[a][1] * A[3] * Np[b] + dNdX[a][2] * A[2] * Np[b];
-    }
-  }
-}
-
-template< typename MATRIX,
-          typename SCALAR_TEST_BASIS,
-          typename DIVERGENCE_VECTOR_TEST_BASIS >
-GEOSX_HOST_DEVICE
-void scalarDivergence( integer const numTestDOF,
-                       integer const numTrialDOF,
-                       MATRIX && mat,
-                       SCALAR_TEST_BASIS && Np,
-                       real64 A,
-                       DIVERGENCE_VECTOR_TEST_BASIS && dNdX )
-{
-  for( int a = 0; a < numTestDOF; ++a )
-  {
-    for( integer b = 0; b < numTrialDOF/3; ++b )
-    {
-      mat[a][b*3+0] = mat[a][b*3+0] + A * dNdX[b][0];
-      mat[a][b*3+1] = mat[a][b*3+1] + A * dNdX[b][1];
-      mat[a][b*3+2] = mat[a][b*3+2] + A * dNdX[b][2];
-    }
-  }
-}
-
-template< typename MATRIX,
-          typename VECTOR_TEST_BASIS,
-          typename VECTOR,
-          typename SCALAR_TEST_BASIS >
-GEOSX_HOST_DEVICE
-void vectorScalar( integer const numTestDOF,
-                   integer const numTrialDOF,
-                   MATRIX && mat,
-                   VECTOR_TEST_BASIS && N,
-                   VECTOR && v,
-                   SCALAR_TEST_BASIS && Np )
-{
-  for( int a = 0; a < numTestDOF/3; ++a )
-  {
-    for( int b = 0; b < numTrialDOF; ++b )
-    {
-      mat[a*3+0][b] = mat[a*3+0][b] + N[a] * v[0] * Np[b];
-      mat[a*3+1][b] = mat[a*3+1][b] + N[a] * v[1] * Np[b];
-      mat[a*3+2][b] = mat[a*3+2][b] + N[a] * v[2] * Np[b];
-    }
-  }
-}
-
-}
-///////////////////////
 
 namespace PoromechanicsKernels
 {
@@ -399,45 +326,49 @@ public:
     // Compute dRmom_dVolStrain
     stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
 
-//  BTDB per tutti i modelli costitutivi:
-//	(1) se simmetrici --> upper BTDB
-//	(2) se non symmetrici --> full
-//
-//	Aggiungi complete che e` noop per problemi non simmetrici
-
-
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute dRmom_dPressure
-    int Np[1] = { 1 };
-    BilinearForms::symmetricGradientScalar( stack.numDispDofPerElem,
-                                            1,
-                                            stack.localDispFlowJacobian,
-                                            dNdX,
-                                            dTotalStress_dPressure,
-                                            Np );
+    real64 Np[1] = { 1 };
+
+
+    BilinearFormUtilities::compute< BilinearFormUtilities::Space::H1vector,
+                                    BilinearFormUtilities::Space::L2,
+                                    BilinearFormUtilities::DifferentialOperator::SymmetricGradient,
+                                    BilinearFormUtilities::DifferentialOperator::Identity >
+    (
+      stack.localDispFlowJacobian,
+      dNdX,
+      dTotalStress_dPressure,
+      Np );
 
     if( m_gravityAcceleration > 0.0 )
     {
-      BilinearForms::vectorScalar( stack.numDispDofPerElem,
-                                   1,
-                                   stack.localDispFlowJacobian,
-                                   N,
-                                   dBodyForce_dPressure,
-                                   Np );
+      BilinearFormUtilities::compute< BilinearFormUtilities::Space::H1vector,
+                                      BilinearFormUtilities::Space::L2,
+                                      BilinearFormUtilities::DifferentialOperator::Identity,
+                                      BilinearFormUtilities::DifferentialOperator::Identity >
+      (
+        stack.localDispFlowJacobian,
+        N,
+        dBodyForce_dPressure,
+        Np );
     }
 
 
     // Compute Rmas
     stack.localFlowResidual[0] += ( fluidMassContent - fluidMassContentOld );
 
-    // Compute dRmas_dVolStrain
-    BilinearForms::scalarDivergence( 1,
-                                     stack.numDispDofPerElem,
-                                     stack.localFlowDispJacobian,
-                                     Np,
-                                     dFluidMassContent_dVolStrainIncrement,
-                                     dNdX );
+    BilinearFormUtilities::compute< BilinearFormUtilities::Space::L2,
+                                    BilinearFormUtilities::Space::H1vector,
+                                    BilinearFormUtilities::DifferentialOperator::Identity,
+                                    BilinearFormUtilities::DifferentialOperator::Divergence >
+    (
+      stack.localFlowDispJacobian,
+      Np,
+      dFluidMassContent_dVolStrainIncrement,
+      dNdX );
+
 
     // Compute dRmas_dPressure
     stack.localFlowFlowJacobian[0][0] += dFluidMassContent_dPressure;
