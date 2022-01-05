@@ -675,14 +675,14 @@ TEST( FunctionTests, 1DMultivariableTable )
 }
 
 real64 operator1 ( real64 const x, real64 const y ) { return 2 * x + 3 * y * y; }
-real64 dOperator1_dx ( real64 const x, real64 const y ) { return 2; }
-real64 dOperator1_dy ( real64 const x, real64 const y ) { return 6 * y; }
+real64 dOperator1_dx ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x, y ); return 2; }
+real64 dOperator1_dy ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x ); return 6 * y; }
 real64 operator2 ( real64 const x, real64 const y ) { return 2 * x * x + 3 / (y + 1); }
-real64 dOperator2_dx ( real64 const x, real64 const y ) { return 4 * x; }
-real64 dOperator2_dy ( real64 const x, real64 const y ) { return -3 / ((y + 1) * (y + 1)); }
-real64 operator3 ( real64 const x, real64 const y ) { return 2 * x + 3; }
-real64 dOperator3_dx ( real64 const x, real64 const y ) { return 2; }
-real64 dOperator3_dy ( real64 const x, real64 const y ) { return 0; }
+real64 dOperator2_dx ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( y ); return 4 * x; }
+real64 dOperator2_dy ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x ); return -3 / ((y + 1) * (y + 1)); }
+real64 operator3 ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( y ); return 2 * x + 3; }
+real64 dOperator3_dx ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x, y ); return 2; }
+real64 dOperator3_dy ( real64 const x, real64 const y ) { GEOSX_UNUSED_VAR( x, y ); return 0; }
 
 TEST( FunctionTests, 2DMultivariableTable )
 {
