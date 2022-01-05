@@ -2,7 +2,6 @@
 #include <Python.h>
 
 // Source includes
-#include "events/EventBase.hpp"
 #include "physicsSolvers/SolverBase.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "../pygeosx.hpp"

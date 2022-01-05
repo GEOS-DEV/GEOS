@@ -1,16 +1,36 @@
 import pygeosx
 import sys
+import h5py
+import numpy as np
 
 problem = pygeosx.initialize(0, sys.argv)
 
 
 solver = problem.get_group("/Solvers/acousticSolver")
 
-#history = pygeosx.pyhistory.History()
+collection = problem.get_group("/Tasks/waveFieldCollection")
+output = problem.get_group("Outputs/waveFieldOutput")
 
 pygeosx.apply_initial_conditions()
-solver.solverStep(0, 0.005)
-#history.collect("waveField",0,0.005)
+for t in range(1000):
+    solver.solverStep(t, 0.005)
+    if t==999:
+        collection.collect(t, 0.005)
+        output.output(t, 0.005)
 
 pressure = solver.get_wrapper("pressureNp1AtReceivers").value().to_numpy()
 print(pressure)
+
+
+filename = "waveField.hdf5"
+
+with h5py.File(filename, "r") as f:
+    # List all groups
+    print("Keys: %s" % f.keys())
+    a_group_key = list(f.keys())[0]
+
+    # Get the data
+    data = list(f[a_group_key])
+
+np.set_printoptions(threshold=np.inf)
+print(data[0])

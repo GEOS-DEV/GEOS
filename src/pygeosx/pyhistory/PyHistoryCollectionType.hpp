@@ -4,7 +4,8 @@ namespace python
 {
 
 
-PyMODINIT_FUNC PyInit_pysolver( void );
+PyTypeObject * getPyHistoryCollectionType();
+
 
 
 } // namespace python

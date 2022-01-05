@@ -366,20 +366,20 @@ PyInit_pygeosx()
 
 
   LvArray::python::PyObjectRef<> submodule1 = geosx::python::PyInit_pysolver();
-  //LvArray::python::PyObjectRef<> submodule2 = geosx::python::PyInit_pyhistory();
+  LvArray::python::PyObjectRef<> submodule2 = geosx::python::PyInit_pyhistory();
 
   Py_XINCREF( submodule1 );
   if( PyModule_AddObject( module, "pysolver", submodule1 ) < 0 )
   {
     Py_XDECREF( submodule1 );
   }
-  /*
+
   Py_XINCREF( submodule2 );
   if( PyModule_AddObject( module, "pyhistory", submodule2 ) < 0 )
   {
     Py_XDECREF( submodule2 );
   }
-  */
+
   if( !addExitHandler( module ) )
   {
     PYTHON_ERROR_IF( PyErr_Occurred() == nullptr, PyExc_RuntimeError,
@@ -397,12 +397,7 @@ PyInit_pygeosx()
   {
     return nullptr;
   }
-  /*
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
-  {
-    return nullptr;
-  }
-  */
+
   if( !LvArray::python::addTypeToModule( module, geosx::python::getPyWrapperType(), "Wrapper" ) )
   {
     return nullptr;

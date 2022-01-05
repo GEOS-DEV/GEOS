@@ -23,6 +23,7 @@
 #include "fileIO/timeHistory/TimeHistoryCollection.hpp"
 #include "fileIO/timeHistory/HistoryIO.hpp"
 #include "fileIO/timeHistory/TimeHistHDF.hpp"
+#include "../../../pygeosx/pyhistory/PyHistoryOutputType.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector
 
@@ -93,6 +94,9 @@ public:
     dataRepository::ViewKey timeHistoryRestart = { "restart" };
   } timeHistoryOutputViewKeys;
   /// @endcond
+
+  virtual PyTypeObject * getPythonType() const
+  { return python::getPyHistoryOutputType(); }
 
 private:
 
