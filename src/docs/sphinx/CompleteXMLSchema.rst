@@ -498,6 +498,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultivariableTableFunction:
+
+Element: MultivariableTableFunction
+===================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction.rst
+
+
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -1473,6 +1480,13 @@ Datastructure: ModifiedCamClay
 Datastructure: MultiphasePoromechanics
 ======================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_MultivariableTableFunction:
+
+Datastructure: MultivariableTableFunction
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
