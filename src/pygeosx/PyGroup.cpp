@@ -20,6 +20,7 @@
 // Source includes
 #include "PyGroup.hpp"
 #include "pygeosx.hpp"
+#include "physicsSolvers/SolverBase.hpp"
 #include "pysolver/PySolver.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
@@ -44,6 +45,16 @@ struct PyGroup
     "A Python interface to geosx::dataRepository::Group.";
 
   dataRepository::Group * group;
+};
+
+  struct PySolver
+{
+  PyObject_HEAD
+
+  static constexpr char const * docString =
+    "A Python interface to geosx::SolverBase.";
+
+  geosx::SolverBase * group;
 };
 
 /**
@@ -273,8 +284,8 @@ END_ALLOW_DESIGNATED_INITIALIZERS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 PyObject * createNewPyGroup( dataRepository::Group & group )
 {
-  // Create a new Group and set the dataRepository::Group it points to.
-  PyObject * const ret = PyObject_CallFunction( reinterpret_cast< PyObject * >( getPyGroupType() ), "" );
+  // Create a new Group or derived class depending on PythonType and set the dataRepository::Group it points to.
+  PyObject * const ret = PyObject_CallFunction( reinterpret_cast< PyObject * >( group.getPythonType() ), "" );
   PyGroup * const retGroup = reinterpret_cast< PyGroup * >( ret );
   if( retGroup == nullptr )
   {

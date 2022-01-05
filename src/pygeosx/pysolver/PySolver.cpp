@@ -2,6 +2,9 @@
 #include <Python.h>
 
 // Source includes
+#include "events/EventBase.hpp"
+#include "physicsSolvers/SolverBase.hpp"
+#include "mainInterface/ProblemManager.hpp"
 #include "../pygeosx.hpp"
 #include "PySolver.hpp"
 #include "../PyGroup.hpp"
@@ -32,12 +35,6 @@ struct PySolver
   geosx::SolverBase * group;
 };
 
-static void PySolver_dealloc( PySolver * self )
-{
-  Py_TYPE( self )->tp_free((PyObject *)self );
-}
-
-
 
 static PyObject * PySolver_new( PyTypeObject *type, PyObject *args, PyObject *kwds )
 {
@@ -51,63 +48,6 @@ static PyObject * PySolver_new( PyTypeObject *type, PyObject *args, PyObject *kw
   }
 
   return (PyObject *)self;
-}
-
-
-
-static int PySolver_init( PySolver *self, PyObject *args, PyObject *kwds )
-{
-  GEOSX_UNUSED_VAR( kwds );
-
-  PYTHON_ERROR_IF( !g_alreadyInitialized, PyExc_RuntimeError, "GEOSX must be initialized first. Call pygeosx.initialize().", -1 );
-
-  geosx::SolverBase *group=nullptr;
-
-  PyObject * unicodePath;
-  if( !PyArg_ParseTuple( args, "U", &unicodePath ) )
-  {
-    return -1;
-  }
-
-  LvArray::python::PyObjectRef<> asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
-  if( asciiPath == nullptr )
-  {
-    return -1;
-  }
-
-  char const * const path = PyBytes_AsString( asciiPath );
-  if( path == nullptr )
-  {
-    return -1;
-  }
-
-  geosx::EventManager & eventManager = g_state->getProblemManager().getEventManager();
-
-  eventManager.forSubGroups< geosx::EventBase >( [&]( geosx::EventBase & subEvent )
-  {
-    subEvent.getTargetReferences();
-  } );
-
-  geosx::EventBase * subEvent = nullptr;
-  for( int currentSubEvent = 0; currentSubEvent<eventManager.numSubGroups(); ++currentSubEvent )
-  {
-
-    subEvent = static_cast< geosx::EventBase * >( eventManager.getSubGroups()[currentSubEvent]);
-    if( subEvent->getTargetName() == path )
-    {
-      break;
-    }
-    else
-    {
-      subEvent = nullptr;
-    }
-  }
-  PYTHON_ERROR_IF( subEvent == nullptr, PyExc_RuntimeError, "Target not found", -1 );
-
-  group = static_cast< geosx::SolverBase * >(subEvent->getEventTarget());
-  self->group = group;
-
-  return 0;
 }
 
 
@@ -181,12 +121,10 @@ static PyTypeObject PySolverType = {
     .tp_name = "pysolver.Solver",
   .tp_basicsize = sizeof( PySolver ),
   .tp_itemsize = 0,
-  .tp_dealloc = (destructor)PySolver_dealloc,
   .tp_repr = PySolver_repr,
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
   .tp_doc = PySolver::docString,
   .tp_methods = PySolver_methods,
-  .tp_init = (initproc)PySolver_init,
   .tp_new = PySolver_new,
 };
 
