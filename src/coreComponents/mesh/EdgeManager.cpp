@@ -38,7 +38,7 @@ EdgeManager::EdgeManager( string const & name,
   m_fractureConnectorsEdgesToEdges(),
   m_fractureConnectorEdgesToFaceElements()
 {
-  this->registerWrapper( viewKeyStruct::nodeListString(), &this->m_toNodesRelation ).setSizedFromParent( 0 );
+  this->registerWrapper( viewKeyStruct::nodeListString(), &this->m_toNodesRelation );
   this->registerWrapper( viewKeyStruct::faceListString(), &this->m_toFacesRelation ).setSizedFromParent( 0 );
 
   m_toNodesRelation.resize( 0, 2 );
@@ -66,7 +66,7 @@ EdgeManager::~EdgeManager()
 
 void EdgeManager::resize( localIndex const newSize )
 {
-//  m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
+  m_toFacesRelation.resize( newSize, 2 * faceMapExtraSpacePerEdge() );
   ObjectManagerBase::resize( newSize );
 }
 
