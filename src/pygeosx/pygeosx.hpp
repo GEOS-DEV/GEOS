@@ -13,7 +13,7 @@
  */
 
 // Source includes
-
+#include "PyGroup.hpp"
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"

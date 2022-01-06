@@ -17,9 +17,6 @@
 
 namespace geosx
 {
-extern std::unique_ptr< GeosxState > g_state;
-
-extern bool g_alreadyInitialized;
 
 namespace python
 {
@@ -83,6 +80,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
     return nullptr;
   }
 
+  geosx::GeosxState* g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 
   try

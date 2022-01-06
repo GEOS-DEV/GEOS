@@ -3,7 +3,7 @@
 
 // Source includes
 #include "physicsSolvers/SolverBase.hpp"
-#include "mainInterface/ProblemManager.hpp"
+
 #include "../pygeosx.hpp"
 #include "PySolver.hpp"
 #include "../PyGroup.hpp"
@@ -17,9 +17,6 @@
 
 namespace geosx
 {
-extern std::unique_ptr< GeosxState > g_state;
-
-extern bool g_alreadyInitialized;
 
 namespace python
 {
@@ -81,6 +78,7 @@ static PyObject * solverStep( PySolver * self, PyObject * args )
     return nullptr;
   }
 
+  geosx::GeosxState* g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 
   self->group->solverStep( time, dt, 0, domain );
