@@ -33,31 +33,56 @@ MultivariableTableFunction::MultivariableTableFunction( const string & name,
 
 void MultivariableTableFunction::initializeFunctionFromFile( string const & filename )
 {
-  std::ifstream inputStream( filename.c_str() );
-  GEOSX_THROW_IF( !inputStream, catalogName() << " " << getName() << ": could not read input file " << filename, InputError );
+  std::ifstream file( filename.c_str() );
+  GEOSX_THROW_IF( !file, catalogName() << " " << getName() << ": could not read input file " << filename, InputError );
 
-  // Read the file
-  // TODO: Update this to handle large parallel jobs
-  // string lineString;
-  // while( std::getline( inputStream, lineString ) )
-  // {
-  //   std::istringstream ss( lineString );
-  //   while( ss.peek() == ',' || ss.peek() == ' ' )
-  //   {
-  //     ss.ignore();
-  //   }
-  //   T value;
-  //   while( ss >> value )
-  //   {
-  //     target.emplace_back( value );
-  //     while( ss.peek() == ',' || ss.peek() == ' ' )
-  //     {
-  //       ss.ignore();
-  //     }
-  //   }
-  // }
+  integer numDims, numOps;
+  globalIndex numPointsTotal = 1;
+  real64_array axisMinimums, axisMaximums;
+  integer_array axisPoints;
 
-  // inputStream.close();
+  // 1. Read numDims and numOps
+
+  GEOSX_THROW_IF( file.eof(), "Table file is shorter than expected", std::runtime_error );
+  file >> numDims >> numOps;
+
+  // assume no more than 10 dimensions
+  GEOSX_ASSERT_GE( numDims, 1 );
+  GEOSX_ASSERT_GT( 10, numDims );
+
+  // assume no more than 100 operators
+  GEOSX_ASSERT_GE( numOps, 1 );
+  GEOSX_ASSERT_GT( 100, numDims );
+
+  axisMinimums.resize( numDims );
+  axisMaximums.resize( numDims );
+  axisPoints.resize( numDims );
+
+  // 2. Read axis parameters
+
+  for( integer i = 0; i < numDims; i++ )
+  {
+    GEOSX_THROW_IF( file.eof(), "Table file is shorter than expected", std::runtime_error );
+    file >> axisPoints[i] >> axisMinimums[i] >> axisMaximums[i];
+    GEOSX_ASSERT_GT( axisPoints[i], 1 );
+    numPointsTotal *= axisPoints[i];
+  }
+  m_pointData.resize( numPointsTotal * numOps );
+
+  // 3. Read table values
+  for( auto i = 0; i < numPointsTotal; i++ )
+  {
+    for( auto j = 0; j < numOps; j++ )
+    {
+      GEOSX_THROW_IF( file.eof(), "Table file is shorter than expected", std::runtime_error );
+      file >> m_pointData[i * numOps + j];
+    }
+  }
+
+  file.close();
+
+  setTableCoordinates( numDims, numOps, axisMinimums, axisMaximums, axisPoints );
+  initializeFunction();
 }
 
 
