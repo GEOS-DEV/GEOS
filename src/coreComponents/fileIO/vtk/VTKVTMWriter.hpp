@@ -49,10 +49,10 @@ public:
   void addBlock( string const & blockName ) const;
 
   /*!
-   * @brief Add a block to the VTM file
-   * @details The first level of block is for the ElementRegion (\p blockName can
+   * @brief Add a sub-block to the VTM file
+   * @details The second level of block is for the ElementRegion (\p subBlockName can
    * be CellElementRegion, FaceElementRegion or WellElementREgion)
-   * @param[in] blockName Name of the block (will be MeshBody name)
+   * @param[in] blockName Name of the parent block (will be MeshBody name)
    * @param[in] subBlockName Name of the subBlock (will be one of the ElementRegion types)
    */
   void addSubBlock( string const & blockName, string const & subBlockName ) const;
@@ -60,14 +60,16 @@ public:
   /*!
    * @brief Add a sub-sub-block to the VTM file
    * @details The third level of block is for the different user-defined Regions
-   * @param[in] blockName Name of the parent subblock (will be one of the ElementRegion types)
+   * @param[in] blockName Name of the parent block (will be MeshBody name)
+   * @param[in] subBlockName Name of the parent subBlock (will be one of the ElementRegion types)
    * @param[in] subSubBlockName Name of the subSubBlock (usually the name of the Region)
    */
   void addSubSubBlock( string const & blockName, string const & subBlockName, string const & subSubBlockName ) const;
 
   /*!
-   * @brief Add data to the subblock \p subBlockName
-   * @details The final level : paths to the vtu file per rank
+   * @brief Add data to the sub-sub-block \p subSubBlockName
+   * @details The fourth and final block level: paths to the vtu files per rank
+   * @param[in] blockName Name of the parent block (will be MeshBody name)
    * @param[in] subBlockName Name of the parent block (will be one of the ElementRegion types)
    * @param[in] subSubBlockName Name of the subSubBlock (usually the name of the Region)
    * @param[in] filePath path to the vtu file containing the unstructured mesh
