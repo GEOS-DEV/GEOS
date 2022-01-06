@@ -100,7 +100,7 @@ cell block using an k-j-i logic in which the k index is the fastest index, and t
 The cell block names are used in the **ElementRegions** block to define element regions
 in the aquifers and in the wells.
 In the benchmark definition, the wells are treated as a porous medium with a higher
-permeability and therefore the rock models  is not the same in the aquifers (``rock``)
+permeability and therefore the rock models are not the same in the aquifers (``rock``)
 and in the wells (``rockWell``).
 These names are defined in the **Constitutive** block.
 
@@ -158,7 +158,7 @@ although this model was initially developed for simple isothermal oil-water or o
 
 The fluid properties (constant densities and constant viscosities) are those given in the
 article documenting the benchmark.
-To define an incompressible fluid, we set of the formation volume factors to 1.  
+To define an incompressible fluid, we set all the formation volume factors to 1.  
 		 
 .. note::		 
    For now, we have to use the label ``oil`` to denote the CO2 phase in the Dead-Oil model, but this will be changed in future GEOSX releases.
@@ -233,7 +233,7 @@ The following figure shows the distribution of CO2 saturation and pressure along
    :width: 500
    :figclass: align-center
 
-   Pressure at t = 200 days
+   Pressure after 200 days
    
 To validate the GEOSX results, we consider the metrics used in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
@@ -277,6 +277,10 @@ the next table shows that the GEOSX arrival time at the leaky well (9.6 days) is
 +------------------+---------------------+
 | VESA             |     7               | 
 +------------------+---------------------+
+
+.. note::
+   The time-stepping strategy used by the codes considered in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__, as well as the meshes that have been used, are not documented in the benchmark description. Therefore, even on this simple test case, we cannot expect to obtain an exact match with the published results. 
+
 
 Next, we measure the CO2 leakage rate through the leaky well, defined by the authors as the CO2 mass
 flow at midway between top and bottom aquifers divided by the injection rate (8.87 kg/s), in percent.
