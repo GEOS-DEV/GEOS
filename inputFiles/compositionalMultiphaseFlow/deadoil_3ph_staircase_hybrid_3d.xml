@@ -7,7 +7,7 @@
       name="compflow"
       logLevel="1"
       discretization="fluidHM"
-      targetRegions="{ Channel }"
+      targetRegions="{ mesh/Channel }"
       fluidNames="{ fluid }"
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
@@ -84,6 +84,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
+      meshBody="mesh"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
       materialList="{ fluid, rock, relperm }"/>
 

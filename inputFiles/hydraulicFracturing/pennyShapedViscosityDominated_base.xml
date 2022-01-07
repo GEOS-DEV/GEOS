@@ -31,7 +31,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
@@ -60,7 +59,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="0.3e6"/>
   </Solvers>
 

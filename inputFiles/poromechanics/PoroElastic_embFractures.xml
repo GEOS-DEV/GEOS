@@ -30,7 +30,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <SinglePhaseFVM
       name="flowSolver"
@@ -42,7 +42,7 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"

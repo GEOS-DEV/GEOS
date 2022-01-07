@@ -55,7 +55,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      solidMaterialNames="{ granite }"
+      
       rockToughness="1e6"/>
   </Solvers>
 

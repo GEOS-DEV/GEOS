@@ -21,7 +21,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Fracture }"
       rockToughness="1e6"
       mpiCommOrder="1"/>
