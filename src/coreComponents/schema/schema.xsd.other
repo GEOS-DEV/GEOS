@@ -784,7 +784,7 @@
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
-                        <xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
+			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -1122,7 +1122,7 @@
 	<xsd:complexType name="CompressibleSolidCarmanKozenyPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidConstantPermeabilityType" />
 	<xsd:complexType name="CompressibleSolidParallelPlatesPermeabilityType" />
-        <xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType" />
+	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType" />
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
@@ -1416,8 +1416,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="NullModelType" />
 	<xsd:complexType name="ParallelPlatesPermeabilityType">
-		<!--dPerm_dAperture => Derivative of rock permeability with respect to aperture-->
-		<xsd:attribute name="dPerm_dAperture" type="real64_array3d" />
+		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
@@ -1463,8 +1463,8 @@
 		<xsd:attribute name="referencePorosity" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantPermeabilityType">
-		<!--dPerm_dAperture => Derivative of rock permeability with respect to aperture-->
-		<xsd:attribute name="dPerm_dAperture" type="real64_array3d" />
+		<!--dPerm_dDispJump => Derivative of rock permeability with respect to displacement jump-->
+		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
@@ -1523,19 +1523,12 @@
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="ProppantSolidProppantPermeabilityType" />
-<<<<<<< HEAD
 	<xsd:complexType name="SlipDependentPermeabilityType">
-		<!--dPerm_dDispJump =>  dPerm_dDispJump of the fracture.-->
+		<!--dPerm_dDispJump => Derivative of the permeability w.r.t. the displacement jump.-->
 		<xsd:attribute name="dPerm_dDispJump" type="real64_array4d" />
-                <!--dPerm_dPressure =>  dPerm_dPressure of the fracture.-->
-		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
-		<!--permeability =>  permeability of the fracture.-->
-=======
-	<xsd:complexType name="StrainDependentPermeabilityType">
 		<!--dPerm_dPressure => Derivative of rock permeability with respect to pressure-->
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
->>>>>>> origin/develop
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">

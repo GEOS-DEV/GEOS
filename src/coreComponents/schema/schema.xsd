@@ -1936,7 +1936,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="CompressibleSolidCarmanKozenyPermeability" type="CompressibleSolidCarmanKozenyPermeabilityType" />
 			<xsd:element name="CompressibleSolidConstantPermeability" type="CompressibleSolidConstantPermeabilityType" />
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
-                        <xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
+			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
@@ -2183,7 +2183,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="solidModelName" type="string" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
-        </xsd:complexType>
+	</xsd:complexType>
 	<xsd:complexType name="CompressibleSolidSlipDependentPermeabilityType">
 		<!--permeabilityModelName => Name of the permeability model.-->
 		<xsd:attribute name="permeabilityModelName" type="string" use="required" />
@@ -2679,11 +2679,11 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SlipDependentPermeabilityType">
-		<!--initialPermeability => Initial fracture permeability.-->
+		<!--initialPermeability =>  initial permeability of the fracture.-->
 		<xsd:attribute name="initialPermeability" type="R1Tensor" use="required" />
 		<!--maxPermMultiplier => Maximum permeability multiplier.-->
 		<xsd:attribute name="maxPermMultiplier" type="real64" use="required" />
-                <!--shearDispThreshold => Slip threshold.-->
+		<!--shearDispThreshold => Threshold of shear displacement.-->
 		<xsd:attribute name="shearDispThreshold" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
