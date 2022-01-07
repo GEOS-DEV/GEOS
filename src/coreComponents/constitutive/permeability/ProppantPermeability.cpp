@@ -18,6 +18,8 @@
 
 #include "ProppantPermeability.hpp"
 
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -44,9 +46,11 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "Proppant diameter." );
 
-  registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump );
-  registerWrapper( viewKeyStruct::permeabilityMultiplierString(), &m_permeabilityMultiplier );
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
+
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerExtrinsicData( extrinsicMeshData::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
+
 }
 
 std::unique_ptr< ConstitutiveBase >

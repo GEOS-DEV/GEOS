@@ -19,6 +19,7 @@
 #include "FlowSolverBase.hpp"
 
 #include "constitutive/ConstitutivePassThru.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -83,10 +84,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
-  m_fluxEstimate(),
-  m_elemGhostRank(),
-  m_volume(),
-  m_gravCoef()
+  m_fluxEstimate()
 {
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -215,8 +213,6 @@ void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  resetViews( mesh );
-
   // Precompute solver-specific constant data (e.g. gravity-depth)
   precomputeData( mesh );
 }
@@ -295,58 +291,6 @@ void FlowSolverBase::updatePorosityAndPermeability( SurfaceElementSubRegion & su
   } );
 }
 
-void FlowSolverBase::resetViews( MeshLevel & mesh )
-{
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  using namespace extrinsicMeshData::flow;
-
-  m_pressure.clear();
-  m_pressure = elemManager.constructArrayViewAccessor< real64, 1 >( pressure::key() );
-  m_pressure.setName( getName() + "/accessors/" + pressure::key() );
-
-  m_deltaPressure.clear();
-  m_deltaPressure = elemManager.constructArrayViewAccessor< real64, 1 >( deltaPressure::key() );
-  m_deltaPressure.setName( getName() + "/accessors/" + deltaPressure::key() );
-
-  m_elemGhostRank.clear();
-  m_elemGhostRank = elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-  m_elemGhostRank.setName( getName() + "/accessors/" + ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-  m_volume.clear();
-  m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-  m_volume.setName( getName() + "/accessors/" + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-
-  m_gravCoef.clear();
-  m_gravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( gravityCoefficient::key() );
-  m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
-
-  using keys = PermeabilityBase::viewKeyStruct;
-
-  m_permeability.clear();
-  m_permeability = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::permeabilityString(),
-                                                                                targetRegionNames(),
-                                                                                m_permeabilityModelNames );
-  m_permeability.setName( getName() + "/accessors/" + keys::permeabilityString() );
-
-  m_dPerm_dPressure.clear();
-  m_dPerm_dPressure = elemManager.constructMaterialArrayViewAccessor< real64, 3 >( keys::dPerm_dPressureString(),
-                                                                                   targetRegionNames(),
-                                                                                   m_permeabilityModelNames );
-  m_dPerm_dPressure.setName( getName() + "/accessors/" + keys::dPerm_dPressureString() );
-
-
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  m_elementSeparationCoefficient.clear();
-  m_elementSeparationCoefficient = elemManager.constructArrayViewAccessor< real64, 1 >( FaceElementSubRegion::viewKeyStruct::separationCoeffString() );
-  m_elementSeparationCoefficient.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::separationCoeffString() );
-
-  m_element_dSeparationCoefficient_dAperture.clear();
-  m_element_dSeparationCoefficient_dAperture = elemManager.constructArrayViewAccessor< real64, 1 >(
-    FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString() );
-  m_element_dSeparationCoefficient_dAperture.setName( getName() + "/accessors/" + FaceElementSubRegion::viewKeyStruct::dSeparationCoeffdAperString() );
-#endif
-}
 
 std::vector< string > FlowSolverBase::getConstitutiveRelations( string const & regionName ) const
 {
@@ -424,6 +368,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   // This step requires three passes:
   //    - First we count the number of individual aquifers
@@ -463,6 +408,20 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     }
 
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
+
+    using namespace extrinsicMeshData::flow;
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
+    m_pressure = elemManager.constructExtrinsicAccessor< pressure >();
+    m_pressure.setName( getName() + "/accessors/" + pressure::key() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
+    m_deltaPressure = elemManager.constructExtrinsicAccessor< deltaPressure >();
+    m_deltaPressure.setName( getName() + "/accessors/" + deltaPressure::key() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
+    m_gravCoef = elemManager.constructExtrinsicAccessor< gravityCoefficient >();
+    m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes =
       FluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,

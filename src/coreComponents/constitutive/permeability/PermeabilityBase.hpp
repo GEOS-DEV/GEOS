@@ -118,13 +118,6 @@ public:
 
   arrayView3d< real64 const > dPerm_dPressure() const { return m_dPerm_dPressure; }
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {
-    static constexpr char const * permeabilityString() { return "permeability"; }
-    static constexpr char const * dPerm_dPressureString() { return "dPerm_dPressure"; }
-    static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
-  } viewKeys;
-
   virtual void initializeState() const
   {}
 

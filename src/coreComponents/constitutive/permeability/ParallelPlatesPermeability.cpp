@@ -18,6 +18,8 @@
 
 #include "ParallelPlatesPermeability.hpp"
 
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -30,7 +32,7 @@ namespace constitutive
 ParallelPlatesPermeability::ParallelPlatesPermeability( string const & name, Group * const parent ):
   PermeabilityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
 }
 
 std::unique_ptr< ConstitutiveBase >
