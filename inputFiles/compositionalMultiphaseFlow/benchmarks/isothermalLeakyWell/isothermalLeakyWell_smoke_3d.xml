@@ -4,7 +4,7 @@
 
   <Included>
     <File
-      name="./isothermalLeakyWell_base_iterative.xml"/>
+      name="./isothermalLeakyWell_base_direct.xml"/>
   </Included>
 
   <!-- SPHINX_MESH -->  
@@ -15,9 +15,9 @@
       xCoords="{ -500, -0.1329, 0.1329, 99.8671, 100.1329, 500 }"
       yCoords="{ -500, -0.1329, 0.1329, 500 }"
       zCoords="{ -3000, -2970, -2870, -2840 }"
-      nx="{ 50, 1, 20, 1, 40 }"
-      ny="{ 50, 1, 50 }"
-      nz="{ 20, 30, 10 }"
+      nx="{ 5, 1, 2, 1, 4 }"
+      ny="{ 5, 1, 5 }"
+      nz="{ 5, 30, 5 }"
       cellBlockNames="{ aquiferBottom00, aquitard00, aquiferTop00,
   		        aquiferBottom01, aquitard01, aquiferTop01,
 		        aquiferBottom02, aquitard02, aquiferTop02,
@@ -45,18 +45,18 @@
     <Box
       name="west"
       xMin="{ -500.01, -500.01, -3001 }"
-      xMax="{ -489.99,  500.01, -2839 }"/>
+      xMax="{ -399.99,  500.01, -2839 }"/>
     <Box
       name="east"
-      xMin="{ 489.99, -500.01, -3001 }"
+      xMin="{ 399.99, -500.01, -3001 }"
       xMax="{ 500.01,  500.01, -2839 }"/>
     <Box
       name="north"
       xMin="{ -500.01, -500.01, -3001 }"
-      xMax="{  500.01, -489.99, -2839 }"/>
+      xMax="{  500.01, -399.99, -2839 }"/>
     <Box
       name="south"
-      xMin="{ -500.01, 489.99, -3001 }"
+      xMin="{ -500.01, 399.99, -3001 }"
       xMax="{  500.01, 500.01, -2839 }"/>
     
   </Geometry>
