@@ -93,6 +93,14 @@ public:
 
   /**@}*/
 
+  inline string const getFractureRegionName() const { return m_fractureRegionName; }
+
+protected:
+
+  virtual void initializePostInitialConditionsPreSubGroups() override final;
+  virtual void postRestartInitialization() override final;
+
+private:
 
   int separationDriver( DomainPartition & domain,
                         MeshLevel & mesh,
@@ -119,18 +127,6 @@ public:
   void
   assignNewGlobalIndicesSerial( ElementRegionManager & elementManager,
                                 map< std::pair< localIndex, localIndex >, std::set< localIndex > > const & indexList );
-
-  // SortedArray< localIndex > & getSurfaceElementsRupturedThisSolve() { return m_faceElemsRupturedThisSolve; }
-
-  inline string const getFractureRegionName() const { return m_fractureRegionName; }
-
-protected:
-
-  virtual void initializePostInitialConditionsPreSubGroups() override final;
-  virtual void postRestartInitialization() override final;
-
-private:
-
 
   /**
    * @brief Function to identify which faces are ready for rupture
