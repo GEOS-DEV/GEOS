@@ -21,7 +21,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Region2, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>
