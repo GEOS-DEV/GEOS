@@ -1,9 +1,9 @@
 .. _ExampleThermalLeakyWell:
 
 
-####################################################################
-Thermal CO2 Plume Evolution and Leakage Through an Abandoned Well
-####################################################################
+#########################################################################
+Non-isothermal CO2 Plume Evolution and Leakage Through an Abandoned Well
+#########################################################################
 
 
 **Context**
@@ -11,7 +11,7 @@ Thermal CO2 Plume Evolution and Leakage Through an Abandoned Well
 This validation case is a more complex version of the benchmark problem presented in :ref:`ExampleIsothermalLeakyWell`.
 While the latter is based on simple isothermal and immiscible fluid properties, the present validation case
 relies on a more realistic fluid behavior accounting for thermal effects and mass exchange between phases.
-This thermal benchmark test has been using in
+This non-isothermal benchmark test has been used in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__
 to compare different implementations of CO2-brine fluid properties in the
 context of CO2 injection and storage in saline aquifers.
@@ -32,26 +32,44 @@ This benchmark test is based on the XML file located below:
 Problem description
 ------------------------------------------------------------------------
 
+Some of the text below is adapted from
+`(Ebigbo, Class, Helmig, 2007) <https://link.springer.com/article/10.1007%2Fs10596-006-9033-7>`__.
+
 The benchmark scenario remains the same as in :ref:`ExampleIsothermalLeakyWell`.
 CO2 is injected into an aquifer, spreads within the aquifer, and, upon reaching a leaky well,
 rises up to a shallower aquifer.
 The model domain still has the dimensions: 1000 x 1000 x 160 m, but it is now assumed to be
 shallower, between 640 m and 800 m of depth.
-The geometric and rock properties (permeability, porosity) remain the same as in
-:ref:`ExampleIsothermalLeakyWell`.
 
-The main difference with the previous benchmark is that the CO2 and brine fluid properties are
-now a function of the aquifer conditions, such as pressure, temperature, and salinity. Specifically:
+The figure below shows the pressure and temperature in the formation at the mentioned
+depths (assuming a geothermal gradient of 0.03 K/m).
+The conditions in the aquifer at the considered depths range from supercritical to liquid
+to gaseous.
+The figure also shows the CO2 density at the conditions of the formation.
+There is a large change in density at a certain  depth.
+This depth corresponds to the point where the line depicting the formation conditions
+crosses the CO2 saturation vapor curve, that is, the boundary between liquid and gaseous CO2.
+Other fluid properties such as viscosity also change abruptly at that depth.    
+
+.. _isothermalLeakyWell_aquiferConditions:
+.. figure:: aquiferConditions.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   Aquifer conditions (image taken from `(Ebigbo, Class, Helmig, 2007) <https://link.springer.com/article/10.1007%2Fs10596-006-9033-7>`__).
+
+Therefore, as explained later, we use a more sophisticated fluid model in which
+the CO2 and brine fluid properties are now a function of the aquifer conditions,
+such as pressure, temperature, and salinity. Specifically:
 
 - The CO2 component is present in the CO2-rich phase but can also dissolve in the brine phase. The amount of dissolved CO2 depends on pressure, temperature, and salinity. For now, in GEOSX, the water component cannot be present in the CO2-rich phase.
 - Densities and viscosities depend nonlinearly on pressure, temperature, and salinity.
 - The hydrostatic initial condition accounts for the geothermal gradient of 0.03 K/m specified in the benchmark description.
 
-The benchmark also involves a nonlinear model for relative permeability and capillary pressure.  
-
 We plan to use two types of physical models in this benchmark:
 
-- A model simulating only flow and mass transfer, but not heat transfer (i.e., no energy balance is used). The geothermal gradient is constant in time, and is taken into account in the calculation of temperature-dependent properties.
+- A model simulating flow and mass transfer, but not heat transfer (i.e., no energy balance is used). The geothermal gradient is constant in time, and is taken into account in the calculation of temperature-dependent properties.
 - A fully thermal model simulating flow as well as mass and heat transfer. The results obtained with this more complex model are not available yet and will be added to this page soon.
 
 ------------------------------------------------------------------
@@ -99,8 +117,8 @@ Constitutive models
 ------------------------------------------------------------------
 
 The Brooks-Corey relative permeabilities and capillary pressure are described using tables
-constructed using the parameters values provided in the benchmark description: wetting-phase
-saturation range between 0.2 and 0.95, entry pressure of 10000 Pa, Brooks-Corey parameter of 2.
+constructed from the parameters values provided in the benchmark description, with a wetting-phase
+saturation range between 0.2 and 0.95, an entry pressure of 10000 Pa, and a Brooks-Corey parameter of 2.
 We refer the reader to the files used in the **TableFunction** listed below for the exact values
 that we have used:
 
@@ -137,8 +155,8 @@ during the simulation.
 
 .. code:: 
 
-        DensityFun SpanWagnerCO2Density 6.8e6 1.5e7 5e4 302.0 310.0 0.5
-        ViscosityFun FenghourCO2Viscosity 6.8e6 1.5e7 5e4 302.0 310.0 0.5
+        DensityFun SpanWagnerCO2Density 6.8e6 2e7 5e4 302.0 307.5 0.5
+        ViscosityFun FenghourCO2Viscosity 6.8e6 2e7 5e4 302.0 307.5 0.5
 
 .. note::
    If pressure or temperature go outside the values specified in this parameter file, constant extrapolation is used to obtain the density and viscosity values. Note that for now, no warning is issued by GEOSX when this happens. We plan to add a warning message to document this behavior in the near future.  
@@ -154,15 +172,15 @@ use the same range as for the CO2 properties to construct this table:
 
 .. code::
 
-        DensityFun PhillipsBrineDensity 6.8e6 1.5e7 5e4 302.0 310.0 0.5 1.711156742
-        ViscosityFun PhillipsBrineViscosity 1.711156742
+        DensityFun PhillipsBrineDensity 6.8e6 2e7 5e4 302.0 307.5 0.125 1.901285269
+        ViscosityFun PhillipsBrineViscosity 1.901285269
 
 Importantly, the last value on each line in the file `pvtliquid.txt` defines the salinity in the domain.
 In our model, salinity is constant in space and in time (i.e., unlike water and CO2, it is not tracked as
 a component in GEOSX).
-In our model, salinity is specified as a molal concentration in mole of NaCl per kg of brine.
-The value used here (0.1 / 58.44 = 1.711156742 mole/kg) is chosen to match the value specified in the
-benchmark (0.1 kg/kg).
+In our model, salinity is specified as a molal concentration in mole of NaCl per kg of solvent (brine).
+The value used here (1000 x 10 / ( 58.44 x ( 100 - 10 ) ) = 1.901285269 moles/kg) is
+chosen to match the value specified in the benchmark (weight% of 10%).
 
 CO2 solubility in brine
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,8 +192,7 @@ of precomputed CO2 solubility in brine.
 
 .. code::
 
-        FlashModel CO2Solubility 6.8e6 1.5e7 5e4 302.0 310.0 0.5 1.711156742
-
+        FlashModel CO2Solubility 6.8e6 2e7 5e4 302.0 307.5 0.25 1.901285269
 	
 ------------------------------------------------------------------
 Initial and boundary conditions
@@ -216,7 +233,23 @@ Inspecting results
 ---------------------------------
 
 We request VTK-format output files and use Paraview to visualize the results.
+The following figures show the distribution of CO2 saturation and pressure along the slice defined by x = 0 at t = 300 days.  
 
+.. _isothermalLeakyWell_CO2saturation:
+.. figure:: co2_saturation.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   CO2 saturation after 200 days
+
+.. _isothermalLeakyWell_pressure:
+.. figure:: pressure.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   Pressure after 200 days
 
 To validate the GEOSX results, we consider the metrics used in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__ as
@@ -226,8 +259,8 @@ First, we consider the arrival time of the CO2 plume at the leaky well.
 As in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__,
 we use the leakage rate threshold of 0.005% to detect the arrival time.
 In our numerical tests, the arrival time is highly dependent on the degree of spatial refinement
-in the vicinity of the wells (not documented in 
-`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__).
+in the vicinity of the wells and on the time step size, but these parameters are not documented in 
+`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
 The next table reports the GEOSX arrival time at the leaky well and compares it with the values published in  
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
 
@@ -335,10 +368,28 @@ The GEOSX leakage rate is shown in the figure below:
     if __name__ == "__main__":
         main()
 
+We see that GEOSX produces a reasonable match with the numerical codes considered in the study.
+Although it is not possible to exactly match the published results (due to the lack of information
+on the problem, such as mesh refinement and time step size), GEOSX reproduces well the trend exhibited
+by the other codes.
+	
+For reference, we include below the original figure from
+`(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__
+containing all the results, including those obtained with the codes solving an energy equation.
+
+.. _isothermalLeakyWell_referenceLeakageRate:
+.. figure:: referenceLeakageRates.png
+   :align: center
+   :width: 500
+   :figclass: align-center
+
+   Leakage rates [%] obtained with the simulators considered in `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__.
+
 To further validate the GEOSX results, we reproduce below Table 9 of
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__ (only considering
 codes that do not solve an energy equation) to compare the maximum leakage rate, the time at which this
 maximum leakage rate is attained, and the leakage rate at 2000 days.
+We observe that the GEOSX values are in the same range as those considered in the benchmark.
 
 +-----------------------------+-------------------------+---------------------------+--------------------------+
 | Code                        | Max                     | Time at                   | Leakage at               |
