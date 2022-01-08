@@ -270,7 +270,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
                                    flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
                                    permAccessors.get< extrinsicMeshData::permeability::permeability >(),
                                    permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                   permAccessors.get< extrinsicMeshData::permeability::dPerm_dAperture >(),
+                                   permAccessors.get< extrinsicMeshData::permeability::dPerm_dDispJump >(),
                                    permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
                                    this->gravityVector(),
                                    localMatrix,
@@ -306,8 +306,8 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
   jumpDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
   jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(),
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key(),
                                                                            targetRegionNames(),
                                                                            m_permeabilityModelNames,
                                                                            true );
@@ -335,7 +335,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                        flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
                                        permAccessors.get< extrinsicMeshData::permeability::permeability >(),
                                        permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                       dPerm_dAper.toNestedViewConst(),
+                                       dPerm_dDispJump.toNestedViewConst(),
                                        localMatrix,
                                        localRhs );
   } );
@@ -364,10 +364,11 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
   elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
   elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > dPerm_dAper =
-    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( extrinsicMeshData::permeability::dPerm_dAperture::key(),
-                                                                 targetRegionNames(),
-                                                                 m_permeabilityModelNames );
+  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
+    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key(),
+                                                                           targetRegionNames(),
+                                                                           m_permeabilityModelNames,
+                                                                           true );
 
   fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
   {
@@ -391,7 +392,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                    flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
                                    permAccessors.get< extrinsicMeshData::permeability::permeability >(),
                                    permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                   dPerm_dAper.toNestedViewConst(),
+                                   dPerm_dDispJump.toNestedViewConst(),
                                    localMatrix,
                                    localRhs,
                                    dR_dAper );

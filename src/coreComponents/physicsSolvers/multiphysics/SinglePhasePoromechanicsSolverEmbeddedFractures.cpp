@@ -269,7 +269,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
             // so we only add the coupling with the jumps of the neighbours.
             if( k1 != k0 )
             {
-              rowLengths[ rowNumber ] += 1;
+              rowLengths[ rowNumber ] += embeddedSurfaceSubRegion.numOfJumpEnrichments(); // number of jump enrichments.
             }
           }
         }
@@ -368,8 +368,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingSparsityPattern
             // so we only add the coupling with the jumps of the neighbours.
             if( k1 != k0 )
             {
-              globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]];
-              pattern.insertNonZero( rowIndex, colIndex );
+              for( localIndex i=0; i<embeddedSurfaceSubRegion.numOfJumpEnrichments(); i++ )
+              {
+                globalIndex const colIndex = jumpDofNumber[sei[iconn][k1]] + i;
+                pattern.insertNonZero( rowIndex, colIndex );
+              }
+
             }
           }
         }
@@ -586,6 +590,9 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
     arrayView1d< real64 > const hydraulicAperture =
       subRegion.template getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
 
+    arrayView1d< real64 const > const oldHydraulicAperture =
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
     arrayView1d< real64 > const deltaVolume =
@@ -606,14 +613,18 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
     ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
 
-    constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
+    ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+
+    CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_porousMaterialNames[targetIndex] );
+
+    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
     {
-      using ContactType = TYPEOFREF( castedContact );
-      typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
+      typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
       PoromechanicsEFEMKernels::StateUpdateKernel::
         launch< parallelDevicePolicy<> >( subRegion.size(),
                                           contactWrapper,
+                                          porousMaterialWrapper,
                                           dispJump,
                                           pressure,
                                           deltaPressure,
@@ -621,14 +632,12 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                           volume,
                                           deltaVolume,
                                           aperture,
+                                          oldHydraulicAperture,
                                           hydraulicAperture,
                                           fractureTraction,
                                           dTdpf );
 
     } );
-
-    // update fracture's permeability and porosity
-    m_flowSolver->updatePorosityAndPermeability( subRegion, targetIndex );
     // update fluid model
     m_flowSolver->updateFluidState( subRegion, targetIndex );
 

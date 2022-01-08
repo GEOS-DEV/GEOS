@@ -80,7 +80,7 @@ struct FluxKernel
   using ProppantPermeabilityAccessors =
     StencilAccessors< extrinsicMeshData::permeability::permeability,
                       extrinsicMeshData::permeability::dPerm_dPressure,
-                      extrinsicMeshData::permeability::dPerm_dAperture,
+                      extrinsicMeshData::permeability::dPerm_dDispJump,
                       extrinsicMeshData::permeability::permeabilityMultiplier >;
 
 
