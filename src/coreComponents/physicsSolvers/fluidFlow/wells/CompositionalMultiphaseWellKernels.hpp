@@ -22,8 +22,15 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
@@ -36,13 +43,41 @@ using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+// tag to access well and reservoir elements in perforation rates computation
+struct SubRegionTag
+{
+  static constexpr integer RES  = 0;
+  static constexpr integer WELL = 1;
+};
+
+// tag to access the next and current well elements of a connection
+struct ElemTag
+{
+  static constexpr integer CURRENT = 0;
+  static constexpr integer NEXT    = 1;
+};
+
+// define the column offset of the derivatives
+struct ColOffset
+{
+  static constexpr integer DPRES = 0;
+  static constexpr integer DCOMP = 1;
+};
+
+// define the row offset of the residual equations
+struct RowOffset
+{
+  static constexpr integer CONTROL = 0;
+  static constexpr integer MASSBAL = 1;
+};
+
 /******************************** ControlEquationHelper ********************************/
 
 struct ControlEquationHelper
 {
 
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   GEOSX_HOST_DEVICE
   static void
@@ -88,9 +123,9 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  using TAG = WellSolverBase::ElemTag;
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using TAG = CompositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -138,9 +173,9 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  using TAG = WellSolverBase::ElemTag;
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using TAG = CompositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -188,7 +223,31 @@ struct PressureRelationKernel
 struct PerforationKernel
 {
 
-  using TAG = CompositionalMultiphaseWell::SubRegionTag;
+  using TAG = CompositionalMultiphaseWellKernels::SubRegionTag;
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::phaseVolumeFraction,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+
+  using MultiFluidAccessors =
+    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseViscosity,
+                      extrinsicMeshData::multifluid::dPhaseViscosity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseCompFraction,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+
+  using RelPermAccessors =
+    StencilAccessors< extrinsicMeshData::relperm::phaseRelPerm,
+                      extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -284,8 +343,8 @@ struct PerforationKernel
 struct AccumulationKernel
 {
 
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -339,8 +398,8 @@ struct AccumulationKernel
 struct VolumeBalanceKernel
 {
 
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -373,6 +432,16 @@ struct VolumeBalanceKernel
 
 struct PresTempCompFracInitializationKernel
 {
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::temperature,
+                      extrinsicMeshData::flow::globalCompDensity,
+                      extrinsicMeshData::flow::phaseVolumeFraction >;
+
+  using MultiFluidAccessors =
+    StencilAccessors< extrinsicMeshData::multifluid::phaseMassDensity >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -452,9 +521,6 @@ class TotalMassDensityKernel : public IsothermalCompositionalMultiphaseBaseKerne
 public:
 
   using Base = IsothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
-  // TODO: get rid of this as soon as extrinsicData is available for the wells
-  using keys = CompositionalMultiphaseWell::viewKeyStruct;
-
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -465,19 +531,19 @@ public:
    * @param[in] subRegion the element subregion
    * @param[in] fluid the fluid model
    */
-  TotalMassDensityKernel( dataRepository::Group & subRegion,
+  TotalMassDensityKernel( ObjectManagerBase & subRegion,
                           MultiFluidBase const & fluid )
     : Base(),
-    m_phaseVolFrac( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() ) ),
-    m_dPhaseVolFrac_dPres( subRegion.getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() ) ),
-    m_dPhaseVolFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() ) ),
-    m_dCompFrac_dCompDens( subRegion.getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() ) ),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseMassDens( fluid.phaseMassDensity() ),
     m_dPhaseMassDens_dPres( fluid.dPhaseMassDensity_dPressure() ),
     m_dPhaseMassDens_dComp( fluid.dPhaseMassDensity_dGlobalCompFraction() ),
-    m_totalMassDens( subRegion.getReference< array1d< real64 > >( keys::totalMassDensityString() ) ),
-    m_dTotalMassDens_dPres( subRegion.getReference< array1d< real64 > >( keys::dTotalMassDensity_dPressureString() ) ),
-    m_dTotalMassDens_dCompDens( subRegion.getReference< array2d< real64, compflow::LAYOUT_FLUID_DC > >( keys::dTotalMassDensity_dGlobalCompDensityString() ) )
+    m_totalMassDens( subRegion.getExtrinsicData< extrinsicMeshData::well::totalMassDensity >() ),
+    m_dTotalMassDens_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >() ),
+    m_dTotalMassDens_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >() )
   {}
 
   /**
@@ -571,7 +637,7 @@ public:
   static void
   createAndLaunch( integer const numComp,
                    integer const numPhase,
-                   dataRepository::Group & subRegion,
+                   ObjectManagerBase & subRegion,
                    MultiFluidBase const & fluid )
   {
     if( numPhase == 2 )
@@ -620,7 +686,7 @@ struct ResidualNormKernel
           real64 const dt,
           real64 * localResidualNorm )
   {
-    using ROFFSET = CompositionalMultiphaseWell::RowOffset;
+    using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
 
     WellControls::Type const wellType = wellControls.getType();
     WellControls::Control const currentControl = wellControls.getControl();
@@ -804,7 +870,7 @@ struct SolutionCheckKernel
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
-    using COFFSET = CompositionalMultiphaseWell::ColOffset;
+    using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
     real64 constexpr eps = minDensForDivision;
 

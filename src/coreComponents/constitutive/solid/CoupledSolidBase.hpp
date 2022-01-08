@@ -141,6 +141,7 @@ public:
   void initializeState() const
   {
     getBasePorosityModel().initializeState();
+    getBasePermModel().initializeState();
   }
 
   virtual void saveConvergedState() const override final

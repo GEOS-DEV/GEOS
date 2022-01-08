@@ -752,7 +752,8 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
   // local residual
   real64 localResidualNorm = 0;
 
-  StencilAccessors< extrinsicMeshData::flow::phaseMobilityOld >
+  StencilAccessors< extrinsicMeshData::elementVolume,
+                    extrinsicMeshData::flow::phaseMobilityOld >
   compFlowAccessors( mesh.getElemManager(), getName() );
 
   // 1. Compute the residual for the mass conservation equations
@@ -810,7 +811,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                         elemRegionList.toNestedViewConst(),
                                                         elemSubRegionList.toNestedViewConst(),
                                                         elemList.toNestedViewConst(),
-                                                        m_volume.toNestedViewConst(),
+                                                        compFlowAccessors.get( extrinsicMeshData::elementVolume{} ),
                                                         compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
                                                         faceResidualNorm );
   localResidualNorm += faceResidualNorm;
