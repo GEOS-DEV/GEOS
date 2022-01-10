@@ -50,6 +50,10 @@ public:
   /// Compile time value for the number of operators (interpolated functions, outputs)
   static constexpr integer numOps = NUM_OPS;
 
+  /// Compile time value for the number of hypercube vertices
+  static constexpr integer numVerts = 1 << numDims;
+
+
   /**
    * @brief Construct a new Multivariable Table Function Static Kernel object
    *
@@ -95,7 +99,7 @@ public:
   void
   compute( localIndex const ei ) const
   {
-    interpolatePoint( &m_coordinates[ei * NUM_DIMS], &m_values[ei * NUM_OPS], &m_derivatives[ei * NUM_OPS * NUM_DIMS] );
+    interpolatePoint( &m_coordinates[ei * numDims], &m_values[ei * numOps], &m_derivatives[ei * numOps * numDims] );
   }
 
 /**
@@ -112,15 +116,15 @@ public:
                     real64 *derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
-    real64 axisLows[NUM_DIMS];
-    real64 axisMults[NUM_DIMS];
+    real64 axisLows[numDims];
+    real64 axisMults[numDims];
 
-    for( int i = 0; i < NUM_DIMS; ++i )
+    for( int i = 0; i < numDims; ++i )
     {
-      integer axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
-                                                       m_axisMinimums[i], m_axisMaximums[i],
-                                                       m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
-                                                       axisLows[i], axisMults[i] );
+      integer const axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
+                                                             m_axisMinimums[i], m_axisMaximums[i],
+                                                             m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                             axisLows[i], axisMults[i] );
       hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
     }
 
@@ -146,8 +150,7 @@ protected:
   real64 const *
   getHypercubeData( globalIndex const hypercubeIndex ) const
   {
-    static constexpr integer NUM_VERTS = 1 << NUM_DIMS;
-    return &m_hypercubeData[hypercubeIndex * NUM_VERTS * NUM_OPS];
+    return &m_hypercubeData[hypercubeIndex * numVerts * numOps];
   }
 
   /**
@@ -225,76 +228,78 @@ protected:
                                    real64 *values,
                                    real64 *derivatives ) const
   {
-    static constexpr integer NUM_VERTS = 1 << NUM_DIMS;
-    integer pwr = NUM_VERTS / 2;   // distance between high and low values
-    real64 workspace[(2 * NUM_VERTS - 1) * NUM_OPS];
+    integer pwr = numVerts / 2;   // distance between high and low values
+    real64 workspace[2 * numVerts - 1][numOps];
 
     // copy operator values for all vertices
-    for( integer i = 0; i < NUM_VERTS * NUM_OPS; ++i )
+    for( integer i = 0; i < numVerts; ++i )
     {
-      workspace[i] = hypercubeData[i];
+      for( integer j = 0; j < numOps; ++j )
+      {
+        workspace[i][j] = hypercubeData[i * numOps + j];
+      }
     }
 
-    for( integer i = 0; i < NUM_DIMS; ++i )
+    for( integer i = 0; i < numDims; ++i )
     {
 
       for( integer j = 0; j < pwr; ++j )
       {
-        for( integer op = 0; op < NUM_OPS; ++op )
+        for( integer op = 0; op < numOps; ++op )
         {
           // update own derivative
-          workspace[(2 * NUM_VERTS - (NUM_VERTS >> i) + j) * NUM_OPS + op] = (workspace[(j + pwr) * NUM_OPS + op] - workspace[j * NUM_OPS + op]) * axisStepInvs[i];
+          workspace[2 * numVerts - (numVerts >> i) + j][op] = (workspace[j + pwr][op] - workspace[j][op]) * axisStepInvs[i];
         }
 
         // update all dependent derivatives
         for( integer k = 0; k < i; k++ )
         {
-          for( integer op = 0; op < NUM_OPS; ++op )
+          for( integer op = 0; op < numOps; ++op )
           {
-            workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j) * NUM_OPS + op] = workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j) * NUM_OPS + op] + axisMults[i] *
-                                                                               (workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j + pwr) * NUM_OPS + op] -
-                                                                                workspace[(2 * NUM_VERTS - (NUM_VERTS >> k) + j) * NUM_OPS + op]);
+            workspace[2 * numVerts - (numVerts >> k) + j][op] = workspace[2 * numVerts - (numVerts >> k) + j][op] + axisMults[i] *
+                                                                (workspace[2 * numVerts - (numVerts >> k) + j + pwr][op] -
+                                                                 workspace[2 * numVerts - (numVerts >> k) + j][op]);
           }
         }
 
-        for( integer op = 0; op < NUM_OPS; ++op )
+        for( integer op = 0; op < numOps; ++op )
         {
           // interpolate value
-          workspace[j * NUM_OPS + op] = workspace[j * NUM_OPS + op] + (axisCoordinates[i] - axisLows[i]) * workspace[(2 * NUM_VERTS - (NUM_VERTS >> i) + j) * NUM_OPS + op];
+          workspace[j][op] = workspace[j][op] + (axisCoordinates[i] - axisLows[i]) * workspace[2 * numVerts - (numVerts >> i) + j][op];
         }
       }
       pwr /= 2;
     }
-    for( integer op = 0; op < NUM_OPS; ++op )
+    for( integer op = 0; op < numOps; ++op )
     {
-      values[op] = workspace[op];
-      for( integer i = 0; i < NUM_DIMS; ++i )
+      values[op] = workspace[0][op];
+      for( integer i = 0; i < numDims; ++i )
       {
-        derivatives[op * NUM_DIMS + i] = workspace[(2 * NUM_VERTS - (NUM_VERTS >> i)) * NUM_OPS + op];
+        derivatives[op * numDims + i] = workspace[2 * numVerts - (numVerts >> i)][op];
       }
     }
   }
 
   // inputs : table discretization data
 
-  /// Array [NUM_DIMS] of axis minimum values
+  /// Array [numDims] of axis minimum values
   arrayView1d< real64 const > m_axisMinimums;
 
-  /// Array [NUM_DIMS] of axis maximum values
+  /// Array [numDims] of axis maximum values
   arrayView1d< real64 const > m_axisMaximums;
 
-  /// Array [NUM_DIMS] of axis discretization points
+  /// Array [numDims] of axis discretization points
   arrayView1d< integer const > m_axisPoints;
 
   // inputs : service data derived from table discretization data
 
-  ///  Array [NUM_DIMS] of axis interval lengths (axes are discretized uniformly)
+  ///  Array [numDims] of axis interval lengths (axes are discretized uniformly)
   arrayView1d< real64 const > m_axisSteps;
 
-  ///  Array [NUM_DIMS] of inversions of axis interval lengths (axes are discretized uniformly)
+  ///  Array [numDims] of inversions of axis interval lengths (axes are discretized uniformly)
   arrayView1d< real64 const > m_axisStepInvs;
 
-  ///  Array [NUM_DIMS] of hypercube index mult factors for each axis
+  ///  Array [numDims] of hypercube index mult factors for each axis
   arrayView1d< globalIndex const > m_axisHypercubeMults;
 
   // inputs: operator sample data
@@ -304,7 +309,7 @@ protected:
 
   // inputs: where to interpolate
 
-  /// Coordinates in NUM_DIMS-dimensional space where interpolation is requested
+  /// Coordinates in numDims-dimensional space where interpolation is requested
   arrayView1d< real64 const > m_coordinates;
 
   // outputs
