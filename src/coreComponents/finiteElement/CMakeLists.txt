@@ -7,6 +7,8 @@ set( finiteElement_headers
      FiniteElementDiscretizationManager.hpp
      FiniteElementDispatch.hpp
      Kinematics.h
+     LinearFormUtilities.hpp
+     PDEUtilities.hpp
      elementFormulations/FiniteElementBase.hpp
      elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp
      elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp

@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 
 #include "finiteElement/BilinearFormUtilities.hpp"
+#include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
@@ -317,11 +318,19 @@ public:
     dFluidMassContent_dVolStrainIncrement *= detJxW;
 
     // Compute Rmom
-    FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
-                                     totalStress,
-                                     N,
-                                     bodyForce,
-                                     reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    LinearFormUtilities::compute< PDEUtilities::Space::H1vector,
+                                  PDEUtilities::DifferentialOperator::SymmetricGradient >
+    (
+      stack.localResidual,
+      dNdX,
+      totalStress );
+
+    LinearFormUtilities::compute< PDEUtilities::Space::H1vector,
+                                  PDEUtilities::DifferentialOperator::Identity >
+    (
+      stack.localResidual,
+      N,
+      bodyForce );
 
     // Compute dRmom_dVolStrain
     stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
@@ -332,10 +341,10 @@ public:
     real64 Np[1] = { 1 };
 
 
-    BilinearFormUtilities::compute< BilinearFormUtilities::Space::H1vector,
-                                    BilinearFormUtilities::Space::L2,
-                                    BilinearFormUtilities::DifferentialOperator::SymmetricGradient,
-                                    BilinearFormUtilities::DifferentialOperator::Identity >
+    BilinearFormUtilities::compute< PDEUtilities::Space::H1vector,
+                                    PDEUtilities::Space::L2,
+                                    PDEUtilities::DifferentialOperator::SymmetricGradient,
+                                    PDEUtilities::DifferentialOperator::Identity >
     (
       stack.localDispFlowJacobian,
       dNdX,
@@ -344,10 +353,10 @@ public:
 
     if( m_gravityAcceleration > 0.0 )
     {
-      BilinearFormUtilities::compute< BilinearFormUtilities::Space::H1vector,
-                                      BilinearFormUtilities::Space::L2,
-                                      BilinearFormUtilities::DifferentialOperator::Identity,
-                                      BilinearFormUtilities::DifferentialOperator::Identity >
+      BilinearFormUtilities::compute< PDEUtilities::Space::H1vector,
+                                      PDEUtilities::Space::L2,
+                                      PDEUtilities::DifferentialOperator::Identity,
+                                      PDEUtilities::DifferentialOperator::Identity >
       (
         stack.localDispFlowJacobian,
         N,
@@ -357,12 +366,18 @@ public:
 
 
     // Compute Rmas
-    stack.localFlowResidual[0] += ( fluidMassContent - fluidMassContentOld );
+    LinearFormUtilities::compute< PDEUtilities::Space::L2,
+                                  PDEUtilities::DifferentialOperator::Identity >
+    (
+      stack.localFlowResidual,
+      Np,
+      fluidMassContent - fluidMassContentOld );
 
-    BilinearFormUtilities::compute< BilinearFormUtilities::Space::L2,
-                                    BilinearFormUtilities::Space::H1vector,
-                                    BilinearFormUtilities::DifferentialOperator::Identity,
-                                    BilinearFormUtilities::DifferentialOperator::Divergence >
+    // Compute dRmas_dVolStrainIncrement
+    BilinearFormUtilities::compute< PDEUtilities::Space::L2,
+                                    PDEUtilities::Space::H1vector,
+                                    PDEUtilities::DifferentialOperator::Identity,
+                                    PDEUtilities::DifferentialOperator::Divergence >
     (
       stack.localFlowDispJacobian,
       Np,
@@ -371,8 +386,15 @@ public:
 
 
     // Compute dRmas_dPressure
-    stack.localFlowFlowJacobian[0][0] += dFluidMassContent_dPressure;
-
+    BilinearFormUtilities::compute< PDEUtilities::Space::L2,
+                                    PDEUtilities::Space::L2,
+                                    PDEUtilities::DifferentialOperator::Identity,
+                                    PDEUtilities::DifferentialOperator::Identity >
+    (
+      stack.localFlowFlowJacobian,
+      Np,
+      dFluidMassContent_dPressure,
+      Np );
   }
 
   /**

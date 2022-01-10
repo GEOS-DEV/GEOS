@@ -19,37 +19,26 @@
 #ifndef GEOSX_FINITEELEMENT_BILINEARFORMUTILITIES_HPP_
 #define GEOSX_FINITEELEMENT_BILINEARFORMUTILITIES_HPP_
 
+#include "finiteElement/PDEUtilities.hpp"
+
 namespace geosx
 {
 
 namespace BilinearFormUtilities
 {
 
-enum class DifferentialOperator : int
-{
-  Divergence,
-  Gradient,
-  Identity,
-  SymmetricGradient
-};
-
-enum class Space : int
-{
-  L2,
-  L2vector,
-  H1,
-  H1vector
-};
-
-template< Space V, Space U, DifferentialOperator OpV, DifferentialOperator OpU >
+template< PDEUtilities::Space V,
+          PDEUtilities::Space U,
+          PDEUtilities::DifferentialOperator OpV,
+          PDEUtilities::DifferentialOperator OpU >
 struct Helper
 {};
 
 template<>
-struct Helper< Space::L2,
-               Space::H1vector,
-               DifferentialOperator::Identity,
-               DifferentialOperator::Divergence >
+struct Helper< PDEUtilities::Space::L2,
+               PDEUtilities::Space::H1vector,
+               PDEUtilities::DifferentialOperator::Identity,
+               PDEUtilities::DifferentialOperator::Divergence >
 {
   template< int numTestDOF, int numTrialDOF >
   GEOSX_HOST_DEVICE
@@ -72,10 +61,32 @@ struct Helper< Space::L2,
 };
 
 template<>
-struct Helper< Space::H1vector,
-               Space::L2,
-               DifferentialOperator::Identity,
-               DifferentialOperator::Identity >
+struct Helper< PDEUtilities::Space::L2,
+               PDEUtilities::Space::L2,
+               PDEUtilities::DifferentialOperator::Identity,
+               PDEUtilities::DifferentialOperator::Identity >
+{
+  template< int numTestDOF, int numTrialDOF >
+  void static compute( double (& mat)[numTestDOF][numTrialDOF],
+                       double const (&Nv)[numTestDOF],
+                       double const A,
+                       double const (&Nu)[numTrialDOF] )
+  {
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      for( int b = 0; b < numTrialDOF; ++b )
+      {
+        mat[a][b] = mat[a][b] + Nv[a] * A * Nu[b];
+      }
+    }
+  }
+};
+
+template<>
+struct Helper< PDEUtilities::Space::H1vector,
+               PDEUtilities::Space::L2,
+               PDEUtilities::DifferentialOperator::Identity,
+               PDEUtilities::DifferentialOperator::Identity >
 {
   template< int numTestDOF, int numTrialDOF >
   void static compute( double (& mat)[numTestDOF][numTrialDOF],
@@ -96,22 +107,22 @@ struct Helper< Space::H1vector,
 };
 
 template<>
-struct Helper< Space::H1vector,
-               Space::L2,
-               DifferentialOperator::SymmetricGradient,
-               DifferentialOperator::Identity >
+struct Helper< PDEUtilities::Space::H1vector,
+               PDEUtilities::Space::L2,
+               PDEUtilities::DifferentialOperator::SymmetricGradient,
+               PDEUtilities::DifferentialOperator::Identity >
 {
   // symmetric second-order tensor A
-  template< int numTrialDOF, int numTestDOF >
+  template< int numTestDOF, int numTrialDOF >
   GEOSX_HOST_DEVICE
-  void static compute( real64 (& mat)[numTrialDOF][numTestDOF],
-                       real64 const (&dNdX)[numTrialDOF/3][3],
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&dNdX)[numTestDOF/3][3],
                        real64 const (&A)[6],
-                       real64 const (&Np)[numTestDOF] )
+                       real64 const (&Np)[numTrialDOF] )
   {
-    for( int a = 0; a < numTrialDOF/3; ++a )
+    for( int a = 0; a < numTestDOF/3; ++a )
     {
-      for( int b = 0; b < numTestDOF; ++b )
+      for( int b = 0; b < numTrialDOF; ++b )
       {
         mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A[0] * Np[b] + dNdX[a][1] * A[5] * Np[b] + dNdX[a][2] * A[4] * Np[b];
         mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][0] * A[5] * Np[b] + dNdX[a][1] * A[1] * Np[b] + dNdX[a][2] * A[3] * Np[b];
@@ -121,16 +132,16 @@ struct Helper< Space::H1vector,
   }
 
   // diagonal second-order tensor
-  template< int numTrialDOF, int numTestDOF >
+  template< int numTestDOF, int numTrialDOF >
   GEOSX_HOST_DEVICE
-  void static compute( real64 (& mat)[numTrialDOF][numTestDOF],
-                       real64 const (&dNdX)[numTrialDOF/3][3],
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&dNdX)[numTestDOF/3][3],
                        real64 const (&A)[3],
-                       real64 const (&Np)[numTestDOF] )
+                       real64 const (&Np)[numTrialDOF] )
   {
-    for( int a = 0; a < numTrialDOF/3; ++a )
+    for( int a = 0; a < numTestDOF/3; ++a )
     {
-      for( int b = 0; b < numTestDOF; ++b )
+      for( int b = 0; b < numTrialDOF; ++b )
       {
         mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A[0] * Np[b];
         mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][1] * A[1] * Np[b];
@@ -140,16 +151,16 @@ struct Helper< Space::H1vector,
   }
 
   // scalar*identity second-order tensor
-  template< int numTrialDOF, int numTestDOF >
+  template< int numTestDOF, int numTrialDOF >
   GEOSX_HOST_DEVICE
-  void static compute( real64 (& mat)[numTrialDOF][numTestDOF],
-                       real64 const (&dNdX)[numTrialDOF/3][3],
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&dNdX)[numTestDOF/3][3],
                        real64 const A,
-                       real64 const (&Np)[numTestDOF] )
+                       real64 const (&Np)[numTrialDOF] )
   {
-    for( int a = 0; a < numTrialDOF/3; ++a )
+    for( int a = 0; a < numTestDOF/3; ++a )
     {
-      for( int b = 0; b < numTestDOF; ++b )
+      for( int b = 0; b < numTrialDOF; ++b )
       {
         mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A * Np[b];
         mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][1] * A * Np[b];
@@ -162,10 +173,10 @@ struct Helper< Space::H1vector,
 // Generic bilinear form template a(v,u)  = op1(V)^T * A * op2( U )
 // V = matrix storing test space basis
 // U = matrix storing trial space basis
-template< Space V,
-          Space U,
-          DifferentialOperator OpV,
-          DifferentialOperator OpU,
+template< PDEUtilities::Space V,
+          PDEUtilities::Space U,
+          PDEUtilities::DifferentialOperator OpV,
+          PDEUtilities::DifferentialOperator OpU,
           typename MATRIX,
           typename V_SPACE_OPV_BASIS_VALUES,
           typename BILINEAR_FORM_MATRIX,
