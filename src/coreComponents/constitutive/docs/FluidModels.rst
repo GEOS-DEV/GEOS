@@ -15,7 +15,6 @@ single fluids and fluid mixtures.
 
    CompositionalMultiphaseFluid
 
-   CO2BrinePhillips
+   CO2BrineFluid
 
    PVTDriver
-
