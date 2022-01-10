@@ -401,7 +401,7 @@ void CompositionalMultiphaseBase::updatePhaseVolumeFraction( ObjectManagerBase &
   }
   else
   {
-    IsothermalCompositionalMultiphaseBaseKernels:: // TODO FRANCOIS
+    ThermalCompositionalMultiphaseBaseKernels::
       PhaseVolumeFractionKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
@@ -1011,19 +1011,29 @@ void CompositionalMultiphaseBase::assembleAccumulationAndVolumeBalanceTerms( Dom
     {
       IsothermalCompositionalMultiphaseBaseKernels::
         ElementBasedAssemblyKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >
-        ( m_numComponents, m_numPhases, dofManager.rankOffset(), dofKey,
-        subRegion, fluid, solid,
-        localMatrix, localRhs );
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   dofKey,
+                                                   subRegion,
+                                                   fluid,
+                                                   solid,
+                                                   localMatrix,
+                                                   localRhs );
     }
     else
     {
       ThermalCompositionalMultiphaseBaseKernels::
         ElementBasedAssemblyKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >
-        ( m_numComponents, m_numPhases, dofManager.rankOffset(), dofKey,
-        subRegion, fluid, solid,
-        localMatrix, localRhs );
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   dofKey,
+                                                   subRegion,
+                                                   fluid,
+                                                   solid,
+                                                   localMatrix,
+                                                   localRhs );
     }
 
   } );

@@ -730,7 +730,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
+      phaseAmountKernelOp( ip, stack.localResidual, stack.localJacobian, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
   }
@@ -776,7 +776,7 @@ public:
 
     // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
     // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
-    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
+    phaseVolFractionSumKernelOp( stack.localResidual, stack.localJacobian, oneMinusPhaseVolFracSum );
   }
 
   /**
@@ -796,7 +796,7 @@ public:
     shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
 
     // add contribution to residual and jacobian into:
-    // - the component mass balance equations (i = 0 to i = numComp-1)
+    // - the component mass balance equations (i = 0 to i = numComp-1) 
     // - the volume balance equations (i = numComp)
     // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
     for( integer i = 0; i < numComp+1; ++i )

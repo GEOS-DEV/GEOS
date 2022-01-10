@@ -586,13 +586,11 @@ public:
    * @param[in] phaseFluxKernelOp the function used to customize the computation of the phase fluxes
    * @param[in] localFluxJacobianKernelOp the function used to customize the computation of the assembly into the local Jacobian
    */
-  template< typename FUNC1 = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc,
-            typename FUNC2 = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC1 && phaseFluxKernelOp = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc{},
-                    FUNC2 && localFluxJacobianKernelOp = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC && compFluxKernelOp = IsothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -815,8 +813,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
-      // note: more variables may need to be passed, but it is hard to tell which ones will be needed for now
-      phaseFluxKernelOp( ip, er_up, esr_up, ei_up, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+      compFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
     }
 
@@ -842,13 +839,6 @@ public:
         }
       }
     }
-
-    // call the lambda to allow assembly into the localFluxJacobian
-    // possible uses: - assemble the derivatives of compFlux wrt temperature into localFluxJacobian;
-    //                - assemble energyFlux into localFlux and localFluxJacobian
-    // TODO: this second kernelOp becomes unnecessary if we increment the residual/jacobian directly in the phase loop
-    localFluxJacobianKernelOp( stack.localFlux, stack.localFluxJacobian );
-
   }
 
   /**
@@ -869,7 +859,9 @@ public:
     shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.numFluxElems,
                                                                stack.localFlux );
 
-    // Add to residual/jacobian
+    // add contribution to residual and jacobian into:
+    // - the component mass balance equations (i = 0 to i = numComp-1)
+    // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
     for( integer i = 0; i < stack.numFluxElems; ++i )
     {
       if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
@@ -917,7 +909,7 @@ public:
     } );
   }
 
-private:
+protected:
 
   // Stencil information
 

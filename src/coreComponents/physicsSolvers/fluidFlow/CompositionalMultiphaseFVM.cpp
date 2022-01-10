@@ -126,7 +126,23 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     }
     else
     {
-      // TODO FRANCOIS
+      ThermalCompositionalMultiphaseFVMKernels::
+        FaceBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   elemDofKey,
+                                                   m_capPressureFlag,
+                                                   getName(),
+                                                   mesh.getElemManager(),
+                                                   stencilWrapper,
+                                                   targetRegionNames(),
+                                                   fluidModelNames(),
+                                                   capPresModelNames(),
+                                                   permeabilityModelNames(),
+                                                   dt,
+                                                   localMatrix.toViewConstSizes(),
+                                                   localRhs.toView() );
     }
   } );
 }
@@ -551,7 +567,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   }
   else
   {
-    IsothermalCompositionalMultiphaseFVMKernels::     // TODO FRANCOIS
+    ThermalCompositionalMultiphaseFVMKernels::
       PhaseMobilityKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,

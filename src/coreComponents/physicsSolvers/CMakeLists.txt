@@ -93,7 +93,6 @@ set( physicsSolvers_sources
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp          
      fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.cpp
-     fluidFlow/ThermalCompositionalMultiphaseFVMKernels.cpp     
      fluidFlow/CompositionalMultiphaseHybridFVM.cpp
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.cpp
      fluidFlow/FlowSolverBase.cpp

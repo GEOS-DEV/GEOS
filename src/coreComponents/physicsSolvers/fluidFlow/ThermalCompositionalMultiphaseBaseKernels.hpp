@@ -19,13 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
-#include "common/DataLayouts.hpp"
-#include "common/DataTypes.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/fluid/layouts.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
-#include "mesh/ElementRegionManager.hpp"
-
 
 namespace geosx
 {
@@ -39,67 +33,117 @@ using namespace constitutive;
 /******************************** PhaseVolumeFractionKernel ********************************/
 
 /**
- * @brief Functions to compute phase volume fractions (saturations) and derivatives
+ * @class PhaseVolumeFractionKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the phase volume fractions
  */
-struct PhaseVolumeFractionKernel
+template< integer NUM_COMP, integer NUM_PHASE >
+class PhaseVolumeFractionKernel : public IsothermalCompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >
 {
-  template< localIndex NC, localIndex NP >
+public:
+
+  using Base = IsothermalCompositionalMultiphaseBaseKernels::PhaseVolumeFractionKernel< NUM_COMP, NUM_PHASE >;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  PhaseVolumeFractionKernel( ObjectManagerBase & subRegion,
+                             MultiFluidBase const & fluid )
+    : Base( subRegion, fluid ),
+    m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
+    m_dPhaseFrac_dTemp( fluid.dPhaseFraction_dTemperature() ),
+    m_dPhaseDens_dTemp( fluid.dPhaseDensity_dTemperature() )
+  {}
+
+  /**
+   * @brief Compute the phase volume fractions in an element
+   * @param[in] ei the element index
+   */
   GEOSX_HOST_DEVICE
-  static void
-  compute( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & compDens,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dCompDens,
-           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseDens_dPres,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseDens_dTemp,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dComp,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseFrac,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseFrac_dPres,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseFrac_dTemp,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseFrac_dComp,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & phaseVolFrac,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
-           arraySlice1d< real64, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dTemp,
-           arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp );
+  void compute( localIndex const ei ) const
+  {
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseDens_dTemp = m_dPhaseDens_dTemp[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseFrac_dTemp = m_dPhaseFrac_dTemp[ei][0];
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dTemp,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dTemp,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
-          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dTemp,
-          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp );
+    arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
+    LvArray::forValuesInSlice( dPhaseVolFrac_dTemp, []( real64 & val ){ val = 0.0; } );
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dTemp,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dTemp,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp,
-          arrayView2d< real64, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView2d< real64, compflow::USD_PHASE > const & dPhaseVolFrac_dTemp,
-          arrayView3d< real64, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dComp );
+    Base::compute( ei, [=] GEOSX_HOST_DEVICE ( localIndex const ip,
+                                               real64 const & phaseVolFrac,
+                                               real64 const & phaseDensInv,
+                                               real64 const & totalDensity )
+    {
+      // for each phase, compute the derivative of phase volume fraction wrt temperature
+      dPhaseVolFrac_dTemp[ip] = (dPhaseFrac_dTemp[ip] - phaseVolFrac * dPhaseDens_dTemp[ip]) * phaseDensInv;
+      dPhaseVolFrac_dTemp[ip] *= totalDensity;
+    } );
+  }
+
+protected:
+
+  // outputs
+
+  /// Views on thermal derivatives of phase volume fractions
+  arrayView2d< real64, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
+
+  // inputs
+
+  /// Views on thermal derivatives of phase fractions
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseFrac_dTemp;
+
+  /// Views on thermal derivatives of phase densities
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseDens_dTemp;
+
 };
+
+/**
+ * @class PhaseVolumeFractionKernelFactory
+ */
+class PhaseVolumeFractionKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numComp the number of fluid components
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
+                   ObjectManagerBase & subRegion,
+                   MultiFluidBase const & fluid )
+  {
+    if( numPhase == 2 )
+    {
+      IsothermalCompositionalMultiphaseBaseKernels::
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        PhaseVolumeFractionKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        PhaseVolumeFractionKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+    else if( numPhase == 3 )
+    {
+      IsothermalCompositionalMultiphaseBaseKernels::
+        internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        PhaseVolumeFractionKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        PhaseVolumeFractionKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+  }
+};
+
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
@@ -176,7 +220,6 @@ public:
     m_rockDensity( solid.getDensity() )
   {}
 
-  // This seems useless, but if I remove it, it does not compile
   struct StackVariables : public Base::StackVariables
   {
 public:
@@ -243,9 +286,10 @@ public:
   void computeAccumulation( localIndex const ei,
                             StackVariables & stack ) const
   {
+    real64 * localResidualPtr = stack.localResidual;
+    real64 ( *localJacobianPtr )[numDof] = stack.localJacobian;
+
     Base::computeAccumulation( ei, stack, [=] GEOSX_HOST_DEVICE ( localIndex const ip,
-                                                                  real64 (& localResidual)[numEqn],
-                                                                  real64 (& localJacobian)[numEqn][numDof],
                                                                   real64 const & phaseAmountNew,
                                                                   real64 const & phaseAmountOld,
                                                                   real64 const & dPhaseAmount_dP,
@@ -278,8 +322,8 @@ public:
                                      * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens_dTemp[ip]);
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                       + phaseAmountNew * dPhaseCompFrac_dTemp[ip][ic];
+        localJacobianPtr[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
+                                          + phaseAmountNew * dPhaseCompFrac_dTemp[ip][ic];
       }
 
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
@@ -292,18 +336,18 @@ public:
                                      + phaseAmountNew * dPhaseInternalEnergy_dTemp[ip];
 
       // local accumulation
-      localResidual[numEqn-1] = phaseEnergyNew - phaseEnergyOld;
+      localResidualPtr[numEqn-1] = phaseEnergyNew - phaseEnergyOld;
 
       // derivatives w.r.t. pressure and temperature
-      localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
-      localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
+      localJacobianPtr[numEqn-1][0]        += dPhaseEnergy_dP;
+      localJacobianPtr[numEqn-1][numDof-1] += dPhaseEnergy_dT;
 
       // derivatives w.r.t. component densities
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy_dComp[ip], dPhaseInternalEnergy_dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
-                                           + dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
+        localJacobianPtr[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
+                                              + dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
       }
     } );
 
@@ -325,17 +369,17 @@ public:
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
-    Base::computeVolumeBalance( ei, stack, [=] GEOSX_HOST_DEVICE ( real64 (& localResidual)[numEqn],
-                                                                   real64 (& localJacobian)[numEqn][numDof],
-                                                                   real64 const & oneMinusPhaseVolFraction )
+    real64 ( *localJacobianPtr )[numDof] = stack.localJacobian;
+
+    Base::computeVolumeBalance( ei, stack, [=] GEOSX_HOST_DEVICE ( real64 const & oneMinusPhaseVolFraction )
     {
-      GEOSX_UNUSED_VAR( localResidual, oneMinusPhaseVolFraction );
+      GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
 
       arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac_dTemp[ip];
+        localJacobianPtr[numEqn-2][numDof-1] -= dPhaseVolFrac_dTemp[ip];
       }
     } );
   }
