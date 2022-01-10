@@ -23,7 +23,7 @@
 #include "fileIO/timeHistory/TimeHistoryCollection.hpp"
 #include "fileIO/timeHistory/HistoryIO.hpp"
 #include "fileIO/timeHistory/TimeHistHDF.hpp"
-#include "../../../pygeosx/pyhistory/PyHistoryOutputType.hpp"
+#include "../pygeosx/pyhistory/PyHistoryOutputType.hpp"
 
 #include "LvArray/src/Array.hpp" // just for collector
 
@@ -95,6 +95,10 @@ public:
   } timeHistoryOutputViewKeys;
   /// @endcond
 
+  /**
+   * @brief Return PyHistoryOutput type.
+   * @return Return PyHistoryOutput type.
+   */
   virtual PyTypeObject * getPythonType() const
   { return python::getPyHistoryOutputType(); }
 

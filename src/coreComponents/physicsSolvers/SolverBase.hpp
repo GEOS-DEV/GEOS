@@ -25,7 +25,7 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
-#include "../../pygeosx/pysolver/PySolverType.hpp"
+#include "../pygeosx/pysolver/PySolverType.hpp"
 
 
 #include <limits>

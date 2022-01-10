@@ -23,7 +23,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
-#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -76,11 +76,9 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
   // loop over the wells
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
   {
-    array1d< array1d< arrayView3d< real64 const > > > const permeability =
-      elemManager.constructMaterialArrayViewAccessor< real64, 3 >( PermeabilityBase::viewKeyStruct::permeabilityString(),
-                                                                   m_flowSolver->targetRegionNames(),
-                                                                   m_flowSolver->permeabilityModelNames() );
-
+    ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const permeability =
+      elemManager.constructMaterialExtrinsicAccessor< extrinsicMeshData::permeability::permeability >( m_flowSolver->targetRegionNames(),
+                                                                                                       m_flowSolver->permeabilityModelNames() );
 
     PerforationData * const perforationData = subRegion.getPerforationData();
 

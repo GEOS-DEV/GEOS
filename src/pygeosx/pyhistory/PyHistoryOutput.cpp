@@ -80,7 +80,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::GeosxState* g_state = &getGlobalState();
+  geosx::GeosxState * g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 
   try

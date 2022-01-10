@@ -47,7 +47,7 @@ struct PyGroup
   dataRepository::Group * group;
 };
 
-  struct PySolver
+struct PySolver
 {
   PyObject_HEAD
 
