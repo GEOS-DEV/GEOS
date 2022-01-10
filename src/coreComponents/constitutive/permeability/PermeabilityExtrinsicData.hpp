@@ -54,6 +54,15 @@ EXTRINSIC_MESH_DATA_TRAIT( dPerm_dAperture,
                            WRITE_AND_READ,
                            "Derivative of rock permeability with respect to aperture" );
 
+EXTRINSIC_MESH_DATA_TRAIT( dPerm_dDispJump,
+                           "dPerm_dDispJump",
+                           array4d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Derivative of rock permeability with respect to displacement jump" );
+
+
 EXTRINSIC_MESH_DATA_TRAIT( permeabilityMultiplier,
                            "permeabilityMultiplier",
                            array3d< real64 >,

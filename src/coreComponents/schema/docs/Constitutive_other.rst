@@ -17,6 +17,7 @@ CompressibleSolidCarmanKozenyPermeability               node :ref:`DATASTRUCTURE
 CompressibleSolidConstantPermeability                   node :ref:`DATASTRUCTURE_CompressibleSolidConstantPermeability`                   
 CompressibleSolidConstantPlusParallelPlatesPermeability node :ref:`DATASTRUCTURE_CompressibleSolidConstantPlusParallelPlatesPermeability` 
 CompressibleSolidParallelPlatesPermeability             node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability`             
+CompressibleSolidSlipDependentPermeability              node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability`              
 ConstantPermeability                                    node :ref:`DATASTRUCTURE_ConstantPermeability`                                    
 ConstantPlusParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ConstantPlusParallelPlatesPermeability`                  
 Coulomb                                                 node :ref:`DATASTRUCTURE_Coulomb`                                                 
@@ -47,7 +48,7 @@ ProppantPermeability                                    node :ref:`DATASTRUCTURE
 ProppantPorosity                                        node :ref:`DATASTRUCTURE_ProppantPorosity`                                        
 ProppantSlurryFluid                                     node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                                     
 ProppantSolidProppantPermeability                       node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`                       
-StrainDependentPermeability                             node :ref:`DATASTRUCTURE_StrainDependentPermeability`                             
+SlipDependentPermeability                               node :ref:`DATASTRUCTURE_SlipDependentPermeability`                               
 TableCapillaryPressure                                  node :ref:`DATASTRUCTURE_TableCapillaryPressure`                                  
 TableRelativePermeability                               node :ref:`DATASTRUCTURE_TableRelativePermeability`                               
 VanGenuchtenBakerRelativePermeability                   node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`                   
