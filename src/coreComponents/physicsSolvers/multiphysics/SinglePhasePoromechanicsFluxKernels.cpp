@@ -167,50 +167,53 @@ void EmbeddedSurfaceFluxKernel::
                                    dTrans_dPres,
                                    dTrans_dDispJump );
 
-    compute( stencilSize,
-             seri[iconn],
-             sesri[iconn],
-             sei[iconn],
-             transmissibility,
-             dTrans_dPres,
-             dTrans_dDispJump,
-             pres,
-             dPres,
-             gravCoef,
-             dens,
-             dDens_dPres,
-             mob,
-             dMob_dPres,
-             dt,
-             localFlux,
-             localFluxJacobian );
-
-    // extract DOF numbers
-    for( localIndex i = 0; i < stencilSize; ++i )
+    if( sei[iconn].size() > 1 )
     {
-      localIndex localDofIndex = 4 * i;
-      dofColIndices[ localDofIndex ]     = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-      dofColIndices[ localDofIndex + 1 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-      dofColIndices[ localDofIndex + 2 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + 1;
-      dofColIndices[ localDofIndex + 3 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + 2;
-    }
+      compute( stencilSize,
+               seri[iconn],
+               sesri[iconn],
+               sei[iconn],
+               transmissibility,
+               dTrans_dPres,
+               dTrans_dDispJump,
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               dt,
+               localFlux,
+               localFluxJacobian );
 
-    for( localIndex i = 0; i < numFluxElems; ++i )
-    {
-
-      if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+      // extract DOF numbers
+      for( localIndex i = 0; i < stencilSize; ++i )
       {
-        globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
-        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+        localIndex localDofIndex = 4 * i;
+        dofColIndices[ localDofIndex ]     = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+        dofColIndices[ localDofIndex + 1 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+        dofColIndices[ localDofIndex + 2 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + 1;
+        dofColIndices[ localDofIndex + 3 ] = jumpDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] + 2;
+      }
 
-        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
-        localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
-                                                                          dofColIndices.data(),
-                                                                          localFluxJacobian[i].dataIfContiguous(),
-                                                                          numDofs );
+      for( localIndex i = 0; i < numFluxElems; ++i )
+      {
 
+        if( ghostRank[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )] < 0 )
+        {
+          globalIndex const globalRow = pressureDofNumber[seri( iconn, i )][sesri( iconn, i )][sei( iconn, i )];
+          localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux[i] );
+          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( localRow,
+                                                                            dofColIndices.data(),
+                                                                            localFluxJacobian[i].dataIfContiguous(),
+                                                                            numDofs );
+
+        }
       }
     }
   } );
