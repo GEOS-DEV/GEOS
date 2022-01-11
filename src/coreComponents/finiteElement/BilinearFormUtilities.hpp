@@ -67,6 +67,7 @@ struct Helper< PDEUtilities::Space::L2,
                PDEUtilities::DifferentialOperator::Identity >
 {
   template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
   void static compute( double (& mat)[numTestDOF][numTrialDOF],
                        double const (&Nv)[numTestDOF],
                        double const A,
@@ -89,6 +90,7 @@ struct Helper< PDEUtilities::Space::H1vector,
                PDEUtilities::DifferentialOperator::Identity >
 {
   template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
   void static compute( double (& mat)[numTestDOF][numTrialDOF],
                        double const (&N)[numTestDOF/3],
                        double const (&A)[3],

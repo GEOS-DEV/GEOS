@@ -37,6 +37,7 @@ struct Helper< PDEUtilities::Space::L2,
                PDEUtilities::DifferentialOperator::Identity >
 {
   template< int numTestDOF >
+  GEOSX_HOST_DEVICE
   void static compute( double (& vec)[numTestDOF],
                        double const (&Nv)[numTestDOF],
                        double const A )
@@ -53,6 +54,7 @@ struct Helper< PDEUtilities::Space::H1vector,
                PDEUtilities::DifferentialOperator::Identity >
 {
   template< int numTestDOF >
+  GEOSX_HOST_DEVICE
   void static compute( double (& vec)[numTestDOF],
                        double const (&Nv)[numTestDOF/3],
                        double const (&A)[3] )
@@ -84,44 +86,36 @@ struct Helper< PDEUtilities::Space::H1vector,
       vec[a*3+2] = vec[a*3+2] + dNdX[a][0] * A[4] + dNdX[a][1] * A[3] + dNdX[a][2] * A[2];
     }
   }
-//
-//  // diagonal second-order tensor
-//  template< int numTrialDOF, int numTestDOF >
-//  GEOSX_HOST_DEVICE
-//  void static compute( real64 (& mat)[numTrialDOF][numTestDOF],
-//                       real64 const (&dNdX)[numTrialDOF/3][3],
-//                       real64 const (&A)[3],
-//                       real64 const (&Np)[numTestDOF] )
-//  {
-//    for( int a = 0; a < numTrialDOF/3; ++a )
-//    {
-//      for( int b = 0; b < numTestDOF; ++b )
-//      {
-//        mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A[0] * Np[b];
-//        mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][1] * A[1] * Np[b];
-//        mat[a*3+2][b] = mat[a*3+2][b] + dNdX[a][2] * A[2] * Np[b];
-//      }
-//    }
-//  }
-//
-//  // scalar*identity second-order tensor
-//  template< int numTrialDOF, int numTestDOF >
-//  GEOSX_HOST_DEVICE
-//  void static compute( real64 (& mat)[numTrialDOF][numTestDOF],
-//                       real64 const (&dNdX)[numTrialDOF/3][3],
-//                       real64 const A,
-//                       real64 const (&Np)[numTestDOF] )
-//  {
-//    for( int a = 0; a < numTrialDOF/3; ++a )
-//    {
-//      for( int b = 0; b < numTestDOF; ++b )
-//      {
-//        mat[a*3+0][b] = mat[a*3+0][b] + dNdX[a][0] * A * Np[b];
-//        mat[a*3+1][b] = mat[a*3+1][b] + dNdX[a][1] * A * Np[b];
-//        mat[a*3+2][b] = mat[a*3+2][b] + dNdX[a][2] * A * Np[b];
-//      }
-//    }
-//  }
+
+  // diagonal second-order tensor
+  template< int numTestDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& vec)[numTestDOF],
+                       real64 const (&dNdX)[numTestDOF/3][3],
+                       real64 const (&A)[3] )
+  {
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      vec[a*3+0] = vec[a*3+0] + dNdX[a][0] * A[0];
+      vec[a*3+1] = vec[a*3+1] + dNdX[a][1] * A[1];
+      vec[a*3+2] = vec[a*3+2] + dNdX[a][2] * A[2];
+    }
+  }
+
+  // scalar*identity second-order tensor
+  template< int numTestDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& vec)[numTestDOF],
+                       real64 const (&dNdX)[numTestDOF/3][3],
+                       real64 const A )
+  {
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      vec[a*3+0] = vec[a*3+0] + dNdX[a][0] * A;
+      vec[a*3+1] = vec[a*3+1] + dNdX[a][1] * A;
+      vec[a*3+2] = vec[a*3+2] + dNdX[a][2] * A;
+    }
+  }
 };
 
 // Generic linear form template f(v)  = op1(V)^T * A
