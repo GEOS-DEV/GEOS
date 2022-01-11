@@ -103,10 +103,10 @@
       target="/Solvers/hydrofracture"/>
 
     <!-- Watch the wall-clock, write a restart, and exit gracefully if necessary -->
-    <HaltEvent
+    <!--HaltEvent
       name="restarts"
       maxRuntime="$t_allocation$"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/-->
   </Events>
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
@@ -119,7 +119,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
   <Constitutive>
