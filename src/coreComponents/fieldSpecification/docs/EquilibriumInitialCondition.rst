@@ -1,7 +1,7 @@
 .. _EquilibriumInitialCondition:
 
 ####################################################
-Hydrostatic equilibrium initial condition
+Hydrostatic Equilibrium Initial Condition
 ####################################################
 
 Overview
