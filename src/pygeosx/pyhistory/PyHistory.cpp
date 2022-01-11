@@ -17,14 +17,21 @@ extern bool g_alreadyInitialized;
 namespace python
 {
 
+static PyMethodDef HistoryFuncs[] = {
+  { nullptr, nullptr, 0, nullptr }        /* Sentinel */
+};
+
+BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyModuleDef pyhistorymodule = {
   PyModuleDef_HEAD_INIT,
-  "pyhistory",
-  "pyhistory module for HistoryCollection and HistoryOutput",
-  -1,
-  NULL, NULL, NULL, NULL, NULL
+  .m_name = "pyhistory",
+  .m_doc = "pyhistory module for HistoryCollection and HistoryOutput",
+  .m_size = -1,
+  .m_methods = HistoryFuncs
 };
+
+END_ALLOW_DESIGNATED_INITIALIZERS
 
 
 PyMODINIT_FUNC

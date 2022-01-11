@@ -364,20 +364,18 @@ PyInit_pygeosx()
     return nullptr;
   }
 
-
-  LvArray::python::PyObjectRef<> submodule1 = geosx::python::PyInit_pysolver();
-  LvArray::python::PyObjectRef<> submodule2 = geosx::python::PyInit_pyhistory();
-
-  Py_XINCREF( submodule1 );
-  if( PyModule_AddObject( module, "pysolver", submodule1 ) < 0 )
+  LvArray::python::PyObjectRef<> pysolverModule = geosx::python::PyInit_pysolver();
+  Py_XINCREF( pysolverModule );
+  if( PyModule_AddObject( module, "pysolver", pysolverModule ) < 0 )
   {
-    Py_XDECREF( submodule1 );
+    return nullptr;
   }
 
-  Py_XINCREF( submodule2 );
-  if( PyModule_AddObject( module, "pyhistory", submodule2 ) < 0 )
+  LvArray::python::PyObjectRef<> pyhistoryModule = geosx::python::PyInit_pyhistory();
+  Py_XINCREF( pyhistoryModule );
+  if( PyModule_AddObject( module, "pyhistory", pyhistoryModule ) < 0 )
   {
-    Py_XDECREF( submodule2 );
+    return nullptr;
   }
 
   if( !addExitHandler( module ) )
@@ -408,7 +406,6 @@ PyInit_pygeosx()
   {
     return nullptr;
   }
-
 
   // Since we return module we don't want to decrease the reference count.
   return module;

@@ -127,14 +127,21 @@ static PyTypeObject PySolverType = {
 
 END_ALLOW_DESIGNATED_INITIALIZERS
 
-static PyModuleDef pysolvermodule = {
-  PyModuleDef_HEAD_INIT,
-  "pysolver",
-  "pysolver module for SolverBase",
-  -1,
-  NULL, NULL, NULL, NULL, NULL
+static PyMethodDef SolverFuncs[] = {
+  { nullptr, nullptr, 0, nullptr }        /* Sentinel */
 };
 
+BEGIN_ALLOW_DESIGNATED_INITIALIZERS
+
+static PyModuleDef pysolvermodule = {
+  PyModuleDef_HEAD_INIT,
+  .m_name = "pysolver",
+  .m_doc = "pysolver module for SolverBase",
+  .m_size = -1,
+  .m_methods = SolverFuncs
+};
+
+END_ALLOW_DESIGNATED_INITIALIZERS
 
 PyMODINIT_FUNC
 PyInit_pysolver( void )
