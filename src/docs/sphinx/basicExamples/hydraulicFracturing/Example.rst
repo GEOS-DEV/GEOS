@@ -26,7 +26,7 @@ This example uses a set of input files and table files located at:
 
 .. code-block:: console
 
-  examples/hydraulicFracturing/heterogeneousInSituProperties
+  inputFiles/hydraulicFracturing
 
 Because the input files use the advanced xml features, they must be preprocessed using the geosx_xml_tools package.
 If you have not already done so, setup these features by following the instructions here: :ref:`AdvancedXMLFeatures` .
@@ -56,7 +56,7 @@ Included: including external xml files
 At the head of the case-specific xml file is a block that will instruct GEOSX to include an external file.
 In our case, this points to the base hydraulic fracturing input file.
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_INCLUDED -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_INCLUDED_END -->
@@ -82,7 +82,7 @@ A number of the input parameters include optional unit definitions, which are de
 For example, the parameter ``t_max`` is used to set the maximum time for the simulation to 20 minutes.
 
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_PARAMETERS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_PARAMETERS_END -->
@@ -96,7 +96,7 @@ For a given element region with bias, the left-hand element will be x% smaller a
 Along the x-axis of the mesh, we select a value of zero for the first region to indicate that we want a uniform-sized mesh, and we select a bias of -0.6 for the second region to indicate that we want the element size to smoothly increase in size as it moves in the +x direction.
 The other dimensions of the mesh follow a similar pattern.
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_MESH -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_MESH_END -->
@@ -112,7 +112,7 @@ To achieve this, we need to define three nodesets:
 - perf_a: This is the initial fracture for the simulation.  This nodeset needs to be at least two-faces wide in the x-z plane (to represent the fracture at least one internal node needs to be open).
 - fracturable_a: This is the set of faces where we will allow the fracture to grow. For a problem where we expect the fracture to curve out of the plane defined by y = 0 , this could be replaced.
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_GEOMETRY -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_GEOMETRY_END -->
@@ -130,7 +130,7 @@ The case specific block includes four instructions:
 - waterDensity: this initializes the fluid in the perforation.
 - sourceTerm: this instructs the code to inject fluid into the source_a nodeset.  Note the usage of the symbolic expression and parameters in the scale.  This boundary condition is also driven by a function, which we will define later. 
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_benchmark.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_BC -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_BC_END -->
@@ -142,7 +142,7 @@ In this example, we are using roller-boundary conditions (zero normal-displaceme
 Depending upon how close they are to the fracture, they can significantly affect its growth.
 Therefore, it is important to test whether the size of the model is large enough to avoid this.
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_BC_BASE -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_BC_BASE_END -->
@@ -162,7 +162,7 @@ Similar to other coupled physics solvers, the Hydrofracture solver is specified 
 
 The final solver present in this example is the SurfaceGenerator, which manages how faces in the model break.
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
@@ -186,7 +186,7 @@ Other key events in this problem include:
 - restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the specified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
 
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
@@ -203,12 +203,12 @@ The flow_rate TableFunction is an example of a 1D function.
 It has a single input, which is time.
 The table is defined using a single coordinateFile:
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/tables/flowRate_time.csv
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/tables/flowRate_time.csv
   :language: none
 
 And a single voxelFile:
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/tables/flowRate.csv
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/tables/flowRate.csv
   :language: none
 
 Given the specified linear interpolation method, these values define a simple trapezoidal function.
@@ -223,7 +223,7 @@ The interpolation method used here is upper, so the values in the table indicate
 
 
 
-.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSituProperties/heterogeneousInSitu_base.xml
+.. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
   :language: xml
   :start-after: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS -->
   :end-before: <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
@@ -242,7 +242,7 @@ For example, this will run the code on a debug partition using a total of 36 cor
 
 .. code-block:: bash
 
-  cp -r examples/hydraulicFracturing/heterogeneousInSituProperties ./hf_example
+  cp -r examples/hydraulicFracturing ./hf_example
   cd hf_example
   srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -x 6 -y 2 -z 3 -o hf_results
 
