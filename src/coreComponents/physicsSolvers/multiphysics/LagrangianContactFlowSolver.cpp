@@ -111,6 +111,10 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
     m_precond->clear();
   }
 
+  // Laura
+  // Uncomment these lines to run the lagrangiancontactflow solver alone
+  // Comment them to run the fully coupled porolagrangian solver
+
 //  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 //  m_flowSolver->resetViews( mesh );
 //
@@ -118,7 +122,8 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
 //
 //  setupDofs( domain, dofManager );
 //  dofManager.reorderByRank();
-
+  // Laura
+  
   localIndex const numLocalRows = dofManager.numLocalDofs();
 
   SparsityPattern< globalIndex > patternOriginal;
