@@ -188,7 +188,7 @@ protected:
       axisIntervalIndex = 0;
       if( axisCoordinate < axisMin )
       {
-        printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+        GEOSX_WARNING( GEOSX_FMT( "Axis coordinate is out of limits ({}; {}) with value {}, extrapolation is applied", axisMin, axisMax, axisCoordinate ));
       }
     }
     else if( axisIntervalIndex > (axisPoints - 2))
@@ -196,7 +196,7 @@ protected:
       axisIntervalIndex = axisPoints - 2;
       if( axisCoordinate > axisMax )
       {
-        printf( "Interpolation warning: axis is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
+        GEOSX_WARNING( GEOSX_FMT( "Axis coordinate is out of limits ({}; {}) with value {}, extrapolation is applied", axisMin, axisMax, axisCoordinate ));
       }
     }
 
@@ -208,6 +208,7 @@ protected:
 
   /**
    * @brief interpolate all operator values and derivatives at a given point
+   * The algoritm is based on http://dx.doi.org/10.1090/S0025-5718-1988-0917826-0
    *
    * @param[in] axisCoordinates coordinates of a point
    * @param[in] hypercubeData data of target hypercube
