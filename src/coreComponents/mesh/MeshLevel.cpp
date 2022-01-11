@@ -175,10 +175,24 @@ MeshLevel::MeshLevel( string const & name,
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
-
+     
+      arrayView2d< localIndex > const & elemToFacesNew = newSubRegion.faceList();
 
       localIndex const numNodesPerElem = pow(order+1,3);
       //localIndex const numNodesPerElem = pow(numBasisSupportPoints,3);
+
+
+      //Copy a new elemToFaces map from the old one 
+      for (localIndex elem = 0; elem < elemsToNodesNew.size(0); ++elem)
+      {
+         for (localIndex  face = 0; face < 6; ++face)
+         {
+           elemToFacesNew[elem][face] = elemToFaces[elem][face];
+         }
+         
+      }
+
+
 
       elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
 
@@ -392,6 +406,7 @@ MeshLevel::MeshLevel( string const & name,
                + (refPosSource[elemsToNodesSource[e][4]][2]-refPosSource[elemsToNodesSource[e][0]][2])/2;
         }
         
+        
         //Fill new refPos array
         for (localIndex k = 0; k< order+1; k++)
         {
@@ -400,6 +415,7 @@ MeshLevel::MeshLevel( string const & name,
             for (localIndex i = 0; i < order+1; i++)
             {
               localIndex const nodeIndex = elemsToNodesNew( e, i+j*(order+1)+k*pow(order+1,2) );
+              
               refPosNew( nodeIndex, 0 ) = x[i];
               refPosNew( nodeIndex, 1 ) = y[j];
               refPosNew( nodeIndex, 2 ) = z[k];
@@ -409,8 +425,7 @@ MeshLevel::MeshLevel( string const & name,
           
         }
            
-      }
-      
+      }     
     });
   });
 }
