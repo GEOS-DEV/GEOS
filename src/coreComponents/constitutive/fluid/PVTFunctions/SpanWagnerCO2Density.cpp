@@ -18,6 +18,7 @@
 
 #include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 
+#include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geosx
@@ -136,11 +137,13 @@ real64 co2HelmholtzEnergy( real64 const & T,
   return rho * (1.0 + delta * phi_r_delta) / (P / (R * T)) - 1.0;
 }
 
-real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
+real64 spanWagnerCO2DensityFunction( string const & name,
+                                     real64 const & tolerance,
                                      real64 const & T,
                                      real64 const & P,
                                      real64 (* f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
 {
+  // define local variables needed to compute the initial guess
   constexpr real64 P_Pa_f = 1e+5;
   constexpr real64 P_c = 73.773 * P_Pa_f;
   constexpr real64 T_c = 304.1282;
@@ -153,57 +156,53 @@ real64 spanWagnerCO2DensityFunction( real64 const & tolerance,
   constexpr real64 lda[] = { 1.9245108, -0.62385555, -0.32731127, 0.39245142 };
   constexpr real64 ldt[] = { 0.340, 0.5, 1.6666666667, 1.833333333 };
 
-  real64 rho;
-
-  // initial guess
+  // compute the initial guess for density using the method ported from NUFT
+  real64 initialRho = 0.0;
   if( T < T_c )
   {
     real64 sum = 0;
-    for( int i=0; i < 4; i++ )
+    for( integer i=0; i < 4; i++ )
     {
       sum += vpa[i] * pow( 1.0 - T / T_c, vpt[i] );
     }
     real64 const psat = P_c * exp( T_c / T * sum );
 
     sum = 0;
-    for( int i=0; i < 4; i++ )
+    for( integer i=0; i < 4; i++ )
     {
       sum += lda[i] * pow( 1.0 - T / T_c, ldt[i] );
     }
     real64 const denl = rho_c * exp( sum );
-
-    if( P >= psat )
-    {
-      rho = denl;
-    }
-    else
-    {
-      rho = P / (R * T);
-    }
+    initialRho = ( P >= psat ) ?  denl : P / (R * T);
   }
   else
   {
-    rho = 1.0 / (30.0 + R * T / P);
+    initialRho = 1.0 / (30.0 + R * T / P);
   }
 
-  constexpr real64 dx = 1e-10;
-  constexpr integer maxIter = 50;
+  // define the local solver parameters
+  // for now, this is hard-coded, but we may want to let the user access the parameters at some point
+  integer const maxNumNewtonIter = 500;
+  integer const maxNumBacktrackIter = 20;
+  real64 const maxAbsUpdate = 500;
+  real64 const minAbsDeriv = 1e-12; // needed to avoid divisions by zero in the calculation of the Newton update
+  real64 const allowedMinValue = -1e12; // use this negative value to disable the chopping on the min value
+  real64 const presMultiplierForReporting = 1;
 
-  // Newton loop
-  integer count = 0;
-  real64 dre = LvArray::NumericLimits< real64 >::infinity;
-  for(; count < maxIter && fabs( dre ) >= tolerance; ++count )
-  {
-    real64 const v0 = (*f)( T, P, rho );
-    real64 const v1 = (*f)( T, P, rho+dx );
-    dre = -v0/((v1-v0)/dx);
-    rho += dre;
-  }
-
-  GEOSX_THROW_IF( count == maxIter,
-                  GEOSX_FMT( "SpanWagnerCO2Density: Newton convergence fails in CO2 solubility computation: dre = {}, tolerance = {}", dre, tolerance ),
-                  InputError );
-  return rho;
+  // solve the Helmholtz energy equation for this pair of (pres, temp)
+  // return the density
+  return CO2EOSSolver::solve( name,
+                              maxNumNewtonIter,
+                              maxNumBacktrackIter,
+                              tolerance,
+                              minAbsDeriv,
+                              maxAbsUpdate,
+                              allowedMinValue,
+                              initialRho,
+                              T,
+                              P,
+                              presMultiplierForReporting,
+                              f );
 }
 
 
@@ -228,7 +227,7 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
   }
 
   array1d< real64 > densities( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
+  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
 
   string const & tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )
@@ -247,7 +246,8 @@ TableFunction const * makeDensityTable( string_array const & inputParams,
 
 } // namespace
 
-void SpanWagnerCO2Density::calculateCO2Density( real64 const & tolerance,
+void SpanWagnerCO2Density::calculateCO2Density( string const & functionName,
+                                                real64 const & tolerance,
                                                 PTTableCoordinates const & tableCoords,
                                                 array1d< real64 > const & densities )
 {
@@ -263,7 +263,7 @@ void SpanWagnerCO2Density::calculateCO2Density( real64 const & tolerance,
     for( localIndex j = 0; j < nTemperatures; ++j )
     {
       real64 const TK = tableCoords.getTemperature( j ) + TK_f;
-      densities[j*nPressures+i] = spanWagnerCO2DensityFunction( tolerance, TK, PPa, &co2HelmholtzEnergy );
+      densities[j*nPressures+i] = spanWagnerCO2DensityFunction( functionName, tolerance, TK, PPa, &co2HelmholtzEnergy );
     }
   }
 }
