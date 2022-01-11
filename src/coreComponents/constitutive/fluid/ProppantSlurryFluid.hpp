@@ -307,7 +307,7 @@ public:
 
   // *** Data repository keys
 
-  struct viewKeyStruct : public SlurryFluidBase::viewKeyStruct
+  struct viewKeyStruct
   {
     static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }

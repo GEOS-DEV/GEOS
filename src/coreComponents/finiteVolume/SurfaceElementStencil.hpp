@@ -177,10 +177,10 @@ public:
   void computeWeights( localIndex iconn,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
                        CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
+                       CoefficientAccessor< arrayView4d< real64 const > > const &  dCoeff_dVar2,
                        real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
                        real64 ( &dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
-                       real64 ( &dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const;
+                       real64 ( &dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2][3] ) const;
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
@@ -397,12 +397,11 @@ GEOSX_HOST_DEVICE
 inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
                                                           CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                                                          CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
+                                                          CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar2,
                                                           real64 (& weight)[MAX_NUM_OF_CONNECTIONS][2],
                                                           real64 (& dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
-                                                          real64 (& dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const
+                                                          real64 (& dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2][3] ) const
 {
-  // TODO: this should become star-delta method
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
@@ -452,8 +451,8 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       dWeight_dVar1[connectionIndex][0] =    m_meanPermCoefficient * dHarmonic_dvar1[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[0];
       dWeight_dVar1[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar1[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[1] );
 
-      real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
-      real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0];
+      real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0][0];
+      real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0][0];
 
       real64 dHarmonic_dvar2[2];
       dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
@@ -463,8 +462,8 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       dArithmetic_dvar2[0] = 0.25 * dt0_dvar2;
       dArithmetic_dvar2[1] = 0.25 * dt1_dvar2;
 
-      dWeight_dVar2[connectionIndex][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
-      dWeight_dVar2[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
+      dWeight_dVar2[connectionIndex][0][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
+      dWeight_dVar2[connectionIndex][1][0] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
 
       connectionIndex++;
     }
