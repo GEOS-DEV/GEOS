@@ -188,7 +188,7 @@ protected:
       axisIntervalIndex = 0;
       if( axisCoordinate < axisMin )
       {
-        GEOSX_WARNING( GEOSX_FMT( "Axis coordinate is out of limits ({}; {}) with value {}, extrapolation is applied", axisMin, axisMax, axisCoordinate ));
+        printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
       }
     }
     else if( axisIntervalIndex > (axisPoints - 2))
@@ -196,7 +196,7 @@ protected:
       axisIntervalIndex = axisPoints - 2;
       if( axisCoordinate > axisMax )
       {
-        GEOSX_WARNING( GEOSX_FMT( "Axis coordinate is out of limits ({}; {}) with value {}, extrapolation is applied", axisMin, axisMax, axisCoordinate ));
+        printf( "Interpolation warning: axis coordinate is out of limits (%lf; %lf) with value %lf, extrapolation is applied\n", axisMin, axisMax, axisCoordinate );
       }
     }
 
