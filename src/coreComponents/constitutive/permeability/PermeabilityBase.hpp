@@ -56,21 +56,22 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromPressureStrain( localIndex const k,
-                                         localIndex const q,
-                                         real64 const & pressure,
-                                         real64 const & volStrain ) const
-  {
-    GEOSX_UNUSED_VAR( k, q, pressure, volStrain );
-  }
-
-  GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
                                    real64 const & newHydraulicAperture ) const
   {
     GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
   }
 
   GEOSX_HOST_DEVICE
@@ -97,7 +98,6 @@ protected:
   arrayView3d< real64 > m_dPerm_dPressure;
 };
 
-
 class PermeabilityBase : public ConstitutiveBase
 {
 public:
@@ -117,6 +117,9 @@ public:
   arrayView3d< real64 const > permeability() const { return m_permeability; }
 
   arrayView3d< real64 const > dPerm_dPressure() const { return m_dPerm_dPressure; }
+
+  virtual void initializeState() const
+  {}
 
 protected:
 
