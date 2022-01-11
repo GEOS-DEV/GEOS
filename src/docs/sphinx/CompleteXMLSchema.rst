@@ -190,6 +190,13 @@ Element: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
+.. _XML_CompressibleSolidSlipDependentPermeability:
+
+Element: CompressibleSolidSlipDependentPermeability
+===================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -764,6 +771,13 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/schema/docs/SinglePhaseWell.rst
 
 
+.. _XML_SlipDependentPermeability:
+
+Element: SlipDependentPermeability
+==================================
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
+
+
 .. _XML_SolidMechanicsEmbeddedFractures:
 
 Element: SolidMechanicsEmbeddedFractures
@@ -804,13 +818,6 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
-
-
-.. _XML_StrainDependentPermeability:
-
-Element: StrainDependentPermeability
-====================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability.rst
 
 
 .. _XML_SurfaceElementRegion:
@@ -1130,6 +1137,13 @@ Datastructure: CompressibleSolidConstantPermeability
 Datastructure: CompressibleSolidParallelPlatesPermeability
 ==========================================================
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
+
+
+.. _DATASTRUCTURE_CompressibleSolidSlipDependentPermeability:
+
+Datastructure: CompressibleSolidSlipDependentPermeability
+=========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantPermeability:
@@ -1734,6 +1748,13 @@ Datastructure: SinglePhaseWell
 .. include:: ../../coreComponents/schema/docs/SinglePhaseWell_other.rst
 
 
+.. _DATASTRUCTURE_SlipDependentPermeability:
+
+Datastructure: SlipDependentPermeability
+========================================
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
 
 Datastructure: SolidMechanicsEmbeddedFractures
@@ -1774,13 +1795,6 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
-
-
-.. _DATASTRUCTURE_StrainDependentPermeability:
-
-Datastructure: StrainDependentPermeability
-==========================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:

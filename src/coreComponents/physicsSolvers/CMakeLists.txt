@@ -19,6 +19,7 @@ set( physicsSolvers_headers
      fluidFlow/FluxKernelsHelper.hpp
      fluidFlow/HybridFVMHelperKernels.hpp          
      fluidFlow/proppantTransport/ProppantTransport.hpp
+     fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp     
      fluidFlow/proppantTransport/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
      fluidFlow/SinglePhaseBaseExtrinsicData.hpp     
@@ -31,11 +32,14 @@ set( physicsSolvers_headers
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/StencilAccessors.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
+     fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp     
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
+     fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp     
      fluidFlow/wells/SinglePhaseWellKernels.hpp     
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
+     fluidFlow/wells/WellSolverBaseExtrinsicData.hpp     
      multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp

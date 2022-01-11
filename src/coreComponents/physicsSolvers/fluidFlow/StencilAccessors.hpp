@@ -48,6 +48,11 @@ public:
     return std::get< traits::type_list_index< TRAIT, std::tuple< TRAITS ... > > >( m_accessors ).toNestedViewConst();
   }
 
+  template< typename TRAIT >
+  auto get() const
+  {
+    return std::get< traits::type_list_index< TRAIT, std::tuple< TRAITS ... > > >( m_accessors ).toNestedViewConst();
+  }
   /**
    * @brief Constructor for the struct
    * @param[in] elemManager a reference to the elemRegionManager
