@@ -31,10 +31,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Domain }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"/>
   </Solvers>
 

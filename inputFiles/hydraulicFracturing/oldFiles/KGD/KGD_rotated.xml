@@ -36,9 +36,6 @@
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0">
       <LinearSolverParameters
         solverType="gmres"

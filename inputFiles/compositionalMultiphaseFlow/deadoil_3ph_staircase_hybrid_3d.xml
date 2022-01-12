@@ -8,10 +8,6 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ mesh/Channel }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"
       maxCompFractionChange="0.5">
       <NonlinearSolverParameters
