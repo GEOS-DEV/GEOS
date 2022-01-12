@@ -138,7 +138,7 @@ real64 CO2SolubilityFunction( string const & name,
   // define the local solver parameters
   // for now, this is hard-coded, but we may want to let the user access the parameters at some point
   integer const maxNumNewtonIter = 500;
-  integer const maxNumBacktrackIter = 20;
+  integer const maxNumBacktrackIter = 8;
   real64 const maxAbsUpdate = 1e12;
   real64 const minAbsDeriv = 0;
   real64 const allowedMinValue = 0.05; // value chosen to match previous implementation

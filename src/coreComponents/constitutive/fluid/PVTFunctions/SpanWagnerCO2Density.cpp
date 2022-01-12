@@ -183,7 +183,7 @@ real64 spanWagnerCO2DensityFunction( string const & name,
   // define the local solver parameters
   // for now, this is hard-coded, but we may want to let the user access the parameters at some point
   integer const maxNumNewtonIter = 500;
-  integer const maxNumBacktrackIter = 20;
+  integer const maxNumBacktrackIter = 4;
   real64 const maxAbsUpdate = 500;
   real64 const minAbsDeriv = 1e-12; // needed to avoid divisions by zero in the calculation of the Newton update
   real64 const allowedMinValue = -1e12; // use this negative value to disable the chopping on the min value
