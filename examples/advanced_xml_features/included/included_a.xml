@@ -7,9 +7,6 @@
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }">
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>

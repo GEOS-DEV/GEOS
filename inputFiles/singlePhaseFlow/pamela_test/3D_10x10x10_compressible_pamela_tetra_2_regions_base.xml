@@ -6,9 +6,6 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
       targetRegions="{ Top, Bot }">
       <NonlinearSolverParameters

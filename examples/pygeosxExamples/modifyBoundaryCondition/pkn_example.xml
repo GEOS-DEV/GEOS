@@ -54,9 +54,6 @@
     <SinglePhaseFVM
       discretization="singlePhaseTPFA"
       name="SinglePhaseFlow"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracturePerm }"
-      fluidNames="{ water }"
       targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="10"

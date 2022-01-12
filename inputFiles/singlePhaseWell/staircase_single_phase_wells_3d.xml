@@ -17,16 +17,11 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ Channel }"/>
 
     <SinglePhaseWell
       name="SinglePhaseWell"
-      logLevel="1"
-      fluidNames="{ water }"
-      targetRegions="{ wellRegion1, wellRegion2 }">
+      logLevel="1">
       <WellControls
         name="wellControls1"
         type="producer"

@@ -70,10 +70,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Omega }"
-      fluidNames="{ water }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ rockPerm }">
+      targetRegions="{ Omega }">
       <!-- SPHINX_SinglePhaseFVMEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
