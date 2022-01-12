@@ -260,6 +260,8 @@ public:
     // A continuous interpolation is used for the displacement, with \eta continuous finite element
     // basis functions. A piecewise-constant approximation is used for the pressure.
 
+    using namespace PDEUtilities;
+
     real64 strainIncrement[6]{};
     real64 totalStress[6]{};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness; // Could this be called dTotalStress_dStrainIncrement?
@@ -307,33 +309,37 @@ public:
                                                        dFluidMassContent_dVolStrainIncrement,
                                                        stiffness );
 
-    // Perform scaling needed for numerical integration
-    LvArray::tensorOps::scale< 6 >( totalStress, -detJxW );  // (s.p.d. vs s.n.d striffness matrix)
-    LvArray::tensorOps::scale< 3 >( bodyForce, detJxW );
-    LvArray::tensorOps::scale< 6 >( dTotalStress_dPressure, -detJxW );
-    LvArray::tensorOps::scale< 3 >( dBodyForce_dPressure, detJxW );
-    fluidMassContent *= detJxW;
-    fluidMassContentOld *= detJxW;
-    dFluidMassContent_dPressure *= detJxW;
-    dFluidMassContent_dVolStrainIncrement *= detJxW;
-
     // Compute Rmom
-    LinearFormUtilities::compute< PDEUtilities::Space::H1vector,
-                                  PDEUtilities::DifferentialOperator::SymmetricGradient >
+    LinearFormUtilities::compute< FunctionSpace::H1vector,
+                                  DifferentialOperator::SymmetricGradient >
     (
       stack.localResidual,
       dNdX,
-      totalStress );
+      totalStress,
+      -detJxW );
 
-    LinearFormUtilities::compute< PDEUtilities::Space::H1vector,
-                                  PDEUtilities::DifferentialOperator::Identity >
-    (
-      stack.localResidual,
-      N,
-      bodyForce );
+    if( m_gravityAcceleration > 0.0 )
+    {
+      LinearFormUtilities::compute< FunctionSpace::H1vector,
+                                    DifferentialOperator::Identity >
+      (
+        stack.localResidual,
+        N,
+        bodyForce,
+        detJxW );
+    }
 
     // Compute dRmom_dVolStrain
-    stiffness.template BTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+    BilinearFormUtilities::compute< FunctionSpace::H1vector,
+                                    FunctionSpace::H1vector,
+                                    DifferentialOperator::SymmetricGradient,
+                                    DifferentialOperator::SymmetricGradient >
+    (
+      stack.localJacobian,
+      dNdX,
+      stiffness, // fourth-order tensor handled via DiscretizationOps
+      dNdX,
+      -detJxW );
 
     // --- dBodyForce_dVoldStrain derivative neglected
 
@@ -341,60 +347,67 @@ public:
     real64 Np[1] = { 1 };
 
 
-    BilinearFormUtilities::compute< PDEUtilities::Space::H1vector,
-                                    PDEUtilities::Space::L2,
-                                    PDEUtilities::DifferentialOperator::SymmetricGradient,
-                                    PDEUtilities::DifferentialOperator::Identity >
+    BilinearFormUtilities::compute< FunctionSpace::H1vector,
+                                    FunctionSpace::L2,
+                                    DifferentialOperator::SymmetricGradient,
+                                    DifferentialOperator::Identity >
     (
       stack.localDispFlowJacobian,
       dNdX,
       dTotalStress_dPressure,
-      Np );
+      Np,
+      -detJxW );
+
+    BilinearFormUtilities::comp
 
     if( m_gravityAcceleration > 0.0 )
     {
-      BilinearFormUtilities::compute< PDEUtilities::Space::H1vector,
-                                      PDEUtilities::Space::L2,
-                                      PDEUtilities::DifferentialOperator::Identity,
-                                      PDEUtilities::DifferentialOperator::Identity >
+      BilinearFormUtilities::compute< FunctionSpace::H1vector,
+                                      FunctionSpace::L2,
+                                      DifferentialOperator::Identity,
+                                      DifferentialOperator::Identity >
       (
         stack.localDispFlowJacobian,
         N,
         dBodyForce_dPressure,
-        Np );
+        Np,
+        detJxW );
     }
 
 
     // Compute Rmas
-    LinearFormUtilities::compute< PDEUtilities::Space::L2,
-                                  PDEUtilities::DifferentialOperator::Identity >
+    LinearFormUtilities::compute< FunctionSpace::L2,
+                                  DifferentialOperator::Identity >
     (
       stack.localFlowResidual,
       Np,
-      fluidMassContent - fluidMassContentOld );
+      fluidMassContent - fluidMassContentOld,
+      detJxW );
 
     // Compute dRmas_dVolStrainIncrement
-    BilinearFormUtilities::compute< PDEUtilities::Space::L2,
-                                    PDEUtilities::Space::H1vector,
-                                    PDEUtilities::DifferentialOperator::Identity,
-                                    PDEUtilities::DifferentialOperator::Divergence >
+    BilinearFormUtilities::compute< FunctionSpace::L2,
+                                    FunctionSpace::H1vector,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Divergence >
     (
       stack.localFlowDispJacobian,
       Np,
       dFluidMassContent_dVolStrainIncrement,
-      dNdX );
+      dNdX,
+      detJxW );
 
 
     // Compute dRmas_dPressure
-    BilinearFormUtilities::compute< PDEUtilities::Space::L2,
-                                    PDEUtilities::Space::L2,
-                                    PDEUtilities::DifferentialOperator::Identity,
-                                    PDEUtilities::DifferentialOperator::Identity >
+    BilinearFormUtilities::compute< FunctionSpace::L2,
+                                    FunctionSpace::L2,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
     (
       stack.localFlowFlowJacobian,
       Np,
       dFluidMassContent_dPressure,
-      Np );
+      Np,
+      detJxW );
   }
 
   /**

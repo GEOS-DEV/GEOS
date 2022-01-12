@@ -25,7 +25,10 @@ namespace geosx
 namespace PDEUtilities
 {
 
-enum class DifferentialOperator : int
+/**
+ * @brief Differential operator type.
+ */
+enum class DifferentialOperator : integer
 {
   Divergence,
   Gradient,
@@ -33,7 +36,10 @@ enum class DifferentialOperator : int
   SymmetricGradient
 };
 
-enum class Space : int
+/**
+ * @brief Function space type.
+ */
+enum class FunctionSpace : integer
 {
   L2,
   L2vector,
