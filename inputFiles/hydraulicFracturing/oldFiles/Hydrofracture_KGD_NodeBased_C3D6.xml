@@ -32,10 +32,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      targetRegions="{ Fracture }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"

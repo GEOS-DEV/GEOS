@@ -39,10 +39,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      targetRegions="{ Fracture }"/>
     <!-- Sphinx_Solvers_SinglePhaseFVM_End -->
 
     <!-- Sphinx_Solvers_SurfaceGenerator -->

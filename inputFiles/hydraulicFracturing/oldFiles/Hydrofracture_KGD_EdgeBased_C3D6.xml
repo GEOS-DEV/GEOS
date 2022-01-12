@@ -37,9 +37,6 @@
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>

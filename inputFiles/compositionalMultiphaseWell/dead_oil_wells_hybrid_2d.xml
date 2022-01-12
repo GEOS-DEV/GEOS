@@ -20,18 +20,12 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ Region1 }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
       maxRelativePressureChange="0.1"
       maxCompFractionChange="0.1">
       <WellControls
