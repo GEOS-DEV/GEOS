@@ -112,8 +112,8 @@ public:
   GEOSX_HOST_DEVICE
   void
   interpolatePoint( real64 const *coordinates,
-                    real64 *values,
-                    real64 *derivatives ) const
+                    real64 * const LVARRAY_RESTRICT values,
+                    real64 * const LVARRAY_RESTRICT derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
@@ -226,8 +226,8 @@ protected:
                                    real64 const * const axisLows,
                                    real64 const * const axisMults,
                                    real64 const * const axisStepInvs,
-                                   real64 *values,
-                                   real64 *derivatives ) const
+                                   real64 * const LVARRAY_RESTRICT values,
+                                   real64 * const LVARRAY_RESTRICT derivatives ) const
   {
     integer pwr = numVerts / 2;   // distance between high and low values
     real64 workspace[2 * numVerts - 1][numOps];
