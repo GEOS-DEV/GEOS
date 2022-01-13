@@ -1,0 +1,74 @@
+/*
+ * ------------------------------------------------------------------------------------------------------------
+ * SPDX-License-Identifier: LGPL-2.1-only
+ *
+ * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
+ * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
+ * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2019-     GEOSX Contributors
+ * All rights reserved
+ *
+ * See top level LICENSE, COPYRIGHT, CONTRIBUTORS, NOTICE, and ACKNOWLEDGEMENTS files for details.
+ * ------------------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @file WillisRichardsPermeability.cpp
+ */
+
+#include "WillisRichardsPermeability.hpp"
+#include "LvArray/src/tensorOps.hpp"
+
+namespace geosx
+{
+
+using namespace dataRepository;
+
+namespace constitutive
+{
+
+
+WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Group * const parent ):
+  PermeabilityBase( name, parent )
+{
+  registerWrapper( viewKeyStruct::maxFracApertureString(), &m_maxFracAperture ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Maximum fracture aperture at zero contact stress." );
+
+  registerWrapper( viewKeyStruct::dilationCoefficientString(), &m_dilationCoefficient ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Dilation coefficient (tan of dilation angle)." );
+
+  registerWrapper( viewKeyStruct::refClosureStressString(), &m_refClosureStress ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Effective normal stress causes 90% reduction in aperture." );
+
+  registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump ).
+    setDescription( "Derivative of the permeability w.r.t. the displacement jump." );
+
+  registerWrapper( viewKeyStruct::dPerm_dTractionString(), &m_dPerm_dTraction ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Derivative of the permeability w.r.t. the fracture traction." );
+}
+
+std::unique_ptr< ConstitutiveBase >
+WillisRichardsPermeability::deliverClone( string const & name,
+                                         Group * const parent ) const
+{
+  return ConstitutiveBase::deliverClone( name, parent );
+}
+
+void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group & parent,
+                                                          localIndex const numConstitutivePointsPerParentIndex )
+{
+// NOTE: enforcing 1 quadrature point
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
+  m_dPerm_dTraction.resize( 0, 1, 3, 3 );
+
+  PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+}
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, WillisRichardsPermeability, string const &, Group * const )
+
+} /* namespace constitutive */
+} /* namespace geosx */
