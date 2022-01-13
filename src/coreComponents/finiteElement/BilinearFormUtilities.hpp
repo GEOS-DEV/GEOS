@@ -194,7 +194,7 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
                        real64 const weight )
   {
     GEOSX_UNUSED_VAR( dNvdX );
-    const_cast <DISCRETIZATION_OPS &>(A).template BTDB< numTestDOF/3 >( dNudX, weight, mat );
+    const_cast< DISCRETIZATION_OPS & >(A).template BTDB< numTestDOF/3 >( dNudX, weight, mat );
   }
 };
 
