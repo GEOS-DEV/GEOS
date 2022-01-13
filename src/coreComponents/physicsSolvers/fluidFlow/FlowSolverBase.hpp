@@ -83,19 +83,10 @@ public:
     static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * permeabilityString() { return "permeability"; }
 
-    // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return "gravityCoefficient"; }
-
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
-    static constexpr char const * pressureString() { return "pressure"; }
-    static constexpr char const * deltaPressureString() { return "deltaPressure"; }
-    static constexpr char const * initialPressureString() { return "initialPressure"; }
-    static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
-    static constexpr char const * aperture0String() { return "aperture_n"; }
-    static constexpr char const * hydraulicApertureString() { return "hydraulicAperture"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
   };
 
@@ -105,11 +96,6 @@ public:
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
                                               localIndex const targetIndex ) const;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   * @param[in] mesh the mesh level object
-   */
-  virtual void resetViews( MeshLevel & mesh );
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -167,24 +153,6 @@ protected:
 
   real64 m_fluxEstimate;
 
-  /// views into pressure fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
-
-  /// views into constant data fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
-
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;
-#endif
 
 };
 

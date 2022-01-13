@@ -53,8 +53,9 @@
     using type = TYPE; \
     /** The template type T for registration of a container<T>. */ \
     using dataType = internal::typeHelper_t< TYPE >; \
-    /** The dataRepository::DefaultValue for NAME. */ \
-    static constexpr dataType defaultValue = DEFAULT; \
+    /** @brief @return The default data value for NAME. */ \
+    static constexpr dataType defaultValue() \
+    { return DEFAULT; } \
     /** The default dataRepository::PlotLevel for NAME. */ \
     static constexpr dataRepository::PlotLevel plotLevel = dataRepository::PlotLevel::PLOTLEVEL; \
     /** The default dataRepository::RestartFlags for NAME. */ \
@@ -89,6 +90,29 @@ template< typename T >
 using typeHelper_t = typename typeHelper< T >::type;
 }
 
+EXTRINSIC_MESH_DATA_TRAIT( ghostRank,
+                           "ghostRank",
+                           array1d< integer >,
+                           -2,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Ghost rank." );
+
+EXTRINSIC_MESH_DATA_TRAIT( elementVolume,
+                           "elementVolume",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "Element volume." );
+
+EXTRINSIC_MESH_DATA_TRAIT( elementAperture,
+                           "elementAperture",
+                           array1d< real64 >,
+                           1e-5,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Element aperture." );
 
 EXTRINSIC_MESH_DATA_TRAIT( ParentIndex,
                            "parentIndex",

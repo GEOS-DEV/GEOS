@@ -22,7 +22,15 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
@@ -35,13 +43,41 @@ using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+// tag to access well and reservoir elements in perforation rates computation
+struct SubRegionTag
+{
+  static constexpr integer RES  = 0;
+  static constexpr integer WELL = 1;
+};
+
+// tag to access the next and current well elements of a connection
+struct ElemTag
+{
+  static constexpr integer CURRENT = 0;
+  static constexpr integer NEXT    = 1;
+};
+
+// define the column offset of the derivatives
+struct ColOffset
+{
+  static constexpr integer DPRES = 0;
+  static constexpr integer DCOMP = 1;
+};
+
+// define the row offset of the residual equations
+struct RowOffset
+{
+  static constexpr integer CONTROL = 0;
+  static constexpr integer MASSBAL = 1;
+};
+
 /******************************** ControlEquationHelper ********************************/
 
 struct ControlEquationHelper
 {
 
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   GEOSX_HOST_DEVICE
   static void
@@ -87,9 +123,9 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  using TAG = WellSolverBase::ElemTag;
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using TAG = CompositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -137,9 +173,9 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  using TAG = WellSolverBase::ElemTag;
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using TAG = CompositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -187,7 +223,31 @@ struct PressureRelationKernel
 struct PerforationKernel
 {
 
-  using TAG = CompositionalMultiphaseWell::SubRegionTag;
+  using TAG = CompositionalMultiphaseWellKernels::SubRegionTag;
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::phaseVolumeFraction,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+
+  using MultiFluidAccessors =
+    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseViscosity,
+                      extrinsicMeshData::multifluid::dPhaseViscosity_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction,
+                      extrinsicMeshData::multifluid::phaseCompFraction,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+
+  using RelPermAccessors =
+    StencilAccessors< extrinsicMeshData::relperm::phaseRelPerm,
+                      extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -283,8 +343,8 @@ struct PerforationKernel
 struct AccumulationKernel
 {
 
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -338,8 +398,8 @@ struct AccumulationKernel
 struct VolumeBalanceKernel
 {
 
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -372,6 +432,16 @@ struct VolumeBalanceKernel
 
 struct PresTempCompFracInitializationKernel
 {
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::temperature,
+                      extrinsicMeshData::flow::globalCompDensity,
+                      extrinsicMeshData::flow::phaseVolumeFraction >;
+
+  using MultiFluidAccessors =
+    StencilAccessors< extrinsicMeshData::multifluid::phaseMassDensity >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -439,38 +509,159 @@ struct RateInitializationKernel
 
 /******************************** TotalMassDensityKernel ****************************/
 
-struct TotalMassDensityKernel
+/**
+ * @class TotalMassDensityKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the total mass density
+ */
+template< integer NUM_COMP, integer NUM_PHASE >
+class TotalMassDensityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
+public:
 
-  template< localIndex NC, localIndex NP >
+  using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+
+  using Base::numComp;
+
+  /// Compile time value for the number of phases
+  static constexpr integer numPhase = NUM_PHASE;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  TotalMassDensityKernel( ObjectManagerBase & subRegion,
+                          MultiFluidBase const & fluid )
+    : Base(),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseMassDens( fluid.phaseMassDensity() ),
+    m_dPhaseMassDens_dPres( fluid.dPhaseMassDensity_dPressure() ),
+    m_dPhaseMassDens_dComp( fluid.dPhaseMassDensity_dGlobalCompFraction() ),
+    m_totalMassDens( subRegion.getExtrinsicData< extrinsicMeshData::well::totalMassDensity >() ),
+    m_dTotalMassDens_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >() ),
+    m_dTotalMassDens_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >() )
+  {}
+
+  /**
+   * @brief Compute the total mass density in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] totalMassDensityKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = CompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
-  static void
-  compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
-           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
-           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseMassDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & dPhaseMassDens_dPres,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseMassDens_dComp,
-           real64 & totalMassDens,
-           real64 & dTotalMassDens_dPres,
-           arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens );
+  void compute( localIndex const ei,
+                FUNC && totalMassDensityKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+  {
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseMassDens = m_phaseMassDens[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseMassDens_dPres = m_dPhaseMassDens_dPres[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens_dComp = m_dPhaseMassDens_dComp[ei][0];
+    real64 & totalMassDens = m_totalMassDens[ei];
+    real64 & dTotalMassDens_dPres = m_dTotalMassDens_dPres[ei];
+    arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > dTotalMassDens_dCompDens = m_dTotalMassDens_dCompDens[ei];
 
-  template< localIndex NC, localIndex NP >
-  static void
-  launch( localIndex const size,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & dWellElemPhaseVolFrac_dPres,
-          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac_dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseMassDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dWellElemPhaseMassDens_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseMassDens_dComp,
-          arrayView1d< real64 > const & wellElemTotalMassDens,
-          arrayView1d< real64 > const & dWellElemTotalMassDens_dPres,
-          arrayView2d< real64, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens );
+    real64 dMassDens_dC[numComp]{};
+
+    totalMassDens = 0.0;
+    dTotalMassDens_dPres = 0.0;
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      dTotalMassDens_dCompDens[ic] = 0.0;
+    }
+
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      totalMassDens += phaseVolFrac[ip] * phaseMassDens[ip];
+      dTotalMassDens_dPres += dPhaseVolFrac_dPres[ip] * phaseMassDens[ip]
+                              + phaseVolFrac[ip] * dPhaseMassDens_dPres[ip];
+
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseMassDens_dComp[ip], dMassDens_dC );
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac_dCompDens[ip][ic] * phaseMassDens[ip]
+                                        + phaseVolFrac[ip] * dMassDens_dC[ic];
+      }
+
+      totalMassDensityKernelOp( ip, totalMassDens, dTotalMassDens_dPres, dTotalMassDens_dCompDens );
+    }
+  }
+
+protected:
+
+  // inputs
+
+  /// Views on phase volume fractions
+  arrayView2d< real64 const, compflow::USD_PHASE > m_phaseVolFrac;
+  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dCompDens;
+  arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
+
+  /// Views on phase mass densities
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseMassDens;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseMassDens_dPres;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseMassDens_dComp;
+
+  // outputs
+
+  /// Views on total mass densities
+  arrayView1d< real64 > m_totalMassDens;
+  arrayView1d< real64 > m_dTotalMassDens_dPres;
+  arrayView2d< real64, compflow::USD_FLUID_DC > m_dTotalMassDens_dCompDens;
 
 };
+
+/**
+ * @class TotalMassDensityKernelFactory
+ */
+class TotalMassDensityKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numComp the number of fluid components
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
+                   ObjectManagerBase & subRegion,
+                   MultiFluidBase const & fluid )
+  {
+    if( numPhase == 2 )
+    {
+      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+    else if( numPhase == 3 )
+    {
+      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+  }
+};
+
 
 /******************************** ResidualNormKernel ********************************/
 
@@ -496,7 +687,7 @@ struct ResidualNormKernel
           real64 const dt,
           real64 * localResidualNorm )
   {
-    using ROFFSET = CompositionalMultiphaseWell::RowOffset;
+    using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
 
     WellControls::Type const wellType = wellControls.getType();
     WellControls::Control const currentControl = wellControls.getControl();
@@ -680,7 +871,7 @@ struct SolutionCheckKernel
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
-    using COFFSET = CompositionalMultiphaseWell::ColOffset;
+    using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
     real64 constexpr eps = minDensForDivision;
 
