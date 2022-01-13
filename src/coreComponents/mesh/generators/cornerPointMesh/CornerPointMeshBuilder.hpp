@@ -290,11 +290,41 @@ private:
                                  ArrayOfArrays< localIndex > & faceToVertices );
 
 
+
+  /**
+   * @brief add a vertical face made of varying number of vertices, ranging from 3 to 6, to the maps
+   * @param[in] faceVertices the vertices of face k
+   * @param[in] iOwnedActiveCellPrev index of the owned active cell before the face (k-1)
+   * @param[in] iOwnedActiveCellNext index of the owned active cell after the face (k)
+   * @param[out] ownedActiveCellToFaces map from owned active cell to faces
+   * @param[out] faceToVertices map from face to vertices
+   */
+  static void addVerticalFace();
+
   /**
    * @brief append top and bottom auxillary layers for processing outer boundary at faults
    * @brief the method will manipulate m_parser.zcorn and m_parser.actnum
    */
   void appendAuxillaryLayer();
+
+  //  Find connections between two faces. If two faces overlap entirely, they are conforming internal faces. If otherwise, they are
+  //  on faulted surface. As for faulted faces, new nodes will be introduced, which results in cases with more or less stanford 4 points face.
+  //  For example, face could be consisted of either  3 points (minimum), 5 points or 6 points (maximum).
+  //  Once a faulted face is inputed, the whole pillar of faces should be assessed for intersections.
+  //
+  // Input:
+  // the whole cell column where the previous cell locates
+  // vertex of next face
+  //
+  //  Output
+  //  This method should update faceToVertex map
+
+  void addNonconformingFace(localIndex iCellPrev, localIndex const zIdxPrev,
+                            localIndex const (&nextFaceVertices)[ 4 ],
+                            localIndex const (&orderPrev)[4]);
+
+  bool checkFaceOverlap(localIndex const (&nextfaceVertices)[ 4 ],
+                        localIndex const (&prevfaceVertices)[ 4 ]);
 
   // a temporary method for debugging
   void printDataForDebugging();

@@ -92,6 +92,35 @@ struct CompareVertices
   }
 };
 
+struct Edge
+{
+
+  Edge( const Vertex point0, const Vertex point1 )
+  : m_point0( point0 ), m_point1( point1) {}
+
+  /// Both ends of edge
+  Vertex m_point0;
+  Vertex m_point1;
+
+  /**
+   * @brief Comparison operator for edges. Every edge has two vertexes
+   * @param[in] edge1, first array of two vertexes
+   * @param[in] edge2, second array of two vertexes
+   * @return true if edge1 and edge2 are possible to intersect, and false otherwise
+   */
+  bool compare( const Edge newEdge ) const
+  {
+    // this only compares if current edge is higher than newEdge, which returns true if it is and false otherwise
+    real64 minZEdge1 = (m_point0.m_z <= m_point1.m_z) ? m_point0.m_z : m_point1.m_z ;
+    real64 maxZEdge2 = (newEdge.m_point0.m_z >= newEdge.m_point1.m_z) ? newEdge.m_point0.m_z : newEdge.m_point1.m_z ;
+
+    if ( minZEdge1 > maxZEdge2)
+      return true;
+    else
+      return false;
+  }
+};
+
 } // end namespace geometryUtilities
 
 } // end namespace cornerPointMesh
