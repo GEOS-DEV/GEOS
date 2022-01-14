@@ -137,16 +137,22 @@ public:
   void updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant relperm models using current values of phase volume fraction
    * @param castedRelPerm the group storing the required fields
    */
   void updateRelPermModel( ObjectManagerBase & castedRelPerm, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant capillary pressure models using current values of phase volume fraction
    * @param castedCapPres the group storing the required fields
    */
   void updateCapPressureModel( ObjectManagerBase & castedCapPres, localIndex const targetIndex ) const;
+
+  /**
+   * @brief Update all relevant thermal conductivity models using current values of phase volume fraction
+   * @param castedThermalConductivity the group storing the required fields
+   */
+  void updateThermalConductivityModel( ObjectManagerBase & castedThermalConductivity, localIndex const targetIndex ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
@@ -207,6 +213,8 @@ public:
 
   arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
 
+  arrayView1d< string const > thermalConductivityModelNames() const { return m_thermalConductivityModelNames; }
+
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
@@ -222,6 +230,8 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -352,6 +362,12 @@ protected:
 
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_thermalFlag;
+
+  /// name of the thermal conductivity model
+  array1d< string > m_thermalConductivityModelNames;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;

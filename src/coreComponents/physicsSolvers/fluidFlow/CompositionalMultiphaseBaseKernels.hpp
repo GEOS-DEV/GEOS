@@ -591,6 +591,45 @@ struct CapillaryPressureUpdateKernel
   }
 };
 
+/******************************** ThermalConductivityUpdateKernel ********************************/
+
+struct ThermalConductivityUpdateKernel
+{
+  template< typename POLICY, typename CONDUCTIVITY_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONDUCTIVITY_WRAPPER const & conductivityWrapper,
+          arrayView2d< real64 const > const & porosityOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      for( localIndex q = 0; q < conductivityWrapper.numGauss(); ++q )
+      {
+        conductivityWrapper.update( k, q, porosityOld[k][q], phaseVolFrac[k] );
+      }
+    } );
+  }
+
+  template< typename POLICY, typename CONDUCTIVITY_WRAPPER >
+  static void
+  launch( SortedArrayView< localIndex const > const & targetSet,
+          CONDUCTIVITY_WRAPPER const & conductivityWrapper,
+          arrayView2d< real64 const > const & porosityOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac )
+  {
+    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      localIndex const k = targetSet[a];
+      for( localIndex q = 0; q < conductivityWrapper.numGauss(); ++q )
+      {
+        conductivityWrapper.update( k, q, porosityOld[k][q], phaseVolFrac[k] );
+      }
+    } );
+  }
+};
+
+
 /******************************** ElementBasedAssemblyKernel ********************************/
 
 /**

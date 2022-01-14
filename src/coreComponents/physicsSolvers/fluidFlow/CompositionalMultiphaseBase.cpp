@@ -28,6 +28,7 @@
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
+#include "constitutive/thermalConductivity/thermalConductivitySelector.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -57,6 +58,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
   m_capPressureFlag( 0 ),
+  m_thermalFlag( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -86,6 +88,11 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Name of the capillary pressure constitutive model to use" );
 
+  this->registerWrapper( viewKeyStruct::thermalConductivityNamesString(), &m_thermalConductivityModelNames ).
+    setSizedFromParent( 0 ).
+    setInputFlag( InputFlags::FALSE ). // input disabled temporarily
+    setDescription( "Name of the thermal conductivity constitutive model to use" );
+
   this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -105,6 +112,7 @@ void CompositionalMultiphaseBase::postProcessInput()
   FlowSolverBase::postProcessInput();
   checkModelNames( m_relPermModelNames, viewKeyStruct::relPermNamesString() );
   m_capPressureFlag = checkModelNames( m_capPressureModelNames, viewKeyStruct::capPressureNamesString(), true );
+  m_thermalFlag = checkModelNames( m_thermalConductivityModelNames, viewKeyStruct::thermalConductivityNamesString(), true );
 
   GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
                          "The maximum absolute change in component fraction must smaller or equal to 1.0" );
@@ -274,6 +282,19 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( constitutive::Cons
       compareMultiphaseModels( capPres, capPres0 );
     }
   }
+
+  if( m_thermalFlag )
+  {
+    ThermalConductivityBase const & conductivity0 = cm.getConstitutiveRelation< ThermalConductivityBase >( m_thermalConductivityModelNames[0] );
+    compareMultiphaseModels( conductivity0, fluid0 );
+
+    for( localIndex i = 1; i < m_thermalConductivityModelNames.size(); ++i )
+    {
+      ThermalConductivityBase const & conductivity = cm.getConstitutiveRelation< ThermalConductivityBase >( m_thermalConductivityModelNames[i] );
+      compareMultiphaseModels( conductivity, conductivity0 );
+    }
+  }
+
 }
 
 void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const & cm ) const
@@ -447,6 +468,37 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
   }
 }
 
+void CompositionalMultiphaseBase::updateThermalConductivityModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  if( m_thermalFlag )
+  {
+    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+      dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+
+    CoupledSolidBase const & solid =
+      getConstitutiveModel< CoupledSolidBase >( dataGroup, m_solidModelNames[targetIndex] );
+
+    // use lagged porosity in time to avoid complex dependencies when porosity depends on displacement
+    arrayView2d< real64 const > const porosityOld = solid.getOldPorosity();
+
+    ThermalConductivityBase & thermalConductivity =
+      getConstitutiveModel< ThermalConductivityBase >( dataGroup, m_thermalConductivityModelNames[targetIndex] );
+
+    constitutive::constitutiveUpdatePassThru( thermalConductivity, [&] ( auto & castedThermalConductivity )
+    {
+      typename TYPEOFREF( castedThermalConductivity ) ::KernelWrapper conductivityWrapper = castedThermalConductivity.createKernelWrapper();
+
+      ThermalConductivityUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                         conductivityWrapper,
+                                                                         porosityOld,
+                                                                         phaseVolFrac );
+    } );
+  }
+}
+
+
 void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion, localIndex targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -457,6 +509,7 @@ void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegio
   updateRelPermModel( subRegion, targetIndex );
   updatePhaseMobility( subRegion, targetIndex );
   updateCapPressureModel( subRegion, targetIndex );
+  updateThermalConductivityModel( subRegion, targetIndex );
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )

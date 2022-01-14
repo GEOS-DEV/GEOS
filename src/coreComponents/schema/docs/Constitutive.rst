@@ -18,6 +18,7 @@ CompressibleSolidConstantPermeability       node         :ref:`XML_CompressibleS
 CompressibleSolidParallelPlatesPermeability node         :ref:`XML_CompressibleSolidParallelPlatesPermeability` 
 CompressibleSolidSlipDependentPermeability  node         :ref:`XML_CompressibleSolidSlipDependentPermeability`  
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
+ConstantThermalConductivity                 node         :ref:`XML_ConstantThermalConductivity`                 
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node         :ref:`XML_DamageSpectralElasticIsotropic`              
@@ -51,6 +52,7 @@ TableCapillaryPressure                      node         :ref:`XML_TableCapillar
 TableRelativePermeability                   node         :ref:`XML_TableRelativePermeability`                   
 VanGenuchtenBakerRelativePermeability       node         :ref:`XML_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node         :ref:`XML_VanGenuchtenCapillaryPressure`               
+VolumeWeightedThermalConductivity           node         :ref:`XML_VolumeWeightedThermalConductivity`           
 =========================================== ==== ======= ====================================================== 
 
 

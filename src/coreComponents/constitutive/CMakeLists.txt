@@ -103,6 +103,11 @@ set( constitutive_headers
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
+     thermalConductivity/ConstantThermalConductivity.hpp
+     thermalConductivity/ThermalConductivityBase.hpp
+     thermalConductivity/ThermalConductivityExtrinsicData.hpp
+     thermalConductivity/thermalConductivitySelector.hpp
+     thermalConductivity/VolumeWeightedThermalConductivity.hpp
    )
 #
 # Specify all sources
@@ -177,6 +182,9 @@ set( constitutive_sources
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
+     thermalConductivity/ConstantThermalConductivity.cpp     
+     thermalConductivity/ThermalConductivityBase.cpp
+     thermalConductivity/VolumeWeightedThermalConductivity.cpp     
    )
 
 set( dependencyList events dataRepository functions )
