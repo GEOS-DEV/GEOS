@@ -18,7 +18,6 @@
 
 #include "ContactSolverBase.hpp"
 
-#include "SolidMechanicsEFEMKernels.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
@@ -256,6 +255,23 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
   GEOSX_LOG_RANK_0( GEOSX_FMT( " Number of element for each fracture state:"
                                " stick: {:12} | slip:  {:12} | open:  {:12}",
                                numStick, numSlip, numOpen ) );
+}
+
+
+void ContactSolverBase::applyBoundaryConditions( real64 const time,
+                                                       real64 const dt,
+                                                       DomainPartition & domain,
+                                                       DofManager const & dofManager,
+                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                       arrayView1d< real64 > const & localRhs )
+{
+  GEOSX_MARK_FUNCTION;
+  m_solidSolver->applyBoundaryConditions( time,
+                                          dt,
+                                          domain,
+                                          dofManager,
+                                          localMatrix,
+                                          localRhs );
 }
 
 

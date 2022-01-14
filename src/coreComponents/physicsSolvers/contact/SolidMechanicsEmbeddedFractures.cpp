@@ -405,25 +405,6 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
 }
 
-void SolidMechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time,
-                                                               real64 const dt,
-                                                               DomainPartition & domain,
-                                                               DofManager const & dofManager,
-                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                               arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  m_solidSolver->applyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
-
-
-}
-
 void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                        real64 const dt,
                                                        DomainPartition & domain )

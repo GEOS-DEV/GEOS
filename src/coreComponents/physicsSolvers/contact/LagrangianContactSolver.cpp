@@ -636,21 +636,6 @@ void LagrangianContactSolver::assembleSystem( real64 const time,
   assembleStabilization( domain, dofManager, localMatrix, localRhs );
 }
 
-void LagrangianContactSolver::applyBoundaryConditions( real64 const time,
-                                                       real64 const dt,
-                                                       DomainPartition & domain,
-                                                       DofManager const & dofManager,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-  m_solidSolver->applyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
-}
 
 real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & domain,
                                                        DofManager const & dofManager,
@@ -1799,7 +1784,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  bool checkActiveSet = true;
+  bool hasConfigurationConverged = true;
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
@@ -1877,22 +1862,12 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
                 fractureState[kfe] = FractureState::STICK;
               }
             }
-
-            if( originalFractureState != fractureState[kfe] )
-            {
-              //            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-              //                                                   << " previous state <"
-              //                                                   << FractureStateToString( originalFractureState )
-              //                                                   << "> current state <"
-              //                                                   << FractureStateToString( fractureState[kfe] )
-              //                                                   << ">" );
-            }
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
           }
         } );
       } );
 
-      checkActiveSet &= checkActiveSetSub.get();
+      hasConfigurationConverged &= checkActiveSetSub.get();
     }
   } );
 
@@ -1900,14 +1875,14 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   synchronizeFractureState( domain );
 
   // Compute if globally the fracture state has changed
-  bool globalCheckActiveSet;
-  MpiWrapper::allReduce( &checkActiveSet,
-                         &globalCheckActiveSet,
+  bool hasConfigurationConvergedGlobally;
+  MpiWrapper::allReduce( &hasConfigurationConverged,
+                         &hasConfigurationConvergedGlobally,
                          1,
                          MPI_LAND,
                          MPI_COMM_GEOSX );
 
-  return globalCheckActiveSet;
+  return hasConfigurationConvergedGlobally;
 }
 
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const

@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_CONTACTSOLVERBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_CONTACTSOLVERBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
 
@@ -44,6 +44,15 @@ public:
                              DomainPartition & domain ) override;
 
   // virtual bool updateConfiguration( DomainPartition & domain ) override;
+
+
+  virtual void
+  applyBoundaryConditions( real64 const time,
+                           real64 const dt,
+                           DomainPartition & domain,
+                           DofManager const & dofManager,
+                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                           arrayView1d< real64 > const & localRhs ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -154,4 +163,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_CONTACTSOLVERBASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_ */

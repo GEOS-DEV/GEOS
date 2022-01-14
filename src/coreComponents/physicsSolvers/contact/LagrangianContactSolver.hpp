@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_
-#define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_
 
-#include "physicsSolvers/solidMechanics/ContactSolverBase.hpp"
+#include "physicsSolvers/contact/ContactSolverBase.hpp"
 
 namespace geosx
 {
@@ -78,14 +78,6 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) override;
-
-  virtual void
-  applyBoundaryConditions( real64 const time,
-                           real64 const dt,
-                           DomainPartition & domain,
-                           DofManager const & dofManager,
-                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                           arrayView1d< real64 > const & localRhs ) override;
 
   virtual real64
   calculateResidualNorm( DomainPartition const & domain,
@@ -197,4 +189,4 @@ public:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTSOLVER_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_LAGRANGIANCONTACTSOLVER_HPP_ */

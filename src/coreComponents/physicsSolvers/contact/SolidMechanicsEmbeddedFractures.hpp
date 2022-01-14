@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
-#include "physicsSolvers/solidMechanics/ContactSolverBase.hpp"
+#include "physicsSolvers/contact/ContactSolverBase.hpp"
 
 namespace geosx
 {
@@ -73,14 +73,6 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-
-  virtual void applyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
-
   virtual real64
   calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
@@ -120,7 +112,7 @@ public:
                         DomainPartition & domain );
 
 
-virtual bool updateConfiguration( DomainPartition & domain ) override final;                       
+  virtual bool updateConfiguration( DomainPartition & domain ) override final;
 
 protected:
 
@@ -133,4 +125,4 @@ protected:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */

@@ -17,10 +17,10 @@
  * @file SolidMechanicsEFEMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELS_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELS_HPP_
 
-#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geosx
@@ -524,4 +524,4 @@ struct StateUpdateKernel
 } // namespace geosx
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELS_HPP_ */
