@@ -68,6 +68,7 @@ public:
     static constexpr auto lineSearchActionString        = "lineSearchAction";
     static constexpr auto lineSearchMaxCutsString       = "lineSearchMaxCuts";
     static constexpr auto lineSearchCutFactorString     = "lineSearchCutFactor";
+    static constexpr auto lineSearchInterpolationTypeString   = "lineSearchInterpolationType";
 
     static constexpr auto newtonTolString               = "newtonTol";
     static constexpr auto newtonMaxIterString           = "newtonMaxIter";
@@ -119,8 +120,21 @@ public:
     Require, ///< Use line search. If smaller residual than starting residual is not achieved, cut time step.
   };
 
+  /**
+   * @brief Indicates the handling of line earch interpolation strategy.
+   */
+  enum class LineSearchInterpolationType : integer
+  {
+    Linear,    ///< 
+    Parabolic, ///< 
+  };
+
+
   /// Flag to apply a line search.
   LineSearchAction m_lineSearchAction;
+
+  /// Flag to pick the type of linesearch
+  LineSearchInterpolationType m_lineSearchInterpType;
 
   /// The maximum number of line search cuts to attempt.
   integer m_lineSearchMaxCuts;

@@ -259,11 +259,11 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
 
 
 void ContactSolverBase::applyBoundaryConditions( real64 const time,
-                                                       real64 const dt,
-                                                       DomainPartition & domain,
-                                                       DofManager const & dofManager,
-                                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                       arrayView1d< real64 > const & localRhs )
+                                                 real64 const dt,
+                                                 DomainPartition & domain,
+                                                 DofManager const & dofManager,
+                                                 CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                 arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
   m_solidSolver->applyBoundaryConditions( time,
@@ -273,6 +273,17 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                           localMatrix,
                                           localRhs );
 }
+
+real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                        real64 const & dt,
+                                        const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+{
+  GEOSX_MARK_FUNCTION;
+  GEOSX_ERROR( "ExplicitStep non available for contact solvers." );
+  return dt;
+}
+
 
 
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const

@@ -43,8 +43,13 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  // virtual bool updateConfiguration( DomainPartition & domain ) override;
+  virtual real64
+  explicitStep( real64 const & time_n,
+                real64 const & dt,
+                integer const cycleNumber,
+                DomainPartition & domain ) override final;                           
 
+  // virtual bool updateConfiguration( DomainPartition & domain ) override;
 
   virtual void
   applyBoundaryConditions( real64 const time,
@@ -83,7 +88,7 @@ public:
                                        globalIndex & numStick,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
-                                       bool printAll = false ) const;
+                                       bool printAll = false ) const; 
 
 protected:
 

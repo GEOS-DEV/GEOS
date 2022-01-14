@@ -98,24 +98,6 @@ public:
              real64 & nextDt ) override;
 
 
-  virtual real64
-  explicitStep( real64 const & time_n,
-                real64 const & dt,
-                integer const cycleNumber,
-                DomainPartition & domain ) override;
-
-  virtual bool
-  lineSearch( real64 const & time_n,
-              real64 const & dt,
-              integer const cycleNumber,
-              DomainPartition & domain,
-              DofManager const & dofManager,
-              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-              ParallelVector & rhs,
-              ParallelVector & solution,
-              real64 const scaleFactor,
-              real64 & lastResidual ) override;
-
   void computeFaceDisplacementJump( DomainPartition & domain );
 
   void assembleForceResidualDerivativeWrtTraction( DomainPartition & domain,

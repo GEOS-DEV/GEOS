@@ -213,6 +213,32 @@ public:
               ParallelVector & solution,
               real64 const scaleFactor,
               real64 & lastResidual );
+  
+   /**
+   * @brief Function to perform line search using a parabolic interpolation to find the scaling factor.
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
+   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @return return true if line search succeeded, false otherwise
+   *
+   */
+  virtual bool
+  lineSearchWithParabolicInterpolation ( real64 const & time_n,
+                                         real64 const & dt,
+                                         integer const cycleNumber,
+                                         DomainPartition & domain,
+                                         DofManager const & dofManager,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         ParallelVector & rhs,
+                                         ParallelVector & solution,
+                                         real64 const scaleFactor,
+                                         real64 & lastResidual );
 
   /**
    * @brief Function for a linear implicit integration step

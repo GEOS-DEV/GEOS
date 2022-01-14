@@ -39,7 +39,6 @@
 #include "linearAlgebra/solvers/PreconditionerBlockJacobi.hpp"
 #include "linearAlgebra/solvers/BlockPreconditioner.hpp"
 #include "linearAlgebra/solvers/SeparateComponentPreconditioner.hpp"
-#include "math/interpolation/Interpolation.hpp"
 #include "finiteElement/elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "finiteElement/elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
 
@@ -52,7 +51,6 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace interpolation;
 using namespace finiteElement;
 
 constexpr integer LagrangianContactSolver::FractureState::STICK;
@@ -463,126 +461,6 @@ void LagrangianContactSolver::computeFaceDisplacementJump( DomainPartition & dom
   } );
 
   return;
-}
-
-real64 LagrangianContactSolver::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const & dt,
-                                              const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                              DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{
-  GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR( "ExplicitStep non available for LagrangianContactSolver!" );
-  return dt;
-}
-
-bool LagrangianContactSolver::lineSearch( real64 const & time_n,
-                                          real64 const & dt,
-                                          integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          ParallelVector & rhs,
-                                          ParallelVector & solution,
-                                          real64 const scaleFactor,
-                                          real64 & lastResidual )
-{
-  bool lineSearchSuccess = true;
-
-  integer const maxNumberLineSearchCuts = m_nonlinearSolverParameters.m_lineSearchMaxCuts;
-
-  real64 const sigma1 = 0.5;
-  real64 const alpha = 1.e-4;
-
-  real64 localScaleFactor = scaleFactor;
-  real64 lamm = scaleFactor;
-  real64 lamc = localScaleFactor;
-  integer lineSearchIteration = 0;
-
-  // get residual norm
-  real64 residualNorm0 = lastResidual;
-
-  applySystemSolution( dofManager, solution.values(), scaleFactor, domain );
-
-  // re-assemble system
-  localMatrix.zero();
-  rhs.zero();
-
-  {
-    arrayView1d< real64 > const localRhs = rhs.open();
-    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-    rhs.close();
-  }
-
-  // get residual norm
-  real64 residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
-
-  real64 ff0 = residualNorm0*residualNorm0;
-  real64 ffT = residualNormT*residualNormT;
-  real64 ffm = ffT;
-  real64 cumulativeScale = scaleFactor;
-
-  while( residualNormT >= (1.0 - alpha*localScaleFactor)*residualNorm0 )
-  {
-    real64 const previousLocalScaleFactor = localScaleFactor;
-    // Apply the three point parabolic model
-    if( lineSearchIteration == 0 )
-    {
-      localScaleFactor *= sigma1;
-    }
-    else
-    {
-      localScaleFactor = parabolicInterpolationThreePoints( lamc, lamm, ff0, ffT, ffm );
-    }
-
-    // Update x; keep the books on lambda
-    real64 const deltaLocalScaleFactor = ( localScaleFactor - previousLocalScaleFactor );
-    cumulativeScale += deltaLocalScaleFactor;
-
-    if( !checkSystemSolution( domain, dofManager, solution.values(), deltaLocalScaleFactor ) )
-    {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
-      continue;
-    }
-
-    applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, domain );
-    lamm = lamc;
-    lamc = localScaleFactor;
-
-    // Keep the books on the function norms
-    // re-assemble system
-    // TODO: add a flag to avoid a completely useless Jacobian computation: rhs is enough
-    localMatrix.zero();
-    rhs.zero();
-
-    {
-      arrayView1d< real64 > const localRhs = rhs.open();
-      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-      rhs.close();
-    }
-
-    if( getLogLevel() >= 1 && logger::internal::rank==0 )
-    {
-      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
-    }
-
-    // get residual norm
-    residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
-    ffm = ffT;
-    ffT = residualNormT*residualNormT;
-    lineSearchIteration += 1;
-
-    if( lineSearchIteration > maxNumberLineSearchCuts )
-    {
-      lineSearchSuccess = false;
-      break;
-    }
-  }
-
-  lastResidual = residualNormT;
-
-  return lineSearchSuccess;
 }
 
 void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
