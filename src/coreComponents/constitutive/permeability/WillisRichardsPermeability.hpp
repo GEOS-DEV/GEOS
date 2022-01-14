@@ -47,7 +47,7 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const & pressure
+  void compute( real64 const & pressure,
                 real64 const ( &dispJump )[3], 
                 real64 const ( &fractureTraction )[3],                  
                 arraySlice1d< real64 > const & permeability,
@@ -59,6 +59,7 @@ public:
                                                        localIndex const q,
                                                        real64 const & oldHydraulicAperture,
                                                        real64 const & newHydraulicAperture,
+                                                       real64 const & pressure,
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &fractureTraction )[3] ) const override
   {
@@ -157,7 +158,7 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void WillisRichardsPermeabilityUpdate::compute( real64 const & pressure
+void WillisRichardsPermeabilityUpdate::compute( real64 const & pressure,
                                                 real64 const ( &dispJump )[3], 
                                                 real64 const ( &fractureTraction )[3],
                                                 arraySlice1d< real64 > const & permeability,
@@ -168,13 +169,13 @@ void WillisRichardsPermeabilityUpdate::compute( real64 const & pressure
   
   real64 const effNormalStress = fractureTraction[0] - pressure; 
 
-  real64 const aperture = ( maxFracAperture + shearMag * dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/refClosureStress )
+  real64 const aperture = ( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress );
 
-  real64 const dPerm_daperture = aperture / 6.0
+  real64 const dPerm_daperture = aperture / 6.0;
 
-  real64 const daperture_dshearMag = dilationCoefficient / ( 1.0 + 9.0 * effNormalStress/refClosureStress )
+  real64 const daperture_dshearMag = m_dilationCoefficient / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress );
 
-  real64 const daperture_deffNormalStress = - ( maxFracAperture + shearMag * dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/refClosureStress ) / ( 1.0 + 9.0 * effNormalStress/refClosureStress ) * 9.0 /refClosureStress  
+  real64 const daperture_deffNormalStress = - ( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress ) / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress ) * 9.0 /m_refClosureStress;  
 
   for( localIndex i=0; i < permeability.size(); i++ )
   {
