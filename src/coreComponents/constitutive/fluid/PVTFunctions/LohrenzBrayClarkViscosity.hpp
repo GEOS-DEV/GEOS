@@ -62,9 +62,6 @@ public:
   {
     GEOSX_UNUSED_VAR( phaseDensity );
 
-auto setConstant = []( real64 & val ){ val = 1.234; };
-LvArray::forValuesInSlice( phaseViscosity, setConstant );
-
     integer const numPhases = phaseComposition.size(0); 
     integer const numComponents = phaseComposition.size(1);
 
@@ -78,16 +75,18 @@ LvArray::forValuesInSlice( phaseViscosity, setConstant );
       real64 reducedTemperature = temperature / m_componentCriticalTemperature[c];
       real64 componentChi = chiParameter( m_componentCriticalTemperature[c], m_componentCriticalPressure[c], m_componentMolarWeight[c] );
 
-      if( reducedTemperature <= 1.5 )
+      if( m_componentMolarWeight[c] < 2.1e-3) // hydrogen correlation, Stiel & Thodos, 1961, Eq. 12
       {
-        componentViscosityAtm[c] = 34e-5 * pow( reducedTemperature, 0.94 );
+        componentViscosityAtm[c] = 90.71e-5 * pow( 0.1375*temperature-1.67, 5.0/8.0 );
       }
-      else
+      else if( reducedTemperature <= 1.5 ) // nonpolar gas correlation at low temp, Eq. 9
       {
-        componentViscosityAtm[c] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 );
+        componentViscosityAtm[c] = 34e-5 * pow( reducedTemperature, 0.94 ) / componentChi;
       }
-
-      componentViscosityAtm[c] /= componentChi;
+      else // nonpolar gas correlation at high temp, Eq. 10
+      {
+        componentViscosityAtm[c] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 ) / componentChi;
+      }
     }
 
     // Estimate phase viscosity (in cp) at near-atmospheric pressure using the 
