@@ -181,7 +181,6 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
   rdsf->GenerateGlobalCellIdsOn();
   rdsf->Update();
-  MpiWrapper::barrier();
 
   // Generate global IDs for vertices and cells
   vtkNew< vtkGenerateGlobalIds > generator;
@@ -794,10 +793,8 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtkMultiProcessController::SetGlobalController( controller );
 
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = loadVTKMesh( m_filePath );
-  MpiWrapper::barrier();
 
   m_vtkMesh =redistributeMesh( *loadedMesh );
-  MpiWrapper::barrier();
 
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
@@ -822,7 +819,6 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   writeSurfaces( nodeManager, allSurfaces, surfaces, *m_vtkMesh );
 
-  MpiWrapper::barrier();
 }
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
 }
