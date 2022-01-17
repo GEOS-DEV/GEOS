@@ -712,7 +712,7 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -829,7 +829,7 @@ void LagrangianContactSolver::
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
-    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
       arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
@@ -1641,7 +1641,7 @@ void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & 
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -1666,7 +1666,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
-    if( subRegion.hasWrapper(  viewKeyStruct::tractionString() ) )
+    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 

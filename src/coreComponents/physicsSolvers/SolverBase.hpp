@@ -213,8 +213,8 @@ public:
               ParallelVector & solution,
               real64 const scaleFactor,
               real64 & lastResidual );
-  
-   /**
+
+  /**
    * @brief Function to perform line search using a parabolic interpolation to find the scaling factor.
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep

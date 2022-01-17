@@ -47,7 +47,7 @@ public:
   explicitStep( real64 const & time_n,
                 real64 const & dt,
                 integer const cycleNumber,
-                DomainPartition & domain ) override final;                           
+                DomainPartition & domain ) override final;
 
   // virtual bool updateConfiguration( DomainPartition & domain ) override;
 
@@ -88,7 +88,7 @@ public:
                                        globalIndex & numStick,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen,
-                                       bool printAll = false ) const; 
+                                       bool printAll = false ) const;
 
 protected:
 
@@ -149,7 +149,7 @@ protected:
 
   void initializeFractureState( MeshLevel & mesh,
                                 string const & fieldName ) const;
-                                
+
   void synchronizeFractureState( DomainPartition & domain ) const;
 
   /// Solid mechanics solver name

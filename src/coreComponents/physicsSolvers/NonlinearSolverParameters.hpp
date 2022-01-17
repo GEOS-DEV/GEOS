@@ -125,8 +125,8 @@ public:
    */
   enum class LineSearchInterpolationType : integer
   {
-    Linear,    ///< 
-    Parabolic, ///< 
+    Linear,    ///<
+    Parabolic, ///<
   };
 
 
@@ -186,6 +186,10 @@ ENUM_STRINGS( NonlinearSolverParameters::LineSearchAction,
               "None",
               "Attempt",
               "Require" );
+
+ENUM_STRINGS( NonlinearSolverParameters::LineSearchInterpolationType,
+              "Linear",
+              "Parabolic" );
 
 } /* namespace geosx */
 

@@ -578,7 +578,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR(domain);
+  GEOSX_UNUSED_VAR( domain );
   return true;
 }
 
