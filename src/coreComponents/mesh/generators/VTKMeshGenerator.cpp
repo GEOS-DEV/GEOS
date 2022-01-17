@@ -620,6 +620,55 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   return materialWrapperNames;
 }
 
+void importMaterialField(std::vector< vtkIdType > const & cellIds, WrapperBase & wrapper, vtkDataArray * vtkArray)
+{
+  // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
+  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
+  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  {
+    using ArrayType = decltype( array );
+    Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+    auto const view = wrapperT.reference().toView();
+
+    localIndex cellCount = 0;
+    for( vtkIdType c : cellIds )
+    {
+      int comp = 0;
+      for( localIndex q = 0; q < view.size( 1 ); ++q )
+      {
+        // The same value is copied for all quadrature points.
+        LvArray::forValuesInSlice( view[cellCount][q], [&]( auto & val )
+        {
+          val = vtkArray->GetComponent( c, comp );
+        } );
+      }
+      cellCount++;
+      comp++;
+    }
+  } );
+}
+
+void importRegularField(std::vector< vtkIdType > const & cellIds, WrapperBase & wrapper, vtkDataArray * vtkArray)
+{
+
+  using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
+  types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
+  {
+    using ArrayType = decltype( array );
+    Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
+    auto const view = wrapperT.reference().toView();
+    localIndex cellCount = 0;
+    for( vtkIdType c : cellIds )
+    {
+      LvArray::forValuesInSlice( view[cellCount], [&]( auto & val )
+      {
+        val = vtkArray->GetComponent( c, 0 );
+      } );
+      cellCount++;
+    }
+  } );
+}
+
 void importFieldOnCellBlock( string const & name, std::vector< vtkIdType > const & cellIds, int region_id,
                              ElementRegionManager & elemManager,
                              std::vector< vtkDataArray * > const & arraysTobeImported )
@@ -639,49 +688,11 @@ void importFieldOnCellBlock( string const & name, std::vector< vtkIdType > const
         WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
         if( materialWrapperNames.count( vtkArray->GetName() ) > 0 && wrapper.numArrayDims() > 1 )
         {
-          // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
-          using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
-          types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
-          {
-            using ArrayType = decltype( array );
-            Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-            auto const view = wrapperT.reference().toView();
-
-            localIndex cellCount = 0;
-            for( vtkIdType c : cellIds )
-            {
-              int comp = 0;
-              for( localIndex q = 0; q < view.size( 1 ); ++q )
-              {
-                // The same value is copied for all quadrature points.
-                LvArray::forValuesInSlice( view[cellCount][q], [&]( auto & val )
-                {
-                  val = vtkArray->GetComponent( c, comp );
-                } );
-              }
-              cellCount++;
-              comp++;
-            }
-          } );
+          importMaterialField(cellIds, wrapper, vtkArray);
         }
         else
         {
-          using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
-          types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
-          {
-            using ArrayType = decltype( array );
-            Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-            auto const view = wrapperT.reference().toView();
-            localIndex cellCount = 0;
-            for( vtkIdType c : cellIds )
-            {
-              LvArray::forValuesInSlice( view[cellCount], [&]( auto & val )
-              {
-                val = vtkArray->GetComponent( c, 0 );
-              } );
-              cellCount++;
-            }
-          } );
+          importRegularField(cellIds, wrapper, vtkArray);
         }
       }
     }
@@ -706,12 +717,19 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   for( vtkDataArray * vtkArray : m_arraysToBeImported )
   {
     fieldNames["elems"].emplace_back( vtkArray->GetName() );
-    std::cout << "fieldNames" << fieldNames["elems"];
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
 }
 
+/**
+ * @brief Register the cell blocks in the GEOSX data structure
+ * @param[in] name the name of the cell type
+ * @param[in] cellIds a vector containing all the cell indices in this cell block
+ * @param[in] region_id the id of the region in which the cell block is
+ * @param[in] cellType the vtk cell type
+ * @param[in] cellBlockManager the GEOSX CellBlockManagner
+ */
 void registerCellBlock( string const & name, std::vector< vtkIdType > const & cellIds, int region_id, int cellType,
                         CellBlockManager & cellBlockManager )
 {
