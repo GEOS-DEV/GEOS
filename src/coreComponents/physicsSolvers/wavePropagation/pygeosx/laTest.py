@@ -67,8 +67,9 @@ def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, ac
         else:
             problem = pygeosx.reinit(sys.argv)
 
-        acousticSolver = pygeosx.pysolver.Solver("/Solvers/acousticSolver")
-        hdf5 = pygeosx.pyhdf5.HDF5()
+        acousticSolver = problem.get_group("/Solvers/acousticSolver")
+        collection = problem.get_group("/Tasks/waveFieldCollection")
+        output = problem.get_group("Outputs/waveFieldOutput")
 
         #Get view on pressure at receivers locations
         pressureAtReceivers = acousticSolver.get_wrapper("pressureNp1AtReceivers").value()
@@ -93,17 +94,16 @@ def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, ac
             i += 1
             #Collect waveField values
             if i % outputWaveFieldInterval == 0:
-                hdf5.collect("waveField", time, dt)
+                collection.collect()
+                output.output()
 
-        #exportToSegy(table = pressureAtReceivers.to_numpy(),
-        #             shot = shot,
-        #             filename = "pressure_Shot"+shot.id,
-        #             directory = acquisition.output,
-        #             rank = rank)
+        exportToSegy(table = pressureAtReceivers.to_numpy(),
+                     shot = shot,
+                     filename = "pressure_Shot"+shot.id,
+                     directory = acquisition.output,
+                     rank = rank)
+
         segyList.append("pressure_Shot"+shot.id)
-        print(pressureAtReceivers.to_numpy())
-        #Output waveField values
-        hdf5.output("waveField", time, dt)
 
         shot.flag = "Done"
         resetWaveField(problem)
