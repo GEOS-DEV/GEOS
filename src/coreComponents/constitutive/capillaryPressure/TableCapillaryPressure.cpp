@@ -18,6 +18,7 @@
 
 #include "TableCapillaryPressure.hpp"
 
+#include "constitutive/capillaryPressure/TableCapillaryPressureHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geosx
@@ -34,7 +35,7 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
 {
   registerWrapper( viewKeyStruct::wettingNonWettingCapPresTableNameString(), &m_wettingNonWettingCapPresTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Capillary pressure table for the pair (wetting phase, non-wetting phase)\n"
+    setDescription( "Capillary pressure table [Pa] for the pair (wetting phase, non-wetting phase)\n"
                     "Note that this input is only used for two-phase flow.\n"
                     "If you want to do a three-phase simulation, please use instead " +
                     string( viewKeyStruct::wettingIntermediateCapPresTableNameString() ) +
@@ -44,7 +45,7 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
 
   registerWrapper( viewKeyStruct::wettingIntermediateCapPresTableNameString(), &m_wettingIntermediateCapPresTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Capillary pressure table for the pair (wetting phase, intermediate phase)\n"
+    setDescription( "Capillary pressure table [Pa] for the pair (wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"
                     "If you want to do a two-phase simulation, please use instead " +
                     string( viewKeyStruct::wettingNonWettingCapPresTableNameString() ) +
@@ -52,13 +53,13 @@ TableCapillaryPressure::TableCapillaryPressure( std::string const & name,
 
   registerWrapper( viewKeyStruct::nonWettingIntermediateCapPresTableNameString(), &m_nonWettingIntermediateCapPresTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Capillary pressure table for the pair (non-wetting phase, intermediate phase)\n"
+    setDescription( "Capillary pressure table [Pa] for the pair (non-wetting phase, intermediate phase)\n"
                     "Note that this input is only used for three-phase flow.\n"
                     "If you want to do a two-phase simulation, please use instead " +
                     string( viewKeyStruct::wettingNonWettingCapPresTableNameString() ) +
                     " to specify the table names" );
 
-  registerWrapper( "capPresWrappers", &m_capPresKernelWrappers ).
+  registerWrapper( viewKeyStruct::capPresWrappersString(), &m_capPresKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }
@@ -67,7 +68,7 @@ void TableCapillaryPressure::postProcessInput()
 {
   CapillaryPressureBase::postProcessInput();
 
-  localIndex const numPhases = m_phaseNames.size();
+  integer const numPhases = m_phaseNames.size();
   GEOSX_THROW_IF( numPhases != 2 && numPhases != 3,
                   GEOSX_FMT( "{}: the expected number of fluid phases is either two, or three",
                              getFullName() ),
@@ -84,11 +85,12 @@ void TableCapillaryPressure::postProcessInput()
   else if( numPhases == 3 )
   {
     GEOSX_THROW_IF( m_wettingIntermediateCapPresTableName.empty() || m_nonWettingIntermediateCapPresTableName.empty(),
-                    GEOSX_FMT(
-                      "{}: for a three-phase flow simulation, we must use {} to specify the capillary pressure table for the pair (wetting phase, intermediate phase), and {} to specify the capillary pressure table for the pair (non-wetting phase, intermediate phase)",
-                      getFullName(),
-                      viewKeyStruct::wettingIntermediateCapPresTableNameString(),
-                      viewKeyStruct::nonWettingIntermediateCapPresTableNameString()  ),
+                    GEOSX_FMT( string( "{}: for a three-phase flow simulation, we must use {} to specify the capillary pressure table " ) +
+                               string( "for the pair (wetting phase, intermediate phase), and {} to specify the capillary pressure table " ) +
+                               string( "for the pair (non-wetting phase, intermediate phase)" ),
+                               getFullName(),
+                               viewKeyStruct::wettingIntermediateCapPresTableNameString(),
+                               viewKeyStruct::nonWettingIntermediateCapPresTableNameString()  ),
                     InputError );
   }
 }
@@ -97,7 +99,7 @@ void TableCapillaryPressure::initializePreSubGroups()
 {
   CapillaryPressureBase::initializePreSubGroups();
 
-  localIndex const numPhases = m_phaseNames.size();
+  integer const numPhases = m_phaseNames.size();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
   if( numPhases == 2 )
@@ -111,7 +113,7 @@ void TableCapillaryPressure::initializePreSubGroups()
     bool const capPresMustBeIncreasing = ( m_phaseOrder[PhaseType::WATER] < 0 )
       ? true   // pc on the gas phase, function must be increasing
       : false; // pc on the water phase, function must be decreasing
-    validateCapillaryPressureTable( capPresTable, capPresMustBeIncreasing );
+    TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTable, getFullName(), capPresMustBeIncreasing );
   }
   else if( numPhases == 3 )
   {
@@ -121,7 +123,7 @@ void TableCapillaryPressure::initializePreSubGroups()
                                m_wettingIntermediateCapPresTableName ),
                     InputError );
     TableFunction const & capPresTableWI = functionManager.getGroup< TableFunction >( m_wettingIntermediateCapPresTableName );
-    validateCapillaryPressureTable( capPresTableWI, false );
+    TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableWI, getFullName(), false );
 
     GEOSX_THROW_IF( !functionManager.hasGroup( m_nonWettingIntermediateCapPresTableName ),
                     GEOSX_FMT( "{}: the table function named {} could not be found",
@@ -129,7 +131,7 @@ void TableCapillaryPressure::initializePreSubGroups()
                                m_nonWettingIntermediateCapPresTableName ),
                     InputError );
     TableFunction const & capPresTableNWI = functionManager.getGroup< TableFunction >( m_nonWettingIntermediateCapPresTableName );
-    validateCapillaryPressureTable( capPresTableNWI, true );
+    TableCapillaryPressureHelpers::validateCapillaryPressureTable( capPresTableNWI, getFullName(), true );
   }
 }
 
@@ -137,7 +139,7 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
 {
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  localIndex const numPhases = m_phaseNames.size();
+  integer const numPhases = m_phaseNames.size();
 
   // we want to make sure that the wrappers are always up-to-date, so we recreate them everytime
 
@@ -156,49 +158,6 @@ void TableCapillaryPressure::createAllTableKernelWrappers()
   }
 }
 
-void TableCapillaryPressure::validateCapillaryPressureTable( TableFunction const & capPresTable,
-                                                             bool const capPresMustBeIncreasing ) const
-{
-  ArrayOfArraysView< real64 const > coords = capPresTable.getCoordinates();
-
-  GEOSX_THROW_IF_NE_MSG( capPresTable.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), capPresTable.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_NE_MSG( capPresTable.numDimensions(), 1,
-                         GEOSX_FMT( "{}: table '{}' must have a single independent coordinate", getFullName(), capPresTable.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_LT_MSG( coords.sizeOfArray( 0 ), 2,
-                         GEOSX_FMT( "{}: table `{}` must contain at least two values", getFullName(), capPresTable.getName() ),
-                         InputError );
-
-  arraySlice1d< real64 const > phaseVolFrac = coords[0];
-  arrayView1d< real64 const > const capPres = capPresTable.getValues();
-
-  for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
-  {
-    // check phase volume fraction
-    GEOSX_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
-                    GEOSX_FMT( "{}: in table '{}' values must be between 0 and 1", getFullName(), capPresTable.getName() ),
-                    InputError );
-
-    // note that the TableFunction class has already checked that the coordinates are monotone
-
-    // check the monotonicity of the capillary pressure table
-    if( capPresMustBeIncreasing )
-    {
-      GEOSX_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) < -1e-10,
-                      GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), capPresTable.getName() ),
-                      InputError );
-    }
-    else
-    {
-      GEOSX_THROW_IF( !isZero( capPres[i] ) && (capPres[i] - capPres[i-1]) > 1e-10,
-                      GEOSX_FMT( "{}: in table '{}' values must be strictly decreasing", getFullName(), capPresTable.getName() ),
-                      InputError );
-    }
-
-  }
-}
 
 TableCapillaryPressure::KernelWrapper::
   KernelWrapper( arrayView1d< TableFunction::KernelWrapper const > const & capPresKernelWrappers,
