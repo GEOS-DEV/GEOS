@@ -3,8 +3,10 @@
 
 // Source includes
 #include "physicsSolvers/SolverBase.hpp"
+#include "LvArray/src/python/pythonForwardDeclarations.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
 
-#include "../pygeosx.hpp"
 #include "PySolver.hpp"
 #include "../PyGroup.hpp"
 
