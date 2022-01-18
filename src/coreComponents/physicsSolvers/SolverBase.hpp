@@ -25,6 +25,7 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
+#include "../pygeosx/pysolver/PySolverType.hpp"
 
 
 #include <limits>
@@ -650,43 +651,19 @@ public:
 
 
   /**
-   * This function provides capability to post process input values prior to
-   * any other initialization operations.
-   */
-  virtual void postProcessInput() override {}
-
-  /**
-   * @brief Called by Initialize() prior to initializing sub-Groups.
-   */
-  virtual void initializePreSubGroups() override {}
-
-  /**
-   * @brief Called by Initialize() after to initializing sub-Groups.
-   */
-  virtual void initializePostSubGroups() override {}
-
-  /**
-   * @brief Called by InitializePostInitialConditions() prior to initializing sub-Groups.
-   */
-  virtual void initializePostInitialConditionsPreSubGroups() override {}
-
-  /**
-   * @brief Called by InitializePostInitialConditions() after to initializing sub-Groups.
-   */
-  virtual void initializePostInitialConditionsPostSubGroups() override {}
-
-  /**
-   * @brief Performs initialization required after reading from a restart file.
-   */
-  virtual void postRestartInitialization() override {}
-
-  /**
    * @brief Performs re-initialization of certain variable depending on the solver being used.
    */
-  virtual void reinit() override {}
+  virtual void reinit() {}
 
+  /**
+   * @brief Return PySolver type.
+   * @return Return PySolver type.
+   */
+  virtual PyTypeObject * getPythonType() const
+  { return python::getPySolverType(); }
 
 protected:
+
 
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,

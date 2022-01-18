@@ -18,6 +18,8 @@
 
 #include "CompressibleSinglePhaseFluid.hpp"
 
+#include "SingleFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -116,8 +118,8 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   real64 dRho_dP;
   real64 dVisc_dP;
   createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::dDens_dPresString() ).setDefaultValue( dRho_dP );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::dVisc_dPresString() ).setDefaultValue( dVisc_dP );
+  getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
+  getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper

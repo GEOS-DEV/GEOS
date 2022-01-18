@@ -91,6 +91,12 @@
       timeFrequency="1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
+    
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>  
  
     <PeriodicEvent
       name="timeHistoryCollection"

@@ -26,6 +26,7 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
+#include "../../pygeosx/PyGroupType.hpp"
 
 #include <iostream>
 
@@ -1283,6 +1284,13 @@ public:
   integer getLogLevel() const { return m_logLevel; }
   ///@}
 
+  /**
+   * @brief Return PyGroup type.
+   * @return Return PyGroup type.
+   */
+  virtual PyTypeObject * getPythonType() const
+  { return python::getPyGroupType(); }
+
 protected:
 
   /**
@@ -1327,12 +1335,6 @@ protected:
    * @brief Performs initialization required after reading from a restart file.
    */
   virtual void postRestartInitialization()
-  {}
-
-  /**
-   * @brief Performs re-initialization of certain variable depending on the solver being used.
-   */
-  virtual void reinit()
   {}
 
 

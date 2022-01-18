@@ -20,10 +20,9 @@
 // Source includes
 #include "pygeosx.hpp"
 #include "PyGroup.hpp"
-#include "PyWrapper.hpp"
+#include "PyGroupType.hpp"
 #include "pysolver/PySolver.hpp"
-#include "pysolver/PySolver2.hpp"
-#include "pyhdf5/PyHDF5.hpp"
+#include "pyhistory/PyHistory.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include "LvArray/src/python/PyArray.hpp"
@@ -41,7 +40,6 @@ namespace geosx
 {
 
 std::unique_ptr< GeosxState > g_state;
-
 bool g_alreadyInitialized = false;
 
 PyObject * init( PyObject * const pyArgv, bool const performSetup, long const pythonMPIRank=-1 )
@@ -360,15 +358,25 @@ PyInit_pygeosx()
 {
   import_array();
 
-  PyObject * module = PyModule_Create( &pygeosxModuleFunctions );
-  PyObject * submodule1 = geosx::python::PyInit_pysolver();
-  PyObject * submodule2 = geosx::python::PyInit_pyhdf5();
+  LvArray::python::PyObjectRef<> module{ PyModule_Create( &pygeosxModuleFunctions ) };
+  if( module == nullptr )
+  {
+    return nullptr;
+  }
 
-  Py_INCREF( submodule1 );
-  PyModule_AddObject( module, "pysolver", submodule1 );
+  LvArray::python::PyObjectRef<> pysolverModule = geosx::python::PyInit_pysolver();
+  Py_XINCREF( pysolverModule );
+  if( PyModule_AddObject( module, "pysolver", pysolverModule ) < 0 )
+  {
+    return nullptr;
+  }
 
-  Py_INCREF( submodule2 );
-  PyModule_AddObject( module, "pyhdf5", submodule2 );
+  LvArray::python::PyObjectRef<> pyhistoryModule = geosx::python::PyInit_pyhistory();
+  Py_XINCREF( pyhistoryModule );
+  if( PyModule_AddObject( module, "pyhistory", pyhistoryModule ) < 0 )
+  {
+    return nullptr;
+  }
 
   if( !addExitHandler( module ) )
   {
@@ -393,17 +401,11 @@ PyInit_pygeosx()
     return nullptr;
   }
 
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolver2Type(), "Solver2" ) )
-  {
-    return nullptr;
-  }
-
   // Add the LvArray submodule.
   if( !LvArray::python::addPyLvArrayModule( module ) )
   {
     return nullptr;
   }
-
 
   // Since we return module we don't want to decrease the reference count.
   return module;

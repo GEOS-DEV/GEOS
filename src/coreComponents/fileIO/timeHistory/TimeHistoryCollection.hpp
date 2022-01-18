@@ -23,6 +23,8 @@
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "../pygeosx/pyhistory/PyHistoryCollectionType.hpp"
+
 
 #include <functional>
 
@@ -179,6 +181,13 @@ public:
    * @param domain The DomainPartition of the problem.
    */
   virtual void updateSetsIndices ( DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Return PyHistoryCollection type.
+   * @return Return PyHistoryCollection type.
+   */
+  virtual PyTypeObject * getPythonType() const
+  { return python::getPyHistoryCollectionType(); }
 
 protected:
 

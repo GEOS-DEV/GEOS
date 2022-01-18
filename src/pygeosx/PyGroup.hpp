@@ -50,8 +50,7 @@ static constexpr char const * PyGroup_getWrapperDocString =
 template< typename T >
 static PyObject * PyGroup_getWrapper( T * const self, PyObject * const args ) noexcept
 {
-  //VERIFY_NON_NULL_SELF( self );
-  //VERIFY_INITIALIZED( self );
+  PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr );
 
   PyObject * unicodePath;
   PyObject * defaultReturnValue = nullptr;
@@ -98,12 +97,13 @@ static PyObject * PyGroup_getWrapper( T * const self, PyObject * const args ) no
 }
 
 
+
 PyObject * createNewPyGroup( dataRepository::Group & group );
 
 /**
  *
  */
-PyTypeObject * getPyGroupType();
+//PyTypeObject * getPyGroupType();
 
 } // namespace python
 } // namespace geosx
