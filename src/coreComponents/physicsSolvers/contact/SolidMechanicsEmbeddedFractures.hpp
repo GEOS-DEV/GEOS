@@ -86,7 +86,7 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  virtual void updateState( DomainPartition & domain ) override;
+  void updateState( DomainPartition & domain ) override final;
 
   void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,

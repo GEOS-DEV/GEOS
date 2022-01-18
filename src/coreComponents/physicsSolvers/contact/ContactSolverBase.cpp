@@ -48,10 +48,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the solid mechanics solver in the rock matrix" );
 
-  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );
-
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
@@ -81,7 +77,7 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
     {
       elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
       {
-        region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
+        region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
         {
 
           subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString() ).

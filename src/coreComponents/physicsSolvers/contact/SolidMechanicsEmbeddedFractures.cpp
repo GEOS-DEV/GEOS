@@ -41,7 +41,11 @@ using namespace constitutive;
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
-{}
+{
+  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+      setInputFlag( InputFlags::REQUIRED ).
+      setDescription( "Name of the fracture region." );
+}
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 {

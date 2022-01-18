@@ -97,8 +97,7 @@ public:
   setNextDt( real64 const & currentDt,
              real64 & nextDt ) override;
 
-
-  void computeFaceDisplacementJump( DomainPartition & domain );
+  void updateState( DomainPartition & domain ) override final;
 
   void assembleForceResidualDerivativeWrtTraction( DomainPartition & domain,
                                                    DofManager const & dofManager,
@@ -148,11 +147,13 @@ private:
 
   void createPreconditioner( DomainPartition const & domain );
 
+  void computeFaceDisplacementJump( DomainPartition & domain );
+
 public:
 
   void setFractureStateForElasticStep( DomainPartition & domain ) const;
 
-  virtual bool updateConfiguration( DomainPartition & domain ) override;
+  bool updateConfiguration( DomainPartition & domain ) override final;
 
   bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
 

@@ -1628,7 +1628,10 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                        domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        true );
+}
 
+void LagrangianContactSolver::updateState( DomainPartition & domain )
+{
   computeFaceDisplacementJump( domain );
 }
 

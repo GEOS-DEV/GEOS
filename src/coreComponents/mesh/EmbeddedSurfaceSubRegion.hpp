@@ -212,7 +212,7 @@ public:
     static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
 
     /// @return Fracture traction string
-    static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
+    static constexpr char const * fractureTractionString()  { return "traction"; }
 
     /// @return Fracture traction derivative w.r.t. jump string
     static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }

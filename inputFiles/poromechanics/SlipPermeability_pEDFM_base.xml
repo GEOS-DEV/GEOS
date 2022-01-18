@@ -230,7 +230,7 @@
     <PackCollection
       name="tractionCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"/>
+      fieldName="traction"/>
 
     <PackCollection
       name="displacementJumpCollection"
