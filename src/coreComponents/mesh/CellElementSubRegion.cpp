@@ -67,7 +67,7 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
   m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
   this->resize( cellBlock.numElements() );
 
-  this->nodeList() = cellBlock.getElemToNode();
+  this->nodeList() = cellBlock.getElemToNodes();
   this->edgeList() = cellBlock.getElemToEdges();
   this->faceList() = cellBlock.getElemToFaces();
 

@@ -83,10 +83,10 @@ public:
   virtual localIndex numElements() const = 0;
 
   /**
-   * @brief Get the element-to-node map.
+   * @brief Get the element-to-nodes map.
    * @return a reference to the element-to-node map
    */
-  virtual array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNode() const = 0;
+  virtual array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNodes() const = 0;
 
   /**
    * @brief Get the element-to-edges map.

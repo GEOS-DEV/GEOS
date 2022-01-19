@@ -58,7 +58,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   for( localIndex iCellBlock = 0; iCellBlock < numCellBlocks(); ++iCellBlock )
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
-    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elemToNode = cb.getElemToNode();
+    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elemToNode = cb.getElemToNodes();
     forAll< parallelHostPolicy >( cb.numElements(), [&elemsPerNode, totalNodeElems, &elemToNode, &cb] ( localIndex const k )
     {
       localIndex const numNodesPerElement = cb.numNodesPerElement();
@@ -92,7 +92,7 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
   for( localIndex iCellBlock = 0; iCellBlock < numCellBlocks(); ++iCellBlock )// Do not need index
   {
     const CellBlockABC & cb = this->getCellBlock( iCellBlock );
-    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const elemToNode = cb.getElemToNode();
+    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const elemToNode = cb.getElemToNodes();
     for( localIndex iElem = 0; iElem < cb.numElements(); ++iElem )
     {
       for( localIndex iNode = 0; iNode < cb.numNodesPerElement(); ++iNode )

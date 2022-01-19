@@ -116,7 +116,7 @@ public:
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > & getElemToNode()
   { return m_elementsToNodes; }
 
-  array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNode() const override
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNodes() const override
   { return m_elementsToNodes; }
 
   array2d< localIndex > const & getElemToEdges() const override
