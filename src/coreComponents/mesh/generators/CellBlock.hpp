@@ -95,9 +95,9 @@ public:
 
   /**
    * @brief Puts the nodes of face @p iFace of element @p iElement inside vector @p nodesInFaces.
-   * @param iElement The element index.
-   * @param iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
-   * @param nodesInFaces The result vector gets resized to the appropriate dimensions before getting filled.
+   * @param[in] iElement The element index.
+   * @param[in] iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
+   * @param[out] nodesInFaces The result vector gets resized to the appropriate dimensions before getting filled.
    *
    * @p nodesInFaces is sorted from lower to larger node indices values.
    * @p nodesInFaces is exactly the size of the number of nodes.

@@ -142,7 +142,7 @@ struct NodesAndElementOfFace
   }
 
   /**
-   * @brief Two NodesAndElementOfFace instances are considered if they share the same node set, whatever the order.
+   * @brief Two NodesAndElementOfFace instances are considered equal if they share the same node set, whatever the order.
    * @param [in] rhs the NodesAndElementOfFace to compare against.
    * @return a boolean.
    */

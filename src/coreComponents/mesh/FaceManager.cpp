@@ -109,7 +109,7 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
   auto f = [&f2e, &f2er, &f2esr]( localIndex er,
                                   localIndex esr,
                                   ElementRegionBase const &,
-                                  CellElementSubRegion const & subRegion )
+                                  CellElementSubRegion const & subRegion ) -> void
   {
     for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
     {
@@ -565,34 +565,33 @@ void FaceManager::enforceStateFieldConsistencyPostTopologyChange( std::set< loca
 void FaceManager::depopulateUpMaps( std::set< localIndex > const & receivedFaces,
                                     ElementRegionManager const & elemRegionManager )
 {
-  for( auto const & targetIndex : receivedFaces )
+  for( auto const & receivedFaceIdx: receivedFaces )
   {
-    for( localIndex k=0; k<m_toElements.m_toElementRegion.size( 1 ); ++k )
+    for( localIndex k = 0; k < m_toElements.m_toElementRegion.size( 1 ); ++k )
     {
-      localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
-      localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
-      localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
+      localIndex const elemRegionIdx    = m_toElements.m_toElementRegion[receivedFaceIdx][k];
+      localIndex const elemSubRegionIdx = m_toElements.m_toElementSubRegion[receivedFaceIdx][k];
+      localIndex const elemIdx          = m_toElements.m_toElementIndex[receivedFaceIdx][k];
 
-      if( elemRegionIndex!=-1 && elemSubRegionIndex!=-1 && elemIndex!=-1 )
+      if( elemRegionIdx != -1 && elemSubRegionIdx != -1 && elemIdx != -1 )
       {
-        CellElementSubRegion const & subRegion = elemRegionManager.getRegion( elemRegionIndex ).
-                                                   getSubRegion< CellElementSubRegion >( elemSubRegionIndex );
-        array2d< localIndex > const & downmap = subRegion.faceList();
+        CellElementSubRegion const & subRegion = elemRegionManager.getRegion( elemRegionIdx ).getSubRegion< CellElementSubRegion >( elemSubRegionIdx );
+        array2d< localIndex > const & downMap = subRegion.faceList();
         bool hasTargetIndex = false;
 
-        for( localIndex a=0; a<downmap.size( 1 ); ++a )
+        for( localIndex a = 0; a < downMap.size( 1 ); ++a )
         {
-          localIndex const compositeLocalIndex = downmap[elemIndex][a];
-          if( compositeLocalIndex==targetIndex )
+          localIndex const compositeLocalIdx = downMap[elemIdx][a];
+          if( compositeLocalIdx == receivedFaceIdx )
           {
-            hasTargetIndex=true;
+            hasTargetIndex = true;
           }
         }
         if( !hasTargetIndex )
         {
-          m_toElements.m_toElementRegion[targetIndex][k] = -1;
-          m_toElements.m_toElementSubRegion[targetIndex][k] = -1;
-          m_toElements.m_toElementIndex[targetIndex][k] = -1;
+          m_toElements.m_toElementRegion[receivedFaceIdx][k] = -1;
+          m_toElements.m_toElementSubRegion[receivedFaceIdx][k] = -1;
+          m_toElements.m_toElementIndex[receivedFaceIdx][k] = -1;
         }
       }
     }
