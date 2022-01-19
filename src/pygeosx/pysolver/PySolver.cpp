@@ -2,11 +2,6 @@
 #include <Python.h>
 
 // Source includes
-#include "physicsSolvers/SolverBase.hpp"
-#include "LvArray/src/python/pythonForwardDeclarations.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/ProblemManager.hpp"
-
 #include "PySolver.hpp"
 #include "dataRepository/python/PyGroup.hpp"
 
@@ -129,38 +124,6 @@ static PyTypeObject PySolverType = {
 
 END_ALLOW_DESIGNATED_INITIALIZERS
 
-static PyMethodDef SolverFuncs[] = {
-  { nullptr, nullptr, 0, nullptr }        /* Sentinel */
-};
-
-BEGIN_ALLOW_DESIGNATED_INITIALIZERS
-
-static PyModuleDef pysolvermodule = {
-  PyModuleDef_HEAD_INIT,
-  .m_name = "pysolver",
-  .m_doc = "pysolver module for SolverBase",
-  .m_size = -1,
-  .m_methods = SolverFuncs
-};
-
-END_ALLOW_DESIGNATED_INITIALIZERS
-
-PyMODINIT_FUNC
-PyInit_pysolver( void )
-{
-  LvArray::python::PyObjectRef<> module{ PyModule_Create( &pysolvermodule ) };
-  if( module == nullptr )
-  {
-    return nullptr;
-  }
-
-  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
-  {
-    return nullptr;
-  }
-
-  return module.release();
-}
 
 PyTypeObject * getPySolverType()
 { return &PySolverType; }

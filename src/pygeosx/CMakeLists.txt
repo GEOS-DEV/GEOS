@@ -1,18 +1,12 @@
 set( python_headers pygeosx.hpp
-
-		  
                     pysolver/PySolver.hpp
 		    pysolver/PySolverType.hpp
-                    pyhistory/PyHistory.hpp
 		    pyhistory/PyHistoryOutputType.hpp
 		    pyhistory/PyHistoryCollectionType.hpp
 		    )
 
 set( python_sources pygeosx.cpp
-
-              
                     pysolver/PySolver.cpp
-                    pyhistory/PyHistory.cpp
 		    pyhistory/PyHistoryOutput.cpp
 		    pyhistory/PyHistoryCollection.cpp
 		    )

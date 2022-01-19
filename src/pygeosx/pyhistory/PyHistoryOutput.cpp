@@ -3,7 +3,6 @@
 
 // Source includes
 #include "../pygeosx.hpp"
-#include "PyHistory.hpp"
 
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 #include "PyHistoryOutputType.hpp"

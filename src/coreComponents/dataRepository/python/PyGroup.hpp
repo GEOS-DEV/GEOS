@@ -106,7 +106,6 @@ PyObject * createNewPyGroup( dataRepository::Group & group );
 /**
  *
  */
-//PyTypeObject * getPyGroupType();
 
 } // namespace python
 } // namespace geosx
