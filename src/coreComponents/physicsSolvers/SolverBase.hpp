@@ -493,7 +493,7 @@ public:
    * @brief
    * @param domain the domain containing the mesh and fields
    */
-   virtual void outputConfigurationStatistics( DomainPartition const & domain ) const;
+  virtual void outputConfigurationStatistics( DomainPartition const & domain ) const;
 
   /**
    * @brief resets the configuration to the beginning of the time-step.

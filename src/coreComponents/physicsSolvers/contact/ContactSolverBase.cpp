@@ -236,12 +236,12 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
 
   MpiWrapper::bcast( totalCounter.data(), 3, 0, MPI_COMM_GEOSX );
 
-   numStick = totalCounter[0];
-   numSlip  = totalCounter[1];
-   numOpen  = totalCounter[2];
+  numStick = totalCounter[0];
+  numSlip  = totalCounter[1];
+  numOpen  = totalCounter[2];
 }
 
-void ContactSolverBase::outputConfigurationStatistics(DomainPartition const & domain ) const
+void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
   globalIndex numStick = 0;
   globalIndex numSlip  = 0;
@@ -250,8 +250,8 @@ void ContactSolverBase::outputConfigurationStatistics(DomainPartition const & do
   computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
 
   GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
-      " stick: {:12} | slip:  {:12} | open:  {:12}",
-      numStick, numSlip, numOpen ) );
+                               " stick: {:12} | slip:  {:12} | open:  {:12}",
+                               numStick, numSlip, numOpen ) );
 }
 
 void ContactSolverBase::applyBoundaryConditions( real64 const time,

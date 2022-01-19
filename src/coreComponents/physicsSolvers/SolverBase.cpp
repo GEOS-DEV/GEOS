@@ -571,7 +571,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     // Configuration loop
     for( configurationLoopIter = 0; configurationLoopIter < maxConfigurationIter; ++configurationLoopIter )
     {
-      if ( getLogLevel() >= 1 )
+      if( getLogLevel() >= 1 )
       {
         outputConfigurationStatistics( domain );
       }
@@ -754,7 +754,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         resetStateToBeginningOfStep( domain );
         bool const breakLoop = setSimplestConfigurationState( domain );
         attemptedSimplestConfiguration = true;
-        if ( breakLoop )
+        if( breakLoop )
         {
           break;
         }
