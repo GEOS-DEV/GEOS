@@ -392,6 +392,10 @@
 	<xsd:complexType name="NonlinearSolverParametersType">
 		<!--newtonNumberOfIterations => Number of Newton's iterations.-->
 		<xsd:attribute name="newtonNumberOfIterations" type="integer" />
+		<!--numberWastedNewtonNumIterations => (no description available)-->
+		<xsd:attribute name="numberWastedNewtonNumIterations" type="integer" />
+		<!--totalSuccessfulNewtonNumIterations => (no description available)-->
+		<xsd:attribute name="totalSuccessfulNewtonNumIterations" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="FiniteVolumeType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -492,16 +496,48 @@
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--averagePressure => (no description available)-->
+		<xsd:attribute name="averagePressure" type="real64" />
+		<!--averageTemperature => (no description available)-->
+		<xsd:attribute name="averageTemperature" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--maximumPressure => (no description available)-->
+		<xsd:attribute name="maximumPressure" type="real64" />
+		<!--maximumTemperature => (no description available)-->
+		<xsd:attribute name="maximumTemperature" type="real64" />
+		<!--minimumPressure => (no description available)-->
+		<xsd:attribute name="minimumPressure" type="real64" />
+		<!--minimumTemperature => (no description available)-->
+		<xsd:attribute name="minimumTemperature" type="real64" />
+		<!--phasePoreVolume => (no description available)-->
+		<xsd:attribute name="phasePoreVolume" type="real64_array" />
+		<!--totalPoreVolume => (no description available)-->
+		<xsd:attribute name="totalPoreVolume" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--averagePressure => (no description available)-->
+		<xsd:attribute name="averagePressure" type="real64" />
+		<!--averageTemperature => (no description available)-->
+		<xsd:attribute name="averageTemperature" type="real64" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--maximumPressure => (no description available)-->
+		<xsd:attribute name="maximumPressure" type="real64" />
+		<!--maximumTemperature => (no description available)-->
+		<xsd:attribute name="maximumTemperature" type="real64" />
+		<!--minimumPressure => (no description available)-->
+		<xsd:attribute name="minimumPressure" type="real64" />
+		<!--minimumTemperature => (no description available)-->
+		<xsd:attribute name="minimumTemperature" type="real64" />
+		<!--phasePoreVolume => (no description available)-->
+		<xsd:attribute name="phasePoreVolume" type="real64_array" />
+		<!--totalPoreVolume => (no description available)-->
+		<xsd:attribute name="totalPoreVolume" type="real64" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

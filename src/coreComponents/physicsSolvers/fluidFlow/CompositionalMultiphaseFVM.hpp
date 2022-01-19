@@ -106,12 +106,6 @@ public:
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
-
   /**@}*/
 
   virtual void
@@ -120,7 +114,6 @@ public:
                      DofManager const & dofManager,
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const override;
-
 
   virtual void
   updatePhaseMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const override;
@@ -134,13 +127,23 @@ public:
                   arrayView1d< real64 > const & localRhs ) const override;
 
 
+  virtual void
+  computeStatistics( real64 const & time,
+                     real64 const & dt,
+                     integer cycleNumber,
+                     DomainPartition & domain,
+                     bool outputStatisticsToScreen ) override;
+
   /**
    * @brief Compute the largest CFL number in the domain
    * @param dt the time step size
    * @param domain the domain containing the mesh and fields
+   * @param outputToTerminal flag to decide whether this function outputs to terminal or not
    */
   void
-  computeCFLNumbers( real64 const & dt, DomainPartition & domain );
+  computeCFLNumbers( real64 const & dt,
+                     DomainPartition & domain,
+                     bool const outputToTerminal );
 
 
   virtual void initializePreSubGroups() override;

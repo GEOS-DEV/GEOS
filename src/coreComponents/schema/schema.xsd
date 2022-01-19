@@ -1078,6 +1078,8 @@ the relative residual norm satisfies:
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1092,6 +1094,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="rickerOrder" type="localIndex" default="2" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeSourceFrequency => Central frequency for the time source-->
@@ -1110,8 +1114,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="capPressureNames" type="string_array" default="{}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computeCFLNumbers => Flag indicating whether CFL numbers are computed or not-->
-		<xsd:attribute name="computeCFLNumbers" type="integer" default="0" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->
@@ -1130,6 +1134,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -1150,8 +1156,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="capPressureNames" type="string_array" default="{}" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--computeCFLNumbers => Flag indicating whether CFL numbers are computed or not-->
-		<xsd:attribute name="computeCFLNumbers" type="integer" default="0" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->
@@ -1172,6 +1178,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
@@ -1188,12 +1196,16 @@ the relative residual norm satisfies:
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver to use in the reservoir-well system solver-->
@@ -1211,6 +1223,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="allowLocalCompDensityChopping" type="integer" default="1" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1223,6 +1237,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="maxRelativePressureChange" type="real64" default="1" />
 		<!--relPermNames => Names of relative permeability constitutive models to use-->
 		<xsd:attribute name="relPermNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--useMass => Use mass formulation instead of molar-->
@@ -1287,6 +1303,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="FractureRegion" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1297,6 +1315,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="mpiCommOrder" type="integer" default="0" />
 		<!--solidMaterialNames => Name of the solid material used in solid mechanic solver-->
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1309,6 +1329,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--flowSolverName => Name of the flow solver to use in the flowProppantTransport solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1317,6 +1339,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--proppantSolverName => Name of the proppant transport solver to use in the flowProppantTransport solver-->
 		<xsd:attribute name="proppantSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1329,6 +1353,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--couplingTypeOption => Coupling method. Valid options:
@@ -1349,6 +1375,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="porousMaterialNames" type="string_array" use="required" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--surfaceGeneratorName => Name of the surface generator to use in the hydrofracture solver-->
 		<xsd:attribute name="surfaceGeneratorName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1370,6 +1398,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="activeSetMaxIter" type="integer" default="10" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--contactRelationName => Name of the constitutive law used for fracture elements-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1380,6 +1410,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->
 		<xsd:attribute name="stabilizationName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1392,6 +1424,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => Name of field variable-->
@@ -1400,6 +1434,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
@@ -1421,6 +1457,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => Name of field variable-->
@@ -1429,6 +1467,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => Time integration method. Options are:
@@ -1445,6 +1485,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poroelastic solver-->
@@ -1457,6 +1499,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="porousMaterialNames" type="string_array" use="required" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poroelastic solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1469,6 +1513,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fieldName => name of field variable-->
@@ -1481,6 +1527,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidMaterialNames => name of solid constitutive model-->
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--timeIntegrationOption => option for default time integration method-->
@@ -1495,6 +1543,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--couplingTypeOption => Coupling option. Valid options:
 * FixedStress
 * TightlyCoupled-->
@@ -1509,6 +1559,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the PhaseFieldFracture solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--subcycling => turn on subcycling on each load step-->
 		<xsd:attribute name="subcycling" type="integer" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1530,6 +1582,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="bridgingFactor" type="real64" default="0" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--criticalShieldsNumber => Critical Shields number-->
 		<xsd:attribute name="criticalShieldsNumber" type="real64" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
@@ -1556,6 +1610,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="proppantNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
@@ -1570,6 +1626,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->
@@ -1584,6 +1642,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1596,6 +1656,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->
@@ -1610,6 +1672,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1622,6 +1686,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
@@ -1634,6 +1700,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="porousMaterialNames" type="string_array" use="required" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1646,6 +1714,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--fluidSolverName => Name of the fluid mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="fluidSolverName" type="string" use="required" />
 		<!--fracturesSolverName => Name of the fractures solver to use in the fractured poroelastic solver-->
@@ -1658,6 +1728,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="porousMaterialNames" type="string_array" use="required" />
 		<!--solidSolverName => Name of the solid mechanics solver to use in the poromechanics solver-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1670,6 +1742,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--discretization => Name of discretization object to use for this solver.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
 		<!--fluidNames => Names of fluid constitutive models for each region.-->
@@ -1684,6 +1758,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
 		<!--solidNames => Names of solid constitutive models for each region.-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1696,12 +1772,16 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--flowSolverName => Name of the flow solver to use in the reservoir-well system solver-->
 		<xsd:attribute name="flowSolverName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--wellSolverName => Name of the well solver to use in the reservoir-well system solver-->
@@ -1717,12 +1797,16 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--fluidNames => Name of fluid constitutive object to use for this solver.-->
 		<xsd:attribute name="fluidNames" type="string_array" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1735,6 +1819,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--fractureRegionName => Name of the fracture region.-->
@@ -1745,6 +1831,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1757,6 +1845,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -1775,6 +1865,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
 		<!--solidMaterialNames => The name of the material that should be used in the constitutive updates-->
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -1805,6 +1897,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" default="NOCONTACT" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
@@ -1823,6 +1917,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
 		<!--solidMaterialNames => The name of the material that should be used in the constitutive updates-->
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -1848,6 +1944,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		</xsd:choice>
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--computeStatistics => Flag indicating whether statistics are computed or not-->
+		<xsd:attribute name="computeStatistics" type="integer" default="0" />
 		<!--fractureRegion => (no description available)-->
 		<xsd:attribute name="fractureRegion" type="string" default="Fracture" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
@@ -1862,6 +1960,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="rockToughness" type="real64" use="required" />
 		<!--solidMaterialNames => Name of the solid material used in solid mechanic solver-->
 		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
+		<!--statisticsOutputFrequency => Flag indicating the frequency of the output of statistics to screen-->
+		<xsd:attribute name="statisticsOutputFrequency" type="integer" default="10" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->

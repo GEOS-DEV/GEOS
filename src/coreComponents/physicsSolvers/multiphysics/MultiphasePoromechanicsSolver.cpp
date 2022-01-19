@@ -164,8 +164,33 @@ real64 MultiphasePoromechanicsSolver::solverStep( real64 const & time_n,
 
   implicitStepComplete( time_n, dt_return, domain );
 
+  if( m_computeStatistics )
+  {
+    bool const outputStatisticsToScreen = ( cycleNumber%m_statisticsOutputFrequency == 0 );
+    computeStatistics( time_n, dt_return, cycleNumber, domain, outputStatisticsToScreen );
+  }
+
   return dt_return;
 }
+
+void MultiphasePoromechanicsSolver::computeStatistics( real64 const & time,
+                                                       real64 const & dt,
+                                                       integer cycleNumber,
+                                                       DomainPartition & domain,
+                                                       bool outputStatisticsToScreen )
+{
+  // output the number of Newton iterations if this is the main solver
+  if( outputStatisticsToScreen && m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations > 0 )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName()
+                            << ": Total number of time steps = " << cycleNumber+1
+                            << ", successful nonlinear iterations = " << m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations
+                            << ", wasted nonlinear iterations = " << m_nonlinearSolverParameters.m_totalWastedNewtonNumIterations );
+  }
+
+  m_flowSolver->computeStatistics( time, dt, cycleNumber, domain, outputStatisticsToScreen );
+}
+
 
 void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                     real64 const dt,

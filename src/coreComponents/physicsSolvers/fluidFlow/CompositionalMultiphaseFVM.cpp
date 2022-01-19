@@ -123,20 +123,20 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   } );
 }
 
-void CompositionalMultiphaseFVM::implicitStepComplete( real64 const & time,
-                                                       real64 const & dt,
-                                                       DomainPartition & domain )
+void CompositionalMultiphaseFVM::computeStatistics( real64 const & time,
+                                                    real64 const & dt,
+                                                    integer cycleNumber,
+                                                    DomainPartition & domain,
+                                                    bool outputStatisticsToScreen )
 {
-  CompositionalMultiphaseBase::implicitStepComplete( time, dt, domain );
-
-  if( m_computeCFLNumbers )
-  {
-    computeCFLNumbers( dt, domain );
-  }
+  CompositionalMultiphaseBase::computeStatistics( time, dt, cycleNumber, domain, outputStatisticsToScreen );
+  computeCFLNumbers( dt, domain, outputStatisticsToScreen );
 }
 
+
 void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
-                                                    DomainPartition & domain )
+                                                    DomainPartition & domain,
+                                                    bool const outputToTerminal )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -258,8 +258,11 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
   real64 const globalMaxPhaseCFLNumber = MpiWrapper::max( localMaxPhaseCFLNumber );
   real64 const globalMaxCompCFLNumber = MpiWrapper::max( localMaxCompCFLNumber );
 
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << globalMaxPhaseCFLNumber );
-  GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << globalMaxCompCFLNumber );
+  if( outputToTerminal )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max phase CFL number: " << globalMaxPhaseCFLNumber );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Max component CFL number: " << globalMaxCompCFLNumber );
+  }
 }
 
 real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const & domain,

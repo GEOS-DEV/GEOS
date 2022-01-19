@@ -112,6 +112,13 @@ real64 ReservoirSolverBase::solverStep( real64 const & time_n,
   // complete time step in reservoir and well systems
   implicitStepComplete( time_n, dt_return, domain );
 
+  // compute some statistics on the reservoir (CFL, average field pressure, averege field temperature)
+  if( m_computeStatistics )
+  {
+    bool const outputStatisticsToScreen = ( cycleNumber%m_statisticsOutputFrequency == 0 );
+    computeStatistics( time_n, dt_return, cycleNumber, domain, outputStatisticsToScreen );
+  }
+
   return dt_return;
 }
 
