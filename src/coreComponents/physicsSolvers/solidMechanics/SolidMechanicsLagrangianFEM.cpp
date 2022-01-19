@@ -616,14 +616,14 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
                         string const fieldName )
   {
     bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       serialPolicy >( targetSet,
-                                                       time,
-                                                       targetGroup,
-                                                       fieldName,
-                                                       dofKey,
-                                                       dofManager.rankOffset(),
-                                                       localMatrix,
-                                                       localRhs );
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     fieldName,
+                                                                     dofKey,
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 

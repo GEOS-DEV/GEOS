@@ -34,7 +34,7 @@ public:
   ContactSolverBase( const string & name,
                      Group * const parent );
 
-  ~ContactSolverBase() override;
+  ~ContactSolverBase() override = default;
 
   virtual void registerDataOnMesh( dataRepository::Group & meshBodies ) override;
 
@@ -86,6 +86,22 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
+  /**
+   * @struct FractureState
+   *
+   * A struct for the fracture states
+   */
+  struct FractureState
+  {
+    enum State : integer
+    {
+      Stick = 0, ///< element is closed: no jump across the discontinuity.
+      Slip = 1, ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed.
+      NewSlip = 2, ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed.
+      Open = 3 ///< element is open: no constraints are imposed.
+    };
+  };
+
 protected:
 
   virtual void postProcessInput() override;
@@ -94,48 +110,6 @@ protected:
                                        globalIndex & numStick,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen ) const;
-  /**
-   * @struct FractureState
-   *
-   * A struct for the fracture states
-   */
-  struct FractureState
-  {
-    static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity.
-    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed.
-    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is
-                                           ///< allowed.
-    static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed.
-  };
-
-  string fractureStateToString( integer const & state ) const
-  {
-    string stringState;
-    switch( state )
-    {
-      case FractureState::STICK:
-      {
-        stringState = "stick";
-        break;
-      }
-      case FractureState::SLIP:
-      {
-        stringState = "slip";
-        break;
-      }
-      case FractureState::NEW_SLIP:
-      {
-        stringState = "new_slip";
-        break;
-      }
-      case FractureState::OPEN:
-      {
-        stringState = "open";
-        break;
-      }
-    }
-    return stringState;
-  }
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
@@ -143,8 +117,8 @@ protected:
                                      integer const state1 )
   {
     return state0 == state1
-           || ( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
-           || ( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP );
+           || ( state0 == FractureState::NewSlip && state1 == FractureState::Slip )
+           || ( state0 == FractureState::Slip && state1 == FractureState::NewSlip );
   }
 
   void initializeFractureState( MeshLevel & mesh,
@@ -164,6 +138,8 @@ protected:
   /// contact relation name string
   string m_contactRelationName;
 };
+
+ENUM_STRINGS( ContactSolverBase::FractureState::State, "stick", "slip", "new_slip", "open" );
 
 
 } /* namespace geosx */

@@ -125,8 +125,8 @@ public:
    */
   enum class LineSearchInterpolationType : integer
   {
-    Linear,    ///<
-    Parabolic, ///<
+    Linear,    ///< linear decrease of line search scaling factor.
+    Parabolic, ///< use parabolic interpolation to define line search scaling factor.
   };
 
 

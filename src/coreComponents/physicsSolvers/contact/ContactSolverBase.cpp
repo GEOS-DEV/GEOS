@@ -56,10 +56,6 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::FALSE );
 }
 
-ContactSolverBase::~ContactSolverBase()
-{
-  // TODO Auto-generated destructor stub
-}
 
 void ContactSolverBase::postProcessInput()
 {
@@ -127,7 +123,7 @@ void ContactSolverBase::initializeFractureState( MeshLevel & mesh,
     if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
     {
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-      fractureState.setValues< parallelHostPolicy >( FractureState::STICK );
+      fractureState.setValues< parallelHostPolicy >( FractureState::Stick );
     }
   } );
 }
@@ -182,18 +178,18 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
         {
           switch( fractureState[kfe] )
           {
-            case FractureState::STICK:
+            case FractureState::Stick:
               {
                 stickCount += 1;
                 break;
               }
-            case FractureState::NEW_SLIP:
-            case FractureState::SLIP:
+            case FractureState::NewSlip:
+            case FractureState::Slip:
               {
                 slipCount += 1;
                 break;
               }
-            case FractureState::OPEN:
+            case FractureState::Open:
               {
                 openCount += 1;
                 break;
