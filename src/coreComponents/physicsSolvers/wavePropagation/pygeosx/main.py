@@ -13,34 +13,36 @@ import time
 def main():
     sysargs = parse_args()
 
-    acq = EQUISPACEDAcquisition(boundary=[[0,2000],[0,2000],[0,2000]],
+    acq = EQUISPACEDAcquisition(boundary=[[0,13520],[0,13520],[0,4200]],
                                 dt=0.002,
-                                velocity_model=1500,
-                                start_source_pos    = [501, 1001],
-                                end_source_pos      = [1501, 1001],
-                                start_receivers_pos = [[21, 1001]],
-                                end_receivers_pos   = [[1981, 1001]],
-                                number_of_sources   = 4,
-                                number_of_receivers = 4,
-                                source_depth = 1899,
-                                receivers_depth = 1949)
+                                velocity_model="/beegfs/jbesset/codes/SEP_REDUCE_Model/338x338x105_velModel.geos",
+                                start_source_pos    = [4001, 6001],
+                                end_source_pos      = [11001, 6001],
+                                start_receivers_pos = [[51, 6001]],
+                                end_receivers_pos   = [[13491, 6001]],
+                                number_of_sources   = 2,
+                                number_of_receivers = 500,
+                                source_depth = 4099,
+                                receivers_depth = 4149)
 
 
     acq.add_xml(sysargs.xml)
-    acq.limitedAperture(500)
+    acq.limitedAperture(2000)
     #acq.calculDt()
 
-    acqs = acq.split(4)
+    acqs = acq.split(2)
 
     cluster = SLURMCluster(job_name="seismicAcquisition", nodes=1, cores=4,
-                           python="/g/g90/hamon1/geosx/GEOSX/build-quartz-gcc@8.1.0-release/lib/PYGEOSX/bin/python",
-                           extra=["-p pdebug"])
+                           python="/beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/python",
+                           launch="mpirun",
+                           extra=["-C bora"],
+                           env_extra=["physics/geosx_deps/mkl2020_gcc9.3.0_mpi4.0.3/NoCuda", "physics/pygeosx/mkl2020_gcc9.3.0_mpi4.0.3"])
 
     client = Client(cluster)
-    client.scale(3)
+    client.scale(2)
 
 
-    maxTime = 0.5
+    maxTime = 2.0
     outputSeismoTraceInterval = 5
     outputWaveFieldInterval = 100
 
@@ -54,7 +56,7 @@ def main():
     
     futures = client.map(acousticShot, args,
                          cmd_line = ["-i", sysargs.xml],
-                         cores=2, x_partition=2)
+                         cores=4, x_partition=4)
     
     #future = client.submit(acousticShot, args,
     #                       cmd_line=["-i", sysargs.xml],

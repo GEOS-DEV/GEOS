@@ -1,21 +1,24 @@
 import pygeosx
 
 
-def recomputeSourceAndReceivers(solver, source, receivers):
-    updateSourceAndReceivers(solver, source, receivers)
+def recomputeSourceAndReceivers(solver, sources, receivers):
+    updateSourceAndReceivers(solver, sources, receivers)
 
     solver.reinit()
 
 
-def updateSourceAndReceivers(solver, source, receivers):
+def updateSourceAndReceivers(solver, sources, receivers):
     src_pos_geosx = solver.get_wrapper("sourceCoordinates").value()
-    src_pos_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
+    src_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
 
     rcv_pos_geosx = solver.get_wrapper("receiverCoordinates").value()
     rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
 
 
-    src_pos_geosx.to_numpy()[0] = source.coords
+    src_pos_geosx.resize(sources.n)
+    src_pos = [source.coords for source in sources.source_list]
+    src_pos_geosx.to_numpy()[:] = src_pos[:]
+
     rcv_pos_geosx.resize(receivers.n)
     rcv_pos = [receiver.coords for receiver in receivers.receivers_list]
     rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]

@@ -1,7 +1,7 @@
 import pygeosx
 import sys
 from seismicUtilities.acquisition import EQUISPACEDAcquisition
-#from seismicUtilities.segy import exportToSegy
+from seismicUtilities.segy import exportToSegy
 from seismicUtilities.acoustic import updateSourceAndReceivers, resetWaveField, setTimeVariables
 #from mpi4py import MPI
 
@@ -76,7 +76,7 @@ def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, ac
 
         #Set time variables and update source and receivers positions
         setTimeVariables(problem, maxTime, dtSeismoTrace)
-        updateSourceAndReceivers(acousticSolver, shot.source, shot.receivers)
+        updateSourceAndReceivers(acousticSolver, shot.sources, shot.receivers)
         pygeosx.apply_initial_conditions()
 
         shot.flag = "In Progress"
@@ -88,14 +88,14 @@ def acousticShot(maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, ac
             if rank == 0:
                 print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", i+1)
 
-            acousticSolver.explicitStep(time, dt)
+            acousticSolver.solverStep(time, dt)
 
             time += dt
             i += 1
             #Collect waveField values
-            if i % outputWaveFieldInterval == 0:
-                collection.collect()
-                output.output()
+            #if i % outputWaveFieldInterval == 0:
+            #    collection.collect()
+            #    output.output()
 
         exportToSegy(table = pressureAtReceivers.to_numpy(),
                      shot = shot,

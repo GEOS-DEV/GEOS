@@ -333,9 +333,9 @@ class Acquisition:
             xmax = x_cells_boundary[nx-1]
 
             for i in range(nx):
-                if shot.source.x() - distance >= x_cells_boundary[i]:
+                if shot.sources.source_list[0].x() - distance >= x_cells_boundary[i]:
                     xmin = x_cells_boundary[i]
-                if shot.source.x() + distance <= x_cells_boundary[nx-1-i]:
+                if shot.sources.source_list[0].x() + distance <= x_cells_boundary[nx-1-i]:
                     xmax = x_cells_boundary[nx-1-i]
 
             ny = y_cells_boundary.size
@@ -343,9 +343,9 @@ class Acquisition:
             ymax = y_cells_boundary[ny-1]
 
             for i in range(ny):
-                if shot.source.y() - distance >= y_cells_boundary[i]:
+                if shot.sources.source_list[0].y() - distance >= y_cells_boundary[i]:
                     ymin = y_cells_boundary[i]
-                if shot.source.y() + distance <= y_cells_boundary[ny-1-i]:
+                if shot.sources.source_list[0].y() + distance <= y_cells_boundary[ny-1-i]:
                     ymax = y_cells_boundary[ny-1-i]
 
             nz = z_cells_boundary.size
@@ -426,7 +426,7 @@ class SEGYAcquisition(Acquisition):
         ------
         shots : list of Shot object
         List of shots configuration
-        
+
 
         shot_list = []
 
@@ -584,7 +584,7 @@ class EQUISPACEDAcquisition(Acquisition):
         shots = []
 
         for i in range(len(xs)):
-
+            source = SourceSet()
             if len(str(i+1))<2:
                 shot_id = "00"+str(i+1)
             elif len(str(i+1))<3 and len(str(i+1))>2:
@@ -593,7 +593,7 @@ class EQUISPACEDAcquisition(Acquisition):
                 shot_id = str(i+1)
 
             srcpos = [xs[i], ys[i], source_depth]
-            source = Source(srcpos, wavelet)
+            source.append(Source(srcpos, wavelet))
 
             shot = Shot(source, receivers, shot_id)
             shots.append(deepcopy(shot))
@@ -897,7 +897,7 @@ class Shot:
     """
 
     def __init__(self,
-                 source=None,
+                 sources=None,
                  receivers=None,
                  shot_id=None):
         """ Constructor of Shot
@@ -911,7 +911,7 @@ class Shot:
             A ReceiverSet object
         """
 
-        self.source = source
+        self.sources = sources
         self.receivers = receivers
         self.flag = "Undone"
         self.dt = None
@@ -925,7 +925,7 @@ class Shot:
             self.id = None
 
     def __repr__(self):
-        return 'Source position : \n'+str(self.source) +' \n\n' + 'Receivers positions : \n' + str(self.receivers) + '\n\n'
+        return 'Source position : \n'+str(self.sources) +' \n\n' + 'Receivers positions : \n' + str(self.receivers) + '\n\n'
 
 
     def flagUpdate(self, string):
@@ -1155,6 +1155,12 @@ class SourceSet:
         else:
             self.source_list = source_list
             self.n = len(source_list)
+
+    def __repr__(self):
+        if self.n >=10:
+            return str(self.source_list[0:4])[:-1] + '...' + '\n' + str(self.source_list[-4:])[1:]
+        else:
+            return str(self.source_list)
 
 
     def append(self, source):

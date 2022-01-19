@@ -57,10 +57,14 @@ class Cluster():
 
 
     def _add_job_to_script(self, cores):
-        self.run = "%s -n %d " %(self.launch, cores)
+        if self.launch=="mpirun":
+            self.run = "%s -np %d " %(self.launch, cores)
+        else:
+            self.run = "%s -n %d " %(self.launch, cores)
+        
         if self.gpu==True:
             self.run += "-g 1 "
-        self.run += "%s seismicUtilities/wrapper.py " %(self.python)    
+        self.run += "%s seismicUtilities/wrapper.py " % self.python    
         
     def _add_cmd_line(self, cmd_line):
         if isinstance(cmd_line, list):
@@ -130,7 +134,9 @@ class SLURMCluster(Cluster):
 
         if nodes is not None:
             header_lines.append("#SBATCH -N %d" % self.nodes)
-
+            
+        if launch == "mpirun":
+            header_lines.append("#SBATCH -n %d" % self.cores)
        # if cores is not None:
        #     header_lines.append("#SBATCH -n %d" % self.cores)
        # else:
@@ -314,6 +320,7 @@ class Client:
                args,
                cmd_line=None,
                cores=None,
+               daemon=False,
                x_partition=1,
                y_partition=1,
                z_partition=1):
@@ -329,6 +336,7 @@ class Client:
                                 y_partition,
                                 z_partition,
                                 future,),
+                        daemon=daemon,
                         )
         thread.start()
         return future
@@ -341,6 +349,7 @@ class Client:
             cmd_line=None,
             parallel_tool="srun",
             cores=None,
+            daemon=False,
             x_partition=1,
             y_partition=1,
             z_partition=1):
@@ -356,6 +365,7 @@ class Client:
                                 y_partition,
                                 z_partition,
                                 futures,),
+                        daemon=daemon,
                     )
         thread.start()
         return futures
