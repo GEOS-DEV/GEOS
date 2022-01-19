@@ -32,6 +32,7 @@ add_subdirectory( LvArray )
 
 if( ENABLE_PYGEOSX )
   list( APPEND coreLibs pylvarray )
+  list( APPEND coreLibs pygroup )
 endif()
 
 foreach( lib ${subdirs} )
@@ -105,8 +106,8 @@ install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
 
 target_include_directories( geosx_core PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX coreComponents 
-                       EXCLUDES cmake 
+geosx_add_code_checks( PREFIX coreComponents
+                       EXCLUDES cmake
                        src/coreComponents/constitutive/PVTPackage
                        src/coreComponents/mesh/PAMELA )
 

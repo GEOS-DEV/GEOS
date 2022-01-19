@@ -161,5 +161,8 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
   }
 }
 
+PyTypeObject * TimeHistoryOutput::getPythonType() const
+{ return python::getPyHistoryOutputType(); }
+
 REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, string const &, Group * const )
 }

@@ -17,6 +17,9 @@
 // Source includes
 #include "dataRepository/Group.hpp"
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
 #include "PyWrapper.hpp"
 
 namespace geosx

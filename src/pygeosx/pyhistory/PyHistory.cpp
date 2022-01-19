@@ -10,9 +10,6 @@
 
 namespace geosx
 {
-extern std::unique_ptr< GeosxState > g_state;
-
-extern bool g_alreadyInitialized;
 
 namespace python
 {

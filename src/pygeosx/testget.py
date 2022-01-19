@@ -19,7 +19,7 @@ time = 0
 dt = 0.005
 for i in range(100):
     solver.solverStep(time, dt)
-    if i==999 :
+    if i==99 :
         collection.collect(time, dt)
         output.output(time, dt)
 

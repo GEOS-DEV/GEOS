@@ -1,7 +1,6 @@
 set( python_headers pygeosx.hpp
-                    PyGroup.hpp
-		    PyGroupType.hpp
-		    PyWrapper.hpp
+
+		  
                     pysolver/PySolver.hpp
 		    pysolver/PySolverType.hpp
                     pyhistory/PyHistory.hpp
@@ -10,8 +9,8 @@ set( python_headers pygeosx.hpp
 		    )
 
 set( python_sources pygeosx.cpp
-                    PyGroup.cpp
-                    PyWrapper.cpp
+
+              
                     pysolver/PySolver.cpp
                     pyhistory/PyHistory.cpp
 		    pyhistory/PyHistoryOutput.cpp

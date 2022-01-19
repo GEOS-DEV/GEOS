@@ -99,8 +99,8 @@ public:
    * @brief Return PyHistoryOutput type.
    * @return Return PyHistoryOutput type.
    */
-  virtual PyTypeObject * getPythonType() const
-  { return python::getPyHistoryOutputType(); }
+  virtual PyTypeObject * getPythonType() const;
+
 
 private:
 

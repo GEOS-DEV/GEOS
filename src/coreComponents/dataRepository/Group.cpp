@@ -623,5 +623,8 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
   return *currentGroup;
 }
 
+PyTypeObject * Group::getPythonType() const
+{ return python::getPyGroupType(); }
+
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

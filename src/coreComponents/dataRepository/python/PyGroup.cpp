@@ -19,9 +19,6 @@
 
 // Source includes
 #include "PyGroup.hpp"
-#include "pygeosx.hpp"
-#include "physicsSolvers/SolverBase.hpp"
-#include "pysolver/PySolver.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
@@ -45,16 +42,6 @@ struct PyGroup
     "A Python interface to geosx::dataRepository::Group.";
 
   dataRepository::Group * group;
-};
-
-struct PySolver
-{
-  PyObject_HEAD
-
-  static constexpr char const * docString =
-    "A Python interface to geosx::SolverBase.";
-
-  geosx::SolverBase * group;
 };
 
 /**

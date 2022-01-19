@@ -8,7 +8,7 @@
 #include "mainInterface/ProblemManager.hpp"
 
 #include "PySolver.hpp"
-#include "../PyGroup.hpp"
+#include "dataRepository/python/PyGroup.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )

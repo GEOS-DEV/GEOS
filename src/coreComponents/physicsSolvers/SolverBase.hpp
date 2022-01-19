@@ -659,8 +659,7 @@ public:
    * @brief Return PySolver type.
    * @return Return PySolver type.
    */
-  virtual PyTypeObject * getPythonType() const
-  { return python::getPySolverType(); }
+  virtual PyTypeObject * getPythonType() const;
 
 protected:
 

@@ -881,5 +881,7 @@ R1Tensor const SolverBase::gravityVector() const
   return rval;
 }
 
+PyTypeObject * SolverBase::getPythonType() const
+{ return python::getPySolverType(); }
 
 } // namespace geosx
