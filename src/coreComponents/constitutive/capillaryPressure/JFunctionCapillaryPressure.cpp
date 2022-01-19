@@ -143,17 +143,17 @@ void JFunctionCapillaryPressure::postProcessInput()
   else if( numPhases == 3 )
   {
     GEOSX_THROW_IF( m_wettingIntermediateJFuncTableName.empty() || m_nonWettingIntermediateJFuncTableName.empty(),
-                    GEOSX_FMT( string( "{}: for a three-phase flow simulation, we must use {} to specify the J-function table" ) +
-                               string( "for the pair (wetting phase, intermediate phase), " ) +
-                               string( "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)" ),
+                    GEOSX_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the J-function table"
+                               "for the pair (wetting phase, intermediate phase), "
+                               "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)",
                                getFullName(),
                                viewKeyStruct::wettingIntermediateJFuncTableNameString(),
                                viewKeyStruct::nonWettingIntermediateJFuncTableNameString()  ),
                     InputError );
     GEOSX_THROW_IF( m_wettingIntermediateSurfaceTension <= 0 || m_nonWettingIntermediateSurfaceTension <= 0,
-                    GEOSX_FMT( string( "{}: for a three-phase flow simulation, we must use {} to specify the surface tension" ) +
-                               string( "for the pair (wetting phase, intermediate phase), " ) +
-                               string( "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)" ),
+                    GEOSX_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the surface tension"
+                               "for the pair (wetting phase, intermediate phase), "
+                               "and {} to specify the J-function table for the pair (non-wetting phase, intermediate phase)",
                                getFullName(),
                                viewKeyStruct::wettingIntermediateSurfaceTensionString(),
                                viewKeyStruct::nonWettingIntermediateSurfaceTensionString()  ),

@@ -85,9 +85,9 @@ void TableCapillaryPressure::postProcessInput()
   else if( numPhases == 3 )
   {
     GEOSX_THROW_IF( m_wettingIntermediateCapPresTableName.empty() || m_nonWettingIntermediateCapPresTableName.empty(),
-                    GEOSX_FMT( string( "{}: for a three-phase flow simulation, we must use {} to specify the capillary pressure table " ) +
-                               string( "for the pair (wetting phase, intermediate phase), and {} to specify the capillary pressure table " ) +
-                               string( "for the pair (non-wetting phase, intermediate phase)" ),
+                    GEOSX_FMT( "{}: for a three-phase flow simulation, we must use {} to specify the capillary pressure table "
+                               "for the pair (wetting phase, intermediate phase), and {} to specify the capillary pressure table "
+                               "for the pair (non-wetting phase, intermediate phase)",
                                getFullName(),
                                viewKeyStruct::wettingIntermediateCapPresTableNameString(),
                                viewKeyStruct::nonWettingIntermediateCapPresTableNameString()  ),
