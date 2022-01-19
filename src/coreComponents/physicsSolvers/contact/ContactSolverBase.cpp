@@ -161,8 +161,7 @@ real64 ContactSolverBase::solverStep( real64 const & time_n,
 void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & domain,
                                                         globalIndex & numStick,
                                                         globalIndex & numSlip,
-                                                        globalIndex & numOpen,
-                                                        bool printAll ) const
+                                                        globalIndex & numOpen ) const
 {
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
@@ -199,13 +198,6 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
                 openCount += 1;
                 break;
               }
-          }
-          if( printAll )
-          {
-//            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-//                                                   << " state <"
-//                                                   << FractureStateToString( fractureState[kfe] )
-//                                                   << ">" );
           }
         }
       } );
@@ -244,15 +236,23 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
 
   MpiWrapper::bcast( totalCounter.data(), 3, 0, MPI_COMM_GEOSX );
 
-  numStick = totalCounter[0];
-  numSlip  = totalCounter[1];
-  numOpen  = totalCounter[2];
-
-  GEOSX_LOG_RANK_0( GEOSX_FMT( " Number of element for each fracture state:"
-                               " stick: {:12} | slip:  {:12} | open:  {:12}",
-                               numStick, numSlip, numOpen ) );
+   numStick = totalCounter[0];
+   numSlip  = totalCounter[1];
+   numOpen  = totalCounter[2];
 }
 
+void ContactSolverBase::outputConfigurationStatistics(DomainPartition const & domain ) const
+{
+  globalIndex numStick = 0;
+  globalIndex numSlip  = 0;
+  globalIndex numOpen  = 0;
+
+  computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
+
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
+      " stick: {:12} | slip:  {:12} | open:  {:12}",
+      numStick, numSlip, numOpen ) );
+}
 
 void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                                  real64 const dt,

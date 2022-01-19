@@ -389,7 +389,8 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
                                                        ParallelVector & rhs,
                                                        ParallelVector & solution,
                                                        real64 const scaleFactor,
-                                                       real64 & lastResidual )
+                                                       real64 & lastResidual,
+                                                       real64 & residualNormT )
 {
   bool lineSearchSuccess = true;
 
@@ -403,24 +404,7 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
   real64 lamc = localScaleFactor;
   integer lineSearchIteration = 0;
 
-  // get residual norm
   real64 residualNorm0 = lastResidual;
-
-  applySystemSolution( dofManager, solution.values(), scaleFactor, domain );
-
-  // re-assemble system
-  localMatrix.zero();
-  rhs.zero();
-
-  {
-    arrayView1d< real64 > const localRhs = rhs.open();
-    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
-    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
-    rhs.close();
-  }
-
-  // get residual norm
-  real64 residualNormT = calculateResidualNorm( domain, dofManager, rhs.values() );
 
   real64 ff0 = residualNorm0*residualNorm0;
   real64 ffT = residualNormT*residualNormT;
@@ -451,6 +435,9 @@ bool SolverBase::lineSearchWithParabolicInterpolation( real64 const & time_n,
     }
 
     applySystemSolution( dofManager, solution.values(), deltaLocalScaleFactor, domain );
+
+    updateState( domain );
+
     lamm = lamc;
     lamc = localScaleFactor;
 
@@ -578,9 +565,17 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       resetConfigurationToBeginningOfStep( domain );
     }
 
+    // it's the simplest configuration that can be attempted whenever Newton's fails as a last resource.
+    bool attemptedSimplestConfiguration = false;
+
     // Configuration loop
     for( configurationLoopIter = 0; configurationLoopIter < maxConfigurationIter; ++configurationLoopIter )
     {
+      if ( getLogLevel() >= 1 )
+      {
+        outputConfigurationStatistics( domain );
+      }
+
       // keep residual from previous iteration in case we need to do a line search
       real64 lastResidual = 1e99;
       integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
@@ -589,7 +584,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       // main Newton loop
       for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
       {
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, NewtonIter: {:2}", dtAttempt, newtonIter ) );
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
 
         // zero out matrix/rhs before assembly
         m_localMatrix.zero();
@@ -653,23 +648,10 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
             && residualNorm > lastResidual )
         {
-          residualNorm = lastResidual;
           bool lineSearchSuccess = false;
-          if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Parabolic )
+          if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
           {
-            lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
-                                                                      stepDt,
-                                                                      cycleNumber,
-                                                                      domain,
-                                                                      m_dofManager,
-                                                                      m_localMatrix.toViewConstSizes(),
-                                                                      m_rhs,
-                                                                      m_solution,
-                                                                      scaleFactor,
-                                                                      residualNorm );
-          }
-          else
-          {
+            residualNorm = lastResidual;
             lineSearchSuccess = lineSearch( time_n,
                                             stepDt,
                                             cycleNumber,
@@ -680,6 +662,20 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                             m_solution,
                                             scaleFactor,
                                             residualNorm );
+          }
+          else
+          {
+            lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
+                                                                      stepDt,
+                                                                      cycleNumber,
+                                                                      domain,
+                                                                      m_dofManager,
+                                                                      m_localMatrix.toViewConstSizes(),
+                                                                      m_rhs,
+                                                                      m_solution,
+                                                                      scaleFactor,
+                                                                      lastResidual,
+                                                                      residualNorm );
           }
 
           if( !lineSearchSuccess )
@@ -747,6 +743,20 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
         if( isConfigurationLoopConverged )
         {
           break; // get out of configuration loop coz everything converged.
+        }
+        else
+        {
+          GEOSX_LOG_LEVEL_RANK_0( 1, "  --------Configuration did not converge. Testing new configuration." );
+        }
+      }
+      else if( !attemptedSimplestConfiguration )
+      {
+        resetStateToBeginningOfStep( domain );
+        bool const breakLoop = setSimplestConfigurationState( domain );
+        attemptedSimplestConfiguration = true;
+        if ( breakLoop )
+        {
+          break;
         }
       }
       else
@@ -1015,6 +1025,11 @@ bool SolverBase::updateConfiguration( DomainPartition & GEOSX_UNUSED_PARAM( doma
   return true;
 }
 
+void SolverBase::outputConfigurationStatistics( DomainPartition const & GEOSX_UNUSED_PARAM( domain ) ) const
+{
+  // For most solvers there is nothing to do.
+}
+
 void SolverBase::resetConfigurationToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   // For most solvers there is nothing to do.
@@ -1023,6 +1038,12 @@ void SolverBase::resetConfigurationToBeginningOfStep( DomainPartition & GEOSX_UN
 void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
+}
+
+bool SolverBase::setSimplestConfigurationState( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
+{
+  // for most solvers it just breaks the loop.
+  return true;
 }
 
 void SolverBase::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time ),

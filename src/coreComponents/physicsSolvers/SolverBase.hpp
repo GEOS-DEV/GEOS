@@ -238,7 +238,8 @@ public:
                                          ParallelVector & rhs,
                                          ParallelVector & solution,
                                          real64 const scaleFactor,
-                                         real64 & lastResidual );
+                                         real64 & lastResidual,
+                                         real64 & residualNormT );
 
   /**
    * @brief Function for a linear implicit integration step
@@ -489,10 +490,23 @@ public:
   virtual bool updateConfiguration( DomainPartition & domain );
 
   /**
+   * @brief
+   * @param domain the domain containing the mesh and fields
+   */
+   virtual void outputConfigurationStatistics( DomainPartition const & domain ) const;
+
+  /**
    * @brief resets the configuration to the beginning of the time-step.
    * @param domain the domain containing the mesh and fields
    */
   virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain );
+
+  /**
+   * @brief set the simplest configuration state.
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual bool setSimplestConfigurationState( DomainPartition & domain ) const;
+
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)

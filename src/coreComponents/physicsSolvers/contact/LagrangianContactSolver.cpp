@@ -620,8 +620,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
     // Add 0 just to match Matlab code results
     globalResidualNorm[2] /= (m_initialResidual[2]+1.0);
   }
-
-  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
+  GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( Rdisplacement, Rtraction, Rtotal ) = ( {:15.6e}, {:15.6e}, {:15.6e} );",
                                         globalResidualNorm[0],
                                         globalResidualNorm[1],
                                         globalResidualNorm[2] ) );
@@ -1635,9 +1634,11 @@ void LagrangianContactSolver::updateState( DomainPartition & domain )
   computeFaceDisplacementJump( domain );
 }
 
-void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & domain ) const
+bool LagrangianContactSolver::setSimplestConfigurationState( DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
+
+  GEOSX_LOG_LEVEL_RANK_0( 1, "  --------The Newton's solver failed to converge. Trying to start with a linear elastic configuration (all stick elements.)" );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
@@ -1656,6 +1657,7 @@ void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & 
       } );
     }
   } );
+  return false;
 }
 
 bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
@@ -1769,7 +1771,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
   globalIndex numStick, numSlip, numOpen;
-  computeFractureStateStatistics( domain, numStick, numSlip, numOpen, false );
+  computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
   return ( ( numSlip + numOpen ) == 0 );
 }
 

@@ -84,16 +84,16 @@ public:
 
   string const & getFractureRegionName() const { return m_fractureRegionName; }
 
-  void computeFractureStateStatistics( DomainPartition const & domain,
-                                       globalIndex & numStick,
-                                       globalIndex & numSlip,
-                                       globalIndex & numOpen,
-                                       bool printAll = false ) const;
+  void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
 protected:
 
   virtual void postProcessInput() override;
 
+  void computeFractureStateStatistics( DomainPartition const & domain,
+                                       globalIndex & numStick,
+                                       globalIndex & numSlip,
+                                       globalIndex & numOpen ) const;
   /**
    * @struct FractureState
    *

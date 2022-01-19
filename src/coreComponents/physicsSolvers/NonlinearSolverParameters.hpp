@@ -121,7 +121,7 @@ public:
   };
 
   /**
-   * @brief Indicates the handling of line earch interpolation strategy.
+   * @brief Indicates the handling of line each interpolation strategy.
    */
   enum class LineSearchInterpolationType : integer
   {

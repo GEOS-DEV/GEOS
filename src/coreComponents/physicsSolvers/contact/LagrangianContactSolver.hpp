@@ -151,7 +151,7 @@ private:
 
 public:
 
-  void setFractureStateForElasticStep( DomainPartition & domain ) const;
+  bool setSimplestConfigurationState( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain ) override final;
 
