@@ -55,7 +55,7 @@ public:
    * @return number of phases
    */
   GEOSX_HOST_DEVICE
-  integer numPhases() const { return LvArray::integerConversion< integer >( m_dEffectiveConductivity_dPhaseVolFrac.size( 2 ) ); }
+  integer numPhases() const { return LvArray::integerConversion< integer >( m_dEffectiveConductivity_dPhaseVolFrac.size( 3 ) ); }
 
 protected:
 
@@ -65,17 +65,17 @@ protected:
    * @param dEffectiveConductivity_dPhaseVolFrac the array of cell-wise derivatives of effective conductivities wrt phase vol fractions in
    * the subregion
    */
-  ThermalConductivityBaseUpdate( arrayView2d< real64 > const & effectiveConductivity,
-                                 arrayView3d< real64 > const & dEffectiveConductivity_dPhaseVolFrac )
+  ThermalConductivityBaseUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                 arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac )
     : m_effectiveConductivity( effectiveConductivity ),
     m_dEffectiveConductivity_dPhaseVolFrac( dEffectiveConductivity_dPhaseVolFrac )
   {}
 
   /// View on the cell-wise effective conductivities
-  arrayView2d< real64 > m_effectiveConductivity;
+  arrayView3d< real64 > m_effectiveConductivity;
 
   /// View on the cell-wise derivatives of effective conductivities wrt phase volume fractions
-  arrayView3d< real64 > m_dEffectiveConductivity_dPhaseVolFrac;
+  arrayView4d< real64 > m_dEffectiveConductivity_dPhaseVolFrac;
 
 private:
 
@@ -129,13 +129,13 @@ public:
    * @brief Getter for the effective conductivities in the subRegion
    * @return an arrayView of effective conductivities
    */
-  arrayView2d< real64 const > effectiveConductivity() const { return m_effectiveConductivity; }
+  arrayView3d< real64 const > effectiveConductivity() const { return m_effectiveConductivity; }
 
   /**
    * @brief Getter for the derivatives of effective conductivity wrt phase volume fraction in the subRegion
    * @return an arrayView of effective conductivities
    */
-  arrayView3d< real64 const > dEffectiveConductivity_dPhaseVolFraction() const { return m_dEffectiveConductivity_dPhaseVolFrac; }
+  arrayView4d< real64 const > dEffectiveConductivity_dPhaseVolFraction() const { return m_dEffectiveConductivity_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -159,10 +159,10 @@ protected:
   string_array m_phaseNames;
 
   /// cell-wise effective conductivities in the subregion
-  array2d< real64 > m_effectiveConductivity;
+  array3d< real64 > m_effectiveConductivity;
 
   /// cell-wise derivatives of effective conductivities wrt phase volume fraction in the subregion
-  array3d< real64 > m_dEffectiveConductivity_dPhaseVolFrac;
+  array4d< real64 > m_dEffectiveConductivity_dPhaseVolFrac;
 
   // the effectiveConductivity is used to compute fluxes, so it is easier to lag porosity for now
 

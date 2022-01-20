@@ -2212,10 +2212,10 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="ConstantThermalConductivityType">
-		<!--defaultThermalConductivity => Constant thermal conductivity [W/(m.K)]-->
-		<xsd:attribute name="defaultThermalConductivity" type="real64" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [W/(m.K)]-->
+		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2779,12 +2779,12 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="VolumeWeightedThermalConductivityType">
-		<!--defaultRockThermalConductivity => Default rock thermal conductivity [W/(m.K)]-->
-		<xsd:attribute name="defaultRockThermalConductivity" type="real64" use="required" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--phaseThermalConductivity => Phase thermal conductivity [W/(m.K)]-->
 		<xsd:attribute name="phaseThermalConductivity" type="real64_array" use="required" />
+		<!--rockThermalConductivityComponents => xx, yy, and zz components of a diagonal rock thermal conductivity tensor [W/(m.K)]-->
+		<xsd:attribute name="rockThermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

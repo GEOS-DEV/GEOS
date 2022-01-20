@@ -1139,9 +1139,9 @@
 	</xsd:complexType>
 	<xsd:complexType name="ConstantThermalConductivityType">
 		<!--dEffectiveConductivity_dPhaseVolFraction => Derivative of effective conductivity with respect to phase volume fraction-->
-		<xsd:attribute name="dEffectiveConductivity_dPhaseVolFraction" type="real64_array3d" />
+		<xsd:attribute name="dEffectiveConductivity_dPhaseVolFraction" type="real64_array4d" />
 		<!--effectiveConductivity => Effective conductivity-->
-		<xsd:attribute name="effectiveConductivity" type="real64_array2d" />
+		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--elasticSlip => Elastic Slip-->
@@ -1597,11 +1597,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="VolumeWeightedThermalConductivityType">
 		<!--dEffectiveConductivity_dPhaseVolFraction => Derivative of effective conductivity with respect to phase volume fraction-->
-		<xsd:attribute name="dEffectiveConductivity_dPhaseVolFraction" type="real64_array3d" />
+		<xsd:attribute name="dEffectiveConductivity_dPhaseVolFraction" type="real64_array4d" />
 		<!--effectiveConductivity => Effective conductivity-->
-		<xsd:attribute name="effectiveConductivity" type="real64_array2d" />
+		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
 		<!--rockThermalConductivity => Rock thermal conductivity-->
-		<xsd:attribute name="rockThermalConductivity" type="real64_array2d" />
+		<xsd:attribute name="rockThermalConductivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

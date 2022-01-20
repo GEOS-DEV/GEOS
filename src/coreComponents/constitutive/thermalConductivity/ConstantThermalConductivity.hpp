@@ -40,8 +40,8 @@ public:
    * @param dEffectiveConductivity_dPhaseVolFrac the array of cell-wise derivatives of effective conductivities wrt phase vol fractions in
    * the subregion
    */
-  ConstantThermalConductivityUpdate( arrayView2d< real64 > const & effectiveConductivity,
-                                     arrayView3d< real64 > const & dEffectiveConductivity_dPhaseVolFrac )
+  ConstantThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                     arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac )
     : ThermalConductivityBaseUpdate( effectiveConductivity, dEffectiveConductivity_dPhaseVolFrac )
   {}
 
@@ -93,7 +93,7 @@ public:
 
   struct viewKeyStruct : public ThermalConductivityBase::viewKeyStruct
   {
-    static constexpr char const * defaultThermalConductivityString() { return "defaultThermalConductivity"; }
+    static constexpr char const * thermalConductivityComponentsString() { return "thermalConductivityComponents"; }
   } viewKeys;
 
 protected:
@@ -103,7 +103,7 @@ protected:
 private:
 
   /// default thermal conductivity in the subRegion
-  real64 m_defaultThermalConductivity;
+  R1Tensor m_thermalConductivityComponents;
 
 };
 

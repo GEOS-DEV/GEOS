@@ -29,10 +29,10 @@ namespace constitutive
 ConstantThermalConductivity::ConstantThermalConductivity( string const & name, Group * const parent ):
   ThermalConductivityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::defaultThermalConductivityString(), &m_defaultThermalConductivity ).
+  registerWrapper( viewKeyStruct::thermalConductivityComponentsString(), &m_thermalConductivityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Constant thermal conductivity [W/(m.K)]" );
+    setDescription( "xx, yy, and zz components of a diagonal thermal conductivity tensor [W/(m.K)]" );
 }
 
 std::unique_ptr< ConstitutiveBase >
@@ -52,15 +52,19 @@ void ConstantThermalConductivity::allocateConstitutiveData( dataRepository::Grou
     // NOTE: enforcing 1 quadrature point
     for( localIndex q = 0; q < 1; ++q )
     {
-      m_effectiveConductivity[ei][q] = m_defaultThermalConductivity;
+      m_effectiveConductivity[ei][q][0] = m_thermalConductivityComponents[0];
+      m_effectiveConductivity[ei][q][1] = m_thermalConductivityComponents[1];
+      m_effectiveConductivity[ei][q][2] = m_thermalConductivityComponents[2];
     }
   }
 }
 
 void ConstantThermalConductivity::postProcessInput()
 {
-  GEOSX_THROW_IF( m_defaultThermalConductivity <= 0,
-                  GEOSX_FMT( "{}: the constant thermal conductivity must be strictly positive",
+  GEOSX_THROW_IF( m_thermalConductivityComponents[0] <= 0 ||
+                  m_thermalConductivityComponents[1] <= 0 ||
+                  m_thermalConductivityComponents[2] <= 0,
+                  GEOSX_FMT( "{}: the components of the thermal conductivity tensor must be strictly positive",
                              getFullName() ),
                   InputError );
 }

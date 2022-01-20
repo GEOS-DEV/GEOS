@@ -50,8 +50,8 @@ void ThermalConductivityBase::postProcessInput()
                          GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
                          InputError );
 
-  m_effectiveConductivity.resize( 0, 0 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, numPhases );
+  m_effectiveConductivity.resize( 0, 0, 3 );
+  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 0, 3, numPhases );
 }
 
 void ThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & parent,
@@ -59,8 +59,8 @@ void ThermalConductivityBase::allocateConstitutiveData( dataRepository::Group & 
 {
   // NOTE: enforcing 1 quadrature point
   integer const numPhases = numFluidPhases();
-  m_effectiveConductivity.resize( 0, 1 );
-  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 1, numPhases );
+  m_effectiveConductivity.resize( 0, 1, 3 );
+  m_dEffectiveConductivity_dPhaseVolFrac.resize( 0, 1, 3, numPhases );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }

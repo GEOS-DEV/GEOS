@@ -31,10 +31,10 @@ namespace constitutive
 VolumeWeightedThermalConductivity::VolumeWeightedThermalConductivity( string const & name, Group * const parent ):
   ThermalConductivityBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::defaultRockThermalConductivityString(), &m_defaultRockThermalConductivity ).
+  registerWrapper( viewKeyStruct::rockThermalConductivityComponentsString(), &m_rockThermalConductivityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Default rock thermal conductivity [W/(m.K)]" );
+    setDescription( "xx, yy, and zz components of a diagonal rock thermal conductivity tensor [W/(m.K)]" );
 
   registerWrapper( viewKeyStruct::phaseThermalConductivityString(), &m_phaseThermalConductivity ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -55,7 +55,7 @@ void VolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository
                                                                   localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_rockThermalConductivity.resize( 0, 1 );
+  m_rockThermalConductivity.resize( 0, 1, 3 );
 
   ThermalConductivityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
@@ -63,15 +63,19 @@ void VolumeWeightedThermalConductivity::allocateConstitutiveData( dataRepository
   {
     for( localIndex q = 0; q < 1; ++q )
     {
-      m_rockThermalConductivity[ei][q] = m_defaultRockThermalConductivity;
+      m_rockThermalConductivity[ei][q][0] = m_rockThermalConductivityComponents[0];
+      m_rockThermalConductivity[ei][q][1] = m_rockThermalConductivityComponents[1];
+      m_rockThermalConductivity[ei][q][2] = m_rockThermalConductivityComponents[2];
     }
   }
 }
 
 void VolumeWeightedThermalConductivity::postProcessInput()
 {
-  GEOSX_THROW_IF( m_defaultRockThermalConductivity <= 0,
-                  GEOSX_FMT( "{}: the rock thermal conductivity must be strictly positive",
+  GEOSX_THROW_IF( m_rockThermalConductivityComponents[0] <= 0 ||
+                  m_rockThermalConductivityComponents[1] <= 0 ||
+                  m_rockThermalConductivityComponents[2] <= 0,
+                  GEOSX_FMT( "{}: the components of the rock thermal conductivity tensor must be strictly positive",
                              getFullName() ),
                   InputError );
 

@@ -42,9 +42,9 @@ public:
    * @param rockThermalConductivity the array of cell-wise rock thermal conductivities
    * @param phaseThermalConductivity the array of fluid phase thermal conductivities
    */
-  VolumeWeightedThermalConductivityUpdate( arrayView2d< real64 > const & effectiveConductivity,
-                                           arrayView3d< real64 > const & dEffectiveConductivity_dPhaseVolFrac,
-                                           arrayView2d< real64 const > const & rockThermalConductivity,
+  VolumeWeightedThermalConductivityUpdate( arrayView3d< real64 > const & effectiveConductivity,
+                                           arrayView4d< real64 > const & dEffectiveConductivity_dPhaseVolFrac,
+                                           arrayView3d< real64 const > const & rockThermalConductivity,
                                            arrayView1d< real64 const > const & phaseThermalConductivity )
     : ThermalConductivityBaseUpdate( effectiveConductivity, dEffectiveConductivity_dPhaseVolFrac ),
     m_rockThermalConductivity( rockThermalConductivity ),
@@ -62,18 +62,26 @@ public:
   GEOSX_HOST_DEVICE
   void compute( real64 const & laggedPorosity,
                 arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
-                real64 const & rockThermalConductivity,
-                real64 & effectiveConductivity,
-                arraySlice1d< real64 > const dEffectiveConductivity_dPhaseVolFrac ) const
+                arraySlice1d< real64 const > const rockThermalConductivity,
+                arraySlice1d< real64 > const effectiveConductivity,
+                arraySlice2d< real64 > const dEffectiveConductivity_dPhaseVolFrac ) const
   {
-    effectiveConductivity = 0.0;
+    LvArray::forValuesInSlice( effectiveConductivity, []( real64 & val ){ val = 0.0; } );
     for( integer ip = 0; ip < numPhases(); ++ip )
     {
-      effectiveConductivity += phaseVolFrac[ip] * m_phaseThermalConductivity[ip];
-      dEffectiveConductivity_dPhaseVolFrac[ip] = m_phaseThermalConductivity[ip] * laggedPorosity;
+      real64 const phaseVolFracTimesConductivity = phaseVolFrac[ip] * m_phaseThermalConductivity[ip];
+      real64 const porosityTimesConductivity = m_phaseThermalConductivity[ip] * laggedPorosity;
+      for( integer dir = 0; dir < 3; ++dir )
+      {
+        effectiveConductivity[dir] += phaseVolFracTimesConductivity;
+        dEffectiveConductivity_dPhaseVolFrac[dir][ip] = porosityTimesConductivity;
+      }
     }
-    effectiveConductivity *= laggedPorosity;
-    effectiveConductivity += ( 1.0 - laggedPorosity ) * rockThermalConductivity;
+    for( integer dir = 0; dir < 3; ++dir )
+    {
+      effectiveConductivity[dir] *= laggedPorosity;
+      effectiveConductivity[dir] += ( 1.0 - laggedPorosity ) * rockThermalConductivity[dir];
+    }
   }
 
   GEOSX_HOST_DEVICE
@@ -92,7 +100,7 @@ public:
 private:
 
   /// View on the cell-wise rock thermal conductivity
-  arrayView2d< real64 const > m_rockThermalConductivity;
+  arrayView3d< real64 const > m_rockThermalConductivity;
 
   /// View on the phase thermal conductivity
   arrayView1d< real64 const > m_phaseThermalConductivity;
@@ -140,7 +148,7 @@ public:
 
   struct viewKeyStruct : public ThermalConductivityBase::viewKeyStruct
   {
-    static constexpr char const * defaultRockThermalConductivityString() { return "defaultRockThermalConductivity"; }
+    static constexpr char const * rockThermalConductivityComponentsString() { return "rockThermalConductivityComponents"; }
     static constexpr char const * phaseThermalConductivityString() { return "phaseThermalConductivity"; }
   } viewKeys;
 
@@ -151,10 +159,10 @@ protected:
 private:
 
   /// default rock thermal conductivity in the subRegion
-  real64 m_defaultRockThermalConductivity;
+  R1Tensor m_rockThermalConductivityComponents;
 
   /// cell-wise rock thermal conductivity in the subRegion
-  array2d< real64 > m_rockThermalConductivity;
+  array3d< real64 > m_rockThermalConductivity;
 
   /// fluid phase thermal conductivity
   array1d< real64 > m_phaseThermalConductivity;
