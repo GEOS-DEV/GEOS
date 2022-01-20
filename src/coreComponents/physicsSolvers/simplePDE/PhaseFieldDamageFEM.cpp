@@ -422,7 +422,7 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                          mesh,
@@ -486,7 +486,7 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     const NodeManager & nodeManager = mesh.getNodeManager();
     const arrayView1d< const integer > & ghostRank = nodeManager.ghostRank();

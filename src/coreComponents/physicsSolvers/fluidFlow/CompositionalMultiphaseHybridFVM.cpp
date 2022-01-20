@@ -797,7 +797,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                 [&]( localIndex const,
                                                                                      localIndex const,
                                                                                      localIndex const,
-                                                                                     ElementRegionBase const & region,
+                                                                                     ElementRegionBase const & ,
                                                                                      ElementSubRegionBase const & subRegion )
     {
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
