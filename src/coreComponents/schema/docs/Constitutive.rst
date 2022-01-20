@@ -31,6 +31,7 @@ ElasticOrthotropic                          node         :ref:`XML_ElasticOrthot
 ElasticTransverseIsotropic                  node         :ref:`XML_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node         :ref:`XML_ExtendedDruckerPrager`                       
 FrictionlessContact                         node         :ref:`XML_FrictionlessContact`                         
+JFunctionCapillaryPressure                  node         :ref:`XML_JFunctionCapillaryPressure`                  
 ModifiedCamClay                             node         :ref:`XML_ModifiedCamClay`                             
 NullModel                                   node         :ref:`XML_NullModel`                                   
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
