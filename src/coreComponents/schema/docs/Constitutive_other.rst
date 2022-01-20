@@ -31,6 +31,7 @@ ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrth
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
 FrictionlessContact                         node :ref:`DATASTRUCTURE_FrictionlessContact`                         
+JFunctionCapillaryPressure                  node :ref:`DATASTRUCTURE_JFunctionCapillaryPressure`                  
 ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCamClay`                             
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
