@@ -386,7 +386,7 @@ private:
    * @param separationPathFaces
    * @param elemManager
    * @param faceManager
-   * @param nodesToElements
+   * @param nodeToElementMaps The vector is assumed not to contain any duplicate.
    * @param localFacesToEdges
    * @param edgeLocations
    * @param faceLocations
@@ -396,7 +396,7 @@ private:
   bool setLocations( std::set< localIndex > const & separationPathFaces,
                      ElementRegionManager const & elemManager,
                      FaceManager const & faceManager,
-                     std::set< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
+                     std::vector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
                      map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                      map< localIndex, int > & edgeLocations,
                      map< localIndex, int > & faceLocations,
@@ -409,7 +409,7 @@ private:
    * @param separationPathFaces
    * @param elemManager
    * @param faceManager
-   * @param nodesToElements
+   * @param nodesToElements The vector is assumed not to contain any duplicate.
    * @param localFacesToEdges
    * @param edgeLocations
    * @param faceLocations
@@ -421,7 +421,7 @@ private:
                          std::set< localIndex > const & separationPathFaces,
                          ElementRegionManager const & elemManager,
                          FaceManager const & faceManager,
-                         std::set< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
+                         std::vector< std::pair< CellElementSubRegion const *, localIndex > > const & nodesToElements,
                          map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                          map< localIndex, int > & edgeLocations,
                          map< localIndex, int > & faceLocations,

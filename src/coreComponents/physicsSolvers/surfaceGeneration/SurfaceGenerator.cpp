@@ -32,6 +32,7 @@
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 
+#include <algorithm>
 
 namespace geosx
 {
@@ -953,28 +954,49 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
-//  array1d< ReferenceWrapper<localIndex_array> > nodeToElements
-//  const std::set< std::pair<CellBlockSubRegion*,localIndex> >&
-//  nodeToElementMaps = nodeManager.m_toElementsRelation[nodeID] ;
-
   arraySlice1d< localIndex const > const & nodeToRegionMap = nodeManager.elementRegionList()[nodeID];
   arraySlice1d< localIndex const > const & nodeToSubRegionMap = nodeManager.elementSubRegionList()[nodeID];
   arraySlice1d< localIndex const > const & nodeToElementMap = nodeManager.elementList()[nodeID];
 
-  // ***** BACKWARDS COMPATIBLITY HACK
-  std::set< std::pair< CellElementSubRegion const *, localIndex > > nodeToElementMaps;
-
-
-  for( localIndex k = 0; k < nodeManager.elementRegionList().sizeOfArray( nodeID ); ++k )
+  // BACKWARDS COMPATIBILITY HACK!
+  //
+  // The `nodeToElementMaps` container used to be a std::set instead of a std::vector.
+  // The problem is that std::set was sorted using the default sorting mechanisms of std::pair.
+  // That is, comparing the first element of the pair, and then the second if required.
+  // But the first element of the std::pair being a `CellElementSubRegion const *`,
+  // pointers were actually compared: the std::set was sorted w.r.t. memory positions of the instances.
+  //
+  // Then the algorithm selects the *first* element of the std::set as input value.
+  // Depending on memory layout, the first element could not be stable, which somehow results in some random selection.
+  // Unfortunately it happens that the algorithm sometimes depends on the selected value of the set, but fails with others.
+  //
+  // As a quick fix for this problem, a version with std::vector is implemented.
+  // It imposes a stable order and also discards any duplicate like the previous std::set implementation did.
+  // This does not fix the algorithm itself, but at least it stabilises the order the data in the container,
+  // making the situation more reproducible.
+  auto buildNodeToElementMaps = [&]()
   {
-    nodeToElementMaps.emplace( &elemManager.getRegion( nodeToRegionMap[k] ).
-                                 getSubRegion< CellElementSubRegion >( nodeToSubRegionMap[k] ),
-                               nodeToElementMap[k] );
-  }
+    std::vector< std::pair< CellElementSubRegion const *, localIndex > > result;
 
+    for( localIndex k = 0; k < nodeManager.elementRegionList().sizeOfArray( nodeID ); ++k )
+    {
+      localIndex const er = nodeToRegionMap[k], esr = nodeToSubRegionMap[k], ei = nodeToElementMap[k];
+      CellElementSubRegion const * cellElementSubRegion = &elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+      std::pair< CellElementSubRegion const *, localIndex > const p( cellElementSubRegion, ei );
+      // To mimic the previous std::set behavior, we keep pairs unique within the container.
+      // This may not be the best implementation since we search before every insertion,
+      // but we'll always be looping over small number of elements (couple regions and a few subregions).
+      if( std::find( result.cbegin(), result.cend(), p ) == result.cend() )
+      {
+        result.push_back( p );
+      }
+    }
 
-  // ***** END BACKWARDS COMPATIBLITY HACK
+    return result;
+  };
 
+  std::vector< std::pair< CellElementSubRegion const *, localIndex > > const nodeToElementMaps( buildNodeToElementMaps() );
+  // END OF BACKWARDS COMPATIBILITY HACK!
 
   arrayView1d< integer const > const & isEdgeExternal = edgeManager.isExternal();
 
@@ -1365,7 +1387,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
     edgeLocations[edgeID] = INT_MIN;
   }
 
-  for( std::set< std::pair< CellElementSubRegion const *, localIndex > >::const_iterator k = nodeToElementMaps.begin(); k != nodeToElementMaps.end(); ++k )
+  for( auto k = nodeToElementMaps.cbegin(); k != nodeToElementMaps.cend(); ++k )
   {
     elemLocations[*k] = INT_MIN;
   }
@@ -1450,7 +1472,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 bool SurfaceGenerator::setLocations( std::set< localIndex > const & separationPathFaces,
                                      ElementRegionManager const & elemManager,
                                      FaceManager const & faceManager,
-                                     std::set< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
+                                     std::vector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
                                      map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                                      map< localIndex, int > & edgeLocations,
                                      map< localIndex, int > & faceLocations,
@@ -1462,7 +1484,7 @@ bool SurfaceGenerator::setLocations( std::set< localIndex > const & separationPa
   // insert an element attached to the separation face
   //  std::pair<CellBlockSubRegion*,localIndex> elem0 = m_virtualFaces.m_FaceToElementMap[separationFace][0] ;
 
-  std::pair< CellElementSubRegion const *, localIndex > elem0 = *( nodeToElementMaps.cbegin() );
+  std::pair< CellElementSubRegion const *, localIndex > const elem0 = *( nodeToElementMaps.cbegin() );
 
 
   setElemLocations( 0,
@@ -1488,7 +1510,7 @@ bool SurfaceGenerator::setElemLocations( int const location,
                                          std::set< localIndex > const & separationPathFaces,
                                          ElementRegionManager const & elemManager,
                                          FaceManager const & faceManager,
-                                         std::set< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
+                                         std::vector< std::pair< CellElementSubRegion const *, localIndex > > const & nodeToElementMaps,
                                          map< localIndex, std::pair< localIndex, localIndex > > const & localFacesToEdges,
                                          map< localIndex, int > & edgeLocations,
                                          map< localIndex, int > & faceLocations,
@@ -1568,9 +1590,9 @@ bool SurfaceGenerator::setElemLocations( int const location,
 
         // if the first element is the one we are on, and the element is attached
         // to the splitting node, then add the second element to the list.
-        if( nodeToElementMaps.find( nextElem )!=nodeToElementMaps.end() )
+        if( std::find( nodeToElementMaps.cbegin(), nodeToElementMaps.cend(), nextElem ) != nodeToElementMaps.cend() )
         {
-          if( elemLocations[nextElem]==INT_MIN )
+          if( elemLocations[nextElem] == INT_MIN )
           {
             setElemLocations( nextLocation,
                               nextElem,
