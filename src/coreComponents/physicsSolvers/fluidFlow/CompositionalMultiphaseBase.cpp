@@ -29,6 +29,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/thermalConductivity/thermalConductivitySelector.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -554,16 +555,31 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
                                                                                    auto & subRegion )
   {
     // 4. Update dependent state quantities
-    updatePhaseVolumeFraction( subRegion, targetIndex );
+
+    // 4.1 First, we update the porosity and permeability, and save the porosity into the "old porosity"
     updatePorosityAndPermeability( subRegion, targetIndex );
+    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    porousMaterial.initializeState();
+
+    // 4.2 Then, we initialize the capillary pressure model (which can depend on porosity and permeability)
+    if( m_capPressureFlag )
+    {
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+      PermeabilityBase const & permeabilityMaterial =
+        getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+
+      CapillaryPressureBase const & capPressureMaterial =
+        getConstitutiveModel< CapillaryPressureBase >( subRegion, m_capPressureModelNames[targetIndex] );
+      capPressureMaterial.initializeRockState( porosity, permeability );
+    }
+
+    // 4.3 Finally, we call the remaining constitutive models to perform the updates
+    updatePhaseVolumeFraction( subRegion, targetIndex );
     updateRelPermModel( subRegion, targetIndex );
     updatePhaseMobility( subRegion, targetIndex );
     updateCapPressureModel( subRegion, targetIndex );
-
-    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
-
-    // saves porosity in oldPorosity
-    porousSolid.initializeState();
 
   } );
 
@@ -1459,6 +1475,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
+  // Step 1: save the aquifer converged state
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
@@ -1475,6 +1492,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
     arrayView2d< real64, compflow::USD_COMP > const compDens =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
 
+    // Step 2: increment the primary variables with the accumulated Newton updates
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
@@ -1484,8 +1502,24 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       }
     } );
 
+    // Step 3: save the converged solid state (porosity, solid internal energy, etc)
     CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
     porousMaterial.saveConvergedState();
+
+    // Step 4: if capillary pressure is supported, send the converged porosity and permeability to the capillary pressure model
+    // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)
+    if( m_capPressureFlag )
+    {
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+      PermeabilityBase const & permeabilityMaterial =
+        getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+
+      CapillaryPressureBase const & capPressureMaterial =
+        getConstitutiveModel< CapillaryPressureBase >( subRegion, m_capPressureModelNames[targetIndex] );
+      capPressureMaterial.saveConvergedRockState( porosity, permeability );
+    }
   } );
 }
 

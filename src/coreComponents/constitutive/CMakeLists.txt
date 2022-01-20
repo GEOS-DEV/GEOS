@@ -10,8 +10,10 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
-     capillaryPressure/CapillaryPressureExtrinsicData.hpp     
-     capillaryPressure/TableCapillaryPressure.hpp     
+     capillaryPressure/CapillaryPressureExtrinsicData.hpp
+     capillaryPressure/JFunctionCapillaryPressure.hpp          
+     capillaryPressure/TableCapillaryPressure.hpp
+     capillaryPressure/TableCapillaryPressureHelpers.hpp          
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
@@ -118,7 +120,9 @@ set( constitutive_sources
      NullModel.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/JFunctionCapillaryPressure.cpp               
      capillaryPressure/TableCapillaryPressure.cpp
+     capillaryPressure/TableCapillaryPressureHelpers.cpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactBase.cpp
      contact/CoulombContact.cpp

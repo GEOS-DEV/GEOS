@@ -463,6 +463,13 @@ Element: InternalWellbore
 .. include:: ../../coreComponents/schema/docs/InternalWellbore.rst
 
 
+.. _XML_JFunctionCapillaryPressure:
+
+Element: JFunctionCapillaryPressure
+===================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
+
+
 .. _XML_LagrangianContact:
 
 Element: LagrangianContact
@@ -1452,6 +1459,13 @@ Datastructure: InternalWell
 Datastructure: InternalWellbore
 ===============================
 .. include:: ../../coreComponents/schema/docs/InternalWellbore_other.rst
+
+
+.. _DATASTRUCTURE_JFunctionCapillaryPressure:
+
+Datastructure: JFunctionCapillaryPressure
+=========================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_LagrangianContact:
