@@ -154,6 +154,8 @@ SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
+  SolverBase::registerDataOnMesh( meshBodies );
+
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
                                     arrayView1d<string const> const & regionNames )
@@ -246,18 +248,16 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent(0);
 
+      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+      GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
+
     } );
 
   } );
 }
 
-void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-{
-  string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
-  solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
-  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
-
-}
 
 void SolidMechanicsLagrangianFEM::initializePreSubGroups()
 {

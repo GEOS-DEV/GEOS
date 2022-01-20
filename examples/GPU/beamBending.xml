@@ -127,7 +127,6 @@
     <FieldSpecification
       name="xposconstraint"
       objectPath="faceManager"
-      fieldName="Traction"
       component="1"
       scale="1.0e6"
       functionName="timeFunction"
