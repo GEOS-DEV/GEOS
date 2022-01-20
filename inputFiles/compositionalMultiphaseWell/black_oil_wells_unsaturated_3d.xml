@@ -134,8 +134,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="TPFA"
-        coefficientName="permeability"/>
+        innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

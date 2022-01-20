@@ -51,9 +51,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        targetRegions="{ Reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        targetRegions="{ Reservoir }"/>
     </FiniteVolume>
   </NumericalMethods>
 

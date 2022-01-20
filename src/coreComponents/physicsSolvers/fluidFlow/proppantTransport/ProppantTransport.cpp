@@ -111,6 +111,8 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
         setDefaultValue( 0 );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString() ).
         setDefaultValue( 0.0 );
+
+      setConstitutiveNames( subRegion );
     } );
 
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
@@ -135,6 +137,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::proppantLiftFluxString() );
       subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::bcComponentConcentrationString() ).
         setDefaultValue( 0.0 );
+
+      setConstitutiveNames( subRegion );
+
     } );
   } );
 }

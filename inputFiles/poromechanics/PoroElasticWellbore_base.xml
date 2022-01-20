@@ -204,9 +204,6 @@
   <FiniteVolume>
     <TwoPointFluxApproximation 
       name="singlePhaseTPFA"
-      fieldName="pressure"
-      coefficientName="permeability"
-      coefficientModelNames="{rockPerm}"
     />
   </FiniteVolume>
 </NumericalMethods>

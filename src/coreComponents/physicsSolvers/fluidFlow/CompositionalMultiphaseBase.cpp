@@ -151,6 +151,41 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
+      {
+
+        string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+        fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+        GEOSX_THROW_IF( fluidName.empty(),
+                        GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                        InputError );
+
+        subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE ).
+          setSizedFromParent(0);
+
+        string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+        relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
+        GEOSX_THROW_IF( relPermName.empty(),
+                        GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
+                        InputError );
+
+        if( m_capPressureFlag )
+        {
+
+          subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
+            setPlotLevel( PlotLevel::NOPLOT ).
+            setRestartFlags( RestartFlags::NO_WRITE ).
+            setSizedFromParent(0);
+
+          string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+          capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
+          GEOSX_THROW_IF( capPresName.empty(),
+                          GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                          InputError );
+        }
+      }
+
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
@@ -339,32 +374,6 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition & 
       }
     } );
   } );
-}
-
-void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-{
-//  FlowSolverBase::setConstitutiveNames(subRegion);
-
-  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-  GEOSX_THROW_IF( fluidName.empty(),
-                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                  InputError );
-
-  string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-  relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
-  GEOSX_THROW_IF( relPermName.empty(),
-                  GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
-                  InputError );
-
-  if( m_capPressureFlag )
-  {
-    string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-    capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-    GEOSX_THROW_IF( capPresName.empty(),
-                    GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
-                    InputError );
-  }
 }
 
 void CompositionalMultiphaseBase::initializePreSubGroups()
@@ -1333,7 +1342,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                          Group & subRegion,
                          string const & )
   {
-    string const & fluidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+    string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
     arrayView1d< real64 const > const bcPres =
