@@ -35,19 +35,19 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 
   registerWrapper( viewKeyStruct::fieldNameString(), &m_fieldName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of primary solution field" );
 
   registerWrapper( viewKeyStruct::coeffNameString(), &m_coeffName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "Name of coefficient field" );
 
   registerWrapper( viewKeyStruct::targetRegionsString(), &m_targetRegions ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "List of regions to build the stencil for" );
 
   registerWrapper( viewKeyStruct::coefficientModelNamesString(), &m_coefficientModelNames ).
-    setInputFlag( InputFlags::OPTIONAL ).
+    setInputFlag( InputFlags::FALSE ).
     setDescription( "List of constitutive models that contain the coefficient used to build the stencil" );
 
   registerWrapper( viewKeyStruct::areaRelativeToleranceString(), &m_areaRelTol ).
@@ -68,7 +68,7 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
-    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
       // Group structure: mesh1/finiteVolumeStencils/myTPFA
 
@@ -107,14 +107,6 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
       {
         registerAquiferStencil( stencilGroup, setName );
       } );
-
-      FaceManager & faceManager = mesh.getFaceManager();
-      faceManager.registerWrapper< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() ).
-        setApplyDefaultValue( 1.0 ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        setRegisteringObjects( this->getName() ).
-        setDescription( "An array that holds the transmissibility multipliers" );
-
     } );
   } );
 }
@@ -155,5 +147,16 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
     } );
   } );
 }
+
+void FluxApproximationBase::setFieldName( string const & name )
+{
+  m_fieldName = name;
+}
+
+void FluxApproximationBase::setCoeffName( string const & name )
+{
+  m_coeffName = name;
+}
+
 
 } //namespace geosx

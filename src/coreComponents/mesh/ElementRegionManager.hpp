@@ -1573,9 +1573,9 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
       string materialName;
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
-        GEOSX_ERROR_IF( materialName.empty(), GEOSX_FMT( "Multiple materials of base type {} found in subregion {}/{}: {} and {}",
-                                                         LvArray::system::demangleType< MATERIALTYPE >(),
-                                                         region.getName(), subRegion.getName(), materialName, constitutiveRelation.getName() ) );
+//        GEOSX_ERROR_IF( materialName.empty(), GEOSX_FMT( "Multiple materials of base type {} found in subregion {}/{}: {} and {}",
+//                                                         LvArray::system::demangleType< MATERIALTYPE >(),
+//                                                         region.getName(), subRegion.getName(), materialName, constitutiveRelation.getName() ) );
         materialName = constitutiveRelation.getName();
         accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
       } );

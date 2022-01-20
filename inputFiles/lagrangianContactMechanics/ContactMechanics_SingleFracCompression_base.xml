@@ -59,9 +59,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 

@@ -910,16 +910,8 @@ the relative residual norm satisfies:
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--areaRelTol => Relative tolerance for area calculations.-->
 		<xsd:attribute name="areaRelTol" type="real64" default="1e-08" />
-		<!--coefficientModelNames => List of constitutive models that contain the coefficient used to build the stencil-->
-		<xsd:attribute name="coefficientModelNames" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-		<!--coefficientName => Name of coefficient field-->
-		<xsd:attribute name="coefficientName" type="string" use="required" />
-		<!--fieldName => Name of primary solution field-->
-		<xsd:attribute name="fieldName" type="string" use="required" />
 		<!--meanPermCoefficient => (no description available)-->
 		<xsd:attribute name="meanPermCoefficient" type="real64" default="1" />
-		<!--targetRegions => List of regions to build the stencil for-->
-		<xsd:attribute name="targetRegions" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--usePEDFM => (no description available)-->
 		<xsd:attribute name="usePEDFM" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1795,8 +1787,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="nodeBasedSIF" type="integer" default="0" />
 		<!--rockToughness => Rock toughness of the solid material-->
 		<xsd:attribute name="rockToughness" type="real64" use="required" />
-		<!--solidMaterialNames => Name of the solid material used in solid mechanic solver-->
-		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2700,7 +2690,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" use="required" />
+		<xsd:attribute name="meshBody" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2711,7 +2701,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" use="required" />
+		<xsd:attribute name="meshBody" type="string" default="" />
 		<!--subRegionType => Type of surface element subregion. Valid options:
 * faceElement
 * embeddedElement-->
@@ -2729,7 +2719,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--materialList => List of materials present in this region-->
 		<xsd:attribute name="materialList" type="string_array" use="required" />
 		<!--meshBody => Mesh body that contains this region-->
-		<xsd:attribute name="meshBody" type="string" use="required" />
+		<xsd:attribute name="meshBody" type="string" default="" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

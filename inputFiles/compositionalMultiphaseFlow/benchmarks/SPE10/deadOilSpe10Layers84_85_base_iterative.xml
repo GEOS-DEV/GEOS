@@ -62,11 +62,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        targetRegions="{ reservoir }"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->

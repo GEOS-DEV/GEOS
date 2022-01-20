@@ -78,8 +78,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="singlePhaseHybridMimetic"
-        innerProductType="quasiTPFA"
-        coefficientName="permeability"/>
+        innerProductType="quasiTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
