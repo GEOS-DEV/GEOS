@@ -218,7 +218,6 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
   // TODO: can we look this up better?
   string const & meshBodyName = mesh.getParent().getParent().getName();
-  arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
   string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
 
 //  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
