@@ -50,6 +50,14 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseCapPressure_dPhaseVolFraction,
                            WRITE_AND_READ,
                            "Derivative of phase capillary pressure with respect to phase volume fraction" );
 
+EXTRINSIC_MESH_DATA_TRAIT( jFuncMultiplier,
+                           "jFuncMultiplier",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Multiplier for the Leverett J-function" );
+
 }
 
 }
