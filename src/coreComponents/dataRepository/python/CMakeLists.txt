@@ -1,10 +1,10 @@
 set( pygroup_headers PyGroup.hpp
-  PyGroupType.hpp
-  PyWrapper.hpp
+                     PyGroupType.hpp
+                     PyWrapper.hpp
 		    )
 
 set( pygroup_sources PyGroup.cpp
-		     PyWrapper.cpp
+                     PyWrapper.cpp
   )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )

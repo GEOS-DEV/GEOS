@@ -23,8 +23,10 @@
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "fileIO/python/PyHistoryCollectionType.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyHistoryCollectionType.hpp"
+#endif
 
 #include <functional>
 

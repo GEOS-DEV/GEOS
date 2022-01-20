@@ -19,7 +19,10 @@
 #include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
+
+#if defined(GEOSX_USE_PYGEOSX)
 #include "python/PySolverType.hpp"
+#endif
 
 namespace geosx
 {

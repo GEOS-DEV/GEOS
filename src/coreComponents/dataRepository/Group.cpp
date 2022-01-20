@@ -17,7 +17,10 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
+
+#if defined(GEOSX_USE_PYGEOSX)
 #include "python/PyGroupType.hpp"
+#endif
 
 namespace geosx
 {

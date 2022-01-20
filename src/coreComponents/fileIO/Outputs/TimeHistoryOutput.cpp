@@ -13,7 +13,10 @@
  */
 
 #include "TimeHistoryOutput.hpp"
+
+#if defined(GEOSX_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"
+#endif
 
 namespace geosx
 {
