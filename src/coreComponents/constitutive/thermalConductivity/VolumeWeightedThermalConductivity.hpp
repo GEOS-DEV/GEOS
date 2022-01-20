@@ -127,6 +127,12 @@ public:
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
+                                         arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const override;
+
+  virtual void saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
+                                            arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const override;
+
   static string catalogName() { return "VolumeWeightedThermalConductivity"; }
 
   virtual string getCatalogName() const override { return catalogName(); }

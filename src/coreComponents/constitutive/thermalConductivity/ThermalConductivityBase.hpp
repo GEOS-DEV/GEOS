@@ -114,6 +114,28 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
   /**
+   * @brief Initialize the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
+   * @param[in] initialPorosity the initial porosity field after reservoir initialization
+   * @param[in] initialPhaseVolumeFraction the initial phase volume fraction field
+   *
+   * Note: this is needed because for now, the porosity and phase volume fraction are treated **explictly**
+   */
+  virtual void initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
+                                         arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const
+  { GEOSX_UNUSED_VAR( initialPorosity, initialPhaseVolumeFraction ); }
+
+  /**
+   * @brief Save the thermal conductivity state (needed when thermal conductivity depends on porosity and phase volume fraction)
+   * @param[in] convergedPorosity the converged porosity field after reservoir initialization
+   * @param[in] convergedPhaseVolumeFraction the converged phase volume fraction field
+   *
+   * Note: this is needed because for now, the porosity and phase volume fraction are treated **explictly**
+   */
+  virtual void saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
+                                            arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const
+  { GEOSX_UNUSED_VAR( convergedPorosity, convergedPhaseVolumeFraction ); }
+
+  /**
    * @brief Getter for the number of fluid phases
    * @return the number of fluid phases
    */
@@ -162,6 +184,7 @@ protected:
   array3d< real64 > m_effectiveConductivity;
 
   /// cell-wise derivatives of effective conductivities wrt phase volume fraction in the subregion
+  /// note that for now, the effectiveConductivity is evaluated explicitly, so this field is not used in the solver
   array4d< real64 > m_dEffectiveConductivity_dPhaseVolFrac;
 
   // the effectiveConductivity is used to compute fluxes, so it is easier to lag porosity for now

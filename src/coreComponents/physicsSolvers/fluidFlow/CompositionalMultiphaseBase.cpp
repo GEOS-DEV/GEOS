@@ -469,37 +469,6 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
   }
 }
 
-void CompositionalMultiphaseBase::updateThermalConductivityModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  if( m_thermalFlag )
-  {
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-
-    CoupledSolidBase const & solid =
-      getConstitutiveModel< CoupledSolidBase >( dataGroup, m_solidModelNames[targetIndex] );
-
-    // use lagged porosity in time to avoid complex dependencies when porosity depends on displacement
-    arrayView2d< real64 const > const porosityOld = solid.getOldPorosity();
-
-    ThermalConductivityBase & thermalConductivity =
-      getConstitutiveModel< ThermalConductivityBase >( dataGroup, m_thermalConductivityModelNames[targetIndex] );
-
-    constitutive::constitutiveUpdatePassThru( thermalConductivity, [&] ( auto & castedThermalConductivity )
-    {
-      typename TYPEOFREF( castedThermalConductivity ) ::KernelWrapper conductivityWrapper = castedThermalConductivity.createKernelWrapper();
-
-      ThermalConductivityUpdateKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                                                         conductivityWrapper,
-                                                                         porosityOld,
-                                                                         phaseVolFrac );
-    } );
-  }
-}
-
-
 void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion, localIndex targetIndex ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -510,7 +479,7 @@ void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegio
   updateRelPermModel( subRegion, targetIndex );
   updatePhaseMobility( subRegion, targetIndex );
   updateCapPressureModel( subRegion, targetIndex );
-  updateThermalConductivityModel( subRegion, targetIndex );
+  // note: for now, thermal conductivity is treated explicitly, so no update here
 }
 
 void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
@@ -555,6 +524,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
                                                                                    auto & subRegion )
   {
     // 4. Update dependent state quantities
+    // Note that the order used below is important, as some constitutive models are initialized with values from other constitutive models
 
     // 4.1 First, we update the porosity and permeability, and save the porosity into the "old porosity"
     updatePorosityAndPermeability( subRegion, targetIndex );
@@ -562,12 +532,15 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
     porousMaterial.initializeState();
 
     // 4.2 Then, we initialize the capillary pressure model (which can depend on porosity and permeability)
+    // note: this **must** be called after the porosity update, and **before** calling updateCapPressureModel
     if( m_capPressureFlag )
     {
+      // initialized porosity
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
       PermeabilityBase const & permeabilityMaterial =
         getConstitutiveModel< PermeabilityBase >( subRegion, m_permeabilityModelNames[targetIndex] );
+      // initialized permeability
       arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
 
       CapillaryPressureBase const & capPressureMaterial =
@@ -575,11 +548,27 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
       capPressureMaterial.initializeRockState( porosity, permeability );
     }
 
-    // 4.3 Finally, we call the remaining constitutive models to perform the updates
+    // 4.3 Then, we call the remaining constitutive models to perform the updates
     updatePhaseVolumeFraction( subRegion, targetIndex );
     updateRelPermModel( subRegion, targetIndex );
     updatePhaseMobility( subRegion, targetIndex );
     updateCapPressureModel( subRegion, targetIndex );
+    // thermal conductivity is explicitly, so no update here
+
+    // 4.4 Finally, we initialize the thermal conductivity (which can depend on porosity and phase volume fraction)
+    if( m_thermalFlag )
+    {
+      // initialized porosity
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+      // initialized phase volume fraction
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+
+      ThermalConductivityBase const & conductivityMaterial =
+        getConstitutiveModel< ThermalConductivityBase >( subRegion, m_thermalConductivityModelNames[targetIndex] );
+      conductivityMaterial.initializeRockFluidState( porosity, phaseVolFrac );
+    }
 
   } );
 
@@ -1520,6 +1509,21 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         getConstitutiveModel< CapillaryPressureBase >( subRegion, m_capPressureModelNames[targetIndex] );
       capPressureMaterial.saveConvergedRockState( porosity, permeability );
     }
+
+    // Step 5: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model
+    // note: this is needed because the phaseVolFrac-weighted thermal conductivity treats phaseVolumeFraction explicitly for now
+    if( m_thermalFlag )
+    {
+      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+
+      ThermalConductivityBase const & thermalConductivityMaterial =
+        getConstitutiveModel< ThermalConductivityBase >( subRegion, m_thermalConductivityModelNames[targetIndex] );
+      thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
+    }
+
   } );
 }
 

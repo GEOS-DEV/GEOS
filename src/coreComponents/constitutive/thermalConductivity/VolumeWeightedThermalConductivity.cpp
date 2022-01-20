@@ -86,9 +86,30 @@ void VolumeWeightedThermalConductivity::postProcessInput()
                                getFullName(), ip ),
                     InputError );
   }
-
-
 }
+
+void VolumeWeightedThermalConductivity::initializeRockFluidState( arrayView2d< real64 const > const & initialPorosity,
+                                                                  arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolumeFraction ) const
+{
+  saveConvergedRockFluidState( initialPorosity, initialPhaseVolumeFraction );
+}
+
+void VolumeWeightedThermalConductivity::saveConvergedRockFluidState( arrayView2d< real64 const > const & convergedPorosity,
+                                                                     arrayView2d< real64 const, compflow::USD_PHASE > const & convergedPhaseVolumeFraction ) const
+{
+  // note that the update function is called here, and not in the solver, because porosity and phase volume fraction are treated explicitly
+
+  KernelWrapper conductivityWrapper = createKernelWrapper();
+
+  forAll< parallelDevicePolicy<> >( conductivityWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < conductivityWrapper.numGauss(); ++q )
+    {
+      conductivityWrapper.update( k, q, convergedPorosity[k][q], convergedPhaseVolumeFraction[k] );
+    }
+  } );
+}
+
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, VolumeWeightedThermalConductivity, string const &, Group * const )
 

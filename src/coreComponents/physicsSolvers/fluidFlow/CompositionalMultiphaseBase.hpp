@@ -149,12 +149,6 @@ public:
   void updateCapPressureModel( ObjectManagerBase & castedCapPres, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant thermal conductivity models using current values of phase volume fraction
-   * @param castedThermalConductivity the group storing the required fields
-   */
-  void updateThermalConductivityModel( ObjectManagerBase & castedThermalConductivity, localIndex const targetIndex ) const;
-
-  /**
    * @brief Recompute phase mobility from constitutive and primary variables
    * @param domain the domain containing the mesh and fields
    */
