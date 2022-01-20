@@ -167,6 +167,9 @@ public:
    */
   array1d< string > & coefficientModelNames( string const & meshBodyName ) { return m_coefficientModelNames[meshBodyName]; }
 
+  void setFieldName( string const & name );
+
+  void setCoeffName( string const & name );
 
 protected:
 

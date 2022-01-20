@@ -1986,6 +1986,13 @@ Datastructure: embeddedSurfacesNodeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
 
 
+.. _DATASTRUCTURE_finiteVolumeStencils:
+
+Datastructure: finiteVolumeStencils
+===================================
+.. include:: ../../coreComponents/schema/docs/finiteVolumeStencils_other.rst
+
+
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen

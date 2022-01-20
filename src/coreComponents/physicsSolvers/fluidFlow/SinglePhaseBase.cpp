@@ -23,6 +23,7 @@
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
@@ -58,13 +59,16 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d< string const > const & regionNames )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
 
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
     {
       subRegion.registerExtrinsicData< pressure >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
@@ -76,23 +80,14 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< dMobility_dPressure >( getName() );
 
       subRegion.registerExtrinsicData< densityOld >( getName() );
-    } );
 
-    elemManager.forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
-    {
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::pressure >( getName() );
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::initialPressure >( getName() );
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::deltaPressure >( getName() );
+      string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+      fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
+      GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::deltaVolume >( getName() );
+    });
 
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::mobility >( getName() );
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::dMobility_dPressure >( getName() );
-
-      subRegion.template registerExtrinsicData< extrinsicMeshData::flow::densityOld >( getName() );
-    } );
-
-    FaceManager & faceManager = meshLevel.getFaceManager();
+    FaceManager & faceManager = mesh.getFaceManager();
     {
       faceManager.registerExtrinsicData< facePressure >( getName() );
     }
@@ -140,17 +135,10 @@ SinglePhaseBase::FluidPropViews SinglePhaseBase::getFluidProperties( Constitutiv
            singleFluid.defaultViscosity() };
 }
 
-void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-{
-  string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
-  fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
-  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
-}
-
-
 void SinglePhaseBase::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
+
 
   validateFluidModels( this->getGroupByPath< DomainPartition >( "/Problem/domain" ) );
 

@@ -74,9 +74,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 
