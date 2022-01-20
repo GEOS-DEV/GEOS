@@ -52,7 +52,7 @@ void MeshBody::setGlobalLengthScale( real64 scale )
 string MeshBody::intToMeshLevelString( localIndex const meshLevel ) const
 {
   char temp[100] = {0};
-  sprintf( temp, "Level%.2ld", meshLevel );
+  sprintf( temp, "Level%.1ld", meshLevel );
   return temp;
 }
 

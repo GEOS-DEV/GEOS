@@ -171,7 +171,28 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< real64_array >( "pressure" ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
+
+
+      subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent(0);
+
+      string & contactRelationName = subRegion.getReference<string>( viewKeyStruct::contactRelationNameString() );
+//      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
+      contactRelationName = this->m_contactRelationName;
+      GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+
+
     } );
+
+    FaceManager & faceManager = mesh.getFaceManager();
+    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
+      setApplyDefaultValue( 1.0 ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName() ).
+      setDescription( "An array that holds the permeability transmissibility multipliers" );
+
   } );
 }
 
@@ -184,6 +205,50 @@ void LagrangianContactSolver::initializePreSubGroups()
 
   ConstitutiveBase const & contactRelation = cm.getConstitutiveRelation< ConstitutiveBase >( m_contactRelationName );
   m_contactRelationFullIndex = contactRelation.getIndexInParent();
+
+
+  // fill stencil targetRegions
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+
+  if( fvManager.hasGroup< FluxApproximationBase >( m_stabilizationName ) )
+  {
+
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_stabilizationName );
+    fluxApprox.setFieldName( viewKeyStruct::tractionString() );
+    fluxApprox.setCoeffName( "penaltyStiffness" );
+
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                  MeshLevel & mesh,
+                                                  arrayView1d< string const > const & regionNames )
+    {
+      array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+      array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames( meshBodyName );
+
+      std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
+      map< string, string > coeffModelNames;
+
+      mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
+                                                                                  [&]( localIndex const,
+                                                                                       localIndex const,
+                                                                                       localIndex const,
+                                                                                       ElementRegionBase const & region,
+                                                                                       ElementSubRegionBase const & subRegion )
+      {
+        coeffModelNames[region.getName()] = viewKeyStruct::contactRelationNameString();//permName;
+        stencilTargetRegionsSet.insert( region.getName() );
+      } );
+
+      stencilTargetRegions.clear();
+      stencilCoeffModelNames.clear();
+      for( auto const & targetRegion: stencilTargetRegionsSet )
+      {
+        stencilTargetRegions.emplace_back( targetRegion );
+        stencilCoeffModelNames.emplace_back( coeffModelNames[targetRegion] );
+      }
+    } );
+  }
+
 }
 
 void LagrangianContactSolver::setupSystem( DomainPartition & domain,
