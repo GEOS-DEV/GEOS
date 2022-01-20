@@ -20,17 +20,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }"/>
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }"
-      fluidNames="{ fluid }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ skeletonPerm }"/>
+      targetRegions="{ Domain }"/>
   </Solvers>
 
   <!-- SPHINX_POROELASTIC_SOLVER_END -->

@@ -6,10 +6,7 @@
     <SinglePhaseHybridFVM
       name="flowSolver"
       discretization="singlePhaseHybridMimetic"
-      targetRegions="{ Region1, Region2 }"
-      fluidNames="{ fluid1, fluid2 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }">
+      targetRegions="{ Region1, Region2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>

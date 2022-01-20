@@ -42,8 +42,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       name="lagsolve"
-      contactRelationName="fractureContact"
-      solidMaterialNames="{ rock }"
+      contactRelationName="fractureContact""
       targetRegions="{ Domain, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
@@ -55,9 +54,6 @@
     <SinglePhaseFVM
       discretization="singlePhaseTPFA"
       name="SinglePhaseFlow"
-      solidNames="{ rock }"
-      permeabilityNames="{ fracturePerm }"
-      fluidNames="{ water }"
       targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonMaxIter="10"
@@ -70,7 +66,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
       rockToughness="1e6"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>

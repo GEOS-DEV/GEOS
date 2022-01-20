@@ -414,6 +414,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
+    localIndex const numMeshBodies = domain.getMeshBodies().numSubGroups();
     domain.getMeshBodies().forSubGroups<MeshBody>([&]( MeshBody & meshBody )
     {
       string const meshBodyName = meshBody.getName();
@@ -423,8 +424,14 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
       xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
       for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
       {
+
         string const regionName = regionNode.attribute( "name" ).value();
-        string const regionMeshBodyName = regionNode.attribute( "meshBody" ).value();
+        string const
+        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
+                                                                    regionNode.attribute( "meshBody" ).value() );
+
+
+
         string const cellBlocks = regionNode.attribute( "cellBlocks" ).value();
 
         if( regionMeshBodyName==meshBodyName )

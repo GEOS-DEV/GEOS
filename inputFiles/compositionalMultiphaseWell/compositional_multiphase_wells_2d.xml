@@ -21,10 +21,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"/>
 
     <!-- SPHINX_COMP_WELL_SOLVER -->
@@ -32,8 +28,6 @@
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }"
-      fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }">
       <WellControls
         name="wellControls1"
         type="producer"

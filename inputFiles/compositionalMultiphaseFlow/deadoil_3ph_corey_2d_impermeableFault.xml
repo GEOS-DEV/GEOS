@@ -6,10 +6,6 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracturePerm }"
-      relPermNames="{ relperm }"
       temperature="300"
       useMass="0"
       targetRegions="{ Domain, Fracture }"
@@ -28,7 +24,7 @@
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
       logLevel="1"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       mpiCommOrder="1"/>

@@ -7,10 +7,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ region }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"
       computeCFLNumbers="1">
       <NonlinearSolverParameters
