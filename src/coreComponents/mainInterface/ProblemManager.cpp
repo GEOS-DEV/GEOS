@@ -667,7 +667,8 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   MeshUtilities::generateNodesets( geometricObjects, nodeManager );
   nodeManager.constructGlobalToLocalMap();
 
-
+  std::cout << meshLevel.getName() << std::endl;
+  std::cout << MeshLevel::viewStructKeys::baseDiscretizationString() << std::endl;
   if( meshLevel.getName() == MeshLevel::viewStructKeys::baseDiscretizationString() )
   {
     elemManager.generateMesh( cellBlockManager );
@@ -693,9 +694,10 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   {
     elemManager.setMaxGlobalIndex();
     elemManager.generateCellToEdgeMaps( faceManager );
+    elemManager.generateAggregates( faceManager, nodeManager );
+
   }
 
-  elemManager.generateAggregates( faceManager, nodeManager );
 
 //  elemManager.generateWells( meshManager, meshLevel );
 }
