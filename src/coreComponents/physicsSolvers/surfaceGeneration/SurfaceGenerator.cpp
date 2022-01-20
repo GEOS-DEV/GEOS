@@ -178,9 +178,9 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 {
   this->registerWrapper( viewKeyStruct::failCriterionString(), &this->m_failCriterion );
 
-  registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid material used in solid mechanic solver" );
+//  registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialNames ).
+//    setInputFlag( InputFlags::REQUIRED ).
+//    setDescription( "Name of the solid material used in solid mechanic solver" );
 
   registerWrapper( viewKeyStruct::rockToughnessString(), &m_rockToughness ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -243,7 +243,7 @@ void SurfaceGenerator::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::K_IC_22 >( this->getName() );
     } );
 
-    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const, FaceElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::K_IC_00,
                                        extrinsicMeshData::K_IC_01,
@@ -2806,12 +2806,15 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
   arrayView1d< localIndex const > const & childNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
   arrayView1d< localIndex > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  ConstitutiveBase const & solid = cm.getConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
-  m_solidMaterialFullIndex = solid.getIndexInParent();
-
-  ConstitutiveManager & constitutiveManager =
-    domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+  m_solidMaterialFullIndex.resize( elementManager.numRegions() );
+  elementManager.forElementRegionsComplete<CellElementRegion>( [&]( localIndex regionIndex,
+                                                                    CellElementRegion const & region )
+  {
+    string const & solidMaterialName = region.getSubRegion(0).getReference<string>( viewKeyStruct::solidMaterialNameString() );
+    ConstitutiveBase const & solid = constitutiveManager.getConstitutiveRelation< ConstitutiveBase >( solidMaterialName );
+    m_solidMaterialFullIndex[regionIndex] = solid.getIndexInParent();
+  });
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
@@ -2842,12 +2845,11 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
                                                                  [&]( localIndex const,
                                                                       CellElementSubRegion const & subRegion )
     {
-      for( localIndex mat=0; mat<m_solidMaterialNames.size(); ++mat )
-      {
-        subRegion.getConstitutiveModel( m_solidMaterialNames[mat] ).
-          getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
-                                                                                                                         false );
-      }
+      string const & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNameString() );
+      subRegion.
+      getConstitutiveModel( solidMaterialName ).
+      getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
+                                                                                                                     false );
     } );
     displacement.move( LvArray::MemorySpace::host, false );
   } );
@@ -2907,8 +2909,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
             arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elementsToNodes = elementSubRegion.nodeList();
             arrayView2d< real64 const > const & elementCenter = elementSubRegion.getElementCenter().toViewConst();
-            real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
-            real64 G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
+            real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
+            real64 G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
             real64 YoungModulus = 9 * K * G / ( 3 * K + G );
             real64 poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
@@ -2927,7 +2929,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
                                              numQuadraturePoints,
                                              dNdX[er][esr],
                                              detJ[er][esr],
-                                             stress[er][esr][m_solidMaterialFullIndex],
+                                             stress[er][esr][m_solidMaterialFullIndex[er]],
                                              temp );
 
                 //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
@@ -3027,8 +3029,8 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
               localIndex const esr = nodeToSubRegionMap[nodeIndex][k];
               localIndex const ei  = nodeToElementMap[nodeIndex][k];
 
-              real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
-              real64 G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
+              real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
+              real64 G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
               averageYoungModulus += 9 * K * G / ( 3 * K + G );
               averagePoissonRatio += ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
             }
@@ -3657,12 +3659,16 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  ConstitutiveBase const & solid = cm.getConstitutiveRelation< ConstitutiveBase >( m_solidMaterialNames[0] );
-  m_solidMaterialFullIndex = solid.getIndexInParent();
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+  m_solidMaterialFullIndex.resize( elementManager.numRegions() );
+  elementManager.forElementRegionsComplete<CellElementRegion>( [&]( localIndex regionIndex,
+                                                                    CellElementRegion const & region )
+  {
+    string const & solidMaterialName = region.getSubRegion(0).getReference<string>( viewKeyStruct::solidMaterialNameString() );
+    ConstitutiveBase const & solid = constitutiveManager.getConstitutiveRelation< ConstitutiveBase >( solidMaterialName );
+    m_solidMaterialFullIndex[regionIndex] = solid.getIndexInParent();
+  });
 
-  ConstitutiveManager & constitutiveManager =
-    domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
@@ -3726,8 +3732,8 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
 
       if(( udist <= edgeLength && udist > 0.0 ) || threeNodesPinched )
       {
-        real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex][ei];
-        real64 G = shearModulus[er][esr][m_solidMaterialFullIndex][ei];
+        real64 K = bulkModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
+        real64 G = shearModulus[er][esr][m_solidMaterialFullIndex[er]][ei];
         real64 YoungModulus = 9 * K * G / ( 3 * K + G );
         real64 poissonRatio = ( 3 * K - 2 * G ) / ( 2 * ( 3 * K + G ) );
 
@@ -3748,7 +3754,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
                                          numQuadraturePoints,
                                          dNdX[er][esr],
                                          detJ[er][esr],
-                                         stress[er][esr][m_solidMaterialFullIndex],
+                                         stress[er][esr][m_solidMaterialFullIndex[er]],
                                          temp );
 
             LvArray::tensorOps::scale< 3 >( temp, YoungModulus );

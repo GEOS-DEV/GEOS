@@ -50,20 +50,22 @@ ElementRegionBase::~ElementRegionBase()
 {}
 
 
-void ElementRegionBase::postProcessInput()
+string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
+                                              string const & meshBodyBlockName )
 {
-  Group const & meshBody = this->getParent().getParent().getParent().getParent().getParent();
-  string const & meshBodyName = meshBody.getName();
-  Group const & meshBodies = meshBody.getParent();
+  string meshBodyName = meshBodyBlockName;
+  localIndex const numMeshBodies = meshBodies.numSubGroups();
   localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
 
   if( numberOfMeshBodies == 1 )
   {
-    if( m_meshBody=="" )
+    string const & onlyMeshBodyName = meshBodies.getGroup(0).getName();
+
+    if( meshBodyName=="" )
     {
-      m_meshBody = meshBodyName;
+      meshBodyName = onlyMeshBodyName;
     }
-    GEOSX_ERROR_IF_EQ_MSG( m_meshBody,
+    GEOSX_ERROR_IF_NE_MSG( onlyMeshBodyName,
                            meshBodyName,
                            "MeshBody specified does not match MeshBody in hierarchy.");
   }
@@ -72,7 +74,7 @@ void ElementRegionBase::postProcessInput()
     bool meshBodyFound = false;
     meshBodies.forSubGroups( [&] ( Group const & meshBody )
     {
-      if( meshBody.getName()==m_meshBody )
+      if( meshBody.getName()==meshBodyName )
       {
         meshBodyFound = true;
       }
@@ -80,7 +82,7 @@ void ElementRegionBase::postProcessInput()
     GEOSX_ERROR_IF( !meshBodyFound, "MeshBody was not found");
   }
 
-
+return meshBodyName;
 }
 
 

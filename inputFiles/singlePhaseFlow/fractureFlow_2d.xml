@@ -6,10 +6,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-2"
         newtonMaxIter="8"/>
@@ -19,7 +16,7 @@
 
     <SurfaceGenerator
       name="SurfaceGen"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Fracture }"
       rockToughness="1e6"
       mpiCommOrder="1"/>

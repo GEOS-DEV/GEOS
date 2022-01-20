@@ -7,11 +7,7 @@
       name="compflow"
       logLevel="1"
       discretization="fluidHM"
-      targetRegions="{ Channel }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
+      targetRegions="{ mesh/Channel }"
       temperature="300"
       maxCompFractionChange="0.5">
       <NonlinearSolverParameters
@@ -84,6 +80,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
+      meshBody="mesh"
       cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
       materialList="{ fluid, rock, relperm }"/>
 

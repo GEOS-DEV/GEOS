@@ -55,11 +55,7 @@
       criticalShieldsNumber="0.0"
       maxProppantConcentration="0.62"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      proppantNames="{ sand }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -86,10 +82,7 @@
       name="SinglePhaseFVM"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -104,7 +97,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      solidMaterialNames="{ granite }"
+      
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>

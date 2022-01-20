@@ -32,7 +32,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      solidMaterialNames="{ rock }"
+      
       contactRelationName="fractureContact"/>
 	<!-- Sphinx_Solvers_SolidMechanicsLagrangianSSLE_End -->
 
@@ -40,10 +40,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      targetRegions="{ Fracture }"/>
     <!-- Sphinx_Solvers_SinglePhaseFVM_End -->
 
     <!-- Sphinx_Solvers_SurfaceGenerator -->
@@ -51,7 +48,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="1e-6"/>
     <!-- Sphinx_Solvers_SurfaceGenerator_End -->
 
