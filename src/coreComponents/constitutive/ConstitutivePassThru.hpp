@@ -41,6 +41,8 @@
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
+#include "permeability/SlipDependentPermeability.hpp"
+
 
 namespace geosx
 {
@@ -167,8 +169,10 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
-                                                                                                               std::forward< LAMBDA >( lambda ) );
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -176,8 +180,10 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
-                                                                                                               std::forward< LAMBDA >( lambda ) );
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
   }
 };
 
@@ -217,6 +223,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,
@@ -237,6 +244,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
                                  PorousSolid< ModifiedCamClay >,
                                  PorousSolid< DelftEgg >,

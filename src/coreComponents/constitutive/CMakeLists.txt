@@ -43,6 +43,7 @@ set( constitutive_headers
      fluid/PVTFunctions/CO2Enthalpy.hpp
      fluid/PVTFunctions/BrineInternalEnergy.hpp
      fluid/PVTFunctions/CO2InternalEnergy.hpp
+     fluid/PVTFunctions/CO2EOSSolver.hpp     
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
@@ -60,8 +61,8 @@ set( constitutive_headers
      permeability/ParallelPlatesPermeability.hpp
      permeability/PermeabilityBase.hpp
      permeability/PermeabilityExtrinsicData.hpp     
-     permeability/StrainDependentPermeability.hpp
      permeability/ProppantPermeability.hpp     
+     permeability/SlipDependentPermeability.hpp 
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp 
@@ -137,6 +138,7 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Enthalpy.cpp
      fluid/PVTFunctions/BrineInternalEnergy.cpp
      fluid/PVTFunctions/CO2InternalEnergy.cpp
+     fluid/PVTFunctions/CO2EOSSolver.cpp          
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
@@ -146,8 +148,8 @@ set( constitutive_sources
      permeability/ConstantPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
      permeability/PermeabilityBase.cpp
-     permeability/StrainDependentPermeability.cpp
-     permeability/ProppantPermeability.cpp
+     permeability/ProppantPermeability.cpp     
+     permeability/SlipDependentPermeability.cpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
