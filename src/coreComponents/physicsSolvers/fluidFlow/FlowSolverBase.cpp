@@ -201,9 +201,9 @@ void FlowSolverBase::initializePreSubGroups()
                                                                                        localIndex const,
                                                                                        localIndex const,
                                                                                        ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const & subRegion )
+                                                                                       ElementSubRegionBase const &  )
       {
-        string const & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
+//        string const & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
         coeffModelNames[region.getName()] = viewKeyStruct::permeabilityNamesString();//permName;
         stencilTargetRegionsSet.insert( region.getName() );
       } );

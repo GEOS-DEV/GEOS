@@ -106,7 +106,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
-                                    arrayView1d< string const > const & regionNames )
+                                    arrayView1d< string const > const & )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 

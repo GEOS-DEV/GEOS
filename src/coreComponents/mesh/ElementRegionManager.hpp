@@ -1527,6 +1527,7 @@ ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT
 ElementRegionManager::
   constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
 {
+  GEOSX_UNUSED_VAR(allowMissingViews);
   return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
                                         traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
 }
@@ -1557,8 +1558,6 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
   {
     accessor[er].resize( getRegion( er ).numSubRegions() );
   }
-
-  subGroupMap const & regionMap = getRegions();
 
   // Loop only over regions named and populate according to given material names
   for( localIndex er = 0; er < numRegions(); ++er )
