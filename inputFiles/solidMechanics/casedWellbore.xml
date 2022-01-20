@@ -10,8 +10,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ casing, cement, rock }"
-      solidMaterialNames="{ casing, cement, rock }">
+      targetRegions="{ mesh1/casing, mesh1/cement, mesh1/rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
@@ -79,16 +78,19 @@
   <ElementRegions>
     <CellElementRegion
       name="casing"
+      meshBody="mesh1"
       cellBlocks="{ casing }"
       materialList="{ casing }"/>
 
     <CellElementRegion
       name="cement"
+      meshBody="mesh1"
       cellBlocks="{ cement }"
       materialList="{ cement }"/>
 
     <CellElementRegion
       name="rock"
+      meshBody="mesh1"
       cellBlocks="{ rock }"
       materialList="{ rock }"/>
   </ElementRegions>

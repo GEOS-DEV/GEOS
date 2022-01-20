@@ -24,18 +24,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }"/>
+      targetRegions="{ Domain }"/>
 
     <CompositionalMultiphaseFVM
       name="TwoPhaseFlowSolver"
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Domain }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"/>
   </Solvers>
 

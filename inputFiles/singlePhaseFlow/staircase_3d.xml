@@ -6,9 +6,6 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ channelPerm }"
       targetRegions="{ Channel }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
