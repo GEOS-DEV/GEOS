@@ -80,10 +80,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

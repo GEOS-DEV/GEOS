@@ -128,6 +128,14 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent(0);
+
+      string & solidName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
+      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
+      GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+
+      string & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
+      permName = getConstitutiveName< PermeabilityBase >( subRegion );
+      GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -150,19 +158,14 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
       setApplyDefaultValue( 0.0 );
+
+    faceManager.registerWrapper< array1d< real64 > >( viewKeyStruct::transMultiplierString() ).
+      setApplyDefaultValue( 1.0 ).
+      setPlotLevel( PlotLevel::LEVEL_0 ).
+      setRegisteringObjects( this->getName() ).
+      setDescription( "An array that holds the permeability transmissibility multipliers" );
+
   } );
-}
-
-
-void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
-{
-  string & solidName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
-  solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-  GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
-
-  string & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
-  permName = getConstitutiveName< PermeabilityBase >( subRegion );
-  GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
 }
 
 
@@ -172,30 +175,21 @@ void FlowSolverBase::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d<string const> const & regionNames )
-  {
-    ElementRegionManager & elementRegionManager = mesh.getElemManager();
-    elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            ElementSubRegionBase & subRegion )
-    {
-      setConstitutiveNames( subRegion );
-    } );
-  } );
-
   // fill stencil targetRegions
   NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
 
   if( fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
+
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    fluxApprox.setFieldName( extrinsicMeshData::flow::pressure::key() );
+    fluxApprox.setCoeffName( extrinsicMeshData::permeability::permeability::key() );
+
     forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                   MeshLevel & mesh,
                                                   arrayView1d< string const > const & regionNames )
     {
-      FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
       array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames( meshBodyName );
 
@@ -210,7 +204,7 @@ void FlowSolverBase::initializePreSubGroups()
                                                                                        ElementSubRegionBase const & subRegion )
       {
         string const & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
-        coeffModelNames[region.getName()] = permName;
+        coeffModelNames[region.getName()] = viewKeyStruct::permeabilityNamesString();//permName;
         stencilTargetRegionsSet.insert( region.getName() );
       } );
 
@@ -223,6 +217,7 @@ void FlowSolverBase::initializePreSubGroups()
       }
     } );
   }
+
 }
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()

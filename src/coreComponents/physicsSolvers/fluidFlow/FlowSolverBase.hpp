@@ -76,6 +76,8 @@ public:
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
+    static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
+
   };
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
@@ -156,8 +158,6 @@ protected:
 #endif
 
 
-private:
-  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
 };
 
 

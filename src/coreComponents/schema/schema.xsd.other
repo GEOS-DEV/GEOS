@@ -397,12 +397,20 @@
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
+		<!--coefficientModelNames => List of constitutive models that contain the coefficient used to build the stencil-->
+		<xsd:attribute name="coefficientModelNames" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+		<!--coefficientName => Name of coefficient field-->
+		<xsd:attribute name="coefficientName" type="string" />
 		<!--edfmStencil => (no description available)-->
 		<xsd:attribute name="edfmStencil" type="geosx_EmbeddedSurfaceToCellStencil" />
 		<!--faceElementToCellStencil => (no description available)-->
 		<xsd:attribute name="faceElementToCellStencil" type="geosx_FaceElementToCellStencil" />
+		<!--fieldName => Name of primary solution field-->
+		<xsd:attribute name="fieldName" type="string" />
 		<!--fractureStencil => (no description available)-->
 		<xsd:attribute name="fractureStencil" type="geosx_SurfaceElementStencil" />
+		<!--targetRegions => List of regions to build the stencil for-->
+		<xsd:attribute name="targetRegions" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="OutputsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1667,6 +1675,7 @@
 			<xsd:element name="embeddedSurfacesEdgeManager" type="embeddedSurfacesEdgeManagerType" />
 			<xsd:element name="embeddedSurfacesNodeManager" type="embeddedSurfacesNodeManagerType" />
 			<xsd:element name="FaceManager" type="FaceManagerType" />
+			<xsd:element name="finiteVolumeStencils" type="finiteVolumeStencilsType" />
 			<xsd:element name="nodeManager" type="nodeManagerType" />
 		</xsd:choice>
 		<!--meshLevel => (no description available)-->
@@ -1798,8 +1807,6 @@
 		<xsd:attribute name="faceCenter" type="real64_array2d" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="real64_array2d" />
-		<!--facePressure => Face pressure => SinglePhaseFVM, SinglePhaseHybridFVM, SinglePhaseProppantFVM-->
-		<xsd:attribute name="facePressure" type="real64_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->
@@ -1812,6 +1819,11 @@
 		<xsd:attribute name="mimGravityCoefficient" type="real64_array" />
 		<!--nodeList => (no description available)-->
 		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_ArrayOfArrays&lt;long, long, LvArray_ChaiBuffer&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="finiteVolumeStencilsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="TwoPointFluxApproximation" type="TwoPointFluxApproximationType" />
+		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="nodeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

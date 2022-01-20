@@ -74,9 +74,7 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         targetRegions="{ reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->

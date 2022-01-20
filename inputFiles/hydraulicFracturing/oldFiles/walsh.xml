@@ -259,9 +259,7 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="pressure"
-                                 coefficientName="permeability"/>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

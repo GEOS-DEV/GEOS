@@ -344,7 +344,6 @@ protected:
   string m_referenceFluidModelName;
 
 private:
-  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
 
 };
 

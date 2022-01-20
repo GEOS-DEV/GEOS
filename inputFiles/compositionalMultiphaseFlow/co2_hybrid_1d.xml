@@ -68,8 +68,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="beiraoDaVeigaLipnikovManzini"
-        coefficientName="permeability"/>
+        innerProductType="beiraoDaVeigaLipnikovManzini"/>
     </FiniteVolume>
   </NumericalMethods>
 
