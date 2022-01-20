@@ -3,7 +3,8 @@
 
 // Source includes
 #include "PySolver.hpp"
-#include "dataRepository/python/PyGroup.hpp"
+#include "dataRepository/python/PyGroupType.hpp"
+#include "PySolverType.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
@@ -63,7 +64,7 @@ static PyObject * PySolver_repr( PyObject * const obj ) noexcept
 
 
 
-static PyObject * solverStep( PySolver * self, PyObject * args )
+static PyObject * execute( PySolver * self, PyObject * args )
 {
   VERIFY_NON_NULL_SELF( self );
   VERIFY_INITIALIZED( self );
@@ -78,7 +79,7 @@ static PyObject * solverStep( PySolver * self, PyObject * args )
   geosx::GeosxState * g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 
-  self->group->solverStep( time, dt, 0, domain );
+  self->group->execute( time, dt, 0, 0, 0, domain );
 
   Py_RETURN_NONE;
 }
@@ -97,9 +98,8 @@ static PyObject * reinit( PySolver * self, PyObject *args )
 
 
 static PyMethodDef PySolver_methods[] = {
-  { "solverStep", (PyCFunction) solverStep, METH_VARARGS, "solver Step" },
+  { "execute", (PyCFunction) execute, METH_VARARGS, "solver Step" },
   { "reinit", (PyCFunction) reinit, METH_NOARGS, "re-initialize certain variable depending on the solver being used"},
-  { "get_wrapper", (PyCFunction) PyGroup_getWrapper< PySolver >, METH_VARARGS, PyGroup_getWrapperDocString },
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 
@@ -119,6 +119,7 @@ static PyTypeObject PySolverType = {
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
   .tp_doc = PySolver::docString,
   .tp_methods = PySolver_methods,
+  .tp_base = getPyGroupType(),
   .tp_new = PySolver_new,
 };
 

@@ -21,11 +21,10 @@
 #include "pygeosx.hpp"
 #include "dataRepository/python/PyGroup.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
-#include "pysolver/PySolverType.hpp"
-#include "pyhistory/PyHistoryCollectionType.hpp"
-#include "pyhistory/PyHistoryOutputType.hpp"
+#include "physicsSolvers/python/PySolverType.hpp"
+#include "fileIO/python/PyHistoryCollectionType.hpp"
+#include "fileIO/python/PyHistoryOutputType.hpp"
 #include "mainInterface/initialization.hpp"
-
 #include "LvArray/src/python/PyArray.hpp"
 
 // System includes
@@ -388,7 +387,7 @@ PyInit_pygeosx()
     return nullptr;
   }
 
-    if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
   {
     return nullptr;
   }

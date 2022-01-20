@@ -26,7 +26,6 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
-#include "python/PyGroupType.hpp"
 
 #include <iostream>
 
@@ -1288,7 +1287,9 @@ public:
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
    */
+#if defined(GEOSX_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const;
+#endif
 
 protected:
 

@@ -23,7 +23,7 @@
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "../pygeosx/pyhistory/PyHistoryCollectionType.hpp"
+#include "fileIO/python/PyHistoryCollectionType.hpp"
 
 
 #include <functional>
@@ -186,8 +186,10 @@ public:
    * @brief Return PyHistoryCollection type.
    * @return Return PyHistoryCollection type.
    */
+#if defined(GEOSX_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const
   { return python::getPyHistoryCollectionType(); }
+#endif
 
 protected:
 

@@ -177,7 +177,7 @@ set( constitutive_sources
      solid/porosity/ProppantPorosity.cpp
    )
 
-set( dependencyList events dataRepository functions )
+set( dependencyList events dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

@@ -1,14 +1,7 @@
 set( python_headers pygeosx.hpp
-                    pysolver/PySolver.hpp
-		    pysolver/PySolverType.hpp
-		    pyhistory/PyHistoryOutputType.hpp
-		    pyhistory/PyHistoryCollectionType.hpp
 		    )
 
 set( python_sources pygeosx.cpp
-                    pysolver/PySolver.cpp
-		    pyhistory/PyHistoryOutput.cpp
-		    pyhistory/PyHistoryCollection.cpp
 		    )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )

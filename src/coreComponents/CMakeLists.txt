@@ -33,6 +33,8 @@ add_subdirectory( LvArray )
 if( ENABLE_PYGEOSX )
   list( APPEND coreLibs pylvarray )
   list( APPEND coreLibs pygroup )
+  list( APPEND coreLibs pysolver )
+  list( APPEND coreLibs pyfileIO )
 endif()
 
 foreach( lib ${subdirs} )

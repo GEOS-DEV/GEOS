@@ -17,6 +17,7 @@
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
+#include "python/PyGroupType.hpp"
 
 namespace geosx
 {
@@ -623,8 +624,10 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
   return *currentGroup;
 }
 
+#if defined(GEOSX_USE_PYGEOSX)
 PyTypeObject * Group::getPythonType() const
 { return python::getPyGroupType(); }
+#endif
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

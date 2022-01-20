@@ -2,10 +2,13 @@
 #include <Python.h>
 
 // Source includes
-#include "../pygeosx.hpp"
-
 #include "fileIO/timeHistory/TimeHistoryCollection.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
 #include "PyHistoryCollectionType.hpp"
+#include "dataRepository/python/PyGroupType.hpp"
+
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
@@ -116,6 +119,7 @@ static PyTypeObject PyHistoryCollectionType = {
   .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
   .tp_doc = PyHistoryCollection::docString,
   .tp_methods = PyHistoryCollection_methods,
+  .tp_base = getPyGroupType(),
   .tp_new = PyHistoryCollection_new,
 };
 
