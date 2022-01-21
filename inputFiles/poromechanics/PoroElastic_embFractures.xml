@@ -38,8 +38,7 @@
       targetRegions="{ Domain, Fracture }"/>
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      
+      name="SurfaceGenerator"      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"

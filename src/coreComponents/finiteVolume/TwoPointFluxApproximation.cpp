@@ -222,7 +222,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
 //  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
 //    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
-//                                                                 targetRegions,
+//                                                                 targetRegions,R
 //                                                                 coeffModelNames );
 
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
