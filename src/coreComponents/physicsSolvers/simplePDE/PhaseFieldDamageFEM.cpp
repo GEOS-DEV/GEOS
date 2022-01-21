@@ -55,8 +55,7 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_fieldName( "primaryField" ),
-  m_solidModelNames()
+  m_fieldName( "primaryField" )
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
@@ -70,10 +69,6 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
-
-  registerWrapper( viewKeyStruct::solidModelNamesString(), &m_solidModelNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "name of solid constitutive model" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -102,6 +97,17 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
         setApplyDefaultValue( 0.0 ).
         setPlotLevel( PlotLevel::LEVEL_0 ).
         setDescription( "field variable representing the diffusion coefficient" );
+
+
+      subRegion.registerWrapper< string >( viewKeyStruct::solidModelNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent(0);
+
+      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidModelNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+      GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
     } );
   } );
 }
