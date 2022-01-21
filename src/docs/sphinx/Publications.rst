@@ -37,7 +37,7 @@ Preprints and Early-Views
    * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
-       | `doi:10.1016/j.cma.2021.114288 <https://doi.org/j.cma.2021.114288>`_
+       | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
 
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato
@@ -47,7 +47,7 @@ Preprints and Early-Views
    * - | **A deep learning-accelerated data assimilation and forecasting workflow for commercial-scale geologic carbon storage**
        | H Tang, P Fu, CS Sherman, J Zhang, X Ju, F Hamon, NA Azzolina, M Burton-Kelly, JP Morris
        | International Journal of Greenhouse Gas Control
-       | `doi:j.ijggc.2021.103488 <https://doi.org/j.ijggc.2021.103488>`_      
+       | `doi:10.1016/j.ijggc.2021.103488 <https://doi.org/10.1016/j.ijggc.2021.103488>`_      
 
 
 2021
