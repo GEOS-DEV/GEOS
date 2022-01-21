@@ -42,12 +42,7 @@ Preprints and Early-Views
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato
        | Computers & Mathematics with Applications
-       | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_
-       
-   * - | **A deep learning-accelerated data assimilation and forecasting workflow for commercial-scale geologic carbon storage**
-       | H Tang, P Fu, CS Sherman, J Zhang, X Ju, F Hamon, NA Azzolina, M Burton-Kelly, JP Morris
-       | International Journal of Greenhouse Gas Control
-       | `doi:10.1016/j.ijggc.2021.103488 <https://doi.org/10.1016/j.ijggc.2021.103488>`_      
+       | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_  
 
 
 2021
@@ -101,6 +96,11 @@ Preprints and Early-Views
        | M Frigo, N Castelletto, M Ferronato, JA White
        | Computers and Mathematics with Applications 
        | `doi:10.1016/j.camwa.2020.07.010 <https://doi.org/10.1016/j.camwa.2020.07.010>`_
+       
+   * - | **A deep learning-accelerated data assimilation and forecasting workflow for commercial-scale geologic carbon storage**
+       | H Tang, P Fu, CS Sherman, J Zhang, X Ju, F Hamon, NA Azzolina, M Burton-Kelly, JP Morris
+       | International Journal of Greenhouse Gas Control
+       | `doi:10.1016/j.ijggc.2021.103488 <https://doi.org/10.1016/j.ijggc.2021.103488>`_    
 
 
 2020
