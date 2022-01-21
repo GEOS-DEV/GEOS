@@ -21,7 +21,7 @@
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <Epetra_Operator.h>
-#include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <Epetra_FECrsMatrix.h>
 #include <ml_MultiLevelPreconditioner.h>
 #include <Ifpack.h>
@@ -51,10 +51,11 @@ void convertRigidBodyModes( array1d< EpetraVector > const & nearNullKernel,
     nullSpacePointer.resize( numRBM, size );
     for( localIndex k = 0; k < numRBM; ++k )
     {
-      for( localIndex j = 0; j < size; ++j )
+      arrayView1d< real64 const > const values = nearNullKernel[k].values();
+      forAll< parallelHostPolicy >( size, [k, values, nsp = nullSpacePointer.toView()]( localIndex const j )
       {
-        nullSpacePointer( k, j ) = nearNullKernel[k].get( nearNullKernel[k].getGlobalRowID( j ) );
-      }
+        nsp( k, j ) = values[j];
+      } );
     }
   }
 }
@@ -97,7 +98,8 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
     { LinearSolverParameters::AMG::SmootherType::default_, "Chebyshev" },
     { LinearSolverParameters::AMG::SmootherType::jacobi, "Jacobi" },
     { LinearSolverParameters::AMG::SmootherType::l1jacobi, "Jacobi" },
-    { LinearSolverParameters::AMG::SmootherType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::SmootherType::fgs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::SmootherType::bgs, "Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::l1sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::chebyshev, "Chebyshev" },
@@ -117,7 +119,8 @@ string getMLCoarseType( LinearSolverParameters::AMG::CoarseType const & value )
     { LinearSolverParameters::AMG::CoarseType::default_, "Amesos-KLU" },
     { LinearSolverParameters::AMG::CoarseType::jacobi, "Jacobi" },
     { LinearSolverParameters::AMG::CoarseType::l1jacobi, "Jacobi" },
-    { LinearSolverParameters::AMG::CoarseType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::CoarseType::fgs, "Gauss-Seidel" },
+    { LinearSolverParameters::AMG::CoarseType::bgs, "Gauss-Seidel" },
     { LinearSolverParameters::AMG::CoarseType::sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::CoarseType::l1sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::CoarseType::chebyshev, "Chebyshev" },
@@ -188,7 +191,8 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
     { LinearSolverParameters::PreconditionerType::ict, Ifpack::ICT },
     { LinearSolverParameters::PreconditionerType::chebyshev, Ifpack::CHEBYSHEV },
     { LinearSolverParameters::PreconditionerType::jacobi, Ifpack::POINT_RELAXATION },
-    { LinearSolverParameters::PreconditionerType::gs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::fgs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::bgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS }
   };
@@ -201,7 +205,7 @@ string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const
   static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
-    { LinearSolverParameters::PreconditionerType::gs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::fgs, "Gauss-Seidel" },
     { LinearSolverParameters::PreconditionerType::sgs, "symmetric Gauss-Seidel" },
   };
 
@@ -259,7 +263,7 @@ EpetraMatrix const & TrilinosPreconditioner::setupPreconditioningMatrix( EpetraM
 {
   if( m_params.preconditionerType == LinearSolverParameters::PreconditionerType::amg && m_params.amg.separateComponents )
   {
-    LAIHelperFunctions::separateComponentFilter( mat, m_precondMatrix, m_params.dofsPerNode );
+    mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
   return mat;
@@ -282,7 +286,8 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
       break;
     }
     case LinearSolverParameters::PreconditionerType::jacobi:
-    case LinearSolverParameters::PreconditionerType::gs:
+    case LinearSolverParameters::PreconditionerType::fgs:
+    case LinearSolverParameters::PreconditionerType::bgs:
     case LinearSolverParameters::PreconditionerType::sgs:
     case LinearSolverParameters::PreconditionerType::chebyshev:
     case LinearSolverParameters::PreconditionerType::iluk:
@@ -323,6 +328,7 @@ void TrilinosPreconditioner::apply( Vector const & src,
   {
     GEOSX_LAI_ASSERT( m_precond );
     m_precond->ApplyInverse( src.unwrapped(), dst.unwrapped() );
+    dst.touch();
   }
 }
 

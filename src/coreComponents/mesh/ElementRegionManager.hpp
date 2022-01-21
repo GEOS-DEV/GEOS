@@ -750,6 +750,17 @@ public:
     } );
   }
 
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam TRAIT data type
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructExtrinsicAccessor( string const & neighborName = string() ) const;
+
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
@@ -834,6 +845,36 @@ public:
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
    * regions/materials.
+   * @tparam TRAIT mesh data trait
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam TRAIT mesh data trait
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename MATERIALTYPE, typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( bool const allowMissingViews = false ) const;
+
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
@@ -846,7 +887,7 @@ public:
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+                                 string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
   /**
@@ -864,7 +905,7 @@ public:
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+                                 string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
   /**
@@ -882,8 +923,34 @@ public:
   ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+                                      string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief Construct a const view accessor to material data for specified material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @return ElementViewAccessor that contains VIEWTYPE data. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructMaterialViewAccessor( string const & viewName ) const;
+
+  /**
+   * @brief Construct a const view accessor for material data, assuming array as storage type
+   * @tparam MATERIALTYPE
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
+   * @param viewName view name of the data
+   * @return MaterialViewAccessor that contains the data views. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  constructMaterialArrayViewAccessor( string const & viewName ) const;
 
   /**
    * @brief Construct a ConstitutiveRelationAccessor.
@@ -1123,6 +1190,8 @@ private:
    * @return reference to this object
    */
   ElementRegionManager & operator=( const ElementRegionManager & );
+
+
 };
 
 
@@ -1187,6 +1256,16 @@ ElementRegionManager::
   }
   return viewAccessor;
 }
+
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructExtrinsicAccessor( string const & neighborName ) const
+{
+  return constructViewAccessor< typename TRAIT::type,
+                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+}
+
 
 template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
@@ -1338,10 +1417,9 @@ template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+                                                     string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
-  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
   ElementViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
@@ -1365,8 +1443,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
                                              ElementSubRegionBase const & subRegion )
       {
-        dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
-        dataRepository::Group const & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+        string const & materialName = subRegion.getReference<string>( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
 
         dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1375,7 +1453,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
         }
       } );
     }
@@ -1387,10 +1465,9 @@ template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+                                                     string const & materialKeyName,
                                                      bool const allowMissingViews )
 {
-  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
   ElementViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
@@ -1413,8 +1490,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
       {
-        dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
-        dataRepository::Group & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+        string const & materialName = subRegion.getReference<string>( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
 
         dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1423,7 +1500,7 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
         }
         else
         {
-          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
         }
       } );
     }
@@ -1431,20 +1508,86 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   return accessor;
 }
 
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
+                                                                                         regionNames,
+                                                                                         materialNames,
+                                                                                         allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
+{
+  GEOSX_UNUSED_VAR(allowMissingViews);
+  return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
+}
+
+
 template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+                                      string const & materialKeyName,
                                       bool const allowMissingViews ) const
 {
-  return constructMaterialViewAccessor< Array< T, NDIM, PERM >,
-                                        ArrayView< T const, NDIM, getUSD< PERM > >
-                                        >( viewName,
-                                           regionNames,
-                                           materialNames,
-                                           allowMissingViews );
+  return constructMaterialViewAccessor< Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName,
+                                                                                                              regionNames,
+                                                                                                              materialKeyName,
+                                                                                                              allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor< LHS >
+ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) const
+{
+  ElementViewAccessor< LHS > accessor( numRegions() );
+
+  // Resize the accessor to all regions and subregions
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    accessor[er].resize( getRegion( er ).numSubRegions() );
+  }
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    ElementRegionBase const & region = getRegion( er );
+
+    region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                           ElementSubRegionBase const & subRegion )
+    {
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+
+      string materialName;
+      constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
+      {
+        materialName = constitutiveRelation.getName();
+        if ( constitutiveRelation.template hasWrapper( viewName ) ) //NOTE (matteo): I have added this check to allow for the view to be missing. I am not sure this is the default behaviour we want though. 
+        {
+          accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
+        }
+      } );
+    } );
+  }
+  return accessor;
+}
+
+template< typename MATERIALTYPE, typename T, int NDIM, typename PERM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ElementRegionManager::constructMaterialArrayViewAccessor( string const & viewName ) const
+{
+  return constructMaterialViewAccessor< MATERIALTYPE, Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName );
 }
 
 template< typename CONSTITUTIVE_TYPE >

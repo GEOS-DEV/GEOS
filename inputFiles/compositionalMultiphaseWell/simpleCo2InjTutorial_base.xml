@@ -1,5 +1,9 @@
 <?xml version="1.0" ?>
 
+<!-- Some recent changes in hypre have broken the MGR recipe for this tutorial -->
+<!-- It no longer works and fails with an error about block-ordering when the preconditioner is called -->
+<!-- The error has been fixed in hypre, the fix needs to be merged in hypre develop, and then added to our TPLs --> 
+
 <Problem>
 
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
@@ -28,10 +32,6 @@
       name="compositionalMultiphaseFlow"
       targetRegions="{ reservoir }"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       logLevel="1"
@@ -40,9 +40,6 @@
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       targetRegions="{ wellRegion }"
-      fluidNames="{ fluid }"
-      relPermNames="{ relperm }"
-      wellTemperature="368.15"
       logLevel="1"
       useMass="1">
       <WellControls
@@ -52,6 +49,7 @@
         referenceElevation="7500"
         targetBHP="1e8"
         targetTotalRate="5e-2"
+        injectionTemperature="368.15"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -76,20 +74,19 @@
       <TwoPointFluxApproximation
         name="fluidTPFA"
         targetRegions="{ reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
 
   <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"
       componentMolarWeight="{ 44e-3, 18e-3 }"
+
       phasePVTParaFiles="{ pvtgas.txt, pvtliquid.txt }"
       flashModelParaFile="co2flash.txt"/>
 
@@ -231,4 +228,3 @@
   </Functions>
   
 </Problem>
-

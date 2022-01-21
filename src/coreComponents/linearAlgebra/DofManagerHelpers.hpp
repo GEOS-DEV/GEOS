@@ -226,7 +226,8 @@ ObjectManagerBase const & getObjectManager( DofManager::Location const loc,
   return *manager;
 }
 
-ObjectManagerBase & getObjectManager( DofManager::Location const loc, MeshLevel & mesh )
+ObjectManagerBase & getObjectManager( DofManager::Location const loc,
+                                      MeshLevel & mesh )
 {
   return const_cast< ObjectManagerBase & >( getObjectManager( loc, const_cast< MeshLevel const & >( mesh ) ) );
 }

@@ -172,9 +172,15 @@ RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 }
 
 template< typename POLICY, typename LAMBDA >
-RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
+RAJA_INLINE void forAll( localIndex const end, LAMBDA && body )
 {
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
+}
+
+template< typename POLICY, typename INDEX, typename LAMBDA >
+RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
+{
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
 } // namespace geosx

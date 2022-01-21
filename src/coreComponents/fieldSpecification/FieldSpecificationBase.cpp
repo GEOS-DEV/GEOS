@@ -45,41 +45,42 @@ FieldSpecificationBase::FieldSpecificationBase( string const & name, Group * par
   registerWrapper( viewKeyStruct::componentString(), &m_component ).
     setApplyDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Component of field (if tensor) to apply boundary condition to" );
+    setDescription( "Component of field (if tensor) to apply boundary condition to." );
 
   registerWrapper( viewKeyStruct::directionString(), &m_direction ).
     setApplyDefaultValue( {0, 0, 0} ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Direction to apply boundary condition to" );
+    setDescription( "Direction to apply boundary condition to." );
 
   registerWrapper( viewKeyStruct::functionNameString(), &m_functionName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of function that specifies variation of the BC" );
+    setDescription( "Name of function that specifies variation of the boundary condition." );
 
   registerWrapper( viewKeyStruct::bcApplicationTableNameString(), &m_bcApplicationFunctionName ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of table that specifies the on/off application of the bc." );
+    setDescription( "Name of table that specifies the on/off application of the boundary condition." );
 
   registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Scale factor for value of BC." );
+    setDescription( "Scale factor for value of the boundary condition." );
 
   registerWrapper( viewKeyStruct::initialConditionString(), &m_initialCondition ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "BC is applied as an initial condition." );
+    setDescription( "Boundary condition is applied as an initial condition." );
 
   registerWrapper( viewKeyStruct::beginTimeString(), &m_beginTime ).
     setApplyDefaultValue( -1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "time at which BC will start being applied." );
+    setDescription( "Time at which the boundary condition will start being applied." );
 
   registerWrapper( viewKeyStruct::endTimeString(), &m_endTime ).
     setApplyDefaultValue( 1.0e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "time at which bc will stop being applied" );
+    setDescription( "Time at which the boundary condition will stop being applied." );
 
+  enableLogLevelInput();
 }
 
 

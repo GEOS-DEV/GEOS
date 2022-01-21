@@ -1,71 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers>
-<!-- SPHINX_PROPPANT_PROPPANTSOLVER -->
-    <ProppantTransport
-      name="ProppantTransport"
-      logLevel="1"
-      updateProppantPacking="1"
-      proppantDiameter="4.5e-4"
-      frictionCoefficient="0.04"
-      criticalShieldsNumber="0.0"
-      maxProppantConcentration="0.62"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      proppantNames="{ sand }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"
-        lineSearchAction="None"
-        maxTimeStepCuts="5"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-7"/>
-    </ProppantTransport>
-<!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
-
-<!-- SPHINX_PROPPANT_COUPLEDSOLVER -->
-    <FlowProppantTransport
-      name="FlowProppantTransport"
-      proppantSolverName="ProppantTransport"
-      flowSolverName="SinglePhaseFVM"
-      targetRegions="{ Fracture }"
-      logLevel="1"/>
-<!-- SPHINX_PROPPANT_COUPLEDSOLVER_END -->
-
-
-<!-- SPHINX_PROPPANT_FLOWSOLVER -->
-    <SinglePhaseProppantFVM
-      name="SinglePhaseFVM"
-      logLevel="1"
-      discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"
-        lineSearchAction="None"
-        newtonMinIter="0"/>
-      <LinearSolverParameters
-        solverType="gmres"
-	preconditionerType="amg"  
-        krylovTol="1.0e-7"/>
-    </SinglePhaseProppantFVM>
-<!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
-
-    <SurfaceGenerator
-      name="SurfaceGen"
-      targetRegions="{ Fracture }"
-      solidMaterialNames="{ granite }"
-      rockToughness="1e6"/>
-  </Solvers>
-
 
   <Geometry>
     <!-- An additional column of grid cells is added to the left of the domain to mimic proppant injection boundary conditions -->
@@ -106,10 +41,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ fracturePerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -290,6 +222,6 @@
       name="siloOutput"/>
 
     <Restart
-      name="sidreRestart"/>
+      name="restartOutput"/>
   </Outputs>
 </Problem>

@@ -362,7 +362,7 @@ static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      string const & finiteElementName,
-                                     arrayView1d< string const > const & constitutiveNames,
+                                     string const & constitutiveStringName,
                                      KERNEL_FACTORY & kernelFactory )
 {
   GEOSX_MARK_FUNCTION;
@@ -376,7 +376,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
   // Loop over all sub-regions in regions of type SUBREGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< SUBREGION_TYPE >( targetRegions,
-                                                               [&constitutiveNames,
+                                                               [&constitutiveStringName,
                                                                 &maxResidualContribution,
                                                                 &nodeManager,
                                                                 &edgeManager,
@@ -388,11 +388,13 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     localIndex const numElems = elementSubRegion.size();
 
     // Get the constitutive model...and allocate a null constitutive model if required.
+
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
-    if( targetRegionIndex <= constitutiveNames.size()-1 )
+    if( elementSubRegion.template hasWrapper<string>(constitutiveStringName) )
     {
-      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+      string const & constitutiveName = elementSubRegion.template getReference<string>( constitutiveStringName );
+      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveName );
     }
     else
     {

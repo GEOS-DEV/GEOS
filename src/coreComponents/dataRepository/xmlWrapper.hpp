@@ -191,9 +191,9 @@ static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
  */
 template< typename T, typename U >
 std::enable_if_t< !internal::canParseVariable< T >, bool >
-readAttributeAsType( T &, string const &, xmlNode const &, U const & )
+readAttributeAsType( T &, string const & name, xmlNode const &, U const & )
 {
-  GEOSX_THROW( "Cannot parse the given type " << LvArray::system::demangleType< T >(), InputError );
+  GEOSX_THROW( "Cannot parse key with name ("<<name<<") with the given type " << LvArray::system::demangleType< T >(), InputError );
 }
 
 /**
