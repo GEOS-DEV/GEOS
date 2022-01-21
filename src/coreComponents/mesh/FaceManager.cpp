@@ -270,36 +270,42 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
 {
   GEOSX_MARK_FUNCTION;
 
-  arrayView2d< localIndex const > const elemRegionList = elementRegionList();
-  arrayView2d< localIndex const > const elemSubRegionList = elementSubRegionList();
-  arrayView2d< localIndex const > const elemList = elementList();
+  arrayView2d< localIndex const > const facesToElementRegions = elementRegionList();
+  arrayView2d< localIndex const > const facesToElementSubRegions = elementSubRegionList();
+  arrayView2d< localIndex const > const facesToElements = elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-  const indexType max_face_nodes = getMaxFaceNodes();
-  GEOSX_ERROR_IF( max_face_nodes >= MAX_FACE_NODES, "More nodes on a face than expected!" );
+  ArrayOfArraysView< localIndex > const & facesToNodes = nodeList().toView();
+
+  GEOSX_ERROR_IF( getMaxFaceNodes() >= MAX_FACE_NODES, "More nodes on a face than expected!" );
 
   elemManager.forElementSubRegions< CellElementSubRegion >( [&] ( CellElementSubRegion const & subRegion )
   { subRegion.calculateElementCenters( X ); } );
 
-  ArrayOfArraysView< localIndex > const & faceToNodeMap = nodeList().toView();
-
-  forAll< parallelHostPolicy >( size(), [&]( localIndex const iFace )
+  forAll< parallelHostPolicy >( size(), [&]( localIndex const iFace ) -> void
   {
     // The face should be connected to at least one element.
-    if( elemList( iFace, 0 ) == -1 and elemList( iFace, 1 ) == -1 )
+    if( facesToElements( iFace, 0 ) != -1 or facesToElements( iFace, 1 ) != -1 )
     {
-      GEOSX_ERROR( "Face " << iFace << " does not seem connected to any element." );
+      // Take the first defined face-to-(elt/region/sub region) to sorting direction.
+      localIndex const iElemLoc = facesToElements( iFace, 0 ) > -1 ? 0 : 1;
+
+      localIndex const er = facesToElementRegions[iFace][iElemLoc], esr = facesToElementSubRegions[iFace][iElemLoc], ei = facesToElements( iFace, iElemLoc );
+      if( er != -1 and esr != -1 and ei != -1 )
+      {
+        CellElementSubRegion const & subRegion = elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );
+        arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
+        localIndex const numFaceNodes = facesToNodes.sizeOfArray( iFace );
+        sortFaceNodes( X, elemCenter[ei], facesToNodes[iFace], numFaceNodes );
+      }
+      else
+      {
+        GEOSX_ERROR( "Face " << iFace << " is connected to at least one invalid region (" << er << "), sub-region (" << esr << ") or element (" << ei << ").");
+      }
     }
     else
     {
-      // Take the first defined face-to-(elt/region/sub region) to sorting direction.
-      const auto iElemLoc = elemList( iFace, 0 ) > -1 ? 0 : 1;
-
-      ElementRegionBase const & elemRegion = elemManager.getRegion( elemRegionList[iFace][iElemLoc] );
-      CellElementSubRegion const & subRegion = elemRegion.getSubRegion< CellElementSubRegion >( elemSubRegionList[iFace][iElemLoc] );
-      localIndex const numFaceNodes = faceToNodeMap.sizeOfArray( iFace );
-      arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
-      sortFaceNodes( X, elemCenter[elemList( iFace, iElemLoc )], faceToNodeMap[iFace], numFaceNodes );
+      GEOSX_ERROR( "Face " << iFace << " does not seem connected to any element." );
     }
   } );
 }
