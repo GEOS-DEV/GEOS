@@ -2828,10 +2828,10 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const bulkModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "bulkModulus", constitutiveManager );
 
-  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const
-    stress = elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
-                                                             arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
-                                                                                                               constitutiveManager );
+  ElementRegionManager::MaterialViewAccessor< arrayView3d< real64 const, solid::STRESS_USD > > const stress =
+    elementManager.constructFullMaterialViewAccessor< array3d< real64, solid::STRESS_PERMUTATION >,
+                                                      arrayView3d< real64 const, solid::STRESS_USD > >( SolidBase::viewKeyStruct::stressString(),
+                                                                                                        constitutiveManager );
 
 
   ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > const
@@ -3848,7 +3848,7 @@ int SurfaceGenerator::checkOrphanElement( ElementRegionManager const & elementMa
     if( er != -1 &&  esr != -1 && ei != -1 )
     {
       CellElementSubRegion const & elementSubRegion = elementManager.getRegion( faceToRegionMap[iFace][k] ).
-                                                                     getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][k] );
+                                                        getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][k] );
 
 
       int nRuptureFace = 0;
@@ -3990,7 +3990,7 @@ void SurfaceGenerator::markRuptureFaceFromEdge( localIndex const edgeID,
                                                 EdgeManager const & edgeManager,
                                                 FaceManager & faceManager,
                                                 ElementRegionManager const & elementManager,
-                                                real64 ( & GEOSX_UNUSED_PARAM( vecTipNorm ) )[3],
+                                                real64 ( &GEOSX_UNUSED_PARAM( vecTipNorm ) )[3],
                                                 real64 ( & vecTip )[3],
                                                 ModifiedObjectLists & modifiedObjects,
                                                 int const edgeMode )

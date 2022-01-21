@@ -163,8 +163,8 @@ private:
                            EdgeManager & edgeManager,
                            FaceManager const & faceManager,
                            ElementRegionManager const & elementManager,
-                           real64 ( & vecTipNorm )[3],
-                           real64 ( & vecTip )[3] );
+                           real64 ( &vecTipNorm )[3],
+                           real64 ( &vecTip )[3] );
 
   /**
    * @brief
@@ -201,8 +201,8 @@ private:
                                     NodeManager const & nodeManager,
                                     EdgeManager const & edgeManager,
                                     ElementRegionManager const & elementManager,
-                                    real64 ( & vecTipNorm )[3],
-                                    real64 ( & fNode )[3],
+                                    real64 ( &vecTipNorm )[3],
+                                    real64 ( &fNode )[3],
                                     real64 & GdivBeta,
                                     bool threeNodesPinched,
                                     bool calculatef_u );
@@ -226,8 +226,8 @@ private:
                                 EdgeManager const & edgeManager,
                                 FaceManager & faceManager,
                                 ElementRegionManager const & elementManager,
-                                real64 ( & vecTipNorm )[3],
-                                real64 ( & vecTip )[3],
+                                real64 ( &vecTipNorm )[3],
+                                real64 ( &vecTip )[3],
                                 ModifiedObjectLists & modifiedObjects,
                                 int const edgeMode );
 

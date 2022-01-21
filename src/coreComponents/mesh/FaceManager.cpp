@@ -300,7 +300,7 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       }
       else
       {
-        GEOSX_ERROR( "Face " << iFace << " is connected to at least one invalid region (" << er << "), sub-region (" << esr << ") or element (" << ei << ").");
+        GEOSX_ERROR( "Face " << iFace << " is connected to at least one invalid region (" << er << "), sub-region (" << esr << ") or element (" << ei << ")." );
       }
     }
     else
