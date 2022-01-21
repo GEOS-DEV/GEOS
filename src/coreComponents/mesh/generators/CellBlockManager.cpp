@@ -463,7 +463,7 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToE
   for( localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock )
   {
     CellBlock & cellBlock = cellBlocks.getGroup< CellBlock >( iCellBlock );
-    arrayView2d< localIndex const > const & cellToFaces = cellBlock.getElemToFaces();
+    arrayView2d< localIndex const > const cellToFaces = cellBlock.getElemToFacesConstView();
 
     // We build the edges of each face of each cell,
     // so we can construct the cell to edges mapping.
@@ -478,7 +478,7 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToE
       for( localIndex kf = 0; kf < cellBlock.numFacesPerElement(); kf++ )
       {
         // Loop over edges of each face
-        localIndex faceIndex = cellToFaces[kc][kf];
+        localIndex const faceIndex = cellToFaces[kc][kf];
         for( localIndex ke = 0; ke < faceToEdges.sizeOfArray( faceIndex ); ke++ )
         {
           bool isUnique = true;

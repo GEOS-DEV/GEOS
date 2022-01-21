@@ -116,14 +116,17 @@ public:
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > & getElemToNode()
   { return m_elementsToNodes; }
 
-  array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNodes() const override
+  array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override
   { return m_elementsToNodes; }
 
-  array2d< localIndex > const & getElemToEdges() const override
+  array2d< localIndex > getElemToEdges() const override
   { return m_elementsToEdges; }
 
-  array2d< localIndex > const & getElemToFaces() const override
+  array2d< localIndex > getElemToFaces() const override
   { return m_elementsToFaces; }
+
+  arrayView2d< localIndex const > getElemToFacesConstView() const
+  { return m_elementsToFaces.toViewConst(); }
 
   /**
    * @brief Sets an entry in the element to faces mapping.
@@ -178,7 +181,7 @@ public:
   arrayView1d< globalIndex > localToGlobalMap()
   { return m_localToGlobalMap; }
 
-  array1d< globalIndex > const & localToGlobalMap() const override
+  array1d< globalIndex > localToGlobalMap() const override
   { return m_localToGlobalMap; }
 
   /**

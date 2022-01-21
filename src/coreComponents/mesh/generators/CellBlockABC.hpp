@@ -86,25 +86,25 @@ public:
    * @brief Get the element-to-nodes map.
    * @return a reference to the element-to-node map
    */
-  virtual array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & getElemToNodes() const = 0;
+  virtual array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const = 0;
 
   /**
    * @brief Get the element-to-edges map.
    * @return A view of the mapping.
    */
-  virtual array2d< localIndex > const & getElemToEdges() const = 0;
+  virtual array2d< localIndex > getElemToEdges() const = 0;
 
   /**
    * @brief Get the element-to-faces map.
    * @return A view of the mapping.
    */
-  virtual array2d< localIndex > const & getElemToFaces() const = 0;
+  virtual array2d< localIndex > getElemToFaces() const = 0;
 
   /**
    * @brief Get local to global map.
    * @return The mapping relationship as a array.
    */
-  virtual array1d< globalIndex > const & localToGlobalMap() const = 0;
+  virtual array1d< globalIndex > localToGlobalMap() const = 0;
 
   /**
    * @brief Helper function to apply a lambda function over all the external properties of the subregion
