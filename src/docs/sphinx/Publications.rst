@@ -15,11 +15,6 @@ Preprints and Early-Views
        | A Franceschini, L Gazzola, M Ferronato
        | arXiv preprint
        | `arXiv:2112.12397 <https://arxiv.org/abs/2112.12397>`_
-       
-   * - | **Phase-field modeling of rock fractures with roughness**
-       | F Fei, J Choo, C Liu, JA White
-       | arXiv preprint
-       | `arXiv:2105.14663 <https://arxiv.org/abs/2105.14663>`_
 
    * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
        | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
@@ -38,6 +33,11 @@ Preprints and Early-Views
        | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
        | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2021.114288 <https://doi.org/10.1016/j.cma.2021.114288>`_
+       
+   * - | **Phase-field modeling of rock fractures with roughness**
+       | F Fei, J Choo, C Liu, JA White
+       | International Journal for Numerical and Analytical Methods in Geomechanics 
+       | `doi:10.1002/nag.3317 <https://doi.org/10.1002/nag.3317>`_
 
    * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
        | M Frigo, N Castelletto, M Ferronato
