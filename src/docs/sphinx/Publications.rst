@@ -2,7 +2,7 @@
 Publications
 ###############################################################################
 
-Last updated 17-September-2021
+Last updated 21-January-2022
 
 Preprints and Early-Views
 =========================
@@ -11,30 +11,43 @@ Preprints and Early-Views
    :widths: 100
    :header-rows: 0
 
-   * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
-       | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
+   * - | **A scalable preconditioning framework for stabilized contact mechanics with hydraulically active fractures**
+       | A Franceschini, L Gazzola, M Ferronato
        | arXiv preprint
-       | `arXiv:2106.03317 <https://arxiv.org/abs/2106.03317>`_
-
+       | `arXiv:2112.12397 <https://arxiv.org/abs/2112.12397>`_
+       
    * - | **Phase-field modeling of rock fractures with roughness**
        | F Fei, J Choo, C Liu, JA White
        | arXiv preprint
        | `arXiv:2105.14663 <https://arxiv.org/abs/2105.14663>`_
-
-   * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
-       | M Frigo, N Castelletto, M Ferronato
-       | arXiv preprint
-       | `arXiv:2007.14591 <https://arxiv.org/abs/2007.14591>`_
 
    * - | **An aggregation-based nonlinear multigrid solver for two-phase flow and transport in porous media**
        | CS Lee, F Hamon, N Castelletto, PS Vassilevski, JA White
        | arXiv preprint
        | `arXiv:2109.07546 <https://arxiv.org/abs/2109.07546>`_
 
+
+2022
+====
+
+.. list-table::
+   :widths: 100
+   :header-rows: 0
+
+   * - | **Smooth implicit hybrid upwinding for compositional multiphase flow in porous media**
+       | SBM Bosma, FP Hamon, BT Mallison, HA Tchelepi
+       | Computer Methods in Applied Mechanics and Engineering
+       | `doi:10.1016/j.cma.2021.114288 <https://doi.org/j.cma.2021.114288>`_
+
+   * - | **Enhanced Relaxed Physical Factorization preconditioner for coupled poromechanics**
+       | M Frigo, N Castelletto, M Ferronato
+       | Computers & Mathematics with Applications
+       | `doi:10.1016/j.camwa.2021.11.015 <https://doi.org/10.1016/j.camwa.2021.11.015>`_
+       
    * - | **A deep learning-accelerated data assimilation and forecasting workflow for commercial-scale geologic carbon storage**
        | H Tang, P Fu, CS Sherman, J Zhang, X Ju, F Hamon, NA Azzolina, M Burton-Kelly, JP Morris
-       | arXiv preprint
-       | `arXiv:2105.09468 <https://arxiv.org/abs/2105.09468>`_
+       | International Journal of Greenhouse Gas Control
+       | `doi:j.ijggc.2021.103488 <https://doi.org/j.ijggc.2021.103488>`_      
 
 
 2021
@@ -46,7 +59,7 @@ Preprints and Early-Views
 
    * - | **Hybrid mimetic finite-difference and virtual element formulation for coupled poromechanics**
        | A Borio, FP Hamon, N Castelletto, JA White, RR Settgast
-       | Computer Methods in Applied Mechanics and Engineering 
+       | Computer Methods in Applied Mechanics and Engineering
        | `doi:10.1016/j.cma.2021.113917 <https://doi.org/10.1016/j.cma.2021.113917>`_
        
    * - | **Enhanced multiscale restriction-smoothed basis (MsRSB) preconditioning with applications to porous media flow and geomechanics**
