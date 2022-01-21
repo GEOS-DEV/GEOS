@@ -446,7 +446,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

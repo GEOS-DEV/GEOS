@@ -193,7 +193,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
   // 2. Add the number of nonzeros induced by coupling jump - matrix pressure
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
 
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();

@@ -168,7 +168,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d< string > m_solidModelNames;
+//  array1d< string > m_solidModelNames;
 
   array1d< real64 > m_coeff;
   //  string m_coeffFieldName;

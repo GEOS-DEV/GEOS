@@ -671,8 +671,6 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   real64 localResidualNorm = 0;
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
@@ -870,7 +868,7 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
   forMeshTargets( domain.getMeshBodies(),
                   [&] ( string const &,
                         MeshLevel & mesh,
-                        arrayView1d<string const> const & regionNames )
+                        arrayView1d<string const> const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

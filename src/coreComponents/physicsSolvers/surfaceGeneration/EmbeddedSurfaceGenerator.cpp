@@ -62,14 +62,9 @@ void NewObjectLists::insert( NewObjectLists const & newObjects )
 EmbeddedSurfaceGenerator::EmbeddedSurfaceGenerator( const string & name,
                                                     Group * const parent ):
   SolverBase( name, parent ),
-  m_solidMaterialNames(),
   m_fractureRegionName(),
   m_mpiCommOrder( 0 )
 {
-  registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid material used in solid mechanic solver" );
-
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( dataRepository::InputFlags::OPTIONAL ).
     setApplyDefaultValue( "FractureRegion" );

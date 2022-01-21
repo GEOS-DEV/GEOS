@@ -553,10 +553,6 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   SortedArrayView< localIndex const > const &
   m_nonSendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).toViewConst();
 
-  SortedArrayView< localIndex const> const &
-  m_targetNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).toViewConst();
-
-
   // save previous constitutive state data in preparation for next timestep
   elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
                                                                      [&]( localIndex const,
