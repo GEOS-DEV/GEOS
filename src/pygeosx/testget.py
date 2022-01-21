@@ -10,9 +10,10 @@ rank = comm.Get_rank()
 problem = pygeosx.initialize(rank, sys.argv)
 
 solver = problem.get_group("/Solvers/acousticSolver")
+"""
 pb1 = solver.get_group("/Tasks")
 print(pb1)
-
+"""
 collection = problem.get_group("/Tasks/waveFieldCollection")
 output = problem.get_group("Outputs/waveFieldOutput")
 
@@ -21,9 +22,9 @@ time = 0
 dt = 0.005
 for i in range(100):
     solver.execute(time, dt)
-    if i==99 :
-        collection.collect(time, dt)
-        output.output(time, dt)
+    #if i==99 :
+    #    collection.collect(time, dt)
+    #    output.output(time, dt)
 
     time += dt
     print("time =", time)
@@ -41,4 +42,5 @@ if rank == 0:
         data = list(f[a_group_key])
 
     print(data[0])
+
 pygeosx._finalize()

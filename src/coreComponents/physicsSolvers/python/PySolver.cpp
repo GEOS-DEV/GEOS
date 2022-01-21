@@ -112,7 +112,7 @@ BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyTypeObject PySolverType = {
   PyVarObject_HEAD_INIT( nullptr, 0 )
-    .tp_name = "pysolver.Solver",
+    .tp_name = "pygeosx.Solver",
   .tp_basicsize = sizeof( PySolver ),
   .tp_itemsize = 0,
   .tp_repr = PySolver_repr,

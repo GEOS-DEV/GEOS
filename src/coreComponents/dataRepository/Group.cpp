@@ -629,7 +629,7 @@ Group const & Group::getBaseGroupByPath( string const & path ) const
 
 #if defined(GEOSX_USE_PYGEOSX)
 PyTypeObject * Group::getPythonType() const
-{ return python::getPyGroupType(); }
+{ return geosx::python::getPyGroupType(); }
 #endif
 
 } /* end namespace dataRepository */

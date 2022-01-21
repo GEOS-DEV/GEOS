@@ -1,10 +1,11 @@
 #pragma once
 
+#include "LvArray/src/python/pythonForwardDeclarations.hpp"
+
 namespace geosx
 {
 namespace python
 {
-class PyTypeObject;
 
 PyTypeObject * getPyGroupType();
 
