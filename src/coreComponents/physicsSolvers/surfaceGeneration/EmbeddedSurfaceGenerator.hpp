@@ -121,8 +121,6 @@ private:
     constexpr static char const * rockToughnessString() {return "rockToughness"; }
   };
 
-  // solid solver name
-  array1d< string > m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
   // Flag for consistent communication ordering
