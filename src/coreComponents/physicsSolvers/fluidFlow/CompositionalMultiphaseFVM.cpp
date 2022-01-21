@@ -93,7 +93,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               arrayView1d< string const > const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -538,7 +538,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               arrayView1d< string const > const & )
   {
     NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
     FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

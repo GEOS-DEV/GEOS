@@ -233,7 +233,7 @@ void LagrangianContactSolver::initializePreSubGroups()
                                                                                        localIndex const,
                                                                                        localIndex const,
                                                                                        ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const & subRegion )
+                                                                                       ElementSubRegionBase const &  )
       {
         coeffModelNames[region.getName()] = viewKeyStruct::contactRelationNameString();//permName;
         stencilTargetRegionsSet.insert( region.getName() );
@@ -291,7 +291,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -353,7 +353,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager const & nodeManager = mesh.getNodeManager();
@@ -501,7 +501,7 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 

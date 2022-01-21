@@ -192,7 +192,7 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
   // increment the face fields
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const &  )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 

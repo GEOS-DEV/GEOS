@@ -414,7 +414,6 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
-    localIndex const numMeshBodies = domain.getMeshBodies().numSubGroups();
     domain.getMeshBodies().forSubGroups<MeshBody>([&]( MeshBody & meshBody )
     {
       string const meshBodyName = meshBody.getName();

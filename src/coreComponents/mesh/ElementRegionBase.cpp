@@ -54,7 +54,6 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
                                               string const & meshBodyBlockName )
 {
   string meshBodyName = meshBodyBlockName;
-  localIndex const numMeshBodies = meshBodies.numSubGroups();
   localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
 
   if( numberOfMeshBodies == 1 )

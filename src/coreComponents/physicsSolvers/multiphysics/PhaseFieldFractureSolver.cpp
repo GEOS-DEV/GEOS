@@ -66,7 +66,7 @@ void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
-                                    arrayView1d< string const > const & regionNames )
+                                    arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -303,9 +303,6 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
   {
     NodeManager & nodeManager = mesh.getNodeManager();
 
-    SolidMechanicsLagrangianFEM &
-    solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-
     PhaseFieldDamageFEM const &
     damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
 
@@ -322,7 +319,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
     constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
-                                                                ( localIndex const targetIndex, 
+                                                                ( localIndex const,
                                                                   CellElementSubRegion & elementSubRegion )
     {
       string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
