@@ -1527,6 +1527,7 @@ ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT
 ElementRegionManager::
   constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
 {
+  GEOSX_UNUSED_VAR(allowMissingViews);
   return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
                                         traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
 }
@@ -1558,8 +1559,6 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
     accessor[er].resize( getRegion( er ).numSubRegions() );
   }
 
-  subGroupMap const & regionMap = getRegions();
-
   // Loop only over regions named and populate according to given material names
   for( localIndex er = 0; er < numRegions(); ++er )
   {
@@ -1573,11 +1572,11 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
       string materialName;
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
-//        GEOSX_ERROR_IF( materialName.empty(), GEOSX_FMT( "Multiple materials of base type {} found in subregion {}/{}: {} and {}",
-//                                                         LvArray::system::demangleType< MATERIALTYPE >(),
-//                                                         region.getName(), subRegion.getName(), materialName, constitutiveRelation.getName() ) );
         materialName = constitutiveRelation.getName();
-        accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
+        if ( constitutiveRelation.template hasWrapper( viewName ) ) //NOTE (matteo): I have added this check to allow for the view to be missing. I am not sure this is the default behaviour we want though. 
+        {
+          accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
+        }
       } );
     } );
   }

@@ -426,7 +426,6 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
   WellSolverBase::initializePreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
@@ -468,7 +467,7 @@ void CompositionalMultiphaseWell::initializePostInitialConditionsPreSubGroups()
   {
 
     // loop over the wells
-    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const targetIndex,
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -951,8 +950,6 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_P
                                                      arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // loop over the wells
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1637,8 +1634,6 @@ void CompositionalMultiphaseWell::resetViews( DomainPartition & domain )
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager & elemManager = mesh.getElemManager();
 
-  CompositionalMultiphaseBase & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-
   {
     using namespace extrinsicMeshData::flow;
     using namespace compflow;
@@ -1747,8 +1742,6 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
                                                              arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
@@ -1865,8 +1858,6 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
       validateWellConstraints( subRegion );
     } );
   } );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
-
 }
 
 

@@ -37,7 +37,6 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      
       localDissipation="Linear"
       logLevel="1"
       targetRegions="{ Region1 }">
