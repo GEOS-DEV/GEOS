@@ -40,7 +40,7 @@ using namespace geosx::dataRepository;
 char const * xmlInput =
   "<Problem>"
   "  <Mesh>"
-  "    <InternalMesh name=\"mesh1\""
+  "    <InternalMesh name=\"mesh\""
   "                  elementTypes=\"{C3D8}\""
   "                  xCoords=\"{0, 1, 2, 3, 4}\""
   "                  yCoords=\"{0, 1}\""
@@ -70,15 +70,15 @@ protected:
   DofManagerTestBase():
     Base(),
     state( std::make_unique< CommandLineOptions >() ),
+    domain( state.getProblemManager().getDomainPartition() ),
     dofManager( "test" )
   {
     geosx::testing::setupProblemFromXML( &state.getProblemManager(), xmlInput );
-    mesh = &state.getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 );
-    dofManager.setMesh( *mesh );
+    dofManager.setDomain( domain );
   }
 
   GeosxState state;
-  MeshLevel * mesh;
+  DomainPartition & domain;
   DofManager dofManager;
 };
 
@@ -90,10 +90,10 @@ protected:
  * @param [out] dofNumbers the list of dof indices
  */
 template< DofManager::Location LOC >
-void checkLocalDofNumbers( MeshLevel const * const mesh,
-                           string const & dofIndexKey,
-                           string_array const & regions,
-                           array1d< globalIndex > & dofNumbers )
+void collectLocalDofNumbers( DomainPartition const & domain,
+                             string const & dofIndexKey,
+                             std::vector< DofManager::Regions > const & regions,
+                             array1d< globalIndex > & dofNumbers )
 {
   ObjectManagerBase const & manager =
     mesh->getGroup< ObjectManagerBase >( geosx::testing::internal::testMeshHelper< LOC >::managerKey() );
@@ -115,10 +115,10 @@ void checkLocalDofNumbers( MeshLevel const * const mesh,
  * @param [out] dofNumbers the list of dof indices
  */
 template<>
-void checkLocalDofNumbers< DofManager::Location::Elem >( MeshLevel const * const mesh,
-                                                         string const & dofIndexKey,
-                                                         string_array const & regions,
-                                                         array1d< globalIndex > & dofNumbers )
+void collectLocalDofNumbers< DofManager::Location::Elem >( DomainPartition const & domain,
+                                                           string const & dofIndexKey,
+                                                           std::vector< DofManager::Regions > const & regions,
+                                                           array1d< globalIndex > & dofNumbers )
 {
   // make a list of regions
   ElementRegionManager const & elemManager = mesh->getElemManager();
@@ -192,11 +192,11 @@ protected:
   {
     string name;
     DofManager::Location location;
-    localIndex components;
-    std::vector< string > regions = {};
+    integer components;
+    std::vector< DofManager::Regions > regions{};
   };
 
-  void test( std::vector< FieldDesc > fields );
+  void test( std::vector< FieldDesc > const & fields );
 };
 
 /**
@@ -207,42 +207,42 @@ protected:
  * @param numDofIndicesExpected expected global number of dof indices
  * @param regions list of support regions (empty = whole domain)
  */
-void DofManagerIndicesTest::test( std::vector< FieldDesc > fields )
+void DofManagerIndicesTest::test( std::vector< FieldDesc > const & fields )
 {
-  for( FieldDesc & f : fields )
+  for( FieldDesc const & f : fields )
   {
-    string_array const regions = getRegions( mesh, f.regions );
-    dofManager.addField( f.name, f.location, f.components, regions );
+    dofManager.addField( f.name, f.location, f.components, f.regions );
   }
   dofManager.reorderByRank();
 
   array1d< globalIndex > allDofNumbers;
   localIndex lastNumComp = -1;
 
-  for( FieldDesc & f : fields )
+  for( FieldDesc const & f : fields )
   {
     array1d< globalIndex > dofNumbers;
     string const key = dofManager.getKey( f.name );
-    string_array const regions = getRegions( mesh, f.regions );
     switch( f.location )
     {
       case DofManager::Location::Elem:
       {
-        checkLocalDofNumbers< DofManager::Location::Elem >( mesh, key, regions, dofNumbers );
+        collectLocalDofNumbers< DofManager::Location::Elem >( mesh, key, getRegions( mesh, f.regions ), dofNumbers );
+        break;
       }
-      break;
       case DofManager::Location::Face:
       {
-        checkLocalDofNumbers< DofManager::Location::Face >( mesh, key, regions, dofNumbers );
+        collectLocalDofNumbers< DofManager::Location::Face >( mesh, key, getRegions( mesh, f.regions ), dofNumbers );
+        break;
       }
-      break;
       case DofManager::Location::Node:
       {
-        checkLocalDofNumbers< DofManager::Location::Node >( mesh, key, regions, dofNumbers );
+        collectLocalDofNumbers< DofManager::Location::Node >( mesh, key, getRegions( mesh, f.regions ), dofNumbers );
+        break;
       }
-      break;
       default:
+      {
         GEOSX_ERROR( "Unsupported" );
+      }
     }
     std::sort( dofNumbers.begin(), dofNumbers.end() );
 
@@ -276,8 +276,13 @@ TEST_F( DofManagerIndicesTest, Node_Full )
  */
 TEST_F( DofManagerIndicesTest, Node_Partial )
 {
-  test( {
-    { "displacement", DofManager::Location::Node, 3, { "region1", "region3", "region4" }
+  test(
+  {
+    {
+      "displacement",
+      DofManager::Location::Node,
+      3,
+      { { "mesh", "Level00", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -287,8 +292,13 @@ TEST_F( DofManagerIndicesTest, Node_Partial )
  */
 TEST_F( DofManagerIndicesTest, Elem_Full )
 {
-  test( {
-    { "pressure", DofManager::Location::Elem, 2 }
+  test(
+  {
+    {
+      "pressure",
+      DofManager::Location::Elem,
+      2
+    }
   } );
 }
 
@@ -297,8 +307,13 @@ TEST_F( DofManagerIndicesTest, Elem_Full )
  */
 TEST_F( DofManagerIndicesTest, Elem_Partial )
 {
-  test( {
-    { "pressure", DofManager::Location::Elem, 2, { "region1", "region3", "region4" }
+  test(
+  {
+    {
+      "pressure",
+      DofManager::Location::Elem,
+      2,
+      { { "mesh", "Level00", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -308,8 +323,13 @@ TEST_F( DofManagerIndicesTest, Elem_Partial )
  */
 TEST_F( DofManagerIndicesTest, Face_Full )
 {
-  test( {
-    { "flux", DofManager::Location::Face, 2 }
+  test(
+  {
+    {
+      "flux",
+      DofManager::Location::Face,
+      2,
+    }
   } );
 }
 
@@ -318,8 +338,13 @@ TEST_F( DofManagerIndicesTest, Face_Full )
  */
 TEST_F( DofManagerIndicesTest, Face_Partial )
 {
-  test( {
-    { "flux", DofManager::Location::Face, 2, { "region1", "region3", "region4" }
+  test(
+  {
+    {
+      "flux",
+      DofManager::Location::Face,
+      2,
+      { { "mesh", "Level00", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -329,10 +354,17 @@ TEST_F( DofManagerIndicesTest, Face_Partial )
  */
 TEST_F( DofManagerIndicesTest, Node_Elem_Full )
 {
-  test( {
-    { "displacement", DofManager::Location::Node, 3, {}
+  test(
+  {
+    {
+      "displacement",
+      DofManager::Location::Node,
+      3
     },
-    { "pressure", DofManager::Location::Elem, 2, {}
+    {
+      "pressure",
+      DofManager::Location::Elem,
+      2
     }
   } );
 }
@@ -342,10 +374,19 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Full )
  */
 TEST_F( DofManagerIndicesTest, Node_Elem_Partial )
 {
-  test( {
-    { "displacement", DofManager::Location::Node, 3, { "region1", "region3", "region4" }
+  test(
+  {
+    {
+      "displacement",
+      DofManager::Location::Node,
+      3,
+      { { "mesh", "Level00", { "region1", "region3", "region4" } } }
     },
-    { "pressure", DofManager::Location::Elem, 2, { "region1", "region2", "region4" }
+    {
+      "pressure",
+      DofManager::Location::Elem,
+      2,
+      { { "mesh", "Level00", { "region1", "region2", "region4" } } }
     }
   } );
 }
@@ -355,10 +396,17 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Partial )
  */
 TEST_F( DofManagerIndicesTest, Face_Elem_Full )
 {
-  test( {
-    { "flux", DofManager::Location::Face, 2, {}
+  test(
+  {
+    {
+      "flux",
+      DofManager::Location::Face,
+      2
     },
-    { "pressure", DofManager::Location::Elem, 2, {}
+    {
+      "pressure",
+      DofManager::Location::Elem,
+      2
     }
   } );
 }
@@ -368,10 +416,19 @@ TEST_F( DofManagerIndicesTest, Face_Elem_Full )
  */
 TEST_F( DofManagerIndicesTest, Face_Elem_Partial )
 {
-  test( {
-    { "flux", DofManager::Location::Face, 2, { "region1", "region3", "region4" }
+  test(
+  {
+    {
+      "flux",
+      DofManager::Location::Face,
+      2,
+      { { "mesh", "Level00", { "region1", "region3", "region4" } } }
     },
-    { "pressure", DofManager::Location::Elem, 2, { "region1", "region3", "region4" }
+    {
+      "pressure",
+      DofManager::Location::Elem,
+      2,
+      { { "mesh", "Level00", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -390,16 +447,18 @@ protected:
   using PatternFunc = void ( * )( MeshLevel const * const mesh,
                                   string const & dofIndexKey,
                                   string_array const & regions,
+                                  globalIndex const rankOffset,
                                   localIndex const numComp,
-                                  Matrix & sparsity );
+                                  CRSMatrix< real64 > & sparsity );
 
   using CoupledPatternFunc = void ( * )( MeshLevel const * const mesh,
                                          string const & dofIndexKey1,
                                          string const & dofIndexKey2,
                                          string_array const & regions,
+                                         globalIndex const rankOffset,
                                          localIndex const numComp1,
                                          localIndex const numComp2,
-                                         Matrix & sparsity );
+                                         CRSMatrix< real64 > & sparsity );
 
   struct FieldDesc
   {
@@ -449,7 +508,7 @@ protected:
   using FieldDesc = typename Base::FieldDesc;
   using CouplingDesc = typename Base::CouplingDesc;
 
-  using Base::mesh;
+  using Base::domain;
   using Base::dofManager;
   using Base::addFields;
 
@@ -503,21 +562,24 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    pattern.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    pattern.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
     pattern.set( 1.0 );
   }
 
+  CRSMatrix< real64, globalIndex > localPatternExpected( numLocalDof,
+                                                         dofManager.numGlobalDofs(),
+                                                         27 * numCompTotal );
   Matrix patternExpected;
-  patternExpected.createWithLocalSize( numLocalDof, numLocalDof, 27 * numCompTotal, MPI_COMM_GEOSX );
-  patternExpected.open();
 
   for( FieldDesc const & f : fields )
   {
+    GEOSX_LOG_RANK( "rankOffset = "<<dofManager.rankOffset() );
     f.makePattern( mesh,
                    dofManager.getKey( f.name ),
                    getRegions( mesh, f.regions ),
+                   dofManager.rankOffset(),
                    f.components,
-                   patternExpected );
+                   localPatternExpected );
   }
   for( auto const & entry : couplings )
   {
@@ -533,11 +595,12 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
                            dofManager.getKey( f1.name ),
                            dofManager.getKey( f2.name ),
                            getRegions( mesh, c.regions ),
+                           dofManager.rankOffset(),
                            f1.components,
                            f2.components,
-                           patternExpected );
+                           localPatternExpected );
   }
-  patternExpected.close();
+  patternExpected.create( localPatternExpected.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
   // Compare the sparsity patterns
   pattern.set( 1.0 );
@@ -555,7 +618,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Full )
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix > }
+      2, makeSparsityTPFA }
   } );
 }
 
@@ -569,7 +632,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      2, makeSparsityTPFA,
       { "region1", "region3", "region4" }
     }
   } );
@@ -585,7 +648,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Full )
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix > }
+      3, makeSparsityFEM }
   } );
 }
 
@@ -599,7 +662,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      3, makeSparsityFEM,
       { "region1", "region3", "region4" }
     }
   } );
@@ -615,7 +678,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Full )
     { "mass",
       DofManager::Location::Elem,
       DofManager::Connector::None,
-      2, makeSparsityMass< typename TestFixture::Matrix > }
+      2, makeSparsityMass }
   } );
 }
 
@@ -629,7 +692,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
     { "mass",
       DofManager::Location::Elem,
       DofManager::Connector::None,
-      2, makeSparsityMass< typename TestFixture::Matrix >,
+      2, makeSparsityMass,
       { "region1", "region3", "region4" }
     }
   } );
@@ -645,7 +708,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Full )
     { "flux",
       DofManager::Location::Face,
       DofManager::Connector::Elem,
-      2, makeSparsityFlux< typename TestFixture::Matrix > }
+      2, makeSparsityFlux }
   } );
 }
 
@@ -659,7 +722,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
     { "flux",
       DofManager::Location::Face,
       DofManager::Connector::Elem,
-      2, makeSparsityFlux< typename TestFixture::Matrix >,
+      2, makeSparsityFlux,
       { "region1", "region3", "region4" }
     }
   } );
@@ -675,17 +738,17 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Full )
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix > },
+      3, makeSparsityFEM },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix > }
+      2, makeSparsityTPFA }
   },
   {
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
-        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        makeSparsityFEM_FVM,
         true }
     }
   } );
@@ -701,13 +764,13 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
     { "displacement",
       DofManager::Location::Node,
       DofManager::Connector::Elem,
-      3, makeSparsityFEM< typename TestFixture::Matrix >,
+      3, makeSparsityFEM,
       { "region1", "region3", "region4" }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
-      2, makeSparsityTPFA< typename TestFixture::Matrix >,
+      2, makeSparsityTPFA,
       { "region1", "region2", "region4" }
     }
   },
@@ -715,7 +778,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
     {
       { "displacement", "pressure" },
       { DofManager::Connector::Elem,
-        makeSparsityFEM_FVM< typename TestFixture::Matrix >,
+        makeSparsityFEM_FVM,
         true,
         { "region4" }
       }
@@ -761,7 +824,7 @@ protected:
   using FieldDesc = typename Base::FieldDesc;
   using CouplingDesc = typename Base::CouplingDesc;
 
-  using Base::mesh;
+  using Base::domain;
   using Base::dofManager;
   using Base::addFields;
 
@@ -784,14 +847,14 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    A.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    A.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
     A.set( 1.0 );
   }
 
   // Create prolongation and restriction to 2 out of 3 components
   Matrix R, P;
-  dofManager.makeRestrictor( selection, A.getComm(), false, R );
-  dofManager.makeRestrictor( selection, A.getComm(), true, P );
+  dofManager.makeRestrictor( selection, A.comm(), false, R );
+  dofManager.makeRestrictor( selection, A.comm(), true, P );
 
   // Compute the sub-matrix via PtAP
   Matrix Asub_PtAP;
@@ -836,7 +899,7 @@ void DofManagerRestrictorTest< LAI >::test( std::vector< FieldDesc > fields,
     dofManager.setSparsityPattern( localPattern );
     CRSMatrix< real64, globalIndex > localMatrix;
     localMatrix.assimilate< parallelHostPolicy >( std::move( localPattern ) );
-    B.create( localMatrix.toViewConst(), MPI_COMM_GEOSX );
+    B.create( localMatrix.toViewConst(), dofManager.numLocalDofs(), MPI_COMM_GEOSX );
     B.set( 1.0 );
   }
 
@@ -866,8 +929,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
   },
   {
     { "pressure", { 3, 1, 3 } }
-  }
-    );
+  } );
 }
 
 TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
@@ -899,8 +961,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
         { "region4" }
       }
     }
-  }
-    );
+  } );
 }
 
 TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )

@@ -158,6 +158,32 @@ std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
   return keys;
 }
 
+namespace internal
+{
+template< class F, class ... Ts, std::size_t ... Is >
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::index_sequence< Is ... > )
+{
+  using expander = int[];
+  (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
+}
+}
+
+/**
+ * @brief Visit every element in a tuple applying a function.
+ * @tparam F type of function
+ * @tparam Ts types of tuple elements
+ * @param tuple the target tuple
+ * @param func the function to apply
+ *
+ * The function will be called with a reference to the tuple element and
+ * a compile-time (std::integral_constant) index of the tuple element.
+ */
+template< class F, class ... Ts >
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
+{
+  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+}
+
 // The code below should work with any subscriptable vector/matrix types
 
 template< typename VEC1, typename VEC2 >
@@ -198,6 +224,9 @@ void applyChainRuleInPlace( integer const N,
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );
 }
+
+template< typename T >
+struct typeTag {};
 
 } // namespace geosx
 

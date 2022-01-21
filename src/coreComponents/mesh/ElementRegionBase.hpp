@@ -68,6 +68,11 @@ public:
 
   ///@}
 
+
+
+  static string verifyMeshBodyName( Group const & meshBodies,
+                                    string const & meshBodyBlockName );
+
   /**
    * @name Generation of the mesh region
    */

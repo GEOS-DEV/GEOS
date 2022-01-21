@@ -18,9 +18,10 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -93,7 +94,7 @@ public:
                CRSMatrixView< real64, globalIndex const > const & inputMatrix,
                arrayView1d< real64 > const & inputRhs,
                real64 const (&inputGravityVector)[3],
-               arrayView1d< string const > const fluidModelNames ):
+               string const & fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -111,12 +112,14 @@ public:
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
-    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( fluidModelKey) ).density() ),
+    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
+    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( fluidModelKey ) ).initialDensity() ),
+    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference<string>( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
+    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
+    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() )
   {}
 
   //*****************************************************************************
@@ -229,12 +232,13 @@ public:
     real64 dPorosity_dVolStrainIncrement;
     real64 dTotalStress_dPressure[6] = {0.0};
 
-    // --- Update total stress tensor
+    // --- Update total stress tensor  (incremental form wrt initial equilibrium state)
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness;
     FE_TYPE::symmetricGradient( dNdX, stack.uhat_local, strainIncrement );
 
     m_constitutiveUpdate.smallStrainUpdate( k,
                                             q,
+                                            m_initialFluidPressure[k],
                                             m_fluidPressure[k],
                                             m_deltaFluidPressure[k],
                                             strainIncrement,
@@ -246,18 +250,22 @@ public:
 
     real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
     real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
+    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k, q );
 
-    // Evaluate body force vector
+    // Evaluate body force vector (incremental form wrt initial equilibrium state)
     real64 bodyForce[3] = { m_gravityVector[0],
                             m_gravityVector[1],
                             m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
-      real64 mixtureDensity = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
-      mixtureDensity *= detJxW;
-      bodyForce[0] *= mixtureDensity;
-      bodyForce[1] *= mixtureDensity;
-      bodyForce[2] *= mixtureDensity;
+      real64 mixtureDensityNew = ( 1.0 - porosityNew ) * m_solidDensity( k, q ) + porosityNew * m_fluidDensity( k, q );
+      real64 mixtureDensityInit = ( 1.0 - porosityInit ) * m_solidDensity( k, q ) + porosityInit * m_initialFluidDensity( k, q );
+      mixtureDensityNew *= detJxW;
+      mixtureDensityInit *= detJxW;
+      real64 const mixtureDensityIncrement = mixtureDensityNew - mixtureDensityInit;
+      bodyForce[0] *= mixtureDensityIncrement;
+      bodyForce[1] *= mixtureDensityIncrement;
+      bodyForce[2] *= mixtureDensityIncrement;
     }
 
     // Assemble local jacobian and residual
@@ -375,8 +383,6 @@ public:
     return maxForce;
   }
 
-
-
 protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
@@ -395,16 +401,21 @@ protected:
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
   arrayView1d< real64 const > const m_fluidDensityOld;
+  arrayView2d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > const m_flowDofNumber;
+
+  /// The rank-global initial fluid pressure array
+  arrayView1d< real64 const > const m_initialFluidPressure;
 
   /// The rank-global fluid pressure array.
   arrayView1d< real64 const > const m_fluidPressure;
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > const m_deltaFluidPressure;
+
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
@@ -414,7 +425,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                CRSMatrixView< real64, globalIndex const > const &,
                                                                arrayView1d< real64 > const &,
                                                                real64 const (&)[3],
-                                                               arrayView1d< string const > const >;
+                                                               string const & >;
 
 } // namespace PoroelasticKernels
 

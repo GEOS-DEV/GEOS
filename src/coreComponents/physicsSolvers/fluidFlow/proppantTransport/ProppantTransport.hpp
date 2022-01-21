@@ -176,9 +176,7 @@ public:
 
   /**@}*/
 
-  void resizeFractureFields( MeshLevel & mesh );
-
-  arrayView1d< string const > const proppantModelNames() const { return m_proppantModelNames; }
+  void resizeFractureFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -233,7 +231,7 @@ public:
    * @brief Function to update fluid and proppant properties
    * @param domain the domain
    */
-  void updateState( Group & dataGroup, localIndex const targetIndex );
+  void updateState( Group & dataGroup );
 
 protected:
 
@@ -250,17 +248,19 @@ private:
    * @brief Function to update fluid properties
    * @param domain the domain
    */
-  void updateFluidModel( Group & dataGroup, localIndex const targetIndex );
+  void updateFluidModel( Group & dataGroup );
 
-  void updateComponentDensity( Group & dataGroup, localIndex const targetIndex );
+  void updateComponentDensity( Group & dataGroup );
 
-  void updateProppantModel( Group & dataGroup, localIndex const targetIndex );
+  void updateProppantModel( Group & dataGroup );
 
   /**
    * @brief Function to update cell-based fluid flux
    */
   void updateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
+
+  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const;
 
   /// views into primary variable fields
 
@@ -307,8 +307,6 @@ private:
 
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeability;
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeabilityMultiplier;
-
-  array1d< string > m_proppantModelNames;
 
   integer m_numComponents;
 

@@ -90,12 +90,12 @@ LaplaceVEM::~LaplaceVEM()
 void LaplaceVEM::setupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
-                              array1d< real64 > & localRhs,
-                              array1d< real64 > & localSolution,
+                              ParallelVector & rhs,
+                              ParallelVector & solution,
                               bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 }
 
 /*
@@ -123,33 +123,32 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 {
   using VEM = finiteElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
 
-  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
-  NodeManager & nodeManager = mesh.getNodeManager();
-  FaceManager const & faceManager = mesh.getFaceManager();
-  EdgeManager const & edgeManager = mesh.getEdgeManager();
-
-  // Get geometric properties used to compute projectors.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
-  arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
-  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
-  arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
-  string const dofKey = dofManager.getKey( m_fieldName );
-  arrayView1d< globalIndex const > const & dofIndex =
-    nodeManager.getReference< array1d< globalIndex > >( dofKey );
-
-  real64 const diffusion = 1.0;
-  globalIndex const rankOffset = dofManager.rankOffset();
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elementRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    elementRegion.forElementSubRegions< CellElementSubRegion >
-      ( [&]( CellElementSubRegion const & elemSubRegion )
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    EdgeManager const & edgeManager = mesh.getEdgeManager();
+
+    // Get geometric properties used to compute projectors.
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+      nodeManager.referencePosition();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+    ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+    arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
+    arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
+    arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
+    arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
+    string const dofKey = dofManager.getKey( m_fieldName );
+    arrayView1d< globalIndex const > const & dofIndex =
+      nodeManager.getReference< array1d< globalIndex > >( dofKey );
+
+    real64 const diffusion = 1.0;
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion & elemSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > elemToNodeMap = elemSubRegion.nodeList().toViewConst();
       arrayView2d< localIndex const > const elementToFaceMap = elemSubRegion.faceList().toViewConst();

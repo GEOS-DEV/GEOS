@@ -7,10 +7,6 @@
       name="compflow"
       logLevel="1"
       discretization="fluidHM"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
       maxCompFractionChange="0.5"
@@ -72,8 +68,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="beiraoDaVeigaLipnikovManzini"
-        coefficientName="permeability"/>
+        innerProductType="beiraoDaVeigaLipnikovManzini"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -85,7 +80,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"

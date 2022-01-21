@@ -21,19 +21,12 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Region1 }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="297.15"/>
 
     <CompositionalMultiphaseWell
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }"
-      wellTemperature="297.15">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -49,6 +42,7 @@
         referenceElevation="2"
         targetBHP="1e8"
         targetTotalRate="1e-7"
+        injectionTemperature="297.15"
         injectionStream="{ 0.1, 0.1, 0.1, 0.7 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -119,9 +113,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 

@@ -20,7 +20,7 @@
 
     <SolidMechanicsEmbeddedFractures
       name="fractureMechSolver"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       solidSolverName="matrixMechSolver"
       fractureRegionName="Fracture"
       contactRelationName="fractureContact"/>
@@ -30,19 +30,15 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ porousRock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracturePerm }"/>
+      targetRegions="{ Domain, Fracture }"/>
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      name="SurfaceGenerator"      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -103,10 +99,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -119,7 +112,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ water, fractureFilling }"
+      materialList="{ water, fractureFilling, fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -172,7 +165,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

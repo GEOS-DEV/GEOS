@@ -17,16 +17,11 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ Channel }"/>
 
     <SinglePhaseWell
       name="SinglePhaseWell"
-      logLevel="1"
-      fluidNames="{ water }"
-      targetRegions="{ wellRegion1, wellRegion2 }">
+      logLevel="1">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -129,11 +124,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -167,13 +158,11 @@
   </Constitutive>
 
   <FieldSpecifications>
-    <FieldSpecification
-      name="initialPressure_channel"
-      initialCondition="1"
-      setNames="{ all }"
-      objectPath="ElementRegions/Channel"
-      fieldName="pressure"
-      scale="1e6"/>
+    <HydrostaticEquilibrium
+      name="equil"
+      objectPath="ElementRegions/Channel"      
+      datumElevation="5"
+      datumPressure="1e6"/>
   </FieldSpecifications>
 
   <Functions>

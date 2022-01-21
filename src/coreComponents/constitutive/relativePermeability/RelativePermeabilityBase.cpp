@@ -17,6 +17,7 @@
  */
 
 #include "RelativePermeabilityBase.hpp"
+#include "RelativePermeabilityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -39,8 +40,9 @@ RelativePermeabilityBase::RelativePermeabilityBase( string const & name, Group *
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseRelPermString(), &m_phaseRelPerm ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dPhaseRelPerm_dPhaseVolFractionString(), &m_dPhaseRelPerm_dPhaseVolFrac );
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseRelPerm{}, &m_phaseRelPerm );
+  registerExtrinsicData( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{}, &m_dPhaseRelPerm_dPhaseVolFrac );
+
 }
 
 void RelativePermeabilityBase::postProcessInput()
@@ -92,7 +94,7 @@ void RelativePermeabilityBase::resizeFields( localIndex const size, localIndex c
 
 void RelativePermeabilityBase::setLabels()
 {
-  getWrapper< array3d< real64, relperm::LAYOUT_RELPERM > >( viewKeyStruct::phaseRelPermString() ).
+  getExtrinsicData< extrinsicMeshData::relperm::phaseRelPerm >().
     setDimLabels( 2, m_phaseNames );
 }
 

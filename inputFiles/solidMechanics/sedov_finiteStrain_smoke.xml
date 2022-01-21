@@ -29,7 +29,7 @@
       cflFactor="0.25"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }"/>
+      />
   </Solvers>
 
   <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->

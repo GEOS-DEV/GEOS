@@ -5,10 +5,6 @@
     <CompositionalMultiphaseFVM
       name="compflow"
       discretization="fluidTPFA"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
       targetRegions="{ Region1 }">
@@ -78,9 +74,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -92,7 +86,7 @@
   </ElementRegions>
 
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid1"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"

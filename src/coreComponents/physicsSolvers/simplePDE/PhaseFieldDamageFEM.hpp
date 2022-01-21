@@ -71,13 +71,6 @@ public:
                                integer const cycleNumber,
                                DomainPartition & domain ) override;
 
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
-                            bool const setSparsity ) override;
-
   virtual void setupDofs( DomainPartition const & domain,
                           DofManager & dofManager ) const override;
 
@@ -175,7 +168,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d< string > m_solidModelNames;
+//  array1d< string > m_solidModelNames;
 
   array1d< real64 > m_coeff;
   //  string m_coeffFieldName;
