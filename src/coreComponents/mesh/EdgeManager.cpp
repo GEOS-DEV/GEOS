@@ -38,8 +38,9 @@ EdgeManager::EdgeManager( string const & name,
   m_fractureConnectorsEdgesToEdges(),
   m_fractureConnectorEdgesToFaceElements()
 {
-  this->registerWrapper( viewKeyStruct::nodeListString(), &this->m_toNodesRelation );
-  this->registerWrapper( viewKeyStruct::faceListString(), &this->m_toFacesRelation ).setSizedFromParent( 0 );
+  registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation ).
+    setSizedFromParent( 0 );
 
   m_toNodesRelation.resize( 0, 2 );
 
@@ -58,7 +59,6 @@ EdgeManager::EdgeManager( string const & name,
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of fracture connector local indices face element local indices" ).
     setSizedFromParent( 0 );
-
 }
 
 EdgeManager::~EdgeManager()
@@ -117,11 +117,6 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                                              m_toNodesRelation );
 
   resize( numEdges );
-
-//  m_toNodesRelation.resize( numEdges );
-//  m_edgesToFractureConnectorsEdges.resize( numEdges );
-  m_fractureConnectorsEdgesToEdges.resize( numEdges );
-  m_fractureConnectorEdgesToFaceElements.resize( numEdges );
 }
 
 void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
