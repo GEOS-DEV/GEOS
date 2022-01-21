@@ -48,7 +48,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
-                                                          Group * const parent ):
+                                      Group * const parent ):
   SolverBase( name, parent ),
   m_newmarkGamma( 0.5 ),
   m_newmarkBeta( 0.25 ),
@@ -138,7 +138,7 @@ void SolidMechanicsMPM::postProcessInput()
 {
   SolverBase::postProcessInput();
 
-  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
+//  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
@@ -154,7 +154,10 @@ SolidMechanicsMPM::~SolidMechanicsMPM()
 
 void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
-  forMeshTargets( meshBodies, [&] ( MeshLevel & meshLevel,
+  SolverBase::registerDataOnMesh( meshBodies );
+
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & meshLevel,
                                     arrayView1d<string const> const & regionNames )
   {
     NodeManager & nodes = meshLevel.getNodeManager();
@@ -239,6 +242,17 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
+
+      subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent(0);
+
+      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+      GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+
+
     } );
 
   } );
@@ -252,14 +266,26 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  GEOSX_ERROR_IF(domain.getMeshBodies().numSubGroups() != 2, "The GEOSX MPM solver requires two mesh bodies corresponding to the background grid and particles!");
 
-  // Validate solid models in target regions
-  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & meshLevel,
+                                                arrayView1d<string const> const & regionNames )
   {
-    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
-    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
-  } );
+    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            CellElementSubRegion & subRegion )
+    {
+      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+    });
+  });
+  // Validate solid models in target regions
+//  domain.forMeshBodies( [&]( MeshBody const & meshBody )
+//  {
+//    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
+//    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
+//  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -275,23 +301,42 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
 template< typename ... PARAMS >
 real64 SolidMechanicsMPM::explicitKernelDispatch( MeshLevel & mesh,
-                                                            arrayView1d< string const > const & targetRegions,
-                                                            string const & finiteElementName,
-                                                            arrayView1d< string const > const & constitutiveNames,
-                                                            real64 const dt,
-                                                            std::string const & elementListName )
+                                                  arrayView1d< string const > const & targetRegions,
+                                                  string const & finiteElementName,
+                                                  real64 const dt,
+                                                  std::string const & elementListName )
 {
   GEOSX_MARK_FUNCTION;
   real64 rval = 0;
-  auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
-  rval = finiteElement::
-           regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                         constitutive::SolidBase,
-                                         CellElementSubRegion >( mesh,
-                                                                 targetRegions,
-                                                                 finiteElementName,
-                                                                 constitutiveNames,
-                                                                 kernelFactory );
+  if( m_strainTheory==0 )
+  {
+    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
+    rval = finiteElement::
+             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                           constitutive::SolidBase,
+                                           CellElementSubRegion >( mesh,
+                                                                   targetRegions,
+                                                                   finiteElementName,
+                                                                   viewKeyStruct::solidMaterialNamesString(),
+                                                                   kernelFactory );
+  }
+  else if( m_strainTheory==1 )
+  {
+    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
+    rval = finiteElement::
+             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                           constitutive::SolidBase,
+                                           CellElementSubRegion >( mesh,
+                                                                   targetRegions,
+                                                                   finiteElementName,
+                                                                   viewKeyStruct::solidMaterialNamesString(),
+                                                                   kernelFactory );
+  }
+  else
+  {
+    GEOSX_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+  }
+
   return rval;
 }
 
