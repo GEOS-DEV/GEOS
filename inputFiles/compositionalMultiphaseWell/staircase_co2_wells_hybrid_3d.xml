@@ -21,10 +21,6 @@
       logLevel="1"
       discretization="fluidHM"
       targetRegions="{ Channel }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       maxRelativePressureChange="0.2"
@@ -34,9 +30,6 @@
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }"
-      wellTemperature="368.15"
       maxCompFractionChange="0.2"
       maxRelativePressureChange="0.2"
       useMass="1">
@@ -55,6 +48,7 @@
         referenceElevation="12"
         targetBHP="2e7"
         targetTotalRateTableName="totalRateTable"
+        injectionTemperature="368.15"
         injectionStream="{ 0.995, 0.005 }"/>
     </CompositionalMultiphaseWell>
   </Solvers>
@@ -133,13 +127,12 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="fluidHM"
-        innerProductType="beiraoDaVeigaLipnikovManzini"
-        coefficientName="permeability"/>
+        innerProductType="beiraoDaVeigaLipnikovManzini"/>
     </FiniteVolume>
   </NumericalMethods>
 
   <Constitutive>
-    <CO2BrineFluid
+    <CO2BrinePhillipsFluid
       name="fluid1"
       phaseNames="{ gas, water }"
       componentNames="{ co2, water }"

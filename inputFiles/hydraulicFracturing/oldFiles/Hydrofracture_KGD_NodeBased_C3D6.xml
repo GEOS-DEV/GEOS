@@ -27,21 +27,17 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"/>
+      targetRegions="{ Fracture }"/>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="0.707e7"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
@@ -126,8 +122,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
         meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>

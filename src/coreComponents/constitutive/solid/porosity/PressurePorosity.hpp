@@ -33,12 +33,14 @@ public:
   PressurePorosityUpdates( arrayView2d< real64 > const & newPorosity,
                            arrayView2d< real64 > const & oldPorosity,
                            arrayView2d< real64 > const & dPorosity_dPressure,
+                           arrayView2d< real64 > const & initialPorosity,
                            arrayView1d< real64 > const & referencePorosity,
                            real64 const & referencePressure,
                            real64 const & compressibility ):
     PorosityBaseUpdates( newPorosity,
                          oldPorosity,
                          dPorosity_dPressure,
+                         initialPorosity,
                          referencePorosity ),
     m_referencePressure( referencePressure ),
     m_compressibility( compressibility )
@@ -107,6 +109,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
                           m_dPorosity_dPressure,
+                          m_initialPorosity,
                           m_referencePorosity,
                           m_referencePressure,
                           m_compressibility );

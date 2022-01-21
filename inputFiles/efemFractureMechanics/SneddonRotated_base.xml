@@ -29,11 +29,11 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -68,7 +68,7 @@
       defaultBulkModulus="5.5556e9"
       defaultShearModulus="4.16667e9"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

@@ -106,7 +106,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
@@ -216,10 +216,14 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
-    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
-                                                                 m_targetRegions,
-                                                                 m_coefficientModelNames );
+  // TODO: can we look this up better?
+  string const & meshBodyName = mesh.getParent().getParent().getName();
+  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
+
+//  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
+//    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
+//                                                                 targetRegions,R
+//                                                                 coeffModelNames );
 
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
@@ -580,7 +584,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                               elemCenter,
                               faceNormal,
                               faceArea,
-                              coefficient,
+//                              coefficient,
                               transMultiplier,
                               fractureRegionIndex ] ( localIndex const k )
     {
@@ -863,16 +867,21 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
+  // TODO: can we look this up better?
+  string const & meshBodyName = mesh.getParent().getParent().getName();
+  arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
+  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
+
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
     elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
-                                                                 m_targetRegions,
-                                                                 m_coefficientModelNames );
+                                                                 targetRegions,
+                                                                 coeffModelNames );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : targetRegions )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
@@ -991,7 +1000,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }

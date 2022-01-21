@@ -139,8 +139,6 @@ public:
 
   struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
   {
-    static constexpr char const * permeabilityMultiplierString() { return "permeabilityMultiplier"; }
-
     static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
     static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
 

@@ -104,9 +104,9 @@ public:
     return m_operator.numLocalCols();
   }
 
-  virtual MPI_Comm getComm() const override final
+  virtual MPI_Comm comm() const override final
   {
-    return m_operator.getComm();
+    return m_operator.comm();
   }
 
   /**
@@ -152,7 +152,7 @@ private:
     static VEC createFrom( VEC const & src )
     {
       VEC v;
-      v.createWithLocalSize( src.localSize(), src.getComm() );
+      v.create( src.localSize(), src.comm() );
       return v;
     }
   };
@@ -167,7 +167,7 @@ private:
       BlockVector< VEC > v( src.blockSize() );
       for( localIndex i = 0; i < src.blockSize(); ++i )
       {
-        v.block( i ).createWithLocalSize( src.block( i ).localSize(), src.block( i ).getComm() );
+        v.block( i ).create( src.block( i ).localSize(), src.block( i ).comm() );
       }
       return v;
     }
@@ -194,31 +194,14 @@ protected:
 
   /**
    * @brief Output iteration progress (called by implementations).
-   * @param iter  current iteration number
-   * @param rnorm current residual norm
+   * @note must be called **after** pushing the most recent residual into m_residualNorms
    */
-  void logProgress( localIndex const iter, real64 const rnorm ) const
-  {
-    m_residualNorms[iter] = rnorm;
-    if( m_params.logLevel >= 2 )
-    {
-      GEOSX_LOG_RANK_0( methodName() << " iteration " << iter << ": residual = " << rnorm );
-    }
-  }
+  void logProgress() const;
 
   /**
    * @brief Output convergence result (called by implementations).
    */
-  void logResult() const
-  {
-    if( m_params.logLevel >= 1 )
-    {
-      GEOSX_LOG_RANK_0( methodName() << ' ' <<
-                        ( m_result.success() ? "converged" : "failed to converge" ) <<
-                        " in " << m_result.numIterations << " iterations " <<
-                        "(" << m_result.solveTime << " s)" );
-    }
-  }
+  void logResult() const;
 
   /// parameters of the solver
   LinearSolverParameters m_params;

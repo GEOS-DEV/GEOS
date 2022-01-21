@@ -29,7 +29,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
@@ -41,10 +40,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
@@ -56,7 +52,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="$K_upscaled$"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
@@ -158,7 +154,7 @@
       referencePressure="0.0"
       compressibility="0.0"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>
@@ -177,8 +173,6 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
         meanPermCoefficient="0.8"/>
     </FiniteVolume>
   </NumericalMethods>

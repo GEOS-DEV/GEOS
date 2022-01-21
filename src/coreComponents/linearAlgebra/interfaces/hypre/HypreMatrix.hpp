@@ -127,9 +127,11 @@ public:
   using MatrixBase::residual;
   using MatrixBase::setDofManager;
   using MatrixBase::dofManager;
+  using MatrixBase::create;
 
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
-                       MPI_Comm const & comm ) override final;
+                       localIndex const numLocalColumns,
+                       MPI_Comm const & comm ) override;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -232,8 +234,8 @@ public:
   virtual void apply( HypreVector const & src,
                       HypreVector & dst ) const override;
 
-  virtual void applyTranspose( Vector const & src,
-                               Vector & dst ) const override;
+  virtual void applyTranspose( HypreVector const & src,
+                               HypreVector & dst ) const override;
 
   virtual void multiply( HypreMatrix const & src,
                          HypreMatrix & dst ) const override;
@@ -261,6 +263,9 @@ public:
 
   virtual void leftScale( HypreVector const & vec ) override;
 
+  virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
+                            RowSumType const rowSumType ) override;
+
   virtual void rightScale( HypreVector const & vec ) override;
 
   virtual void leftRightScale( HypreVector const & vecLeft,
@@ -269,34 +274,40 @@ public:
   virtual void transpose( HypreMatrix & dst ) const override;
 
   virtual void separateComponentFilter( HypreMatrix & dst,
-                                        localIndex const dofPerPoint ) const override;
+                                        integer const dofPerPoint ) const override;
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
   virtual void addEntries( HypreMatrix const & src,
-                           real64 const scale = 1.0,
-                           bool const samePattern = true ) override;
+                           MatrixPatternOp const op,
+                           real64 const scale ) override;
 
-  virtual void addDiagonal( HypreVector const & src ) override;
+  virtual void addDiagonal( HypreVector const & src,
+                            real64 const scale ) override;
+
+  virtual void clampEntries( real64 const lo,
+                             real64 const hi,
+                             bool const excludeDiag ) override;
 
   /**
    * @copydoc MatrixBase<HypreMatrix,HypreVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
 
-  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
+  virtual localIndex rowLength( globalIndex const globalRowIndex ) const override;
 
-  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
+  virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
   virtual void getRowCopy( globalIndex globalRowIndex,
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const override;
 
-  virtual real64 getDiagValue( globalIndex globalRow ) const override;
-
   virtual void extractDiagonal( HypreVector & dst ) const override;
+
+  virtual void getRowSums( HypreVector & dst,
+                           RowSumType const rowSumType ) const override;
 
   /**
    * @copydoc MatrixBase<HypreMatrix,HypreVector>::numGlobalRows
@@ -363,14 +374,21 @@ public:
    */
   virtual real64 normFrobenius() const override;
 
+  /**
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::normMax
+   */
+  virtual real64 normMax() const override;
+
+  virtual real64 normMax( arrayView1d< globalIndex const > const & rowIndices ) const override;
+
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
   /**
-   * @copydoc MatrixBase<HypreMatrix,HypreVector>::getComm
+   * @copydoc MatrixBase<HypreMatrix,HypreVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 

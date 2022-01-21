@@ -1,28 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!-- SPHINX_Gravity -->
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
-    <!-- SPHINX_GravityEnd -->
-    <!-- SPHINX_SolidMechanicsSolver -->
-    <SolidMechanicsLagrangianSSLE
-      name="lagsolve"
-      timeIntegrationOption="QuasiStatic"
-      discretization="FE1"
-      logLevel="0"
-      targetRegions="{ Omega }"
-      solidMaterialNames="{ shale }">
-      <!-- SPHINX_SolidMechanicsSolverEnd -->
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"
-        newtonMaxIter="8"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        directParallel="0"
-        logLevel="0"/>
-    </SolidMechanicsLagrangianSSLE>
-  </Solvers>
 
   <Events
     maxTime="1.0">
@@ -44,11 +22,11 @@
       targetExactTimestep="1"
       target="/Outputs/siloOutput"/>
 
-    <!--PeriodicEvent
+    <PeriodicEvent
       name="restarts"
-      timeFrequency="1e99"
+      timeFrequency="1.0"
       targetExactTimestep="0"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/>
   </Events>
 
   <!-- SPHINX_FEDiscretization -->
@@ -133,7 +111,7 @@
       plotFileRoot="plot"
       childDirectory="sub"/>
 
-    <!--Restart
-      name="restartOutput"/-->
+    <Restart
+      name="restartOutput"/>
   </Outputs>
 </Problem>

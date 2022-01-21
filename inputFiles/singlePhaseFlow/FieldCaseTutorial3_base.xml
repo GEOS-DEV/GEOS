@@ -51,9 +51,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        targetRegions="{ Reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        targetRegions="{ Reservoir }"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -64,9 +62,6 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ Reservoir }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"

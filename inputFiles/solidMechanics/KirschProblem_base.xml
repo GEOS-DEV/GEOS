@@ -127,6 +127,9 @@
       name="displacementOutput"
       sources="{/Tasks/displacementCollection}"
       filename="displacement_history" />
+      
+    <Restart
+      name="restartOutput"/>  
   </Outputs>
 <!-- SPHINX_OUTPUT_END -->
 
@@ -137,8 +140,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{Omega}"
-      solidMaterialNames="{rock}">
+      targetRegions="{Omega}">
       <NonlinearSolverParameters
         newtonTol = "1.0e-5"
         newtonMaxIter = "15"
