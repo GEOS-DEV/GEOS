@@ -1665,10 +1665,10 @@
 	</xsd:complexType>
 	<xsd:complexType name="meshLevelsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level00" type="Level00Type" />
+			<xsd:element name="Level0" type="Level0Type" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="Level00Type">
+	<xsd:complexType name="Level0Type">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />
