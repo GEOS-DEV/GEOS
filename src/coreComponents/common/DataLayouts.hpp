@@ -171,6 +171,12 @@ using LAYOUT_PHASE_COMP = RAJA::PERM_JKI;
 /// Fluid property compositional derivative array layout
 using LAYOUT_FLUID_DC = RAJA::PERM_JI;
 
+/// OBL operator values array layout
+using LAYOUT_OBL_OPERATOR_VALUES = RAJA::PERM_JI;
+
+/// OBL operator derivatives derivative array layout
+using LAYOUT_OBL_OPERATOR_DERIVATIVES = RAJA::PERM_JKI;
+
 #else
 
 /// Component global density/fraction array layout
@@ -190,6 +196,12 @@ using LAYOUT_PHASE_COMP = RAJA::PERM_IJK;
 
 /// Fluid property compositional derivative array layout
 using LAYOUT_FLUID_DC = RAJA::PERM_IJ;
+
+/// OOBL operator values array layout
+using LAYOUT_OBL_OPERATOR_VALUES = RAJA::PERM_IJ;
+
+/// OBL operator derivatives derivative array layout
+using LAYOUT_OBL_OPERATOR_DERIVATIVES = RAJA::PERM_IJK;
 
 #endif
 

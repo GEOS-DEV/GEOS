@@ -1046,6 +1046,7 @@ the relative residual norm satisfies:
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
+			<xsd:element name="DARTSSuperEngine" type="DARTSSuperEngineType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -1280,6 +1281,40 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
 		</xsd:restriction>
 	</xsd:simpleType>
+	<xsd:complexType name="DARTSSuperEngineType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--discretization => Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
+		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--numComponents => Number of components-->
+		<xsd:attribute name="numComponents" type="integer" use="required" />
+		<!--numPhases => Number of phases-->
+		<xsd:attribute name="numPhases" type="integer" use="required" />
+		<!--permeabilityNames => Names of permeability constitutive models for each region.-->
+		<xsd:attribute name="permeabilityNames" type="string_array" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--solidNames => Names of solid constitutive models for each region.-->
+		<xsd:attribute name="solidNames" type="string_array" use="required" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />

@@ -15,6 +15,8 @@ set( physicsSolvers_headers
      fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp
      fluidFlow/CompositionalMultiphaseUtilities.hpp
      fluidFlow/DARTSSuperEngine.hpp
+     fluidFlow/DARTSSuperEngineExtrinsicData.hpp
+     fluidFlow/DARTSSuperEngineKernels.hpp
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseExtrinsicData.hpp
      fluidFlow/FluxKernelsHelper.hpp
