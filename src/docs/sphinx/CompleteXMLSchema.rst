@@ -211,11 +211,19 @@ Element: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
+<<<<<<< HEAD
 .. _XML_ConstantPlusParallelPlatesPermeability:
 
 Element: ConstantPlusParallelPlatesPermeability
 ===============================================
 .. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability.rst
+=======
+.. _XML_ConstantThermalConductivity:
+
+Element: ConstantThermalConductivity
+====================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
+>>>>>>> origin/develop
 
 
 .. _XML_Constitutive:
@@ -974,6 +982,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_VolumeWeightedThermalConductivity:
+
+Element: VolumeWeightedThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
+
+
 .. _XML_WellControls:
 
 Element: WellControls
@@ -1209,11 +1224,19 @@ Datastructure: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
 
 
+<<<<<<< HEAD
 .. _DATASTRUCTURE_ConstantPlusParallelPlatesPermeability:
 
 Datastructure: ConstantPlusParallelPlatesPermeability
 =====================================================
 .. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability_other.rst
+=======
+.. _DATASTRUCTURE_ConstantThermalConductivity:
+
+Datastructure: ConstantThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
+>>>>>>> origin/develop
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1998,6 +2021,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
+
+Datastructure: VolumeWeightedThermalConductivity
+================================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:
