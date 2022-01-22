@@ -64,7 +64,13 @@ FluxApproximationBase::getCatalog()
 }
 
 void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
+{}
+
+void FluxApproximationBase::initializePreSubGroups()
 {
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  Group & meshBodies = domain.getMeshBodies();
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {

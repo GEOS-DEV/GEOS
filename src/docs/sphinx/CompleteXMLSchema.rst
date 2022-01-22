@@ -1433,11 +1433,11 @@ Datastructure: LaplaceVEM
 .. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
 
 
-.. _DATASTRUCTURE_Level00:
+.. _DATASTRUCTURE_Level0:
 
-Datastructure: Level00
-======================
-.. include:: ../../coreComponents/schema/docs/Level00_other.rst
+Datastructure: Level0
+=====================
+.. include:: ../../coreComponents/schema/docs/Level0_other.rst
 
 
 .. _DATASTRUCTURE_LinearSolverParameters:
