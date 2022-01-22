@@ -30,9 +30,8 @@ class MeshLevel;
 
 /**
  * @class CellElementSubRegion
- * Class deriving from CellBlock further specializing the element subregion
- * for a cell element. This is the class used in the physics solvers to
- * represent a collection of mesh cell elements
+ * Class specializing the element subregion for a cell element.
+ * This is the class used in the physics solvers to represent a collection of mesh cell elements
  */
 class CellElementSubRegion : public ElementSubRegionBase
 {
@@ -86,7 +85,7 @@ public:
 
   /**
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
-   * @param cellBlock the CellBlock whose properties (connectivity info) will be copied
+   * @param cellBlock the CellBlock which properties (connectivity info) will be copied.
    */
   void copyFromCellBlock( CellBlockABC & cellBlock );
 
@@ -208,9 +207,9 @@ public:
 
   /**
    * @brief Get the local indices of the nodes in a face of the element.
-   * @param elementIndex the local index of the target element
-   * @param localFaceIndex the local index of the target face in the element  (this will be 0-numFacesInElement)
-   * @param nodeIndices a reference to the array of node indices of the face
+   * @param[in] elementIndex The local index of the target element.
+   * @param[in] localFaceIndex The local index of the target face in the element (this will be [0, numFacesInElement[)
+   * @param[out] nodeIndices A reference to the array of node indices of the face. Gets resized at the proper size.
    * @deprecated This method will be removed soon.
    */
   void getFaceNodes( localIndex const elementIndex,
@@ -443,7 +442,7 @@ private:
 
   /**
    * @brief Links the managers to their mappings.
-   * @param mesh Holds the node/edge/face managers.
+   * @param[in] mesh Holds the node/edge/face managers.
    *
    * Defines links the element to nodes, edges and faces to their respective node/edge/face managers.
    */

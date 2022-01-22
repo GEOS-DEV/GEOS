@@ -530,7 +530,7 @@ void ProblemManager::generateMesh()
       nodeManager.setElementMaps( cellBlockManager, elemManager );
 
       // Faces
-      faceManager.buildFaces( cellBlockManager, nodeManager, elemManager );
+      faceManager.buildFaces( cellBlockManager, elemManager, nodeManager );
       nodeManager.setFaceMaps( cellBlockManager, faceManager );
 
       // Edges

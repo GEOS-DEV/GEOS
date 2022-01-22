@@ -121,14 +121,14 @@ public:
 
   /**
    * @brief Copies faces-to-edges and nodes-to-edges relation maps from @p cellBlockManger.
-   * @param[in] cellBlockManager cell block manager.
-   * @param[in] nodeManager manager of all nodes in the DomainPartition
-   * @param[in] faceManager manager of all faces in the DomainPartition
+   * @param[in] cellBlockManager Cell block manager.
+   * @param[in] nodeManager Manager of all nodes in the DomainPartition.
+   * @param[in,out] faceManager Manager of all faces in the DomainPartition.
    *
    * @p nodeManager and @p faceManager are given for inter-managers relations.
    */
   void buildEdges( CellBlockManagerABC const & cellBlockManager,
-                   NodeManager & nodeManager,
+                   NodeManager const & nodeManager,
                    FaceManager & faceManager );
 
   /**

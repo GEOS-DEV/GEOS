@@ -84,25 +84,25 @@ public:
 
   /**
    * @brief Get the element-to-nodes map.
-   * @return a reference to the element-to-node map
+   * @return The mapping relationship as a 2d-array.
    */
   virtual array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const = 0;
 
   /**
    * @brief Get the element-to-edges map.
-   * @return A view of the mapping.
+   * @return The mapping relationship as a 2d-array.
    */
   virtual array2d< localIndex > getElemToEdges() const = 0;
 
   /**
    * @brief Get the element-to-faces map.
-   * @return A view of the mapping.
+   * @return The mapping relationship as a 2d-array.
    */
   virtual array2d< localIndex > getElemToFaces() const = 0;
 
   /**
    * @brief Get local to global map.
-   * @return The mapping relationship as a array.
+   * @return The mapping relationship as an array.
    */
   virtual array1d< globalIndex > localToGlobalMap() const = 0;
 
@@ -110,6 +110,10 @@ public:
    * @brief Helper function to apply a lambda function over all the external properties of the subregion
    * @tparam LAMBDA the type of the lambda function
    * @param lambda lambda function that is applied to the wrappers of external properties
+   *
+   * @note Unlike the other member functions of this class, this current member function is not abstract,
+   * mainly because it's a template method. The abstraction is delegated to private method @p getExternalProperties.
+   * @see getExternalProperties()
    */
   template< typename LAMBDA >
   void forExternalProperties( LAMBDA && lambda )
@@ -118,17 +122,17 @@ public:
     {
       lambda( *wrapperBase );
     }
-  } // TODO This is not abstract
+  }
 
 private:
   /**
-   * @brief Returns the external properties under the form of WrapperBase pointer to instances.
+   * @brief Returns the external properties under the form of WrapperBase pointers.
    * @return An iterable of pointers
-   * @note I quite don't get why this cannot be const.
    *
    * In order not to expose the implementation details (external properties being stored as WrapperBase),
    * this abstract member function is made private.
-   * Thus the list of pointers shall not be used anyhow by end-users that must use @see forExternalProperties.
+   * Thus the list of pointers shall not be used anyhow by end-users that must use @p forExternalProperties.
+   * @see forExternalProperties(LAMBDA && lambda)
    */
   virtual std::list< dataRepository::WrapperBase * > getExternalProperties() = 0;
 };

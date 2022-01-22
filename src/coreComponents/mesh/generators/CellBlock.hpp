@@ -125,50 +125,54 @@ public:
   array2d< localIndex > getElemToFaces() const override
   { return m_elementsToFaces; }
 
+  /**
+   * @brief Get the element-to-faces map.
+   * @return A const view of the mapping.
+   */
   arrayView2d< localIndex const > getElemToFacesConstView() const
   { return m_elementsToFaces.toViewConst(); }
 
   /**
    * @brief Sets an entry in the element to faces mapping.
-   * @param iElement Index of the element
-   * @param iFace Index of the face of the element @p iElement (typically from 0 to 5 for an hexahedron).
-   * @param faceIndex The face index.
+   * @param[in] iElement Index of the element
+   * @param[in] iFaceLoc Local index of the face of the element @p iElement (typically from 0 to 5 for an hexahedron).
+   * @param[in] iFace The face index.
    */
   void setElementToFaces( localIndex iElement,
-                          localIndex iFace,
-                          localIndex faceIndex )
+                          localIndex iFaceLoc,
+                          localIndex iFace )
   {
-    m_elementsToFaces( iElement, iFace ) = faceIndex;
+    m_elementsToFaces( iElement, iFaceLoc ) = iFace;
   }
 
   /**
    * @brief Sets an entry in the element to edges mapping.
-   * @param iElement Index of the element
-   * @param iEdge Index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
-   * @param edgeIndex The edge index.
+   * @param[in] iElement Index of the element.
+   * @param[in] iEdgeLoc Local index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
+   * @param[in] iEdge Index of the edge.
    *
    * In the element to edges mapping, element @p iElement has a given number of edges (typically 12 for a hexahedron).
-   * Then edge @p iEdge of this local indexing (typically 0 to 11) is meant to have global indexing of @p edgeIndex.
+   * Then edge @p iEdgeLoc of this local indexing (typically 0 to 11) is meant to have global indexing of @p iEdge.
    */
   void setElementToEdges( localIndex iElement,
-                          localIndex iEdge,
-                          localIndex edgeIndex )
+                          localIndex iEdgeLoc,
+                          localIndex iEdge )
   {
-    m_elementsToEdges( iElement, iEdge ) = edgeIndex;
+    m_elementsToEdges( iElement, iEdgeLoc ) = iEdge;
   }
 
   /**
    * @brief Checks if edge @p iEdge of element @p iElement has been defined.
-   * @param iElement Index of the element
-   * @param iEdge Index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
-   * @param edgeIndex The edge index.
+   * @param[in] iElement Index of the element
+   * @param[in] iEdgeLoc Index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
+   * @param[in] iEdge The edge index.
    * @return True if the entry is already there in the mapping. False otherwise.
    */
   bool hasElementToEdges( localIndex iElement,
-                          localIndex iEdge,
-                          localIndex edgeIndex ) const
+                          localIndex iEdgeLoc,
+                          localIndex iEdge ) const
   {
-    return m_elementsToEdges( iElement, iEdge ) == edgeIndex;
+    return m_elementsToEdges( iElement, iEdgeLoc ) == iEdge;
   }
 
   /**
@@ -196,19 +200,6 @@ public:
    * @name Properties
    */
   ///@{
-
-  /**
-   * @brief Add a property to the CellBlock.
-   * @tparam T type of the property
-   * @param[in] propertyName the name of the property
-   * @return a non-const reference to the property
-   */
-  template< typename T >
-  T & addProperty( string const & propertyName )
-  {
-    m_externalPropertyNames.emplace_back( propertyName );
-    return this->registerWrapper< T >( propertyName ).reference();
-  }
 
   ///@}
 
@@ -244,7 +235,7 @@ private:
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {
     std::list< dataRepository::WrapperBase * > result;
-    for( auto & externalPropertyName : m_externalPropertyNames )
+    for( string const & externalPropertyName : m_externalPropertyNames )
     {
       result.push_back( &this->getWrapperBase( externalPropertyName ) );
     }

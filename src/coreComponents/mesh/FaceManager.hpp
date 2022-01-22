@@ -134,12 +134,12 @@ public:
   /**
    * @brief Build faces in filling face-to-node and face-to-element mappings.
    * @param[in] cellBlockManager cell block manager
-   * @param[in] nodeManager mesh node manager
-   * @param[in] elementManager element manager
+   * @param[in] elementRegionManager element manager
+   * @param[in,out] nodeManager mesh node manager
    */
   void buildFaces( CellBlockManagerABC const & cellBlockManager,
-                   NodeManager & nodeManager,
-                   ElementRegionManager & elementManager );
+                   ElementRegionManager const & elementRegionManager,
+                   NodeManager & nodeManager );
 
   /**
    * @brief Compute faces center, area and normal.

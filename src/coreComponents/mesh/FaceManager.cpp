@@ -71,7 +71,7 @@ void FaceManager::resize( localIndex const newSize )
 
 /**
  * @brief Populates the face to element region and face to element subregion mappings.
- * @param [in] elementRegionMgr The ElementRegionManager associated with this mesh level. Regions and subregions come from it.
+ * @param [in] elementRegionManager The ElementRegionManager associated with this mesh level. Regions and subregions come from it.
  * @param [in] f2e The face to element maps (on face may belong to up to 2 elements).
  * @param [in,out] f2er The face to element region map (on face may belong to up to 2 regions).
  * @param [in,out] f2esr The face to element subregion map (on face may belong to up to 2 sub-regions).
@@ -79,7 +79,7 @@ void FaceManager::resize( localIndex const newSize )
  * @warning @p f2er and @p f2esr need to have the correct dimensions (numFaces, 2). Values are all overwritten.
  * @note When a face only points to single one region/sub-region, the second element will equal -1.
  */
-void populateRegions( ElementRegionManager const & elementRegionMgr,
+void populateRegions( ElementRegionManager const & elementRegionManager,
                       arrayView2d< localIndex const > const & f2e,
                       arrayView2d< localIndex > const & f2er,
                       arrayView2d< localIndex > const & f2esr )
@@ -144,23 +144,23 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
     }
   };
 
-  elementRegionMgr.forElementSubRegionsComplete< CellElementSubRegion >( f );
+  elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >( f );
 }
 
 void FaceManager::buildFaces( CellBlockManagerABC const & cellBlockManager,
-                              NodeManager & nodeManager,
-                              ElementRegionManager & elementManager )
+                              ElementRegionManager const & elementRegionManager,
+                              NodeManager & nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  m_toElements.setElementRegionManager( elementManager );
+  m_toElements.setElementRegionManager( elementRegionManager );
 
   resize( cellBlockManager.numFaces() );
 
   m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements();
   nodeList().base() = cellBlockManager.getFaceToNodes();
 
-  populateRegions( elementManager,
+  populateRegions( elementRegionManager,
                    m_toElements.m_toElementIndex.toViewConst(),
                    m_toElements.m_toElementRegion,
                    m_toElements.m_toElementSubRegion );
@@ -325,7 +325,6 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
   }
   LvArray::tensorOps::scale< 3 >( fc, 1.0 / numFaceNodes );
 
-  //real64 ex[3], ey[3], ez[3];
   // Approximate face normal direction (unscaled)
 
   if( numFaceNodes == 2 )  //2D only.
@@ -339,10 +338,8 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     real64 ez[3];
     LvArray::tensorOps::crossProduct( ez, ex, ey );
 
-    // The element should be on the right hand side of the vector from node 0 to
-    // node 1.
-    // This ensure that the normal vector of an external face points to outside
-    // the element.
+    // The element should be on the right hand side of the vector from node 0 to node 1.
+    // This ensure that the normal vector of an external face points to outside the element.
     if( ez[2] > 0 )
     {
       localIndex itemp = faceNodes[0];
@@ -355,7 +352,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
     real64 ez[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( fc );
     LvArray::tensorOps::subtract< 3 >( ez, elementCenter );
 
-    /// Approximate in-plane axis
+    // Approximate in-plane axis
     real64 ex[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[0]] );
     LvArray::tensorOps::subtract< 3 >( ex, fc );
     LvArray::tensorOps::normalize< 3 >( ex );
@@ -366,7 +363,7 @@ void FaceManager::sortFaceNodes( arrayView2d< real64 const, nodes::REFERENCE_POS
 
     std::pair< real64, localIndex > thetaOrder[MAX_FACE_NODES];
 
-    /// Sort nodes counterclockwise around face center
+    // Sort nodes counterclockwise around face center
     for( localIndex n =0; n < numFaceNodes; ++n )
     {
       real64 v[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[faceNodes[n]] );

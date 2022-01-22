@@ -223,9 +223,9 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager,
   toElementRegionList.resize( 0 );
   toElementSubRegionList.resize( 0 );
 
-  // FIXME If there is a strong requirement that `toElementRegionList` and `toElementSubRegionList`
-  //       share the same capacities as `toElementList`, then it's should be interesting
-  //       to retrieve this information from `toElementList` instead.
+  // TODO Since there is a strong requirement that `toElementRegionList` and `toElementSubRegionList`
+  //      share the same capacities as `toElementList`, then it's should be interesting
+  //      to retrieve this information from `toElementList` instead.
 
   // Reserve space for the number of current faces plus some extra.
   double const overAllocationFactor = 0.3;

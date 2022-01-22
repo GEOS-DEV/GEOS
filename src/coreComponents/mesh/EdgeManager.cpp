@@ -71,10 +71,12 @@ void EdgeManager::resize( localIndex const newSize )
 }
 
 void EdgeManager::buildEdges( CellBlockManagerABC const & cellBlockManager,
-                              NodeManager & nodeManager,
+                              NodeManager const & nodeManager,
                               FaceManager & faceManager )
 {
   GEOSX_MARK_FUNCTION;
+
+  // TODO Split this member function such that the actions of the nodeManager and of the faceManager are separated.
 
   faceManager.edgeList().setRelatedObject( *this );
   m_toFacesRelation.setRelatedObject( faceManager );
