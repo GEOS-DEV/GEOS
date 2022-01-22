@@ -18,6 +18,7 @@ CompressibleSolidConstantPermeability       node :ref:`DATASTRUCTURE_Compressibl
 CompressibleSolidParallelPlatesPermeability node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability` 
 CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability`  
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
+ConstantThermalConductivity                 node :ref:`DATASTRUCTURE_ConstantThermalConductivity`                 
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`              
@@ -31,6 +32,7 @@ ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrth
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
 FrictionlessContact                         node :ref:`DATASTRUCTURE_FrictionlessContact`                         
+JFunctionCapillaryPressure                  node :ref:`DATASTRUCTURE_JFunctionCapillaryPressure`                  
 ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCamClay`                             
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
@@ -51,6 +53,7 @@ TableCapillaryPressure                      node :ref:`DATASTRUCTURE_TableCapill
 TableRelativePermeability                   node :ref:`DATASTRUCTURE_TableRelativePermeability`                   
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
+VolumeWeightedThermalConductivity           node :ref:`DATASTRUCTURE_VolumeWeightedThermalConductivity`           
 =========================================== ==== ================================================================ 
 
 

@@ -494,6 +494,8 @@
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--thermalConductivityNames => Name of the thermal conductivity constitutive model to use-->
+		<xsd:attribute name="thermalConductivityNames" type="string_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -502,6 +504,8 @@
 		</xsd:choice>
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--thermalConductivityNames => Name of the thermal conductivity constitutive model to use-->
+		<xsd:attribute name="thermalConductivityNames" type="string_array" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseReservoirType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -788,6 +792,7 @@
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
+			<xsd:element name="ConstantThermalConductivity" type="ConstantThermalConductivityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -801,6 +806,7 @@
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
+			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
@@ -821,6 +827,7 @@
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VolumeWeightedThermalConductivity" type="VolumeWeightedThermalConductivityType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -1131,6 +1138,12 @@
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
 	</xsd:complexType>
+	<xsd:complexType name="ConstantThermalConductivityType">
+		<!--dEffectiveConductivity_dPhaseVolFraction => Derivative of effective conductivity with respect to phase volume fraction-->
+		<xsd:attribute name="dEffectiveConductivity_dPhaseVolFraction" type="real64_array4d" />
+		<!--effectiveConductivity => Effective conductivity-->
+		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
+	</xsd:complexType>
 	<xsd:complexType name="CoulombType">
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
@@ -1392,6 +1405,20 @@
 		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="FrictionlessContactType" />
+	<xsd:complexType name="JFunctionCapillaryPressureType">
+		<!--dPhaseCapPressure_dPhaseVolFraction => Derivative of phase capillary pressure with respect to phase volume fraction-->
+		<xsd:attribute name="dPhaseCapPressure_dPhaseVolFraction" type="real64_array4d" />
+		<!--jFuncMultiplier => Multiplier for the Leverett J-function-->
+		<xsd:attribute name="jFuncMultiplier" type="real64_array2d" />
+		<!--jFunctionWrappers => (no description available)-->
+		<xsd:attribute name="jFunctionWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--phaseCapPressure => Phase capillary pressure-->
+		<xsd:attribute name="phaseCapPressure" type="real64_array3d" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseTypes => (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
+	</xsd:complexType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--cslSlope => Slope of the critical state line-->
 		<xsd:attribute name="cslSlope" type="real64_array" />
@@ -1582,6 +1609,14 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--volFracScale => Factor used to scale the phase capillary pressure, defined as: one minus the sum of the phase minimum volume fractions.-->
 		<xsd:attribute name="volFracScale" type="real64" />
+	</xsd:complexType>
+	<xsd:complexType name="VolumeWeightedThermalConductivityType">
+		<!--dEffectiveConductivity_dPhaseVolFraction => Derivative of effective conductivity with respect to phase volume fraction-->
+		<xsd:attribute name="dEffectiveConductivity_dPhaseVolFraction" type="real64_array4d" />
+		<!--effectiveConductivity => Effective conductivity-->
+		<xsd:attribute name="effectiveConductivity" type="real64_array3d" />
+		<!--rockThermalConductivity => Rock thermal conductivity-->
+		<xsd:attribute name="rockThermalConductivity" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="MeshBodiesType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
