@@ -485,7 +485,6 @@ void testValuesAgainstPreviousImplementation( TBL_WRAPPER const & relpermTblWrap
 
     checkRelativeError( phaseRelPerm[ipWetting], oldImplValue_w, relTol );
     checkRelativeError( phaseRelPerm[ipNonWetting], oldImplValue_nw, relTol );
-//    checkRelativeError( dPhaseRelPerm_dPhaseVolFrac[ip], dOldImplValue_dPhaseVolFrac[ip], relTol );
 }
 
 //template< typename TBL_WRAPPER >
@@ -572,9 +571,7 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
                                                sg_inc[isat], sg_inc[isat],
                                                drainage_w_values[isat], drainage_g_values[isat],
                                                relTol );
-//
-//      testNumericalDerivatives( relpermTblWrapper, ds[isat], xxxx, comp,
-//      true, eps, relTol );
+
 
     }
     //imbibition
@@ -585,8 +582,6 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
                                                scanning_w_i[count][isat], scanning_g_i[count][isat],
                                                relTol );
 
-//      testNumericalDerivatives( relpermTblWrapper, ds[isat], xxxx, comp,
-//      true, eps, relTol );
     }
   }
 

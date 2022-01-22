@@ -450,19 +450,13 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const A = 1 + jerauldParam_a * ( Shy - Swc );
   real64 const numerator = (Shy - Smxd);
   real64 const denom = A + landParam * pow( (Smxd-Shy)/(Smxd-Swc), 1 + jerauldParam_b/landParam );
-  assert(numerator < 0 && denom > 1.0 );
   real64 const Scrt = Smxd + numerator / denom;
 
-  GEOSX_ERROR_IF( Scrt < Smxi,
-                 GEOSX_FMT( string( "For wetting phase hysteresis, trapping saturation (1-Srt): {} ") +
-                 string(" should be greater or equal to maximium for imbibition Smxi: {}"),
-                 Scrt, Smxi)
-                  );
 
   //c. Finding the new endpoint
   //this is the saturation for the scanning curve endpoint
   real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
-  real64 const krwieStar = krwedAtScrt + deltak * pow( ( Smxd - Scrt) / (Smxd - Smxi), m_alphaParam_2 );
+  real64 const krwieStar = krwedAtScrt + deltak * pow( (Smxd - Scrt) / (Smxd - Smxi), m_alphaParam_2 );
 
   //2. Get the normalized value of sat
   real64 const S = phaseVolFraction;

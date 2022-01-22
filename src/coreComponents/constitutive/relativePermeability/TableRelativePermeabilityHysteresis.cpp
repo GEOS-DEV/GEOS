@@ -474,18 +474,13 @@ void TableRelativePermeabilityHysteresis::validateRelPermTable( TableFunction co
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
-//    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
-    GEOSX_THROW_IF(  (relPerm[i] - relPerm[i-1]) < -1e-10,
+    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
                     GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), relPermTable.getName() ),
                     InputError );
 
     if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
     {
       phaseMinVolFrac = phaseVolFrac[i-1];
-    }
-    if( !isZero( relPerm[i-1] ) && isZero( relPerm[i] - relPerm[i-1] ) )
-    {
-      phaseMaxVolFrac = phaseVolFrac[i-1];
     }
   }
 
