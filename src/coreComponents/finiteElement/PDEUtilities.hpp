@@ -19,6 +19,8 @@
 #ifndef GEOSX_FINITEELEMENT_PDEUTILITIES_HPP_
 #define GEOSX_FINITEELEMENT_PDEUTILITIES_HPP_
 
+#include "codingUtilities/EnumStrings.hpp"
+
 namespace geosx
 {
 
@@ -41,11 +43,20 @@ enum class DifferentialOperator : integer
  */
 enum class FunctionSpace : integer
 {
+  invalid,
   L2,
   L2vector,
   H1,
   H1vector
 };
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( FunctionSpace,
+              "invalid",
+              "L2",
+              "L2vector",
+              "H1",
+              "H1vector" );
 
 } // namespace PDEUtilities
 

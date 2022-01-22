@@ -145,8 +145,8 @@ public:
             xLocal(),
             u_local(),
             uhat_local(),
-            localResidualMomentum{ Base::StackVariables::localResidual },
-      dLocalResidualMomentum_dDisplacement{ Base::StackVariables::localJacobian },
+            localResidualMomentum( Base::StackVariables::localResidual ),
+      dLocalResidualMomentum_dDisplacement( Base::StackVariables::localJacobian ),
       dLocalResidualMomentum_dPressure{ {0.0} },
       localResidualMass{ 0.0 },
       dLocalResidualMass_dDisplacement{ {0.0} },
@@ -281,6 +281,12 @@ public:
 
     // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
+
+    constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
+    constexpr FunctionSpace pressureTrialSpace = FunctionSpace::L2;
+    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
+
     real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
     FE_TYPE::calcN( q, N );
@@ -315,7 +321,7 @@ public:
                                                        stiffness );
 
     // Compute local linear momentum balance residual
-    LinearFormUtilities::compute< FunctionSpace::H1vector,
+    LinearFormUtilities::compute< FunctionSpace::H1vector,// displacementTestSpace,
                                   DifferentialOperator::SymmetricGradient >
     (
       stack.localResidualMomentum,
@@ -325,7 +331,7 @@ public:
 
     if( m_gravityAcceleration > 0.0 )
     {
-      LinearFormUtilities::compute< FunctionSpace::H1vector,
+      LinearFormUtilities::compute< displacementTestSpace,
                                     DifferentialOperator::Identity >
       (
         stack.localResidualMomentum,
@@ -335,8 +341,8 @@ public:
     }
 
     // Compute local linear momentum balance residual derivatives with respect to displacement
-    BilinearFormUtilities::compute< FunctionSpace::H1vector,
-                                    FunctionSpace::H1vector,
+    BilinearFormUtilities::compute< displacementTestSpace,
+                                    displacementTrialSpace,
                                     DifferentialOperator::SymmetricGradient,
                                     DifferentialOperator::SymmetricGradient >
     (
@@ -349,10 +355,10 @@ public:
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute local linear momentum balance residual derivatives with respect to pressure
-    real64 Np[1] = { 1 };
+    real64 Np[1] = { 1.0 };
 
-    BilinearFormUtilities::compute< FunctionSpace::H1vector,
-                                    FunctionSpace::L2,
+    BilinearFormUtilities::compute< displacementTestSpace,
+                                    pressureTrialSpace,
                                     DifferentialOperator::SymmetricGradient,
                                     DifferentialOperator::Identity >
     (
@@ -364,8 +370,8 @@ public:
 
     if( m_gravityAcceleration > 0.0 )
     {
-      BilinearFormUtilities::compute< FunctionSpace::H1vector,
-                                      FunctionSpace::L2,
+      BilinearFormUtilities::compute< displacementTestSpace,
+                                      pressureTrialSpace,
                                       DifferentialOperator::Identity,
                                       DifferentialOperator::Identity >
       (
@@ -378,7 +384,7 @@ public:
 
 
     // Compute local mass balance residual
-    LinearFormUtilities::compute< FunctionSpace::L2,
+    LinearFormUtilities::compute< pressureTestSpace,
                                   DifferentialOperator::Identity >
     (
       stack.localResidualMass,
@@ -387,8 +393,8 @@ public:
       detJxW );
 
     // Compute local mass balance residual derivatives with respect to displacement
-    BilinearFormUtilities::compute< FunctionSpace::L2,
-                                    FunctionSpace::H1vector,
+    BilinearFormUtilities::compute< pressureTestSpace,
+                                    displacementTrialSpace,
                                     DifferentialOperator::Identity,
                                     DifferentialOperator::Divergence >
     (
@@ -399,8 +405,8 @@ public:
       detJxW );
 
     // Compute local mass balance residual derivatives with respect to pressure
-    BilinearFormUtilities::compute< FunctionSpace::L2,
-                                    FunctionSpace::L2,
+    BilinearFormUtilities::compute< pressureTestSpace,
+                                    pressureTrialSpace,
                                     DifferentialOperator::Identity,
                                     DifferentialOperator::Identity >
     (
