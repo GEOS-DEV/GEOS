@@ -84,11 +84,11 @@ public:
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-               arrayView1d< globalIndex const > const & uDofNumber,
-               arrayView1d< globalIndex const > const & wDofNumber,
+               arrayView1d< globalIndex const > const uDofNumber,
+               arrayView1d< globalIndex const > const wDofNumber,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -477,11 +477,11 @@ protected:
 /// The factory used to construct a QuasiStatic kernel.
 using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          EmbeddedSurfaceSubRegion const &,
-                                                         arrayView1d< globalIndex const > const &,
-                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const,
+                                                         arrayView1d< globalIndex const > const,
                                                          globalIndex const,
-                                                         CRSMatrixView< real64, globalIndex const > const &,
-                                                         arrayView1d< real64 > const &,
+                                                         CRSMatrixView< real64, globalIndex const > const,
+                                                         arrayView1d< real64 > const,
                                                          real64 const (&) [3] >;
 
 
