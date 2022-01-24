@@ -92,7 +92,7 @@ private:
    * @param[in] subSubBlockName Name of the subSubBlock (usually the name of the Region)
    * @return the sub-sub-block name consistent with the chosen naming convention
    */
-  static string buildSubSubBlockName( string const & blockName, string const & subSubBlockName ) const;
+  static string buildSubSubBlockName( string const & blockName, string const & subSubBlockName );
 
 };
 }

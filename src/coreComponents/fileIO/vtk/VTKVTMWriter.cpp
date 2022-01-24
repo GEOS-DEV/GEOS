@@ -76,7 +76,7 @@ void VTKVTMWriter::addDataToSubSubBlock( string const & blockName, string const 
   dataNode.append_attribute( "file" ) = filePath.c_str();
 }
 
-static string VTKVTMWriter::buildSubSubBlockName( string const & blockName, string const & subSubBlockName ) const
+string VTKVTMWriter::buildSubSubBlockName( string const & blockName, string const & subSubBlockName )
 {
   return(blockName + "_" + subSubBlockName);
 }
