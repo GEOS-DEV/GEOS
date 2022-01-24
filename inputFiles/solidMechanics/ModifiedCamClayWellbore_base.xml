@@ -121,6 +121,8 @@
       discretization="FE1"
       targetRegions="{ Omega }"
       solidMaterialNames="{ rock }">
+      <LinearSolverParameters
+      directParallel="0"/>
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="15"/>
