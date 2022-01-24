@@ -166,6 +166,20 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       setDescription( "An array that holds the permeability transmissibility multipliers" );
 
   } );
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  // fill stencil targetRegions
+  NumericalMethodsManager & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
+
+  if( fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
+  {
+
+    FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+    fluxApprox.setFieldName( extrinsicMeshData::flow::pressure::key() );
+    fluxApprox.setCoeffName( extrinsicMeshData::permeability::permeability::key() );
+  }
 }
 
 
@@ -183,8 +197,6 @@ void FlowSolverBase::initializePreSubGroups()
   {
 
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-    fluxApprox.setFieldName( extrinsicMeshData::flow::pressure::key() );
-    fluxApprox.setCoeffName( extrinsicMeshData::permeability::permeability::key() );
 
     forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                   MeshLevel & mesh,
