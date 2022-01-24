@@ -147,7 +147,7 @@
         newtonMaxIter = "15"
       />
       <LinearSolverParameters
-        solverType = "direct"/>
+        directParallel="0"/>
     </SolidMechanics_LagrangianFEM>
   </Solvers>
 <!-- SPHINX_SOLVER_END -->
