@@ -711,7 +711,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
  * @param[in] vtmWriter a writer specialized for the VTM file format
  */
 void writeVtmFile( real64 const time,
-                   string const meshBodyName,
+                   string const & meshBodyName,
                    ElementRegionManager const & elemManager,
                    VTKVTMWriter const & vtmWriter )
 {

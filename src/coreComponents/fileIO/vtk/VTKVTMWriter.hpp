@@ -77,15 +77,6 @@ public:
    */
   void addDataToSubSubBlock( string const & blockName, string const & subBlockName, string const & subSubBlockName, string const & filePath, int mpiRank ) const;
 
-  /*!
-   * @brief Return sub-sub-block name as seen inside .vtm files according to some naming convention
-   * @details Establishes a consistent naming convention for the 3rd level of .vtm files
-   * @param[in] blockName Name of the parent block (will be MeshBody name)
-   * @param[in] subSubBlockName Name of the subSubBlock (usually the name of the Region)
-   * @param[out] the sub-sub-block name consistent with the chosen naming convention
-   */
-  string subSubBlockNamingConvention(string const & blockName, string const & subSubBlockName) const;
-
 private:
 
   /// VTM XML file
@@ -93,6 +84,16 @@ private:
 
   /// Path to the XML File
   string const m_filePath;
+
+  /*!
+   * @brief Return sub-sub-block name as seen inside .vtm files according to some naming convention
+   * @details Establishes a consistent naming convention for the 3rd level of .vtm files
+   * @param[in] blockName Name of the parent block (will be MeshBody name)
+   * @param[in] subSubBlockName Name of the subSubBlock (usually the name of the Region)
+   * @return the sub-sub-block name consistent with the chosen naming convention
+   */
+  static string buildSubSubBlockName( string const & blockName, string const & subSubBlockName ) const;
+
 };
 }
 }
