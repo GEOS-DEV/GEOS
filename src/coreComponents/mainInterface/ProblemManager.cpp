@@ -417,7 +417,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     domain.getMeshBodies().forSubGroups<MeshBody>([&]( MeshBody & meshBody )
     {
       string const meshBodyName = meshBody.getName();
-      GEOSX_LOG_RANK_0("MeshBody "<<meshBodyName );
+      GEOSX_LOG_RANK_0( "MeshBody " << meshBodyName );
       ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
       xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
@@ -538,6 +538,9 @@ void ProblemManager::generateMesh()
   for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+
+    // THERE NEEDS TO BE SOME SORT OF CHECK TO SEE IF THE CURRENT MESHBODY IS A PARTICLE MESH OR NOT
+
     Group & meshLevels = meshBody.getMeshLevels();
     for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
     {
