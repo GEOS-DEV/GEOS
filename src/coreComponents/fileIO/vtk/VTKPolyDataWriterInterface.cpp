@@ -802,7 +802,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( a );
-    string const meshBodyName = meshBody.getName();
+    string const & meshBodyName = meshBody.getName();
     ElementRegionManager const & elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
     NodeManager const & nodeManager = meshBody.getMeshLevel( 0 ).getNodeManager();
     EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshBody.getMeshLevel( 0 ).getEmbSurfNodeManager();
