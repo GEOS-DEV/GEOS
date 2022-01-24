@@ -40,7 +40,13 @@
       solidMaterialNames="{ shale }"
       localDissipation="Linear"
       logLevel="1"
-      targetRegions="{ Region1 }"/>
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-12"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
   </Solvers>
 
   <!-- <Mesh>
