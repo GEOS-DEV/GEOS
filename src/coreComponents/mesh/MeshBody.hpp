@@ -81,7 +81,7 @@ public:
    * @return pointer to MeshLevel
    */
   MeshLevel & getMeshLevel( localIndex const level )
-  { return getMeshLevel( intToMeshLevelString(level) ); }
+  { return getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Get mesh level
@@ -89,19 +89,19 @@ public:
    * @return pointer to const MeshLevel
    */
   MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return getMeshLevel( intToMeshLevelString(level) ); }
+  { return getMeshLevel( intToMeshLevelString( level ) ); }
 
 
   template< typename FUNCTION >
   void forMeshLevels( FUNCTION && function ) const
   {
-    m_meshLevels.forSubGroups<MeshLevel>( std::forward<FUNCTION>(function) );
+    m_meshLevels.forSubGroups< MeshLevel >( std::forward< FUNCTION >( function ) );
   }
 
   template< typename FUNCTION >
   void forMeshLevels( FUNCTION && function )
   {
-    m_meshLevels.forSubGroups<MeshLevel>( std::forward<FUNCTION>(function) );
+    m_meshLevels.forSubGroups< MeshLevel >( std::forward< FUNCTION >( function ) );
   }
 
   /**
@@ -123,8 +123,7 @@ public:
    * @brief Data repository keys
    */
   struct viewKeysStruct
-  {
-  } viewKeys; ///< viewKeys
+  {} viewKeys; ///< viewKeys
 
   /**
    * @brief Group keys

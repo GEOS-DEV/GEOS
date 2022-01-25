@@ -391,9 +391,9 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
-    if( elementSubRegion.template hasWrapper<string>(constitutiveStringName) )
+    if( elementSubRegion.template hasWrapper< string >( constitutiveStringName ) )
     {
-      string const & constitutiveName = elementSubRegion.template getReference<string>( constitutiveStringName );
+      string const & constitutiveName = elementSubRegion.template getReference< string >( constitutiveStringName );
       constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveName );
     }
     else

@@ -176,9 +176,9 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
+        setSizedFromParent( 0 );
 
-      string & contactRelationName = subRegion.getReference<string>( viewKeyStruct::contactRelationNameString() );
+      string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
 //      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
       contactRelationName = this->m_contactRelationName;
       GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
@@ -233,7 +233,7 @@ void LagrangianContactSolver::initializePreSubGroups()
                                                                                        localIndex const,
                                                                                        localIndex const,
                                                                                        ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const &  )
+                                                                                       ElementSubRegionBase const & )
       {
         coeffModelNames[region.getName()] = viewKeyStruct::contactRelationNameString();//permName;
         stencilTargetRegionsSet.insert( region.getName() );
@@ -377,7 +377,7 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
       elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor<ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =

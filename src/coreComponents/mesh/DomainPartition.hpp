@@ -205,26 +205,26 @@ public:
   template< typename FUNCTION >
   void forMeshBodies( FUNCTION && function ) const
   {
-    getMeshBodies().forSubGroups<MeshBody>( std::forward<FUNCTION>(function) );
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
   template< typename FUNCTION >
   void forMeshBodies( FUNCTION && function )
   {
-    getMeshBodies().forSubGroups<MeshBody>( std::forward<FUNCTION>(function) );
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
 
   template< typename FUNCTION >
   void forMeshBodiesIndex( FUNCTION && function ) const
   {
-    getMeshBodies().forSubGroupsIndex<MeshBody>( std::forward<FUNCTION>(function) );
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
   template< typename FUNCTION >
   void forMeshBodiesIndex( FUNCTION && function )
   {
-    getMeshBodies().forSubGroupsIndex<MeshBody>( std::forward<FUNCTION>(function) );
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
   }
 
 

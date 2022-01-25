@@ -388,7 +388,7 @@ struct RegionComp
 {
   bool operator()( DofManager::Regions const & l, DofManager::Regions const & r ) const
   {
-    return OP{}( std::tie( l.meshBodyName, l.meshLevelName ), std::tie( r.meshBodyName, r.meshLevelName ) );
+    return OP{} ( std::tie( l.meshBodyName, l.meshLevelName ), std::tie( r.meshBodyName, r.meshLevelName ) );
   }
 };
 
@@ -411,7 +411,7 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
     for( DofManager::Regions & r : regions )
     {
       // Find the body/level pair in the column field list (unsorted range)
-      auto const comp = [&r]( auto const & c ){ return RegionComp< std::equal_to<> >{}( r, c ); };
+      auto const comp = [&r]( auto const & c ){ return RegionComp< std::equal_to<> >{} ( r, c ); };
       DofManager::Regions const & colRegions = *std::find_if( colFieldRegions.begin(), colFieldRegions.end(), comp );
       // Intersect row field regions (already copied into result) with col field regions (found above)
       r.regionNames = processCouplingRegionList( {}, r.regionNames, rowFieldName, colRegions.regionNames, colFieldName );
@@ -424,7 +424,7 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
     {
       for( DofManager::Regions const & r : regions )
       {
-        auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{}( r, f ); };
+        auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{} ( r, f ); };
         auto const it = std::find_if( fieldRegions.begin(), fieldRegions.end(), comp );
         GEOSX_ERROR_IF( it == fieldRegions.end(),
                         GEOSX_FMT( "Mesh {}/{} not found in support of field {}", r.meshBodyName, r.meshLevelName, fieldName ) );
@@ -493,7 +493,7 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< string, array1d< string>> const & bodyRegions,
+                              map< string, array1d< string > > const & bodyRegions,
                               bool symmetric )
 {
   // Convert input into internal format

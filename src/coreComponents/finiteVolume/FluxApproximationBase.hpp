@@ -173,10 +173,6 @@ public:
 
 protected:
 
-
-  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
-
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;

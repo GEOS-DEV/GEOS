@@ -550,7 +550,7 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      if( hasGroup(subgroup) )
+      if( hasGroup( subgroup ) )
       {
         applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
         {
@@ -578,7 +578,7 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      if( hasGroup(subgroup) )
+      if( hasGroup( subgroup ) )
       {
         applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto const & castedSubGroup )
         {
