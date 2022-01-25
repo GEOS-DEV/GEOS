@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GEOSX_PYTHON_PYHISTORYOUTPUTTYPE_HPP_
+#define GEOSX_PYTHON_PYHISTORYOUTPUTTYPE_HPP_
 
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 
@@ -11,3 +12,5 @@ PyTypeObject * getPyHistoryOutputType();
 
 } // namespace python
 } // namespace geosx
+
+#endif

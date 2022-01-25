@@ -12,7 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#pragma once
+#ifndef GEOSX_PYTHON_PYGROUP_HPP_
+#define GEOSX_PYTHON_PYGROUP_HPP_
 
 // Source includes
 #include "dataRepository/Group.hpp"
@@ -35,3 +36,5 @@ PyObject * createNewPyGroup( dataRepository::Group & group );
 
 } // namespace python
 } // namespace geosx
+
+#endif

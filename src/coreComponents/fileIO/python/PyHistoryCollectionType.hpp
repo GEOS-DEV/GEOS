@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GEOSX_PYTHON_PYHISTORYCOLLECTIONTYPE_HPP_
+#define GEOSX_PYTHON_PYHISTORYCOLLECTIONTYPE_HPP_
 
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 
@@ -12,3 +13,5 @@ PyTypeObject * getPyHistoryCollectionType();
 
 } // namespace python
 } // namespace geosx
+
+#endif

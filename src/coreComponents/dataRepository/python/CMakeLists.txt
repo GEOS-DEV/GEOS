@@ -7,12 +7,11 @@ set( pygroup_sources PyGroup.cpp
                      PyWrapper.cpp
   )
 
-set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
 
 blt_add_library( NAME             pygroup
                  SOURCES          ${pygroup_sources}
                  HEADERS          ${pygroup_headers}
-                 DEPENDS_ON       dataRepository ${dependencyList}
+                 DEPENDS_ON       ${dependencyList} ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python dataRepository mainInterface
                  SHARED TRUE
                  CLEAR_PREFIX TRUE
                  )

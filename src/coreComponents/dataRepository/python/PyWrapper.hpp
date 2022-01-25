@@ -12,7 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#pragma once
+#ifndef GEOSX_PYTHON_PYWRAPPER_HPP_
+#define GEOSX_PYTHON_PYWRAPPER_HPP_
 
 // Source includes
 #include "dataRepository/WrapperBase.hpp"
@@ -34,3 +35,5 @@ PyTypeObject * getPyWrapperType();
 
 } // namespace python
 } // namespace geosx
+
+#endif

@@ -6,12 +6,11 @@ set( pyfileIO_sources PyHistoryCollection.cpp
 PyHistoryOutput.cpp
   )
 
-set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
 
 blt_add_library( NAME             pyfileIO
                  SOURCES          ${pyfileIO_sources}
                  HEADERS          ${pyfileIO_headers}
-                 DEPENDS_ON       fileIO mainInterface ${dependencyList}
+                 DEPENDS_ON       ${dependencyList} ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python fileIO pygroup
                  SHARED TRUE
                  CLEAR_PREFIX TRUE
                  )

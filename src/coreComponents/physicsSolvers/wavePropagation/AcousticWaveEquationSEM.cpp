@@ -289,6 +289,20 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
       p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
     }
   } );
+
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+  {
+    if( this->m_outputSeismoTrace == 1 )
+    {
+      if( receiverIsLocal[ircv] == 1 )
+      {
+        // Note: this "manual" output to file is temporary
+        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+        // TODO: remove saveSeismo and replace with TimeHistory
+        this->saveSeismo( iseismo, p_rcvs[ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+      }
+    }
+  } );
 }
 
 /// Use for now until we get the same functionality in TimeHistory
