@@ -517,6 +517,10 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
+      // The following lines in this for loop stack some operations to build (node|edge|face|elementRegion)Manager.
+      // Please be cautious, in case of refactoring, that the dependencies of the current version
+      // get properly managed.
+
       elemManager.generateMesh( cellBlockManager );
 
       nodeManager.setGeometricalRelations( cellBlockManager );
@@ -525,7 +529,7 @@ void ProblemManager::generateMesh()
 
       nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
-      // Edge, face and element region managers rely on the boundary information provided by the node manager.
+      // Edge, face and element region managers rely on the sets provided by the node manager.
       // This is why `nodeManager.buildSets` is called first.
       nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
       edgeManager.buildSets( nodeManager );
