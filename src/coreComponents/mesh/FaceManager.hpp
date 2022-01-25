@@ -152,9 +152,9 @@ public:
 
   /**
    * @brief Link the current manager to other managers.
-   * @param nodeManager[in] The node manager instance.
-   * @param edgeManager[in] The edge manager instance.
-   * @param elementRegionManager[in] The element region manager instance.
+   * @param[in] nodeManager The node manager instance.
+   * @param[in] edgeManager The edge manager instance.
+   * @param[in] elementRegionManager The element region manager instance.
    */
   void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
                                        EdgeManager const & edgeManager,
