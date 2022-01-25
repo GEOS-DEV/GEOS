@@ -42,6 +42,7 @@
       <NonlinearSolverParameters
         newtonMaxIter="40"/>
       <LinearSolverParameters
+        directParallel="0"
         logLevel="2"/>
     </SinglePhasePoromechanics>
 
@@ -78,8 +79,8 @@
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="direct"
-        krylovTol="1.0e-8"
-        logLevel="2"/>
+        directParallel="0"
+        logLevel="0"/>
     </SinglePhaseFVM>
   </Solvers>
 
