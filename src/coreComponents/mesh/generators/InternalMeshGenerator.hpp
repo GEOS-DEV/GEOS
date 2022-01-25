@@ -125,8 +125,8 @@ public:
 
   /**
    * @brief Performs a coordinate transformation of all nodes.
-   * @param X The nodes coordinates.
-   * @param nodeSets The name to node sets mapping.
+   * @param[in,out] X The nodes coordinates.
+   * @param[in,out] nodeSets The name to node sets mapping.
    */
   virtual void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X, std::map< string, SortedArray< localIndex > > & nodeSets )
   {

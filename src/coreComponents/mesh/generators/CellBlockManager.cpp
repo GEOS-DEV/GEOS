@@ -186,8 +186,8 @@ private:
 
 /**
  * @brief Return the total number of unique faces and fill in the uniqueFaceOffsets array.
- * @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
- * @param [out] uniqueFaceOffsets an array of size numNodes + 1. After this function returns node i contains
+ * @param [in] lowestNodeToFaces An array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
+ * @param [out] uniqueFaceOffsets An array of size numNodes + 1. After this function returns node i contains
  *              faces with IDs ranging from uniqueFaceOffsets[ i ] to uniqueFaceOffsets[ i + 1 ] - 1.
  * @return return total number of faces
  */

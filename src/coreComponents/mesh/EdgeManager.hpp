@@ -133,8 +133,8 @@ public:
 
   /**
    * @brief Link the current manager to other managers.
-   * @param nodeManager The node manager instance.
-   * @param faceManager The face manager instance.
+   * @param[in] nodeManager The node manager instance.
+   * @param[in] faceManager The face manager instance.
    *
    * @note the @p EdgeManager do not hold any information related to the regions nor to the elements.
    * This is why the element region manager is not provided.

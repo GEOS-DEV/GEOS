@@ -210,7 +210,7 @@ void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManage
                                                   EdgeManager const & edgeManager,
                                                   ElementRegionManager const & elementRegionManager )
 {
-  m_nodeList.setRelatedObject( nodeManager ); // FIXME This was not in the original code.
+  m_nodeList.setRelatedObject( nodeManager );
   m_edgeList.setRelatedObject( edgeManager );
 
   m_toElements.setElementRegionManager( elementRegionManager );

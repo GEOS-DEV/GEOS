@@ -128,8 +128,8 @@ public:
 
   /**
    * @brief Set the number of elements for a set of element regions.
-   * @param numElements list of the new element numbers
-   * @param regionNames list of the element region names
+   * @param[in] numElements list of the new element numbers
+   * @param[in] regionNames list of the element region names
    */
   void resize( integer_array const & numElements,
                string_array const & regionNames );
@@ -145,7 +145,7 @@ public:
 
   /**
    * @brief Get cell block by name.
-   * @param name Name of the cell block.
+   * @param[in] name Name of the cell block.
    * @return Reference to the cell block instance.
    */
   CellBlock & getCellBlock( string const & name )
@@ -189,7 +189,7 @@ private:
 
   /**
    * @brief Get cell block at index @p iCellBlock.
-   * @param iCellBlock The cell block index.
+   * @param[in] iCellBlock The cell block index.
    * @return Const reference to the instance.
    *
    * @note Mainly useful for iteration purposes.

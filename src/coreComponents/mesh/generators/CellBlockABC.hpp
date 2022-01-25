@@ -113,6 +113,7 @@ public:
    *
    * @note Unlike the other member functions of this class, this current member function is not abstract,
    * mainly because it's a template method. The abstraction is delegated to private method @p getExternalProperties.
+   * @note There is some `constness` concern for this member function.
    * @see getExternalProperties()
    */
   template< typename LAMBDA >
@@ -132,6 +133,7 @@ private:
    * In order not to expose the implementation details (external properties being stored as WrapperBase),
    * this abstract member function is made private.
    * Thus the list of pointers shall not be used anyhow by end-users that must use @p forExternalProperties.
+   * @note There is some `constness` concern for this member function.
    * @see forExternalProperties(LAMBDA && lambda)
    */
   virtual std::list< dataRepository::WrapperBase * > getExternalProperties() = 0;
