@@ -515,7 +515,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
   //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
+  //Change velocityUpdate (add gravity) by ron, 26 Dec 2022
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, gravityVector(), dt/2 );
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -566,7 +567,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   applyTractionBCExplicit( time_n + dt, domain );
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
+  //Change velocityUpdate (add massDamping) by ron, 26 Dec 2022
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes.toViewConst() );
 
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -585,7 +587,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                           string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
 
   // apply this over a set
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
+  //Change velocityUpdate (add massDamping) by ron, 26 Dec 2022
+  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes.toViewConst() );
   fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
   // this includes  a device sync after launching all the unpacking kernels
