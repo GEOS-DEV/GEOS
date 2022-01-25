@@ -63,9 +63,6 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
-{}
-
 void FluxApproximationBase::initializePreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -132,7 +129,7 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
       {
         registerAquiferStencil( stencilGroup, setName );
       } );
-      
+
       // Compute the main cell-based stencil
       computeCellStencil( mesh );
 

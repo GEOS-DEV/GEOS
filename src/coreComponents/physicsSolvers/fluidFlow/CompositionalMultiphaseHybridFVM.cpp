@@ -127,9 +127,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
     GEOSX_ERROR( "The QuasiRT, QuasiTPFA, and Simple inner products are only available in SinglePhaseHybridFVM" );
   }
 
-  string const & coeffName = hmDiscretization.template getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
-  m_transMultName = coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString();
-
+  m_transMultName = viewKeyStruct::transMultiplierString();
 
   m_lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * 1e-8;
 
@@ -797,7 +795,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                                                 [&]( localIndex const,
                                                                                      localIndex const,
                                                                                      localIndex const,
-                                                                                     ElementRegionBase const & ,
+                                                                                     ElementRegionBase const &,
                                                                                      ElementSubRegionBase const & subRegion )
     {
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );

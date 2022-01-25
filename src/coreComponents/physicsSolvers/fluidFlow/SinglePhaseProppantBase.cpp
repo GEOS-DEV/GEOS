@@ -66,7 +66,7 @@ SinglePhaseProppantBase::~SinglePhaseProppantBase()
 void SinglePhaseProppantBase::validateFluidModels( DomainPartition & domain ) const
 {
   // Validate fluid models in regions
-forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
@@ -118,7 +118,7 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) 
   arrayView1d< integer const > const isProppantBoundaryElement =
     dataGroup.getReference< array1d< integer > >( ProppantTransport::viewKeyStruct::isProppantBoundaryString() );
 
-  string const & fluidName = dataGroup.getReference<string>( viewKeyStruct::fluidNamesString() ); 
+  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
   SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, fluidName );
 
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
@@ -148,7 +148,7 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
   arrayView1d< real64 const > const oldHydraulicAperture =
     subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::aperture0::key() );
 
-  string const & solidName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() ); 
+  string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
   CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
   constitutive::ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeability > >::execute( porousSolid, [=, &subRegion] ( auto & castedProppantSolid )
@@ -185,7 +185,7 @@ void SinglePhaseProppantBase::resetViewsPrivate( ElementRegionManager const & el
 
   {
     m_permeabilityMultiplier.clear();
-    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor<ProppantPermeability, real64, 3 >( extrinsicMeshData::permeability::permeabilityMultiplier::key() );
+    m_permeabilityMultiplier = elemManager.constructMaterialArrayViewAccessor< ProppantPermeability, real64, 3 >( extrinsicMeshData::permeability::permeabilityMultiplier::key() );
     m_permeabilityMultiplier.setName( getName() + "/accessors/" + extrinsicMeshData::permeability::permeabilityMultiplier::key() );
   }
 }

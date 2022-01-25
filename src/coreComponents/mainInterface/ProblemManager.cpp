@@ -414,10 +414,10 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
-    domain.getMeshBodies().forSubGroups<MeshBody>([&]( MeshBody & meshBody )
+    domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
     {
       string const meshBodyName = meshBody.getName();
-      GEOSX_LOG_RANK_0("MeshBody "<<meshBodyName );
+      GEOSX_LOG_RANK_0( "MeshBody "<<meshBodyName );
       ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
       xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
@@ -442,7 +442,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
 
       }
 //      elementManager.processInputFileRecursive( elementRegionsNode );
-    });
+    } );
   }
 }
 
@@ -589,7 +589,7 @@ void ProblemManager::generateMesh()
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupCommunications( useNonblockingMPI );
 
-  domain.forMeshBodies([&]( MeshBody & meshBody )
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
@@ -599,7 +599,7 @@ void ProblemManager::generateMesh()
 
     faceManager.setIsExternal();
     edgeManager.setIsExternal( faceManager );
-  });
+  } );
 
 }
 
@@ -658,56 +658,56 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                                    MeshLevel & meshLevel,
                                    auto const & regionNames )
       {
-          NodeManager & nodeManager = meshLevel.getNodeManager();
-          ElementRegionManager & elemManager = meshLevel.getElemManager();
-          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        ElementRegionManager & elemManager = meshLevel.getElemManager();
+        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
-          for( auto const & regionName : regionNames )
+        for( auto const & regionName : regionNames )
+        {
+          if( elemManager.hasRegion( regionName ) )
           {
-            if( elemManager.hasRegion( regionName ) )
+            ElementRegionBase & elemRegion = elemManager.getRegion( regionName );
+
+            if( feDiscretization != nullptr )
             {
-              ElementRegionBase & elemRegion = elemManager.getRegion( regionName );
-
-              if( feDiscretization != nullptr )
+              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
               {
-                elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
+
+                finiteElement::FiniteElementBase &
+                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
+                       setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+
+                finiteElement::dispatch3D( fe,
+                                           [&] ( auto & finiteElement )
                 {
-                  std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
+                  using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
 
-                  finiteElement::FiniteElementBase &
-                  fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
-                         setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+                  localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  finiteElement::dispatch3D( fe,
-                                             [&] ( auto & finiteElement )
-                  {
-                    using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
+                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
 
-                    localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
-
-                    feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
-
-                    localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                                regionName,
-                                                                                                subRegion.getName() ) ];
-
-                    numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
-                  } );
-                } );
-              }
-              else //if( fvFluxApprox != nullptr )
-              {
-                elemRegion.forElementSubRegions( [&]( auto & subRegion )
-                {
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
-                                                                                             regionName,
-                                                                                             subRegion.getName() ) ];
-                  localIndex const numQuadraturePoints = 1;
+                                                                                              regionName,
+                                                                                              subRegion.getName() ) ];
+
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                 } );
-              }
+              } );
+            }
+            else   //if( fvFluxApprox != nullptr )
+            {
+              elemRegion.forElementSubRegions( [&]( auto & subRegion )
+              {
+                localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                            regionName,
+                                                                                            subRegion.getName() ) ];
+                localIndex const numQuadraturePoints = 1;
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+              } );
             }
           }
+        }
       } );
     } // if( solver!=nullptr )
   }
@@ -723,7 +723,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
   for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-    meshBody.forMeshLevels( [&] (MeshLevel & meshLevel )
+    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
     {
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 

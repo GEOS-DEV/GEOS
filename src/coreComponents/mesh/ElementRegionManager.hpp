@@ -1443,8 +1443,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
                                              ElementSubRegionBase const & subRegion )
       {
-        string const & materialName = subRegion.getReference<string>( materialKeyName );
-        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
 
         dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1490,8 +1490,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
       {
-        string const & materialName = subRegion.getReference<string>( materialKeyName );
-        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
 
         dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1527,7 +1527,7 @@ ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT
 ElementRegionManager::
   constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
 {
-  GEOSX_UNUSED_VAR(allowMissingViews);
+  GEOSX_UNUSED_VAR( allowMissingViews );
   return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
                                         traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
 }
@@ -1573,7 +1573,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
         materialName = constitutiveRelation.getName();
-        if ( constitutiveRelation.template hasWrapper( viewName ) ) //NOTE (matteo): I have added this check to allow for the view to be missing. I am not sure this is the default behaviour we want though. 
+        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                    // missing. I am not sure this is the default behaviour we want though.
         {
           accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
         }

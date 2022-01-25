@@ -81,11 +81,11 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerExtrinsicData< densityOld >( getName() );
 
-      string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
-      fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
+      string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
       GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
-    });
+    } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
@@ -251,7 +251,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                               ElementSubRegionBase & subRegion )
+                                                                  ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 > const initPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();

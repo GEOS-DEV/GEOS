@@ -128,9 +128,9 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                      ElementSubRegionBase const & subRegion )
     {
       arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-    arrayView1d< real64 const > const & densOld        = subRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
+      arrayView1d< real64 const > const & densOld        = subRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >();
 
       CoupledSolidBase const & solidModel =
         SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
@@ -180,7 +180,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< string const > const & )
   {
     std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::flow::deltaPressure::key() ) );
+    fieldNames["elems"].emplace_back( string( extrinsicMeshData::flow::deltaPressure::key() ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
   } );
@@ -460,10 +460,10 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
     FaceManager & faceManager = mesh.getFaceManager();
 
     arrayView1d< real64 const > const presFace =
-    faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
 
-  arrayView1d< real64 const > const gravCoefFace =
-    faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+    arrayView1d< real64 const > const gravCoefFace =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
     elemDofNumber = mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( dofKey );

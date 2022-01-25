@@ -98,7 +98,7 @@ public:
   StencilMaterialAccessors( ElementRegionManager const & elemManager,
                             string const & solverName,
                             bool const fill = false ):
-    StencilAccessors<TRAITS ...>( elemManager, solverName, fill )
+    StencilAccessors< TRAITS ... >( elemManager, solverName, fill )
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {

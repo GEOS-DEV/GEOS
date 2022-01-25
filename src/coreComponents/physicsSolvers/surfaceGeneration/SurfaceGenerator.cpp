@@ -2808,13 +2808,13 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
 
   ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   m_solidMaterialFullIndex.resize( elementManager.numRegions() );
-  elementManager.forElementRegionsComplete<CellElementRegion>( [&]( localIndex regionIndex,
-                                                                    CellElementRegion const & region )
+  elementManager.forElementRegionsComplete< CellElementRegion >( [&]( localIndex regionIndex,
+                                                                      CellElementRegion const & region )
   {
-    string const & solidMaterialName = region.getSubRegion(0).getReference<string>( viewKeyStruct::solidMaterialNameString() );
+    string const & solidMaterialName = region.getSubRegion( 0 ).getReference< string >( viewKeyStruct::solidMaterialNameString() );
     ConstitutiveBase const & solid = constitutiveManager.getConstitutiveRelation< ConstitutiveBase >( solidMaterialName );
     m_solidMaterialFullIndex[regionIndex] = solid.getIndexInParent();
-  });
+  } );
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =
     elementManager.constructFullMaterialViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( "shearModulus", constitutiveManager );
@@ -2845,11 +2845,11 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition & domain,
                                                                  [&]( localIndex const,
                                                                       CellElementSubRegion const & subRegion )
     {
-      string const & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNameString() );
+      string const & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNameString() );
       subRegion.
-      getConstitutiveModel( solidMaterialName ).
-      getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
-                                                                                                                     false );
+        getConstitutiveModel( solidMaterialName ).
+        getReference< array3d< real64, solid::STRESS_PERMUTATION > >( SolidBase::viewKeyStruct::stressString() ).move( LvArray::MemorySpace::host,
+                                                                                                                       false );
     } );
     displacement.move( LvArray::MemorySpace::host, false );
   } );
@@ -3661,13 +3661,13 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition & domain,
 
   ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
   m_solidMaterialFullIndex.resize( elementManager.numRegions() );
-  elementManager.forElementRegionsComplete<CellElementRegion>( [&]( localIndex regionIndex,
-                                                                    CellElementRegion const & region )
+  elementManager.forElementRegionsComplete< CellElementRegion >( [&]( localIndex regionIndex,
+                                                                      CellElementRegion const & region )
   {
-    string const & solidMaterialName = region.getSubRegion(0).getReference<string>( viewKeyStruct::solidMaterialNameString() );
+    string const & solidMaterialName = region.getSubRegion( 0 ).getReference< string >( viewKeyStruct::solidMaterialNameString() );
     ConstitutiveBase const & solid = constitutiveManager.getConstitutiveRelation< ConstitutiveBase >( solidMaterialName );
     m_solidMaterialFullIndex[regionIndex] = solid.getIndexInParent();
-  });
+  } );
 
 
   ElementRegionManager::MaterialViewAccessor< arrayView1d< real64 const > > const shearModulus =

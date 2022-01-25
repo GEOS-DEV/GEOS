@@ -588,8 +588,8 @@ public:
     for( auto const & target: m_meshTargets )
     {
       string const meshBodyName = target.first;
-      arrayView1d<string const> const & regionNames = target.second.toViewConst();
-      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
       meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
       {
         lambda( meshBodyName, meshLevel, regionNames );
@@ -603,8 +603,8 @@ public:
     for( auto const & target: m_meshTargets )
     {
       string const meshBodyName = target.first;
-      arrayView1d<string const> const & regionNames = target.second.toViewConst();
-      MeshBody & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
         lambda( meshBodyName, meshLevel, regionNames );

@@ -329,7 +329,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d<string const> const & regionNames )
+                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -353,7 +353,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                                          this->getDiscretizationName(),
                                                                          viewKeyStruct::solidMaterialNamesString(),
                                                                          kernelWrapper );
-  }) ;
+  } );
 
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );

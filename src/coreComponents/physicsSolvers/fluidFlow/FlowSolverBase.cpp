@@ -117,25 +117,25 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
+        setSizedFromParent( 0 );
 
       subRegion.registerWrapper< string >( viewKeyStruct::solidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
+        setSizedFromParent( 0 );
 
       subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
+        setSizedFromParent( 0 );
 
-      string & solidName = subRegion.getReference<string>( viewKeyStruct::solidNamesString() );
+      string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
       GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 
-      string & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
+      string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
       permName = getConstitutiveName< PermeabilityBase >( subRegion );
-      GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+      GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -213,7 +213,7 @@ void FlowSolverBase::initializePreSubGroups()
                                                                                        localIndex const,
                                                                                        localIndex const,
                                                                                        ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const &  )
+                                                                                       ElementSubRegionBase const & )
       {
 //        string const & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
         coeffModelNames[region.getName()] = viewKeyStruct::permeabilityNamesString();//permName;

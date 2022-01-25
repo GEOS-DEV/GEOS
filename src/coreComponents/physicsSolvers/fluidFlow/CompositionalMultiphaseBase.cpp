@@ -162,7 +162,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
           setPlotLevel( PlotLevel::NOPLOT ).
           setRestartFlags( RestartFlags::NO_WRITE ).
-          setSizedFromParent(0);
+          setSizedFromParent( 0 );
 
         string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
         relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
@@ -176,7 +176,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
           subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
             setRestartFlags( RestartFlags::NO_WRITE ).
-            setSizedFromParent(0);
+            setSizedFromParent( 0 );
 
           string & capPresName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
           capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
