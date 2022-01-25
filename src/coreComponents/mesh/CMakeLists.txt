@@ -52,7 +52,6 @@ set( mesh_headers
      simpleGeometricObjects/ThickPlane.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
-     utilities/MeshUtilities.hpp
      utilities/StructuredGridUtilities.hpp
    )
 
@@ -102,8 +101,7 @@ set( mesh_sources
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp
-     utilities/MeshUtilities.cpp
-   )
+     )
 
 set( dependencyList schema dataRepository constitutive metis )
 

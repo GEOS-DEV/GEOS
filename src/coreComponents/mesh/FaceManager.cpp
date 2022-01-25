@@ -147,24 +147,19 @@ void populateRegions( ElementRegionManager const & elementRegionManager,
   elementRegionManager.forElementSubRegionsComplete< CellElementSubRegion >( f );
 }
 
-void FaceManager::buildFaces( CellBlockManagerABC const & cellBlockManager,
-                              ElementRegionManager const & elementRegionManager,
-                              NodeManager & nodeManager )
+void FaceManager::buildRegionMaps( ElementRegionManager const & elementRegionManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  m_toElements.setElementRegionManager( elementRegionManager );
-
-  resize( cellBlockManager.numFaces() );
-
-  m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements();
-  nodeList().base() = cellBlockManager.getFaceToNodes();
-
+  // Delegating to a free function.
   populateRegions( elementRegionManager,
                    m_toElements.m_toElementIndex.toViewConst(),
                    m_toElements.m_toElementRegion,
                    m_toElements.m_toElementSubRegion );
+}
 
+void FaceManager::buildSets( NodeManager const & nodeManager )
+{
   // First create the sets
   auto const & nodeSets = nodeManager.sets().wrappers();
   for( localIndex i = 0; i < nodeSets.size(); ++i )
@@ -182,12 +177,44 @@ void FaceManager::buildFaces( CellBlockManagerABC const & cellBlockManager,
     SortedArrayView< localIndex const > const & targetSet = nodeManager.sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     constructSetFromSetAndMap( targetSet, m_nodeList.toViewConst(), setName );
   } );
+}
 
-  setDomainBoundaryObjects( nodeManager );
+void FaceManager::setDomainBoundaryObjects()
+{
+  arrayView1d< integer > const & isFaceOnDomainBoundary = getDomainBoundaryIndicator();
+  isFaceOnDomainBoundary.zero();
+
+  forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
+  {
+    if( m_toElements.m_toElementRegion[kf][1] == -1 )
+    {
+      isFaceOnDomainBoundary( kf ) = 1;
+    }
+  } );
+}
+
+void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
+                                           NodeManager const & nodeManager )
+{
+  resize( cellBlockManager.numFaces() );
+
+  m_nodeList.base() = cellBlockManager.getFaceToNodes();
+  m_edgeList.base() = cellBlockManager.getFaceToEdges();
+
+  m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements();
 
   computeGeometry( nodeManager );
 }
 
+void FaceManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                                  EdgeManager const & edgeManager,
+                                                  ElementRegionManager const & elementRegionManager )
+{
+  m_nodeList.setRelatedObject( nodeManager ); // FIXME This was not in the original code.
+  m_edgeList.setRelatedObject( edgeManager );
+
+  m_toElements.setElementRegionManager( elementRegionManager );
+}
 
 void FaceManager::computeGeometry( NodeManager const & nodeManager )
 {
@@ -201,41 +228,6 @@ void FaceManager::computeGeometry( NodeManager const & nodeManager )
                                                                       m_faceCenter[ faceID ],
                                                                       m_faceNormal[ faceID ] );
 
-  } );
-}
-
-void FaceManager::setDomainBoundaryObjects( NodeManager & nodeManager )
-{
-  // Set value of domainBoundaryIndicator to one if it is found to have only one elements that it
-  // is connected to.
-  arrayView1d< integer > const & faceDomainBoundaryIndicator = this->getDomainBoundaryIndicator();
-  faceDomainBoundaryIndicator.zero();
-
-  arrayView2d< localIndex const > const elemRegionList = this->elementRegionList();
-
-  forAll< parallelHostPolicy >( size(), [&]( localIndex const kf )
-  {
-    if( elemRegionList[kf][1] == -1 )
-    {
-      faceDomainBoundaryIndicator( kf ) = 1;
-    }
-  } );
-
-  arrayView1d< integer > const & nodeDomainBoundaryIndicator = nodeManager.getDomainBoundaryIndicator();
-  nodeDomainBoundaryIndicator.zero();
-
-  ArrayOfArraysView< localIndex const > const faceToNodesMap = this->nodeList().toViewConst();
-
-  forAll< parallelHostPolicy >( size(), [&]( localIndex const k )
-  {
-    if( faceDomainBoundaryIndicator[k] == 1 )
-    {
-      localIndex const numNodes = faceToNodesMap.sizeOfArray( k );
-      for( localIndex a=0; a< numNodes; ++a )
-      {
-        nodeDomainBoundaryIndicator[faceToNodesMap( k, a )] = 1;
-      }
-    }
   } );
 }
 

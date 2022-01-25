@@ -142,8 +142,6 @@ public:
     return numElem;
   }
 
-//  void Initialize(  ){}
-
   /**
    * @brief Generate the mesh.
    * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
@@ -156,6 +154,13 @@ public:
    * @param [in] meshLevel pointer to meshLevel
    */
   void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+
+  /**
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
+   * @note ElementRegionManager's sub-regions need to be properly defined.
+   */
+  void buildSets( NodeManager const & nodeManager );
 
   /**
    * @brief Create a new ElementRegion object as a child of this group.

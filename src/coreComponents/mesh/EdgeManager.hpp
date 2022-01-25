@@ -110,7 +110,7 @@ public:
    * @brief Set the node of the domain boundary object.
    * @param[in] referenceObject the reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & referenceObject );
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
 
   /**
    * @brief Set external edges.
@@ -120,16 +120,27 @@ public:
   void setIsExternal( FaceManager const & faceManager );
 
   /**
-   * @brief Copies faces-to-edges and nodes-to-edges relation maps from @p cellBlockManger.
-   * @param[in] cellBlockManager Cell block manager.
-   * @param[in] nodeManager Manager of all nodes in the DomainPartition.
-   * @param[in,out] faceManager Manager of all faces in the DomainPartition.
-   *
-   * @p nodeManager and @p faceManager are given for inter-managers relations.
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
    */
-  void buildEdges( CellBlockManagerABC const & cellBlockManager,
-                   NodeManager const & nodeManager,
-                   FaceManager & faceManager );
+  void buildSets( NodeManager const & nodeManager );
+
+  /**
+   * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
+   * @param[in] cellBlockManager Provides the mappings.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param nodeManager The node manager instance.
+   * @param faceManager The face manager instance.
+   *
+   * @note the @p EdgeManager do not hold any information related to the regions nor to the elements.
+   * This is why the element region manager is not provided.
+   */
+  void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                       FaceManager const & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.

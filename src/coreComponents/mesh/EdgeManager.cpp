@@ -70,25 +70,11 @@ void EdgeManager::resize( localIndex const newSize )
   ObjectManagerBase::resize( newSize );
 }
 
-void EdgeManager::buildEdges( CellBlockManagerABC const & cellBlockManager,
-                              NodeManager const & nodeManager,
-                              FaceManager & faceManager )
+void EdgeManager::buildSets( NodeManager const & nodeManager )
 {
   GEOSX_MARK_FUNCTION;
 
-  // TODO Split this member function such that the actions of the nodeManager and of the faceManager are separated.
-
-  faceManager.edgeList().setRelatedObject( *this );
-  m_toFacesRelation.setRelatedObject( faceManager );
-  m_toNodesRelation.setRelatedObject( nodeManager );
-
-  resize( cellBlockManager.numEdges() );
-
-  faceManager.edgeList().base() = cellBlockManager.getFaceToEdges();
-  m_toFacesRelation.base() = cellBlockManager.getEdgeToFaces();
-  m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
-
-  // make sets from nodesets
+  // Make sets from node sets.
   auto const & nodeSets = nodeManager.sets().wrappers();
   for( int i = 0; i < nodeSets.size(); ++i )
   {
@@ -105,8 +91,6 @@ void EdgeManager::buildEdges( CellBlockManagerABC const & cellBlockManager,
     SortedArrayView< localIndex const > const targetSet = nodeManager.sets().getReference< SortedArray< localIndex > >( setName ).toViewConst();
     constructSetFromSetAndMap( targetSet, m_toNodesRelation, setName );
   } );
-
-  setDomainBoundaryObjects( faceManager );
 }
 
 void EdgeManager::buildEdges( localIndex const numNodes,
@@ -119,6 +103,21 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                                              m_toNodesRelation );
 
   resize( numEdges );
+}
+
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+{
+  resize( cellBlockManager.numEdges() );
+
+  m_toNodesRelation.base() = cellBlockManager.getEdgeToNodes();
+  m_toFacesRelation.base() = cellBlockManager.getEdgeToFaces();
+}
+
+void EdgeManager::setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                                  FaceManager const & faceManager )
+{
+  m_toNodesRelation.setRelatedObject( nodeManager );
+  m_toFacesRelation.setRelatedObject( faceManager );
 }
 
 void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
@@ -134,7 +133,7 @@ void EdgeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
   ArrayOfArraysView< localIndex const > const & faceToEdgeMap = faceManager.edgeList().toViewConst();
 
   // loop through all faces
-  for( localIndex kf=0; kf<faceManager.size(); ++kf )
+  for( localIndex kf = 0; kf < faceManager.size(); ++kf )
   {
     // check to see if the face is on a domain boundary
     if( isFaceOnDomainBoundary[kf] == 1 )

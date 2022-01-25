@@ -176,6 +176,68 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
   nodeManager.setMaxGlobalIndex();
 }
 
+void ElementRegionManager::buildSets( NodeManager const & nodeManager )
+{
+  GEOSX_MARK_FUNCTION;
+
+  dataRepository::Group const & nodeSets = nodeManager.sets();
+
+  map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
+  string_array setNames; // just a holder for the names of the sets
+
+  // loop over all wrappers and fill the nodeIndSet arrays for each set
+  for( auto & wrapper: nodeSets.wrappers() )
+  {
+    string const & name = wrapper.second->getName();
+    nodeInSet[name].resize( nodeManager.size() );
+    nodeInSet[name].setValues< serialPolicy >( false );
+
+    if( nodeSets.hasWrapper( name ) )
+    {
+      setNames.emplace_back( name );
+      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
+      for( localIndex const a: set )
+      {
+        nodeInSet[name][a] = true;
+      }
+    }
+  }
+
+  this->forElementSubRegions(
+    [&]( auto & subRegion ) -> void
+  {
+    dataRepository::Group & elementSets = subRegion.sets();
+
+    auto const & elemToNodeMap = subRegion.nodeList();
+
+    for( string const & setName: setNames )
+    {
+      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
+
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+      for( localIndex k = 0; k < subRegion.size(); ++k )
+      {
+        localIndex const numNodes = subRegion.numNodesPerElement( k );
+
+        localIndex elementInSet = true;
+        for( localIndex i = 0; i < numNodes; ++i )
+        {
+          if( !nodeInCurSet( elemToNodeMap[k][i] ) )
+          {
+            elementInSet = false;
+            break;
+          }
+        }
+
+        if( elementInSet )
+        {
+          targetSet.insert( k );
+        }
+      }
+    }
+  } );
+}
+
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {

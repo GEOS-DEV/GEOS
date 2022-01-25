@@ -21,6 +21,7 @@
 
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "ToElementRelation.hpp"
 
 namespace geosx
@@ -147,35 +148,50 @@ public:
   ///@}
 
   /**
-   * @brief Copies the node information from @p cellBlockManager.
-   * @param [in] cellBlockManager the cell block manager providing the node information.
+   * @brief Builds the nodes to regions and nodes to sub-regions mappings.
+   * @param [in] elementRegionManager the ElementRegionManager.
    *
-   * Copies the nodes coordinates, the node sets (with their names) and the local to global mapping for nodes.
+   * @note Requires the sub-regions of the @p elementRegionManager to be fully defined.
+   * As well as the node to elements mappings of the @p NodeManager.
    */
-  void setNodesInformation( CellBlockManagerABC const & cellBlockManager );
+  void buildRegionMaps( ElementRegionManager const & elementRegionManager );
 
   /**
-   * @brief Link the EdgeManager @p edgeManager to the NodeManager, and copies the the node-to-edge mapping from @p cellBlockManager.
-   * @param [in] cellBlockManager the cell block manager providing the node to edges mapping.
-   * @param [in] edgeManager the edgeManager to assign this NodeManager.
+   * @brief Copies the local to global mapping from @p cellBlockManager and invert to create the global to local mapping.
+   * @param cellBlockManager Provides the local to global mapping.
    */
-  void setEdgeMaps( CellBlockManagerABC const & cellBlockManager, EdgeManager const & edgeManager );
+  void constructGlobalToLocalMap( CellBlockManagerABC const & cellBlockManager );
 
   /**
-   * @brief Link the FaceManager @p faceManager to the NodeManager, and copies the node-to-face mapping from @p cellBlockManager.
-   * @param [in] cellBlockManager the cell block manager providing the node to faces mapping.
-   * @param [in] faceManager the face manager for inter-object relations.
+   * @brief Build sets from sources.
+   * @param cellBlockManager Provides some node sets.
+   * @param geometries Provides other nodes sets, with some filtering based on node coordinates.
    */
-  void setFaceMaps( CellBlockManagerABC const & cellBlockManager, FaceManager const & faceManager );
+  void buildSets( CellBlockManagerABC const & cellBlockManager,
+                  GeometricObjectManager const & geometries );
 
   /**
-   * @brief Copies the node-to-element mapping from @p cellBlockManager and builds the node to region and node to sub-regions relations.
-   * @param [in] cellBlockManager Contains the raw mesh information.
-   * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
-   *
-   * @note maybe split into two parts: the @p cellBlockManager part and the @p elementRegionManager part.
+   * @brief Builds the node-on-domain-boundary indicator.
+   * @param[in] faceManager The computation is based on the face-on-domain-boundary indicator.
+   * @see ObjectManagerBase::getDomainBoundaryIndicator()
    */
-  void setElementMaps( CellBlockManagerABC const & cellBlockManager, ElementRegionManager const & elementRegionManager );
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
+
+  /**
+   * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
+   * @param[in] cellBlockManager Will provide the mappings.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param edgeManager The edge manager instance.
+   * @param faceManager The face manager instance.
+   * @param elementRegionManager The element region manager instance.
+   */
+  void setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
+                                       FaceManager const & faceManager,
+                                       ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.

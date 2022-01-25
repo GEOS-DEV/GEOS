@@ -27,6 +27,7 @@ namespace geosx
 {
 
 class NodeManager;
+class EdgeManager;
 class ElementRegionManager;
 class CellElementSubRegion;
 
@@ -132,20 +133,51 @@ public:
   virtual void resize( localIndex const newsize ) override;
 
   /**
-   * @brief Build faces in filling face-to-node and face-to-element mappings.
-   * @param[in] cellBlockManager cell block manager
-   * @param[in] elementRegionManager element manager
-   * @param[in,out] nodeManager mesh node manager
+   * @brief Builds the faces to regions and faces to sub-regions mappings.
+   * @param [in] elementRegionManager the ElementRegionManager.
+   *
+   * @note Requires the sub-regions of the @p elementRegionManager to be fully defined.
+   * As well as the faces to elements mappings of the @p FaceManager.
    */
-  void buildFaces( CellBlockManagerABC const & cellBlockManager,
-                   ElementRegionManager const & elementRegionManager,
-                   NodeManager & nodeManager );
+  void buildRegionMaps( ElementRegionManager const & elementRegionManager );
+
+  /**
+   * @brief Copies the nodes positions and the faces to (nodes|edges|elements) mappings from @p cellBlockManager.
+   * Computes the faces center, area and normal too.
+   * @param[in] cellBlockManager Provides the mappings.
+   * @param[in] nodeManager Provides the nodes positions.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
+                                NodeManager const & nodeManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param nodeManager The node manager instance.
+   * @param edgeManager The edge manager instance.
+   * @param elementRegionManager The element region manager instance.
+   */
+  void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                       EdgeManager const & edgeManager,
+                                       ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compute faces center, area and normal.
    * @param[in] nodeManager NodeManager associated with the current DomainPartition
    */
   void computeGeometry( NodeManager const & nodeManager );
+
+  /**
+   * @brief Builds the face-on-domain-boundary indicator.
+   * @note Based on the face to element region mapping that must be defined.
+   * @see ObjectManagerBase::getDomainBoundaryIndicator()
+   */
+  void setDomainBoundaryObjects();
+
+  /**
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
+   */
+  void buildSets( NodeManager const & nodeManager );
 
   /**
    * @brief Return the number of nodes of the faces with the greatest number of nodes.
@@ -172,12 +204,6 @@ public:
                       arraySlice1d< real64 const > const elementCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
-
-  /**
-   * @brief Flag face and nodes'face with at least one element on the boundary.
-   * @param[in] nodeManager manager of mesh nodes
-   */
-  void setDomainBoundaryObjects( NodeManager & nodeManager );
 
   /**
    * @brief Flag faces on boundary or external to the DomainPartition.

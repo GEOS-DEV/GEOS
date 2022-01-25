@@ -65,38 +65,10 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::setNodesInformation( CellBlockManagerABC const & cellBlockManager )
+void NodeManager::constructGlobalToLocalMap( CellBlockManagerABC const & cellBlockManager )
 {
-  this->resize( cellBlockManager.numNodes() );
-
-  m_referencePosition = cellBlockManager.getNodesPositions();
-
   m_localToGlobalMap = cellBlockManager.getNodeLocalToGlobal();
-
-  for( const auto & nameArray: cellBlockManager.getNodeSets() )
-  {
-    auto & array = m_sets.registerWrapper< SortedArray< localIndex > >( nameArray.first ).reference();
-    array = nameArray.second;
-  }
-}
-
-void NodeManager::setEdgeMaps( CellBlockManagerABC const & cellBlockManager, EdgeManager const & edgeManager )
-{
-  GEOSX_MARK_FUNCTION;
-
-  m_toEdgesRelation.base() = cellBlockManager.getNodeToEdges();
-
-  m_toEdgesRelation.setRelatedObject( edgeManager );
-}
-
-
-void NodeManager::setFaceMaps( CellBlockManagerABC const & cellBlockManager, FaceManager const & faceManager )
-{
-  GEOSX_MARK_FUNCTION;
-
-  m_toFacesRelation.base() = cellBlockManager.getNodeToFaces();
-
-  m_toFacesRelation.setRelatedObject( faceManager );
+  ObjectManagerBase::constructGlobalToLocalMap();
 }
 
 /**
@@ -158,7 +130,7 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
   auto f = [&n2e, &n2er, &n2esr]( localIndex er,
                                   localIndex esr,
                                   ElementRegionBase const &,
-                                  CellElementSubRegion const & subRegion )
+                                  CellElementSubRegion const & subRegion ) -> void
   {
     for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
     {
@@ -205,19 +177,14 @@ void populateRegions( ElementRegionManager const & elementRegionMgr,
   elementRegionMgr.forElementSubRegionsComplete< CellElementSubRegion >( f );
 }
 
-void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager,
-                                  ElementRegionManager const & elementRegionManager )
+void NodeManager::buildRegionMaps( ElementRegionManager const & elementRegionManager )
 {
-  const localIndex totalNodeElems = cellBlockManager.numNodes();
-
   GEOSX_MARK_FUNCTION;
 
   ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
-  ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
+  ArrayOfArraysView< localIndex const > const & toElementList = m_toElements.m_toElementIndex.toViewConst();
   localIndex const numNodes = size();
-
-  toElementList = cellBlockManager.getNodeToElements();
 
   // Resize the node to elem map.
   toElementRegionList.resize( 0 );
@@ -234,7 +201,7 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager,
   toElementSubRegionList.reserve( entriesToReserve );
 
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeElems + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  localIndex const valuesToReserve = numNodes + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
   toElementRegionList.reserveValues( valuesToReserve );
   toElementSubRegionList.reserveValues( valuesToReserve );
 
@@ -244,15 +211,91 @@ void NodeManager::setElementMaps( CellBlockManagerABC const & cellBlockManager,
     toElementRegionList.appendArray( 0 );
     toElementSubRegionList.appendArray( 0 );
 
-    const localIndex numElementsPerNode = toElementList[ nodeID ].size() + getElemMapOverAllocation();
+    const localIndex numElementsPerNode = toElementList[nodeID].size() + getElemMapOverAllocation();
     toElementRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
     toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
   }
 
-  populateRegions( elementRegionManager, toElementList.toViewConst(), toElementRegionList.toView(), toElementSubRegionList.toView() );
-
-  this->m_toElements.setElementRegionManager( elementRegionManager );
+  // Delegate the computation to a free function.
+  populateRegions( elementRegionManager,
+                   toElementList,
+                   toElementRegionList.toView(),
+                   toElementSubRegionList.toView() );
 }
+
+void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
+                             GeometricObjectManager const & geometries )
+{
+  // Let's first copy the sets from the cell block manager.
+  for( const auto & nameArray: cellBlockManager.getNodeSets() )
+  {
+    auto & array = m_sets.registerWrapper< SortedArray< localIndex > >( nameArray.first ).reference();
+    array = nameArray.second;
+  }
+
+  // Now let's copy them from the geometric objects.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = this->referencePosition();
+  localIndex const numNodes = this->size();
+
+  geometries.forSubGroups< SimpleGeometricObjectBase >(
+    [&]( SimpleGeometricObjectBase const & object ) -> void
+  {
+    string const & name = object.getName();
+    SortedArray< localIndex > & targetSet = m_sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
+    for( localIndex a = 0; a < numNodes; ++a )
+    {
+      real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[a] );
+      if( object.isCoordInObject( nodeCoord ) )
+      {
+        targetSet.insert( a );
+      }
+    }
+  } );
+}
+
+void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
+{
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
+  arrayView1d< integer > const & isNodeOnDomainBoundary = getDomainBoundaryIndicator();
+  isNodeOnDomainBoundary.zero();
+
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+
+  forAll< parallelHostPolicy >( faceManager.size(), [&]( localIndex const k )
+  {
+    if( isFaceOnDomainBoundary[k] == 1 )
+    {
+      localIndex const numNodes = faceToNodes.sizeOfArray( k );
+      for( localIndex a = 0; a < numNodes; ++a )
+      {
+        isNodeOnDomainBoundary[faceToNodes( k, a )] = 1;
+      }
+    }
+  } );
+}
+
+void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+{
+  resize( cellBlockManager.numNodes() );
+
+  m_referencePosition = cellBlockManager.getNodesPositions();
+
+  m_toEdgesRelation.base() = cellBlockManager.getNodeToEdges();
+  m_toFacesRelation.base() = cellBlockManager.getNodeToFaces();
+
+  m_toElements.m_toElementIndex = cellBlockManager.getNodeToElements();
+}
+
+void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
+                                                  FaceManager const & faceManager,
+                                                  ElementRegionManager const & elementRegionManager )
+{
+  m_toEdgesRelation.setRelatedObject( edgeManager );
+  m_toFacesRelation.setRelatedObject( faceManager );
+
+  m_toElements.setElementRegionManager( elementRegionManager );
+}
+
 
 void NodeManager::compressRelationMaps()
 {

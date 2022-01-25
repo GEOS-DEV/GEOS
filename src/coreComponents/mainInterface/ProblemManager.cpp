@@ -36,7 +36,6 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
-#include "mesh/utilities/MeshUtilities.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -518,26 +517,35 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-      GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-
-      // Nodes
-      nodeManager.setNodesInformation( cellBlockManager );
-      MeshUtilities::generateNodeSets( geometricObjects, nodeManager );
-      nodeManager.constructGlobalToLocalMap();
-
-      // Elements
       elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( cellBlockManager, elemManager );
 
-      // Faces
-      faceManager.buildFaces( cellBlockManager, elemManager, nodeManager );
-      nodeManager.setFaceMaps( cellBlockManager, faceManager );
+      nodeManager.setGeometricalRelations( cellBlockManager );
+      edgeManager.setGeometricalRelations( cellBlockManager );
+      faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
 
-      // Edges
-      edgeManager.buildEdges( cellBlockManager, nodeManager, faceManager );
-      nodeManager.setEdgeMaps( cellBlockManager, edgeManager );
+      nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
-      domain.generateSets();
+      // Edge, face and element region managers rely on the boundary information provided by the node manager.
+      // This is why `nodeManager.buildSets` is called first.
+      nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+      edgeManager.buildSets( nodeManager );
+      faceManager.buildSets( nodeManager );
+      elemManager.buildSets( nodeManager );
+
+      // The edge manager do not hold any information related to the regions nor the elements.
+      // This is why the element region manager is not provided.
+      nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+      edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+      faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+
+      nodeManager.buildRegionMaps( elemManager );
+      faceManager.buildRegionMaps( elemManager );
+
+      // Node and edge managers rely on the boundary information provided by the face manager.
+      // This is why `faceManager.setDomainBoundaryObjects` is called first.
+      faceManager.setDomainBoundaryObjects();
+      nodeManager.setDomainBoundaryObjects( faceManager );
+      edgeManager.setDomainBoundaryObjects( faceManager );
 
       elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
       {
