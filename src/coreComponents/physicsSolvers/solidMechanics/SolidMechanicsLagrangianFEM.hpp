@@ -204,6 +204,10 @@ public:
                         DomainPartition & domain,
                         arrayView1d< real64 > const & localRhs );
 
+  //Add applyTractionBCExplicit by ron, 25 Dec 2022
+  void applyTractionBCExplicit( real64 const time,
+                        DomainPartition & domain );
+
   void applyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,
                             arrayView1d< real64 > const & localRhs );

@@ -562,6 +562,9 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                           dt,
                           string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
 
+  //Add applyTractionBCExplicit by ron, 25 Dec 2022
+  applyTractionBCExplicit( time_n + dt, domain );
+
   // apply this over a set
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
@@ -659,6 +662,86 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
                targetSet,
                localRhs );
   } );
+}
+
+//Add applyTractionBCExplicit by ron, 25 Dec 2022
+void SolidMechanicsLagrangianFEM::applyTractionBCExplicit( real64 const time,
+                                                   DomainPartition & domain )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FunctionManager const & functionManager = FunctionManager::getInstance();
+
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+
+  arrayView1d< real64 const > const faceArea  = faceManager.faceArea();
+  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodeManager.acceleration();
+
+  fsManager.apply( time,
+                   domain,
+                   "faceManager",
+                   string( "TractionExplicit" ),
+                   [&]( FieldSpecificationBase const & bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+						Group &,
+						string const &  )
+{
+	  string const & functionName = bc.getFunctionName();
+
+	  integer const component = bc.getComponent();
+
+	  if( functionName.empty() )
+	  {
+		  real64 value = bc.getScale();
+		  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+		    {
+		      localIndex const kf = targetSet[ i ];
+		      localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+		      for( localIndex a=0; a<numNodes; ++a )
+		      {
+		    	  acc( faceToNodeMap( kf, a ), component ) += value * faceArea[kf] / numNodes;
+		      }
+		    } );
+	  }
+	  else
+	  {
+		  FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
+		  if( function.isFunctionOfTime() == 2 )
+		  {
+			  real64 value = bc.getScale() * function.evaluate( &time );
+			  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+			    {
+			      localIndex const kf = targetSet[ i ];
+			      localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+			      for( localIndex a=0; a<numNodes; ++a )
+			      {
+			    	  acc( faceToNodeMap( kf, a ), component ) += value * faceArea[kf] / numNodes;
+			      }
+			    } );
+		  }
+		  else
+		  {
+			  array1d< real64 > valuesArray( targetSet.size() );
+			  valuesArray.setName( "TractionBCExplicit function results" );
+			  function.evaluate( faceManager, time, targetSet, valuesArray );
+
+			  arrayView1d< real64 const > const valuesArrayView = valuesArray;
+
+			  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+			    {
+			      localIndex const kf = targetSet[ i ];
+			      localIndex const numNodes = faceToNodeMap.sizeOfArray( kf );
+			      for( localIndex a=0; a<numNodes; ++a )
+			      {
+			    	  acc( faceToNodeMap( kf, a ), component ) += valuesArrayView[kf] * faceArea[kf] / numNodes;
+			      }
+			    } );
+		  }
+	  }
+});
 }
 
 void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofManager,
