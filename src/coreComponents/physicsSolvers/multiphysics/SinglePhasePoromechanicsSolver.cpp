@@ -242,7 +242,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
                                                                   localRhs,
-                                                                  gravityVectorData, 
+                                                                  gravityVectorData,
                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // Cell-based contributions

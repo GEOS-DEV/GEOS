@@ -159,8 +159,8 @@ void LaplaceFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
     dofIndex =  nodeManager.getReference< array1d< globalIndex > >( dofKey );
 
     LaplaceFEMKernelFactory kernelFactory( dofIndex, dofManager.rankOffset(), localMatrix, localRhs, m_fieldName );
-    
-    string const dummyString = "dummy"; 
+
+    string const dummyString = "dummy";
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::NullModel,

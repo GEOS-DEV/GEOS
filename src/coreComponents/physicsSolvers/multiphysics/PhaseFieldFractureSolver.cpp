@@ -320,7 +320,7 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
     // begin region loop
     elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
                                                                 ( localIndex const,
-                                                                  CellElementSubRegion & elementSubRegion )
+                                                                CellElementSubRegion & elementSubRegion )
     {
       string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
       constitutive::SolidBase &

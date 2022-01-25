@@ -176,7 +176,7 @@ void ProppantTransport::initializePreSubGroups()
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
-      setConstitutiveNames(subRegion);
+      setConstitutiveNames( subRegion );
     } );
 
     if( m_numComponents > 0 )

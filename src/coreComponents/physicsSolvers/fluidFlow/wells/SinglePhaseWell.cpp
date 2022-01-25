@@ -78,6 +78,11 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::densityOldString() );
 
+      subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+
       PerforationData & perforationData = *subRegion.getPerforationData();
       perforationData.registerWrapper< array1d< real64 > >( viewKeyStruct::perforationRateString() );
       perforationData.registerWrapper< array2d< real64 > >( viewKeyStruct::dPerforationRate_dPresString() ).
@@ -90,6 +95,10 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
       wellControls.registerWrapper< real64 >( viewKeyStruct::currentVolRateString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dPresString() );
       wellControls.registerWrapper< real64 >( viewKeyStruct::dCurrentVolRate_dRateString() );
+
+      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidName = getConstitutiveName< SingleFluidBase >( subRegion );
+      GEOSX_ERROR_IF( fluidName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
     } );
   } );
@@ -868,7 +877,7 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
   forMeshTargets( domain.getMeshBodies(),
                   [&] ( string const &,
                         MeshLevel & mesh,
-                        arrayView1d<string const> const & )
+                        arrayView1d< string const > const & )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
@@ -884,24 +893,24 @@ void SinglePhaseWell::resetViews( DomainPartition & domain )
     {
 
       using keys = SingleFluidBase::viewKeyStruct;
-    m_resDensity.clear();
-    m_resDensity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::densityString() );
-    m_resDensity.setName( getName() + "/accessors/" + keys::densityString() );
+      m_resDensity.clear();
+      m_resDensity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::densityString() );
+      m_resDensity.setName( getName() + "/accessors/" + keys::densityString() );
 
-    m_dResDens_dPres.clear();
-    m_dResDens_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::dDens_dPresString() );
-    m_dResDens_dPres.setName( getName() + "/accessors/" + keys::dDens_dPresString() );
+      m_dResDens_dPres.clear();
+      m_dResDens_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::dDens_dPresString() );
+      m_dResDens_dPres.setName( getName() + "/accessors/" + keys::dDens_dPresString() );
 
-    m_resViscosity.clear();
-    m_resViscosity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::viscosityString() );
-    m_resViscosity.setName( getName() + "/accessors/" + keys::viscosityString() );
+      m_resViscosity.clear();
+      m_resViscosity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::viscosityString() );
+      m_resViscosity.setName( getName() + "/accessors/" + keys::viscosityString() );
 
-    m_dResVisc_dPres.clear();
-    m_dResVisc_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::dVisc_dPresString() );
-    m_dResVisc_dPres.setName( getName() + "/accessors/" + keys::dVisc_dPresString() );
+      m_dResVisc_dPres.clear();
+      m_dResVisc_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( keys::dVisc_dPresString() );
+      m_dResVisc_dPres.setName( getName() + "/accessors/" + keys::dVisc_dPresString() );
 
     }
-  });
+  } );
 }
 
 void SinglePhaseWell::implicitStepSetup( real64 const & time,
