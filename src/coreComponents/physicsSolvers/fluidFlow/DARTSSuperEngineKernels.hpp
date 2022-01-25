@@ -24,11 +24,13 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
+#include "functions/MultivariableTableFunctionKernels.hpp"
 #include "functions/TableFunction.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
+
 
 namespace geosx
 {
@@ -110,31 +112,240 @@ public:
 namespace internal
 {
 
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
+// template< integer NUM_COMP, typename LAMBDA >
+// void kernelLaunchSelectorOpSwitch( T value, LAMBDA && lambda )
 
-  switch( value )
+template< integer NUM_PHASES, typename T, typename LAMBDA >
+void kernelLaunchSelectorDofSwitch( T numDofs, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorDofSwitch: type should be integral" );
+
+  switch( numDofs )
   {
     case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 1 >() ); return; }
     case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 2 >() ); return; }
     case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 3 >() ); return; }
     case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 4 >() ); return; }
     case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >()); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
+    { GEOSX_ERROR( "Unsupported number of Dofs: " << numDofs ); }
+  }
+}
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorPhaseDofSwitch( T numPhases, T numDofs, LAMBDA && lambda )
+{
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseDofSwitch: type should be integral" );
+
+  switch( numPhases )
+  {
+    case 1:
+    { kernelLaunchSelectorDofSwitch< 1 >( numDofs, lambda ); return; }
+    case 2:
+    { kernelLaunchSelectorDofSwitch< 2 >( numDofs, lambda ); return; }
+    case 3:
+    { kernelLaunchSelectorDofSwitch< 3 >( numDofs, lambda ); return; }
+    default:
+    { GEOSX_ERROR( "Unsupported number of phases: " << numPhases ); }
   }
 }
 
 } // namespace internal
 
 
+/******************************** OBLOperatorsKernel ********************************/
+
+/**
+ * @class OBLOperatorsKernel
+ * @tparam NUM_DIMS number of degrees of freedom
+ * @tparam NUM_OPS number of degrees of freedom
+ * @brief Compute OBL Operators and derivatives for specified region
+ */
+template< integer NUM_DIMS, integer NUM_OPS >
+class OBLOperatorsKernel
+{
+public:
+
+  /// Compile time value for the number of dimensions
+  static constexpr integer numDims = NUM_DIMS;
+  /// Compile time value for the number of operators
+  static constexpr integer numOps = NUM_OPS;
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to the compute function
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      kernelComponent.compute( ei );
+    } );
+  }
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  OBLOperatorsKernel( ObjectManagerBase & subRegion,
+                      MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > OBLOperatorsTable )
+    :
+    m_OBLOperatorsTable( OBLOperatorsTable ),
+    m_pressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
+    m_temperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
+    m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
+    m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >())
+  {}
+
+  /**
+   * @brief Compute the phase volume fractions in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
+   */
+  GEOSX_HOST_DEVICE
+  void compute( localIndex const ei ) const
+  {
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
+    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const OBLVals = m_OBLOperatorValues[ei];
+    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const OBLDers = m_OBLOperatorDerivatives[ei];
+    // arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
+    // arraySlice1d< real64, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
+    // arraySlice2d< real64, compflow::USD_COMP_DC - 2 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    real64 state[numDims];
+    state[0] = m_pressure[ei];
+    printf ( "%ld: %lf,", ei, state[0] );
+    for( integer i = 1; i < numDims - 1; i++ )
+    {
+      state[i] = compFrac[i - 1];
+      printf ( " %lf,", state[i] );
+    }
+
+    printf ( "\n Ops before:\n" );
+    for( integer i = 0; i < numOps; i++ )
+    {
+      printf ( "%lf [", OBLVals[i] );
+      for( integer j = 0; j < numDims; j++ )
+      {
+        printf ( " %lf,", OBLDers[i][j] );
+      }
+      printf ( "]\n" );
+    }
+
+
+    m_OBLOperatorsTable.compute( state, OBLVals.dataIfContiguous(), OBLDers.dataIfContiguous() );
+    printf ( "\n Ops after:\n" );
+    for( integer i = 0; i < numOps; i++ )
+    {
+      printf ( "%lf [", OBLVals[i] );
+      for( integer j = 0; j < numDims; j++ )
+      {
+        printf ( " %lf,", OBLDers[i][j] );
+      }
+      printf ( "]\n" );
+    }
+
+    // for( integer ic = 0; ic < numComp; ++ic )
+    // {
+    //   totalDensity += compDens[ic] + dCompDens[ic];
+    // }
+
+    // real64 const totalDensityInv = 1.0 / totalDensity;
+
+    // for( integer ic = 0; ic < numComp; ++ic )
+    // {
+    //   compFrac[ic] = (compDens[ic] + dCompDens[ic]) * totalDensityInv;
+    //   for( integer jc = 0; jc < numComp; ++jc )
+    //   {
+    //     dCompFrac_dCompDens[ic][jc] = -compFrac[ic] * totalDensityInv;
+    //   }
+    //   dCompFrac_dCompDens[ic][ic] += totalDensityInv;
+    // }
+
+    // compFractionKernelOp( compFrac, dCompFrac_dCompDens );
+  }
+
+protected:
+
+  // inputs
+  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > m_OBLOperatorsTable;
+
+  // Views on component densities
+  arrayView1d< real64 const > m_pressure;
+  arrayView2d< real64 const, compflow::USD_COMP > m_compFrac;
+  arrayView1d< real64 const > m_temperature;
+
+  // outputs
+
+  // Views on component fraction
+  arrayView2d< real64, compflow::USD_OBL_VAL > m_OBLOperatorValues;
+  arrayView3d< real64, compflow::USD_OBL_DER > m_OBLOperatorDerivatives;
+
+
+};
+
+/**
+ * @class ComponentFractionKernelFactory
+ */
+class OBLOperatorsKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numPhases the number of phases
+   * @param[in] numDofs the number of degrees of freedom
+   * @param[in] subRegion the element subregion
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numPhases,
+                   integer const numDofs,
+                   ObjectManagerBase & subRegion,
+                   MultivariableTableFunction const & function )
+  {
+    internal::kernelLaunchSelectorPhaseDofSwitch( numPhases, numDofs, [&] ( auto NPHASES, auto ND )
+    {
+      integer constexpr NUM_PHASES = NPHASES();
+      integer constexpr NUM_DIMS = ND();
+      integer constexpr NUM_OPS =  NUM_DIMS /*accumulation*/ +
+                                  NUM_DIMS * NUM_PHASES /*flux*/ +
+                                  NUM_PHASES /*up_constant*/ +
+                                  NUM_DIMS * NUM_PHASES /*gradient*/ +
+                                  NUM_DIMS /*kinetic rate*/ +
+                                  2 /*rock internal energy and conduction*/ +
+                                  2 * NUM_PHASES /*gravity and capillarity*/ +
+                                  1 /*rock porosity*/ +
+                                  1;
+
+      OBLOperatorsKernel< NUM_DIMS, NUM_OPS > kernel( subRegion,
+                                                      MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS >( function.getAxisMinimums(),
+                                                                                                                   function.getAxisMaximums(),
+                                                                                                                   function.getAxisPoints(),
+                                                                                                                   function.getAxisSteps(),
+                                                                                                                   function.getAxisStepInvs(),
+                                                                                                                   function.getAxisHypercubeMults(),
+                                                                                                                   function.getHypercubeData()
+                                                                                                                   ) );
+      OBLOperatorsKernel< NUM_DIMS, NUM_OPS >::template launch< POLICY >( subRegion.size(), kernel );
+    } );
+  }
+
+};
 
 /******************************** ElementBasedAssemblyKernel ********************************/
 
@@ -548,14 +759,14 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
-    {
-      integer constexpr NUM_COMP = NC();
-      integer constexpr NUM_DOF = NC()+1;
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-      kernel( numPhases, rankOffset, dofKey, subRegion, solid, localMatrix, localRhs );
-      ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
-    } );
+    // internal::kernelLaunchSelectorOpSwitch( numComps, [&] ( auto NC )
+    // {
+    //   integer constexpr NUM_COMP = NC();
+    //   integer constexpr NUM_DOF = NC()+1;
+    //   ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
+    //   kernel( numPhases, rankOffset, dofKey, subRegion, solid, localMatrix, localRhs );
+    //   ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
+    // } );
   }
 
 };
@@ -964,38 +1175,38 @@ struct HydrostaticPressureKernel
 
 /******************************** Kernel launch machinery ********************************/
 
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( integer const numComp, ARGS && ... args )
-{
-  internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
-  } );
-}
+// template< typename KERNELWRAPPER, typename ... ARGS >
+// void KernelLaunchSelector1( integer const numComp, ARGS && ... args )
+// {
+//   internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+//   {
+//     KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
+//   } );
+// }
 
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS && ... args )
-{
-  // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
-  if( numPhase == 2 )
-  {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-    {
-      KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args ) ... );
-    } );
-  }
-  else if( numPhase == 3 )
-  {
-    internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-    {
-      KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args ) ... );
-    } );
-  }
-  else
-  {
-    GEOSX_ERROR( "Unsupported number of phases: " << numPhase );
-  }
-}
+// template< typename KERNELWRAPPER, typename ... ARGS >
+// void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS && ... args )
+// {
+//   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
+//   if( numPhase == 2 )
+//   {
+//     internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+//     {
+//       KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args ) ... );
+//     } );
+//   }
+//   else if( numPhase == 3 )
+//   {
+//     internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+//     {
+//       KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args ) ... );
+//     } );
+//   }
+//   else
+//   {
+//     GEOSX_ERROR( "Unsupported number of phases: " << numPhase );
+//   }
+// }
 
 } // namespace CompositionalMultiphaseBaseKernels
 

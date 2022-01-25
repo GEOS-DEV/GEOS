@@ -44,6 +44,26 @@
 namespace geosx
 {
 
+namespace
+{
+
+MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOperatorsTableFile,
+                                                          FunctionManager & functionManager )
+{
+  string const tableName = "OBL_operators_table";
+  if( functionManager.hasGroup< MultivariableTableFunction >( tableName ) )
+  {
+    return functionManager.getGroupPointer< MultivariableTableFunction >( tableName );
+  }
+  else
+  {
+    MultivariableTableFunction * const table = dynamicCast< MultivariableTableFunction * >( functionManager.createChild( "MultivariableTableFunction", tableName ) );
+    table->initializeFunctionFromFile ( OBLOperatorsTableFile );
+    return table;
+  }
+}
+}
+
 using namespace dataRepository;
 using namespace constitutive;
 //using namespace CompositionalMultiphaseFVMKernels;
@@ -65,6 +85,14 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Number of phases" );
 
+  this->registerWrapper( viewKeyStruct::enableEnergyBalanceString(), &m_enableEnergyBalance ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Enable energy balance calculation and temperature degree of freedom" );
+
+  this->registerWrapper( viewKeyStruct::OBLOperatorsTableFileString(), &m_OBLOperatorsTableFile ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "File containing OBL operator values" );
+
   this->registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of component names" );
@@ -73,9 +101,7 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
-  this->registerWrapper( viewKeyStruct::enableEnergyBalanceString(), &m_enableEnergyBalance ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Enable energy balance calculation and temperature degree of freedom" );
+
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 }
@@ -152,7 +178,7 @@ void DARTSSuperEngine::implicitStepComplete( real64 const & time,
 
 void DARTSSuperEngine::postProcessInput()
 {
-  // need to override only to skip the check for fluidModel, which is enabled in FlowSolverBase
+  // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
   checkModelNames( m_solidModelNames, viewKeyStruct::solidNamesString() );
   checkModelNames( m_permeabilityModelNames, viewKeyStruct::permeabilityNamesString() );
@@ -161,6 +187,8 @@ void DARTSSuperEngine::postProcessInput()
                          "The maximum absolute change in component fraction must smaller or equal to 1.0" );
   GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
                          "The maximum absolute change in component fraction must larger or equal to 0.0" );
+
+  m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 }
 
 void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
@@ -172,7 +200,19 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
+  // Equations: [NC] Molar mass balance, ([1] energy balance if enabled)
+  // Primary variables: [1] pressure, [NC-1] global component fractions, ([1] temperature)
   m_numDofPerCell = m_numComponents + m_enableEnergyBalance;
+
+  m_numOBLOperators = m_numDofPerCell /*accumulation*/ +
+                      m_numDofPerCell * m_numPhases /*flux*/ +
+                      m_numPhases /*up_constant*/ +
+                      m_numDofPerCell * m_numPhases /*gradient*/ +
+                      m_numDofPerCell /*kinetic rate*/ +
+                      2 /*rock internal energy and conduction*/ +
+                      2 * m_numPhases /*gravity and capillarity*/ +
+                      1 /*rock porosity*/ +
+                      1;
 
   // 2. Register and resize all fields as necessary
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
@@ -185,20 +225,35 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< pressure >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
       subRegion.registerExtrinsicData< deltaPressure >( getName() );
-
       subRegion.registerExtrinsicData< bcPressure >( getName() );
 
       subRegion.registerExtrinsicData< temperature >( getName() );
 
+      subRegion.registerExtrinsicData< OBLOperatorValues >( getName() ).
+        reference().resizeDimension< 1 >( m_numOBLOperators );
+      subRegion.registerExtrinsicData< OBLOperatorValuesOld >( getName() ).
+        reference().resizeDimension< 1 >( m_numOBLOperators );
+      subRegion.registerExtrinsicData< OBLOperatorDerivatives >( getName() ).
+        reference().resizeDimension< 1, 2 >( m_numOBLOperators, m_numDofPerCell );
+
+      if( m_enableEnergyBalance )
+      {
+        subRegion.registerExtrinsicData< deltaTemperature >( getName() );
+      }
+
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
-
       subRegion.registerExtrinsicData< globalCompFraction >( getName() ).
         setDimLabels( 1, m_componentNames ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      subRegion.registerExtrinsicData< deltaGlobalCompFraction >( getName() ).
-        reference().resizeDimension< 1 >( m_numComponents );
+      // for single component problems (e.g., geothermal), global component fraction is not a primary variable
+      if( m_numComponents > 1 )
+      {
+        subRegion.registerExtrinsicData< deltaGlobalCompFraction >( getName() ).
+          reference().resizeDimension< 1 >( m_numComponents );
+      }
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -335,7 +390,7 @@ real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domai
   // } );
 
   //return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
-  
+
   // dummy return
   return 1;
 }
@@ -395,6 +450,7 @@ void DARTSSuperEngine::applySystemSolution( DofManager const & dofManager,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
+  DofManager::CompMask compFracMask( m_numDofPerCell, 1, m_numComponents );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
@@ -406,11 +462,23 @@ void DARTSSuperEngine::applySystemSolution( DofManager const & dofManager,
                                viewKeyStruct::elemDofFieldString(),
                                extrinsicMeshData::flow::deltaGlobalCompFraction::key(),
                                scalingFactor,
-                               ~pressureMask );
-
+                               compFracMask );
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
   fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompFraction::key() );
+
+  if( m_enableEnergyBalance )
+  {
+    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numDofPerCell - 1, m_numDofPerCell );
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 extrinsicMeshData::flow::deltaTemperature::key(),
+                                 scalingFactor,
+                                 temperatureMask );
+    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
+  }
+
+
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
@@ -903,18 +971,46 @@ void DARTSSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
   {
     arrayView1d< real64 > const & dPres =
       subRegion.template getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
-    arrayView2d< real64, compflow::USD_COMP > const & dCompFrac =
-      subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
 
     dPres.zero();
-    dCompFrac.zero();
+
+    // for single component problems (e.g., geothermal), global component fraction is not a primary variable
+    if( m_numComponents > 1 )
+    {
+      arrayView2d< real64, compflow::USD_COMP > const & dCompFrac =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
+      dCompFrac.zero();
+    }
+
+    if( m_enableEnergyBalance )
+    {
+      arrayView1d< real64 > const & dTemp =
+        subRegion.template getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaTemperature::key() );
+      dTemp.zero();
+    }
+
+
 
     // update porosity and permeability
     updatePorosityAndPermeability( subRegion, targetIndex );
 
+    // update operator values
+    updateOBLOperators( subRegion );
+
   } );
 }
 
+void DARTSSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  OBLOperatorsKernelFactory::
+    createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                               m_numDofPerCell,
+                                               dataGroup,
+                                               *m_OBLOperatorsTable );
+
+}
 
 
 void DARTSSuperEngine::updateState( DomainPartition & domain )

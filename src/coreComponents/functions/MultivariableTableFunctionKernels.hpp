@@ -74,36 +74,18 @@ public:
                                           arrayView1d< real64 const > const & axisSteps,
                                           arrayView1d< real64 const > const & axisStepInvs,
                                           arrayView1d< globalIndex const > const & axisHypercubeMults,
-                                          arrayView1d< real64 const > const & hypercubeData,
-                                          arrayView1d< real64 const > const & coordinates,
-                                          arrayView1d< real64 > const & values,
-                                          arrayView1d< real64 > const & derivatives ):
+                                          arrayView1d< real64 const > const & hypercubeData ):
     m_axisMinimums ( axisMinimums ),
     m_axisMaximums ( axisMaximums ),
     m_axisPoints ( axisPoints ),
     m_axisSteps ( axisSteps ),
     m_axisStepInvs ( axisStepInvs ),
     m_axisHypercubeMults ( axisHypercubeMults ),
-    m_hypercubeData ( hypercubeData ),
-    m_coordinates ( coordinates ),
-    m_values ( values ),
-    m_derivatives ( derivatives )
+    m_hypercubeData ( hypercubeData )
   {};
 
-  /**
-   * @brief Compute interpolation element-wise using host or device execution space
-   *
-   * @param[in] ei Index of element
-   */
-  GEOSX_HOST_DEVICE
-  void
-  compute( localIndex const ei ) const
-  {
-    interpolatePoint( &m_coordinates[ei * numDims], &m_values[ei * numOps], &m_derivatives[ei * numOps * numDims] );
-  }
-
 /**
- * @brief interpolate operators at a given point
+ * @brief interpolate all operators at a given point
  *
  * @param[in] coordinates point coordinates
  * @param[out] values interpolated operator values
@@ -111,9 +93,41 @@ public:
  */
   GEOSX_HOST_DEVICE
   void
-  interpolatePoint( real64 const *coordinates,
-                    real64 * const LVARRAY_RESTRICT values,
-                    real64 * const LVARRAY_RESTRICT derivatives ) const
+  compute( real64 const * const coordinates,
+           real64 * const LVARRAY_RESTRICT values ) const
+  {
+    globalIndex hypercubeIndex = 0;
+    real64 axisLows[numDims];
+    real64 axisMults[numDims];
+
+    for( int i = 0; i < numDims; ++i )
+    {
+      integer const axisIndex = getAxisIntervalIndexLowMult( coordinates[i],
+                                                             m_axisMinimums[i], m_axisMaximums[i],
+                                                             m_axisSteps[i], m_axisStepInvs[i], m_axisPoints[i],
+                                                             axisLows[i], axisMults[i] );
+      hypercubeIndex += axisIndex * m_axisHypercubeMults[i];
+    }
+
+    interpolatePoint( coordinates,
+                      getHypercubeData( hypercubeIndex ),
+                      &axisLows[0], &axisMults[0],
+                      &m_axisStepInvs[0],
+                      values );
+  }
+
+  /**
+   * @brief interpolate all operators and their derivatives at a given point
+   *
+   * @param[in] coordinates point coordinates
+   * @param[out] values interpolated operator values
+   * @param[out] derivatives derivatives of interpolated operators
+   */
+  GEOSX_HOST_DEVICE
+  void
+  compute( real64 const * const coordinates,
+           real64 * const LVARRAY_RESTRICT values,
+           real64 * const LVARRAY_RESTRICT derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
@@ -203,6 +217,59 @@ protected:
     axisLow = axisIntervalIndex * axisStep + axisMin;
     axisMult = (axisCoordinate - axisLow) * axisStepInv;
     return axisIntervalIndex;
+  }
+
+  /**
+   * @brief interpolate all operator values and derivatives at a given point
+   * The algoritm is based on http://dx.doi.org/10.1090/S0025-5718-1988-0917826-0
+   *
+   * @param[in] axisCoordinates coordinates of a point
+   * @param[in] hypercubeData data of target hypercube
+   * @param[in] axisLows array of left coordinates of target axis intervals
+   * @param[in] axisMults array of weights of right coordinates of target axis intervals
+   * @param[in] axisStepInvs array of inversions of axis steps
+   * @param[out] values interpolated operator values
+   * @param[out] derivatives derivatives of interpolated operators
+   */
+  GEOSX_HOST_DEVICE
+  inline
+  void
+  interpolatePoint( real64 const * const axisCoordinates,
+                    real64 const * const hypercubeData,
+                    real64 const * const axisLows,
+                    real64 const * const axisMults,
+                    real64 const * const axisStepInvs,
+                    real64 * const LVARRAY_RESTRICT values ) const
+  {
+    integer pwr = numVerts / 2;   // distance between high and low values
+    real64 workspace[numVerts][numOps];
+
+    // copy operator values for all vertices
+    for( integer i = 0; i < numVerts; ++i )
+    {
+      for( integer j = 0; j < numOps; ++j )
+      {
+        workspace[i][j] = hypercubeData[i * numOps + j];
+      }
+    }
+
+    for( integer i = 0; i < numDims; ++i )
+    {
+
+      for( integer j = 0; j < pwr; ++j )
+      {
+        for( integer op = 0; op < numOps; ++op )
+        {
+          // update own derivative
+          workspace[j][op] += (axisCoordinates[i] - axisLows[i]) * (workspace[j + pwr][op] - workspace[j][op]) * axisStepInvs[i];
+        }
+      }
+      pwr /= 2;
+    }
+    for( integer op = 0; op < numOps; ++op )
+    {
+      values[op] = workspace[0][op];
+    }
   }
 
 

@@ -648,15 +648,25 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       function.getAxisSteps(),
                                                                       function.getAxisStepInvs(),
                                                                       function.getAxisHypercubeMults(),
-                                                                      function.getHypercubeData(),
-                                                                      inputs,
-                                                                      evaluatedValuesView,
-                                                                      evaluatedDerivativesView );
-  // Loop over cells on the device.
+                                                                      function.getHypercubeData()
+                                                                      );
+  // Test values evalutation first
   forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
-    kernel.compute( elemIndex );
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
+  } );
+
+  forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
+  {
+    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], valuesTolerance );
+  } );
+
+  // And now - both values and derivatives
+  forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
+                                       ( localIndex const elemIndex )
+  {
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS], &evaluatedDerivativesView[elemIndex * NUM_OPS * NUM_DIMS] );
   } );
 
   // Perform checks.

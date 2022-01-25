@@ -19,7 +19,8 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_DARTSSUPERENGINE_HPP_
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_DARTSSUPERENGINE_HPP_
 
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "functions/MultivariableTableFunction.hpp"
 
 namespace geosx
 {
@@ -152,6 +153,13 @@ public:
 
   virtual void updateState( DomainPartition & domain ) override final;
 
+
+  /**
+   * @brief Recompute operator values and derivatives from primary variables
+   * @param dataGroup the group storing the required fields
+   */
+  void updateOBLOperators( ObjectManagerBase & dataGroup ) const;
+
   /**
    * @brief Get the number of fluid components (species)
    * @return the number of components
@@ -195,6 +203,8 @@ public:
     static constexpr char const * componentNamesString() { return "componentNames"; }
 
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
+
+    static constexpr char const * OBLOperatorsTableFileString() { return "OBLOperatorsTableFile"; }
 
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
@@ -276,6 +286,15 @@ protected:
 
   /// list of phase names names
   array1d< string > m_phaseNames;
+
+  /// the number of OBL operators
+  integer m_numOBLOperators;
+
+  /// OBL operators table file (if OBL physics becomes consitutive, multiple regions will be supported )
+  string m_OBLOperatorsTableFile;
+
+  /// OBL operators table function tabulated vs all primary variables
+  MultivariableTableFunction const * m_OBLOperatorsTable;
 
   /// flag indicating whether energy balance will be enabled or not
   integer m_enableEnergyBalance;
