@@ -108,7 +108,7 @@ public:
 
   /**
    * @brief Set the node of the domain boundary object.
-   * @param[in] referenceObject the reference of the face manager.
+   * @param[in] faceManager The reference of the face manager.
    */
   void setDomainBoundaryObjects( FaceManager const & faceManager );
 
