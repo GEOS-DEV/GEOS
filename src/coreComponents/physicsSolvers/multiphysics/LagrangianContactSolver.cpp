@@ -173,15 +173,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName());
 
 
-      subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-//      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      contactRelationName = this->m_contactRelationName;
-      GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 
 
     } );
@@ -195,6 +186,20 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
   } );
 }
+
+void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
+//      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
+  contactRelationName = this->m_contactRelationName;
+  GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+}
+
 
 void LagrangianContactSolver::initializePreSubGroups()
 {

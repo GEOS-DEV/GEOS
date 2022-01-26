@@ -116,6 +116,27 @@ void SolverBase::initialize_postMeshGeneration()
   }
 }
 
+void SolverBase::registerDataOnMesh( Group & meshBodies )
+{
+  ExecutableGroup::registerDataOnMesh( meshBodies );
+
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      setConstitutiveNamesCallSuper( subRegion );
+      setConstitutiveNames( subRegion );
+    } );
+
+  } );
+
+}
+
 
 
 Group * SolverBase::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )

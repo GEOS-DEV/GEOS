@@ -323,6 +323,8 @@ protected:
   void
   initializeAquiferBC() const;
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -360,10 +362,10 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
-private:
-
-
   virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
+
+private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 

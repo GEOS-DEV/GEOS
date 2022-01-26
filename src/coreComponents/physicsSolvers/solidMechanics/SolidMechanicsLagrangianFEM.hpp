@@ -284,6 +284,8 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;
@@ -304,6 +306,8 @@ protected:
   array1d< ParallelVector > m_rigidBodyModes;
 
 private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,

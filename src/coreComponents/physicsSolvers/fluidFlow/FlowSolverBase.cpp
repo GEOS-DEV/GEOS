@@ -113,29 +113,6 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >( getName() ).
         setApplyDefaultValue( 0.0 );
-
-      subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      subRegion.registerWrapper< string >( viewKeyStruct::solidNamesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
-
-      string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
-      permName = getConstitutiveName< PermeabilityBase >( subRegion );
-      GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
     } );
 
     elemManager.forElementSubRegionsComplete< SurfaceElementSubRegion >( [&]( localIndex const,
@@ -182,6 +159,38 @@ void FlowSolverBase::registerDataOnMesh( Group & meshBodies )
   }
 }
 
+void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::solidNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+  solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
+  GEOSX_ERROR_IF( solidName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::permeabilityNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
+  permName = getConstitutiveName< PermeabilityBase >( subRegion );
+  GEOSX_ERROR_IF( permName.empty(), GEOSX_FMT( "Permeability model not found on subregion {}", subRegion.getName() ) );
+}
+
+void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  GEOSX_UNUSED_VAR(subRegion);
+}
 
 void FlowSolverBase::initializePreSubGroups()
 {

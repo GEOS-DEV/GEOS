@@ -81,9 +81,6 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerExtrinsicData< densityOld >( getName() );
 
-      string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-      fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
-      GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
     } );
 
@@ -93,6 +90,19 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     }
   } );
 }
+
+void SinglePhaseBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  FlowSolverBase::setConstitutiveNamesCallSuper( subRegion );
+}
+
+void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
+  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+}
+
 
 void SinglePhaseBase::initializeAquiferBC() const
 {

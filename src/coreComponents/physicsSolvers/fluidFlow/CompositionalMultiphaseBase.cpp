@@ -153,23 +153,6 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     {
       {
 
-        string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-        fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
-        GEOSX_THROW_IF( fluidName.empty(),
-                        GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
-                        InputError );
-
-        subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRestartFlags( RestartFlags::NO_WRITE ).
-          setSizedFromParent( 0 );
-
-        string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
-        relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
-        GEOSX_THROW_IF( relPermName.empty(),
-                        GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
-                        InputError );
-
         if( m_capPressureFlag )
         {
 
@@ -266,6 +249,28 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
 
   } );
 }
+
+void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidName = getConstitutiveName< MultiFluidBase >( subRegion );
+  GEOSX_THROW_IF( fluidName.empty(),
+                  GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                  InputError );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+  relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
+  GEOSX_THROW_IF( relPermName.empty(),
+                  GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
+                  InputError );
+
+}
+
 
 namespace
 {

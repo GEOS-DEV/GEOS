@@ -257,6 +257,8 @@ private:
 
   void createPreconditioner( DomainPartition const & domain );
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
 public:
 
   void initializeFractureState( MeshLevel & mesh,

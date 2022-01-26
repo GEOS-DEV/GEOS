@@ -243,19 +243,27 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent( 0 );
-
-      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-      solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
-      GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
-
-
     } );
-
   } );
+}
+
+void SolidMechanicsLagrangianFEM::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+}
+
+void SolidMechanicsLagrangianFEM::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  GEOSX_UNUSED_VAR(subRegion);
 }
 
 

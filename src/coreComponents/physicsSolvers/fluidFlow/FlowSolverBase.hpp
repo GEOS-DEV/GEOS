@@ -118,14 +118,14 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
-protected:
-
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
@@ -156,6 +156,9 @@ protected:
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
   ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;
 #endif
+
+private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 
 };

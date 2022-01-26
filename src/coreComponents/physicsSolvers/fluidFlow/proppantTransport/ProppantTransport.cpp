@@ -153,6 +153,7 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
                   GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
+  subRegion.registerWrapper<string>( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
   GEOSX_THROW_IF( proppantName.empty(),
