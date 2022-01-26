@@ -104,9 +104,9 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
   {
     typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
 
-    if( m_isothermalFlag )
+    if( m_thermalFlag )
     {
-      IsothermalCompositionalMultiphaseFVMKernels::
+      ThermalCompositionalMultiphaseFVMKernels::
         FaceBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
@@ -126,7 +126,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     }
     else
     {
-      ThermalCompositionalMultiphaseFVMKernels::
+      IsothermalCompositionalMultiphaseFVMKernels::
         FaceBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
@@ -321,22 +321,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     real64 subRegionFlowResidualNorm = 0.0;
     real64 subRegionEnergyResidualNorm = 0.0;
 
-    if( m_isothermalFlag )
-    {
-      IsothermalCompositionalMultiphaseBaseKernels::
-        ResidualNormKernel::
-        launch< parallelDevicePolicy<>,
-                parallelDeviceReduce >( localRhs,
-                                        rankOffset,
-                                        numFluidComponents(),
-                                        dofNumber,
-                                        elemGhostRank,
-                                        referencePorosity,
-                                        volume,
-                                        totalDensOld,
-                                        subRegionFlowResidualNorm );
-    }
-    else
+    if( m_thermalFlag )
     {
       ThermalCompositionalMultiphaseBaseKernels::
         ResidualNormKernel::
@@ -352,6 +337,21 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                         subRegionFlowResidualNorm,
                                         subRegionEnergyResidualNorm );
     }
+    else
+    {
+      IsothermalCompositionalMultiphaseBaseKernels::
+        ResidualNormKernel::
+        launch< parallelDevicePolicy<>,
+                parallelDeviceReduce >( localRhs,
+                                        rankOffset,
+                                        numFluidComponents(),
+                                        dofNumber,
+                                        elemGhostRank,
+                                        referencePorosity,
+                                        volume,
+                                        totalDensOld,
+                                        subRegionFlowResidualNorm );
+    }
     localFlowResidualNorm   += subRegionFlowResidualNorm;
     localEnergyResidualNorm += subRegionEnergyResidualNorm;
 
@@ -359,15 +359,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 
   // compute global residual norms
   real64 residual = 0.0;
-  if( m_isothermalFlag )
-  {
-    residual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
-    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
-    {
-      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ", residual );
-    }
-  }
-  else
+  if( m_thermalFlag )
   {
     real64 const flowResidual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
     real64 const energyResidual = std::sqrt( MpiWrapper::sum( localEnergyResidualNorm ) );
@@ -375,6 +367,14 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     if( getLogLevel() >= 1 && logger::internal::rank == 0 )
     {
       std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", flowResidual, energyResidual );
+    }
+  }
+  else
+  {
+    residual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+    {
+      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ", residual );
     }
   }
   return residual;
@@ -538,7 +538,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
   fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
 
-  if( !m_isothermalFlag )
+  if( m_thermalFlag )
   {
     fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
   }
@@ -555,9 +555,9 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, m_relPermModelNames[targetIndex] );
 
-  if( m_isothermalFlag )
+  if( m_thermalFlag )
   {
-    IsothermalCompositionalMultiphaseFVMKernels::
+    ThermalCompositionalMultiphaseFVMKernels::
       PhaseMobilityKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,
@@ -567,7 +567,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   }
   else
   {
-    ThermalCompositionalMultiphaseFVMKernels::
+    IsothermalCompositionalMultiphaseFVMKernels::
       PhaseMobilityKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                  m_numPhases,

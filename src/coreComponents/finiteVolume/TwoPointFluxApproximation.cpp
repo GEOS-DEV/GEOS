@@ -30,7 +30,6 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "finiteVolume/ProjectionEDFMHelper.hpp"
-#include "mainInterface/GeosxState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -94,7 +93,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
@@ -211,7 +210,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
@@ -858,7 +857,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );

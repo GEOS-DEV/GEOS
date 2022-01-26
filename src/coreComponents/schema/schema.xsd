@@ -506,6 +506,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 	<xsd:complexType name="FunctionsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="CompositeFunction" type="CompositeFunctionType" />
+			<xsd:element name="MultivariableTableFunction" type="MultivariableTableFunctionType" />
 			<xsd:element name="SymbolicFunction" type="SymbolicFunctionType" />
 			<xsd:element name="TableFunction" type="TableFunctionType" />
 		</xsd:choice>
@@ -519,6 +520,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
 		<!--variableNames => List of variables in expression-->
 		<xsd:attribute name="variableNames" type="string_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="MultivariableTableFunctionType">
+		<!--inputVarNames => Name of fields are input to function.-->
+		<xsd:attribute name="inputVarNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1113,8 +1120,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
-		<!--isothermal => Flag indicating whether the problem is isothermal or not.-->
-		<xsd:attribute name="isothermal" type="integer" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -1129,6 +1134,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--thermalFlag => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="thermalFlag" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1155,8 +1162,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
-		<!--isothermal => Flag indicating whether the problem is isothermal or not.-->
-		<xsd:attribute name="isothermal" type="integer" default="1" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -1173,6 +1178,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--thermalFlag => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="thermalFlag" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1942,6 +1949,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="CompressibleSolidParallelPlatesPermeability" type="CompressibleSolidParallelPlatesPermeabilityType" />
 			<xsd:element name="CompressibleSolidSlipDependentPermeability" type="CompressibleSolidSlipDependentPermeabilityType" />
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
+			<xsd:element name="ConstantThermalConductivity" type="ConstantThermalConductivityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
@@ -1955,6 +1963,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ElasticTransverseIsotropic" type="ElasticTransverseIsotropicType" />
 			<xsd:element name="ExtendedDruckerPrager" type="ExtendedDruckerPragerType" />
 			<xsd:element name="FrictionlessContact" type="FrictionlessContactType" />
+			<xsd:element name="JFunctionCapillaryPressure" type="JFunctionCapillaryPressureType" />
 			<xsd:element name="ModifiedCamClay" type="ModifiedCamClayType" />
 			<xsd:element name="NullModel" type="NullModelType" />
 			<xsd:element name="ParallelPlatesPermeability" type="ParallelPlatesPermeabilityType" />
@@ -1975,6 +1984,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
+			<xsd:element name="VolumeWeightedThermalConductivity" type="VolumeWeightedThermalConductivityType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="BiotPorosityType">
@@ -2203,6 +2213,14 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="ConstantPermeabilityType">
 		<!--permeabilityComponents => xx, yy and zz components of a diagonal permeability tensor.-->
 		<xsd:attribute name="permeabilityComponents" type="R1Tensor" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ConstantThermalConductivityType">
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [W/(m.K)]-->
+		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -2490,6 +2508,54 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:complexType name="JFunctionCapillaryPressureType">
+		<!--nonWettingIntermediateJFunctionTableName => J-function table (dimensionless) for the pair (non-wetting phase, intermediate phase)
+Note that this input is only used for three-phase flow.
+If you want to do a two-phase simulation, please use instead wettingNonWettingJFunctionTableName to specify the table names.-->
+		<xsd:attribute name="nonWettingIntermediateJFunctionTableName" type="string" default="" />
+		<!--nonWettingIntermediateSurfaceTension => Surface tension [N/m] for the pair (non-wetting phase, intermediate phase)
+If you have a value in [dyne/cm], divide it by 1000 to obtain the value in [N/m]
+Note that this input is only used for three-phase flow.
+If you want to do a two-phase simulation, please use instead wettingNonWettingSurfaceTension to specify the surface tensions.-->
+		<xsd:attribute name="nonWettingIntermediateSurfaceTension" type="real64" default="0" />
+		<!--permeabilityDirection => Permeability direction. Options are:
+XY - use the average of the permeabilities in the x and y directions,
+X - only use the permeability in the x direction,
+Y - only use the permeability in the y direction,
+Z - only use the permeability in the z direction.-->
+		<xsd:attribute name="permeabilityDirection" type="geosx_constitutive_JFunctionCapillaryPressure_PermeabilityDirection" use="required" />
+		<!--permeabilityExponent => Permeability exponent-->
+		<xsd:attribute name="permeabilityExponent" type="real64" default="0.5" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--porosityExponent => Porosity exponent-->
+		<xsd:attribute name="porosityExponent" type="real64" default="0.5" />
+		<!--wettingIntermediateJFunctionTableName => J-function table (dimensionless) for the pair (wetting phase, intermediate phase)
+Note that this input is only used for three-phase flow.
+If you want to do a two-phase simulation, please use instead wettingNonWettingJFunctionTableName to specify the table names.-->
+		<xsd:attribute name="wettingIntermediateJFunctionTableName" type="string" default="" />
+		<!--wettingIntermediateSurfaceTension => Surface tension [N/m] for the pair (wetting phase, intermediate phase)
+If you have a value in [dyne/cm], divide it by 1000 to obtain the value in [N/m]
+Note that this input is only used for three-phase flow.
+If you want to do a two-phase simulation, please use instead wettingNonWettingSurfaceTension to specify the surface tensions.-->
+		<xsd:attribute name="wettingIntermediateSurfaceTension" type="real64" default="0" />
+		<!--wettingNonWettingJFunctionTableName => J-function table (dimensionless) for the pair (wetting phase, non-wetting phase)
+Note that this input is only used for two-phase flow.
+If you want to do a three-phase simulation, please use instead wettingIntermediateJFunctionTableName and nonWettingIntermediateJFunctionTableName to specify the table names.-->
+		<xsd:attribute name="wettingNonWettingJFunctionTableName" type="string" default="" />
+		<!--wettingNonWettingSurfaceTension => Surface tension [N/m] for the pair (wetting phase, non-wetting phase)
+If you have a value in [dyne/cm], divide it by 1000 to obtain the value in [N/m]
+Note that this input is only used for two-phase flow.
+If you want to do a three-phase simulation, please use instead wettingIntermediateSurfaceTension and nonWettingIntermediateSurfaceTension to specify the surface tensions.-->
+		<xsd:attribute name="wettingNonWettingSurfaceTension" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:simpleType name="geosx_constitutive_JFunctionCapillaryPressure_PermeabilityDirection">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|XY|X|Y|Z" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="ModifiedCamClayType">
 		<!--defaultCslSlope => Slope of the critical state line-->
 		<xsd:attribute name="defaultCslSlope" type="real64" default="1" />
@@ -2693,17 +2759,17 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
-		<!--nonWettingIntermediateCapPressureTableName => Capillary pressure table for the pair (non-wetting phase, intermediate phase)
+		<!--nonWettingIntermediateCapPressureTableName => Capillary pressure table [Pa] for the pair (non-wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingCapPressureTableName to specify the table names-->
 		<xsd:attribute name="nonWettingIntermediateCapPressureTableName" type="string" default="" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--wettingIntermediateCapPressureTableName => Capillary pressure table for the pair (wetting phase, intermediate phase)
+		<!--wettingIntermediateCapPressureTableName => Capillary pressure table [Pa] for the pair (wetting phase, intermediate phase)
 Note that this input is only used for three-phase flow.
 If you want to do a two-phase simulation, please use instead wettingNonWettingCapPressureTableName to specify the table names-->
 		<xsd:attribute name="wettingIntermediateCapPressureTableName" type="string" default="" />
-		<!--wettingNonWettingCapPressureTableName => Capillary pressure table for the pair (wetting phase, non-wetting phase)
+		<!--wettingNonWettingCapPressureTableName => Capillary pressure table [Pa] for the pair (wetting phase, non-wetting phase)
 Note that this input is only used for two-phase flow.
 If you want to do a three-phase simulation, please use instead wettingIntermediateCapPressureTableName and nonWettingIntermediateCapPressureTableName to specify the table names-->
 		<xsd:attribute name="wettingNonWettingCapPressureTableName" type="string" default="" />
@@ -2762,6 +2828,16 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="phaseMinVolumeFraction" type="real64_array" default="{0}" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="VolumeWeightedThermalConductivityType">
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" use="required" />
+		<!--phaseThermalConductivity => Phase thermal conductivity [W/(m.K)]-->
+		<xsd:attribute name="phaseThermalConductivity" type="real64_array" use="required" />
+		<!--rockThermalConductivityComponents => xx, yy, and zz components of a diagonal rock thermal conductivity tensor [W/(m.K)]-->
+		<xsd:attribute name="rockThermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

@@ -22,7 +22,6 @@
 #include "SurfaceElementRegion.hpp"
 #include "FaceManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
-#include "CellBlockManager.hpp"
 #include "mesh/MeshManager.hpp"
 #include "schema/schemaUtilities.hpp"
 
@@ -40,16 +39,6 @@ ElementRegionManager::ElementRegionManager( string const & name, Group * const p
 ElementRegionManager::~ElementRegionManager()
 {
   // TODO Auto-generated destructor stub
-}
-
-localIndex ElementRegionManager::numCellBlocks() const
-{
-  localIndex numCellBlocks = 0;
-  this->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & )
-  {
-    numCellBlocks += 1;
-  } );
-  return numCellBlocks;
 }
 
 void ElementRegionManager::resize( integer_array const & numElements,
@@ -131,70 +120,11 @@ void ElementRegionManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 }
 
-void ElementRegionManager::generateMesh( Group & cellBlockManager )
+void ElementRegionManager::generateMesh( CellBlockManagerABC & cellBlockManager )
 {
   this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
   {
-    elemRegion.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
-  } );
-}
-
-void ElementRegionManager::generateCellToEdgeMaps( FaceManager const & faceManager )
-{
-  /*
-   * Create cell to edges map
-   * I use the existing maps from cells to faces and from faces to edges.
-   */
-  localIndex faceIndex, edgeIndex;
-  int count = 0;
-  bool isUnique = true;
-
-  this->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-  {
-    FixedOneToManyRelation & cellToEdges = subRegion.edgeList();
-    FixedOneToManyRelation const & cellToFaces = subRegion.faceList();
-    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager.edgeList();
-
-    //loop over the cells
-    for( localIndex kc = 0; kc < subRegion.size(); kc++ )
-    {
-      count = 0;
-      for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); kf++ )
-      {
-        // loop over edges of each face
-        faceIndex = cellToFaces[kc][kf];
-        for( localIndex ke = 0; ke < faceToEdges.sizeOfArray( faceIndex ); ke++ )
-        {
-          isUnique = true;
-          edgeIndex = faceToEdges[faceIndex][ke];
-
-          //loop over edges that have already been added to the element.
-          for( localIndex kec = 0; kec < count+1; kec++ )
-          {
-            // make sure that the edge has not been counted yet
-            if( cellToEdges( kc, kec ) == edgeIndex )
-            {
-              isUnique = false;
-              break;
-            }
-          }
-          if( isUnique )
-          {
-            cellToEdges( kc, count ) = edgeIndex;
-            count++;
-          }
-
-        } // end edge loop
-      } // end face loop
-    } // end cell loop
-  } );
-}
-
-void ElementRegionManager::generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager )
-{
-  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
-  {
-    elemRegion.generateAggregates( faceManager, nodeManager );
+    elemRegion.generateMesh( cellBlockManager.getCellBlocks() );
   } );
 }
 
@@ -244,6 +174,68 @@ void ElementRegionManager::generateWells( MeshManager & meshManager,
 
   // communicate to rebuild global node info since we modified global ordering
   nodeManager.setMaxGlobalIndex();
+}
+
+void ElementRegionManager::buildSets( NodeManager const & nodeManager )
+{
+  GEOSX_MARK_FUNCTION;
+
+  dataRepository::Group const & nodeSets = nodeManager.sets();
+
+  map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
+  string_array setNames; // just a holder for the names of the sets
+
+  // loop over all wrappers and fill the nodeIndSet arrays for each set
+  for( auto & wrapper: nodeSets.wrappers() )
+  {
+    string const & name = wrapper.second->getName();
+    nodeInSet[name].resize( nodeManager.size() );
+    nodeInSet[name].setValues< serialPolicy >( false );
+
+    if( nodeSets.hasWrapper( name ) )
+    {
+      setNames.emplace_back( name );
+      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
+      for( localIndex const a: set )
+      {
+        nodeInSet[name][a] = true;
+      }
+    }
+  }
+
+  this->forElementSubRegions(
+    [&]( auto & subRegion ) -> void
+  {
+    dataRepository::Group & elementSets = subRegion.sets();
+
+    auto const & elemToNodeMap = subRegion.nodeList();
+
+    for( string const & setName: setNames )
+    {
+      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
+
+      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
+      for( localIndex k = 0; k < subRegion.size(); ++k )
+      {
+        localIndex const numNodes = subRegion.numNodesPerElement( k );
+
+        localIndex elementInSet = true;
+        for( localIndex i = 0; i < numNodes; ++i )
+        {
+          if( !nodeInCurSet( elemToNodeMap[k][i] ) )
+          {
+            elementInSet = false;
+            break;
+          }
+        }
+
+        if( elementInSet )
+        {
+          targetSet.insert( k );
+        }
+      }
+    }
+  } );
 }
 
 int ElementRegionManager::PackSize( string_array const & wrapperNames,
