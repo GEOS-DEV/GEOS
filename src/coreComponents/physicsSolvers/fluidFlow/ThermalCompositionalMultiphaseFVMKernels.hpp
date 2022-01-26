@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
+#include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geosx
@@ -217,13 +218,15 @@ public:
   using Base::maxNumElems;
   using Base::maxNumConns;
   using Base::maxStencilSize;
+  using Base::m_stencilWrapper;
   using Base::m_seri;
   using Base::m_sesri;
   using Base::m_sei;
 
-
   using ThermalCompFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::dPhaseMobility_dTemperature,
+    StencilAccessors< extrinsicMeshData::flow::temperature,
+                      extrinsicMeshData::flow::deltaTemperature,
+                      extrinsicMeshData::flow::dPhaseMobility_dTemperature,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >;
 
   using ThermalMultiFluidAccessors =
@@ -233,6 +236,10 @@ public:
                       extrinsicMeshData::multifluid::dPhaseEnthalpy_dPressure,
                       extrinsicMeshData::multifluid::dPhaseEnthalpy_dTemperature,
                       extrinsicMeshData::multifluid::dPhaseEnthalpy_dGlobalCompFraction >;
+
+  using ThermalConductivityAccessors =
+    StencilAccessors< extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+  // for now, we treat thermal conductivity explicitly
 
   /**
    * @brief Constructor for the kernel interface
@@ -247,6 +254,7 @@ public:
    * @param[in] thermalMultiFluidAccessors
    * @param[in] capPressureAccessors
    * @param[in] permeabilityAccessors
+   * @param[in] thermalConductivityAccessors
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -262,6 +270,7 @@ public:
                            ThermalMultiFluidAccessors const & thermalMultiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
+                           ThermalConductivityAccessors const & thermalConductivityAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
@@ -277,6 +286,8 @@ public:
             dt,
             localMatrix,
             localRhs ),
+    m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
+    m_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::deltaTemperature {} ) ),
     m_dPhaseMob_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dTemperature {} ) ),
     m_dPhaseVolFrac_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature {} ) ),
     m_dPhaseMassDens_dTemp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dTemperature {} ) ),
@@ -284,7 +295,8 @@ public:
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
     m_dPhaseEnthalpy_dPres( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dPressure {} ) ),
     m_dPhaseEnthalpy_dTemp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dTemperature {} ) ),
-    m_dPhaseEnthalpy_dComp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dGlobalCompFraction {} ) )
+    m_dPhaseEnthalpy_dComp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dGlobalCompFraction {} ) ),
+    m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -304,6 +316,7 @@ public:
     using Base::StackVariables::stencilSize;
     using Base::StackVariables::numFluxElems;
     using Base::StackVariables::transmissibility;
+    using Base::StackVariables::dTrans_dPres;
     using Base::StackVariables::dofColIndices;
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
@@ -312,6 +325,10 @@ public:
 
     /// Derivatives of component fluxes wrt temperature
     stackArray2d< real64, maxStencilSize * numComp > dCompFlux_dT;
+
+    // Thermal transmissibility (for now, no derivatives)
+
+    real64 thermalTransmissibility[maxNumConns][2]{};
 
     // Energy fluxes and derivatives
 
@@ -342,6 +359,7 @@ public:
     arraySlice1d< real64 > dEnergyFlux_dTSlice = stack.dEnergyFlux_dT.toSlice();
     arraySlice2d< real64 > dEnergyFlux_dCSlice = stack.dEnergyFlux_dC.toSlice();
 
+    // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives (including derivatives wrt temperature),
     //  2) enthalpyFlux and its derivatives (including derivatives wrt temperature
@@ -455,7 +473,6 @@ public:
         dCompFlux_dTSlice[k_up][ic] += phaseFlux * dPhaseCompFrac_dTempSub[ic];
       }
 
-
       // Step 4: compute the enthalpy flux
 
       real64 const enthalpy = m_phaseEnthalpy[er_up][esr_up][ei_up][0][ip];
@@ -487,8 +504,28 @@ public:
     } );
 
 
-    // TODO HERE: add conduction
+    // *****************************************************
+    // Computation of the conduction term in the energy flux
+    // Note that this term is computed using an explicit treatment of conductivity for now
+    // Step 1: compute the thermal transmissibilities at this face
+    m_stencilWrapper.computeWeights( iconn,
+                                     m_thermalConductivity,
+                                     m_thermalConductivity, // unused for now
+                                     stack.thermalTransmissibility,
+                                     stack.dTrans_dPres ); // unused for now
 
+    // Step 2: compute temperature difference at the interface
+    for( integer i = 0; i < stack.stencilSize; ++i )
+    {
+      localIndex const er  = m_seri( iconn, i );
+      localIndex const esr = m_sesri( iconn, i );
+      localIndex const ei  = m_sei( iconn, i );
+
+      stack.energyFlux += stack.thermalTransmissibility[0][i] * ( m_temp[er][esr][ei] + m_dTemp[er][esr][ei] );
+      stack.dEnergyFlux_dT[i] += stack.thermalTransmissibility[0][i];
+    }
+
+    // **********************************************************************************
     // At this point, we have computed the energyFlux and the compFlux for all components
     // We have to do two things here:
     // 1) Add dCompFlux_dTemp to the localFluxJacobian of the component mass balance equations
@@ -563,6 +600,10 @@ public:
 
 protected:
 
+  /// Views on temperature
+  ElementViewConst< arrayView1d< real64 const > > const m_temp;
+  ElementViewConst< arrayView1d< real64 const > > const m_dTemp;
+
   /// Views on derivatives of phase mobilities, volume fractions, mass densities and phase comp fractions
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dTemp;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseVolFrac_dTemp;
@@ -574,6 +615,10 @@ protected:
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseEnthalpy_dPres;
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseEnthalpy_dTemp;
   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy_dComp;
+
+  /// View on thermal conductivity
+  ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
+  // for now, we treat thermal conductivity explicitly
 
 };
 
@@ -600,6 +645,7 @@ public:
    * @param[in] fluidModelNames names of the fluid models
    * @param[in] capPresModelNames names of the capillary pressure models
    * @param[in] permeabilityModelNames names of the permeability models
+   * @param[in] thermalConductivityNames names of the thermal conductivity models
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -618,6 +664,7 @@ public:
                    arrayView1d< string const > const & fluidModelNames,
                    arrayView1d< string const > const & capPresModelNames,
                    arrayView1d< string const > const & permeabilityModelNames,
+                   arrayView1d< string const > const & thermalConductivityModelNames,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -639,9 +686,11 @@ public:
       typename KERNEL_TYPE::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName, targetRegionNames, fluidModelNames );
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName, targetRegionNames, capPresModelNames );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName, targetRegionNames, permeabilityModelNames );
+      typename KERNEL_TYPE::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName, targetRegionNames, thermalConductivityModelNames );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, capPressureFlag, stencilWrapper, dofNumberAccessor,
-                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors, capPressureAccessors, permeabilityAccessors,
+                          compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
+                          capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

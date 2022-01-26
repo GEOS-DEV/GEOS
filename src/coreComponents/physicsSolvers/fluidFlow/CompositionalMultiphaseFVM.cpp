@@ -120,6 +120,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                    fluidModelNames(),
                                                    capPresModelNames(),
                                                    permeabilityModelNames(),
+                                                   thermalConductivityModelNames(),
                                                    dt,
                                                    localMatrix.toViewConstSizes(),
                                                    localRhs.toView() );
