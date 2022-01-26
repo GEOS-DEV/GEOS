@@ -27,8 +27,7 @@
         newtonMaxIter="200"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        preconditionerType="amg"
-        krylovTol="1.0e-14"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -44,8 +43,7 @@
         newtonMaxIter="200"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        preconditionerType="amg"
-        krylovTol="1.0e-14"/>
+        directParallel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 
