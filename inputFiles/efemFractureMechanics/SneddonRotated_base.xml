@@ -19,8 +19,6 @@
       <LinearSolverParameters
         directParallel="0"
         solverType="direct"
-        preconditionerType="amg"
-        amgAggresiveCoarseningLevels="1"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 

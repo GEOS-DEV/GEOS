@@ -268,16 +268,12 @@ public:
    * @param stressModifier An optional functor to allow for the modification
    *  of stress prior to integration.
    */
-  template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack,
-                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
+                              StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( stressModifier );
-
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     real64 dNdX[ numNodesPerElem ][ 3 ];
