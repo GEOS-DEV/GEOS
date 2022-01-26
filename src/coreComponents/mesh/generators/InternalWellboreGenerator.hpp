@@ -51,20 +51,21 @@ public:
 
 protected:
 
-  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
-                                                  integer ( &numNodes )[3] ) override final;
+  void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+                                          integer ( &numNodes )[3] ) override final;
 
-  virtual void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                                       int ( & index )[3] ) override final;
+  void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                               int ( & index )[3] ) override final;
 
-  virtual void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
-                                                     integer const ( &numNodesInDir )[3],
-                                                     int const ( &firstElemIndexInPartition )[3],
-                                                     localIndex ( &nodeOfBox )[8] ) override final;
+  void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
+                                             integer const ( &numNodesInDir )[3],
+                                             int const ( &firstElemIndexInPartition )[3],
+                                             localIndex ( &nodeOfBox )[8] ) override final;
 
-  virtual void coordinateTransformation( NodeManager & nodeManager ) override final;
+  void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X,
+                                 std::map< string, SortedArray< localIndex > > & nodeSets ) override final;
 
-  virtual inline bool isCartesian() const override final
+  inline bool isCartesian() const override final
   {
     return false;
   }
