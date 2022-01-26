@@ -127,19 +127,21 @@ private:
   /**
    * @brief Given a time-step \p time, returns the relative path
    * to the subfolder containing the files concerning this time-step
-   * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @return the relative path to the folder of the time step
    */
-  string getTimeStepSubFolder( real64 time ) const;
+  string getCycleSubFolder( integer const cycle ) const;
 
   /**
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeCellElementRegions( real64 time,
+                                integer const cycle,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
@@ -147,10 +149,12 @@ private:
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeWellElementRegions( real64 time,
+                                integer const cycle,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
@@ -158,10 +162,12 @@ private:
    * @brief Writes the files containing the faces elements
    * @details There will be one file written per FaceElementRegion and per rank
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeSurfaceElementRegions( real64 time,
+                                   integer const cycle,
                                    ElementRegionManager const & elemManager,
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
@@ -189,10 +195,10 @@ private:
    * it contains the cells connectivities and the vertices coordinates as long as the
    * data fields associated with it
    * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
-   * @param[in] time the current time-step
+   * @param[in] cycle the current cycle number
    * @param[in] name the name of the ElementRegionBase to be written
    */
-  void writeUnstructuredGrid( real64 time,
+  void writeUnstructuredGrid( integer const cycle,
                               string const & name,
                               vtkUnstructuredGrid & ug ) const;
 
