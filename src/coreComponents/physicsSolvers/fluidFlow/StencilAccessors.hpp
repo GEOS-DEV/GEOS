@@ -46,7 +46,7 @@ public:
   auto get( TRAIT ) const
   {
     constexpr std::size_t idx = traits::type_list_index< TRAIT, std::tuple< TRAITS ... > >;
-    static_assert( idx != std::tuple_size< std::tuple< TRAITS... > >::value, "Trait/stencil does not match the available traits/stencils." );
+    static_assert( idx != std::tuple_size< std::tuple< TRAITS... > >::value, "input trait/stencil does not match the available traits/stencils." );
     return std::get< idx >( m_accessors ).toNestedViewConst();
   }
 
