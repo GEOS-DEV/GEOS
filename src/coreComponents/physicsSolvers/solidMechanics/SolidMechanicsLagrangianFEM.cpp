@@ -566,6 +566,25 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
   //Add applyTractionBCExplicit by ron, 25 Dec 2022
   applyTractionBCExplicit( time_n + dt, domain );
 
+  //Add applyAcceleration by ron, 26 Dec 2022
+  fsManager.applyFieldValue( time_n + dt,
+                             domain, "nodeManager",
+							 keys::Acceleration,
+                             [&]( FieldSpecificationBase const & bc,
+                                  SortedArrayView< localIndex const > const & targetSet )
+  {
+    integer const component = bc.getComponent();
+    real64 value = bc.getScale();
+    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
+    forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                            [=] GEOSX_DEVICE ( localIndex const i )
+    {
+      localIndex const a = targetSet[ i ];
+      acc( a, component ) = value * mass[a];
+    } );
+  });
+
   // apply this over a set
   //Change velocityUpdate (add massDamping) by ron, 26 Dec 2022
   SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes.toViewConst() );
