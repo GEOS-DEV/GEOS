@@ -52,7 +52,8 @@ public:
 
   static string catalogName() { return "SolverBase"; }
 
-//  virtual void Registration( dataRepository::WrapperCollection& domain );
+
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
 
   virtual void initialize_postMeshGeneration() override;
@@ -681,6 +682,14 @@ protected:
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & );
 
+  /**
+   * @brief This function sets constitutive name fields on an
+   *  ElementSubRegionBase, and calls the base function it overrides.
+   * @param subRegion The ElementSubRegionBase that will have constitutive
+   *  names set.
+   */
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR(subRegion); }
+
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
 
@@ -722,6 +731,17 @@ protected:
   map< string, array1d< string > > m_meshTargets;
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;
+
+private:
+
+  /**
+   * @brief This function sets constitutive name fields on an
+   *  ElementSubRegionBase, and DOES NOT call the base function it overrides.
+   * @param subRegion The ElementSubRegionBase that will have constitutive
+   *  names set.
+   */
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR(subRegion); }
+
 
 };
 
