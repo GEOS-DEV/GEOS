@@ -25,7 +25,6 @@
 #include "mesh/MeshBody.hpp"
 #include "physicsSolvers/NonlinearSolverParameters.hpp"
 #include "physicsSolvers/LinearSolverParameters.hpp"
-#include "../pygeosx/pysolver/PySolverType.hpp"
 
 
 #include <limits>
@@ -659,8 +658,9 @@ public:
    * @brief Return PySolver type.
    * @return Return PySolver type.
    */
-  virtual PyTypeObject * getPythonType() const
-  { return python::getPySolverType(); }
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const;
+#endif
 
 protected:
 

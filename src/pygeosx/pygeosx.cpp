@@ -19,12 +19,12 @@
 
 // Source includes
 #include "pygeosx.hpp"
-#include "PyGroup.hpp"
-#include "PyGroupType.hpp"
-#include "pysolver/PySolver.hpp"
-#include "pyhistory/PyHistory.hpp"
+#include "dataRepository/python/PyGroup.hpp"
+#include "dataRepository/python/PyGroupType.hpp"
+#include "physicsSolvers/python/PySolverType.hpp"
+#include "fileIO/python/PyHistoryCollectionType.hpp"
+#include "fileIO/python/PyHistoryOutputType.hpp"
 #include "mainInterface/initialization.hpp"
-
 #include "LvArray/src/python/PyArray.hpp"
 
 // System includes
@@ -364,20 +364,6 @@ PyInit_pygeosx()
     return nullptr;
   }
 
-  LvArray::python::PyObjectRef<> pysolverModule = geosx::python::PyInit_pysolver();
-  Py_XINCREF( pysolverModule );
-  if( PyModule_AddObject( module, "pysolver", pysolverModule ) < 0 )
-  {
-    return nullptr;
-  }
-
-  LvArray::python::PyObjectRef<> pyhistoryModule = geosx::python::PyInit_pyhistory();
-  Py_XINCREF( pyhistoryModule );
-  if( PyModule_AddObject( module, "pyhistory", pyhistoryModule ) < 0 )
-  {
-    return nullptr;
-  }
-
   if( !addExitHandler( module ) )
   {
     PYTHON_ERROR_IF( PyErr_Occurred() == nullptr, PyExc_RuntimeError,
@@ -401,6 +387,21 @@ PyInit_pygeosx()
     return nullptr;
   }
 
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPySolverType(), "Solver" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryCollectionType(), "HistoryCollection" ) )
+  {
+    return nullptr;
+  }
+
+  if( !LvArray::python::addTypeToModule( module, geosx::python::getPyHistoryOutputType(), "HistoryOutput" ) )
+  {
+    return nullptr;
+  }
+
   // Add the LvArray submodule.
   if( !LvArray::python::addPyLvArrayModule( module ) )
   {
@@ -408,7 +409,7 @@ PyInit_pygeosx()
   }
 
   // Since we return module we don't want to decrease the reference count.
-  return module;
+  return module.release();
 }
 
 

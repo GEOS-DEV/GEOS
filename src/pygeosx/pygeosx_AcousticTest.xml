@@ -15,7 +15,7 @@
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 1105,1005, 1005 } }"
-      outputSeismoTrace="1"
+      outputSeismoTrace="0"
       dtSeismoTrace="0.5"/>
 
   </Solvers>

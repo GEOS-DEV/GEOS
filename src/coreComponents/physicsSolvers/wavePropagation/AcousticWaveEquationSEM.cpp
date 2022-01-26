@@ -289,13 +289,33 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
       p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
     }
   } );
+
+  if( iSeismo == m_nsamplesSeismoTrace - 1 )
+  {
+    forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+    {
+      if( this->m_outputSeismoTrace == 1 )
+      {
+	if( receiverIsLocal[ircv] == 1 )
+        {
+	  // Note: this "manual" output to file is temporary
+	  //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+	  // TODO: remove saveSeismo and replace with TimeHistory
+	  for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
+	  {
+	    this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+	  }
+	}
+      }
+    } );
+  }
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valPressure, string const & filename )
+void AcousticWaveEquationSEM::saveSeismo( localIndex iSeismo, real64 valPressure, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
-  f<< iseismo << " " << valPressure << std::endl;
+  f<< iSeismo << " " << valPressure << std::endl;
   f.close();
 }
 
@@ -524,16 +544,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs[a] = 0.0;
   } );
 
-  if( this->m_outputSeismoTrace == 1 )
+  real64 checkSismo = m_dtSeismoTrace*m_indexSeismoTrace;
+  real64 epsilonLoc = 1e-12;
+  if( (time_n-epsilonLoc) <= checkSismo && checkSismo < (time_n + dt) )
   {
-    real64 checkSismo = m_dtSeismoTrace*m_indexSeismoTrace;
-    real64 epsilonLoc = 1e-12;
-    if( (time_n-epsilonLoc) <= checkSismo && checkSismo < (time_n + dt) )
-    {
-      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
-      m_indexSeismoTrace++;
-    }
+    computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
+    m_indexSeismoTrace++;
   }
+
 
   return dt;
 }

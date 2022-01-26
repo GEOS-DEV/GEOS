@@ -26,7 +26,7 @@
 #include "RestartFlags.hpp"
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
-#include "../../pygeosx/PyGroupType.hpp"
+
 
 #include <iostream>
 
@@ -1288,8 +1288,9 @@ public:
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
    */
-  virtual PyTypeObject * getPythonType() const
-  { return python::getPyGroupType(); }
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const;
+#endif
 
 protected:
 

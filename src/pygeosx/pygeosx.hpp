@@ -13,7 +13,11 @@
  */
 
 // Source includes
-#include "PyGroup.hpp"
+#ifndef GEOSX_PYGEOSX_PYGEOSX_HPP_
+#define GEOSX_PYGEOSX_PYGEOSX_HPP_
+
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/ProblemManager.hpp"
+
+#endif

@@ -20,6 +20,10 @@
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 #include "mesh/DomainPartition.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "python/PySolverType.hpp"
+#endif
+
 namespace geosx
 {
 
@@ -881,5 +885,9 @@ R1Tensor const SolverBase::gravityVector() const
   return rval;
 }
 
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * SolverBase::getPythonType() const
+{ return python::getPySolverType(); }
+#endif
 
 } // namespace geosx
