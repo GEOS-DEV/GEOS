@@ -1516,7 +1516,7 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
 
   using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
   ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
-    elemManager.constructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+    elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
   ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
   arrayView1d< globalIndex const > const & presDofNumber = fractureSubRegion.getReference< globalIndex_array >( presDofKey );
