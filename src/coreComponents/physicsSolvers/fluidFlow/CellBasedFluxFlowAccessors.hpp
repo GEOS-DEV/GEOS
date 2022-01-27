@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------	
  */
 
-#ifndef GEOSX_CELLBASEDFLUXFLOWACCESSORS_HPP
-#define GEOSX_CELLBASEDFLUXFLOWACCESSORS_HPP
+#ifndef GEOSX_PROPPANTTRANSPORTKERNELS_CELLBASEDFLUXFLOWACCESSORS_HPP
+#define GEOSX_PROPPANTTRANSPORTKERNELS_CELLBASEDFLUXFLOWACCESSORS_HPP
 
 #include "FlowSolverBaseExtrinsicData.hpp"
 
@@ -57,4 +57,4 @@ private:
 
 } // end of namespace geosx
 
-#endif //GEOSX_CELLBASEDFLUXFLOWACCESSORS_HPP
+#endif //GEOSX_PROPPANTTRANSPORTKERNELS_CELLBASEDFLUXFLOWACCESSORS_HPP

@@ -12,8 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------	
  */
 
-#ifndef GEOSX_PERMEABILITYACCESSORS_HPP
-#define GEOSX_PERMEABILITYACCESSORS_HPP
+#ifndef GEOSX_PROPPANTTRANSPORTKERNELS_PERMEABILITYACCESSORS_HPP
+#define GEOSX_PROPPANTTRANSPORTKERNELS_PERMEABILITYACCESSORS_HPP
 
 #include "PermeabilityExtrinsicData.hpp"
 
@@ -29,9 +29,9 @@ class PermeabilityAccessorsImpl
 {
 public:
   PermeabilityAccessorsImpl( ElementRegionManager const & elemManager,
-                                          string const & solverName,
-                                          arrayView1d< string const > const & regionNames,
-                                          arrayView1d< string const > const & materialNames )
+                             string const & solverName,
+                             arrayView1d< string const > const & regionNames,
+                             arrayView1d< string const > const & materialNames )
     : m_impl( elemManager, solverName, regionNames, materialNames )
   { }
 
@@ -101,4 +101,4 @@ using PermeabilityAccessorsImpl = CompositionalMultiphaseFVMKernels::Permeabilit
 
 } // end of namespace geosx
 
-#endif //GEOSX_PERMEABILITYACCESSORS_HPP
+#endif //GEOSX_PROPPANTTRANSPORTKERNELS_PERMEABILITYACCESSORS_HPP
