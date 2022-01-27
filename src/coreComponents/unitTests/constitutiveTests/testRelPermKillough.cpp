@@ -28,7 +28,7 @@ using namespace geosx::constitutive::relperm;
 using namespace geosx::dataRepository;
 
 
-TableRelativePermeabilityHysteresis& makeTableRelPermHysteresisTwoPhase( string const & name, Group & parent )
+TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string const & name, Group & parent )
 {
   FunctionManager & functionManager = FunctionManager::getInstance();
 
@@ -249,200 +249,202 @@ TableRelativePermeabilityHysteresis& makeTableRelPermHysteresisTwoPhase( string 
 
 //todo (jacques) revise values in accordance with what's above
 /*RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Group & parent )
-{
-  FunctionManager & functionManager = FunctionManager::getInstance();
+   {
+   FunctionManager & functionManager = FunctionManager::getInstance();
 
-  // 1) First, define the tables
+   // 1) First, define the tables
 
-  // 1D table, various interpolation methods
-  localIndex Naxis = 6;
+   // 1D table, various interpolation methods
+   localIndex Naxis = 6;
 
-  // 1.a) First pair of phases (ow)
+   // 1.a) First pair of phases (ow)
 
-  // Setup table
-  array1d< real64_array > coordinates;
-  coordinates.resize( 1 );
-  coordinates[0].resize( Naxis );
+   // Setup table
+   array1d< real64_array > coordinates;
+   coordinates.resize( 1 );
+   coordinates[0].resize( Naxis );
 
-  coordinates[0][0] = 0.20000;
-  coordinates[0][1] = 0.22000;
-  coordinates[0][2] = 0.25000;
-  coordinates[0][3] = 0.30000;
-  coordinates[0][4] = 0.35000;
-  coordinates[0][5] = 0.40000;
-  coordinates[0][6] = 0.45000;
-  coordinates[0][7] = 0.50000;
-  coordinates[0][8] = 0.55000;
-  coordinates[0][9] = 0.60000;
-  coordinates[0][10] = 0.65000;
-  coordinates[0][11] = 0.66000;
-  coordinates[0][12] = 0.68000;
+   coordinates[0][0] = 0.20000;
+   coordinates[0][1] = 0.22000;
+   coordinates[0][2] = 0.25000;
+   coordinates[0][3] = 0.30000;
+   coordinates[0][4] = 0.35000;
+   coordinates[0][5] = 0.40000;
+   coordinates[0][6] = 0.45000;
+   coordinates[0][7] = 0.50000;
+   coordinates[0][8] = 0.55000;
+   coordinates[0][9] = 0.60000;
+   coordinates[0][10] = 0.65000;
+   coordinates[0][11] = 0.66000;
+   coordinates[0][12] = 0.68000;
 
-  real64_array values( Naxis1 );
+   real64_array values( Naxis1 );
 
-  values[0] = 0.00000;
-  values[1] = 0.00000;
-  values[2] = 0.00100;
-  values[3] = 0.00300;
-  values[4] = 0.01000;
-  values[5] = 0.01800;
-  values[6] = 0.03500;
-  values[7] = 0.04000;
-  values[8] = 0.57000;
-  values[9] = 0.08800;
-  values[10] = 0.14500;
-  values[11] = 0.16000;
-  values[12] = 0.19000;
+   values[0] = 0.00000;
+   values[1] = 0.00000;
+   values[2] = 0.00100;
+   values[3] = 0.00300;
+   values[4] = 0.01000;
+   values[5] = 0.01800;
+   values[6] = 0.03500;
+   values[7] = 0.04000;
+   values[8] = 0.57000;
+   values[9] = 0.08800;
+   values[10] = 0.14500;
+   values[11] = 0.16000;
+   values[12] = 0.19000;
 
 
-  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_swof" ) );
-  table_ow_w.setTableCoordinates( coordinates );
-  table_ow_w.setTableValues( values );
-  table_ow_w.reInitializeFunction();
+   TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_swof" ) );
+   table_ow_w.setTableCoordinates( coordinates );
+   table_ow_w.setTableValues( values );
+   table_ow_w.reInitializeFunction();
 
-  table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+   table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  array1d< real64_array > coordinates_inv;
-  coordinates_inv.resize( 1 );
-  coordinates_inv[0].resize( Naxis );
-  //reuse coordinates
-  for( int i = 0; i <Naxis1 ; ++i )
-  {
+   array1d< real64_array > coordinates_inv;
+   coordinates_inv.resize( 1 );
+   coordinates_inv[0].resize( Naxis );
+   //reuse coordinates
+   for( int i = 0; i <Naxis1 ; ++i )
+   {
     coordinates_inv[0][i] = 1. - coordinates[0][Naxis1-1-i];
-  }
+   }
 
-  values[0] = 0.00000;
-  values[1] = 0.00000;
-  values[2] = 0.00700;
-  values[3] = 0.04500;
-  values[4] = 0.09500;
-  values[5] = 0.16000;
-  values[6] = 0.24000;
-  values[7] = 0.33000;
-  values[8] = 0.44000;
-  values[9] = 0.57000;
-  values[10] = 0.73000;
-  values[11] = 0.85000;
-  values[12] = 0.85000;
+   values[0] = 0.00000;
+   values[1] = 0.00000;
+   values[2] = 0.00700;
+   values[3] = 0.04500;
+   values[4] = 0.09500;
+   values[5] = 0.16000;
+   values[6] = 0.24000;
+   values[7] = 0.33000;
+   values[8] = 0.44000;
+   values[9] = 0.57000;
+   values[10] = 0.73000;
+   values[11] = 0.85000;
+   values[12] = 0.85000;
 
-  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_swof" ) );
-  table_ow_o.setTableCoordinates( coordinates_inv );
-  table_ow_o.setTableValues( values );
-  table_ow_o.reInitializeFunction();
+   TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_swof" ) );
+   table_ow_o.setTableCoordinates( coordinates_inv );
+   table_ow_o.setTableValues( values );
+   table_ow_o.reInitializeFunction();
 
-  table_ow_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+   table_ow_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  // 1.a) Second pair of phases (og)
-  localIndex Naxis2 = 19;
-  coordinates[0].resize( Naxis2 );
+   // 1.a) Second pair of phases (og)
+   localIndex Naxis2 = 19;
+   coordinates[0].resize( Naxis2 );
 
-  coordinates[0][0] = 0.0;
-  coordinates[0][1] = 0.005;
-  coordinates[0][2] = 0.010;
-  coordinates[0][3] = 0.030;
-  coordinates[0][4] = 0.050;
-  coordinates[0][5] = 0.100;
-  coordinates[0][6] = 0.150;
-  coordinates[0][7] = 0.200;
-  coordinates[0][8] = 0.250;
-  coordinates[0][9] = 0.300;
-  coordinates[0][10] = 0.350;
-  coordinates[0][11] = 0.400;
-  coordinates[0][12] = 0.450;
-  coordinates[0][13] = 0.500;
-  coordinates[0][14] = 0.550;
-  coordinates[0][15] = 0.600;
-  coordinates[0][16] = 0.650;
-  coordinates[0][17] = 0.700;
-  coordinates[0][18] = 0.750;
-  coordinates[0][19] = 0.780;
+   coordinates[0][0] = 0.0;
+   coordinates[0][1] = 0.005;
+   coordinates[0][2] = 0.010;
+   coordinates[0][3] = 0.030;
+   coordinates[0][4] = 0.050;
+   coordinates[0][5] = 0.100;
+   coordinates[0][6] = 0.150;
+   coordinates[0][7] = 0.200;
+   coordinates[0][8] = 0.250;
+   coordinates[0][9] = 0.300;
+   coordinates[0][10] = 0.350;
+   coordinates[0][11] = 0.400;
+   coordinates[0][12] = 0.450;
+   coordinates[0][13] = 0.500;
+   coordinates[0][14] = 0.550;
+   coordinates[0][15] = 0.600;
+   coordinates[0][16] = 0.650;
+   coordinates[0][17] = 0.700;
+   coordinates[0][18] = 0.750;
+   coordinates[0][19] = 0.780;
 
-  //v1
-  values.resize( Naxis2 );
-  values[0] = 0.00000;
-  values[1] = 0.00000;
-  values[2] = 0.00200;
-  values[3] = 0.00700;
-  values[4] = 0.01000;
-  values[5] = 0.02000;
-  values[6] = 0.04000;
-  values[7] = 0.07500;
-  values[8] = 0.12700;
-  values[9] = 0.18000;
-  values[10] = 0.24000;
-  values[11] = 0.31000;
-  values[12] = 0.37300;
-  values[13] = 0.46000;
-  values[14] = 0.55000;
-  values[15] = 0.64000;
-  values[16] = 0.73000;
-  values[17] = 0.82500;
-  values[18] = 0.92000;
-  values[19] = 1.00000;
+   //v1
+   values.resize( Naxis2 );
+   values[0] = 0.00000;
+   values[1] = 0.00000;
+   values[2] = 0.00200;
+   values[3] = 0.00700;
+   values[4] = 0.01000;
+   values[5] = 0.02000;
+   values[6] = 0.04000;
+   values[7] = 0.07500;
+   values[8] = 0.12700;
+   values[9] = 0.18000;
+   values[10] = 0.24000;
+   values[11] = 0.31000;
+   values[12] = 0.37300;
+   values[13] = 0.46000;
+   values[14] = 0.55000;
+   values[15] = 0.64000;
+   values[16] = 0.73000;
+   values[17] = 0.82500;
+   values[18] = 0.92000;
+   values[19] = 1.00000;
 
-  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_sgof" ) );
-  table_og_g.setTableCoordinates( coordinates );
-  table_og_g.setTableValues( values );
-  table_og_g.reInitializeFunction();
+   TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_sgof" ) );
+   table_og_g.setTableCoordinates( coordinates );
+   table_og_g.setTableValues( values );
+   table_og_g.reInitializeFunction();
 
-  table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+   table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  coordinates_inv[0].resize( Naxis2 );
-  //reuse coordinates
-  for( int i = 0; i <Naxis2 ; ++i )
-  {
+   coordinates_inv[0].resize( Naxis2 );
+   //reuse coordinates
+   for( int i = 0; i <Naxis2 ; ++i )
+   {
     coordinates_inv[0][i] = 1. - coordinates[0][Naxis2-1-i];
-  }
+   }
 
 
-  values[0] = 0.00000;
-  values[1] = 0.00330;
-  values[2] = 0.00870;
-  values[3] = 0.01420;
-  values[4] = 0.01960;
-  values[5] = 0.02500;
-  values[6] = 0.03500;
-  values[7] = 0.05000;
-  values[8] = 0.07500;
-  values[9] = 0.14000;
-  values[10] = 0.22000;
-  values[11] = 0.33000;
-  values[12] = 0.45000;
-  values[13] = 0.58750;
-  values[14] = 0.72500;
-  values[15] = 0.86250;
-  values[16] = 0.91750;
-  values[17] = 0.97250;
-  values[18] = 1.00000;
-  values[19] = 1.00000;
+   values[0] = 0.00000;
+   values[1] = 0.00330;
+   values[2] = 0.00870;
+   values[3] = 0.01420;
+   values[4] = 0.01960;
+   values[5] = 0.02500;
+   values[6] = 0.03500;
+   values[7] = 0.05000;
+   values[8] = 0.07500;
+   values[9] = 0.14000;
+   values[10] = 0.22000;
+   values[11] = 0.33000;
+   values[12] = 0.45000;
+   values[13] = 0.58750;
+   values[14] = 0.72500;
+   values[15] = 0.86250;
+   values[16] = 0.91750;
+   values[17] = 0.97250;
+   values[18] = 1.00000;
+   values[19] = 1.00000;
 
-  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_sgof" ) );
-  table_og_o.setTableCoordinates( coordinates_inv );
-  table_og_o.setTableValues( values );
-  table_og_o.reInitializeFunction();
+   TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_sgof" ) );
+   table_og_o.setTableCoordinates( coordinates_inv );
+   table_og_o.setTableValues( values );
+   table_og_o.reInitializeFunction();
 
-  table_og_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+   table_og_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  // 2) Then set up the constitutive model
+   // 2) Then set up the constitutive model
 
-  auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
+   auto & relPerm = parent.registerGroup< TableRelativePermeability >( name );
 
-  auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
-  phaseNames.resize( 3 );
-  phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
+   auto & phaseNames = relPerm.getReference< string_array >( RelativePermeabilityBase::viewKeyStruct::phaseNamesString() );
+   phaseNames.resize( 3 );
+   phaseNames[0] = "oil"; phaseNames[1] = "water"; phaseNames[2] = "gas";
 
-  auto & waterOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::wettingIntermediateRelPermTableNamesString() );
-  waterOilTableNames.resize( 2 );
-  waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
+   auto & waterOilTableNames = relPerm.getReference< array1d< string > >(
+      TableRelativePermeability::viewKeyStruct::wettingIntermediateRelPermTableNamesString() );
+   waterOilTableNames.resize( 2 );
+   waterOilTableNames[0] = "water_swof"; waterOilTableNames[1] = "oil_swof";
 
-  auto & gasOilTableNames = relPerm.getReference< array1d< string > >( TableRelativePermeability::viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() );
-  gasOilTableNames.resize( 2 );
-  gasOilTableNames[0] = "gas_sgof"; gasOilTableNames[1] = "oil_sgof";
+   auto & gasOilTableNames = relPerm.getReference< array1d< string > >(
+      TableRelativePermeability::viewKeyStruct::nonWettingIntermediateRelPermTableNamesString() );
+   gasOilTableNames.resize( 2 );
+   gasOilTableNames[0] = "gas_sgof"; gasOilTableNames[1] = "oil_sgof";
 
-  relPerm.postProcessInputRecursive();
-  relPerm.initialize(); // to test all the checks
-  return relPerm;
-}*/
+   relPerm.postProcessInputRecursive();
+   relPerm.initialize(); // to test all the checks
+   return relPerm;
+   }*/
 
 
 class KilloughHysteresisTest : public ConstitutiveTestBase< TableRelativePermeabilityHysteresis >
@@ -477,18 +479,21 @@ void testValuesAgainstPreviousImplementation( TBL_WRAPPER const & relpermTblWrap
   phaseMinHistoricalVolFraction[0][1] = 0.;
 
   StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM > phaseRelPerm( 1, 1, numPhases );
-  
-  StackArray< real64, 4, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES * constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm_dPhaseVolFrac( 1, 1, numPhases, numPhases );
-  
+
+  StackArray< real64, 4, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES * constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm_dPhaseVolFrac( 1,
+                                                                                                                                                                                                    1,
+                                                                                                                                                                                                    numPhases,
+                                                                                                                                                                                                    numPhases );
 
 
-   relpermTblWrapper.computeTwoPhase( ipWetting,
-                    ipNonWetting,
-                    phaseVolFraction[0],
-                    phaseMaxHistoricalVolFraction[0],
-                    phaseMinHistoricalVolFraction[0],
-                    phaseRelPerm[0][0],
-                    dPhaseRelPerm_dPhaseVolFrac[0][0] );
+
+  relpermTblWrapper.computeTwoPhase( ipWetting,
+                                     ipNonWetting,
+                                     phaseVolFraction[0],
+                                     phaseMaxHistoricalVolFraction[0],
+                                     phaseMinHistoricalVolFraction[0],
+                                     phaseRelPerm[0][0],
+                                     dPhaseRelPerm_dPhaseVolFrac[0][0] );
 
   checkRelativeError( phaseRelPerm[0][0][ipWetting], oldImplValue_w, relTol );
   checkRelativeError( phaseRelPerm[0][0][ipNonWetting], oldImplValue_nw, relTol );
@@ -537,15 +542,15 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
                             0.65, 0.7, 0.75, 0.78 };
 
   localIndex const ndsc = 12;
-  localIndex const off[3] = { 6, 1 ,0 };
+  localIndex const off[3] = { 6, 1, 0 };
   real64 const sg_dsc[] = { 0.78, 0.73, 0.68, 0.63, 0.58, 0.53, 0.48, 0.43, 0.38, 0.33, 0.28, 0.23 };
 
 
 
   real64 const scanning_w_i[][ndsc] = {
-  { 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.0616975, 0.172378, 0.337489, 0.541488, 0.778040, 0.910729 },
-  { 0.000057, 0.011931, 0.062327, 0.136442, 0.228608, 0.336255, 0.4569098, 0.589277, 0.732427, 0.879957, 0.935521, 0.935521 },
-  { 0.0, 0.036560, 0.097156, 0.176380, 0.270440, 0.377219, 0.4953000, 0.623760, 0.761800, 0.892749, 0.938200, 0.938200 } };
+    { 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.0616975, 0.172378, 0.337489, 0.541488, 0.778040, 0.910729 },
+    { 0.000057, 0.011931, 0.062327, 0.136442, 0.228608, 0.336255, 0.4569098, 0.589277, 0.732427, 0.879957, 0.935521, 0.935521 },
+    { 0.0, 0.036560, 0.097156, 0.176380, 0.270440, 0.377219, 0.4953000, 0.623760, 0.761800, 0.892749, 0.938200, 0.938200 } };
 
 //krgd
   real64 const drainage_w_values[] = {
@@ -560,42 +565,42 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
     { 0.920000, 0.860285, 0.716467, 0.581413, 0.456038, 0.341595, 0.238939, 0.149497, 0.075697, 0.022777, 0.000000, 0.000000 },
     { 1.000000, 0.848929, 0.705493, 0.571229, 0.446815, 0.333110, 0.231251, 0.142852, 0.070502, 0.020172, 0.000000, 0.000000 } };
 
-  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const relTol = 5e-5;
 
 //saved cycle
-  initialize( makeTableRelPermHysteresisTwoPhase("relPerm", m_parent) );
+  initialize( makeTableRelPermHysteresisTwoPhase( "relPerm", m_parent ) );
   auto relpermTblWrapper = m_model->createKernelWrapper();
   // all sat are nonwetting sat
   for( localIndex count = 0; count < 3; ++count )
   {
     //drainage
-      for( localIndex isat = 0; isat < ninc; ++isat )
-      {
-        if(sg_inc[isat] > shy[count]) break; // exit as the drainage bounding is not scanned anymore
+    for( localIndex isat = 0; isat < ninc; ++isat )
+    {
+      if( sg_inc[isat] > shy[count] )
+        break;                               // exit as the drainage bounding is not scanned anymore
 
-        testValuesAgainstPreviousImplementation( relpermTblWrapper,
-                                                 sg_inc[isat], sg_inc[isat],
-                                                 drainage_w_values[isat], drainage_g_values[isat],
-                                                 relTol );
+      testValuesAgainstPreviousImplementation( relpermTblWrapper,
+                                               sg_inc[isat], sg_inc[isat],
+                                               drainage_w_values[isat], drainage_g_values[isat],
+                                               relTol );
 
 
-     }
+    }
     //imbibition
-     for( localIndex isat = off[count]; isat < ndsc; ++isat )
-     {
-       testValuesAgainstPreviousImplementation( relpermTblWrapper,
-                                                sg_dsc[isat], shy[count],
-                                                scanning_w_i[count][isat], scanning_g_i[count][isat],
-                                                relTol );
+    for( localIndex isat = off[count]; isat < ndsc; ++isat )
+    {
+      testValuesAgainstPreviousImplementation( relpermTblWrapper,
+                                               sg_dsc[isat], shy[count],
+                                               scanning_w_i[count][isat], scanning_g_i[count][isat],
+                                               relTol );
 
-     }
+    }
   }
 
 }
 
 
-int main( int argc, char ** argv )
+int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 

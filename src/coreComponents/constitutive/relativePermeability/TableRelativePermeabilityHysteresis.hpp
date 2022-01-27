@@ -108,7 +108,6 @@ public:
                                           real64 const & jerauldParam_a,
                                           real64 const & jerauldParam_b,
                                           real64 const & landParam,
-                                          real64 const & drainageKrEndPoint,
                                           real64 const & imbibitionKrEndPoint,
                                           real64 const & phaseVolFraction,
                                           real64 const & phaseMinHistoricalVolFraction,
@@ -415,7 +414,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                    real64 const & jerauldParam_a,
                                    real64 const & jerauldParam_b,
                                    real64 const & landParam,
-                                   real64 const & drainageKrEndPoint,
                                    real64 const & imbibitionKrEndPoint,
                                    real64 const & phaseVolFraction,
                                    real64 const & phaseMinHistoricalVolFraction,
@@ -437,7 +435,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   // Swc is the common end min endpoint sat for wetting curves
   real64 const Swc = imbibitionMinPhaseWettingVolFraction;
 
-  real64 const krwed = drainageKrEndPoint;
   real64 const krwei = imbibitionKrEndPoint;
   real64 const krwedAtSmxi = drainageRelPermKernelWrapper.compute( &Smxi );
 
@@ -462,9 +459,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const S = phaseVolFraction;
   real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
   real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
-  real64 const dSnorm_dS =  - ratio;
+  real64 const dSnorm_dS =  -ratio;
   real64 dkri_dSnorm = 0.0;
-  real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute(&Snorm, &dkri_dSnorm );
+  real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute( &Snorm, &dkri_dSnorm );
   real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;
 
   //3. Get the final value at evaluated sat
@@ -514,10 +511,10 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 
 
   GEOSX_ERROR_IF( Scrt > Scri,
-                  GEOSX_FMT( string( "For non-wetting phase hysteresis, trapping saturation Snrt: {} ") +
-                             string(" should be less or equal to the trapping sat for imbibition Sncri: {}"),
-                             Scrt, Scri)
-  );
+                  GEOSX_FMT( string( "For non-wetting phase hysteresis, trapping saturation Snrt: {} " ) +
+                             string( " should be less or equal to the trapping sat for imbibition Sncri: {}" ),
+                             Scrt, Scri )
+                  );
 
 
   // Step 3: evaluate the imbibition relperm, kri(Snorm), at the normalized saturation, Snorm.
@@ -569,7 +566,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                      m_jerauldParam_a,
                                      m_jerauldParam_b,
                                      m_landParam[IPT::WETTING],
-                                     m_drainagePhaseRelPermEndPoint[TPT::WETTING],
                                      m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
                                      phaseVolFraction[ipWetting],
                                      phaseMinHistoricalVolFraction[ipWetting],
@@ -643,7 +639,6 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                      m_jerauldParam_a,
                                      m_jerauldParam_b,
                                      m_landParam[IPT::WETTING],
-                                     m_drainagePhaseRelPermEndPoint[TPT::WETTING],
                                      m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
                                      phaseVolFraction[ipWetting],
                                      phaseMinHistoricalVolFraction[ipWetting],

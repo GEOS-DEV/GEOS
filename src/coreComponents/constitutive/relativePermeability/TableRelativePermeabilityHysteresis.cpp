@@ -373,7 +373,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
                                + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
                                + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
                                getFullName(),
-                               m_drainagePhaseMaxVolFraction[ipWetting], m_imbibitionPhaseMaxVolFraction[ipWetting]),
+                               m_drainagePhaseMaxVolFraction[ipWetting], m_imbibitionPhaseMaxVolFraction[ipWetting] ),
                     InputError );
   }
 
@@ -392,7 +392,7 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateImbibitionRel
                                + string( "However, we found that the drainage maximum wetting-phase volume fraction is {}, " )
                                + string( "whereas the imbibition maximum wetting-phase volume fraction is {}" ),
                                getFullName(),
-                               m_drainagePhaseMaxVolFraction[ipNonWetting] , m_imbibitionPhaseMaxVolFraction[ipNonWetting] ),
+                               m_drainagePhaseMaxVolFraction[ipNonWetting], m_imbibitionPhaseMaxVolFraction[ipNonWetting] ),
                     InputError );
 
     GEOSX_THROW_IF( !isZero ( m_imbibitionPhaseRelPermEndPoint[IPT::NONWETTING] - m_drainagePhaseRelPermEndPoint[ipNonWetting] ),
@@ -518,15 +518,14 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
     real64 const Smxd = m_drainagePhaseMaxVolFraction[ipWetting];
     real64 const Smxi = m_imbibitionPhaseMaxVolFraction[ipWetting];
     real64 const Scrd = m_drainagePhaseMinVolFraction[IPT::WETTING];
-    real64 const Scri = m_imbibitionPhaseMinVolFraction[IPT::WETTING];
     real64 const Swc = Scrd;
     GEOSX_ERROR_IF(  (Smxi - Smxd) > 0,
-     GEOSX_FMT( string("{}: For wetting phase hysteresis, imbibition end-point Smxi( {} ) is larger than drainage one Smxd( {} ).\n") +
-                string("Crossing curves.\n"),
-                getFullName(),
-                Smxi,
-                Smxd )
-      );
+                     GEOSX_FMT( string( "{}: For wetting phase hysteresis, imbibition end-point Smxi( {} ) is larger than drainage one Smxd( {} ).\n" ) +
+                                string( "Crossing curves.\n" ),
+                                getFullName(),
+                                Smxi,
+                                Smxd )
+                     );
 
     m_landParam[IPT::WETTING] = ( Smxd - Swc ) / ( Smxd - Smxi ) - 1.0;
   }
@@ -538,12 +537,12 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
     real64 const Scrd = m_drainagePhaseMinVolFraction[ipNonWetting];
     real64 const Scri = m_imbibitionPhaseMinVolFraction[IPT::NONWETTING];
     GEOSX_ERROR_IF( (Scrd - Scri) > 0,
-      GEOSX_FMT(string("{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) is larger than imbibition one Scri( {} ).\n") +
-                string("Crossing curves.\n"),
-                getFullName(),
-                Scrd,
-                Scri )
-    );
+                    GEOSX_FMT( string( "{}: For non-wetting phase hysteresis, drainage trapped saturation Scrd( {} ) is larger than imbibition one Scri( {} ).\n" ) +
+                               string( "Crossing curves.\n" ),
+                               getFullName(),
+                               Scrd,
+                               Scri )
+                    );
 
     m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
   }
@@ -553,12 +552,12 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   if( m_phaseHasHysteresis[IPT::WETTING] && m_phaseHasHysteresis[IPT::NONWETTING] )
   {
     GEOSX_WARNING_IF( numPhases == 2 && !isZero( m_landParam[IPT::WETTING] - m_landParam[IPT::NONWETTING] ),
-                    GEOSX_FMT( string( "{}: For two-phase flow, the Land parameters computed from the wetting and non-wetting relperm curves must match.\n" )
-                               + string( "However, we found that the wetting Land parameter is {}, " )
-                               + string( "whereas the nonwetting Land parameter is {}. " )
-                               + string( "This might result in inconsistency." ),
-                               getFullName(),
-                               m_landParam[IPT::WETTING], m_landParam[IPT::NONWETTING] ) );
+                      GEOSX_FMT( string( "{}: For two-phase flow, the Land parameters computed from the wetting and non-wetting relperm curves must match.\n" )
+                                 + string( "However, we found that the wetting Land parameter is {}, " )
+                                 + string( "whereas the nonwetting Land parameter is {}. " )
+                                 + string( "This might result in inconsistency." ),
+                                 getFullName(),
+                                 m_landParam[IPT::WETTING], m_landParam[IPT::NONWETTING] ) );
   }
 }
 
