@@ -19,10 +19,10 @@
 #ifndef GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 #define GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 
-#include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -135,33 +135,18 @@ public:
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & cellBlock )
+    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & elementSubRegion )
     {
-      numElem += cellBlock.size();
+      numElem += elementSubRegion.size();
     } );
     return numElem;
   }
 
-//  void Initialize(  ){}
-
   /**
    * @brief Generate the mesh.
-   * @param [in] cellBlockManager pointer to the CellBlockManager
+   * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( Group & cellBlockManager );
-
-  /**
-   * @brief Generate the cell-to-edge map
-   * @param [in] faceManager pointer to the FaceManager
-   */
-  void generateCellToEdgeMaps( FaceManager const & faceManager );
-
-  /**
-   * @brief Generate the aggregates.
-   * @param [in] faceManager pointer to the FaceManager
-   * @param [in] nodeManager pointer to the NodeManager
-   */
-  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
+  void generateMesh( CellBlockManagerABC & cellBlockManager );
 
   /**
    * @brief Generate the wells.
@@ -169,6 +154,13 @@ public:
    * @param [in] meshLevel pointer to meshLevel
    */
   void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+
+  /**
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
+   * @note ElementRegionManager's sub-regions need to be properly defined.
+   */
+  void buildSets( NodeManager const & nodeManager );
 
   /**
    * @brief Create a new ElementRegion object as a child of this group.
@@ -259,12 +251,6 @@ public:
   {
     return this->getRegions().size();
   }
-
-  /**
-   * @brief Get number of the cell blocks.
-   * @return number of the cell blocks
-   */
-  localIndex numCellBlocks() const;
 
   /**
    * @brief This function is used to launch kernel function over all the element regions with region type =
@@ -738,6 +724,17 @@ public:
     } );
   }
 
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam TRAIT data type
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructExtrinsicAccessor( string const & neighborName = string() ) const;
+
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
@@ -818,6 +815,23 @@ public:
   MaterialViewAccessor< LHS >
   constructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const & cm );
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
+   * @tparam TRAIT mesh data trait
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
+
 
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
@@ -1111,6 +1125,8 @@ private:
    * @return reference to this object
    */
   ElementRegionManager & operator=( const ElementRegionManager & );
+
+
 };
 
 
@@ -1175,6 +1191,16 @@ ElementRegionManager::
   }
   return viewAccessor;
 }
+
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructExtrinsicAccessor( string const & neighborName ) const
+{
+  return constructViewAccessor< typename TRAIT::type,
+                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+}
+
 
 template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
@@ -1412,6 +1438,21 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   }
   return accessor;
 }
+
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
+                                                                                         regionNames,
+                                                                                         materialNames,
+                                                                                         allowMissingViews );
+}
+
 
 template< typename T, int NDIM, typename PERM >
 ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >

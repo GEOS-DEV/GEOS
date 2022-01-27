@@ -133,7 +133,7 @@ public:
    */
   KernelWrapper createKernelWrapper();
 
-  struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
+  struct viewKeyStruct
   {
     static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * viscosibilityString() { return "viscosibility"; }

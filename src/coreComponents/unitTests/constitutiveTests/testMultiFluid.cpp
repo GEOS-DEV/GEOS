@@ -15,6 +15,7 @@
 // Source includes
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
 #include "constitutive/fluid/multiFluidSelector.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
@@ -97,8 +98,12 @@ static const char * pvdwTableContent = "# Pref[Pa] Bw[m3/sm3] Cp[1/Pa]     Visc[
 
 // CO2-brine model
 
-static const char * pvtLiquidTableContent = "DensityFun BrineCO2Density 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
-                                            "ViscosityFun BrineViscosity 0.1";
+static const char * pvtLiquidPhillipsTableContent = "DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 367.15 369.15 1 0.2\n"
+                                                    "ViscosityFun PhillipsBrineViscosity 0.1";
+
+// the last are set relatively high (1e-4) to increase derivative value and check it properly
+static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
+                                                   "ViscosityFun EzrokhiBrineViscosity 2.42e-7 0 1e-4";
 
 static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 367.15 369.15 1\n"
                                          "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1";
@@ -137,49 +142,49 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   fluidCopy.allocateConstitutiveData( fluid.getParent(), 1 );
 
   // extract data views from both fluids
-  #define GET_FLUID_DATA( FLUID, DIM, PERM, KEY ) \
-    FLUID.getReference< Array< real64, DIM, PERM > >( MultiFluidBase::viewKeyStruct::KEY() )[0][0]
+  #define GET_FLUID_DATA( FLUID, TRAIT ) \
+    FLUID.getReference< TRAIT::type >( TRAIT::key() )[0][0]
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseFractionString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dPressureString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseFraction_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseFraction_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseFraction ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction_dPressure ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction_dTemperature ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction_dGlobalCompFraction )
   };
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseDensityString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dPressureString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseDensity_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseDensity_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseDensity ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity_dPressure ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity_dTemperature ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction )
   };
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, phaseViscosityString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dPressureString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_PHASE, dPhaseViscosity_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_DC, dPhaseViscosity_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseViscosity ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity_dPressure ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity_dTemperature ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction )
   };
 
   MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
-    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, phaseCompFractionString ),
-    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dPressureString ),
-    GET_FLUID_DATA( fluid, 4, LAYOUT_PHASE_COMP, dPhaseCompFraction_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 5, LAYOUT_PHASE_COMP_DC, dPhaseCompFraction_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseCompFraction ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction_dTemperature ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction )
   };
 
   MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
-    GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, totalDensityString ),
-    GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dPressureString ),
-    GET_FLUID_DATA( fluid, 2, LAYOUT_FLUID, dTotalDensity_dTemperatureString ),
-    GET_FLUID_DATA( fluid, 3, LAYOUT_FLUID_DC, dTotalDensity_dGlobalCompFractionString )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::totalDensity ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity_dPressure ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity_dTemperature ),
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity_dGlobalCompFraction )
   };
 
-  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, 3, LAYOUT_PHASE, phaseFractionString );
-  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, 3, LAYOUT_PHASE, phaseDensityString );
-  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, 3, LAYOUT_PHASE, phaseViscosityString );
-  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, 4, LAYOUT_PHASE_COMP, phaseCompFractionString );
-  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, 2, LAYOUT_FLUID, totalDensityString );
+  auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseFraction );
+  auto const & phaseDensCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseDensity );
+  auto const & phaseViscCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseViscosity );
+  auto const & phaseCompFracCopy = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseCompFraction );
+  auto const & totalDensCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::totalDensity );
 
 #undef GET_FLUID_DATA
 
@@ -248,7 +253,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
       // Note: in PVTPackage, derivatives are obtained with finite-difference approx **with normalization of the comp fraction**
       //       The component fraction is perturbed (just as above), and then all the component fractions are normalized (as below)
-      //       But, in the native DO model and in CO2Brine, derivatives are computed analytically, which results in different
+      //       But, in the native DO model and in CO2BrinePhillips, derivatives are computed analytically, which results in different
       //       derivatives wrt component fractions--although the derivatives wrt component densities obtained with the chain rule
       //       in the solver will be very similar (see discussion on PR #1325 on GitHub).
       //
@@ -287,7 +292,7 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   } );
 }
 
-void testValuesAgainstPreviousImplementation( CO2BrineFluid::KernelWrapper const & wrapper,
+void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapper const & wrapper,
                                               real64 const P,
                                               real64 const T,
                                               arraySlice1d< real64 const > const & compositionInput,
@@ -843,9 +848,9 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
   }
 }
 
-MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group * parent )
+MultiFluidBase & makeCO2BrinePhillipsFluid( string const & name, Group * parent )
 {
-  CO2BrineFluid & fluid = parent->registerGroup< CO2BrineFluid >( name );
+  CO2BrinePhillipsFluid & fluid = parent->registerGroup< CO2BrinePhillipsFluid >( name );
 
   auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
   compNames.resize( 2 );
@@ -859,35 +864,35 @@ MultiFluidBase & makeMultiPhaseMultiComponentFluid( string const & name, Group *
   phaseNames.resize( 2 );
   phaseNames[0] = "gas"; phaseNames[1] = "liquid";
 
-  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrineFluid::viewKeyStruct::phasePVTParaFilesString() );
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrinePhillipsFluid::viewKeyStruct::phasePVTParaFilesString() );
   phasePVTParaFileNames.resize( 2 );
   phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
 
-  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineFluid::viewKeyStruct::flashModelParaFileString() );
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrinePhillipsFluid::viewKeyStruct::flashModelParaFileString() );
   flashModelParaFileName = "co2flash.txt";
 
   fluid.postProcessInputRecursive();
   return fluid;
 }
 
-class MultiPhaseMultiComponentFluidTest : public CompositionalFluidTestBase
+class CO2BrinePhillipsFluidTest : public CompositionalFluidTestBase
 {
 protected:
 
-  MultiPhaseMultiComponentFluidTest()
+  CO2BrinePhillipsFluidTest()
   {
-    writeTableToFile( "pvtliquid.txt", pvtLiquidTableContent );
+    writeTableToFile( "pvtliquid.txt", pvtLiquidPhillipsTableContent );
     writeTableToFile( "pvtgas.txt", pvtGasTableContent );
     writeTableToFile( "co2flash.txt", co2FlashTableContent );
 
     parent.resize( 1 );
-    fluid = &makeMultiPhaseMultiComponentFluid( "fluid", &parent );
+    fluid = &makeCO2BrinePhillipsFluid( "fluid", &parent );
 
     parent.initialize();
     parent.initializePostInitialConditions();
   }
 
-  ~MultiPhaseMultiComponentFluidTest()
+  ~CO2BrinePhillipsFluidTest()
   {
     removeFile( "pvtliquid.txt" );
     removeFile( "pvtgas.txt" );
@@ -897,7 +902,7 @@ protected:
 };
 
 
-TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMolar )
+TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMolar )
 {
   fluid->setMassFlag( false );
 
@@ -910,8 +915,8 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMol
 
   fluid->allocateConstitutiveData( fluid->getParent(), 1 );
 
-  CO2BrineFluid::KernelWrapper wrapper =
-    dynamicCast< CO2BrineFluid * >( fluid )->createKernelWrapper();
+  CO2BrinePhillipsFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrinePhillipsFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
   { 5881.8128183956969224, 5869.522096458530541, 5854.9469601674582009, 9180.9455320478591602, 9157.2045503913905122, 9129.1751063784995495, 15755.475565136142905, 15696.691553847707837,
@@ -962,7 +967,7 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMol
   }
 }
 
-TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMass )
+TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMass )
 {
   fluid->setMassFlag( true );
 
@@ -975,8 +980,8 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMas
 
   fluid->allocateConstitutiveData( fluid->getParent(), 1 );
 
-  CO2BrineFluid::KernelWrapper wrapper =
-    dynamicCast< CO2BrineFluid * >( fluid )->createKernelWrapper();
+  CO2BrinePhillipsFluid::KernelWrapper wrapper =
+    dynamicCast< CO2BrinePhillipsFluid * >( fluid )->createKernelWrapper();
 
   real64 const savedTotalDens[] =
   { 238.33977561940088208, 237.86350488026934613, 237.29874890241927687, 354.01144731214282046, 353.18618684355078585, 352.21120673560858449, 550.02182875764299297, 548.3889751707506548,
@@ -1027,7 +1032,7 @@ TEST_F( MultiPhaseMultiComponentFluidTest, checkAgainstPreviousImplementationMas
   }
 }
 
-TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
+TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMolar )
 {
   fluid->setMassFlag( false );
 
@@ -1049,7 +1054,104 @@ TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMolar )
   }
 }
 
-TEST_F( MultiPhaseMultiComponentFluidTest, numericalDerivativesMass )
+TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMass )
+{
+  fluid->setMassFlag( true );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-8;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
+    }
+  }
+}
+
+MultiFluidBase & makeCO2BrineEzrokhiFluid( string const & name, Group * parent )
+{
+  CO2BrineEzrokhiFluid & fluid = parent->registerGroup< CO2BrineEzrokhiFluid >( name );
+
+  auto & compNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::componentNamesString() );
+  compNames.resize( 2 );
+  compNames[0] = "co2"; compNames[1] = "water";
+
+  auto & molarWgt = fluid.getReference< array1d< real64 > >( MultiFluidBase::viewKeyStruct::componentMolarWeightString() );
+  molarWgt.resize( 2 );
+  molarWgt[0] = 44e-3; molarWgt[1] = 18e-3;
+
+  auto & phaseNames = fluid.getReference< string_array >( MultiFluidBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "gas"; phaseNames[1] = "liquid";
+
+  auto & phasePVTParaFileNames = fluid.getReference< path_array >( CO2BrineEzrokhiFluid::viewKeyStruct::phasePVTParaFilesString() );
+  phasePVTParaFileNames.resize( 2 );
+  phasePVTParaFileNames[0] = "pvtgas.txt"; phasePVTParaFileNames[1] = "pvtliquid.txt";
+
+  auto & flashModelParaFileName = fluid.getReference< Path >( CO2BrineEzrokhiFluid::viewKeyStruct::flashModelParaFileString() );
+  flashModelParaFileName = "co2flash.txt";
+
+  fluid.postProcessInputRecursive();
+  return fluid;
+}
+
+class CO2BrineEzrokhiFluidTest : public CompositionalFluidTestBase
+{
+protected:
+
+  CO2BrineEzrokhiFluidTest()
+  {
+    writeTableToFile( "pvtliquid.txt", pvtLiquidEzrokhiTableContent );
+    writeTableToFile( "pvtgas.txt", pvtGasTableContent );
+    writeTableToFile( "co2flash.txt", co2FlashTableContent );
+
+    parent.resize( 1 );
+    fluid = &makeCO2BrineEzrokhiFluid( "fluid", &parent );
+
+    parent.initialize();
+    parent.initializePostInitialConditions();
+  }
+
+  ~CO2BrineEzrokhiFluidTest()
+  {
+    removeFile( "pvtliquid.txt" );
+    removeFile( "pvtgas.txt" );
+    removeFile( "co2flash.txt" );
+  }
+
+};
+
+TEST_F( CO2BrineEzrokhiFluidTest, numericalDerivativesMolar )
+{
+  fluid->setMassFlag( false );
+
+  // TODO test over a range of values
+  real64 const P[3] = { 5e6, 7.5e6, 1.2e7 };
+  real64 const T[3] = { 367.65, 368.15, 368.75 };
+  array1d< real64 > comp( 2 );
+  comp[0] = 0.3; comp[1] = 0.7;
+
+  real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
+  real64 const relTol = 1e-4;
+
+  for( localIndex i = 0; i < 3; ++i )
+  {
+    for( localIndex j = 0; j < 3; ++j )
+    {
+      testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
+    }
+  }
+}
+
+TEST_F( CO2BrineEzrokhiFluidTest, numericalDerivativesMass )
 {
   fluid->setMassFlag( true );
 

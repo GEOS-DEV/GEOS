@@ -127,6 +127,9 @@
       name="displacementOutput"
       sources="{/Tasks/displacementCollection}"
       filename="displacement_history" />
+      
+    <Restart
+      name="restartOutput"/>  
   </Outputs>
 <!-- SPHINX_OUTPUT_END -->
 
@@ -144,7 +147,7 @@
         newtonMaxIter = "15"
       />
       <LinearSolverParameters
-        solverType = "direct"/>
+        directParallel="0"/>
     </SolidMechanics_LagrangianFEM>
   </Solvers>
 <!-- SPHINX_SOLVER_END -->

@@ -85,11 +85,18 @@ Element: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability.rst
 
 
-.. _XML_CO2BrineFluid:
+.. _XML_CO2BrineEzrokhiFluid:
 
-Element: CO2BrineFluid
-======================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid.rst
+Element: CO2BrineEzrokhiFluid
+=============================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
+
+
+.. _XML_CO2BrinePhillipsFluid:
+
+Element: CO2BrinePhillipsFluid
+==============================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -183,6 +190,13 @@ Element: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability.rst
 
 
+.. _XML_CompressibleSolidSlipDependentPermeability:
+
+Element: CompressibleSolidSlipDependentPermeability
+===================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability.rst
+
+
 .. _XML_ConstantPermeability:
 
 Element: ConstantPermeability
@@ -190,18 +204,18 @@ Element: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
+.. _XML_ConstantThermalConductivity:
+
+Element: ConstantThermalConductivity
+====================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
+
+
 .. _XML_Constitutive:
 
 Element: Constitutive
 =====================
 .. include:: ../../coreComponents/schema/docs/Constitutive.rst
-
-
-.. _XML_Contact:
-
-Element: Contact
-================
-.. include:: ../../coreComponents/schema/docs/Contact.rst
 
 
 .. _XML_Coulomb:
@@ -372,6 +386,13 @@ Element: FlowProppantTransport
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport.rst
 
 
+.. _XML_FrictionlessContact:
+
+Element: FrictionlessContact
+============================
+.. include:: ../../coreComponents/schema/docs/FrictionlessContact.rst
+
+
 .. _XML_Functions:
 
 Element: Functions
@@ -407,6 +428,13 @@ Element: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture.rst
 
 
+.. _XML_HydrostaticEquilibrium:
+
+Element: HydrostaticEquilibrium
+===============================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium.rst
+
+
 .. _XML_Included:
 
 Element: Included
@@ -433,6 +461,13 @@ Element: InternalWell
 Element: InternalWellbore
 =========================
 .. include:: ../../coreComponents/schema/docs/InternalWellbore.rst
+
+
+.. _XML_JFunctionCapillaryPressure:
+
+Element: JFunctionCapillaryPressure
+===================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
 
 
 .. _XML_LagrangianContact:
@@ -484,6 +519,13 @@ Element: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
 
 
+.. _XML_MultivariableTableFunction:
+
+Element: MultivariableTableFunction
+===================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction.rst
+
+
 .. _XML_NonlinearSolverParameters:
 
 Element: NonlinearSolverParameters
@@ -517,6 +559,13 @@ Element: Outputs
 Element: PAMELAMeshGenerator
 ============================
 .. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator.rst
+
+
+.. _XML_PVTDriver:
+
+Element: PVTDriver
+==================
+.. include:: ../../coreComponents/schema/docs/PVTDriver.rst
 
 
 .. _XML_PackCollection:
@@ -750,6 +799,13 @@ Element: SinglePhaseWell
 .. include:: ../../coreComponents/schema/docs/SinglePhaseWell.rst
 
 
+.. _XML_SlipDependentPermeability:
+
+Element: SlipDependentPermeability
+==================================
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability.rst
+
+
 .. _XML_SolidMechanicsEmbeddedFractures:
 
 Element: SolidMechanicsEmbeddedFractures
@@ -790,13 +846,6 @@ Element: Solvers
 Element: SourceFlux
 ===================
 .. include:: ../../coreComponents/schema/docs/SourceFlux.rst
-
-
-.. _XML_StrainDependentPermeability:
-
-Element: StrainDependentPermeability
-====================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability.rst
 
 
 .. _XML_SurfaceElementRegion:
@@ -902,6 +951,13 @@ Element: VanGenuchtenBakerRelativePermeability
 Element: VanGenuchtenCapillaryPressure
 ======================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
+
+
+.. _XML_VolumeWeightedThermalConductivity:
+
+Element: VolumeWeightedThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
 
 
 .. _XML_WellControls:
@@ -1013,11 +1069,18 @@ Datastructure: BrooksCoreyRelativePermeability
 .. include:: ../../coreComponents/schema/docs/BrooksCoreyRelativePermeability_other.rst
 
 
-.. _DATASTRUCTURE_CO2BrineFluid:
+.. _DATASTRUCTURE_CO2BrineEzrokhiFluid:
 
-Datastructure: CO2BrineFluid
-============================
-.. include:: ../../coreComponents/schema/docs/CO2BrineFluid_other.rst
+Datastructure: CO2BrineEzrokhiFluid
+===================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsFluid:
+
+Datastructure: CO2BrinePhillipsFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1111,11 +1174,25 @@ Datastructure: CompressibleSolidParallelPlatesPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidParallelPlatesPermeability_other.rst
 
 
+.. _DATASTRUCTURE_CompressibleSolidSlipDependentPermeability:
+
+Datastructure: CompressibleSolidSlipDependentPermeability
+=========================================================
+.. include:: ../../coreComponents/schema/docs/CompressibleSolidSlipDependentPermeability_other.rst
+
+
 .. _DATASTRUCTURE_ConstantPermeability:
 
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantThermalConductivity:
+
+Datastructure: ConstantThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1130,13 +1207,6 @@ Datastructure: Constitutive
 Datastructure: ConstitutiveModels
 =================================
 .. include:: ../../coreComponents/schema/docs/ConstitutiveModels_other.rst
-
-
-.. _DATASTRUCTURE_Contact:
-
-Datastructure: Contact
-======================
-.. include:: ../../coreComponents/schema/docs/Contact_other.rst
 
 
 .. _DATASTRUCTURE_Coulomb:
@@ -1314,6 +1384,13 @@ Datastructure: FlowProppantTransport
 .. include:: ../../coreComponents/schema/docs/FlowProppantTransport_other.rst
 
 
+.. _DATASTRUCTURE_FrictionlessContact:
+
+Datastructure: FrictionlessContact
+==================================
+.. include:: ../../coreComponents/schema/docs/FrictionlessContact_other.rst
+
+
 .. _DATASTRUCTURE_Functions:
 
 Datastructure: Functions
@@ -1349,6 +1426,13 @@ Datastructure: Hydrofracture
 .. include:: ../../coreComponents/schema/docs/Hydrofracture_other.rst
 
 
+.. _DATASTRUCTURE_HydrostaticEquilibrium:
+
+Datastructure: HydrostaticEquilibrium
+=====================================
+.. include:: ../../coreComponents/schema/docs/HydrostaticEquilibrium_other.rst
+
+
 .. _DATASTRUCTURE_Included:
 
 Datastructure: Included
@@ -1375,6 +1459,13 @@ Datastructure: InternalWell
 Datastructure: InternalWellbore
 ===============================
 .. include:: ../../coreComponents/schema/docs/InternalWellbore_other.rst
+
+
+.. _DATASTRUCTURE_JFunctionCapillaryPressure:
+
+Datastructure: JFunctionCapillaryPressure
+=========================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_LagrangianContact:
@@ -1440,6 +1531,13 @@ Datastructure: MultiphasePoromechanics
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
 
 
+.. _DATASTRUCTURE_MultivariableTableFunction:
+
+Datastructure: MultivariableTableFunction
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction_other.rst
+
+
 .. _DATASTRUCTURE_NonlinearSolverParameters:
 
 Datastructure: NonlinearSolverParameters
@@ -1473,6 +1571,13 @@ Datastructure: Outputs
 Datastructure: PAMELAMeshGenerator
 ==================================
 .. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator_other.rst
+
+
+.. _DATASTRUCTURE_PVTDriver:
+
+Datastructure: PVTDriver
+========================
+.. include:: ../../coreComponents/schema/docs/PVTDriver_other.rst
 
 
 .. _DATASTRUCTURE_PackCollection:
@@ -1706,6 +1811,13 @@ Datastructure: SinglePhaseWell
 .. include:: ../../coreComponents/schema/docs/SinglePhaseWell_other.rst
 
 
+.. _DATASTRUCTURE_SlipDependentPermeability:
+
+Datastructure: SlipDependentPermeability
+========================================
+.. include:: ../../coreComponents/schema/docs/SlipDependentPermeability_other.rst
+
+
 .. _DATASTRUCTURE_SolidMechanicsEmbeddedFractures:
 
 Datastructure: SolidMechanicsEmbeddedFractures
@@ -1746,13 +1858,6 @@ Datastructure: Solvers
 Datastructure: SourceFlux
 =========================
 .. include:: ../../coreComponents/schema/docs/SourceFlux_other.rst
-
-
-.. _DATASTRUCTURE_StrainDependentPermeability:
-
-Datastructure: StrainDependentPermeability
-==========================================
-.. include:: ../../coreComponents/schema/docs/StrainDependentPermeability_other.rst
 
 
 .. _DATASTRUCTURE_SurfaceElementRegion:
@@ -1860,6 +1965,13 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
+.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
+
+Datastructure: VolumeWeightedThermalConductivity
+================================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
+
+
 .. _DATASTRUCTURE_WellControls:
 
 Datastructure: WellControls
@@ -1881,11 +1993,11 @@ Datastructure: WellElementRegionuniqueSubRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
 
 
-.. _DATASTRUCTURE_cellBlocks:
+.. _DATASTRUCTURE_cellBlocksKey:
 
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
+Datastructure: cellBlocksKey
+============================
+.. include:: ../../coreComponents/schema/docs/cellBlocksKey_other.rst
 
 
 .. _DATASTRUCTURE_cellManager:

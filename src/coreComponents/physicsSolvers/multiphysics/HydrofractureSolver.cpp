@@ -34,6 +34,7 @@
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/multiphysics/HydrofractureSolverKernels.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
@@ -184,8 +185,8 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       setupSystem( domain,
                    m_dofManager,
                    m_localMatrix,
-                   m_localRhs,
-                   m_localSolution );
+                   m_rhs,
+                   m_solution );
 
       // currently the only method is implicit time integration
       dtReturn = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
@@ -210,7 +211,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         std::map< string, string_array > fieldNames;
         fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
         fieldNames["node"].emplace_back( keys::TotalDisplacement );
-        fieldNames["elems"].emplace_back( string( FlowSolverBase::viewKeyStruct::pressureString() ) );
+        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
         fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::getInstance().synchronizeFields( fieldNames,
@@ -224,7 +225,6 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         {
           GEOSX_LOG_RANK_0( "++ Fracture propagation. Re-entering Newton Solve." );
         }
-        m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
       }
     }
 
@@ -248,16 +248,15 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
   // arrayView1d<real64 const> const faceArea = faceManager.faceArea();
   ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
 
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
-
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
   {
+
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     arrayView1d< real64 > const aperture = subRegion.getElementAperture();
-    arrayView1d< real64 > const effectiveAperture = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::effectiveApertureString() );
+    arrayView1d< real64 > const hydraulicAperture = subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
     arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-    arrayView1d< real64 > const deltaVolume = subRegion.getReference< array1d< real64 > >( FlowSolverBase::viewKeyStruct::deltaVolumeString() );
+    arrayView1d< real64 > const deltaVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
     arrayView1d< real64 const > const area = subRegion.getElementArea();
     arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
@@ -290,7 +289,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
                                             volume,
                                             deltaVolume,
                                             aperture,
-                                            effectiveAperture
+                                            hydraulicAperture
 #ifdef GEOSX_USE_SEPARATION_COEFFICIENT
                                             ,
                                             apertureF,
@@ -305,7 +304,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
 //#if defined(USE_CUDA)
 //    deltaVolume.move( LvArray::MemorySpace::cuda );
 //    aperture.move( LvArray::MemorySpace::cuda );
-//    effectiveAperture.move( LvArray::MemorySpace::cuda );
+//    hydraulicAperture.move( LvArray::MemorySpace::cuda );
 //#endif
   } );
 }
@@ -457,7 +456,7 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          FlowSolverBase::viewKeyStruct::pressureString(),
+                          extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem,
                           fractureRegions );
 
@@ -466,8 +465,8 @@ void HydrofractureSolver::setupDofs( DomainPartition const & domain,
 void HydrofractureSolver::setupSystem( DomainPartition & domain,
                                        DofManager & dofManager,
                                        CRSMatrix< real64, globalIndex > & localMatrix,
-                                       array1d< real64 > & localRhs,
-                                       array1d< real64 > & localSolution,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution,
                                        bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
@@ -475,7 +474,6 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   GEOSX_UNUSED_VAR( setSparsity );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  m_flowSolver->resetViews( mesh );
 
   dofManager.setMesh( mesh );
 
@@ -514,13 +512,13 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
   addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView() );
 
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+  localMatrix.setName( this->getName() + "/matrix" );
 
-  localRhs.resize( numLocalRows );
-  localSolution.resize( numLocalRows );
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( numLocalRows, MPI_COMM_GEOSX );
 
-  localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  solution.setName( this->getName() + "/solution" );
+  solution.create( numLocalRows, MPI_COMM_GEOSX );
 
   setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
@@ -535,7 +533,7 @@ void HydrofractureSolver::addFluxApertureCouplingNNZ( DomainPartition & domain,
 
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -595,7 +593,7 @@ void HydrofractureSolver::addFluxApertureCouplingSparsityPattern( DomainPartitio
   NodeManager const & nodeManager = mesh.getNodeManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = dofManager.rankOffset();
@@ -671,8 +669,6 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
-  m_flowSolver->resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
-
   m_flowSolver->assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
                                                                      dofManager,
                                                                      localMatrix,
@@ -736,7 +732,7 @@ HydrofractureSolver::
   fext = nodeManager.getReference< array2d< real64 > >( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() );
   fext.zero();
 
-  string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
@@ -829,17 +825,14 @@ HydrofractureSolver::
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   FaceManager const & faceManager = mesh.getFaceManager();
   NodeManager const & nodeManager = mesh.getNodeManager();
-  ConstitutiveManager const & constitutiveManager = domain.getConstitutiveManager();
 
-  string const presDofKey = m_dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const presDofKey = m_dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
   string const dispDofKey = m_dofManager.getKey( keys::TotalDisplacement );
 
   globalIndex const rankOffset = m_dofManager.rankOffset();
 
   CRSMatrixView< real64 const, localIndex const > const
   dFluxResidual_dAperture = getDerivativeFluxResidual_dAperture().toViewConst();
-
-  ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
 
   forTargetSubRegionsComplete< FaceElementSubRegion >( mesh,
                                                        [&]( localIndex const,
@@ -848,6 +841,8 @@ HydrofractureSolver::
                                                             ElementRegionBase const & region,
                                                             FaceElementSubRegion const & subRegion )
   {
+    ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
     string const & fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( region.getName() )];
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, fluidName );
 
@@ -975,7 +970,7 @@ void HydrofractureSolver::setUpDflux_dApertureMatrix( DomainPartition & domain,
     }
   }
 
-  string const presDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+  string const presDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();

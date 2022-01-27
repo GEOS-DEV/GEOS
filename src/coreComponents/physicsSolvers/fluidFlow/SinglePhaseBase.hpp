@@ -74,8 +74,8 @@ public:
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual real64
@@ -272,7 +272,7 @@ public:
    * @param dataGroup group that contains the fields
    */
   void
-  updateFluidState( Group & subRegion, localIndex const targetIndex ) const;
+  updateFluidState( ObjectManagerBase & subRegion, localIndex const targetIndex ) const;
 
 
   /**
@@ -280,36 +280,27 @@ public:
    * @param dataGroup group that contains the fields
    */
   virtual void
-  updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
   void
-  updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
-
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
-  {
-    // used for face-based BC
-    static constexpr char const * facePressureString() { return "facePressure"; }
-
-    // intermediate fields
-    static constexpr char const * mobilityString() { return "mobility"; }
-    static constexpr char const * dMobility_dPressureString() { return "dMobility_dPressure"; }
-
-    // backup fields
-    static constexpr char const * densityOldString() { return "densityOld"; }
-  };
+  updateMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void resetViews( MeshLevel & mesh ) override;
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
@@ -359,20 +350,9 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dMobility_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
 private:
 
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
 };
 
