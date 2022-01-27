@@ -376,8 +376,11 @@ AquiferBoundaryCondition::KernelWrapper::
   real64 const b = timeConstantInv * m_influxConstant / denom;
 
   // compute the average inflow rate Q (equation 5.7 of the Eclipse TD)
-  real64 const aquiferVolFlux =  areaFraction * ( a - b * reservoirDeltaPressure );
-  dAquiferVolFlux_dPres = -areaFraction * b;
+  // Laura: seems to work
+  //real64 const aquiferVolFlux =  areaFraction * ( a - b * reservoirDeltaPressure );
+  //dAquiferVolFlux_dPres = -areaFraction * b;
+  real64 const aquiferVolFlux =  (areaFraction * ( a - b * reservoirDeltaPressure )) * 0.0 + 1.e-3;
+  dAquiferVolFlux_dPres = -areaFraction * b * 0.0;
 
   return aquiferVolFlux;
 }

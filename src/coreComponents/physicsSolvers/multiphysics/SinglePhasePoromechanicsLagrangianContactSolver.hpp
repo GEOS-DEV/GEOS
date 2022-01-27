@@ -122,6 +122,24 @@ public:
 
   arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
 
+  virtual real64
+  nonlinearImplicitStep( real64 const & time_n,
+                         real64 const & dt,
+                         integer const cycleNumber,
+                         DomainPartition & domain ) override;
+
+  virtual bool
+  lineSearch( real64 const & time_n,
+              real64 const & dt,
+              integer const cycleNumber,
+              DomainPartition & domain,
+              DofManager const & dofManager,
+              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+              ParallelVector & rhs,
+              ParallelVector & solution,
+              real64 const scaleFactor,
+              real64 & lastResidual ) override;
+
 protected:
 
   virtual void postProcessInput() override;
@@ -143,6 +161,7 @@ protected:
 
 private:
 
+  integer m_activeSetIter = 0;
   void createPreconditioner();
 
 };

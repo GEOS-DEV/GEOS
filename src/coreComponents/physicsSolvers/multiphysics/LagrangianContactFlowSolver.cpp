@@ -534,8 +534,8 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
     if( !isNewtonConverged )
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
-      if (stepDt >= 0.25)
-        stepDt *= dtCutFactor;
+      // if (stepDt >= 0.25)
+      stepDt *= dtCutFactor;
       GEOSX_LOG_LEVEL_RANK_0 ( 1, "New dt = " <<  stepDt );
     }
     if( isActiveSetConverged )
