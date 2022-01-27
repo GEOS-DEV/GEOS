@@ -199,7 +199,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
       {
         arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
         double * max_pres = std::max_element(pres.begin(), pres.end());
-        std::cout << "max pres " << * max_pres << std::endl;
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max pres {:15.6e}", * max_pres ) );
       }
     } );
   } );
@@ -207,7 +207,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
   NodeManager & nodeManager = mesh.getNodeManager();
   arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
   double * min_disp = std::min_element(disp.begin(), disp.end());
-  std::cout << "min disp " << * min_disp << std::endl;
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", * min_disp ) );
   // end Laura
 
 }

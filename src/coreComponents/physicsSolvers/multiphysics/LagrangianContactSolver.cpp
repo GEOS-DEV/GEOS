@@ -277,35 +277,36 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
         {
           maxNormFT = normForceT;
         }
-        if( maxNormFN < abs(traction[kfe][0]) )
+        if( maxNormFN < std::abs(traction[kfe][0]) )
         {
-          maxNormFN = abs(traction[kfe][0]);
+          maxNormFN = std::abs(traction[kfe][0]);
         }
         real64 const area = faceArea[kfe];
 	sumarea += area;
         if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
         {
 	  area_slip += area;
+	  Jmean += normD*area;
 	}
-	Jmean += normD*area;
 	FTmean += normForceT*area;
-	FNmean += abs(traction[kfe][0])*area;
+	FNmean += std::abs(traction[kfe][0])*area;
       } );
-      if( abs( area_slip ) > 0 )
+      if( std::abs( area_slip ) > 0 )
       {
         Jmean /= area_slip;
       }
-      if( abs( sumarea ) > 0 )
+      if( std::abs( sumarea ) > 0 )
       {
         FTmean /= sumarea;
         FNmean /= sumarea;
       }
-      std::cout << "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump " << maxNorm << std::endl;
-      std::cout << "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T " << maxNormFT << std::endl;
-      std::cout << "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N " << maxNormFN << std::endl;
-      std::cout << "mean disp jump " << Jmean << std::endl;
-      std::cout << "mean force T " << FTmean << std::endl;
-      std::cout << "mean force N " << FNmean << std::endl;
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T {:15.6e}", maxNormFT ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N {:15.6e}", maxNormFN ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force T {:15.6e}", FTmean ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force N {:15.6e}", FNmean ) );
       // end Laura
     }
   } );

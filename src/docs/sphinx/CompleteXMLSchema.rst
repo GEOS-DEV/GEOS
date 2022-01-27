@@ -211,19 +211,18 @@ Element: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
-<<<<<<< HEAD
 .. _XML_ConstantPlusParallelPlatesPermeability:
 
 Element: ConstantPlusParallelPlatesPermeability
 ===============================================
 .. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability.rst
-=======
+
+
 .. _XML_ConstantThermalConductivity:
 
 Element: ConstantThermalConductivity
 ====================================
 .. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
->>>>>>> origin/develop
 
 
 .. _XML_Constitutive:
@@ -1224,19 +1223,18 @@ Datastructure: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
 
 
-<<<<<<< HEAD
 .. _DATASTRUCTURE_ConstantPlusParallelPlatesPermeability:
 
 Datastructure: ConstantPlusParallelPlatesPermeability
 =====================================================
 .. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability_other.rst
-=======
+
+
 .. _DATASTRUCTURE_ConstantThermalConductivity:
 
 Datastructure: ConstantThermalConductivity
 ==========================================
 .. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
->>>>>>> origin/develop
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -2049,20 +2047,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_cellBlocksKey:
-
-Datastructure: cellBlocksKey
-============================
-.. include:: ../../coreComponents/schema/docs/cellBlocksKey_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
