@@ -43,8 +43,8 @@ struct PureWaterProperties
    * @return a pointer to the newly created TableFunction
    */
   static
-  TableFunction const * makeViscosityTable( string const & functionName,
-                                            FunctionManager & functionManager );
+  TableFunction const * makeSaturationViscosityTable( string const & functionName,
+                                                      FunctionManager & functionManager );
 
   /**
    * @brief Creates a table of pure water saturation density [kg/m^3] as a function of temperature [degC]

@@ -30,8 +30,8 @@ namespace PVTProps
 {
 
 TableFunction const *
-PureWaterProperties::makeViscosityTable( string const & functionName,
-                                         FunctionManager & functionManager )
+PureWaterProperties::makeSaturationViscosityTable( string const & functionName,
+                                                   FunctionManager & functionManager )
 {
   array1d< array1d< real64 > > temperatures;
   array1d< real64 > viscosities;
