@@ -7,7 +7,6 @@ Neighbors        std_vector< geosx_NeighborCommunicator, std_allocator< geosx_Ne
 partitionManager geosx_PartitionBase                                                                   (no description available)        
 Constitutive     node                                                                                  :ref:`DATASTRUCTURE_Constitutive` 
 MeshBodies       node                                                                                  :ref:`DATASTRUCTURE_MeshBodies`   
-cellManager      node                                                                                  :ref:`DATASTRUCTURE_cellManager`  
 ================ ===================================================================================== ================================= 
 
 

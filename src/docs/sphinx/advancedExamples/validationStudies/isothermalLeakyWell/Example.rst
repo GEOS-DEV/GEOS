@@ -104,7 +104,7 @@ permeability and therefore the rock models are not the same in the aquifers (``r
 and in the wells (``rockWell``).
 These names are defined in the **Constitutive** block.
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_ELEMENT_REGIONS -->
     :end-before: <!-- SPHINX_ELEMENT_REGIONS_END -->
@@ -124,7 +124,7 @@ Flow solver
 The isothermal immiscible simulation is performed by the GEOSX general-purpose multiphase
 flow solver based on a TPFA discretization defined in the XML block **CompositionalMultiphaseFVM**:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_SOLVER -->
     :end-before: <!-- SPHINX_SOLVER_END -->
@@ -151,7 +151,7 @@ although this model was initially developed for simple isothermal oil-water or o
 (note that this is also the approach used for the Eclipse simulator, as documented in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__). 
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_FLUID -->
     :end-before: <!-- SPHINX_FLUID_END -->
@@ -176,7 +176,7 @@ This is specified using the **HydrostaticEquilibrium** XML tag in the **FieldSpe
 The datum pressure and elevation used below are defined in
 `(Class et al., 2009) <https://link.springer.com/article/10.1007/s10596-009-9146-x>`__).
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_HYDROSTATIC -->
     :end-before: <!-- SPHINX_HYDROSTATIC_END -->
@@ -191,7 +191,7 @@ in :ref:`EquilibriumInitialCondition`.
 To impose the Dirichlet boundary conditions on the four sides of the aquifers, we use this simple
 table-based approach as shown below:
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_DIRICHLET_BC -->
     :end-before: <!-- SPHINX_DIRICHLET_BC_END -->
@@ -204,7 +204,7 @@ To reproduce the behavior of a rate-controlled well, we use the **SourceFlux** t
 ``source`` set (located in the ``injectionWell`` cell element regions), with the injection rate
 specified in the benchmark description (8.87 kg/s):
 
-.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_benchmark.xml
+.. literalinclude:: ../../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/isothermalLeakyWell/isothermalLeakyWell_base_iterative.xml
     :language: xml
     :start-after: <!-- SPHINX_SOURCE_BC -->
     :end-before: <!-- SPHINX_SOURCE_BC_END -->

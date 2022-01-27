@@ -1993,20 +1993,6 @@ Datastructure: WellElementRegionuniqueSubRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
 
 
-.. _DATASTRUCTURE_cellBlocksKey:
-
-Datastructure: cellBlocksKey
-============================
-.. include:: ../../coreComponents/schema/docs/cellBlocksKey_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
-
-
 .. _DATASTRUCTURE_commandLine:
 
 Datastructure: commandLine
