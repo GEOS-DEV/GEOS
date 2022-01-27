@@ -14,7 +14,9 @@
 
 // Source includes
 #include "codingUtilities/UnitTestUtilities.hpp"
+#include "common/DataTypes.hpp"
 #include "constitutiveTestHelpers.hpp"
+#include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 #include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -457,34 +459,39 @@ void testValuesAgainstPreviousImplementation( TBL_WRAPPER const & relpermTblWrap
                                               real64 const & oldImplValue_nw,
                                               real64 const relTol )
 {
-  static localIndex const MAX_PHASE = 2;
+  static localIndex const numPhases = 2;
 
   static localIndex const ipWetting = 0;
   static localIndex const ipNonWetting = 1;
 
-  stackArray1d< real64, MAX_PHASE > phaseVolFraction( MAX_PHASE );
-  phaseVolFraction[0] = 1. - sat_nw;
-  phaseVolFraction[1] = sat_nw;
-  stackArray1d< real64, MAX_PHASE > phaseMaxHistoricalVolFraction( MAX_PHASE );
-  phaseMaxHistoricalVolFraction[0] = 1.;
-  phaseMaxHistoricalVolFraction[1] = shy;
-  stackArray1d< real64, MAX_PHASE > phaseMinHistoricalVolFraction( MAX_PHASE );
-  phaseMinHistoricalVolFraction[0] = 1. - shy;
-  phaseMinHistoricalVolFraction[1] = 0.;
-  stackArray1d< real64, MAX_PHASE > phaseRelPerm( MAX_PHASE );
-  stackArray2d< real64, MAX_PHASE*MAX_PHASE > dPhaseRelPerm_dPhaseVolFrac( MAX_PHASE, MAX_PHASE );
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > phaseVolFraction( 1, numPhases );
+  phaseVolFraction[0][0] = 1. - sat_nw;
+  phaseVolFraction[0][1] = sat_nw;
+
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction( 1, numPhases );
+  phaseMaxHistoricalVolFraction[0][0] = 1.;
+  phaseMaxHistoricalVolFraction[0][1] = shy;
+
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > phaseMinHistoricalVolFraction( 1, numPhases );
+  phaseMinHistoricalVolFraction[0][0] = 1. - shy;
+  phaseMinHistoricalVolFraction[0][1] = 0.;
+
+  StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM > phaseRelPerm( 1, 1, numPhases );
+  
+  StackArray< real64, 4, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES * constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm_dPhaseVolFrac( 1, 1, numPhases, numPhases );
+  
 
 
-  relpermTblWrapper.computeTwoPhase( ipWetting,
-                   ipNonWetting,
-                   phaseVolFraction,
-                   phaseMaxHistoricalVolFraction,
-                   phaseMinHistoricalVolFraction,
-                   phaseRelPerm,
-                   dPhaseRelPerm_dPhaseVolFrac );
+   relpermTblWrapper.computeTwoPhase( ipWetting,
+                    ipNonWetting,
+                    phaseVolFraction[0],
+                    phaseMaxHistoricalVolFraction[0],
+                    phaseMinHistoricalVolFraction[0],
+                    phaseRelPerm[0][0],
+                    dPhaseRelPerm_dPhaseVolFrac[0][0] );
 
-    checkRelativeError( phaseRelPerm[ipWetting], oldImplValue_w, relTol );
-    checkRelativeError( phaseRelPerm[ipNonWetting], oldImplValue_nw, relTol );
+  checkRelativeError( phaseRelPerm[0][0][ipWetting], oldImplValue_w, relTol );
+  checkRelativeError( phaseRelPerm[0][0][ipNonWetting], oldImplValue_nw, relTol );
 }
 
 //template< typename TBL_WRAPPER >
@@ -560,29 +567,29 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
   initialize( makeTableRelPermHysteresisTwoPhase("relPerm", m_parent) );
   auto relpermTblWrapper = m_model->createKernelWrapper();
   // all sat are nonwetting sat
-  for( localIndex count = 0; count < 4; ++count )
+  for( localIndex count = 0; count < 3; ++count )
   {
     //drainage
-    for( localIndex isat = 0; isat < ninc; ++isat )
-    {
-      if(sg_inc[isat] > shy[count]) break; // exit as the drainage bounding is not scanned anymore
+      for( localIndex isat = 0; isat < ninc; ++isat )
+      {
+        if(sg_inc[isat] > shy[count]) break; // exit as the drainage bounding is not scanned anymore
 
-      testValuesAgainstPreviousImplementation( relpermTblWrapper,
-                                               sg_inc[isat], sg_inc[isat],
-                                               drainage_w_values[isat], drainage_g_values[isat],
-                                               relTol );
+        testValuesAgainstPreviousImplementation( relpermTblWrapper,
+                                                 sg_inc[isat], sg_inc[isat],
+                                                 drainage_w_values[isat], drainage_g_values[isat],
+                                                 relTol );
 
 
-    }
+     }
     //imbibition
-    for( localIndex isat = off[count]; isat < ndsc; ++isat )
-    {
-      testValuesAgainstPreviousImplementation( relpermTblWrapper,
-                                               sg_dsc[isat], shy[count],
-                                               scanning_w_i[count][isat], scanning_g_i[count][isat],
-                                               relTol );
+     for( localIndex isat = off[count]; isat < ndsc; ++isat )
+     {
+       testValuesAgainstPreviousImplementation( relpermTblWrapper,
+                                                sg_dsc[isat], shy[count],
+                                                scanning_w_i[count][isat], scanning_g_i[count][isat],
+                                                relTol );
 
-    }
+     }
   }
 
 }
