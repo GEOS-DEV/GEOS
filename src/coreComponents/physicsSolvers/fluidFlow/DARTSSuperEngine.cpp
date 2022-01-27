@@ -189,6 +189,19 @@ void DARTSSuperEngine::postProcessInput()
                          "The maximum absolute change in component fraction must larger or equal to 0.0" );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
+
+  // Equations: [NC] Molar mass balance, ([1] energy balance if enabled)
+  // Primary variables: [1] pressure, [NC-1] global component fractions, ([1] temperature)
+  m_numDofPerCell = m_numComponents + m_enableEnergyBalance;
+
+  m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
+
+  GEOSX_ERROR_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->getNumDims(),
+                         "The number of degrees of freedom per element used in solver and table should match" );
+
+  GEOSX_ERROR_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->getNumOps(),
+                         "The number of operators per element used in solver and table should match" );
+
 }
 
 void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
@@ -200,19 +213,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
   DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
-  // Equations: [NC] Molar mass balance, ([1] energy balance if enabled)
-  // Primary variables: [1] pressure, [NC-1] global component fractions, ([1] temperature)
-  m_numDofPerCell = m_numComponents + m_enableEnergyBalance;
 
-  m_numOBLOperators = m_numDofPerCell /*accumulation*/ +
-                      m_numDofPerCell * m_numPhases /*flux*/ +
-                      m_numPhases /*up_constant*/ +
-                      m_numDofPerCell * m_numPhases /*gradient*/ +
-                      m_numDofPerCell /*kinetic rate*/ +
-                      2 /*rock internal energy and conduction*/ +
-                      2 * m_numPhases /*gravity and capillarity*/ +
-                      1 /*rock porosity*/ +
-                      1;
 
   // 2. Register and resize all fields as necessary
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
@@ -236,10 +237,9 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< OBLOperatorDerivatives >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numOBLOperators, m_numDofPerCell );
 
-      if( m_enableEnergyBalance )
-      {
-        subRegion.registerExtrinsicData< deltaTemperature >( getName() );
-      }
+      // we need to register this fiels in any case (if energy balance is enabled or not)
+      // to be able to pass the view to OBLOperatorsKernel
+      subRegion.registerExtrinsicData< deltaTemperature >( getName() );
 
       // The resizing of the arrays needs to happen here, before the call to initializePreSubGroups,
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
@@ -247,12 +247,10 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
         setDimLabels( 1, m_componentNames ).
         reference().resizeDimension< 1 >( m_numComponents );
 
-      // for single component problems (e.g., geothermal), global component fraction is not a primary variable
-      if( m_numComponents > 1 )
-      {
-        subRegion.registerExtrinsicData< deltaGlobalCompFraction >( getName() ).
-          reference().resizeDimension< 1 >( m_numComponents );
-      }
+      // we need to register this fiels in any case (if there is a single component or not)
+      // to be able to pass the view to OBLOperatorsKernel
+      subRegion.registerExtrinsicData< deltaGlobalCompFraction >( getName() ).
+        reference().resizeDimension< 1 >( m_numComponents );
 
     } );
 
@@ -1006,7 +1004,8 @@ void DARTSSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 
   OBLOperatorsKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
-                                               m_numDofPerCell,
+                                               m_numComponents,
+                                               m_enableEnergyBalance,
                                                dataGroup,
                                                *m_OBLOperatorsTable );
 
@@ -1023,6 +1022,7 @@ void DARTSSuperEngine::updateState( DomainPartition & domain )
     updatePorosityAndPermeability( subRegion, targetIndex );
   } );
 }
+
 
 
 //START_SPHINX_INCLUDE_01

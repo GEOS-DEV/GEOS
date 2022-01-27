@@ -42,6 +42,32 @@ using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+
+// The number of operators in use depends on:
+// 1. Number of phases
+// 2. Number of components
+// 3. Features required in simulation (now its only one - ENergy balance)
+// This number needs to be used in solver and in kernels (as a template parameter)
+// IMHO, this number is too big ( order of 10-100) to be treated via a kernelLaunchSelectorSwitch construct
+// Hence, a way to define it once and for all is needed.
+// Could be constexpr member of solver, but passing constexpr lambdas require -std=c++17
+
+constexpr integer COMPUTE_NUM_OPS ( integer const NP, integer const NC, bool ENERGY )
+{
+  auto DOF = NC + ENERGY;
+  return DOF /*accumulation*/ +
+         DOF * NP /*flux*/ +
+         NP /*up_constant*/ +
+         DOF * NP /*gradient*/ +
+         DOF /*kinetic rate*/ +
+         2 /*rock internal energy and conduction*/ +
+         2 * NP /*gravity and capillarity*/ +
+         1 /*rock porosity*/ +
+         1;
+}
+
+
+
 /******************************** PropertyKernelBase ********************************/
 
 /**
@@ -115,43 +141,56 @@ namespace internal
 // template< integer NUM_COMP, typename LAMBDA >
 // void kernelLaunchSelectorOpSwitch( T value, LAMBDA && lambda )
 
-template< integer NUM_PHASES, typename T, typename LAMBDA >
-void kernelLaunchSelectorDofSwitch( T numDofs, LAMBDA && lambda )
+template< bool ENABLE_ENERGY, integer NUM_PHASES, typename T, typename LAMBDA >
+void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
 {
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorDofSwitch: type should be integral" );
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorCompSwitch: type should be integral" );
 
-  switch( numDofs )
+  switch( numComps )
   {
     case 1:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 1 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 1 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
     case 2:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 2 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 2 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
     case 3:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 3 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 3 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
     case 4:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 4 >() ); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 4 >(), std::integral_constant< bool, ENABLE_ENERGY >() ); return; }
     case 5:
-    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >()); return; }
+    { lambda( std::integral_constant< T, NUM_PHASES >(), std::integral_constant< T, 5 >(), std::integral_constant< bool, ENABLE_ENERGY >()); return; }
     default:
-    { GEOSX_ERROR( "Unsupported number of Dofs: " << numDofs ); }
+    { GEOSX_ERROR( "Unsupported number of components: " << numComps ); }
   }
 }
 
-template< typename T, typename LAMBDA >
-void kernelLaunchSelectorPhaseDofSwitch( T numPhases, T numDofs, LAMBDA && lambda )
+template< bool ENABLE_ENERGY, typename T, typename LAMBDA >
+void kernelLaunchSelectorPhaseSwitch( T numPhases, T numComps, LAMBDA && lambda )
 {
-  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseDofSwitch: type should be integral" );
+  static_assert( std::is_integral< T >::value, "kernelLaunchSelectorPhaseSwitch: type should be integral" );
 
   switch( numPhases )
   {
     case 1:
-    { kernelLaunchSelectorDofSwitch< 1 >( numDofs, lambda ); return; }
+    { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 1 >( numComps, lambda ); return; }
     case 2:
-    { kernelLaunchSelectorDofSwitch< 2 >( numDofs, lambda ); return; }
+    { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 2 >( numComps, lambda ); return; }
     case 3:
-    { kernelLaunchSelectorDofSwitch< 3 >( numDofs, lambda ); return; }
+    { kernelLaunchSelectorCompSwitch< ENABLE_ENERGY, 3 >( numComps, lambda ); return; }
     default:
     { GEOSX_ERROR( "Unsupported number of phases: " << numPhases ); }
+  }
+}
+
+template< typename T, typename LAMBDA >
+void kernelLaunchSelectorEnergySwitch( T numPhases, T numComps, bool enableEnergyBalance, LAMBDA && lambda )
+{
+  if( enableEnergyBalance )
+  {
+    kernelLaunchSelectorPhaseSwitch< true >( numPhases, numComps, lambda );
+  }
+  else
+  {
+    kernelLaunchSelectorPhaseSwitch< false >( numPhases, numComps, lambda );
   }
 }
 
@@ -166,15 +205,22 @@ void kernelLaunchSelectorPhaseDofSwitch( T numPhases, T numDofs, LAMBDA && lambd
  * @tparam NUM_OPS number of degrees of freedom
  * @brief Compute OBL Operators and derivatives for specified region
  */
-template< integer NUM_DIMS, integer NUM_OPS >
+template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY >
 class OBLOperatorsKernel
 {
 public:
+  /// Compile time value for the energy balance switch
+  static constexpr integer enableEnergyBalance = ENABLE_ENERGY;
+  /// Compile time value for the number of components
+  static constexpr integer numComps = NUM_COMPS;
 
   /// Compile time value for the number of dimensions
-  static constexpr integer numDims = NUM_DIMS;
-  /// Compile time value for the number of operators
-  static constexpr integer numOps = NUM_OPS;
+  static constexpr integer numDims = numComps + enableEnergyBalance;
+  // /// Compile time value for the number of operators
+  static constexpr integer numOps = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
+
+  static constexpr real64 barToPascalMult = 1e5;
+  static constexpr real64 pascalToBarMult = 1 / 1e5;
 
   /**
    * @brief Performs the kernel launch
@@ -200,12 +246,15 @@ public:
    * @param[in] fluid the fluid model
    */
   OBLOperatorsKernel( ObjectManagerBase & subRegion,
-                      MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > OBLOperatorsTable )
+                      MultivariableTableFunctionStaticKernel< numDims, numOps > OBLOperatorsTable )
     :
     m_OBLOperatorsTable( OBLOperatorsTable ),
     m_pressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
     m_temperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
+    m_dPressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
+    m_dCompFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >() ),
+    m_dTemperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >() ),
     m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
     m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >())
   {}
@@ -220,18 +269,23 @@ public:
   void compute( localIndex const ei ) const
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
+    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompFrac = m_dCompFrac[ei];
     arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const OBLVals = m_OBLOperatorValues[ei];
     arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const OBLDers = m_OBLOperatorDerivatives[ei];
-    // arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
-    // arraySlice1d< real64, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
-    // arraySlice2d< real64, compflow::USD_COMP_DC - 2 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     real64 state[numDims];
-    state[0] = m_pressure[ei];
-    printf ( "%ld: %lf,", ei, state[0] );
-    for( integer i = 1; i < numDims - 1; i++ )
+
+    // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
+    state[0] = (m_pressure[ei] + m_dPressure[ei]) * pascalToBarMult;
+
+    for( integer i = 1; i < numComps - 1; i++ )
     {
-      state[i] = compFrac[i - 1];
-      printf ( " %lf,", state[i] );
+      state[i] = compFrac[i - 1] + dCompFrac[i - 1];
+      //printf ( " %lf,", state[i] );
+    }
+
+    if( enableEnergyBalance )
+    {
+      state[numDims - 1] = (m_temperature[ei] + m_dTemperature[ei]);
     }
 
     printf ( "\n Ops before:\n" );
@@ -247,6 +301,12 @@ public:
 
 
     m_OBLOperatorsTable.compute( state, OBLVals.dataIfContiguous(), OBLDers.dataIfContiguous() );
+    for( integer i = 0; i < numOps; i++ )
+    {
+      // perform pressure unit conversion back
+      OBLDers[i][0] *= barToPascalMult;
+    }
+
     printf ( "\n Ops after:\n" );
     for( integer i = 0; i < numOps; i++ )
     {
@@ -255,8 +315,11 @@ public:
       {
         printf ( " %lf,", OBLDers[i][j] );
       }
+      // perform conversion back
+      OBLDers[i][0] *= barToPascalMult;
       printf ( "]\n" );
     }
+
 
     // for( integer ic = 0; ic < numComp; ++ic )
     // {
@@ -281,12 +344,16 @@ public:
 protected:
 
   // inputs
-  MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > m_OBLOperatorsTable;
+  MultivariableTableFunctionStaticKernel< numDims, numOps > m_OBLOperatorsTable;
 
-  // Views on component densities
+  // Views on primary variables and their updates
   arrayView1d< real64 const > m_pressure;
   arrayView2d< real64 const, compflow::USD_COMP > m_compFrac;
   arrayView1d< real64 const > m_temperature;
+
+  arrayView1d< real64 const > m_dPressure;
+  arrayView2d< real64 const, compflow::USD_COMP > m_dCompFrac;
+  arrayView1d< real64 const > m_dTemperature;
 
   // outputs
 
@@ -314,34 +381,30 @@ public:
   template< typename POLICY >
   static void
   createAndLaunch( integer const numPhases,
-                   integer const numDofs,
+                   integer const numComponents,
+                   bool const enableEnergyBalance,
                    ObjectManagerBase & subRegion,
                    MultivariableTableFunction const & function )
   {
-    internal::kernelLaunchSelectorPhaseDofSwitch( numPhases, numDofs, [&] ( auto NPHASES, auto ND )
+    internal::kernelLaunchSelectorEnergySwitch( numPhases, numComponents, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
     {
-      integer constexpr NUM_PHASES = NPHASES();
-      integer constexpr NUM_DIMS = ND();
-      integer constexpr NUM_OPS =  NUM_DIMS /*accumulation*/ +
-                                  NUM_DIMS * NUM_PHASES /*flux*/ +
-                                  NUM_PHASES /*up_constant*/ +
-                                  NUM_DIMS * NUM_PHASES /*gradient*/ +
-                                  NUM_DIMS /*kinetic rate*/ +
-                                  2 /*rock internal energy and conduction*/ +
-                                  2 * NUM_PHASES /*gravity and capillarity*/ +
-                                  1 /*rock porosity*/ +
-                                  1;
+      integer constexpr ENABLE_ENERGY = E();
+      integer constexpr NUM_PHASES = NP();
+      integer constexpr NUM_COMPS = NC();
+      integer constexpr NUM_DIMS = ENABLE_ENERGY + NUM_COMPS;
+      integer constexpr NUM_OPS  = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
-      OBLOperatorsKernel< NUM_DIMS, NUM_OPS > kernel( subRegion,
-                                                      MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS >( function.getAxisMinimums(),
-                                                                                                                   function.getAxisMaximums(),
-                                                                                                                   function.getAxisPoints(),
-                                                                                                                   function.getAxisSteps(),
-                                                                                                                   function.getAxisStepInvs(),
-                                                                                                                   function.getAxisHypercubeMults(),
-                                                                                                                   function.getHypercubeData()
-                                                                                                                   ) );
-      OBLOperatorsKernel< NUM_DIMS, NUM_OPS >::template launch< POLICY >( subRegion.size(), kernel );
+      OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
+      kernel( subRegion,
+              MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS >( function.getAxisMinimums(),
+                                                                           function.getAxisMaximums(),
+                                                                           function.getAxisPoints(),
+                                                                           function.getAxisSteps(),
+                                                                           function.getAxisStepInvs(),
+                                                                           function.getAxisHypercubeMults(),
+                                                                           function.getHypercubeData()
+                                                                           ) );
+      OBLOperatorsKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
     } );
   }
 

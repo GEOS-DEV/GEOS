@@ -164,6 +164,12 @@ public:
    */
   arrayView1d< real64 const > getHypercubeData() const { return m_hypercubeData.toViewConst(); }
 
+
+  integer  getNumDims() const {return m_numDims;};
+
+
+  integer  getNumOps()    const {return m_numOps;};
+
 private:
 
   /**
