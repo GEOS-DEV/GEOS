@@ -637,9 +637,9 @@ void testMutivariableFunction( MultivariableTableFunction & function,
   ASSERT_EQ( numElems * NUM_OPS, expectedValues.size());
 
   real64_array evaluatedValues( numElems * NUM_OPS );
-  real64_array evaluatedDerivatives( numElems * NUM_OPS * NUM_OPS );
-  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView(),
-                        evaluatedDerivativesView = evaluatedDerivatives.toView();
+  real64_array2d evaluatedDerivatives( numElems * NUM_OPS, NUM_DIMS );
+  arrayView1d< real64 > evaluatedValuesView = evaluatedValues.toView();
+  arrayView2d< real64 > evaluatedDerivativesView = evaluatedDerivatives.toView();
 
 
   MultivariableTableFunctionStaticKernel< NUM_DIMS, NUM_OPS > kernel( function.getAxisMinimums(),
@@ -650,35 +650,44 @@ void testMutivariableFunction( MultivariableTableFunction & function,
                                                                       function.getAxisHypercubeMults(),
                                                                       function.getHypercubeData()
                                                                       );
-  // Test values evalutation first
+  // Test values evaluation first
   forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
     kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS] );
   } );
 
-  forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
   {
-    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], valuesTolerance );
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
   } );
 
   // And now - both values and derivatives
   forAll< parallelDevicePolicy< > >( numElems, [=] GEOSX_HOST_DEVICE
                                        ( localIndex const elemIndex )
   {
-    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS], &evaluatedDerivativesView[elemIndex * NUM_OPS * NUM_DIMS] );
+    // use local 2D array for the kernel
+    real64 derivatives[NUM_OPS][NUM_DIMS];
+
+    kernel.compute( &inputs[elemIndex * NUM_DIMS], &evaluatedValuesView[elemIndex * NUM_OPS], derivatives );
+
+    // now copy results to the view
+    for( auto i = 0; i < NUM_OPS; i++ )
+      for( auto j = 0; j < NUM_DIMS; j++ )
+        evaluatedDerivativesView[elemIndex * NUM_OPS + i][j] = derivatives[i][j];
   } );
 
   // Perform checks.
-  forAll< serialPolicy >( numElems, [=] ( localIndex const elemIndex )
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
   {
-    ASSERT_NEAR( expectedValues[elemIndex], evaluatedValuesView[elemIndex], valuesTolerance );
+    ASSERT_NEAR( expectedValues[elemOpIndex], evaluatedValuesView[elemOpIndex], valuesTolerance );
   } );
 
   // Perform checks.
-  forAll< serialPolicy >( numElems * NUM_DIMS, [=] ( localIndex const elemDerivIndex )
+  forAll< serialPolicy >( numElems * NUM_OPS, [=] ( localIndex const elemOpIndex )
   {
-    ASSERT_NEAR( expectedDerivatives[elemDerivIndex], evaluatedDerivativesView[elemDerivIndex], derivativesTolerance );
+    for( auto j = 0; j < NUM_DIMS; j++ )
+      ASSERT_NEAR( expectedDerivatives[elemOpIndex * NUM_DIMS + j], evaluatedDerivativesView[elemOpIndex][j], derivativesTolerance );
   } );
 }
 
@@ -812,7 +821,7 @@ TEST( FunctionTests, 2DMultivariableTable )
   }
 
 
-  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-3, 1e-2 );
+  testMutivariableFunction< nDims, nOps >( table_g, testCoordinates, testExpectedValues, testExpectedDerivatives, 1e-2, 2e-2 );
 }
 
 TEST( FunctionTests, MultivariableTableFromFile )

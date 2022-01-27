@@ -91,10 +91,11 @@ public:
  * @param[out] values interpolated operator values
  * @param[out] derivatives derivatives of interpolated operators
  */
+  template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
   void
-  compute( real64 const * const coordinates,
-           real64 * const LVARRAY_RESTRICT values ) const
+  compute( IN_ARRAY const & coordinates,
+           OUT_ARRAY && values ) const
   {
     globalIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
@@ -123,11 +124,12 @@ public:
    * @param[out] values interpolated operator values
    * @param[out] derivatives derivatives of interpolated operators
    */
+  template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
   GEOSX_HOST_DEVICE
   void
-  compute( real64 const * const coordinates,
-           real64 * const LVARRAY_RESTRICT values,
-           real64 * const LVARRAY_RESTRICT derivatives ) const
+  compute( IN_ARRAY const & coordinates,
+           OUT_ARRAY && values,
+           OUT_2D_ARRAY && derivatives ) const
   {
     globalIndex hypercubeIndex = 0;
     real64 axisLows[numDims];
@@ -231,15 +233,16 @@ protected:
    * @param[out] values interpolated operator values
    * @param[out] derivatives derivatives of interpolated operators
    */
+  template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
   inline
   void
-  interpolatePoint( real64 const * const axisCoordinates,
+  interpolatePoint( IN_ARRAY const & axisCoordinates,
                     real64 const * const hypercubeData,
                     real64 const * const axisLows,
                     real64 const * const axisMults,
                     real64 const * const axisStepInvs,
-                    real64 * const LVARRAY_RESTRICT values ) const
+                    OUT_ARRAY && values ) const
   {
     integer pwr = numVerts / 2;   // distance between high and low values
     real64 workspace[numVerts][numOps];
@@ -285,16 +288,17 @@ protected:
    * @param[out] values interpolated operator values
    * @param[out] derivatives derivatives of interpolated operators
    */
+  template< typename IN_ARRAY, typename OUT_ARRAY, typename OUT_2D_ARRAY >
   GEOSX_HOST_DEVICE
   inline
   void
-  interpolatePointWithDerivatives( real64 const * const axisCoordinates,
+  interpolatePointWithDerivatives( IN_ARRAY const & axisCoordinates,
                                    real64 const * const hypercubeData,
                                    real64 const * const axisLows,
                                    real64 const * const axisMults,
                                    real64 const * const axisStepInvs,
-                                   real64 * const LVARRAY_RESTRICT values,
-                                   real64 * const LVARRAY_RESTRICT derivatives ) const
+                                   OUT_ARRAY && values,
+                                   OUT_2D_ARRAY && derivatives ) const
   {
     integer pwr = numVerts / 2;   // distance between high and low values
     real64 workspace[2 * numVerts - 1][numOps];
@@ -343,7 +347,7 @@ protected:
       values[op] = workspace[0][op];
       for( integer i = 0; i < numDims; ++i )
       {
-        derivatives[op * numDims + i] = workspace[2 * numVerts - (numVerts >> i)][op];
+        derivatives[op][i] = workspace[2 * numVerts - (numVerts >> i)][op];
       }
     }
   }

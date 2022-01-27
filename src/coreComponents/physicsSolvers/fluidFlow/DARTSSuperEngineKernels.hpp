@@ -270,8 +270,8 @@ public:
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompFrac = m_dCompFrac[ei];
-    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const OBLVals = m_OBLOperatorValues[ei];
-    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const OBLDers = m_OBLOperatorDerivatives[ei];
+    arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & OBLVals = m_OBLOperatorValues[ei];
+    arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
     real64 state[numDims];
 
     // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
@@ -300,7 +300,7 @@ public:
     }
 
 
-    m_OBLOperatorsTable.compute( state, OBLVals.dataIfContiguous(), OBLDers.dataIfContiguous() );
+    m_OBLOperatorsTable.compute( state, OBLVals, OBLDers );
     for( integer i = 0; i < numOps; i++ )
     {
       // perform pressure unit conversion back
