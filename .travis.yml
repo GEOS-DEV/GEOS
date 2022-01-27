@@ -2,7 +2,7 @@ language: minimal
 
 env:
   global:
-  - GEOSX_TPL_TAG=latest
+  - GEOSX_TPL_TAG=173-714
   - secure: CGs2uH6efq1Me6xJWRr0BnwtwxoujzlowC4FHXHdWbNOkPsXf7nCgdaW5vthfD3bhnOeEUQSrfxdhTRtyU/NfcKLmKgGBnZOdUG4/JJK4gDSJ2Wp8LZ/mB0QEoODKVxbh+YtoAiHe3y4M9PGCs+wkNDw/3eEU00cK12DZ6gad0RbLjI3xkhEr/ZEZDZkcYg9yHAhl5bmpqoh/6QGnIg8mxIqdAtGDw+6tT0EgUqjeqc5bG5WwsamKzJItHSXD5zx8IJAlgDk4EzEGjZe0m56YnNfb9iwqqUsmL3Cuwgs7ByVDYw78JC5Kv42YqoxA5BxMT2mFsEe37TpYNXlzofU7ma2Duw9DGXWQd4IkTCcBxlyR0I0bfo0TmgO+y7PYG9lIyHPUkENemdozsZcWamqqkqegiEdRhDVYlSRo3mu7iCwTS6ZTALliVyEYjYxYb7oAnR3cNywXjblTCI8oKfgLSY+8WijM9SRl57JruIHLkLMCjmRI+cZBfv5tS2tYQTBPkygGrigrrN77ZiC7/TGyfggSN0+y0oYtOAgqEnBcKcreiibMW7tKcV2Z1RFD9ZvIkSc1EXLUPDP8FX1oyhmqBMqVo8LksrYLDJHQ05+F3YNgl2taSt7uMjQ4e8iZ3/IjFeMnbylDw+cj/RbS520HXsFPbWFm2Pb9pceA9n6GnY=
 
 # The integrated test repository contains large data (using git lfs) and we do not use them here.
@@ -26,7 +26,7 @@ geosx_linux_build: &geosx_linux_build
     # Optional BUILD_AND_TEST_ARGS to pass arguments to travis_build_and_test.sh script.
     #
     # We extract the location of the GEOSX_TPL from the container...
-  - GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:latest /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
+  - GEOSX_TPL_DIR=$(docker run --rm ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG} /bin/bash -c 'echo ${GEOSX_TPL_DIR}')
     # ... so we can install GEOSX alongside. This is assumed for bundling the binaries, so consider modifying with care.
   - GEOSX_DIR=${GEOSX_TPL_DIR}/../GEOSX-${TRAVIS_COMMIT:0:7}
     # We need to know where the code folder is mounted inside the container so we can run the script at the proper location!
@@ -48,7 +48,7 @@ geosx_linux_build: &geosx_linux_build
     -e ENABLE_HYPRE=${ENABLE_HYPRE:-OFF}
     -e ENABLE_HYPRE_CUDA=${ENABLE_HYPRE_CUDA:-OFF}
     -e ENABLE_TRILINOS=${ENABLE_TRILINOS:-ON}
-    ${DOCKER_REPOSITORY}:latest
+    ${DOCKER_REPOSITORY}:${GEOSX_TPL_TAG}
     ${TRAVIS_BUILD_DIR_MOUNT_POINT}/scripts/travis_build_and_test.sh ${BUILD_AND_TEST_ARGS};
 
 geosx_osx_build: &geosx_osx_build
@@ -218,7 +218,7 @@ jobs:
     name: Pecan GPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5, cuda 10.2.89p2)
     <<: *geosx_totalenergies_cluster_build
     env:
-    - DOCKER_REPOSITORY=han12/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
+    - DOCKER_REPOSITORY=geosx/pecan-gpu-gcc8.2.0-openmpi4.0.1-mkl2019.5-cuda10.2.89p2
     - CMAKE_BUILD_TYPE=Release
     - BUILD_AND_TEST_ARGS=--disable-unit-tests
     - HOST_CONFIG=host-configs/TOTAL/pecan-GPU.cmake
@@ -227,7 +227,7 @@ jobs:
     name: Pecan CPU (centos 7.7, gcc 8.2.0, open-mpi 4.0.1, mkl 2019.5)
     <<: *geosx_totalenergies_cluster_build
     env:
-    - DOCKER_REPOSITORY=han12/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
+    - DOCKER_REPOSITORY=geosx/pecan-cpu-gcc8.2.0-openmpi4.0.1-mkl2019.5
     - CMAKE_BUILD_TYPE=Release
     - HOST_CONFIG=host-configs/TOTAL/pecan-CPU.cmake
     - GCP_BUCKET=geosx/Pecan-CPU
@@ -235,7 +235,7 @@ jobs:
     name: Pangea 2 (centos 7.6, gcc 8.3.0, open-mpi 2.1.5, mkl 2019.3)
     <<: *geosx_totalenergies_cluster_build
     env:
-    - DOCKER_REPOSITORY=han12/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
+    - DOCKER_REPOSITORY=geosx/pangea2-gcc8.3.0-openmpi2.1.5-mkl2019.3
     - CMAKE_BUILD_TYPE=Release
     - GCP_BUCKET=geosx/Pangea2
     - ENABLE_HYPRE=ON
