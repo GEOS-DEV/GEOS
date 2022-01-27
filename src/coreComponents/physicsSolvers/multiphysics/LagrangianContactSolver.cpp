@@ -283,7 +283,8 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
         }
         real64 const area = faceArea[kfe];
 	sumarea += area;
-        if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
+        //if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
+	if( std::abs( normD ) > 1.e-4 )
         {
 	  area_slip += area;
 	  Jmean += normD*area;
@@ -300,7 +301,6 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
         FTmean /= sumarea;
         FNmean /= sumarea;
       }
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
       GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
       GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T {:15.6e}", maxNormFT ) );
       GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N {:15.6e}", maxNormFN ) );
