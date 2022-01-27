@@ -599,8 +599,8 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                         particleFluidAccessors.get< extrinsicMeshData::particlefluid::collisionFactor >(),
                         particleFluidAccessors.get< extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration >(),
                         flowAccessors.get< extrinsicMeshData::proppant::isProppantMobile >(),
-                        permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                        permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
+                        permAccessors.permeability(),
+                        permAccessors.permeabilityMultiplier(),
                         flowAccessors.get< extrinsicMeshData::elementAperture >(),
                         localMatrix,
                         localRhs );
@@ -914,13 +914,13 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
     FluxKernel::launchCellBasedFluxCalculation( stencilWrapper,
                                                 downVector,
-                                                flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                                flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                                slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::density >(),
-                                                slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::viscosity >(),
-                                                permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                                permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
-                                                flowAccessors.get< extrinsicMeshData::elementAperture >(),
+                                                flowAccessors.pressure(),
+                                                flowAccessors.gravityCoefficient(),
+                                                slurryFluidAccessors.density(),
+                                                slurryFluidAccessors.viscosity(),
+                                                permAccessors.permeability(),
+                                                permAccessors.permeabilityMultiplier(),
+                                                flowAccessors.elementAperture(),
                                                 cellBasedFluxAccessor.toNestedView() );
   } );
 

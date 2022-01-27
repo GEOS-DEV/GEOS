@@ -6,6 +6,7 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     fluidFlow/CellBasedFluxFlowAccessors.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
      fluidFlow/CompositionalMultiphaseBaseKernels.hpp

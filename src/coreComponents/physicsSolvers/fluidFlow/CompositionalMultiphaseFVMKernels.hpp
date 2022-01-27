@@ -26,6 +26,7 @@
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityAccessors.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -307,9 +308,7 @@ public:
     StencilAccessors< extrinsicMeshData::cappres::phaseCapPressure,
                       extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction >;
 
-  using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure >;
+  using PermeabilityAccessors = PermeabilityAccessorsImpl;
 
   /**
    * @brief Constructor for the kernel interface
@@ -1030,9 +1029,7 @@ struct CFLFluxKernel
                       extrinsicMeshData::multifluid::phaseMassDensity,
                       extrinsicMeshData::multifluid::phaseCompFraction >;
 
-  using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure >;
+  using PermeabilityAccessors = PermeabilityAccessorsImpl;
 
 
   using RelPermAccessors =

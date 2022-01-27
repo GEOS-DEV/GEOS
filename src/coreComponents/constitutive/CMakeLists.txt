@@ -21,13 +21,14 @@ set( constitutive_headers
      contact/CoulombContact.hpp
      contact/ContactSelector.hpp
      contact/FrictionlessContact.hpp
-     fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
+     fluid/BlackOilFluidBase.hpp
+     fluid/CellBasedFluxSlurryFluidAccessors.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
-     fluid/MultiFluidUtils.hpp
      fluid/MultiFluidExtrinsicData.hpp
+     fluid/MultiFluidUtils.hpp
      fluid/MultiPhaseMultiComponentFluid.hpp     
      fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
@@ -61,10 +62,11 @@ set( constitutive_headers
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
+     permeability/PermeabilityAccessors.hpp
      permeability/PermeabilityBase.hpp
-     permeability/PermeabilityExtrinsicData.hpp     
-     permeability/ProppantPermeability.hpp     
-     permeability/SlipDependentPermeability.hpp 
+     permeability/PermeabilityExtrinsicData.hpp
+     permeability/ProppantPermeability.hpp
+     permeability/SlipDependentPermeability.hpp
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp 

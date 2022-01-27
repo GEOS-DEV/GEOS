@@ -25,6 +25,7 @@
 #include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityAccessors.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
@@ -73,9 +74,7 @@ struct FluxKernel
     StencilAccessors< extrinsicMeshData::slurryfluid::density,
                       extrinsicMeshData::slurryfluid::dDensity_dPressure >;
 
-  using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure >;
+  using PermeabilityAccessors = PermeabilityAccessorsImpl;
 
   using ProppantPermeabilityAccessors =
     StencilAccessors< extrinsicMeshData::permeability::permeability,

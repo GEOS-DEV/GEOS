@@ -216,8 +216,8 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
                         fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
                         flowAccessors.get< extrinsicMeshData::flow::mobility >(),
                         flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                        permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                        permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+                        permAccessors.permeability(),
+                        permAccessors.dPerm_dPressure(),
                         localMatrix,
                         localRhs );
 
@@ -333,8 +333,8 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
                                        fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
                                        flowAccessors.get< extrinsicMeshData::flow::mobility >(),
                                        flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                       permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                       permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+                                       permAccessors.permeability(),
+                                       permAccessors.dPerm_dPressure(),
                                        dPerm_dDispJump.toNestedViewConst(),
                                        localMatrix,
                                        localRhs );
@@ -390,8 +390,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                    fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
                                    flowAccessors.get< extrinsicMeshData::flow::mobility >(),
                                    flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                   permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                   permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+                                   permAccessors.permeability(),
+                                   permAccessors.dPerm_dPressure(),
                                    dPerm_dDispJump.toNestedViewConst(),
                                    localMatrix,
                                    localRhs,

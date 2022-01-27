@@ -21,12 +21,15 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "constitutive/fluid/ParticleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/fluid/CellBasedFluxSlurryFluidAccessors.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
+#include "constitutive/permeability/PermeabilityAccessors.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CellBasedFluxFlowAccessors.hpp"
 #include "physicsSolvers/fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
@@ -184,10 +187,7 @@ struct FluxKernel
                       extrinsicMeshData::proppant::deltaProppantConcentration,
                       extrinsicMeshData::proppant::isProppantMobile >;
 
-  using CellBasedFluxFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient,
-                      extrinsicMeshData::elementAperture >;
+  using CellBasedFluxFlowAccessors = CellBasedFluxFlowAccessorsImpl;
 
   using ParticleFluidAccessors =
     StencilAccessors< extrinsicMeshData::particlefluid::settlingFactor,
@@ -213,13 +213,9 @@ struct FluxKernel
                       extrinsicMeshData::slurryfluid::dFluidDensity_dPressure,
                       extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration >;
 
-  using CellBasedFluxSlurryFluidAccessors =
-    StencilAccessors< extrinsicMeshData::slurryfluid::density,
-                      extrinsicMeshData::slurryfluid::viscosity >;
+  using CellBasedFluxSlurryFluidAccessors = CellBasedFluxSlurryFluidAccessorsImpl;
 
-  using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::permeabilityMultiplier >;
+  using PermeabilityAccessors = PermeabilityAccessorsImpl;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
