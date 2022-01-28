@@ -228,8 +228,8 @@ void BlackOilFluidBase::createAllKernelWrappers()
       // grab the tables by name from the function manager
       TableFunction const & fvfTable = functionManager.getGroup< TableFunction const >( m_formationVolFactorTableNames[iph] );
       TableFunction const & viscosityTable = functionManager.getGroup< TableFunction const >( m_viscosityTableNames[iph] );
-      validateFormationVolumeFactorTable( fvfTable );
-      validateViscosityTable( viscosityTable );
+      validateTable( fvfTable, false );
+      validateTable( viscosityTable, true );
 
       // create the table wrapper for the oil and (if present) the gas phases
       m_formationVolFactorTables.emplace_back( fvfTable.createKernelWrapper() );
@@ -238,44 +238,35 @@ void BlackOilFluidBase::createAllKernelWrappers()
   }
 }
 
-namespace internal
-{
-void validateTable( TableFunction const & table, string const fullName )
+void BlackOilFluidBase::validateTable( TableFunction const & table,
+                                       bool warningIfDecreasing ) const
 {
   arrayView1d< real64 const > const property = table.getValues();
-
   GEOSX_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", fullName, table.getName() ),
+                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
                          InputError );
   GEOSX_THROW_IF_LT_MSG( property.size(), 2,
-                         GEOSX_FMT( "{}: table `{}` must contain at least two values", fullName, table.getName() ),
+                         GEOSX_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
                          InputError );
-}
-}
 
-void BlackOilFluidBase::validateViscosityTable( TableFunction const & table ) const
-{
-  internal::validateTable( table, getFullName() );
-
-  arrayView1d< real64 const > const property = table.getValues();
-  for( localIndex i = 1; i < property.size(); ++i )
+  // we don't check the first interval, as the first value may be used to specify surface conditions
+  // we only issue a warning here, as we still want to allow this configuration
+  for( localIndex i = 3; i < property.size(); ++i )
   {
-    GEOSX_THROW_IF( property[i] - property[i-1] < 0,
-                    GEOSX_FMT( "{}: in table '{}',  viscosity values must be increasing as a function of pressure", getFullName(), table.getName() ),
+    GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
+                    GEOSX_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
                     InputError );
   }
-}
 
-void BlackOilFluidBase::validateFormationVolumeFactorTable( TableFunction const & table ) const
-{
-  internal::validateTable( table, getFullName() );
-
-  arrayView1d< real64 const > const property = table.getValues();
-  for( localIndex i = 1; i < property.size(); ++i )
+  // we don't check the first value, as it may be used to specify surface conditions
+  for( localIndex i = 2; i < property.size(); ++i )
   {
-    GEOSX_THROW_IF( property[i] - property[i-1] > 0,
-                    GEOSX_FMT( "{}: in table '{}',  formation volume factor values must be decreasing as a function of pressure", getFullName(), table.getName() ),
-                    InputError );
+    GEOSX_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
+                         GEOSX_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
+                                    getFullName(), table.getName() ) );
+    GEOSX_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
+                         GEOSX_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
+                                    getFullName(), table.getName() ) );
   }
 }
 

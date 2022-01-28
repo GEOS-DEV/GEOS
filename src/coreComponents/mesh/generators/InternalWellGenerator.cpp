@@ -34,6 +34,8 @@ using namespace dataRepository;
 InternalWellGenerator::InternalWellGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent ),
   m_numElemsPerSegment( 0 ),
+  m_minSegmentLength( 1e-2 ),
+  m_minElemLength( 1e-3 ),
   m_radius( 0 ),
   m_wellRegionName( "" ),
   m_wellControlsName( "" ),
@@ -60,12 +62,24 @@ InternalWellGenerator::InternalWellGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::radiusString(), &m_radius ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Radius of the well" );
+    setDescription( "Radius of the well [m]" );
 
   registerWrapper( viewKeyStruct::numElementsPerSegmentString(), &m_numElemsPerSegment ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Number of well elements per polyline segment" );
+
+  registerWrapper( viewKeyStruct::minSegmentLengthString(), &m_minSegmentLength ).
+    setApplyDefaultValue( 1e-2 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum length of a well segment [m]" );
+
+  registerWrapper( viewKeyStruct::minElementLengthString(), &m_minElemLength ).
+    setApplyDefaultValue( 1e-3 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]" );
 
   registerWrapper( viewKeyStruct::wellRegionNameString(), &m_wellRegionName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -208,8 +222,7 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
 {
   m_polyNodeToSegmentMap.resize( m_polyNodeCoords.size( 0 ) );
 
-  bool foundSmallSegment = false;
-  bool foundSmallWellElement = false;
+  bool foundSmallElem = false;
 
   // loop over the segments
   for( globalIndex iseg = 0; iseg < m_segmentToPolyNodeMap.size( 0 ); ++iseg )
@@ -223,9 +236,10 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
     real64 const segmentLength = LvArray::tensorOps::l2Norm< 3 >( vSeg );
 
     // various checks and warnings on the segment and element length
-    GEOSX_THROW_IF( segmentLength < 1e-5,
+    GEOSX_THROW_IF( segmentLength < m_minSegmentLength,
                     "Error in the topology of well '" << getName() <<
-                    "': we detected a polyline segment measuring less than 1 cm",
+                    "': we detected a polyline segment measuring less than " << m_minSegmentLength << "m. \n" <<
+                    "You can change the minimum segment length using the field " << viewKeyStruct::minSegmentLengthString(),
                     InputError );
 
     GEOSX_THROW_IF( m_polyNodeCoords[ipolyNode_a][2] < m_polyNodeCoords[ipolyNode_b][2],
@@ -234,14 +248,9 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
                     "This is not the case between polyline nodes " << m_polyNodeCoords[ipolyNode_a] << " and " << m_polyNodeCoords[ipolyNode_b],
                     InputError );
 
-    if( segmentLength < 0.1 )
+    if( segmentLength / m_numElemsPerSegment < m_minElemLength )
     {
-      foundSmallSegment = true;
-    }
-
-    if( segmentLength / m_numElemsPerSegment < 1e-2 )
-    {
-      foundSmallWellElement = true;
+      foundSmallElem = true;
     }
 
     // map the polyline node ids to the polyline segment ids
@@ -249,18 +258,12 @@ void InternalWellGenerator::constructPolylineNodeToSegmentMap()
     m_polyNodeToSegmentMap[ipolyNode_b].insert( iseg );
   }
 
-  if( foundSmallSegment )
-  {
-    GEOSX_LOG_RANK_0(
-      "\nWarning: we detected a segment measuring less than 1 m in the topology of well '" << getName() << "'\n"
-                                                                                           << "The simulation can proceed like that, but small segments may cause numerical issues, so it is something to keep an eye on.\n" );
-  }
-
-  if( foundSmallWellElement )
+  if( foundSmallElem )
   {
     GEOSX_LOG_RANK_0( "\nWarning: the chosen number of well elements per polyline segment (" << m_numElemsPerSegment <<
-                      ") leads to well elements measuring less than 1 cm in the topology of well '" << getName() << "'.\n" <<
-                      "The simulation can proceed like that, but small well elements may cause numerical issues, so it is something to keep an eye on.\n" );
+                      ") leads to well elements measuring less than " << m_minElemLength << "m in the topology of well '" << getName() << "'.\n" <<
+                      "The simulation can proceed like that, but small well elements may cause numerical issues, so it is something to keep an eye on.\n" <<
+                      "You can get rid of this message by changing the field " << viewKeyStruct::minElementLengthString() );
   }
 }
 
@@ -279,7 +282,8 @@ void InternalWellGenerator::findPolylineHeadNodeIndex()
                   && !(m_polyNodeCoords[ipolyNode_a][2] > m_polyNodeCoords[ipolyNode_b][2]),
                   "The head polyline segment cannot be horizontal in well '" << getName()
                                                                              << "' since we use depth to determine which of its nodes is to head node of the well.\n"
-                                                                             << "If you are trying to set up a horizontal well, please simply add a non-horizontal segment at the top of the well, and this error will go away",
+                                                                             << "If you are trying to set up a horizontal well, please simply add a non-horizontal segment at the top of the well,"
+                                                                             << " and this error will go away",
                   InputError );
 
   // detect the top node, assuming z oriented upwards
