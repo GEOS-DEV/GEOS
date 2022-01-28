@@ -1555,12 +1555,16 @@
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => (no description available)-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<!--drainagePhaseMaxVolumeFraction => (no description available)-->
+		<xsd:attribute name="drainagePhaseMaxVolumeFraction" type="real64_array" />
 		<!--drainagePhaseMinVolumeFraction => (no description available)-->
 		<xsd:attribute name="drainagePhaseMinVolumeFraction" type="real64_array" />
 		<!--drainagePhaseRelPermEndPoint => (no description available)-->
 		<xsd:attribute name="drainagePhaseRelPermEndPoint" type="real64_array" />
 		<!--drainageRelPermWrappers => (no description available)-->
 		<xsd:attribute name="drainageRelPermWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--imbibitionPhaseMaxVolumeFraction => (no description available)-->
+		<xsd:attribute name="imbibitionPhaseMaxVolumeFraction" type="real64_array" />
 		<!--imbibitionPhaseMinVolumeFraction => (no description available)-->
 		<xsd:attribute name="imbibitionPhaseMinVolumeFraction" type="real64_array" />
 		<!--imbibitionPhaseRelPermEndPoint => (no description available)-->
@@ -1571,8 +1575,6 @@
 		<xsd:attribute name="landParameter" type="real64_array" />
 		<!--phaseHasHysteresis => (no description available)-->
 		<xsd:attribute name="phaseHasHysteresis" type="integer_array" />
-		<!--phaseMaxVolumeFraction => (no description available)-->
-		<xsd:attribute name="phaseMaxVolumeFraction" type="real64_array" />
 		<!--phaseOrder => (no description available)-->
 		<xsd:attribute name="phaseOrder" type="integer_array" />
 		<!--phaseRelPerm => (no description available)-->

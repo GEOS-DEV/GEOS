@@ -5,6 +5,7 @@
 set( gtest_geosx_tests
      testDamage.cpp
      testRelPerm.cpp
+     testRelPermKillough.cpp
      testCapillaryPressure.cpp
    )
 

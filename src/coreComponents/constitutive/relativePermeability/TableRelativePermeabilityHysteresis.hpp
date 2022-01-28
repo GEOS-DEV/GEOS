@@ -80,15 +80,19 @@ public:
                    arrayView1d< TableFunction::KernelWrapper const > const & imbibitionRelPermKernelWrappers,
                    real64 const & jerauldParam_a,
                    real64 const & jerauldParam_b,
+                   real64 const & alphaParam_2,
                    arrayView1d< integer const > const & phaseHasHysteresis,
                    arrayView1d< real64 const > const & landParam,
-                   arrayView1d< real64 const > const & imbibitionMinPhaseVolFraction,
                    arrayView1d< real64 const > const & drainageMinPhaseVolFraction,
-                   arrayView1d< real64 const > const & maxPhaseVolFraction,
+                   arrayView1d< real64 const > const & imbibitionMinPhaseVolFraction,
+                   arrayView1d< real64 const > const & drainageMaxPhaseVolFraction,
+                   arrayView1d< real64 const > const & imbibitionMaxPhaseVolFraction,
                    arrayView1d< integer const > const & phaseTypes,
                    arrayView1d< integer const > const & phaseOrder,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMaxHistoricalVolFraction,
                    arrayView2d< real64 const, compflow::USD_PHASE > const & phaseMinHistoricalVolFraction,
+                   arrayView1d< real64 const > const & drainageKrEndPoint,
+                   arrayView1d< real64 const > const & imbibitionKrEndPoint,
                    arrayView3d< real64, relperm::USD_RELPERM > const & phaseRelPerm,
                    arrayView4d< real64, relperm::USD_RELPERM_DS > const & dPhaseRelPerm_dPhaseVolFrac );
 
@@ -101,8 +105,15 @@ public:
     GEOSX_HOST_DEVICE
     void computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                           TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
+                                          real64 const & jerauldParam_a,
+                                          real64 const & jerauldParam_b,
+                                          real64 const & landParam,
+                                          real64 const & imbibitionKrEndPoint,
                                           real64 const & phaseVolFraction,
                                           real64 const & phaseMinHistoricalVolFraction,
+                                          real64 const & imbibitionMinPhaseWettingVolFraction,
+                                          real64 const & drainagePhaseMaxVolFraction,
+                                          real64 const & imbibitionPhaseMaxVolFraction,
                                           real64 & phaseRelPerm,
                                           real64 & dPhaseRelPerm_dPhaseVolFrac ) const;
 
@@ -175,26 +186,38 @@ private:
     /// Parameter b introduced by Jerauld in the Land model
     real64 const m_jerauldParam_b;
 
+    /// Parameter alpha_2 introduced for wetting phase hysteresis in Killough
+    real64 const m_alphaParam_2;
+
     /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
     arrayView1d< integer const > m_phaseHasHysteresis;
 
     /// Trapping parameter from the Land model (typically called C)
     arrayView1d< real64 const > m_landParam;
 
-    /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
-    arrayView1d< real64 const > m_imbibitionPhaseMinVolFraction;
-
     /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
     arrayView1d< real64 const > m_drainagePhaseMinVolFraction;
 
-    /// Minimum volume fraction for each phase (identical for both tables)
-    arrayView1d< real64 const > m_phaseMaxVolFraction;
+    /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
+    arrayView1d< real64 const > m_imbibitionPhaseMinVolFraction;
+
+    /// Maximum volume fraction for each phase
+    arrayView1d< real64 const > m_drainagePhaseMaxVolFraction;
+
+    /// Maximum volume fraction for each phase
+    arrayView1d< real64 const > m_imbibitionPhaseMaxVolFraction;
 
     /// Maximum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMaxHistoricalVolFraction;
 
     /// Minimum historical phase volume fraction for each phase
     arrayView2d< real64 const, compflow::USD_PHASE > m_phaseMinHistoricalVolFraction;
+
+    /// Relperm endpoint for each phase in drainage (deduced from the drainage table)
+    arrayView1d< real64 const > m_drainagePhaseRelPermEndPoint;
+
+    /// Relperm endpoint for each phase in imbibition (deduced from the imbibition table)
+    arrayView1d< real64 const > m_imbibitionPhaseRelPermEndPoint;
 
   };
 
@@ -219,13 +242,15 @@ private:
     static constexpr char const * phaseHasHysteresisString() { return "phaseHasHysteresis"; }
     static constexpr char const * jerauldParameterAString() { return "jerauldParameterA"; }
     static constexpr char const * jerauldParameterBString() { return "jerauldParameterB"; }
+    static constexpr char const * alphaParameter2String() { return "alphaParameter2"; }
     static constexpr char const * landParameterString() { return "landParameter"; }
 
     static constexpr char const * imbibitionPhaseMinVolumeFractionString() { return "imbibitionPhaseMinVolumeFraction"; }
     static constexpr char const * drainagePhaseRelPermEndPointString() { return "drainagePhaseRelPermEndPoint"; }
     static constexpr char const * imbibitionPhaseRelPermEndPointString() { return "imbibitionPhaseRelPermEndPoint"; }
     static constexpr char const * drainagePhaseMinVolumeFractionString() { return "drainagePhaseMinVolumeFraction"; }
-    static constexpr char const * phaseMaxVolumeFractionString() { return "phaseMaxVolumeFraction"; }
+    static constexpr char const * drainagePhaseMaxVolumeFractionString() { return "drainagePhaseMaxVolumeFraction"; }
+    static constexpr char const * imbibitionPhaseMaxVolumeFractionString() { return "imbibitionPhaseMaxVolumeFraction"; }
 
     static constexpr char const * drainageWettingNonWettingRelPermTableNamesString() { return "drainageWettingNonWettingRelPermTableNames"; }
     static constexpr char const * drainageWettingIntermediateRelPermTableNamesString() { return "drainageWettingIntermediateRelPermTableNames"; }
@@ -331,26 +356,32 @@ private:
   /// Parameter b introduced by Jerauld in the Land model
   real64 m_jerauldParam_b;
 
+  /// Parameter alpha2 in Killough wetting phase hysteresis (enpoints durvatures)
+  real64 m_alphaParam_2;
+
   /// Flag to specify whether the phase has hysteresis or not (deduced from table input)
   array1d< integer > m_phaseHasHysteresis;
 
   /// Trapping parameter from the Land model (typically called C)
   array1d< real64 > m_landParam;
 
-  /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
-  array1d< real64 > m_imbibitionPhaseMinVolFraction;
-
   /// Minimum volume fraction for each phase in drainage (deduced from the drainage table)
   array1d< real64 > m_drainagePhaseMinVolFraction;
 
-  /// Relperm endpoint for each phase in imbibition (deduced from the imbibition table)
-  array1d< real64 > m_imbibitionPhaseRelPermEndPoint;
+  /// Minimum volume fraction for each phase in imbibition (deduced from the imbibition table)
+  array1d< real64 > m_imbibitionPhaseMinVolFraction;
 
   /// Relperm endpoint for each phase in drainage (deduced from the drainage table)
   array1d< real64 > m_drainagePhaseRelPermEndPoint;
 
-  /// Maximum volume fraction for each phase (identical for both tables)
-  array1d< real64 > m_phaseMaxVolFraction;
+  /// Relperm endpoint for each phase in imbibition (deduced from the imbibition table)
+  array1d< real64 > m_imbibitionPhaseRelPermEndPoint;
+
+  /// Maximum volume fraction for each phase
+  array1d< real64 > m_drainagePhaseMaxVolFraction;
+
+  /// Maximum volume fraction for each phase
+  array1d< real64 > m_imbibitionPhaseMaxVolFraction;
 
   // Max historical saturations
 
@@ -380,17 +411,65 @@ inline void
 TableRelativePermeabilityHysteresis::KernelWrapper::
   computeImbibitionWettingRelPerm( TableFunction::KernelWrapper const & drainageRelPermKernelWrapper,
                                    TableFunction::KernelWrapper const & imbibitionRelPermKernelWrapper,
+                                   real64 const & jerauldParam_a,
+                                   real64 const & jerauldParam_b,
+                                   real64 const & landParam,
+                                   real64 const & imbibitionKrEndPoint,
                                    real64 const & phaseVolFraction,
                                    real64 const & phaseMinHistoricalVolFraction,
+                                   real64 const & imbibitionMinPhaseWettingVolFraction,
+                                   real64 const & drainagePhaseMaxVolFraction,
+                                   real64 const & imbibitionPhaseMaxVolFraction,
                                    real64 & phaseRelPerm,
                                    real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
-  GEOSX_UNUSED_VAR( imbibitionRelPermKernelWrapper, phaseMinHistoricalVolFraction );
 
-  // for now, we neglect hysteresis on the wetting phase (this is just a placeholder)
-  phaseRelPerm =
-    drainageRelPermKernelWrapper.compute( &phaseVolFraction,
-                                          &dPhaseRelPerm_dPhaseVolFrac );
+//0. preparing keypoints in the (S,kr) plan
+//real64 const Scri = imbibitionPhaseMinVolNonWettingFraction;
+//if consistify should be equal to 1. - imbibitionPhaseMinVolNonWettingFraction
+//but wetting and nonwetting are implemented decoupled
+  real64 const Smxi = imbibitionPhaseMaxVolFraction;
+  real64 const Smxd = drainagePhaseMaxVolFraction;
+//  real64 const Scri = 1. - Smxi;
+//  real64 const Scrd = 1. - Smxd;
+  // Swc is the common end min endpoint sat for wetting curves
+  real64 const Swc = imbibitionMinPhaseWettingVolFraction;
+
+  real64 const krwei = imbibitionKrEndPoint;
+  real64 const krwedAtSmxi = drainageRelPermKernelWrapper.compute( &Smxi );
+
+  //1. Compute the new end point
+  //a. get the value at the max NW residual value
+  real64 const deltak = krwei - krwedAtSmxi;
+
+  //b. get the trapped from wetting data
+  real64 const Shy = phaseMinHistoricalVolFraction;
+  real64 const A = 1 + jerauldParam_a * ( Shy - Swc );
+  real64 const numerator = (Shy - Smxd);
+  real64 const denom = A + landParam * pow( (Smxd-Shy)/(Smxd-Swc), 1 + jerauldParam_b/landParam );
+  real64 const Scrt = Smxd + numerator / denom;
+
+
+  //c. Finding the new endpoint
+  //this is the saturation for the scanning curve endpoint
+  real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
+  real64 const krwieStar = krwedAtScrt + deltak * pow( (Smxd - Scrt) / (Smxd - Smxi), m_alphaParam_2 );
+
+  //2. Get the normalized value of sat
+  real64 const S = phaseVolFraction;
+  real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
+  real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
+  real64 const dSnorm_dS =  -ratio;
+  real64 dkri_dSnorm = 0.0;
+  real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute( &Snorm, &dkri_dSnorm );
+  real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;
+
+  //3. Get the final value at evaluated sat
+  real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy );
+  real64 const imbibitionRelPermRatio = (krwieStar - krdAtShy) / krwei;
+
+  phaseRelPerm = krdAtShy + krwiAtSnorm * imbibitionRelPermRatio;
+  dPhaseRelPerm_dPhaseVolFrac = dkriAtSnorm_dS * imbibitionRelPermRatio;
 }
 
 GEOSX_HOST_DEVICE
@@ -430,17 +509,24 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const Snorm = Scri + ( S - Scrt ) * ratio; // normalized saturation from equation 2.166
   real64 const dSnorm_dS = ratio;
 
+
+  GEOSX_ERROR_IF( Scrt > Scri,
+                  GEOSX_FMT( string( "For non-wetting phase hysteresis, trapping saturation Snrt: {} " ) +
+                             string( " should be less or equal to the trapping sat for imbibition Sncri: {}" ),
+                             Scrt, Scri )
+                  );
+
+
   // Step 3: evaluate the imbibition relperm, kri(Snorm), at the normalized saturation, Snorm.
   real64 dkri_dSnorm = 0;
   real64 const kriAtSnorm = imbibitionRelPermKernelWrapper.compute( &Snorm, &dkri_dSnorm );
   real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;
 
   // Step 4: evaluate the drainage relperm, krd(Shy), at the max hystorical saturation, Shy.
-  real64 dummyValue = 0;
-  real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy, &dummyValue );
+  real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy );
 
   // Step 5: evaluate the drainage relperm, krd(Smx), at the max drainage saturation, Smx.
-  real64 const krdAtSmx = drainageRelPermKernelWrapper.compute( &Smx, &dummyValue );
+  real64 const krdAtSmx = drainageRelPermKernelWrapper.compute( &Smx );
 
   // Step 6: apply the formula blending drainage and imbibition relperms from the Killough model.
   //         This equation 2.165 from the IX technical description.
@@ -473,10 +559,19 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   }
   else
   {
+
+
     computeImbibitionWettingRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                                      m_imbibitionRelPermKernelWrappers[IPT::WETTING],
+                                     m_jerauldParam_a,
+                                     m_jerauldParam_b,
+                                     m_landParam[IPT::WETTING],
+                                     m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
                                      phaseVolFraction[ipWetting],
                                      phaseMinHistoricalVolFraction[ipWetting],
+                                     m_imbibitionPhaseMinVolFraction[IPT::WETTING],
+                                     m_drainagePhaseMaxVolFraction[TPT::WETTING],
+                                     m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
                                      phaseRelPerm[ipWetting],
                                      dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
   }
@@ -498,7 +593,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                         m_landParam[IPT::NONWETTING],
                                         m_imbibitionPhaseMinVolFraction[IPT::NONWETTING],
                                         m_drainagePhaseMinVolFraction[ipNonWetting],
-                                        m_phaseMaxVolFraction[ipNonWetting],
+                                        m_drainagePhaseMaxVolFraction[ipNonWetting],
                                         phaseVolFraction[ipNonWetting],
                                         phaseMaxHistoricalVolFraction[ipNonWetting],
                                         phaseRelPerm[ipNonWetting],
@@ -538,10 +633,18 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   }
   else
   {
+
     computeImbibitionWettingRelPerm( m_drainageRelPermKernelWrappers[TPT::WETTING],
                                      m_imbibitionRelPermKernelWrappers[IPT::WETTING],
+                                     m_jerauldParam_a,
+                                     m_jerauldParam_b,
+                                     m_landParam[IPT::WETTING],
+                                     m_imbibitionPhaseRelPermEndPoint[IPT::WETTING],
                                      phaseVolFraction[ipWetting],
                                      phaseMinHistoricalVolFraction[ipWetting],
+                                     m_imbibitionPhaseMinVolFraction[IPT::WETTING],
+                                     m_drainagePhaseMaxVolFraction[TPT::WETTING],
+                                     m_imbibitionPhaseMaxVolFraction[IPT::WETTING],
                                      phaseRelPerm[ipWetting],
                                      dPhaseRelPerm_dPhaseVolFrac[ipWetting][ipWetting] );
   }
@@ -569,9 +672,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                         m_jerauldParam_a,
                                         m_jerauldParam_b,
                                         m_landParam[IPT::NONWETTING],
-                                        m_imbibitionPhaseMinVolFraction[IPT::NONWETTING],
                                         m_drainagePhaseMinVolFraction[ipNonWetting],
-                                        m_phaseMaxVolFraction[ipNonWetting],
+                                        m_imbibitionPhaseMinVolFraction[IPT::NONWETTING],
+                                        m_drainagePhaseMaxVolFraction[ipNonWetting],
                                         phaseVolFraction[ipNonWetting],
                                         phaseMaxHistoricalVolFraction[ipNonWetting],
                                         phaseRelPerm[ipNonWetting],
