@@ -3,10 +3,8 @@
 set(CONFIG_NAME "pangea3-gcc8.3-smpi-10.3.0.1" CACHE PATH "") 
 
 # Set up the tpls
-if (DEFINED ENV{GEOSX_TPL_DIR})
-  set(GEOSX_TPL_DIR ENV{GEOSX_TPL_DIR})
-else ()
-  message(FATAL_ERROR "You must set GEOSX_TPL_DIR")
+if (NOT DEFINED GEOSX_TPL_DIR})
+  message(FATAL_ERROR "You must set GEOSX_TPL_DIR, via config-build.py ... -DGEOSX_TPL_DIR=")
 endif ()
 
 if ((DEFINED ENV{CC}) AND (DEFINED ENV{CXX}) AND (DEFINED ENV{FC}))
@@ -28,7 +26,7 @@ if ((DEFINED ENV{CC}) AND (DEFINED ENV{CXX}) AND (DEFINED ENV{FC}))
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -DNDEBUG -mcpu=power9 -mtune=power9" CACHE STRING "")
   #set(FORTRAN_MANGLE_NO_UNDERSCORE ON CACHE BOOL "")
 else()
-  message(FATAL_ERROR "You must load module gcc/8.3")
+  message(FATAL_ERROR "You must have CC/CXX/FC environment variables set, we advise loading module gcc/8.3.0")
 endif()
 
 
@@ -46,7 +44,7 @@ if (DEFINED ENV{MPI_ROOT})
   set(MPIEXEC                $ENV{MPI_ROOT}/bin/mpirun  CACHE STRING "")
   set(ENABLE_WRAP_ALL_TESTS_WITH_MPIEXEC ON CACHE BOOL "")
 else()
-  message(FATAL_ERROR "You must load module smpi/10.3.0.1")
+  message(FATAL_ERROR "You must have MPI_ROOT variable set, we advise loading module smpi/10.3.0.1")
 endif()
 
 # Cuda options
@@ -67,7 +65,7 @@ if (DEFINED ENV{CUDA_ROOT})
   # Uncomment this line to make nvcc output register usage for each kernel.
   # set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --resource-usage" CACHE STRING "" FORCE)
 else()
-  message(FATAL_ERROR "You must load module cuda/11.3")
+  message(FATAL_ERROR "You must have CUDA_ROOT environment variable set, we advise loading module cuda/11.3")
 endif()
 
 # GTEST options
