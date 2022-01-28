@@ -163,13 +163,13 @@ public:
              m_dFluidVisc_dCompConc[k][q],
              isProppantBoundary,
              m_density[k][q],
-             m_dDens_dPres[k][q],
+             m_dDensity_dPressure[k][q],
              m_dDens_dProppantConc[k][q],
              m_dDens_dCompConc[k][q],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q],
-             m_dVisc_dProppantConc[k][q],
-             m_dVisc_dCompConc[k][q] );
+             m_dViscosity_dPressure[k][q],
+             m_dViscosity_dProppantConc[k][q],
+             m_dViscosity_dCompConc[k][q] );
   }
 
   GEOSX_HOST_DEVICE
