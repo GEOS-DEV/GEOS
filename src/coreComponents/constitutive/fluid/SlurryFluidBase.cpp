@@ -27,7 +27,7 @@ namespace constitutive
 {
 
 SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
+  SingleFluidBase( name, parent ),
   m_isNewtonianFluid( true )
 {
 
@@ -56,10 +56,8 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flow consistency index" );
 
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDens_dPres );
-  registerWrapper( viewKeyStruct::dDens_dProppantConcString(), &m_dDens_dProppantConc );
-  registerWrapper( viewKeyStruct::dDens_dCompConcString(), &m_dDens_dCompConc );
+  registerWrapper( viewKeyStruct::dDens_dProppantConcString(), &m_dDensity_dProppantConc );
+  registerWrapper( viewKeyStruct::dDens_dCompConcString(), &m_dDensity_dCompConc );
 
   registerWrapper( viewKeyStruct::fluidDensityString(), &m_fluidDensity ).setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dFluidDens_dPresString(), &m_dFluidDens_dPres );
@@ -73,10 +71,8 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::dCompDens_dPresString(), &m_dCompDens_dPres );
   registerWrapper( viewKeyStruct::dCompDens_dCompConcString(), &m_dCompDens_dCompConc );
 
-  registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dVisc_dPres );
-  registerWrapper( viewKeyStruct::dVisc_dProppantConcString(), &m_dVisc_dProppantConc );
-  registerWrapper( viewKeyStruct::dVisc_dCompConcString(), &m_dVisc_dCompConc );
+  registerWrapper( viewKeyStruct::dVisc_dProppantConcString(), &m_dViscosity_dProppantConc );
+  registerWrapper( viewKeyStruct::dVisc_dCompConcString(), &m_dViscosity_dCompConc );
 }
 
 SlurryFluidBase::~SlurryFluidBase() = default;
@@ -112,15 +108,12 @@ void SlurryFluidBase::allocateConstitutiveData( Group & parent,
 
   localIndex const NC = numFluidComponents();
 
-  m_density.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDens_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_dDensity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dDensity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
 
   m_componentDensity.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
   m_dCompDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
   m_dCompDens_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC, NC );
-
 
   m_fluidDensity.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dFluidDens_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
@@ -130,10 +123,8 @@ void SlurryFluidBase::allocateConstitutiveData( Group & parent,
   m_dFluidVisc_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dFluidVisc_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
 
-  m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dVisc_dPres.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dVisc_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
-  m_dVisc_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
+  m_dViscosity_dProppantConc.resize( parent.size(), numConstitutivePointsPerParentIndex );
+  m_dViscosity_dCompConc.resize( parent.size(), numConstitutivePointsPerParentIndex, NC );
 
 }
 
