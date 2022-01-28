@@ -109,9 +109,9 @@ ProppantSlurryFluid::createKernelWrapper()
                         m_Ks,
                         m_isNewtonianFluid,
                         m_density,
-                        m_dDens_dPres,
-                        m_dDens_dProppantConc,
-                        m_dDens_dCompConc,
+                        m_dDensity_dPressure,
+                        m_dDensity_dProppantConc,
+                        m_dDensity_dCompConc,
                         m_componentDensity,
                         m_dCompDens_dPres,
                         m_dCompDens_dCompConc,
@@ -122,9 +122,9 @@ ProppantSlurryFluid::createKernelWrapper()
                         m_dFluidVisc_dPres,
                         m_dFluidVisc_dCompConc,
                         m_viscosity,
-                        m_dVisc_dPres,
-                        m_dVisc_dProppantConc,
-                        m_dVisc_dCompConc );
+                        m_dViscosity_dPressure,
+                        m_dViscosity_dProppantConc,
+                        m_dViscosity_dCompConc );
 }
 
 
