@@ -68,6 +68,15 @@ public:
   }
 
   /**
+   * @brief get the solid model name.
+   * return a constant string to the solid model name.
+   */
+  string const getsolidModelName() const
+  {
+    return m_solidModelName;
+  }
+
+  /**
    * @brief get the old porosity.
    * return a constant arrayView2d to the old porosity
    */

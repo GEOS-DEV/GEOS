@@ -640,6 +640,24 @@ public:
   ///@{
 
   /**
+   * Getter for solid compressibility
+   * @return the solid compressibility
+   */
+  virtual real64 getCompressibility() const
+  {
+    return m_compressibility;
+  }
+
+  /**
+   * Setter for solid compressibility
+   * @param compressibility The value to set m_compressibility equal to.
+   */
+  virtual void setCompressibility( real64 const compressibility )
+  {
+    m_compressibility = compressibility;
+  }
+
+  /**
    * @brief Non-const/mutable accessor for stress
    * @return Accessor
    */
@@ -693,6 +711,9 @@ protected:
 
   /// The default density for new allocations.
   real64 m_defaultDensity = 0;
+
+  /// The scalar solid bulk modulus
+  real64 m_compressibility;
 
   /// band-aid fix...going to have to remove this after we clean up
   /// initialization for constitutive models.

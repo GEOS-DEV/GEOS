@@ -84,7 +84,7 @@ FlowSolverBase::FlowSolverBase( string const & name,
   m_poroElasticFlag( 0 ),
   m_coupledWellsFlag( 0 ),
   m_numDofPerCell( 0 ),
-  //m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient ),
+  m_timeIntegrationOption( TimeIntegrationOption::ImplicitTransient ),
   m_fluxEstimate()
 {
   this->registerWrapper( viewKeyStruct::discretizationString(), &m_discretizationName ).
@@ -105,12 +105,12 @@ FlowSolverBase::FlowSolverBase( string const & name,
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Names of permeability constitutive models for each region." );
-/*
-  this->registerWrapper( viewKeyStruct::timeIntegrationOptionString, &m_timeIntegrationOption ).
+
+  this->registerWrapper( viewKeyStruct::timeIntegrationOptionString(), &m_timeIntegrationOption ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( m_timeIntegrationOption ).
     setDescription( "Time integration method. Options are:\n* " + EnumStrings< TimeIntegrationOption >::concat( "\n* " ) );
-*/
+
   this->registerWrapper( viewKeyStruct::inputFluxEstimateString(), &m_fluxEstimate ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).

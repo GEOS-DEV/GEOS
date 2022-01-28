@@ -1134,11 +1134,20 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_FlowSolverBase_TimeIntegrationOption">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|ImplicitTransient|ExplicitTransient" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="CompositionalMultiphaseHybridFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1176,6 +1185,10 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1558,6 +1571,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1586,6 +1603,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1612,6 +1633,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1686,6 +1711,10 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidNames" type="string_array" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--timeIntegrationOption => Time integration method. Options are:
+* ImplicitTransient
+* ExplicitTransient-->
+		<xsd:attribute name="timeIntegrationOption" type="geosx_FlowSolverBase_TimeIntegrationOption" default="ImplicitTransient" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

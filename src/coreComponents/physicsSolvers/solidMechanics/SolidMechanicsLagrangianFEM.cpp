@@ -638,7 +638,6 @@ real64 SolidMechanicsLagrangianFEM::explicitStepVelocityUpdate( real64 const & t
 
 }
 
-
 real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                                   real64 const & dt,
                                                   const int cycleNumber,

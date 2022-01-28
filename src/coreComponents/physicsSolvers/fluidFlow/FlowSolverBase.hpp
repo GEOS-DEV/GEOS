@@ -169,11 +169,11 @@ protected:
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;
 
-  real64 m_fluxEstimate;
-
   // Add explicit solver inputs by ron, 27 Jan 2022
   /// option for time integration
-  //TimeIntegrationOption m_timeIntegrationOption;
+  TimeIntegrationOption m_timeIntegrationOption;
+
+  real64 m_fluxEstimate;
 
 
 };

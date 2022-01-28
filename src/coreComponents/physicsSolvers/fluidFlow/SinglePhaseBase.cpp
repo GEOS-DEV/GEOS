@@ -25,6 +25,7 @@
 #include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
+#include "constitutive/solid/SolidBase.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "fieldSpecification/EquilibriumInitialCondition.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -77,6 +78,15 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< dMobility_dPressure >( getName() );
 
       subRegion.registerExtrinsicData< densityOld >( getName() );
+
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::totalCompressibilityString() ).
+              setRestartFlags( RestartFlags::NO_WRITE );
+
+            subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::referencePressureString() ).
+              setRestartFlags( RestartFlags::NO_WRITE );
+
+            subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::fluidMassString() ).
+            		setPlotLevel( PlotLevel::LEVEL_0 );
     } );
 
     elemManager.forElementSubRegions< FaceElementSubRegion, EmbeddedSurfaceSubRegion >( [&] ( auto & subRegion )
@@ -150,11 +160,26 @@ void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup, localInde
 
   SingleFluidBase & fluid = getConstitutiveModel< SingleFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
 
-  constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+  switch( m_timeIntegrationOption )
   {
-    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
-  } );
+    case TimeIntegrationOption::ExplicitTransient:
+    {
+      constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+      {
+        typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+        FluidUpdateKernel::launch( fluidWrapper, pres );
+      } );
+      break;
+    }
+    default:
+    {
+    	  constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
+    	  {
+    	    typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+    	    FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
+    	  } );
+    }
+  }
 }
 
 void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const
@@ -174,13 +199,27 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup, localIndex 
   ConstitutiveBase & fluid = getConstitutiveModel( dataGroup, m_fluidModelNames[targetIndex] );
   FluidPropViews fluidProps = getFluidProperties( fluid );
 
-  SinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+  switch( m_timeIntegrationOption )
+  {
+    case TimeIntegrationOption::ExplicitTransient:
+    {
+      SinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                                                                fluidProps.dens,
+                                                                                fluidProps.visc,
+                                                                                mob );
+      break;
+    }
+    default:
+    {
+    	SinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
                                                                             fluidProps.dens,
                                                                             fluidProps.dDens_dPres,
                                                                             fluidProps.visc,
                                                                             fluidProps.dVisc_dPres,
                                                                             mob,
                                                                             dMob_dPres );
+    }
+  }
 }
 
 void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
@@ -438,21 +477,125 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 dt_return;
+  real64 dt_return = dt;
 
-  // setup dof numbers and linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+  if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
+  {
+	  dt_return = explicitStep( time_n, dt, cycleNumber, domain );
+  }
+  else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient)
+  {
+	  // setup dof numbers and linear system
+	  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 
-  implicitStepSetup( time_n, dt, domain );
+	  implicitStepSetup( time_n, dt, domain );
 
-  // currently the only method is implicit time integration
-  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
+	  // currently the only method is implicit time integration
+	  dt_return = nonlinearImplicitStep( time_n, dt, cycleNumber, domain );
 
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dt_return, domain );
-
+	  // final step for completion of timestep. typically secondary variable updates and cleanup.
+	  implicitStepComplete( time_n, dt_return, domain );
+  }
   return dt_return;
 }
+
+real64 SinglePhaseBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n),
+                                      real64 const & dt,
+                                      integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                      DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  //ResetViews( mesh ); //by ron
+  // This initialization should be done after running SurfaceGenerator
+  static int setFlowSolverTimeStep = 0;
+  if( setFlowSolverTimeStep == 0 )
+  {
+	  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+	                                                                                   auto & subRegion )
+    {
+    	updatePorosityAndPermeability( subRegion, targetIndex );
+    	updateFluidState( subRegion, targetIndex );
+    });
+	  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+	                                  ElementSubRegionBase & subRegion )
+	  {
+	          arrayView1d< real64 > const totalCompressibility = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalCompressibilityString() );
+	          arrayView1d< real64 > const referencePressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePressureString() );
+
+	          CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+	          SolidBase const & solid = getConstitutiveModel< SolidBase >( subRegion, porousSolid.getsolidModelName());
+
+	          //SolidBase & solid = GetConstitutiveModel< SolidBase >( subRegion, m_solidModelNames[targetIndex] );
+	          CompressibleSinglePhaseFluid & fluid = getConstitutiveModel< CompressibleSinglePhaseFluid >( subRegion, m_fluidModelNames[targetIndex] );
+
+	          totalCompressibility.setValues< parallelDevicePolicy<> >( solid.getCompressibility() + fluid.compressibility() );
+	          referencePressure.setValues< parallelDevicePolicy<> >( fluid.referencePressure() );
+	  } );
+	  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+	                                                                                   auto & subRegion )
+    {
+    	updatePorosityAndPermeability( subRegion, targetIndex );
+    	updateFluidState( subRegion, targetIndex );
+    });
+	  /*
+	  forTargetSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+	                                                                                   auto & subRegion )
+    {
+    	updatePorosityAndPermeability( subRegion, targetIndex );
+    	updateFluidState( subRegion, targetIndex );
+
+      arrayView1d< real64 > const & totalCompressibility = subRegion.getReference< array1d< real64 > >( viewKeyStruct::totalCompressibilityString() );
+      arrayView1d< real64 > const & referencePressure = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePressureString() );
+      arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( viewKeyStruct::referencePressureString()  );
+
+
+      CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+      SolidBase const & solid = getConstitutiveModel< SolidBase >( subRegion, porousSolid.getSubRelationNames());
+
+      //SolidBase & solid = GetConstitutiveModel< SolidBase >( subRegion, m_solidModelNames[targetIndex] );
+      CompressibleSinglePhaseFluid & fluid = getConstitutiveModel< CompressibleSinglePhaseFluid >( subRegion, m_fluidModelNames[targetIndex] );
+
+      totalCompressibility.setValues< parallelDevicePolicy<> >( solid.getCompressibility() + fluid.compressibility() );
+      referencePressure.setValues< parallelDevicePolicy<> >( fluid.referencePressure() );
+
+      updatePorosityAndPermeability( subRegion, targetIndex );
+      updateFluidState( subRegion, targetIndex );
+    } );
+    */
+
+  }
+  forTargetSubRegions< FaceElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                          FaceElementSubRegion & subRegion )
+  {
+    arrayView1d< real64 const > const aper = subRegion.getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
+    arrayView1d< real64 > const aper0 = subRegion.getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+
+    aper0.setValues< parallelDevicePolicy<> >( aper );
+
+    // Needed coz faceElems don't exist when initializing.
+    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    porousSolid.saveConvergedState();
+
+    updatePorosityAndPermeability( subRegion, targetIndex );
+    updateFluidState( subRegion, targetIndex );
+  } );
+
+  // get the maxStableDt for the first time step
+  if( setFlowSolverTimeStep == 0 )
+  {
+    //assembleFluxTermsExplicit( time_n, dt, domain );
+    setFlowSolverTimeStep = 1;
+  }
+
+  //CalculateAndApplyMassFlux( time_n, dt, domain );
+
+  //UpdateEOSExplicit( time_n, dt, domain );
+
+  return dt;
+}
+
 
 void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    DofManager & dofManager,

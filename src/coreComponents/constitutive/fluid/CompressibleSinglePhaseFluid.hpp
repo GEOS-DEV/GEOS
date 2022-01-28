@@ -103,6 +103,15 @@ public:
              m_dVisc_dPres[k][q] );
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  virtual void updateViscosity( localIndex const k,
+                                localIndex const q,
+                                real64 const pressure ) const
+  {
+    m_viscRelation.compute( pressure, m_viscosity[k][q], m_dVisc_dPres[k][q] );
+  }
+
 private:
 
   DensRelationType m_densRelation;
@@ -143,6 +152,12 @@ public:
     static constexpr char const * densityModelTypeString() { return "densityModelType"; }
     static constexpr char const * viscosityModelTypeString() { return "viscosityModelType"; }
   };
+
+  real64 compressibility() const { return m_compressibility; }
+
+  real64 referencePressure() const { return m_referencePressure; }
+
+  real64 referenceDensity() const { return m_referenceDensity; }
 
 protected:
 
