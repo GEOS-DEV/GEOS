@@ -474,147 +474,179 @@ real64 SolidMechanicsLagrangianFEM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
+/*Change explicitStep() into explicitStepDisplacementUpdate() and explicitStepVelocityUpdate()
+ * by ron, 28 Jan 2022
+*/
+void SolidMechanicsLagrangianFEM::explicitStepDisplacementUpdate( real64 const& time_n,
+                                                                  real64 const& dt,
+                                                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                                  DomainPartition & domain )
+{
+	#define USE_PHYSICS_LOOP
+	// updateIntrinsicNodalData(domain);
+
+	MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+	NodeManager & nodes = mesh.getNodeManager();
+
+	// save previous constitutive state data in preparation for next timestep
+	forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
+                                                        CellElementSubRegion & subRegion )
+														{
+		SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
+		constitutiveRelation.saveConvergedState();
+														} );
+
+	FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+	arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
+	arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
+
+	arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
+	arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
+	arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
+
+	std::map< string, string_array > fieldNames;
+	fieldNames["node"].emplace_back( keys::Velocity );
+	fieldNames["node"].emplace_back( keys::Acceleration );
+
+	m_iComm.resize( domain.getNeighbors().size() );
+	CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+
+	fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
+
+	//3: v^{n+1/2} = v^{n} + a^{n} dt/2
+	//Change velocityUpdate (add gravity) by ron, 26 Jan 2022
+	SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, gravityVector(), dt/2 );
+	fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+	//4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
+	SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
+
+	fsManager.applyFieldValue( time_n + dt,
+                           domain, "nodeManager",
+                           NodeManager::viewKeyStruct::totalDisplacementString(),
+                           [&]( FieldSpecificationBase const & bc,
+                                SortedArrayView< localIndex const > const & targetSet )
+								{
+		integer const component = bc.getComponent();
+		GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
+		forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                          [=] GEOSX_DEVICE ( localIndex const i )
+										  {
+			localIndex const a = targetSet[ i ];
+			vel( a, component ) = u( a, component );
+										  } );
+								},
+                           [&]( FieldSpecificationBase const & bc,
+                                SortedArrayView< localIndex const > const & targetSet )
+								{
+		integer const component = bc.getComponent();
+		GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
+		forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                          [=] GEOSX_DEVICE ( localIndex const i )
+										  {
+			localIndex const a = targetSet[ i ];
+			uhat( a, component ) = u( a, component ) - vel( a, component );
+			vel( a, component )  = uhat( a, component ) / dt;
+										  } );
+								} );
+
+}
+
+real64 SolidMechanicsLagrangianFEM::explicitStepVelocityUpdate( real64 const & time_n,
+                                                                real64 const & dt,
+                                                                integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                                DomainPartition & domain )
+{
+	MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+	NodeManager & nodes = mesh.getNodeManager();
+
+	FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+	arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
+	arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
+	arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
+
+	std::map< string, string_array > fieldNames;
+	fieldNames["node"].emplace_back( keys::Velocity );
+	fieldNames["node"].emplace_back( keys::Acceleration );
+
+
+    //Step 5. Calculate deformation input to constitutive model and update state to
+    // Q^{n+1}
+    explicitKernelDispatch( mesh,
+                            targetRegionNames(),
+                            this->getDiscretizationName(),
+                            m_solidMaterialNames,
+                            dt,
+                            string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
+
+    //Add applyTractionBCExplicit by ron, 25 Jan 2022
+    applyTractionBCExplicit( time_n + dt, domain );
+
+    //Add applyAcceleration by ron, 26 Jan 2022
+    fsManager.applyFieldValue( time_n + dt,
+                               domain, "nodeManager",
+  							 keys::Acceleration,
+                               [&]( FieldSpecificationBase const & bc,
+                                    SortedArrayView< localIndex const > const & targetSet )
+    {
+      integer const component = bc.getComponent();
+      real64 value = bc.getScale();
+      GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+
+      forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
+                                              [=] GEOSX_DEVICE ( localIndex const i )
+      {
+        localIndex const a = targetSet[ i ];
+        acc( a, component ) = value * mass[a];
+      } );
+    });
+
+    // apply this over a set
+    //Change velocityUpdate (add massDamping) by ron, 26 Jan 2022
+    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes.toViewConst() );
+
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+    parallelDeviceEvents packEvents;
+    CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+
+    waitAllDeviceEvents( packEvents );
+
+    CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
+
+    explicitKernelDispatch( mesh,
+                            targetRegionNames(),
+                            this->getDiscretizationName(),
+                            m_solidMaterialNames,
+                            dt,
+                            string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
+
+    // apply this over a set
+    //Change velocityUpdate (add massDamping) by ron, 26 Jan 2022
+    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes.toViewConst() );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+
+    // this includes  a device sync after launching all the unpacking kernels
+    parallelDeviceEvents unpackEvents;
+    CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
+
+    return dt;
+
+}
+
+
 real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                                                   real64 const & dt,
-                                                  const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                  const int cycleNumber,
                                                   DomainPartition & domain )
 {
-  GEOSX_MARK_FUNCTION;
-
-  #define USE_PHYSICS_LOOP
-
-  // updateIntrinsicNodalData(domain);
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager & nodes = mesh.getNodeManager();
-
-  // save previous constitutive state data in preparation for next timestep
-  forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-                                                          CellElementSubRegion & subRegion )
-  {
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-    constitutiveRelation.saveConvergedState();
-  } );
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-  arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
-
-  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
-  arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
-  arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
-
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( keys::Velocity );
-  fieldNames["node"].emplace_back( keys::Acceleration );
-
-  m_iComm.resize( domain.getNeighbors().size() );
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
-
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
-
-  //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-  //Change velocityUpdate (add gravity) by ron, 26 Dec 2022
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, gravityVector(), dt/2 );
-
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-
-  //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-  SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
-
-  fsManager.applyFieldValue( time_n + dt,
-                             domain, "nodeManager",
-                             NodeManager::viewKeyStruct::totalDisplacementString(),
-                             [&]( FieldSpecificationBase const & bc,
-                                  SortedArrayView< localIndex const > const & targetSet )
-  {
-    integer const component = bc.getComponent();
-    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
-
-    forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
-                                            [=] GEOSX_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
-      vel( a, component ) = u( a, component );
-    } );
-  },
-                             [&]( FieldSpecificationBase const & bc,
-                                  SortedArrayView< localIndex const > const & targetSet )
-  {
-    integer const component = bc.getComponent();
-    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
-
-    forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
-                                            [=] GEOSX_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
-      uhat( a, component ) = u( a, component ) - vel( a, component );
-      vel( a, component )  = uhat( a, component ) / dt;
-    } );
-  } );
-
-  //Step 5. Calculate deformation input to constitutive model and update state to
-  // Q^{n+1}
-  explicitKernelDispatch( mesh,
-                          targetRegionNames(),
-                          this->getDiscretizationName(),
-                          m_solidMaterialNames,
-                          dt,
-                          string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
-
-  //Add applyTractionBCExplicit by ron, 25 Dec 2022
-  applyTractionBCExplicit( time_n + dt, domain );
-
-  //Add applyAcceleration by ron, 26 Dec 2022
-  fsManager.applyFieldValue( time_n + dt,
-                             domain, "nodeManager",
-							 keys::Acceleration,
-                             [&]( FieldSpecificationBase const & bc,
-                                  SortedArrayView< localIndex const > const & targetSet )
-  {
-    integer const component = bc.getComponent();
-    real64 value = bc.getScale();
-    GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
-
-    forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
-                                            [=] GEOSX_DEVICE ( localIndex const i )
-    {
-      localIndex const a = targetSet[ i ];
-      acc( a, component ) = value * mass[a];
-    } );
-  });
-
-  // apply this over a set
-  //Change velocityUpdate (add massDamping) by ron, 26 Dec 2022
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes.toViewConst() );
-
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-
-  parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
-
-  waitAllDeviceEvents( packEvents );
-
-  CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
-
-  explicitKernelDispatch( mesh,
-                          targetRegionNames(),
-                          this->getDiscretizationName(),
-                          m_solidMaterialNames,
-                          dt,
-                          string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
-
-  // apply this over a set
-  //Change velocityUpdate (add massDamping) by ron, 26 Dec 2022
-  SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes.toViewConst() );
-  fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-
-  // this includes  a device sync after launching all the unpacking kernels
-  parallelDeviceEvents unpackEvents;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
-
-  return dt;
+	GEOSX_MARK_FUNCTION;
+	explicitStepDisplacementUpdate( time_n, dt, cycleNumber, domain );
+	return explicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
 }
 
 
@@ -686,7 +718,7 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
   } );
 }
 
-//Add applyTractionBCExplicit by ron, 25 Dec 2022
+//Add applyTractionBCExplicit by ron, 25 Jan 2022
 void SolidMechanicsLagrangianFEM::applyTractionBCExplicit( real64 const time,
                                                    DomainPartition & domain )
 {

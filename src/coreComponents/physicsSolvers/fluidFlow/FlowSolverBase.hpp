@@ -68,6 +68,17 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
+  /**
+   * @enum TimeIntegrationOption
+   *
+   * The options for time integration added by ron, 27 Jan 2022
+   */
+  enum class TimeIntegrationOption : integer
+  {
+    ImplicitTransient,
+    ExplicitTransient,
+  };
+
   arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
 
   arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
@@ -88,6 +99,13 @@ public:
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
+
+    // Add explicit solver inputs by ron, 27 Jan 2022
+    static constexpr char const * timeIntegrationOptionString() { return "timeIntegrationOption"; };
+    static constexpr char const * totalCompressibilityString() { return "totalCompressibility"; };
+    static constexpr char const * referencePressureString() { return "referencePressure"; };
+    static constexpr char const * fluidMassString() { return "fluidMass"; };
+
   };
 
   void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
@@ -153,8 +171,17 @@ protected:
 
   real64 m_fluxEstimate;
 
+  // Add explicit solver inputs by ron, 27 Jan 2022
+  /// option for time integration
+  //TimeIntegrationOption m_timeIntegrationOption;
+
 
 };
+
+// Add explicit solver inputs by ron, 27 Jan 2022
+ENUM_STRINGS( FlowSolverBase::TimeIntegrationOption,
+		"ImplicitTransient",
+		"ExplicitTransient" );
 
 
 }

@@ -96,6 +96,21 @@ public:
                      integer const cycleNumber,
                      DomainPartition & domain ) override;
 
+  /*Change explicitStep() into explicitStepDisplacementUpdate() and explicitStepVelocityUpdate()
+   * by ron, 28 Jan 2022
+  */
+  virtual
+  void explicitStepDisplacementUpdate( real64 const & time_n,
+                                       real64 const & dt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain );
+
+  virtual
+  real64 explicitStepVelocityUpdate( real64 const & time_n,
+                                     real64 const & dt,
+                                     integer const cycleNumber,
+                                     DomainPartition & domain );
+
   virtual
   real64 explicitStep( real64 const & time_n,
                        real64 const & dt,
@@ -204,7 +219,7 @@ public:
                         DomainPartition & domain,
                         arrayView1d< real64 > const & localRhs );
 
-  //Add applyTractionBCExplicit by ron, 25 Dec 2022
+  //Add applyTractionBCExplicit by ron, 25 Jan 2022
   void applyTractionBCExplicit( real64 const time,
                         DomainPartition & domain );
 

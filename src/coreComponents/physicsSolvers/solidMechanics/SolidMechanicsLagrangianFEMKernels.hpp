@@ -31,7 +31,7 @@ namespace geosx
 namespace SolidMechanicsLagrangianFEMKernels
 {
 
-//Change velocityUpdate (add gravity) by ron, 26 Dec 2022
+//Change velocityUpdate (add gravity) by ron, 26 Jan 2022
 inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
 							arrayView1d< real64 const > const & mass,
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,
@@ -49,7 +49,7 @@ inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const
   } );
 }
 
-//Change velocityUpdate (add massDamping) by ron, 26 Dec 2022
+//Change velocityUpdate (add massDamping) by ron, 26 Jan 2022
 inline void velocityUpdate( arrayView2d< real64, nodes::ACCELERATION_USD > const & acceleration,
                             arrayView1d< real64 const > const & mass,
                             arrayView2d< real64, nodes::VELOCITY_USD > const & velocity,

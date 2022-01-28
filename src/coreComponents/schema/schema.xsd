@@ -1333,8 +1333,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--couplingTypeOption => Coupling method. Valid options:
 * FIM
-* SIM_FixedStress
-* FEM-->
+* SIM_FixedStress-->
 		<xsd:attribute name="couplingTypeOption" type="geosx_HydrofractureSolver_CouplingTypeOption" use="required" />
 		<!--discretization => Name of discretization object (defined in the :ref:`NumericalMethodsManager`) to use for this solver. For instance, if this is a Finite Element Solver, the name of a :ref:`FiniteElement` should be specified. If this is a Finite Volume Method, the name of a :ref:`FiniteVolume` discretization should be specified.-->
 		<xsd:attribute name="discretization" type="string" use="required" />
@@ -1359,7 +1358,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 	</xsd:complexType>
 	<xsd:simpleType name="geosx_HydrofractureSolver_CouplingTypeOption">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress|FEM" />
+			<xsd:pattern value=".*[\[\]`$].*|FIM|SIM_FixedStress" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LagrangianContactType">
