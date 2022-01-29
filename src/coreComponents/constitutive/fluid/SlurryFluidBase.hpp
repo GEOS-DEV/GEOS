@@ -53,7 +53,7 @@ public:
    * @return number of fluid components
    */
   GEOSX_HOST_DEVICE
-  localIndex numFluidComponents() const { return m_defaultDensity.size(); }
+  localIndex numFluidComponents() const { return m_defaultComponentDensity.size(); }
 
 protected:
 
@@ -106,9 +106,9 @@ protected:
                          arrayView2d< real64 > const & dVisc_dPres,
                          arrayView2d< real64 > const & dVisc_dProppantConc,
                          arrayView3d< real64 > const & dVisc_dCompConc )
-    : m_defaultDensity( defaultDensity ),
-    m_defaultCompressibility( defaultCompressibility ),
-    m_defaultViscosity( defaultViscosity ),
+    : m_defaultComponentDensity( defaultDensity ),
+    m_defaultComponentCompressibility( defaultCompressibility ),
+    m_defaultComponentViscosity( defaultViscosity ),
     m_nIndices( nIndices ),
     m_Ks( Ks ),
     m_isNewtonianFluid( isNewtonianFluid ),
@@ -153,9 +153,9 @@ protected:
    */
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate && ) = delete;
 
-  arrayView1d< real64 const > m_defaultDensity;
-  arrayView1d< real64 const > m_defaultCompressibility;
-  arrayView1d< real64 const > m_defaultViscosity;
+  arrayView1d< real64 const > m_defaultComponentDensity;
+  arrayView1d< real64 const > m_defaultComponentCompressibility;
+  arrayView1d< real64 const > m_defaultComponentViscosity;
 
   arrayView1d< real64 const > m_nIndices;
   arrayView1d< real64 const > m_Ks;
@@ -266,8 +266,8 @@ public:
   arrayView2d< real64 > fluidDensity() { return m_fluidDensity; }
   arrayView2d< real64 const > fluidDensity() const { return m_fluidDensity; }
 
-  arrayView2d< real64 > dFlui_dDensity_dPressuresure() { return m_dFluidDens_dPres; }
-  arrayView2d< real64 const > dFlui_dDensity_dPressuresure() const { return m_dFluidDens_dPres; }
+  arrayView2d< real64 > dFluidDensity_dPressure() { return m_dFluidDens_dPres; }
+  arrayView2d< real64 const > dFluidDensity_dPressure() const { return m_dFluidDens_dPres; }
 
   arrayView3d< real64 > dFluidDensity_dComponentConcentration() { return m_dFluidDens_dCompConc; }
   arrayView3d< real64 const > dFluidDensity_dComponentConcentration() const { return m_dFluidDens_dCompConc; }
@@ -284,8 +284,8 @@ public:
   arrayView2d< real64 > fluidViscosity(){ return m_fluidViscosity; }
   arrayView2d< real64 const > fluidViscosity() const { return m_fluidViscosity; }
 
-  arrayView2d< real64 > dFlui_dViscosity_dPressuresure() { return m_dFluidVisc_dPres; }
-  arrayView2d< real64 const > dFlui_dViscosity_dPressuresure() const { return m_dFluidVisc_dPres; }
+  arrayView2d< real64 > dFluidViscosity_dPressure() { return m_dFluidVisc_dPres; }
+  arrayView2d< real64 const > dFluidViscosity_dPressure() const { return m_dFluidVisc_dPres; }
 
   arrayView3d< real64 > dFluidViscosity_dComponentConcentration() { return m_dFluidVisc_dCompConc; }
   arrayView3d< real64 const > dFluidViscosity_dComponentConcentration() const { return m_dFluidVisc_dCompConc; }
@@ -300,12 +300,12 @@ public:
 
   // *** Data repository keys
 
-  struct viewKeyStruct
+  struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultDensityString() { return "defaultComponentDensity"; }
     static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
-    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+    static constexpr char const * defaultViscosityString() { return "defaultComponentViscosity"; }
 
     static constexpr char const * dDens_dProppantConcString() { return "dDens_dProppantConc"; }
     static constexpr char const * dDens_dCompConcString() { return "dDens_dCompConc"; }
@@ -335,9 +335,9 @@ protected:
 
   string_array m_componentNames;
 
-  array1d< real64 > m_defaultDensity;
-  array1d< real64 > m_defaultCompressibility;
-  array1d< real64 > m_defaultViscosity;
+  array1d< real64 > m_defaultComponentDensity;
+  array1d< real64 > m_defaultComponentCompressibility;
+  array1d< real64 > m_defaultComponentViscosity;
 
   array1d< real64 > m_nIndices;
   array1d< real64 > m_Ks;
