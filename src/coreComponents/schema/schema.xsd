@@ -666,13 +666,17 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--meshName => Name of the reservoir mesh associated with this well-->
 		<xsd:attribute name="meshName" type="string" use="required" />
+		<!--minElementLength => Minimum length of a well element, computed as (segment length / number of elements per segment ) [m]-->
+		<xsd:attribute name="minElementLength" type="real64" default="0.001" />
+		<!--minSegmentLength => Minimum length of a well segment [m]-->
+		<xsd:attribute name="minSegmentLength" type="real64" default="0.01" />
 		<!--numElementsPerSegment => Number of well elements per polyline segment-->
 		<xsd:attribute name="numElementsPerSegment" type="integer" use="required" />
 		<!--polylineNodeCoords => Physical coordinates of the well polyline nodes-->
 		<xsd:attribute name="polylineNodeCoords" type="real64_array2d" use="required" />
 		<!--polylineSegmentConn => Connectivity of the polyline segments-->
 		<xsd:attribute name="polylineSegmentConn" type="globalIndex_array2d" use="required" />
-		<!--radius => Radius of the well-->
+		<!--radius => Radius of the well [m]-->
 		<xsd:attribute name="radius" type="real64" use="required" />
 		<!--wellControlsName => Name of the set of constraints associated with this well-->
 		<xsd:attribute name="wellControlsName" type="string" use="required" />
