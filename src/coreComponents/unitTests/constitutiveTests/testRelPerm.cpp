@@ -14,6 +14,7 @@
 
 // Source includes
 #include "constitutiveTestHelpers.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
@@ -973,6 +974,14 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
 
   m_model->allocateConstitutiveData( m_parent, 1 );
   m_model->initializePhaseVolFractionState( initSat.toViewConst() );
+
+  // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
+  auto & phaseMinHistoricalVolFraction =
+    m_model->getReference< array2d< real64 > >( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction::key() );
+  phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
+  auto & phaseMaxHistoricalVolFraction =
+    m_model->getReference< array2d< real64 > >( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction::key() );
+  phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
 
   while( sat[0] <= endSat )
   {

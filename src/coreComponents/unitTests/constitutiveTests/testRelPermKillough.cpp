@@ -466,26 +466,26 @@ void testValuesAgainstPreviousImplementation( TBL_WRAPPER const & relpermTblWrap
   static localIndex const ipWetting = 0;
   static localIndex const ipNonWetting = 1;
 
-  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > phaseVolFraction( 1, numPhases );
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              compflow::LAYOUT_PHASE > phaseVolFraction( 1, numPhases );
   phaseVolFraction[0][0] = 1. - sat_nw;
   phaseVolFraction[0][1] = sat_nw;
 
-  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction( 1, numPhases );
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              compflow::LAYOUT_PHASE > phaseMaxHistoricalVolFraction( 1, numPhases );
   phaseMaxHistoricalVolFraction[0][0] = 1.;
   phaseMaxHistoricalVolFraction[0][1] = shy;
 
-  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, compflow::LAYOUT_PHASE > phaseMinHistoricalVolFraction( 1, numPhases );
+  StackArray< real64, 2, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              compflow::LAYOUT_PHASE > phaseMinHistoricalVolFraction( 1, numPhases );
   phaseMinHistoricalVolFraction[0][0] = 1. - shy;
   phaseMinHistoricalVolFraction[0][1] = 0.;
 
-  StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM > phaseRelPerm( 1, 1, numPhases );
+  StackArray< real64, 3, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              relperm::LAYOUT_RELPERM > phaseRelPerm( 1, 1, numPhases );
 
-  StackArray< real64, 4, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES * constitutive::RelativePermeabilityBase::MAX_NUM_PHASES, relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm_dPhaseVolFrac( 1,
-                                                                                                                                                                                                    1,
-                                                                                                                                                                                                    numPhases,
-                                                                                                                                                                                                    numPhases );
-
-
+  StackArray< real64, 4, constitutive::RelativePermeabilityBase::MAX_NUM_PHASES *constitutive::RelativePermeabilityBase::MAX_NUM_PHASES,
+              relperm::LAYOUT_RELPERM_DS > dPhaseRelPerm_dPhaseVolFrac( 1, 1, numPhases, numPhases );
 
   relpermTblWrapper.computeTwoPhase( ipWetting,
                                      ipNonWetting,
@@ -536,7 +536,7 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 {
   real64 const shy[3] = { 0.5, 0.75, 0.78 };
 
-/// old impl data -- saved data
+  /// old impl data -- saved data
   localIndex const ninc = 15;
   real64 const sg_inc[] = { 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6,
                             0.65, 0.7, 0.75, 0.78 };
@@ -545,49 +545,50 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
   localIndex const off[3] = { 6, 1, 0 };
   real64 const sg_dsc[] = { 0.78, 0.73, 0.68, 0.63, 0.58, 0.53, 0.48, 0.43, 0.38, 0.33, 0.28, 0.23 };
 
-
-
-  real64 const scanning_w_i[][ndsc] = {
-    { 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.0616975, 0.172378, 0.337489, 0.541488, 0.778040, 0.910729 },
+  real64 const scanning_w_i[][ndsc] =
+  { { 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.046258, 0.0616975, 0.172378, 0.337489, 0.541488, 0.778040, 0.910729 },
     { 0.000057, 0.011931, 0.062327, 0.136442, 0.228608, 0.336255, 0.4569098, 0.589277, 0.732427, 0.879957, 0.935521, 0.935521 },
     { 0.0, 0.036560, 0.097156, 0.176380, 0.270440, 0.377219, 0.4953000, 0.623760, 0.761800, 0.892749, 0.938200, 0.938200 } };
 
-//krgd
-  real64 const drainage_w_values[] = {
-    0.66567, 0.53400, 0.41660, 0.32060, 0.22650, 0.14500, 0.08800, 0.05700, 0.04, 0.035,
+  // krgd
+  real64 const drainage_w_values[] =
+  { 0.66567, 0.53400, 0.41660, 0.32060, 0.22650, 0.14500, 0.08800, 0.05700, 0.04, 0.035,
     0.018, 0.01, 0.003, 0.001, 0.00000, 0.00000, 0.00000, 0.00000 };
 
-  real64 const drainage_g_values[] = { 0.02000, 0.04000, 0.07500, 0.12700, 0.18000, 0.24000, 0.31000,
-                                       0.37300, 0.46000, 0.55000, 0.64000, 0.73000, 0.82500, 0.92000, 1.00000 };
+  real64 const drainage_g_values[] =
+  { 0.02000, 0.04000, 0.07500, 0.12700, 0.18000, 0.24000, 0.31000,
+    0.37300, 0.46000, 0.55000, 0.64000, 0.73000, 0.82500, 0.92000, 1.00000 };
 
-  real64 const scanning_g_i[][ndsc] = {
-    { 0.460000, 0.460000, 0.460000, 0.460000, 0.460000, 0.460000, 0.407517, 0.285259, 0.178848, 0.090686, 0.025844, 0.000000 },
+  real64 const scanning_g_i[][ndsc] =
+  { { 0.460000, 0.460000, 0.460000, 0.460000, 0.460000, 0.460000, 0.407517, 0.285259, 0.178848, 0.090686, 0.025844, 0.000000 },
     { 0.920000, 0.860285, 0.716467, 0.581413, 0.456038, 0.341595, 0.238939, 0.149497, 0.075697, 0.022777, 0.000000, 0.000000 },
     { 1.000000, 0.848929, 0.705493, 0.571229, 0.446815, 0.333110, 0.231251, 0.142852, 0.070502, 0.020172, 0.000000, 0.000000 } };
 
   real64 const relTol = 5e-5;
 
-//saved cycle
+  // saved cycle
   initialize( makeTableRelPermHysteresisTwoPhase( "relPerm", m_parent ) );
   auto relpermTblWrapper = m_model->createKernelWrapper();
+
   // all sat are nonwetting sat
-  for( localIndex count = 0; count < 3; ++count )
+  for( integer count = 0; count < 3; ++count )
   {
-    //drainage
-    for( localIndex isat = 0; isat < ninc; ++isat )
+
+    // drainage
+    for( integer isat = 0; isat < ninc; ++isat )
     {
       if( sg_inc[isat] > shy[count] )
-        break;                               // exit as the drainage bounding is not scanned anymore
-
+      {
+        break; // exit as the drainage bounding is not scanned anymore
+      }
       testValuesAgainstPreviousImplementation( relpermTblWrapper,
                                                sg_inc[isat], sg_inc[isat],
                                                drainage_w_values[isat], drainage_g_values[isat],
                                                relTol );
-
-
     }
-    //imbibition
-    for( localIndex isat = off[count]; isat < ndsc; ++isat )
+
+    // imbibition
+    for( integer isat = off[count]; isat < ndsc; ++isat )
     {
       testValuesAgainstPreviousImplementation( relpermTblWrapper,
                                                sg_dsc[isat], shy[count],
@@ -596,9 +597,7 @@ TEST_F( KilloughHysteresisTest, KilloughTwoPhaseHysteresisTest )
 
     }
   }
-
 }
-
 
 int main( int argc, char * * argv )
 {

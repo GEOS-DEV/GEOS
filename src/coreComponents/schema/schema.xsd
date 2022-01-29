@@ -2795,8 +2795,6 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
-		<!--alphaParameter2 => Second parameter introduced by Jerauld (see RTD documentation).-->
-		<xsd:attribute name="alphaParameter2" type="real64" default="1" />
 		<!--drainageNonWettingIntermediateRelPermTableNames => List of drainage relative permeability tables for the pair (non-wetting phase, intermediate phase)
 The expected format is "{ nonWettingPhaseRelPermTableName, intermediatePhaseRelPermTableName }", in that order
 Note that this input is only used for three-phase flow.
@@ -2818,10 +2816,12 @@ To neglect hysteresis on this phase, just use the same table name for the draina
 		<!--imbibitionNonWettingImbibitionRelPermTableName => Imbibition relative permeability table name for the non-wetting phase.
 To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves-->
 		<xsd:attribute name="imbibitionNonWettingImbibitionRelPermTableName" type="string" use="required" />
-		<!--jerauldParameterA => First parameter introduced by Jerauld (see RTD documentation).-->
+		<!--jerauldParameterA => First parameter (modification parameter) introduced by Jerauld in the Land trapping model (see RTD documentation).-->
 		<xsd:attribute name="jerauldParameterA" type="real64" default="0.1" />
-		<!--jerauldParameterB => Second parameter introduced by Jerauld (see RTD documentation).-->
+		<!--jerauldParameterB => Second parameter introduced by Jerauld in the Land trapping model (see RTD documentation).-->
 		<xsd:attribute name="jerauldParameterB" type="real64" default="0" />
+		<!--killoughCurvatuveParameter => Curvature parameter introduced by Killough for wetting-phase hysteresis (see RTD documentation).-->
+		<xsd:attribute name="killoughCurvatuveParameter" type="real64" default="1" />
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
