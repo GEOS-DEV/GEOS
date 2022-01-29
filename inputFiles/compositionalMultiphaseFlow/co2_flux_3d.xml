@@ -10,6 +10,7 @@
       solidNames="{ rock }"
       permeabilityNames="{ rockPerm }"
       relPermNames="{ relperm }"
+      capPressureNames="{ cappres }"
       temperature="368.15"
       useMass="1"
       computeCFLNumbers="1"
@@ -113,7 +114,7 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ cellBlock }"
-      materialList="{ fluid, rock, relperm }"/>
+      materialList="{ fluid, rock, relperm, cappres }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -130,25 +131,28 @@
       solidModelName="nullSolid"
       porosityModelName="rockPorosity"
       permeabilityModelName="rockPerm"/>
-
     <NullModel
       name="nullSolid"/>
-
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.2"
       referencePressure="0.0"
       compressibility="1.0e-9"/>
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
 
     <TableRelativePermeability
       name="relperm"
       phaseNames="{ gas, water }"
       wettingNonWettingRelPermTableNames="{ waterRelativePermeabilityTable,
                                             gasRelativePermeabilityTable }"/>
-    
-    <ConstantPermeability
-      name="rockPerm"
-      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-13 }"/>
+    <JFunctionCapillaryPressure
+      name="cappres"
+      phaseNames="{ gas, water }"	
+      wettingNonWettingJFunctionTableName="jFunctionTable"
+      wettingNonWettingSurfaceTension="23.86955676433857e-3"
+      permeabilityDirection="XY"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -229,6 +233,7 @@
 
     <Aquifer
       name="aquiferBC1"
+      logLevel="1"	
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
       aquiferInitialPressure="8e6"
@@ -245,6 +250,7 @@
 
     <Aquifer
       name="aquiferBC2"
+      logLevel="1"	
       aquiferPorosity="1e-1"
       aquiferPermeability="1e-13"
       aquiferInitialPressure="8e6"
@@ -288,6 +294,10 @@
       coordinateFiles="{ phaseVolFraction_gas.txt }"
       voxelFile="relPerm_gas.txt"/>       
 
+    <TableFunction
+      name="jFunctionTable"
+      coordinateFiles="{ phaseVolFraction_water.txt }"
+      voxelFile="jFunction.txt"/>
   </Functions>      
   
   <Outputs>

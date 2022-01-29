@@ -760,7 +760,6 @@ class RelPermTest : public ConstitutiveTestBase< RelativePermeabilityBase >
 {
 public:
   void test( arraySlice1d< real64 const > const sat,
-             arraySlice1d< real64 const > const initSat,
              real64 const eps,
              real64 const tol )
   {
@@ -769,7 +768,6 @@ public:
     testNumericalDerivatives( m_parent,
                               *m_model,
                               sat,
-                              initSat,
                               eps,
                               tol,
                               "phaseRelPerm",
@@ -791,17 +789,14 @@ TEST_F( RelPermTest, numericalDerivatives_brooksCoreyRelPerm )
 {
   initialize( makeBrooksCoreyRelPerm( "relPerm", m_parent ) );
 
-  array1d< real64 > initSat( 2 ); // will be unused for this model
   array1d< real64 > sat( 2 );
   sat[0] = 0.7;
   sat[1] = 0.3;
-  initSat[0] = 0.7;
-  initSat[1] = 0.3;
 
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  test( sat, initSat, eps, tol );
+  test( sat, eps, tol );
 }
 
 TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
@@ -815,17 +810,14 @@ TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermTwoPhase )
   real64 const endSat   = 0.7;
   real64 const dS = 1e-1;
 
-  array1d< real64 > initSat( 2 ); // will be unused for this model
   array1d< real64 > sat( 2 );
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 1.0-sat[0];
-  initSat[1] = sat[1];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1-sat[0];
   }
@@ -844,18 +836,14 @@ TEST_F( RelPermTest, numericalDerivatives_BrooksCoreyBakerRelPermThreePhase )
   real64 const alpha = 0.4;
 
   array1d< real64 > sat( 3 );
-  array1d< real64 > initSat( 3 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = alpha*(1.0-sat[0]);
-  initSat[1] = sat[1];
   sat[2] = (1-alpha)*(1.0-sat[0]);
-  initSat[2] = sat[2];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = alpha *(1-sat[0]);
     sat[2] = (1-alpha) *(1-sat[0]);
@@ -875,16 +863,13 @@ TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermTwoPhase )
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 2 );
-  array1d< real64 > initSat( 2 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 1.0-sat[0];
-  initSat[1] = sat[1];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1-sat[0];
   }
@@ -903,18 +888,14 @@ TEST_F( RelPermTest, numericalDerivatives_VanGenuchtenBakerRelPermThreePhase )
   real64 const alpha = 0.4;
 
   array1d< real64 > sat( 3 );
-  array1d< real64 > initSat( 3 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = alpha*(1.0-sat[0]);
-  initSat[1] = sat[1];
   sat[2] = (1-alpha)*(1.0-sat[0]);
-  initSat[2] = sat[2];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = alpha *(1-sat[0]);
     sat[2] = (1-alpha) *(1-sat[0]);
@@ -933,13 +914,12 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermTwoPhase )
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 2 );
-  array1d< real64 > initSat( 2 ); // will be unused for this model
 
   sat[0] = startSat;
   sat[1] = 1.0-sat[0];
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1-sat[0];
   }
@@ -958,18 +938,14 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermThreePhase )
   real64 const alpha = 0.4;
 
   array1d< real64 > sat( 3 );
-  array1d< real64 > initSat( 3 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = alpha*(1.0-sat[0]);
-  initSat[1] = sat[1];
   sat[2] = (1-alpha)*(1.0-sat[0]);
-  initSat[2] = sat[2];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = alpha *(1-sat[0]);
     sat[2] = (1-alpha) *(1-sat[0]);
@@ -988,16 +964,19 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   real64 const dS = 2e-2;
 
   array1d< real64 > sat( 2 );
-  array1d< real64 > initSat( 2 ); // this is important for this model
+  array2d< real64, compflow::LAYOUT_PHASE > initSat( 1, 2 );
 
   sat[0] = startSat;
   sat[1] = 1.0-sat[0];
-  initSat[0] = 0.6;
-  initSat[1] = 0.4;
+  initSat[0][0] = 0.6;
+  initSat[0][1] = 0.4;
+
+  m_model->allocateConstitutiveData( m_parent, 1 );
+  m_model->initializePhaseVolFractionState( initSat.toViewConst() );
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1-sat[0];
   }

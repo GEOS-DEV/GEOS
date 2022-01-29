@@ -16,7 +16,7 @@ import re
 # strip_trailing  | 3.0000, 5.150050             | Removes unnecessary float strings
 # strip_trailing_b| 3.0000e0, 1.23e0             | Removes unnecessary float strings
 #
-patterns = {'parameters': r"\$:?([a-zA-Z_]*)\$?",
+patterns = {'parameters': r"\$:?([a-zA-Z_0-9]*)\$?",
             'units': r"([0-9]*?\.?[0-9]+(?:[eE][-+]?[0-9]*?)?)\ *?\[([-+.*/()a-zA-Z0-9]*)\]",
             'units_b': r"([a-zA-Z]*)",
             'symbolic': r"\`([-+.*/() 0-9eE]*)\`",

@@ -26,6 +26,7 @@
 
 namespace geosx
 {
+
 namespace constitutive
 {
 
@@ -132,14 +133,14 @@ public:
    * @brief Setup the initial step at the beginning of the simulation (needed for hysteresis)
    * @param[in] initialPhaseVolFraction an array containing the initial phase volume fractions
    */
-  virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
+  virtual void initializePhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
   { GEOSX_UNUSED_VAR( initialPhaseVolFraction ); }
 
   /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
    */
-  virtual void saveConvergedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+  virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
   { GEOSX_UNUSED_VAR( phaseVolFraction ); }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
@@ -147,9 +148,6 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
-
-    static constexpr char const * phaseRelPermString() { return "phaseRelPerm"; }                                       // Kr
-    static constexpr char const * dPhaseRelPerm_dPhaseVolFractionString() { return "dPhaseRelPerm_dPhaseVolFraction"; } // dKr_p/dS_p
   };
 
 private:

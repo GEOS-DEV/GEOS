@@ -18,6 +18,7 @@
 
 #include "TableRelativePermeabilityHysteresis.hpp"
 
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geosx
@@ -126,6 +127,9 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   registerWrapper( viewKeyStruct::phaseHasHysteresisString(), &m_phaseHasHysteresis ).
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
+
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction{}, &m_phaseMaxHistoricalVolFraction );
+  registerExtrinsicData( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction{}, &m_phaseMinHistoricalVolFraction );
 
   registerWrapper( viewKeyStruct::drainageRelPermKernelWrappersString(), &m_drainageRelPermKernelWrappers ).
     setSizedFromParent( 0 ).
@@ -658,7 +662,7 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
   m_phaseMinHistoricalVolFraction.resize( size, numPhases );
 }
 
-void TableRelativePermeabilityHysteresis::initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
+void TableRelativePermeabilityHysteresis::initializePhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
 {
   arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
   arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
@@ -676,7 +680,7 @@ void TableRelativePermeabilityHysteresis::initializeState( arrayView2d< real64 c
   } );
 }
 
-void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
 {
   arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
   arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();

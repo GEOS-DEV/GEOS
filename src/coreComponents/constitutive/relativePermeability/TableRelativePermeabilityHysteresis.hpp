@@ -227,9 +227,9 @@ private:
    */
   KernelWrapper createKernelWrapper();
 
-  virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const override;
+  virtual void initializePhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const override;
 
-  virtual void saveConvergedPhaseVolFraction( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
+  virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
@@ -424,25 +424,24 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
                                    real64 & dPhaseRelPerm_dPhaseVolFrac ) const
 {
 
-//0. preparing keypoints in the (S,kr) plan
-//real64 const Scri = imbibitionPhaseMinVolNonWettingFraction;
-//if consistify should be equal to 1. - imbibitionPhaseMinVolNonWettingFraction
-//but wetting and nonwetting are implemented decoupled
+  // Step 0: preparing keypoints in the (S,kr) plan
+  // if consistent, S should be equal to 1. - imbibitionPhaseMinVolNonWettingFraction for two-phase flow
+  // (but wetting and nonwetting phases are implemented in a decoupled fashion)
   real64 const Smxi = imbibitionPhaseMaxVolFraction;
   real64 const Smxd = drainagePhaseMaxVolFraction;
-//  real64 const Scri = 1. - Smxi;
-//  real64 const Scrd = 1. - Smxd;
-  // Swc is the common end min endpoint sat for wetting curves
+
+  // Swc is the common end min endpoint saturation for wetting curves
   real64 const Swc = imbibitionMinPhaseWettingVolFraction;
 
   real64 const krwei = imbibitionKrEndPoint;
   real64 const krwedAtSmxi = drainageRelPermKernelWrapper.compute( &Smxi );
 
-  //1. Compute the new end point
-  //a. get the value at the max NW residual value
+  // Step 1: Compute the new end point
+
+  // Step 1.a: get the value at the max non-wetting residual value
   real64 const deltak = krwei - krwedAtSmxi;
 
-  //b. get the trapped from wetting data
+  // Step 1.b: get the trapped from wetting data
   real64 const Shy = phaseMinHistoricalVolFraction;
   real64 const A = 1 + jerauldParam_a * ( Shy - Swc );
   real64 const numerator = (Shy - Smxd);
@@ -450,12 +449,12 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const Scrt = Smxd + numerator / denom;
 
 
-  //c. Finding the new endpoint
-  //this is the saturation for the scanning curve endpoint
+  // Step 1.c: find the new endpoint
+  // this is the saturation for the scanning curve endpoint
   real64 const krwedAtScrt = drainageRelPermKernelWrapper.compute( &Scrt );
   real64 const krwieStar = krwedAtScrt + deltak * pow( (Smxd - Scrt) / (Smxd - Smxi), m_alphaParam_2 );
 
-  //2. Get the normalized value of sat
+  // Step 2: get the normalized value of saturation
   real64 const S = phaseVolFraction;
   real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
   real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
@@ -464,7 +463,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
   real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute( &Snorm, &dkri_dSnorm );
   real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;
 
-  //3. Get the final value at evaluated sat
+  // Step 3: Get the final value at evaluated saturation
   real64 const krdAtShy = drainageRelPermKernelWrapper.compute( &Shy );
   real64 const imbibitionRelPermRatio = (krwieStar - krdAtShy) / krwei;
 

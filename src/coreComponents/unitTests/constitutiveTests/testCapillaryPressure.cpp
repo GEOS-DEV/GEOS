@@ -12,11 +12,12 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-// Source inclues
+// Source includes
 #include "constitutiveTestHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
+#include "constitutive/capillaryPressure/CapillaryPressureExtrinsicData.hpp"
 
 using namespace geosx;
 using namespace geosx::testing;
@@ -198,7 +199,7 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
   // 1) First, define the tables
 
   // 1D table, various interpolation methods
-  localIndex Naxis = 6;
+  localIndex const Naxis = 6;
 
   // 1.a) First pair of phases (ow)
 
@@ -221,7 +222,7 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
   values_w[4] = 6894.76;
   values_w[5] = 3294.76;
 
-  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_pc" ) );
+  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_ow_pc" ) );
   table_ow_w.setTableCoordinates( coordinates_w );
   table_ow_w.setTableValues( values_w );
   table_ow_w.reInitializeFunction();
@@ -248,7 +249,7 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
   values_g[4] = 24131.7;
   values_g[5] = 26889.6;
 
-  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_pc" ) );
+  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_og_pc" ) );
   table_og_g.setTableCoordinates( coordinates_g );
   table_og_g.setTableValues( values_g );
   table_og_g.reInitializeFunction();
@@ -264,21 +265,183 @@ CapillaryPressureBase & makeTableCapPressureThreePhase( string const & name, Gro
   phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
 
   auto & waterTableName = capPressure.getReference< string >( TableCapillaryPressure::viewKeyStruct::wettingIntermediateCapPresTableNameString() );
-  waterTableName = "water_pc";
+  waterTableName = "water_ow_pc";
 
   auto & gasTableName = capPressure.getReference< string >( TableCapillaryPressure::viewKeyStruct::nonWettingIntermediateCapPresTableNameString() );
-  gasTableName = "gas_pc";
+  gasTableName = "gas_og_pc";
 
   capPressure.postProcessInputRecursive();
   capPressure.initialize(); // to test all the checks
   return capPressure;
 }
 
+CapillaryPressureBase & makeJFunctionCapPressureTwoPhase( string const & name, Group & parent )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // 1) First, define the tables
+
+  // 1D table, various interpolation methods
+  localIndex const Naxis = 10;
+
+  // Setup table
+  array1d< real64_array > coordinates;
+  coordinates.resize( 1 );
+  coordinates[0].resize( Naxis );
+
+  coordinates[0][0] = 0.2924;
+  coordinates[0][1] = 0.3639;
+  coordinates[0][2] = 0.4354;
+  coordinates[0][3] = 0.5068;
+  coordinates[0][4] = 0.5783;
+  coordinates[0][5] = 0.6498;
+  coordinates[0][6] = 0.7213;
+  coordinates[0][7] = 0.7927;
+  coordinates[0][8] = 0.8642;
+  coordinates[0][9] = 0.9357;
+
+  real64_array values( Naxis );
+  values[0] = 0.3772;
+  values[1] = 0.0908;
+  values[2] = 0.0607;
+  values[3] = 0.0468;
+  values[4] = 0.0381;
+  values[5] = 0.0318;
+  values[6] = 0.0267;
+  values[7] = 0.0222;
+  values[8] = 0.0178;
+  values[9] = 0.0127;
+
+
+  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_jFunction" ) );
+  table_w.setTableCoordinates( coordinates );
+  table_w.setTableValues( values );
+  table_w.reInitializeFunction();
+
+  table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  // 2) Then set up the constitutive model
+
+  JFunctionCapillaryPressure & capPressure = parent.registerGroup< JFunctionCapillaryPressure >( name );
+
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 2 );
+  phaseNames[0] = "water"; phaseNames[1] = "gas";
+
+  auto & waterTableName = capPressure.getReference< string >( JFunctionCapillaryPressure::viewKeyStruct::wettingNonWettingJFuncTableNameString() );
+  waterTableName = "water_jFunction";
+
+  auto & surfaceTension = capPressure.getReference< real64 >( JFunctionCapillaryPressure::viewKeyStruct::wettingNonWettingSurfaceTensionString() );
+  surfaceTension = 23.86955676433857e-3;
+
+  auto & permeabilityDirection =
+    capPressure.getReference< JFunctionCapillaryPressure::PermeabilityDirection >( JFunctionCapillaryPressure::viewKeyStruct::permeabilityDirectionString() );
+  permeabilityDirection = JFunctionCapillaryPressure::PermeabilityDirection::XY;
+
+  capPressure.postProcessInputRecursive();
+  capPressure.initialize(); // to test all the checks
+
+  return capPressure;
+}
+
+CapillaryPressureBase & makeJFunctionCapPressureThreePhase( string const & name, Group & parent )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  // 1) First, define the tables
+
+  // 1D table, various interpolation methods
+  localIndex const Naxis = 6;
+
+  // 1.a) First pair of phases (ow)
+
+  // Setup table
+  array1d< real64_array > coordinates_w;
+  coordinates_w.resize( 1 );
+  coordinates_w[0].resize( Naxis );
+  coordinates_w[0][0] = 0.22;
+  coordinates_w[0][1] = 0.3;
+  coordinates_w[0][2] = 0.5;
+  coordinates_w[0][3] = 0.6;
+  coordinates_w[0][4] = 0.8;
+  coordinates_w[0][5] = 1.0;
+
+  real64_array values_w( Naxis );
+  values_w[0] = 0.40203;
+  values_w[1] = 0.31311;
+  values_w[2] = 0.22423;
+  values_w[3] = 0.15011;
+  values_w[4] = 0.04224;
+  values_w[5] = 0.00603;
+
+  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_ow_jFunction" ) );
+  table_ow_w.setTableCoordinates( coordinates_w );
+  table_ow_w.setTableValues( values_w );
+  table_ow_w.reInitializeFunction();
+
+  table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  // 1.a) Second pair of phases (og)
+
+  array1d< real64_array > coordinates_g;
+  coordinates_g.resize( 1 );
+  coordinates_g[0].resize( Naxis );
+  coordinates_g[0][0] = 0.0;
+  coordinates_g[0][1] = 0.04;
+  coordinates_g[0][2] = 0.1;
+  coordinates_g[0][3] = 0.2;
+  coordinates_g[0][4] = 0.7;
+  coordinates_g[0][5] = 0.78;
+
+  real64_array values_g( Naxis );
+  values_g[0] = 0.0;
+  values_g[1] = 0.02101;
+  values_g[2] = 0.11607;
+  values_g[3] = 0.19103;
+  values_g[4] = 0.21033;
+  values_g[5] = 0.27203;
+
+  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_og_jFunction" ) );
+  table_og_g.setTableCoordinates( coordinates_g );
+  table_og_g.setTableValues( values_g );
+  table_og_g.reInitializeFunction();
+
+  table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+
+  // 2) Then set up the constitutive model
+
+  JFunctionCapillaryPressure & capPressure = parent.registerGroup< JFunctionCapillaryPressure >( name );
+
+  string_array & phaseNames = capPressure.getReference< string_array >( CapillaryPressureBase::viewKeyStruct::phaseNamesString() );
+  phaseNames.resize( 3 );
+  phaseNames[0] = "oil"; phaseNames[1] = "gas"; phaseNames[2] = "water";
+
+  auto & waterTableName = capPressure.getReference< string >( JFunctionCapillaryPressure::viewKeyStruct::wettingIntermediateJFuncTableNameString() );
+  waterTableName = "water_ow_jFunction";
+
+  auto & gasTableName = capPressure.getReference< string >( JFunctionCapillaryPressure::viewKeyStruct::nonWettingIntermediateJFuncTableNameString() );
+  gasTableName = "gas_og_jFunction";
+
+  auto & waterSurfaceTension = capPressure.getReference< real64 >( JFunctionCapillaryPressure::viewKeyStruct::wettingIntermediateSurfaceTensionString() );
+  waterSurfaceTension = 23.86955676433857e-3;
+
+  auto & gasSurfaceTension = capPressure.getReference< real64 >( JFunctionCapillaryPressure::viewKeyStruct::nonWettingIntermediateSurfaceTensionString() );
+  gasSurfaceTension = 14.24643678933543e-3;
+
+  auto & permeabilityDirection =
+    capPressure.getReference< JFunctionCapillaryPressure::PermeabilityDirection >( JFunctionCapillaryPressure::viewKeyStruct::permeabilityDirectionString() );
+  permeabilityDirection = JFunctionCapillaryPressure::PermeabilityDirection::Z;
+
+  capPressure.postProcessInputRecursive();
+  capPressure.initialize(); // to test all the checks
+  return capPressure;
+}
+
+
 class CapillaryPressureTest : public ConstitutiveTestBase< CapillaryPressureBase >
 {
 public:
   void test( arraySlice1d< real64 const > const sat,
-             arraySlice1d< real64 const > const initSat,
              real64 const eps,
              real64 const tol )
   {
@@ -287,7 +450,6 @@ public:
     testNumericalDerivatives( m_parent,
                               *m_model,
                               sat,
-                              initSat,
                               eps,
                               tol,
                               "phaseCapPressure",
@@ -317,16 +479,13 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureTwoPha
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 2 );
-  array1d< real64 > initSat( 2 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 1.0-sat[0];
-  initSat[1] = sat[1];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1 - sat[0];
   }
@@ -345,18 +504,14 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureThreeP
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 3 );
-  array1d< real64 > initSat( 3 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 0.5*(1-sat[0]);
-  initSat[1] = sat[1];
   sat[2] = 1.0-sat[0]-sat[1];
-  initSat[2] = sat[2];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 0.5 * ( 1-sat[0] );
     sat[2] = 1.0 - sat[0] - sat[1];
@@ -376,16 +531,13 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureTwoPh
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 2 );
-  array1d< real64 > initSat( 2 ); // will be unused for this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 1-sat[1];
-  initSat[1] = sat[1];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1 - sat[0];
   }
@@ -405,18 +557,14 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureThree
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 3 );
-  array1d< real64 > initSat( 3 ); // will be unused in this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 0.5*(1-sat[0]);
-  initSat[1] = sat[1];
   sat[2] = 1.0-sat[0]-sat[1];
-  initSat[2] = sat[2];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 0.5*(1-sat[0]);
     sat[2] = 1 - sat[0] - sat[1];
@@ -436,16 +584,10 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureTwoPhase )
   real64 const dS        = 1e-1;
 
   array1d< real64 > sat( 2 );
-  array1d< real64 > initSat( 2 ); // will be unused in this model
-
-  sat[0] = startSat;
-  initSat[0] = sat[0];
-  sat[1] = 1-sat[1];
-  initSat[1] = sat[1];
-
+  sat[0] = startSat; sat[1] = 1-sat[0];
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 1 - sat[0];
   }
@@ -465,18 +607,108 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureThreePhase )
   real64 const dS = 1e-1;
 
   array1d< real64 > sat( 3 );
-  array1d< real64 > initSat( 3 ); // will be unused in this model
 
   sat[0] = startSat;
-  initSat[0] = sat[0];
   sat[1] = 0.5*(1-sat[0]);
-  initSat[1] = sat[1];
   sat[2] = 1.0-sat[0]-sat[1];
-  initSat[2] = sat[2];
 
   while( sat[0] <= endSat )
   {
-    test( sat, initSat, eps, tol );
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 0.5*(1-sat[0]);
+    sat[2] = 1 - sat[0] - sat[1];
+  }
+}
+
+TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureTwoPhase )
+{
+  initialize( makeJFunctionCapPressureTwoPhase( "capPressure", m_parent ) );
+
+  // here, we have to apply a special treatment to this test
+  // to make sure that the J-function multiplier is initialized using initializeRockState
+  // this requires calling allocateConstitutiveData in advance (it will be called again later, in the "test" function)
+
+  // setup some values for porosity and permeability
+  array2d< real64 > porosity;
+  porosity.resize( 1, 1 );
+  porosity[0][0] = 0.13496794266569806;
+  array3d< real64 > permeability;
+  permeability.resize( 1, 1, 3 );
+  permeability[0][0][0] = 0.1722194e-15;
+  permeability[0][0][1] = 0.3423156e-15;
+  permeability[0][0][2] = 0.2324191e-15;
+
+  // initialize the J-function multiplier (done on GPU if GPU is available)
+  m_model->allocateConstitutiveData( m_parent, 1 );
+  m_model->initializeRockState( porosity.toViewConst(), permeability.toViewConst() );
+
+  // move the multiplier back to the CPU since the test is performed on the CPU
+  auto & jFuncMultiplier =
+    m_model->getReference< array2d< real64 > >( extrinsicMeshData::cappres::jFuncMultiplier::key() );
+  jFuncMultiplier.move( LvArray::MemorySpace::host, false );
+
+  // we are ready to proceed to the test
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const start_sat = 0.3;
+  real64 const end_sat   = 0.9;
+  real64 const dS        = 1e-1;
+  array1d< real64 > sat( 2 );
+  sat[0] = start_sat; sat[1] = 1-sat[0];
+  while( sat[0] <= end_sat )
+  {
+    test( sat, eps, tol );
+    sat[0] += dS;
+    sat[1] = 1 - sat[0];
+  }
+
+}
+
+TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePhase )
+{
+  initialize( makeJFunctionCapPressureThreePhase( "capPressure", m_parent ) );
+
+  // here, we have to apply a special treatment to this test
+  // to make sure that the J-function multiplier is initialized using initializeRockState
+  // this requires calling allocateConstitutiveData in advance (it will be called again later, in the "test" function)
+
+  // setup some values for porosity and permeability
+  array2d< real64 > porosity;
+  porosity.resize( 1, 1 );
+  porosity[0][0] = 0.03496794266569806;
+  array3d< real64 > permeability;
+  permeability.resize( 1, 1, 3 );
+  permeability[0][0][0] = 0.3722194e-15;
+  permeability[0][0][1] = 0.4423156e-15;
+  permeability[0][0][2] = 0.2324191e-15;
+
+  // initialize the J-function multiplier (done on the GPU if GPU is available)
+  m_model->allocateConstitutiveData( m_parent, 1 );
+  m_model->initializeRockState( porosity.toViewConst(), permeability.toViewConst() );
+
+  // move the multiplier back to the CPU since the test is performed on the CPU
+  auto & jFuncMultiplier =
+    m_model->getReference< array2d< real64 > >( extrinsicMeshData::cappres::jFuncMultiplier::key() );
+  jFuncMultiplier.move( LvArray::MemorySpace::host, false );
+
+  // we are ready to proceed to the test
+
+  real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
+  real64 const tol = 1e-4;
+
+  real64 const start_sat = 0.25;
+  real64 const end_sat   = 0.75;
+  real64 const dS        = 1e-1;
+  array1d< real64 > sat( 3 );
+  sat[0] = start_sat;
+  sat[1] = 0.5*(1-sat[0]);
+  sat[2] = 1.0-sat[0]-sat[1];
+  while( sat[0] <= end_sat )
+  {
+    test( sat, eps, tol );
     sat[0] += dS;
     sat[1] = 0.5*(1-sat[0]);
     sat[2] = 1 - sat[0] - sat[1];
