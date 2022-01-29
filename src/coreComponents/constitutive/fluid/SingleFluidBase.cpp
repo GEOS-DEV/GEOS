@@ -29,14 +29,6 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for density." );
-
-  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for viscosity." );
-
   registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
   registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDensity_dPressure );
 
@@ -49,8 +41,6 @@ SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
-  getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
-  getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
 }
 
 void SingleFluidBase::initializeState() const

@@ -182,11 +182,10 @@ public:
   arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
   arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
 
-  real64 defaultDensity() const { return m_defaultDensity; }
-  real64 defaultViscosity() const { return m_defaultViscosity; }
+  virtual real64 defaultDensity() const  { return 1.0; }
+  virtual real64 defaultViscosity() const  { return 1.0; }
 
   // *** Data repository keys
-
   struct viewKeyStruct
   {
     static constexpr char const * defaultDensityString() { return "defaultDensity"; }
@@ -202,9 +201,6 @@ public:
 protected:
 
   virtual void postProcessInput() override;
-
-  real64 m_defaultDensity;
-  real64 m_defaultViscosity;
 
   array2d< real64 > m_density;
   array2d< real64 > m_dDensity_dPressure;

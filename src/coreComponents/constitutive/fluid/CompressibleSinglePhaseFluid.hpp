@@ -144,11 +144,20 @@ public:
     static constexpr char const * viscosityModelTypeString() { return "viscosityModelType"; }
   };
 
+  real64 defaultDensity() const override final { return m_defaultDensity; }
+  real64 defaultViscosity() const override final { return m_defaultViscosity; }
+
 protected:
 
   virtual void postProcessInput() override;
 
 private:
+
+  /// default density value
+  real64 m_defaultDensity;
+  
+  /// default viscosity value
+  real64 m_defaultViscosity;
 
   /// scalar fluid bulk modulus parameter
   real64 m_compressibility;
