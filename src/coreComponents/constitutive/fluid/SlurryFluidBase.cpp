@@ -33,19 +33,22 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
 
   registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
+    setSizedFromParent( 0 ).
     setDescription( "List of fluid component names" );
 
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
+  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultComponentDensity ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default value for density." );
+    setSizedFromParent( 0 ).
+    setDescription( "Default value for the component density." );
 
-  registerWrapper( viewKeyStruct::defaultCompressibilityString(), &m_defaultCompressibility ).
+  registerWrapper( viewKeyStruct::defaultCompressibilityString(), &m_defaultComponentCompressibility ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default value for compressibility." );
+    setSizedFromParent( 0 ).
+    setDescription( "Default value for the component compressibility." );
 
-  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
+  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultComponentViscosity ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Default value for viscosity." );
+    setDescription( "Default value for the component viscosity." );
 
 
   registerWrapper( viewKeyStruct::flowBehaviorIndexString(), &m_nIndices ).
@@ -83,13 +86,13 @@ void SlurryFluidBase::postProcessInput()
 
   localIndex const NC = numFluidComponents();
 
-  GEOSX_ERROR_IF( m_defaultDensity.size() != NC,
+  GEOSX_ERROR_IF( m_defaultComponentDensity.size() != NC,
                   "The number of default density values is not the same as the component number" );
 
-  GEOSX_ERROR_IF( m_defaultCompressibility.size() != NC,
+  GEOSX_ERROR_IF( m_defaultComponentCompressibility.size() != NC,
                   "The number of default compressibility values is not the same as the component number" );
 
-  GEOSX_ERROR_IF( m_defaultViscosity.size() != NC,
+  GEOSX_ERROR_IF( m_defaultComponentViscosity.size() != NC,
                   "The number of default viscosity values is not the same as the component number" );
 
 }
@@ -102,7 +105,7 @@ localIndex SlurryFluidBase::numFluidComponents() const
 void SlurryFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
-  ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
   this->resize( parent.size() );
 

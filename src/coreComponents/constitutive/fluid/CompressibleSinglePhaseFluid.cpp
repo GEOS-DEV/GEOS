@@ -31,6 +31,15 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   m_densityModelType( ExponentApproximationType::Linear ),
   m_viscosityModelType( ExponentApproximationType::Linear )
 {
+
+  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value for density." );
+
+  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value for viscosity." );
+
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -73,6 +82,9 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
+  
+  getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
+  getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
 
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );

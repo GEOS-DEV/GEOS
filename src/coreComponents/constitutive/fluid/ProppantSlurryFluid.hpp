@@ -164,8 +164,8 @@ public:
              isProppantBoundary,
              m_density[k][q],
              m_dDensity_dPressure[k][q],
-             m_dDens_dProppantConc[k][q],
-             m_dDens_dCompConc[k][q],
+             m_dDensity_dProppantConc[k][q],
+             m_dDensity_dCompConc[k][q],
              m_viscosity[k][q],
              m_dViscosity_dPressure[k][q],
              m_dViscosity_dProppantConc[k][q],
@@ -363,10 +363,10 @@ ProppantSlurryFluidUpdate::
 
   for( localIndex c = 0; c < NC; ++c )
   {
-    real64 const density = m_defaultDensity[c] * exp( m_defaultCompressibility[c] * (pressure - m_referencePressure));
+    real64 const density = m_defaultComponentDensity[c] * exp( m_defaultComponentCompressibility[c] * (pressure - m_referencePressure));
 
     componentDensity[c] = componentConcentration[c] * density;
-    dComponentDensity_dPressure[c] = m_defaultCompressibility[c] * componentDensity[c];
+    dComponentDensity_dPressure[c] = m_defaultComponentCompressibility[c] * componentDensity[c];
 
     for( localIndex i = 0; i < NC; ++i )
     {
@@ -399,10 +399,10 @@ ProppantSlurryFluidUpdate::
 
   for( localIndex c = 0; c < NC; ++c )
   {
-    real64 const density = m_defaultDensity[c] * exp( m_defaultCompressibility[c] * (pressure - m_referencePressure));
+    real64 const density = m_defaultComponentDensity[c] * exp( m_defaultComponentCompressibility[c] * (pressure - m_referencePressure));
 
     componentDensity[c] = componentConcentration[c] * density;
-    dComponentDensity_dPressure[c] = m_defaultCompressibility[c] * componentDensity[c];
+    dComponentDensity_dPressure[c] = m_defaultComponentCompressibility[c] * componentDensity[c];
 
     for( localIndex i = 0; i < NC; ++i )
     {
@@ -437,11 +437,11 @@ ProppantSlurryFluidUpdate::
 
   for( localIndex c1 = 0; c1 < NC; ++c1 )
   {
-    fluidViscosity += componentDensity[c1] / fluidDensity * (m_defaultViscosity[c1] - m_referenceViscosity);
+    fluidViscosity += componentDensity[c1] / fluidDensity * (m_defaultComponentViscosity[c1] - m_referenceViscosity);
 
     dFluidViscosity_dPressure +=
       (dComponentDensity_dPressure[c1] / fluidDensity - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dPressure) *
-      (m_defaultViscosity[c1] - m_referenceViscosity);
+      (m_defaultComponentViscosity[c1] - m_referenceViscosity);
   }
 }
 
