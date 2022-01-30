@@ -359,11 +359,6 @@ void compute2DElasticityOperator( MPI_Comm const comm,
                                            ( nCellsX + 1 ) * ( nCellsY + 1 ) * 2,
                                            18 );
 
-
-  // Construct local stiffness matrix (same for all cells)
-  real64 Ke[8][8];
-  Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
-
   globalIndex const iStart = LvArray::math::max( iCellLower - nCellsX, globalIndex( 0 ) );
   globalIndex const iEnd   = LvArray::math::min( iCellUpper + nCellsX, nCells );
 
@@ -425,6 +420,10 @@ void compute2DElasticityOperator( MPI_Comm const comm,
     // Loop over grid cells
     globalIndex dofIndex[8];
     computeQuadElementDofIndices( iCell + iStart, nCellsX, dofIndex );
+    
+    // Construct local stiffness matrix (same for all cells)
+    real64 Ke[8][8];
+    Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
     // Element matrix assembly into the local matrix
     for( integer i = 0; i < 8; ++i )
