@@ -420,7 +420,7 @@ void compute2DElasticityOperator( MPI_Comm const comm,
     // Loop over grid cells
     globalIndex dofIndex[8];
     computeQuadElementDofIndices( iCell + iStart, nCellsX, dofIndex );
-    
+
     // Construct local stiffness matrix (same for all cells)
     real64 Ke[8][8];
     Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
