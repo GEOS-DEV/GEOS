@@ -22,6 +22,7 @@ ProppantTransport                         node                 :ref:`XML_Proppan
 SinglePhaseFVM                            node                 :ref:`XML_SinglePhaseFVM`                            
 SinglePhaseHybridFVM                      node                 :ref:`XML_SinglePhaseHybridFVM`                      
 SinglePhasePoromechanics                  node                 :ref:`XML_SinglePhasePoromechanics`                  
+SinglePhasePoromechanicsDynamic           node                 :ref:`XML_SinglePhasePoromechanicsDynamic`           
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      

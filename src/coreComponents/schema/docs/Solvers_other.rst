@@ -21,6 +21,7 @@ ProppantTransport                         node :ref:`DATASTRUCTURE_ProppantTrans
 SinglePhaseFVM                            node :ref:`DATASTRUCTURE_SinglePhaseFVM`                            
 SinglePhaseHybridFVM                      node :ref:`DATASTRUCTURE_SinglePhaseHybridFVM`                      
 SinglePhasePoromechanics                  node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                  
+SinglePhasePoromechanicsDynamic           node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsDynamic`           
 SinglePhasePoromechanicsEmbeddedFractures node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                      

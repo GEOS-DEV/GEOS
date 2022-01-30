@@ -481,7 +481,7 @@ real64 SinglePhaseBase::solverStep( real64 const & time_n,
 
   if( m_timeIntegrationOption == TimeIntegrationOption::ExplicitTransient )
   {
-	  dt_return = explicitStep( time_n, dt, cycleNumber, domain );
+	  //dt_return = explicitStep( time_n, dt, cycleNumber, domain );
   }
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitTransient)
   {
@@ -507,7 +507,6 @@ real64 SinglePhaseBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n),
   GEOSX_MARK_FUNCTION;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  //ResetViews( mesh ); //by ron
   // This initialization should be done after running SurfaceGenerator
   static int setFlowSolverTimeStep = 0;
   if( setFlowSolverTimeStep == 0 )

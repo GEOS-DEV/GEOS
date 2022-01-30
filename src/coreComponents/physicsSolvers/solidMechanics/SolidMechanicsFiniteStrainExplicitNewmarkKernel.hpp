@@ -94,7 +94,13 @@ public:
           inputConstitutiveType,
           dt,
           elementListName )
-  {}
+  {
+	  m_hasWrapperPressure = elementSubRegion.hasWrapper( "pressure" );
+	  if(m_hasWrapperPressure)
+	  {
+		  m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( "pressure" );
+	  }
+  }
 
 
   //*****************************************************************************
@@ -190,12 +196,26 @@ public:
     real64 stress[ 6 ] = { };
     m_constitutiveUpdate.hypoUpdate_StressOnly( k, q, Dadt, Rot, stress );
 
+    if(m_hasWrapperPressure)
+    {
+        real64 const biotCoefficient = 1.0;
+    	stress[0] -= biotCoefficient * m_fluidPressure[k];
+    	stress[1] -= biotCoefficient * m_fluidPressure[k];
+    	stress[2] -= biotCoefficient * m_fluidPressure[k];
+    }
+
     real64 P[ 3 ][ 3 ];
     LvArray::tensorOps::Rij_eq_symAikBjk< 3 >( P, stress, fInv );
     LvArray::tensorOps::scale< 3, 3 >( P, -detJ * detF );
 
     FE_TYPE::plusGradNajAij( dNdX, P, stack.fLocal );
   }
+
+  protected:
+    bool m_hasWrapperPressure = false;
+    /// The rank-global fluid pressure array.
+    arrayView1d< real64 const > m_fluidPressure;
+
 };
 #undef UPDATE_STRESS
 

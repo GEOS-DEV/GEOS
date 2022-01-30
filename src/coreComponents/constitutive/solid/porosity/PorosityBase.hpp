@@ -111,6 +111,18 @@ public:
     GEOSX_ERROR( "updateFromPressure is not implemented for porosityBase." );
   }
 
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  void updatePorosityExplicit( localIndex const k,
+                     localIndex const q,
+                     real64 const & volume,
+                     real64 const & deltaVolume ) const
+  {
+      real64 volStrain = deltaVolume / volume;
+      real64 poro = std::max((m_oldPorosity[k][q] + volStrain) / (1 + volStrain), 1e-5);
+	  m_newPorosity[k][q] = poro;
+  }
+
 protected:
   arrayView2d< real64 > m_newPorosity;
 

@@ -595,7 +595,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStepVelocityUpdate( real64 const & t
     {
       integer const component = bc.getComponent();
       real64 value = bc.getScale();
-      GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
+      GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for acceleration BC " << bc.getName() );
 
       forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
                                               [=] GEOSX_DEVICE ( localIndex const i )
