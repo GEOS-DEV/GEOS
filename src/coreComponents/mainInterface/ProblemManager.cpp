@@ -540,7 +540,7 @@ void ProblemManager::generateMesh()
     Group & meshLevels = meshBody.getMeshLevels();
     for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
     {
-      CellBlockManagerABC & cellBlockManager = domain.getGroup< CellBlockManagerABC >( keys::cellManager );
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
       MeshLevel & meshLevel = meshBody.getMeshLevel( b );
 
       NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -600,14 +600,6 @@ void ProblemManager::generateMesh()
   }
 
 
-  GEOSX_THROW_IF_NE( meshBodies.numSubGroups(), 1, InputError );
-  MeshBody & meshBody = meshBodies.getGroup< MeshBody >( 0 );
-
-  GEOSX_THROW_IF_NE( meshBody.numSubGroups(), 1, InputError );
-  MeshLevel & meshLevel = meshBody.getGroup< MeshLevel >( 0 );
-
-  FaceManager & faceManager = meshLevel.getFaceManager();
-  EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
