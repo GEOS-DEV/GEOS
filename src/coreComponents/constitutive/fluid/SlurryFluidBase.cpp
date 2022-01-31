@@ -82,7 +82,7 @@ SlurryFluidBase::~SlurryFluidBase() = default;
 
 void SlurryFluidBase::postProcessInput()
 {
-  ConstitutiveBase::postProcessInput();
+  SingleFluidBase::postProcessInput();
 
   localIndex const NC = numFluidComponents();
 
