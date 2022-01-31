@@ -632,11 +632,11 @@ void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n )
                                              localMatrix,
                                              localRhs );
 
-  // assembleFluxTerms( dt,
-  //                    domain,
-  //                    dofManager,
-  //                    localMatrix,
-  //                    localRhs );
+  assembleFluxTerms( dt,
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhs );
 
 
 }
@@ -672,6 +672,44 @@ void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const d
 
   } );
 }
+
+void DARTSSuperEngine::assembleFluxTerms( real64 const dt,
+                                          DomainPartition const & domain,
+                                          DofManager const & dofManager,
+                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                          arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+  fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
+  {
+    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+    FaceBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                 m_numComponents,
+                                                 m_enableEnergyBalance,
+                                                 dofManager.rankOffset(),
+                                                 elemDofKey,
+                                                 getName(),
+                                                 mesh.getElemManager(),
+                                                 stencilWrapper,
+                                                 targetRegionNames(),
+                                                 permeabilityModelNames(),
+                                                 dt,
+                                                 localMatrix.toViewConstSizes(),
+                                                 localRhs.toView() );
+  } );
+}
+
 
 void DARTSSuperEngine::applyBoundaryConditions( real64 const time_n,
                                                 real64 const dt,
