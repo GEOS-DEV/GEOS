@@ -1873,6 +1873,19 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
+<<<<<<< HEAD
+=======
+		<!--rhs => RHS => AcousticSEM-->
+		<xsd:attribute name="rhs" type="real64_array" />
+		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
+		<xsd:attribute name="ruptureTime" type="real64_array" />
+		<!--stiffnessVector => Stiffness vector contains R_h*Pressure_n. => AcousticSEM-->
+		<xsd:attribute name="stiffnessVector" type="real64_array" />
+		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="uhatTilde" type="real64_array2d" />
+		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
+		<xsd:attribute name="velocityTilde" type="real64_array2d" />
+>>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
