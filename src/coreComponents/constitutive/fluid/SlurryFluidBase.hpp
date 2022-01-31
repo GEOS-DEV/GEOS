@@ -310,41 +310,6 @@ public:
 
   bool isNewtonianFluid() const { return m_isNewtonianFluid; }
 
-  // *** Data repository keys
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * componentNamesString() { return "componentNames"; }
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
-    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
-    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
-
-    static constexpr char const * densityString() { return "density"; }
-    static constexpr char const * dDens_dPresString() { return "dDens_dPres"; }
-    static constexpr char const * dDens_dProppantConcString() { return "dDens_dProppantConc"; }
-    static constexpr char const * dDens_dCompConcString() { return "dDens_dCompConc"; }
-
-    static constexpr char const * componentDensityString() { return "componentDensity"; }
-    static constexpr char const * dCompDens_dPresString() { return "dCompDens_dPres"; }
-    static constexpr char const * dCompDens_dCompConcString() { return "dCompDens_dCompConc"; }
-
-    static constexpr char const * fluidDensityString() { return "FluidDensity"; }
-    static constexpr char const * dFluidDens_dPresString() { return "dFluidDens_dPres"; }
-    static constexpr char const * dFluidDens_dCompConcString() { return "dFluidDens_dCompConc"; }
-
-    static constexpr char const * fluidViscosityString() { return "FluidViscosity"; }
-    static constexpr char const * dFluidVisc_dPresString() { return "dFluidVisc_dPres"; }
-    static constexpr char const * dFluidVisc_dCompConcString() { return "dFluidVisc_dCompConc"; }
-
-    static constexpr char const * viscosityString() { return "viscosity"; }
-    static constexpr char const * dVisc_dPresString() { return "dVisc_dPres"; }
-    static constexpr char const * dVisc_dProppantConcString() { return "dVisc_dProppantConc"; }
-    static constexpr char const * dVisc_dCompConcString() { return "dVisc_dCompConc"; }
-    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
-
-    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
-  };
-
 protected:
 
   virtual void postProcessInput() override;
@@ -382,6 +347,20 @@ protected:
 
   bool m_isNewtonianFluid;
 
+private:
+
+  // *** Data repository keys
+  struct viewKeyStruct
+  {
+    static constexpr char const * componentNamesString() { return "componentNames"; }
+
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+
+    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
+    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
+  };
 };
 
 } //namespace constitutive

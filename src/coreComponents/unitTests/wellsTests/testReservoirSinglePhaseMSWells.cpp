@@ -25,9 +25,11 @@
 #include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellKernels.hpp"
+#include "physicsSolvers/fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
 
 using namespace geosx;
 using namespace geosx::dataRepository;
@@ -210,9 +212,9 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
       // get the primary variables on reservoir elements
       arrayView1d< real64 const > const & pres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
       arrayView1d< real64 > const & dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
       // a) compute all the derivatives wrt to the pressure in RESERVOIR elem ei
@@ -235,7 +237,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
           wellSolver.forTargetSubRegions< WellElementSubRegion >( mesh, [&]( localIndex const targetIndex3,
                                                                              WellElementSubRegion & subRegion3 )
           {
-            wellSolver.updateSubRegionState( subRegion3, targetIndex3 );
+            wellSolver.updateSubRegionState( mesh, subRegion3, targetIndex3 );
           } );
 
           residual.zero();
@@ -266,15 +268,15 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
 
     // get the primary variables on well elements
     arrayView1d< real64 const > const & wellElemPressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
     arrayView1d< real64 > const & dWellElemPressure =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+      subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
     wellElemPressure.move( LvArray::MemorySpace::host, false );
 
     arrayView1d< real64 const > const & connRate =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::connRateString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
     arrayView1d< real64 > const & dConnRate =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseWell::viewKeyStruct::deltaConnRateString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::well::deltaConnectionRate >();
     connRate.move( LvArray::MemorySpace::host, false );
 
     // a) compute all the derivatives wrt to the pressure in WELL elem iwelem
@@ -289,7 +291,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dWellElemPressure[iwelem] = dP;
 
         // after perturbing, update the pressure-dependent quantities in the well
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -299,7 +301,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         //      this is computing J_RW and J_WW
         fillNumericalJacobian( residual.toViewConst(),
                                residualOrig.toViewConst(),
-                               wellElemDofNumber[iwelem] + SinglePhaseWell::ColOffset::DPRES,
+                               wellElemDofNumber[iwelem] + SinglePhaseWellKernels::ColOffset::DPRES,
                                dP,
                                jacobianFD.toViewConstSizes() );
       }
@@ -317,7 +319,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         dConnRate[iwelem] = dRate;
 
         // after perturbing, update the rate-dependent quantities in the well (well controls)
-        wellSolver.updateSubRegionState( subRegion, targetIndex );
+        wellSolver.updateSubRegionState( mesh, subRegion, targetIndex );
 
         residual.zero();
         jacobian.zero();
@@ -327,7 +329,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
         //      this is computing J_RW and J_WW
         fillNumericalJacobian( residual.toViewConst(),
                                residualOrig.toViewConst(),
-                               wellElemDofNumber[iwelem] + SinglePhaseWell::ColOffset::DRATE,
+                               wellElemDofNumber[iwelem] + SinglePhaseWellKernels::ColOffset::DRATE,
                                dRate,
                                jacobianFD.toViewConstSizes() );
       }

@@ -112,7 +112,7 @@ TableFunction const * makeViscosityTable( string_array const & inputParams,
   localIndex const nT = tableCoords.nTemperatures();
   array1d< real64 > density( nP * nT );
   array1d< real64 > viscosity( nP * nT );
-  SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, density );
+  SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, density );
   calculateCO2Viscosity( tableCoords, density, viscosity );
 
   string const tableName = functionName + "_table";
