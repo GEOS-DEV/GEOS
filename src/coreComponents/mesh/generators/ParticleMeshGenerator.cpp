@@ -69,16 +69,17 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
-  GEOSX_LOG_RANK_0( "MPM particle file name: " << m_filePath );
+  GEOSX_LOG_RANK_0( "MPM particle file path: " << m_filePath );
 
   int numParticles = 0;
 
   // Get MPI rank
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
-  if(mpiRank==0) // Only rank 0 should read the particle file (for now)
+
+  std::vector<std::vector<double> > particleData;
+  if(mpiRank==0) // Only rank 0 should read the particle file (for now).
   {
-    std::vector<std::vector<double> > data;
     std::ifstream file(m_filePath);
     std::string line;
     while(std::getline(file, line))
@@ -89,22 +90,33 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       double value;
       while(lineStream >> value)
       {
-        std::cout << value << "\t"; // debug
+        //std::cout << value << "\t"; // debug
         lineData.push_back(value);
       }
-      std::cout << "\n"; //debug
-      data.push_back(lineData);
+      //std::cout << "\n"; //debug
+      particleData.push_back(lineData);
       numParticles++;
     }
   }
 
   // Rank 0 will have to broadcast the particle information to all ranks at some point, probably here. Let's skip this for now and get serial MPM working.
+  // Is it better to send all the particle info to all ranks and let each rank perform spatial partitioning, or have rank 0 do the partitioning and only send the necessary pieces to each rank?
 
   particleManager.resize( numParticles );
-  // Do we want a new namespace for particles so we can do particles::REFERENCE_POSITION_USD and particles::STRESS_PERMUTATION?
-  // Probably too redundant, but calling things called "nodes" when operating on particles may be confusing.
-  // Good documentation may help this.
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = particleManager.referencePosition();
+  arrayView2d< real64, particles::REFERENCE_POSITION_USD > const & X = particleManager.referencePosition();
+
+  // Assign the read-in particle coordinates to the particle reference positions.
+  for(localIndex i=0; i<numParticles; i++)
+  {
+    for(localIndex j=0; j<3; j++)
+    {
+      X[i][j] = particleData[i][j];
+      std::cout << X[i][j] << "\t";
+    }
+    std::cout << "\n"; //debug
+  }
+
+
 
 
   GEOSX_LOG_RANK_0( "Total number of particles:" << particleManager.size() );

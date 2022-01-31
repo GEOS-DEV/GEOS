@@ -16,6 +16,7 @@
 #define GEOSX_MESH_ELEMENTREGIONBASE_HPP
 
 #include "CellElementSubRegion.hpp"
+#include "ParticleSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "WellElementSubRegion.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -302,6 +303,8 @@ public:
     static constexpr char const * meshBodyString() { return "meshBody"; }
     /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
+    /// @return String key for the element subregions
+    static constexpr char const * particleSubRegions() { return "particleSubRegions"; }
   };
 
 private:

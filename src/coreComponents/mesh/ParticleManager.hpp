@@ -13,11 +13,11 @@
  */
 
 /**
- * @file NodeManager.hpp
+ * @file ParticleManager.hpp
  */
 
-#ifndef GEOSX_MESH_NODEMANAGER_HPP_
-#define GEOSX_MESH_NODEMANAGER_HPP_
+#ifndef GEOSX_MESH_PARTICLEMANAGER_HPP_
+#define GEOSX_MESH_PARTICLEMANAGER_HPP_
 
 #include "mesh/ObjectManagerBase.hpp"
 #include "CellBlockManager.hpp"
@@ -35,15 +35,15 @@ class ElementRegionManager;
 
 
 /**
- * @class NodeManager
- * @brief The NodeManager class provides an interface to ObjectManagerBase in order to manage node data.
+ * @class ParticleManager
+ * @brief The ParticleManager class provides an interface to ObjectManagerBase in order to manage particle data.
  *
- * The NodeManagerT class manages the node data using the
+ * The ParticleManagerT class manages the particle data using the
  * ObjectDataStructureBaseT as a data manager.
  * This means that each field is stored in an array where each array entry
- * corresponds to a node.
+ * corresponds to a particle.
  */
-class NodeManager : public ObjectManagerBase
+class ParticleManager : public ObjectManagerBase
 {
 public:
 
@@ -86,41 +86,41 @@ public:
   ///@{
 
   /**
-   * @brief Main constructor for NodeManager Objects.
-   * @param [in] name the name of this instantiation of NodeManager
-   * @param [in] parent the parent group of this instantiation of NodeManager
+   * @brief Main constructor for ParticleManager Objects.
+   * @param [in] name the name of this instantiation of ParticleManager
+   * @param [in] parent the parent group of this instantiation of ParticleManager
    */
-  NodeManager( string const & name,
+  ParticleManager( string const & name,
                dataRepository::Group * const parent );
 
   /**
-   * @brief The default NodeManager destructor.
+   * @brief The default ParticleManager destructor.
    */
-  ~NodeManager() override;
+  ~ParticleManager() override;
 
   /// @cond DO_NOT_DOCUMENT
   /**
    * @brief deleted constructor
    */
-  NodeManager() = delete;
+  ParticleManager() = delete;
 
   /**
    * @brief deleted copy constructor
    */
-  NodeManager( const NodeManager & init ) = delete;
+  ParticleManager( const ParticleManager & init ) = delete;
 
   /**
    * @brief deleted assignement operator
    */
-  NodeManager & operator=( const NodeManager & ) = delete;
+  ParticleManager & operator=( const ParticleManager & ) = delete;
   /// @endcond
 
   ///@}
 
   /**
-   * @brief Resize the NodeManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
-   * @details the size of the NodeManager is the number of nodes
-   * @param[in] newsize the new size of the NodeManager
+   * @brief Resize the ParticleManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
+   * @details the size of the ParticleManager is the number of nodes
+   * @param[in] newsize the new size of the ParticleManager
    */
   virtual void resize( localIndex const newsize ) override;
 
@@ -131,40 +131,40 @@ public:
 
   /**
    * @brief Return the name of the node manager in the object catalog.
-   * @return string that contains the NodeManager catalog name
+   * @return string that contains the ParticleManager catalog name
    */
   static string catalogName()
-  { return "NodeManager"; }
+  { return "ParticleManager"; }
 
   /**
    * @brief Provide a virtual access to catalogName().
-   * @return string that contains the NodeManager catalog name
+   * @return string that contains the ParticleManager catalog name
    */
   const string getCatalogName() const override final
-  { return NodeManager::catalogName(); }
+  { return ParticleManager::catalogName(); }
 
   ///@}
 
   /**
-   * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
-   * @param [in] edgeManager the edgeManager to assign this NodeManager
+   * @brief Link the EdgeManager \p edgeManager to the ParticleManager, and performs the node-to-edge mapping.
+   * @param [in] edgeManager the edgeManager to assign this ParticleManager
    */
   void setEdgeMaps( EdgeManager const & edgeManager );
 
   /**
-   * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
-   * @param [in] faceManager the faceManager to assign this NodeManager
+   * @brief Link the FaceManager \p faceManager to the ParticleManager, and performs the node-to-face mapping.
+   * @param [in] faceManager the faceManager to assign this ParticleManager
    */
   void setFaceMaps( FaceManager const & faceManager );
 
   /**
-   * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
-   * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
+   * @brief Assign the ElementRegionManager \p elementRegionManager to the ParticleManager, and performs the node-to-element mapping
+   * @param [in] elementRegionManager the ElementRegionManager to assign this ParticleManager
    */
   void setElementMaps( ElementRegionManager const & elementRegionManager );
 
   /**
-   * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
+   * @brief Compress all ParticleManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
    * @note The method used here on each arrays (compress) does not free any memory.
    */
   void compressRelationMaps();
@@ -309,7 +309,7 @@ public:
   ///@}
 
   /**
-   * \defgroup Accessors for NodeManager fixed data
+   * \defgroup Accessors for ParticleManager fixed data
    * @{
    */
 
@@ -514,4 +514,4 @@ private:
 };
 }
 
-#endif // MESH_NODEMANAGER_HPP_
+#endif // MESH_PARTICLEMANAGER_HPP_
