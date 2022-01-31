@@ -200,18 +200,18 @@ void compute2DLaplaceOperator( MPI_Comm comm,
  * @param hy element height
  * @param E Young's modulus
  * @param nu Poisson ratio
- * @param Ke the output stiffness matrix
+ * @return the quad element stiffness matrix
  */
 GEOSX_HOST_DEVICE
-inline void Q12d_local( real64 const & hx,
-                        real64 const & hy,
-                        real64 const & E,
-                        real64 const & nu,
-                        real64 (& Ke)[8][8] )
+inline stackArray2d< real64, 8*8 > Q12d_local( real64 const & hx,
+                                               real64 const & hy,
+                                               real64 const & E,
+                                               real64 const & nu )
 {
   real64 fac = E / ( 1. - 2. * nu ) / ( 1. + nu );
 
   // Populate stiffness matrix
+  stackArray2d< real64, 8*8 > Ke( 8, 8 );
 
   // --- Fill diagonal entries
   real64 Dxx = ( fac * hx * ( 1. - 2. * nu ) ) / ( 6. * hy )
@@ -279,6 +279,8 @@ inline void Q12d_local( real64 const & hx,
       Ke[i][j] = Ke[j][i];
     }
   }
+
+  return Ke;
 }
 
 /**
@@ -359,6 +361,9 @@ void compute2DElasticityOperator( MPI_Comm const comm,
                                            ( nCellsX + 1 ) * ( nCellsY + 1 ) * 2,
                                            18 );
 
+  // Construct local stiffness matrix (same for all cells)
+  stackArray2d< real64, 8*8 > const Ke =  Q12d_local( hx, hy, youngModulus, poissonRatio );
+
   globalIndex const iStart = LvArray::math::max( iCellLower - nCellsX, globalIndex( 0 ) );
   globalIndex const iEnd   = LvArray::math::min( iCellUpper + nCellsX, nCells );
 
@@ -420,10 +425,6 @@ void compute2DElasticityOperator( MPI_Comm const comm,
     // Loop over grid cells
     globalIndex dofIndex[8];
     computeQuadElementDofIndices( iCell + iStart, nCellsX, dofIndex );
-
-    // Construct local stiffness matrix (same for all cells)
-    real64 Ke[8][8];
-    Q12d_local( hx, hy, youngModulus, poissonRatio, Ke );
 
     // Element matrix assembly into the local matrix
     for( integer i = 0; i < 8; ++i )
