@@ -215,7 +215,7 @@ public:
   static constexpr integer numComps = NUM_COMPS;
 
   /// Compile time value for the number of dimensions
-  static constexpr integer numDims = numComps + enableEnergyBalance;
+  static constexpr integer numDofs = numComps + enableEnergyBalance;
   // /// Compile time value for the number of operators
   static constexpr integer numOps = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
@@ -246,7 +246,7 @@ public:
    * @param[in] fluid the fluid model
    */
   OBLOperatorsKernel( ObjectManagerBase & subRegion,
-                      MultivariableTableFunctionStaticKernel< numDims, numOps > OBLOperatorsTable )
+                      MultivariableTableFunctionStaticKernel< numDofs, numOps > OBLOperatorsTable )
     :
     m_OBLOperatorsTable( OBLOperatorsTable ),
     m_pressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
@@ -272,7 +272,7 @@ public:
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompFrac = m_dCompFrac[ei];
     arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & OBLVals = m_OBLOperatorValues[ei];
     arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
-    real64 state[numDims];
+    real64 state[numDofs];
 
     // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
     state[0] = (m_pressure[ei] + m_dPressure[ei]) * pascalToBarMult;
@@ -285,66 +285,36 @@ public:
 
     if( enableEnergyBalance )
     {
-      state[numDims - 1] = (m_temperature[ei] + m_dTemperature[ei]);
+      state[numDofs - 1] = (m_temperature[ei] + m_dTemperature[ei]);
     }
-
-    printf ( "\n Ops before:\n" );
-    for( integer i = 0; i < numOps; i++ )
-    {
-      printf ( "%lf [", OBLVals[i] );
-      for( integer j = 0; j < numDims; j++ )
-      {
-        printf ( " %lf,", OBLDers[i][j] );
-      }
-      printf ( "]\n" );
-    }
-
 
     m_OBLOperatorsTable.compute( state, OBLVals, OBLDers );
+
+    // perform pressure unit conversion back
     for( integer i = 0; i < numOps; i++ )
     {
-      // perform pressure unit conversion back
       OBLDers[i][0] *= barToPascalMult;
     }
 
-    printf ( "\n Ops after:\n" );
-    for( integer i = 0; i < numOps; i++ )
+    if( ei == 0 )
     {
-      printf ( "%lf [", OBLVals[i] );
-      for( integer j = 0; j < numDims; j++ )
+      printf ( "\n Ops after:\n" );
+      for( integer i = 0; i < numOps; i++ )
       {
-        printf ( " %lf,", OBLDers[i][j] );
+        printf ( "%lf [", OBLVals[i] );
+        for( integer j = 0; j < numDofs; j++ )
+        {
+          printf ( " %lf,", OBLDers[i][j] );
+        }
+        printf ( "]\n" );
       }
-      // perform conversion back
-      OBLDers[i][0] *= barToPascalMult;
-      printf ( "]\n" );
     }
-
-
-    // for( integer ic = 0; ic < numComp; ++ic )
-    // {
-    //   totalDensity += compDens[ic] + dCompDens[ic];
-    // }
-
-    // real64 const totalDensityInv = 1.0 / totalDensity;
-
-    // for( integer ic = 0; ic < numComp; ++ic )
-    // {
-    //   compFrac[ic] = (compDens[ic] + dCompDens[ic]) * totalDensityInv;
-    //   for( integer jc = 0; jc < numComp; ++jc )
-    //   {
-    //     dCompFrac_dCompDens[ic][jc] = -compFrac[ic] * totalDensityInv;
-    //   }
-    //   dCompFrac_dCompDens[ic][ic] += totalDensityInv;
-    // }
-
-    // compFractionKernelOp( compFrac, dCompFrac_dCompDens );
   }
 
 protected:
 
   // inputs
-  MultivariableTableFunctionStaticKernel< numDims, numOps > m_OBLOperatorsTable;
+  MultivariableTableFunctionStaticKernel< numDofs, numOps > m_OBLOperatorsTable;
 
   // Views on primary variables and their updates
   arrayView1d< real64 const > m_pressure;
@@ -418,19 +388,39 @@ public:
  * @tparam NUM_DOF number of degrees of freedom
  * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
  */
-template< integer NUM_COMP, integer NUM_DOF >
+template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY >
 class ElementBasedAssemblyKernel
 {
 public:
 
+  /// Compile time value for the number of phases
+  static constexpr integer numPhases = NUM_PHASES;
   /// Compile time value for the number of components
-  static constexpr integer numComp = NUM_COMP;
+  static constexpr integer numComps = NUM_COMPS;
+  /// Compile time value for the energy balance switch
+  static constexpr integer enableEnergyBalance = ENABLE_ENERGY;
 
-  /// Compute time value for the number of degrees of freedom
-  static constexpr integer numDof = NUM_DOF;
+  /// Compile time value for the number of dimensions
+  static constexpr integer numDofs = numComps + enableEnergyBalance;
+  // /// Compile time value for the number of operators
+  static constexpr integer numOps = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
-  /// Compute time value for the number of equations
-  static constexpr integer numEqn = NUM_DOF;
+  // order of operators:
+  static constexpr integer ACC_OP = 0;
+  static constexpr integer FLUX_OP = numDofs;
+  // diffusion
+  static constexpr integer UPSAT_OP = numDofs + numDofs * numPhases;
+  static constexpr integer GRAD_OP = numDofs + numDofs * numPhases + numPhases;
+  // kinumDofstic reaction
+  static constexpr integer KIN_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases;
+
+
+  static constexpr integer RE_INTER_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs;
+  static constexpr integer RE_TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 1;
+  static constexpr integer ROCK_COND = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2;
+  static constexpr integer GRAV_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3;
+  static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + numPhases;
+  static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
 
   /**
    * @brief Constructor
@@ -443,24 +433,32 @@ public:
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
    */
-  ElementBasedAssemblyKernel( localIndex const numPhases,
+  ElementBasedAssemblyKernel( real64 const dt,
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
                               CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
-    : m_numPhases( numPhases ),
+    :
+    m_dt( dt ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
-    m_volume( subRegion.getElementVolume() ),
     m_pressure ( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_compFrac ( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
     m_temperature ( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
-    m_globalCompFrac ( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
-    m_porosityOld( solid.getOldPorosity() ),
-    m_porosityNew( solid.getPorosity() ),
-    m_dPoro_dPres( solid.getDporosity_dPressure() ),
+    m_dPressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
+    m_dCompFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >() ),
+    m_dTemperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >() ),
+    m_referencePoreVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >() ),
+    m_referenceRockVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >() ),
+    m_rockVolumetricHeatCapacity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockVolumetricHeatCapacity >() ),
+    m_rockThermalConductivity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockThermalConductivity >() ),
+    m_rockKineticRateFactor( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockKineticRateFactor >() ),
+    m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
+    m_OBLOperatorValuesOld ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >()),
+    m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >()),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -473,30 +471,17 @@ public:
   {
 public:
 
-    // Pore volume information (used by both accumulation and volume balance)
-
-    /// Pore volume at time n+1
-    real64 poreVolumeNew = 0.0;
-
-    /// Pore volume at the previous converged time step
-    real64 poreVolumeOld = 0.0;
-
-    /// Derivative of pore volume with respect to pressure
-    real64 dPoreVolume_dPres = 0.0;
-
-    // Residual information
-
     /// Index of the local row corresponding to this element
     localIndex localRow = -1;
 
     /// Indices of the matrix rows/columns corresponding to the dofs in this element
-    globalIndex dofIndices[numDof]{};
+    globalIndex dofIndices[numDofs]{};
 
     /// C-array storage for the element local residual vector (all equations except volume balance)
-    real64 localResidual[numEqn]{};
+    real64 localResidual[numDofs]{};
 
     /// C-array storage for the element local Jacobian matrix (all equations except volume balance, all dofs)
-    real64 localJacobian[numEqn][numDof]{};
+    real64 localJacobian[numDofs][numDofs]{};
 
   };
 
@@ -519,26 +504,14 @@ public:
   void setup( localIndex const ei,
               StackVariables & stack ) const
   {
-    // initialize the pore volume
-    stack.poreVolumeNew = m_volume[ei] * m_porosityNew[ei][0];
-    stack.poreVolumeOld = m_volume[ei] * m_porosityOld[ei][0];
-    stack.dPoreVolume_dPres = m_volume[ei] * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
     stack.localRow = m_dofNumber[ei] - m_rankOffset;
 
-    for( integer idof = 0; idof < numDof; ++idof )
+    for( integer idof = 0; idof < numDofs; ++idof )
     {
       stack.dofIndices[idof] = m_dofNumber[ei] + idof;
     }
-    printf ( "Element %ld: pressure %lf; temperature %lf; ", ei, m_pressure[ei], m_temperature[ei] );
-    for( integer c = 0; c < numComp; ++c )
-    {
-      printf ( "component %d global frac %lf; ", c, m_globalCompFrac[ei][c] );
-    }
-
-    printf ( "\n" );
-
   }
 
   /**
@@ -548,128 +521,42 @@ public:
    * @param[inout] stack the stack variables
    * @param[in] phaseAmountKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeAccumulation( localIndex const ei,
-                            StackVariables & stack,
-                            FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
+                            StackVariables & stack ) const
   {
-    // construct the slices for variables accessed multiple times
-    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLVals = m_OBLOperatorValues[ei];
+    arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsOld = m_OBLOperatorValuesOld[ei];
+    arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
 
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFracOld = m_phaseVolFracOld[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
-
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseDensOld = m_phaseDensOld[ei];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseDens_dPres = m_dPhaseDens_dPres[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens_dComp = m_dPhaseDens_dComp[ei][0];
-
-    arraySlice2d< real64 const, compflow::USD_PHASE_COMP-1 > phaseCompFracOld = m_phaseCompFracOld[ei];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP-2 > phaseCompFrac = m_phaseCompFrac[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP-2 > dPhaseCompFrac_dPres = m_dPhaseCompFrac_dPres[ei][0];
-    arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC-2 > dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp[ei][0];
-
-    // temporary work arrays
-    real64 dPhaseAmount_dC[numComp]{};
-    real64 dPhaseCompFrac_dC[numComp]{};
-
-    // sum contributions to component accumulation from each phase
-    for( integer ip = 0; ip < m_numPhases; ++ip )
+    // [1] fill diagonal part for both mass (and energy equations if needed, only fluid energy is involved here)
+    for( uint8_t c = 0; c < numDofs; c++ )
     {
-      real64 const phaseAmountNew = stack.poreVolumeNew * phaseVolFrac[ip] * phaseDens[ip];
-      real64 const phaseAmountOld = stack.poreVolumeOld * phaseVolFracOld[ip] * phaseDensOld[ip];
+      stack.localResidual[c] = m_referencePoreVolume[ei] * (OBLVals[ACC_OP + c] - OBLValsOld[ACC_OP + c]);   // acc operators
+      // only
 
-      real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
-                                     + stack.poreVolumeNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
-                                                              + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
+      // Add reaction term to diagonal of reservoir cells (here the volume is pore volume or block volume):
+      stack.localResidual[c] += (m_referencePoreVolume[ei] + m_referenceRockVolume[ei]) * m_dt * OBLVals[KIN_OP + c] * m_rockKineticRateFactor[ei]; // kinetics
 
-      // assemble density dependence
-      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
-      for( integer jc = 0; jc < numComp; ++jc )
+      for( uint8_t v = 0; v < numDofs; v++ )
       {
-        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
-                              + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][jc];
-        dPhaseAmount_dC[jc] *= stack.poreVolumeNew;
-      }
+        stack.localJacobian[c][v] = m_referencePoreVolume[ei] * OBLDers[ACC_OP + c][v];   // der of accumulation term
 
-      // ic - index of component whose conservation equation is assembled
-      // (i.e. row number in local matrix)
-      for( integer ic = 0; ic < numComp; ++ic )
-      {
-        real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
-        real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
-
-        real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                           + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
-
-        stack.localResidual[ic] += phaseCompAmountNew - phaseCompAmountOld;
-        stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
-
-        // jc - index of component w.r.t. whose compositional var the derivative is being taken
-        // (i.e. col number in local matrix)
-
-        // assemble phase composition dependence
-        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
-        for( integer jc = 0; jc < numComp; ++jc )
-        {
-          real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
-                                             + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
-          stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
-        }
-      }
-
-      // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-      // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
-
-    }
-  }
-
-  /**
-   * @brief Compute the local accumulation contributions to the residual and Jacobian
-   * @tparam FUNC the type of the function that can be used to customize the kernel
-   * @param[in] ei the element index
-   * @param[inout] stack the stack variables
-   * @param[in] phaseVolFractionSumKernelOp the function used to customize the kernel
-   */
-  template< typename FUNC = NoOpFunc >
-  GEOSX_HOST_DEVICE
-  void computeVolumeBalance( localIndex const ei,
-                             StackVariables & stack,
-                             FUNC && phaseVolFractionSumKernelOp = NoOpFunc{} ) const
-  {
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
-    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
-
-    real64 oneMinusPhaseVolFracSum = 1.0;
-
-    // sum contributions to component accumulation from each phase
-    for( integer ip = 0; ip < m_numPhases; ++ip )
-    {
-      oneMinusPhaseVolFracSum -= phaseVolFrac[ip];
-      stack.localJacobian[numComp][0] -= dPhaseVolFrac_dPres[ip];
-
-      for( integer jc = 0; jc < numComp; ++jc )
-      {
-        stack.localJacobian[numComp][jc+1] -= dPhaseVolFrac_dCompDens[ip][jc];
+        // Include derivatives for reaction term if part of reservoir cells:
+        stack.localJacobian[c][v] += (m_referencePoreVolume[ei] + m_referenceRockVolume[ei]) * m_dt * OBLDers[KIN_OP + c][v] * m_rockKineticRateFactor[ei];     // derivative
       }
     }
 
-    // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-    stack.localResidual[numComp] = stack.poreVolumeNew * oneMinusPhaseVolFracSum;
-    for( integer idof = 0; idof < numComp+1; ++idof )
+    // + rock energy
+    if( enableEnergyBalance )
     {
-      stack.localJacobian[numComp][idof] *= stack.poreVolumeNew;
-    }
-    stack.localJacobian[numComp][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
+      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLValsOld[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
 
-    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
-    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
+      for( uint8_t v = 0; v < numDofs; v++ )
+      {
+        stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[RE_INTER_OP][v] * m_rockVolumetricHeatCapacity[ei];
+      }   // end of fill offdiagonal part + contribute to diagonal
+    }
   }
 
   /**
@@ -683,21 +570,16 @@ public:
   {
     using namespace CompositionalMultiphaseUtilities;
 
-    // apply equation/variable change transformation to the component mass balance equations
-    real64 work[numDof]{};
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof, stack.localJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
-
     // add contribution to residual and jacobian into:
     // - the component mass balance equations
     // - the volume balance equations
-    for( integer i = 0; i < numComp+1; ++i )
+    for( integer i = 0; i < numDofs; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
       m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
                                               stack.dofIndices,
                                               stack.localJacobian[i],
-                                              numDof );
+                                              numDofs );
     }
   }
 
@@ -725,16 +607,15 @@ public:
       typename KERNEL_TYPE::StackVariables stack;
 
       kernelComponent.setup( ei, stack );
-      // kernelComponent.computeAccumulation( ei, stack );
-      // kernelComponent.computeVolumeBalance( ei, stack );
+      kernelComponent.computeAccumulation( ei, stack );
       kernelComponent.complete( ei, stack );
     } );
   }
 
 protected:
 
-  /// Number of fluid phases
-  integer const m_numPhases;
+// Time step size
+  real64 m_dt;
 
   /// Offset for my MPI rank
   globalIndex const m_rankOffset;
@@ -745,44 +626,30 @@ protected:
   /// View on the ghost ranks
   arrayView1d< integer const > const m_elemGhostRank;
 
-  /// View on the element volumes
-  arrayView1d< real64 const > const m_volume;
 
-  /// View on pressure
-  arrayView1d< real64 const > const m_pressure;
+  // Views on primary variables and their updates
+  arrayView1d< real64 const > m_pressure;
+  arrayView2d< real64 const, compflow::USD_COMP > m_compFrac;
+  arrayView1d< real64 const > m_temperature;
 
-  /// View on temperature
-  arrayView1d< real64 const > const m_temperature;
+  arrayView1d< real64 const > m_dPressure;
+  arrayView2d< real64 const, compflow::USD_COMP > m_dCompFrac;
+  arrayView1d< real64 const > m_dTemperature;
 
-  /// View on global component fraction
-  arrayView2d< real64 const, compflow::USD_COMP > const m_globalCompFrac;
+  // views on solid properties
+  arrayView1d< real64 const > const m_referencePoreVolume;
+  arrayView1d< real64 const > const m_referenceRockVolume;
+  arrayView1d< real64 const > const m_rockVolumetricHeatCapacity;
+  arrayView1d< real64 const > const m_rockThermalConductivity;
+  arrayView1d< real64 const > const m_rockKineticRateFactor;
 
 
-  /// Views on the porosity
-  arrayView2d< real64 const > const m_porosityOld;
-  arrayView2d< real64 const > const m_porosityNew;
-  arrayView2d< real64 const > const m_dPoro_dPres;
+  // Views on OBL operators and their derivatives
+  arrayView2d< real64 const, compflow::USD_OBL_VAL > const m_OBLOperatorValues;
+  arrayView2d< real64 const, compflow::USD_OBL_VAL > const m_OBLOperatorValuesOld;
+  arrayView3d< real64 const, compflow::USD_OBL_DER > const m_OBLOperatorDerivatives;
 
-  /// Views on the derivatives of comp fractions wrt component density
-  arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dCompFrac_dCompDens;
-
-  /// Views on the phase volume fractions (excluding derivative wrt temperature)
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFracOld;
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac;
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_dPhaseVolFrac_dPres;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac_dCompDens;
-
-  /// Views on the phase densities (excluding derivative wrt temperature)
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseDensOld;
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens;
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_dPhaseDens_dPres;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseDens_dComp;
-
-  /// Views on the phase component fraction (excluding derivative wrt temperature)
-  arrayView3d< real64 const, compflow::USD_PHASE_COMP > const m_phaseCompFracOld;
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_dPhaseCompFrac_dPres;
-  arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac_dComp;
+  // outputs
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -813,23 +680,29 @@ public:
    */
   template< typename POLICY >
   static void
-  createAndLaunch( integer const numComps,
-                   integer const numPhases,
-                   globalIndex const rankOffset,
-                   string const dofKey,
-                   ElementSubRegionBase const & subRegion,
-                   CoupledSolidBase const & solid,
-                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                   arrayView1d< real64 > const & localRhs )
+  createAndLaunch(
+    integer const numPhases,
+    integer const numComps,
+    bool const enableEnergyBalance,
+    real64 const dt,
+    globalIndex const rankOffset,
+    string const dofKey,
+    ElementSubRegionBase const & subRegion,
+    CoupledSolidBase const & solid,
+    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+    arrayView1d< real64 > const & localRhs )
   {
-    // internal::kernelLaunchSelectorOpSwitch( numComps, [&] ( auto NC )
-    // {
-    //   integer constexpr NUM_COMP = NC();
-    //   integer constexpr NUM_DOF = NC()+1;
-    //   ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >
-    //   kernel( numPhases, rankOffset, dofKey, subRegion, solid, localMatrix, localRhs );
-    //   ElementBasedAssemblyKernel< NUM_COMP, NUM_DOF >::template launch< POLICY >( subRegion.size(), kernel );
-    // } );
+    internal::kernelLaunchSelectorEnergySwitch( numPhases, numComps, enableEnergyBalance, [&] ( auto NP, auto NC, auto E )
+    {
+      integer constexpr ENABLE_ENERGY = E();
+      integer constexpr NUM_PHASES = NP();
+      integer constexpr NUM_COMPS = NC();
+
+      ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
+      kernel( dt, rankOffset, dofKey, subRegion, solid, localMatrix, localRhs );
+      ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
+    } );
+
   }
 
 };

@@ -233,7 +233,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< OBLOperatorValues >( getName() ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
       subRegion.registerExtrinsicData< OBLOperatorValuesOld >( getName() ).
-        reference().resizeDimension< 1 >( m_numOBLOperators );
+        reference().resizeDimension< 1 >( m_numDofPerCell );
       subRegion.registerExtrinsicData< OBLOperatorDerivatives >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numOBLOperators, m_numDofPerCell );
 
@@ -251,6 +251,14 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       // to be able to pass the view to OBLOperatorsKernel
       subRegion.registerExtrinsicData< deltaGlobalCompFraction >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
+
+      subRegion.registerExtrinsicData< referencePoreVolume >( getName() );
+      subRegion.registerExtrinsicData< referenceRockVolume >( getName() );
+
+      // thermal rock properties (again, register in any case)
+      subRegion.registerExtrinsicData< rockVolumetricHeatCapacity >( getName() );
+      subRegion.registerExtrinsicData< rockThermalConductivity >( getName() );
+      subRegion.registerExtrinsicData< rockKineticRateFactor >( getName() );
 
     } );
 
@@ -496,6 +504,42 @@ void DARTSSuperEngine::initializePostInitialConditionsPreSubGroups()
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
+  forTargetSubRegions( mesh,
+                       [&]( localIndex const targetIndex,
+                            ElementSubRegionBase & subRegion )
+  {
+    CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+    arrayView1d< real64 const > const volume =  subRegion.getElementVolume();
+    arrayView1d< real64 const > const refPorosity =  solid.getReferencePorosity();
+    arrayView1d< real64 > const referenceRockVolume =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >();
+    arrayView1d< real64 > const referencePoreVolume =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
+
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] >= 0 )
+        return;
+
+      referencePoreVolume[ei] = volume[ei] * refPorosity[ei];
+      referenceRockVolume[ei] = volume[ei] - referencePoreVolume[ei];
+
+    } );
+  } );
+
+
+  // forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  // {
+  //   arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+
+  //   arrayView1d< real64 const > const volume =
+  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+
+  //   arrayView2d< real64, compflow::USD_OBL_VAL > const OBLOperatorValuesOld =
+  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
+
+
+  // } );
+
   // Initialize primary variables from applied initial conditions
   //initializeFluidState( mesh );
 }
@@ -532,36 +576,31 @@ void DARTSSuperEngine::backupFields( MeshLevel & mesh ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const numComp = m_numComponents;
-  integer const numPhase = m_numPhases;
+  integer const numDofs = m_numDofPerCell;
 
-  // backup some fields used in time derivative approximation
-  // forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
-  // {
-  //   arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+  //backup some fields used in time derivative approximation
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  {
+    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
 
-  //   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+    arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLOperatorValues =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
 
-  //   arrayView2d< real64, compflow::USD_PHASE > const phaseVolFracOld =
-  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >();
+    arrayView2d< real64, compflow::USD_OBL_VAL > const OBLOperatorValuesOld =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
 
-  //   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-  //   {
-  //     if( elemGhostRank[ei] >= 0 )
-  //       return;
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] >= 0 )
+        return;
 
-  //     for( localIndex ip = 0; ip < numPhase; ++ip )
-  //     {
-  //       phaseVolFracOld[ei][ip] = phaseVolFrac[ei][ip];
-
-  //       for( localIndex ic = 0; ic < numComp; ++ic )
-  //       {
-  //         phaseCompFracOld[ei][ip][ic] = phaseCompFrac[ei][0][ip][ic];
-  //       }
-  //     }
-  //   } );
-  // } );
+      // we need to back up first m_numDofPerCell operators - they are accumulative
+      for( localIndex dof = 0; dof < m_numDofPerCell; ++dof )
+      {
+        OBLOperatorValuesOld[ei][dof] = OBLOperatorValues[ei][dof];
+      }
+    } );
+  } );
 }
 
 void
@@ -587,7 +626,8 @@ void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n )
 {
   GEOSX_MARK_FUNCTION;
 
-  assembleAccumulationAndVolumeBalanceTerms( domain,
+  assembleAccumulationAndVolumeBalanceTerms( dt,
+                                             domain,
                                              dofManager,
                                              localMatrix,
                                              localRhs );
@@ -601,7 +641,8 @@ void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n )
 
 }
 
-void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
+void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const dt,
+                                                                  DomainPartition & domain,
                                                                   DofManager const & dofManager,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                                   arrayView1d< real64 > const & localRhs ) const
@@ -618,8 +659,10 @@ void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( DomainPartitio
     CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
     ElementBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_numPhases,
+      createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
+                                                 m_numComponents,
+                                                 m_enableEnergyBalance,
+                                                 dt,
                                                  dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,

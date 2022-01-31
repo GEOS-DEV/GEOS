@@ -181,7 +181,8 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationAndVolumeBalanceTerms( DomainPartition & domain,
+  void assembleAccumulationAndVolumeBalanceTerms( real64 const dt,
+                                                  DomainPartition & domain,
                                                   DofManager const & dofManager,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs ) const;

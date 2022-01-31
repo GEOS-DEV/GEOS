@@ -65,6 +65,46 @@ EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
                            NO_WRITE,
                            "Accumulated temperature updates" );
 
+EXTRINSIC_MESH_DATA_TRAIT( referencePoreVolume,
+                           "referencePoreVolume",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Reference volume of porous space" );
+
+EXTRINSIC_MESH_DATA_TRAIT( referenceRockVolume,
+                           "referenceRockVolume",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Reference volume of rock" );
+
+EXTRINSIC_MESH_DATA_TRAIT( rockVolumetricHeatCapacity,
+                           "specificHeatCapacity",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Volumetric rock heat capacity" );
+
+EXTRINSIC_MESH_DATA_TRAIT( rockThermalConductivity,
+                           "rockThermalConductivity",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Rock thermal conductivity" );
+
+EXTRINSIC_MESH_DATA_TRAIT( rockKineticRateFactor,
+                           "rockKineticRateFactor",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Rock kinetic rate factor" );
+
 EXTRINSIC_MESH_DATA_TRAIT( OBLOperatorValues,
                            "OBLOperatorValues",
                            array2dLayoutOBLOpVals,
