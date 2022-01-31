@@ -67,14 +67,6 @@ struct MobilityKernel
                       arrayView1d< real64 > const & mob,
                       arrayView1d< real64 > const & dMob_dPres )
   {
-    std::cout << "size" << size << std::endl;
-    std::cout << "dens " << dens << std::endl;
-    std::cout << "dDens_dPres " << dDens_dPres << std::endl;
-    std::cout << "visc " << visc << std::endl;
-    std::cout << "dVisc_dPres " << dVisc_dPres << std::endl;
-    std::cout << "mob " << mob << std::endl;
-    std::cout << "dMob_dPres " << dMob_dPres << std::endl;
-
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       compute( dens[a][0],

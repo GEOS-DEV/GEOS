@@ -342,8 +342,6 @@ protected:
   array1d< real64 > m_nIndices;
   array1d< real64 > m_Ks;
 
-  array2d< real64 > m_density;
-  array2d< real64 > m_dDensity_dPressure;
   array2d< real64 > m_dDensity_dProppantConc;
   array3d< real64 > m_dDensity_dCompConc;
 
@@ -359,8 +357,6 @@ protected:
   array2d< real64 > m_dFluidVisc_dPres;
   array3d< real64 > m_dFluidVisc_dCompConc;
 
-  array2d< real64 > m_viscosity;
-  array2d< real64 > m_dViscosity_dPressure;
   array2d< real64 > m_dViscosity_dProppantConc;
   array3d< real64 > m_dViscosity_dCompConc;
 

@@ -153,7 +153,7 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
                   GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
-  subRegion.registerWrapper<string>( viewKeyStruct::proppantNamesString() );
+  subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
   GEOSX_THROW_IF( proppantName.empty(),
@@ -180,20 +180,28 @@ void ProppantTransport::initializePreSubGroups()
       setConstitutiveNames( subRegion );
     } );
 
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
+
+    {
+      if( m_numDofPerCell < 1 )
+      {
+        SlurryFluidBase const & fluid0 = cm.getConstitutiveRelation< SlurryFluidBase >( subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
+        m_numComponents = fluid0.numFluidComponents();
+
+        m_numDofPerCell = m_numComponents + 1;
+      }
+    } );
+
     if( m_numComponents > 0 )
     {
       mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                             CellElementSubRegion & subRegion )
 
       {
-        SlurryFluidBase const & fluid0 = cm.getConstitutiveRelation< SlurryFluidBase >( subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-
-        m_numComponents = fluid0.numFluidComponents();
-
-        m_numDofPerCell = m_numComponents + 1;
-
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString() ).resizeDimension< 1 >( m_numComponents );
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString() ).resizeDimension< 1 >( m_numComponents );
+        subRegion.template getReference< array2d< real64 > >( viewKeyStruct::componentConcentrationString() ).resizeDimension< 1 >( m_numComponents );
+        subRegion.template getReference< array2d< real64 > >( viewKeyStruct::deltaComponentConcentrationString() ).resizeDimension< 1 >( m_numComponents );
       } );
     }
 
