@@ -111,7 +111,8 @@ public:
   KernelWrapper createKernelWrapper() const;
 
   static
-  void calculateCO2Density( real64 const & tolerance,
+  void calculateCO2Density( string const & functionName,
+                            real64 const & tolerance,
                             PVTProps::PTTableCoordinates const & tableCoords,
                             array1d< real64 > const & densities );
 
