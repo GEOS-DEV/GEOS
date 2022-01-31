@@ -64,12 +64,9 @@ protected:
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeabilityMultiplier;
-
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

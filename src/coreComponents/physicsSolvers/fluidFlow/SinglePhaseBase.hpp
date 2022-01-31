@@ -290,7 +290,6 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void resetViews( MeshLevel & mesh ) override;
 
   virtual void initializePreSubGroups() override;
 
@@ -351,18 +350,6 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dMobility_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
-
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
 
 private:
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;

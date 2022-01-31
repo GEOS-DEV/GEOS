@@ -96,14 +96,6 @@ public:
   ///@{
 
   /**
-   * @copydoc getSubRegions() const
-   */
-  subGroupMap & getSubRegions()
-  {
-    return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
-  }
-
-  /**
    * @brief Get a collection of the subregions.
    * @return a collection of the subregions
    */
@@ -111,7 +103,6 @@ public:
   {
     return getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups();
   }
-
 
   /**
    * @brief Get a reference to a subregion.
@@ -141,7 +132,7 @@ public:
    */
   localIndex numSubRegions() const
   {
-    return this->getGroup( viewKeyStruct::elementSubRegions() ).getSubGroups().size();
+    return this->getSubRegions().size();
   }
 
   /**
@@ -157,9 +148,9 @@ public:
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & cellBlock ) -> void
+    this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      numElem += cellBlock.size();
+      numElem += group.size();
     } );
     return numElem;
   }

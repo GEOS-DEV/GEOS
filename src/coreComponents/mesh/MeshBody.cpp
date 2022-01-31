@@ -18,6 +18,7 @@
 
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
+#include "generators/CellBlockManager.hpp"
 
 namespace geosx
 {

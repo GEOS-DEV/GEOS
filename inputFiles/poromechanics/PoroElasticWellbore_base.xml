@@ -216,6 +216,10 @@
     parallelThreads="1"
     plotFileRoot="plot"
   />
+
+  <Restart
+    name="restartOutput"
+  />  
 </Outputs>
 <!-- SPHINX_WELLBORE_OUTPUT_END -->
 

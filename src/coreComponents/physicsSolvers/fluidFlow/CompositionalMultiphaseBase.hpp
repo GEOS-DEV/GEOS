@@ -137,13 +137,13 @@ public:
   void updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant relperm models using current values of phase volume fraction
    * @param castedRelPerm the group storing the required fields
    */
   void updateRelPermModel( ObjectManagerBase & castedRelPerm ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant capillary pressure models using current values of phase volume fraction
    * @param castedCapPres the group storing the required fields
    */
   void updateCapPressureModel( ObjectManagerBase & castedCapPres ) const;
@@ -218,6 +218,8 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -311,7 +313,20 @@ protected:
    * @brief Checks constitutive models for consistency
    * @param[in] domain reference to the domain
    */
-  void validateConstitutiveModels( DomainPartition & domain );
+  void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
+   * @brief Checks aquifer boundary condition for consistency
+   * @param[in] cm reference to the global constitutive model manager
+   */
+  void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   * @param[in] cm reference to the global constitutive model manager
+   */
+  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+
 
   /// the max number of fluid phases
   integer m_numPhases;
@@ -330,6 +345,9 @@ protected:
 
   /// flag to determine whether or not to apply capillary pressure
   integer m_capPressureFlag;
+
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_thermalFlag;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
