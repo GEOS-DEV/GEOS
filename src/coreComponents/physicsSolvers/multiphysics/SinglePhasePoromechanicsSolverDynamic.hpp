@@ -54,6 +54,8 @@ public:
 	                               integer const cycleNumber,
 	                               DomainPartition & domain ) override;
 
+	  void updateDeformationForCoupling( DomainPartition & domain );
+
 	  enum class CouplingTypeOption : integer
 	  {
 	    FIM,
