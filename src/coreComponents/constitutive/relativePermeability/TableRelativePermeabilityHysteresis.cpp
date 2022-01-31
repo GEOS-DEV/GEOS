@@ -68,12 +68,14 @@ TableRelativePermeabilityHysteresis::TableRelativePermeabilityHysteresis( std::s
   // imbibition table names
 
   registerWrapper( viewKeyStruct::imbibitionWettingRelPermTableNameString(), &m_imbibitionWettingRelPermTableName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "" ).
     setDescription( "Imbibition relative permeability table name for the wetting phase.\n"
                     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
   registerWrapper( viewKeyStruct::imbibitionNonWettingRelPermTableNameString(), &m_imbibitionNonWettingRelPermTableName ).
-    setInputFlag( InputFlags::REQUIRED ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "" ).
     setDescription( "Imbibition relative permeability table name for the non-wetting phase.\n"
                     "To neglect hysteresis on this phase, just use the same table name for the drainage and imbibition curves" );
 
@@ -529,7 +531,7 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
                                 Smxd ),
                      InputError );
 
-    m_landParam[IPT::WETTING] = ( Smxd - Swc ) / ( Smxd - Smxi ) - 1.0;
+    m_landParam[IPT::WETTING] = ( Smxd - Swc ) / LvArray::math::max( KernelWrapper::minScriMinusScrd, ( Smxd - Smxi ) ) - 1.0;
   }
 
   // Step 2: Land parameter for the non-wetting phase
@@ -546,7 +548,7 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
                                Scri ),
                     InputError );
 
-    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / ( Scri - Scrd ) - 1.0;
+    m_landParam[IPT::NONWETTING] = ( Smx - Scrd ) / LvArray::math::max( KernelWrapper::minScriMinusScrd, ( Scri - Scrd ) ) - 1.0;
   }
 
   // Step 3: make sure that they match for two-phase flow
@@ -554,10 +556,10 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
   if( m_phaseHasHysteresis[IPT::WETTING] && m_phaseHasHysteresis[IPT::NONWETTING] )
   {
     GEOSX_WARNING_IF( numPhases == 2 && !isZero( m_landParam[IPT::WETTING] - m_landParam[IPT::NONWETTING] ),
-                      GEOSX_FMT( string( "{}: For two-phase flow, the Land parameters computed from the wetting and non-wetting relperm curves must match.\n" )
-                                 + string( "However, we found that the wetting Land parameter is {}, " )
-                                 + string( "whereas the nonwetting Land parameter is {}. " )
-                                 + string( "This might result in inconsistency." ),
+                      GEOSX_FMT( "{}: For two-phase flow, the Land parameters computed from the wetting and non-wetting relperm curves should match.\n"
+                                 "However, we found that the wetting Land parameter is {}, "
+                                 "whereas the nonwetting Land parameter is {}. "
+                                 "This might result in inconsistency.",
                                  getFullName(),
                                  m_landParam[IPT::WETTING], m_landParam[IPT::NONWETTING] ) );
   }

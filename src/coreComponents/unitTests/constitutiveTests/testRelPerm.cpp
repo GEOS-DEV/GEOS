@@ -355,14 +355,14 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
   values_g[39] = 5.275887e-1;
   values_g[40] = 5.500000e-1;
 
-  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_swg" ) );
+  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "water_swg" ) );
   table_w.setTableCoordinates( coordinates_w );
   table_w.setTableValues( values_w );
   table_w.reInitializeFunction();
 
   table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & table_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_swg" ) );
+  TableFunction & table_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "gas_swg" ) );
   table_g.setTableCoordinates( coordinates_g );
   table_g.setTableValues( values_g );
   table_g.reInitializeFunction();
@@ -617,21 +617,21 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   imbibitionValues_g[39] = 5.221327e-1;
   imbibitionValues_g[40] = 5.500000e-1;
 
-  TableFunction & drainageTable_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "drainageWater_swg" ) );
+  TableFunction & drainageTable_w = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "drainageWater_swg" ) );
   drainageTable_w.setTableCoordinates( coordinates_w );
   drainageTable_w.setTableValues( drainageValues_w );
   drainageTable_w.reInitializeFunction();
 
   drainageTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & drainageTable_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "drainageGas_swg" ) );
+  TableFunction & drainageTable_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "drainageGas_swg" ) );
   drainageTable_g.setTableCoordinates( coordinates_g );
   drainageTable_g.setTableValues( drainageValues_g );
   drainageTable_g.reInitializeFunction();
 
   drainageTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & imbibitionTable_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "imbibitionGas_swg" ) );
+  TableFunction & imbibitionTable_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "imbibitionGas_swg" ) );
   imbibitionTable_g.setTableCoordinates( coordinates_g );
   imbibitionTable_g.setTableValues( imbibitionValues_g );
   imbibitionTable_g.reInitializeFunction();
@@ -693,14 +693,14 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "water_swof" ) );
+  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "water_swof" ) );
   table_ow_w.setTableCoordinates( coordinates );
   table_ow_w.setTableValues( values );
   table_ow_w.reInitializeFunction();
 
   table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_swof" ) );
+  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "oil_swof" ) );
   table_ow_o.setTableCoordinates( coordinates );
   table_ow_o.setTableValues( values );
   table_ow_o.reInitializeFunction();
@@ -722,14 +722,14 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "gas_sgof" ) );
+  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "gas_sgof" ) );
   table_og_g.setTableCoordinates( coordinates );
   table_og_g.setTableValues( values );
   table_og_g.reInitializeFunction();
 
   table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager.createChild( "TableFunction", "oil_sgof" ) );
+  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "oil_sgof" ) );
   table_og_o.setTableCoordinates( coordinates );
   table_og_o.setTableValues( values );
   table_og_o.reInitializeFunction();
