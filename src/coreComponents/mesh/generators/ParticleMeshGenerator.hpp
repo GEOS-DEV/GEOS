@@ -25,9 +25,8 @@
 namespace geosx
 {
 
-class NodeManager; // Probably don't need this?
-class ParticleManager; // This needs to be created
-class SpatialPartition; // Need this to initially partition particles
+class ParticleManager;
+class SpatialPartition;
 
 /**
  * @class ParticleMeshGenerator

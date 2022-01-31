@@ -26,6 +26,9 @@ set( mesh_headers
      MeshManager.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
+     ParticleManager.hpp
+     ParticleRegion.hpp
+     ParticleSubRegion.hpp
      Perforation.hpp
      PerforationData.hpp
      SurfaceElementRegion.hpp
@@ -81,6 +84,9 @@ set( mesh_sources
      MeshManager.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
+     ParticleManager.cpp
+     ParticleRegion.cpp
+     ParticleSubRegion.cpp
      Perforation.cpp
      PerforationData.cpp
      SurfaceElementRegion.cpp

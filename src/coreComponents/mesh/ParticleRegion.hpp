@@ -88,15 +88,15 @@ public:
   ///@{
 
   /**
-   * @brief Add a cellBlockRegion name to the list.
-   * @param cellBlockName string containing the cell block region name.
+   * @brief Add a particleBlockRegion name to the list.
+   * @param particleBlockName string containing the cell block region name.
    */
-  void addCellBlockName( string const & cellBlockName )
+  void addParticleBlockName( string const & particleBlockName )
   {
-    m_cellBlockNames.emplace_back( cellBlockName );
+    m_particleBlockNames.emplace_back( particleBlockName );
   }
 
-  virtual void generateMesh( Group & cellBlocks ) override;
+  virtual void generateMesh( Group & particleBlocks ) override;
 
 
   ///@}
@@ -108,14 +108,14 @@ public:
   struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
   {
     /// @return String key for the cell block names
-    static constexpr char const * sourceCellBlockNamesString() {return "cellBlocks"; }
+    static constexpr char const * sourceParticleBlockNamesString() {return "particleBlocks"; }
   };
 
 
 private:
 
   // Cell block names
-  string_array m_cellBlockNames;
+  string_array m_particleBlockNames;
 
 };
 
