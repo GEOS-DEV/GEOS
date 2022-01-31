@@ -27,24 +27,24 @@ using namespace dataRepository;
 ParticleRegion::ParticleRegion( string const & name, Group * const parent ):
   ElementRegionBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::sourceCellBlockNamesString(), &m_cellBlockNames ).
+  registerWrapper( viewKeyStruct::sourceParticleBlockNamesString(), &m_particleBlockNames ).
     setInputFlag( InputFlags::OPTIONAL );
 }
 
 ParticleRegion::~ParticleRegion()
 {}
 
-//void ParticleRegion::generateMesh( Group & cellBlocks )
-//{
-//  Group & ParticleSubRegions = this->getGroup( viewKeyStruct::particleSubRegions() );
-//
-//  for( string const & cellBlockName : this->m_cellBlockNames )
-//  {
-//    ParticleSubRegion & subRegion = particleSubRegions.registerGroup< ParticleSubRegion >( cellBlockName );
-//    CellBlock & source = cellBlocks.getGroup< CellBlock >( subRegion.getName() );
-//    subRegion.copyFromCellBlock( source );
-//  }
-//}
+void ParticleRegion::generateMesh( Group & particleBlocks )
+{
+  Group & particleSubRegions = this->getGroup( viewKeyStruct::particleSubRegions() );
+
+  for( string const & particleBlockName : this->m_particleBlockNames )
+  {
+    ParticleSubRegion & subRegion = particleSubRegions.registerGroup< ParticleSubRegion >( particleBlockName );
+    ParticleBlock & source = particleBlocks.getGroup< ParticleBlock >( subRegion.getName() );
+    subRegion.copyFromParticleBlock( source );
+  }
+}
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleRegion, string const &, Group * const )
 

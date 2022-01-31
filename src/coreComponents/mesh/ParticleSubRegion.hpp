@@ -16,18 +16,18 @@
 #ifndef GEOSX_MESH_PARTICLESUBREGION_HPP_
 #define GEOSX_MESH_PARTICLESUBREGION_HPP_
 
-#include "CellBlock.hpp"
+#include "ParticleBlock.hpp"
 
 namespace geosx
 {
 
 /**
  * @class ParticleSubRegion
- * Class deriving from CellBlock further specializing the element subregion
+ * Class deriving from ParticleBlock further specializing the element subregion
  * for a cell element. This is the class used in the physics solvers to
  * represent a collection of mesh cell elements
  */
-class ParticleSubRegion : public CellBlock
+class ParticleSubRegion : public ParticleBlock
 {
 public:
 
@@ -59,10 +59,10 @@ public:
   ///@{
 
   /**
-   * @brief Fill the ParticleSubRegion by copying those of the source CellBlock
-   * @param source the CellBlock whose properties (connectivity info) will be copied
+   * @brief Fill the ParticleSubRegion by copying those of the source ParticleBlock
+   * @param source the ParticleBlock whose properties (connectivity info) will be copied
    */
-  void copyFromCellBlock( CellBlock & source );
+  void copyFromParticleBlock( ParticleBlock & source );
 
   ///@}
 
@@ -152,7 +152,7 @@ public:
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : public CellBlock::viewKeyStruct
+  struct viewKeyStruct : public ParticleBlock::viewKeyStruct
   {
     /// @return String key for the constitutive point volume fraction
     static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
@@ -175,10 +175,10 @@ public:
     dataRepository::ViewKey constitutiveMap       = { constitutiveMapString() };
   }
   /// viewKey struct for the ParticleSubRegion class
-  m_CellBlockSubRegionViewKeys;
+  m_ParticleBlockSubRegionViewKeys;
 
-  virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
-  virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
+  virtual viewKeyStruct & viewKeys() override { return m_ParticleBlockSubRegionViewKeys; }
+  virtual viewKeyStruct const & viewKeys() const override { return m_ParticleBlockSubRegionViewKeys; }
 
   /**
    * @brief @return The array of shape function derivatives.
@@ -193,13 +193,13 @@ public:
   { return m_dNdX; }
 
   /**
-   * @brief @return The array of jacobian determinantes.
+   * @brief @return The array of jacobian determinants.
    */
   array2d< real64 > & detJ()
   { return m_detJ; }
 
   /**
-   * @brief @return The array of jacobian determinantes.
+   * @brief @return The array of jacobian determinants.
    */
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }

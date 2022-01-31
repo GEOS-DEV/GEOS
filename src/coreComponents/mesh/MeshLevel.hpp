@@ -20,6 +20,7 @@
 #define GEOSX_MESH_MESHLEVEL_HPP_
 
 #include "NodeManager.hpp"
+#include "ParticleManager.hpp"
 #include "EmbeddedSurfaceNodeManager.hpp"
 #include "EdgeManager.hpp"
 #include "ElementRegionManager.hpp"
@@ -81,6 +82,7 @@ public:
     dataRepository::GroupKey cellManager    = { "cellManager" };
 
     static constexpr auto nodeManagerString = "nodeManager";
+    static constexpr auto particleManagerString = "particleManager";
     static constexpr auto edgeManagerString = "edgeManager";
     static constexpr auto faceManagerString = "faceManager";
 
@@ -91,6 +93,7 @@ public:
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";
 
     dataRepository::GroupKey nodeManager = {nodeManagerString};
+    dataRepository::GroupKey particleManager = {particleManagerString};
     dataRepository::GroupKey edgeManager = {edgeManagerString};
     dataRepository::GroupKey faceManager = {faceManagerString};
     dataRepository::GroupKey elemManager = {elemManagerString};
@@ -117,6 +120,19 @@ public:
    */
   NodeManager & getNodeManager()
   { return m_nodeManager; }
+
+  /**
+   * @brief Get the particle manager.
+   * @return a reference to the particleManager object
+   */
+  ParticleManager const & getParticleManager() const
+  { return m_particleManager; }
+
+  /**
+   * @copydoc getParticleManager() const
+   */
+  ParticleManager & getParticleManager()
+  { return m_particleManager; }
 
   /**
    * @brief Get the edge manager.
@@ -189,6 +205,8 @@ private:
 
   /// Manager for node data
   NodeManager m_nodeManager;
+  /// Manager for particle data
+  ParticleManager m_particleManager;
   /// Manager for edge data
   EdgeManager m_edgeManager;
   /// Manager for face data

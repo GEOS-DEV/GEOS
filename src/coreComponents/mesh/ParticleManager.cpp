@@ -13,10 +13,10 @@
  */
 
 /**
- * @file NodeManager.cpp
+ * @file ParticleManager.cpp
  */
 
-#include "NodeManager.hpp"
+#include "ParticleManager.hpp"
 #include "FaceManager.hpp"
 #include "EdgeManager.hpp"
 #include "ToElementRelation.hpp"
@@ -34,7 +34,7 @@ using namespace dataRepository;
  * @return
  */
 //START_SPHINX_REFPOS_REG
-NodeManager::NodeManager( string const & name,
+ParticleManager::ParticleManager( string const & name,
                           Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_referencePosition( 0, 3 )
@@ -50,11 +50,11 @@ NodeManager::NodeManager( string const & name,
 }
 
 
-NodeManager::~NodeManager()
+ParticleManager::~ParticleManager()
 {}
 
 
-void NodeManager::resize( localIndex const newSize )
+void ParticleManager::resize( localIndex const newSize )
 {
   m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
   m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
@@ -65,7 +65,7 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::setEdgeMaps( EdgeManager const & edgeManager )
+void ParticleManager::setEdgeMaps( EdgeManager const & edgeManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -114,7 +114,7 @@ void NodeManager::setEdgeMaps( EdgeManager const & edgeManager )
 }
 
 
-void NodeManager::setFaceMaps( FaceManager const & faceManager )
+void ParticleManager::setFaceMaps( FaceManager const & faceManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -165,7 +165,7 @@ void NodeManager::setFaceMaps( FaceManager const & faceManager )
 }
 
 
-void NodeManager::setElementMaps( ElementRegionManager const & elementRegionManager )
+void ParticleManager::setElementMaps( ElementRegionManager const & elementRegionManager )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -251,7 +251,7 @@ void NodeManager::setElementMaps( ElementRegionManager const & elementRegionMana
 }
 
 
-void NodeManager::compressRelationMaps()
+void ParticleManager::compressRelationMaps()
 {
   m_toEdgesRelation.compress();
   m_toFacesRelation.compress();
@@ -261,7 +261,7 @@ void NodeManager::compressRelationMaps()
 }
 
 
-void NodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+void ParticleManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
 {
   ObjectManagerBase::viewPackingExclusionList( exclusionList );
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
@@ -277,14 +277,14 @@ void NodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusio
 }
 
 
-localIndex NodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+localIndex ParticleManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return packUpDownMapsPrivate< false >( junk, packList );
 }
 
 
-localIndex NodeManager::packUpDownMaps( buffer_unit_type * & buffer,
+localIndex ParticleManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
   return packUpDownMapsPrivate< true >( buffer, packList );
@@ -292,7 +292,7 @@ localIndex NodeManager::packUpDownMaps( buffer_unit_type * & buffer,
 
 
 template< bool DOPACK >
-localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
+localIndex ParticleManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
@@ -322,7 +322,7 @@ localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
 }
 
 
-localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
+localIndex ParticleManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                           localIndex_array & packList,
                                           bool const overwriteUpMaps,
                                           bool const )
@@ -362,7 +362,7 @@ localIndex NodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
 }
 
 
-void NodeManager::fixUpDownMaps( bool const clearIfUnmapped )
+void ParticleManager::fixUpDownMaps( bool const clearIfUnmapped )
 {
   ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
                                     m_toEdgesRelation.relatedObjectGlobalToLocal(),
@@ -377,7 +377,7 @@ void NodeManager::fixUpDownMaps( bool const clearIfUnmapped )
 }
 
 
-void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes,
+void ParticleManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes,
                                     array2d< localIndex > const & edgesToNodes,
                                     ArrayOfArraysView< localIndex const > const & facesToNodes,
                                     ElementRegionManager const & elemRegionManager )
@@ -420,6 +420,6 @@ void NodeManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, NodeManager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleManager, string const &, Group * const )
 
 }
