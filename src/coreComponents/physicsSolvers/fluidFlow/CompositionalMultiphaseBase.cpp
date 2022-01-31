@@ -265,29 +265,35 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                   GEOSX_FMT( "Relative permeability model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
-  string & capPressureName = subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Name of the capillary pressure constitutive model to use" ).
-    reference();
 
-  capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
-  GEOSX_THROW_IF( capPressureName.empty(),
-                  GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
-                  InputError );
+  if( m_capPressureFlag )
+  {
+    string & capPressureName = subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 ).
+      setDescription( "Name of the capillary pressure constitutive model to use" ).
+      reference();
+    capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
+    GEOSX_THROW_IF( capPressureName.empty(),
+                    GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+  }
 
-  string & thermalConductivityName = subRegion.registerWrapper<string>( viewKeyStruct::thermalConductivityNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Name of the thermal conductivity constitutive model to use" ).
-    reference();
+  if( m_thermalFlag )
+  {
+    string & thermalConductivityName = subRegion.registerWrapper<string>( viewKeyStruct::thermalConductivityNamesString() ).
+      setPlotLevel( PlotLevel::NOPLOT ).
+      setRestartFlags( RestartFlags::NO_WRITE ).
+      setSizedFromParent( 0 ).
+      setDescription( "Name of the thermal conductivity constitutive model to use" ).
+      reference();
 
-  thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
-  GEOSX_THROW_IF( relPermName.empty(),
-                  GEOSX_FMT( "Thermal Conductivity model not found on subregion {}", subRegion.getName() ),
-                  InputError );
+    thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
+    GEOSX_THROW_IF( relPermName.empty(),
+                    GEOSX_FMT( "Thermal Conductivity model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+  }
 
 
 }
