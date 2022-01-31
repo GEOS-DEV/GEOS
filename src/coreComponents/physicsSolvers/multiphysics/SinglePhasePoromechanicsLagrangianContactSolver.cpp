@@ -200,6 +200,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
         arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
         double * max_pres = std::max_element(pres.begin(), pres.end());
         GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max pres {:15.6e}", * max_pres ) );
+        double * min_pres = std::min_element(pres.begin(), pres.end());
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min pres {:15.6e}", * min_pres ) );
       }
     } );
   } );
@@ -208,8 +210,10 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
   arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
   double * min_disp = std::min_element(disp.begin(), disp.end());
   GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", * min_disp ) );
-  // end Laura
 
+  real64 const totalFlux = m_flowSolver->computeFluxFaceDirichlet( time_n, dt, domain );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- total flux through Dirichlet faces {:15.6e}", totalFlux ) );
+  // end Laura
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::postProcessInput()

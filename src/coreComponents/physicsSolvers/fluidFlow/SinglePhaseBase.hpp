@@ -265,6 +265,11 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const = 0;
 
+  virtual real64
+  computeFluxFaceDirichlet( real64 const time_n,
+                            real64 const dt,
+                            DomainPartition & domain ) const = 0;
+
   virtual void
   updateState ( DomainPartition & domain ) override final;
 

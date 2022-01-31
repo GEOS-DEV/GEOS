@@ -158,6 +158,11 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override final;
 
+  virtual real64
+  computeFluxFaceDirichlet( real64 const time,
+                            real64 const dt,
+                            DomainPartition & domain ) const override final;
+
   virtual void
   saveAquiferConvergedState( real64 const & time,
                              real64 const & dt,

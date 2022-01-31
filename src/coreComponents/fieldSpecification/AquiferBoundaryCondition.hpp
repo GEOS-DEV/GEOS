@@ -379,7 +379,7 @@ AquiferBoundaryCondition::KernelWrapper::
   // Laura: seems to work
   //real64 const aquiferVolFlux =  areaFraction * ( a - b * reservoirDeltaPressure );
   //dAquiferVolFlux_dPres = -areaFraction * b;
-  real64 const aquiferVolFlux =  (areaFraction * ( a - b * reservoirDeltaPressure )) * 0.0 + 1.e-3;
+  real64 const aquiferVolFlux =  (areaFraction * ( a - b * reservoirDeltaPressure )) * 0.0 + areaFraction * m_initialPressure;
   dAquiferVolFlux_dPres = -areaFraction * b * 0.0;
 
   return aquiferVolFlux;

@@ -199,6 +199,11 @@ public:
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const override;
 
+  virtual real64
+  computeFluxFaceDirichlet( real64 const time_n,
+                            real64 const dt,
+                            DomainPartition & domain ) const override;
+
   virtual void initializePreSubGroups() override;
 
 private:

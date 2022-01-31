@@ -356,7 +356,7 @@ struct FaceDirichletBCKernel
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
   {
-    forAll< parallelDevicePolicy<> >( seri.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    forAll< parallelDevicePolicy<> >( seri.size( 0 ), [&] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
       real64 flux, fluxJacobian;
 
@@ -391,6 +391,50 @@ struct FaceDirichletBCKernel
         RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], flux );
         localMatrix.addToRow< parallelDeviceAtomic >( localRow, &dofIndex, &fluxJacobian, 1 );
       }
+    } );
+  }
+
+  template< typename FLUID_WRAPPER >
+  static void computeFlux( BoundaryStencil::IndexContainerViewConstType const & seri,
+                           BoundaryStencil::IndexContainerViewConstType const & sesri,
+                           BoundaryStencil::IndexContainerViewConstType const & sefi,
+                           BoundaryStencil::WeightContainerViewConstType const & trans,
+                           ElementViewConst< arrayView1d< real64 const > > const & pres,
+                           ElementViewConst< arrayView1d< real64 const > > const & dPres,
+                           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+                           ElementViewConst< arrayView2d< real64 const > > const & dens,
+                           ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+                           ElementViewConst< arrayView1d< real64 const > > const & mob,
+                           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
+                           arrayView1d< real64 const > const & presFace,
+                           arrayView1d< real64 const > const & gravCoefFace,
+                           FLUID_WRAPPER const & fluidWrapper,
+                           real64 & totalFlux )
+  {
+    totalFlux = 0.0;
+    forAll< parallelDevicePolicy<> >( seri.size( 0 ), [&] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+      real64 flux, fluxJacobian;
+
+      compute( seri[iconn],
+               sesri[iconn],
+               sefi[iconn],
+               trans[iconn],
+               pres,
+               dPres,
+               gravCoef,
+               dens,
+               dDens_dPres,
+               mob,
+               dMob_dPres,
+               presFace,
+               gravCoefFace,
+               fluidWrapper,
+               1,
+               flux,
+               fluxJacobian );
+
+      totalFlux += flux;
     } );
   }
 };

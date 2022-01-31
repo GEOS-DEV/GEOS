@@ -568,6 +568,117 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 }
 
 template<>
+real64 SinglePhaseFVM< SinglePhaseProppantBase >::computeFluxFaceDirichlet( real64 const GEOSX_UNUSED_PARAM( time ),
+                                                                            real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                                            DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
+{
+  // Aquifer does not make sense for proppant flow in fractures
+  return 0.0;
+}
+
+template<>
+real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const time_n,
+                                                                    real64 const dt,
+                                                                    DomainPartition & domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  FaceManager & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+
+  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+  // make a list of region indices to be included
+  map< localIndex, localIndex > regionFluidMap;
+  forTargetRegionsComplete( mesh, [&]( localIndex const targetIndex, localIndex const er, ElementRegionBase & )
+  {
+    localIndex const modelIndex = constitutiveManager.getSubGroups().getIndex( m_fluidModelNames[targetIndex] );
+    regionFluidMap.emplace( er, modelIndex );
+  } );
+
+  arrayView1d< real64 const > const presFace =
+    faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+
+  arrayView1d< real64 const > const gravCoefFace =
+    faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+
+  real64 totalFlux = 0.0;
+
+  // Take BCs defined for "pressure" field and apply values to "facePressure"
+  fsManager.apply( time_n + dt,
+                   domain,
+                   "faceManager",
+                   extrinsicMeshData::flow::pressure::key(),
+                   [&] ( FieldSpecificationBase const & fs,
+                         string const & setName,
+                         SortedArrayView< localIndex const > const & targetSet,
+                         Group & targetGroup,
+                         string const & )
+  {
+    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
+                                   this->getName(), time_n+dt, AquiferBoundaryCondition::catalogName(),
+                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
+    }
+
+    if( stencil.size() == 0 )
+    {
+      return;
+    }
+
+    // first, evaluate BC to get primary field values (pressure)
+    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                           time_n + dt,
+                                                                           targetGroup,
+                                                                           extrinsicMeshData::flow::facePressure::key() );
+
+    // Now run the actual kernel
+    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+    BoundaryStencil::WeightContainerViewConstType const & trans = stencil.getWeights();
+
+    // TODO: currently we just use model from the first cell in this stencil
+    //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
+    //       Can we just use cell properties for an approximate flux computation?
+    //       Then we can forget about capturing the fluid model.
+    SingleFluidBase & fluidBase = constitutiveManager.getConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
+
+    constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+    {
+      // create the fluid compute wrapper suitable for capturing in a kernel lambda
+      typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+
+      typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
+      typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName(), this->targetRegionNames(), this->fluidModelNames() );
+
+      FaceDirichletBCKernel::computeFlux( seri, sesri, sefi, trans,
+                                          flowAccessors.get< extrinsicMeshData::flow::pressure >(),
+                                          flowAccessors.get< extrinsicMeshData::flow::deltaPressure >(),
+                                          flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
+                                          fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
+                                          fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
+                                          flowAccessors.get< extrinsicMeshData::flow::mobility >(),
+                                          flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
+                                          presFace,
+                                          gravCoefFace,
+                                          fluidWrapper,
+                                          totalFlux );
+    } );
+  } );
+  return totalFlux;
+}
+
+template<>
 void SinglePhaseFVM< SinglePhaseProppantBase >::applyAquiferBC( real64 const GEOSX_UNUSED_PARAM( time ),
                                                                 real64 const GEOSX_UNUSED_PARAM( dt ),
                                                                 DomainPartition & GEOSX_UNUSED_PARAM( domain ),
