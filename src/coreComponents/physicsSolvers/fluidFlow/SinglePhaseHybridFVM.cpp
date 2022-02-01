@@ -287,9 +287,9 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
       faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
 
     // get the face-centered transMultiplier
-  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
+//    string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
     arrayView1d< real64 const > const & transMultiplier =
-    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
+    faceManager.getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString() );
 
     // get the face-to-nodes connectivity for the transmissibility calculation
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
