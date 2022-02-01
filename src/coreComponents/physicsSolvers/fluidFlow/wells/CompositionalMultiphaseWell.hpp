@@ -342,6 +342,8 @@ private:
    */
   void initializeWells( DomainPartition & domain ) override;
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
   /// the max number of fluid phases
   integer m_numPhases;
 
