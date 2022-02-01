@@ -76,10 +76,11 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
+  integer cycleNumber = int(time/dt);
   geosx::GeosxState * g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 
-  self->group->execute( time, dt, 0, 0, 0, domain );
+  self->group->execute( time, dt, cycleNumber, 0, 0, domain );
 
   Py_RETURN_NONE;
 }
