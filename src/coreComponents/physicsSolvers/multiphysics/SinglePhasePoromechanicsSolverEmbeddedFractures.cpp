@@ -278,7 +278,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::addCouplingNumNonzeros( Do
               // so we only add the coupling with the jumps of the neighbours.
               if( k1 != k0 )
               {
-              rowLengths[ rowNumber ] += embeddedSurfaceSubRegion.numOfJumpEnrichments(); // number of jump enrichments.
+                rowLengths[ rowNumber ] += embeddedSurfaceSubRegion.numOfJumpEnrichments(); // number of jump enrichments.
               }
             }
           }
@@ -610,10 +610,10 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       arrayView1d< real64 > const hydraulicAperture =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::hydraulicAperture >();
 
-    arrayView1d< real64 const > const oldHydraulicAperture =
-      subRegion.template getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
+      arrayView1d< real64 const > const oldHydraulicAperture =
+        subRegion.template getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
 
-    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
       arrayView1d< real64 > const deltaVolume =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
@@ -633,19 +633,19 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_fracturesSolver->getContactRelationName() );
 
-    ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
+      ContactBase::KernelWrapper contactWrapper = contact.createKernelWrapper();
 
-    string const porousSolidName = subRegion.template getReference<string>( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString() );
-    CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
+      string const porousSolidName = subRegion.template getReference< string >( FlowSolverBase::viewKeyStruct::solidNamesString() );
+      CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( porousSolidName );
 
-    constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
+      constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( porousSolid, [=, &subRegion] ( auto & castedPorousSolid )
       {
-      typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
+        typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
         PoromechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
-                                          porousMaterialWrapper,
+                                            porousMaterialWrapper,
                                             dispJump,
                                             pressure,
                                             deltaPressure,
@@ -653,7 +653,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
                                             volume,
                                             deltaVolume,
                                             aperture,
-                                          oldHydraulicAperture,
+                                            oldHydraulicAperture,
                                             hydraulicAperture,
                                             fractureTraction,
                                             dTdpf );

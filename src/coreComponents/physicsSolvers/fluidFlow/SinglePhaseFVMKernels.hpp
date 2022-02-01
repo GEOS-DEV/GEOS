@@ -70,14 +70,14 @@ struct FluxKernel
                       extrinsicMeshData::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
-      StencilMaterialAccessors< SingleFluidBase,
-                                extrinsicMeshData::singlefluid::density,
-                                extrinsicMeshData::singlefluid::dDensity_dPressure >;
+    StencilMaterialAccessors< SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
-      StencilMaterialAccessors< SlurryFluidBase,
-                                extrinsicMeshData::singlefluid::density,
-                                extrinsicMeshData::singlefluid::dDensity_dPressure >;
+    StencilMaterialAccessors< SlurryFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,
@@ -85,11 +85,11 @@ struct FluxKernel
                               extrinsicMeshData::permeability::dPerm_dPressure >;
 
   using ProppantPermeabilityAccessors =
-      StencilMaterialAccessors< PermeabilityBase,
-                                extrinsicMeshData::permeability::permeability,
-                                extrinsicMeshData::permeability::dPerm_dPressure,
-                                extrinsicMeshData::permeability::dPerm_dDispJump,
-                                extrinsicMeshData::permeability::permeabilityMultiplier >;
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure,
+                              extrinsicMeshData::permeability::dPerm_dDispJump,
+                              extrinsicMeshData::permeability::permeabilityMultiplier >;
 
 
   /**

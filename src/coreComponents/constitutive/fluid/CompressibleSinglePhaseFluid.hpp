@@ -157,7 +157,7 @@ private:
 
   /// default density value
   real64 m_defaultDensity;
-  
+
   /// default viscosity value
   real64 m_defaultViscosity;
 
