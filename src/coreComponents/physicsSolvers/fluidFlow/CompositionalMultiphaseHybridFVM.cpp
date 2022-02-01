@@ -206,7 +206,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayVi
                                                                                         CellElementSubRegion & subRegion )
   {
     arrayView2d< real64 const > const & elemCenter =
-      subRegion.template getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
+      subRegion.template getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
     string & permModelName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
     arrayView3d< real64 const > const & elemPerm =
       getConstitutiveModel< PermeabilityBase >( subRegion, permModelName ).permeability();
@@ -769,6 +769,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
   // local residual
   real64 localResidualNorm = 0;
+  globalIndex const rankOffset = dofManager.rankOffset();
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
@@ -784,10 +785,11 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     string const elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
     string const faceDofKey = dofManager.getKey( viewKeyStruct::faceDofFieldString() );
 
-    globalIndex const rankOffset = dofManager.rankOffset();
 
-    StencilAccessors< extrinsicMeshData::flow::phaseMobilityOld >
+    StencilAccessors< extrinsicMeshData::elementVolume,
+                      extrinsicMeshData::flow::phaseMobilityOld >
     compFlowAccessors( mesh.getElemManager(), getName() );
+
 
     // 1. Compute the residual for the mass conservation equations
 
@@ -844,11 +846,10 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                           elemRegionList.toNestedViewConst(),
                                                           elemSubRegionList.toNestedViewConst(),
                                                           elemList.toNestedViewConst(),
-                                                          m_volume.toNestedViewConst(),
+                                                          compFlowAccessors.get( extrinsicMeshData::elementVolume{} ),
                                                           compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
                                                           faceResidualNorm );
     localResidualNorm += faceResidualNorm;
-
   } );
 
   // 3. Combine the two norms

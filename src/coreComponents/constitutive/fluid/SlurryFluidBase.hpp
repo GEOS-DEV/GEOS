@@ -298,6 +298,7 @@ public:
 
   bool isNewtonianFluid() const { return m_isNewtonianFluid; }
 
+<<<<<<< HEAD
   // *** Data repository keys
 
   struct viewKeyStruct : public SingleFluidBase::viewKeyStruct
@@ -329,6 +330,8 @@ public:
     static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
   };
 
+=======
+>>>>>>> d06d55f17b0ff00a3f682700b7cc9a71c1052e6f
 protected:
 
   virtual void postProcessInput() override;
@@ -362,6 +365,20 @@ protected:
 
   bool m_isNewtonianFluid;
 
+private:
+
+  // *** Data repository keys
+  struct viewKeyStruct
+  {
+    static constexpr char const * componentNamesString() { return "componentNames"; }
+
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+
+    static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
+    static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
+  };
 };
 
 } //namespace constitutive

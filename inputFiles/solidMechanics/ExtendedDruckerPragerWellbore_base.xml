@@ -119,6 +119,8 @@
       discretization="FE1"
       targetRegions="{ Omega }"
       >
+      <LinearSolverParameters
+        directParallel="0"/>
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="15"/>

@@ -23,7 +23,7 @@
         newtonMaxIter="50"
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
-        preconditionerType="amg"/>
+        directParallel="0"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE

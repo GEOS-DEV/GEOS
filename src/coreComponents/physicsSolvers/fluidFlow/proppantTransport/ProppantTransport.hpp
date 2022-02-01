@@ -182,43 +182,20 @@ public:
   {
     static constexpr char const * proppantNamesString() { return "proppantNames"; }
 
-    // primary solution field
-    static constexpr char const * proppantConcentrationString() { return "proppantConcentration"; }
-    static constexpr char const * deltaProppantConcentrationString() { return "deltaProppantConcentration"; }
-    static constexpr char const * componentConcentrationString() { return "componentConcentration"; }
-    static constexpr char const * deltaComponentConcentrationString() { return "deltaComponentConcentration"; }
-    static constexpr char const * bcComponentConcentrationString() { return "bcComponentConcentration"; }
-
     // these are used to store last converged time step values
 
-    static constexpr char const * oldComponentDensityString() { return "oldComponentDensity"; }
-
     static constexpr char const * updateProppantPackingString() { return "updateProppantPacking"; }
-    static constexpr char const * cellBasedFluxString() { return "cellBasedFlux"; }
-
-    static constexpr char const * isProppantBoundaryString() { return "isProppantBoundary"; }
-    static constexpr char const * isProppantMobileString() { return "isProppantMobile"; }
-
-    static constexpr char const * proppantPackVolumeFractionString() { return "proppantPackVolumeFraction"; }
-    static constexpr char const * proppantExcessPackVolumeString() { return "proppantExcessPackVolume"; }
-    static constexpr char const * proppantLiftFluxString() { return "proppantLiftFlux"; }
-
     static constexpr char const * bridgingFactorString() { return "bridgingFactor"; }
-
     static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
-
     static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
     static constexpr char const * proppantDensityString() { return "proppantDensity"; }
-
     static constexpr char const * criticalShieldsNumberString() { return "criticalShieldsNumber"; }
     static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
   };
 
-  static constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
-
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  void updateProppantMobility( Group & dataGroup );
+  void updateProppantMobility( ObjectManagerBase & dataGroup );
 
   /**
    * @brief Function to update proppant pack volume fraction
@@ -231,7 +208,7 @@ public:
    * @brief Function to update fluid and proppant properties
    * @param domain the domain
    */
-  void updateState( Group & dataGroup );
+  void updateState( ObjectManagerBase & dataGroup );
 
 protected:
 
@@ -240,19 +217,14 @@ protected:
 private:
 
   /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void resetViews( MeshLevel & mesh ) override;
-
-  /**
    * @brief Function to update fluid properties
    * @param domain the domain
    */
-  void updateFluidModel( Group & dataGroup );
+  void updateFluidModel( ObjectManagerBase & dataGroup );
 
-  void updateComponentDensity( Group & dataGroup );
+  void updateComponentDensity( ObjectManagerBase & dataGroup );
 
-  void updateProppantModel( Group & dataGroup );
+  void updateProppantModel( ObjectManagerBase & dataGroup );
 
   /**
    * @brief Function to update cell-based fluid flux
@@ -261,52 +233,6 @@ private:
                             DomainPartition & domain );
 
   void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
-
-  /// views into primary variable fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_cellBasedFlux;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantLiftFlux;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantPackVolumeFraction;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_proppantExcessPackVolume;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantBoundaryElement;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_isProppantMobile;
-
-  /// views into material fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDensity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDensity_dProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dDensity_dComponentConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_componentDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dComponentDensity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > m_dComponentDensity_dComponentConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_fluidDensity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dFluidDensity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dFluidDensity_dComponentConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_fluidViscosity;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dViscosity_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dViscosity_dProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_dViscosity_dComponentConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_settlingFactor;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dSettlingFactor_dPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dSettlingFactor_dProppantConcentration;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dSettlingFactor_dComponentConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_collisionFactor;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dCollisionFactor_dProppantConcentration;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeability;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeabilityMultiplier;
 
   integer m_numComponents;
 

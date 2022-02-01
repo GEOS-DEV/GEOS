@@ -36,7 +36,6 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/MeshManager.hpp"
-#include "mesh/utilities/MeshUtilities.hpp"
 #include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
@@ -541,8 +540,7 @@ void ProblemManager::generateMesh()
     Group & meshLevels = meshBody.getMeshLevels();
     for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
     {
-
-      Group & cellBlockManager = meshBody.getGroup( keys::cellManager );
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
       MeshLevel & meshLevel = meshBody.getMeshLevel( b );
 
       NodeManager & nodeManager = meshLevel.getNodeManager();
@@ -550,21 +548,39 @@ void ProblemManager::generateMesh()
       FaceManager & faceManager = meshLevel.getFaceManager();
       ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-      GeometricObjectManager & geometricObjects = this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager );
-
-      MeshUtilities::generateNodesets( geometricObjects, nodeManager );
-      nodeManager.constructGlobalToLocalMap();
+      // The following lines in this for loop stack some operations to build (node|edge|face|elementRegion)Manager.
+      // Please be cautious, in case of refactoring, that the dependencies of the current version
+      // get properly managed.
 
       elemManager.generateMesh( cellBlockManager );
-      nodeManager.setElementMaps( elemManager );
 
-      faceManager.buildFaces( nodeManager, elemManager );
-      nodeManager.setFaceMaps( faceManager );
+      nodeManager.setGeometricalRelations( cellBlockManager );
+      edgeManager.setGeometricalRelations( cellBlockManager );
+      faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
 
-      edgeManager.buildEdges( nodeManager, faceManager );
-      nodeManager.setEdgeMaps( edgeManager );
+      nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
-      domain.generateSets();
+      // Edge, face and element region managers rely on the sets provided by the node manager.
+      // This is why `nodeManager.buildSets` is called first.
+      nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+      edgeManager.buildSets( nodeManager );
+      faceManager.buildSets( nodeManager );
+      elemManager.buildSets( nodeManager );
+
+      // The edge manager do not hold any information related to the regions nor the elements.
+      // This is why the element region manager is not provided.
+      nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+      edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+      faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+
+      nodeManager.buildRegionMaps( elemManager );
+      faceManager.buildRegionMaps( elemManager );
+
+      // Node and edge managers rely on the boundary information provided by the face manager.
+      // This is why `faceManager.setDomainBoundaryObjects` is called first.
+      faceManager.setDomainBoundaryObjects();
+      nodeManager.setDomainBoundaryObjects( faceManager );
+      edgeManager.setDomainBoundaryObjects( faceManager );
 
       elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
       {
@@ -576,13 +592,13 @@ void ProblemManager::generateMesh()
 
       elemManager.setMaxGlobalIndex();
 
-      elemManager.generateCellToEdgeMaps( faceManager );
-
-      elemManager.generateAggregates( faceManager, nodeManager );
-
       elemManager.generateWells( meshManager, meshLevel );
     }
+
+    // The cell block manager is not meant to be used anymore, let's free space.
+    meshBody.deregisterGroup( keys::cellManager );
   }
+
 
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
@@ -628,7 +644,6 @@ void ProblemManager::applyNumericalMethods()
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
-
 
 map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
