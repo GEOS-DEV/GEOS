@@ -123,6 +123,16 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_phaseViscosity.dTemp.resize( size, numPts, numPhase );
   m_phaseViscosity.dComp.resize( size, numPts, numPhase, numComp );
 
+  m_phaseEnthalpy.value.resize( size, numPts, numPhase );
+  m_phaseEnthalpy.dPres.resize( size, numPts, numPhase );
+  m_phaseEnthalpy.dTemp.resize( size, numPts, numPhase );
+  m_phaseEnthalpy.dComp.resize( size, numPts, numPhase, numComp );
+
+  m_phaseInternalEnergy.value.resize( size, numPts, numPhase );
+  m_phaseInternalEnergy.dPres.resize( size, numPts, numPhase );
+  m_phaseInternalEnergy.dTemp.resize( size, numPts, numPhase );
+  m_phaseInternalEnergy.dComp.resize( size, numPts, numPhase, numComp );
+
   m_phaseCompFraction.value.resize( size, numPts, numPhase, numComp );
   m_phaseCompFraction.dPres.resize( size, numPts, numPhase, numComp );
   m_phaseCompFraction.dTemp.resize( size, numPts, numPhase, numComp );
@@ -134,33 +144,6 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity.dComp.resize( size, numPts, numComp );
 
   m_initialTotalMassDensity.resize( size, numPts );
-
-  // special treatment for the (thermal) enthalpy and internal energy fields to save a little bit of space
-  if( m_thermalFlag )
-  {
-    m_phaseEnthalpy.value.resize( size, numPts, numPhase );
-    m_phaseEnthalpy.dPres.resize( size, numPts, numPhase );
-    m_phaseEnthalpy.dTemp.resize( size, numPts, numPhase );
-    m_phaseEnthalpy.dComp.resize( size, numPts, numPhase, numComp );
-
-    m_phaseInternalEnergy.value.resize( size, numPts, numPhase );
-    m_phaseInternalEnergy.dPres.resize( size, numPts, numPhase );
-    m_phaseInternalEnergy.dTemp.resize( size, numPts, numPhase );
-    m_phaseInternalEnergy.dComp.resize( size, numPts, numPhase, numComp );
-  }
-  else
-  {
-    m_phaseEnthalpy.value.resize( size, numPts, 0 );
-    m_phaseEnthalpy.dPres.resize( size, numPts, 0 );
-    m_phaseEnthalpy.dTemp.resize( size, numPts, 0 );
-    m_phaseEnthalpy.dComp.resize( size, numPts, 0, 0 );
-
-    m_phaseInternalEnergy.value.resize( size, numPts, 0 );
-    m_phaseInternalEnergy.dPres.resize( size, numPts, 0 );
-    m_phaseInternalEnergy.dTemp.resize( size, numPts, 0 );
-    m_phaseInternalEnergy.dComp.resize( size, numPts, 0, 0 );
-  }
-
 }
 
 void MultiFluidBase::setLabels()
