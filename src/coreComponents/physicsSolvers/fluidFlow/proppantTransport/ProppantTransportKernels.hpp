@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/ParticleFluidBase.hpp"
 #include "constitutive/fluid/ParticleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
@@ -35,6 +36,7 @@ namespace geosx
 
 namespace ProppantTransportKernels
 {
+using namespace constitutive;
 
 /******************************** FluidUpdateKernel ********************************/
 
@@ -190,7 +192,7 @@ struct FluxKernel
                       extrinsicMeshData::elementAperture >;
 
   using ParticleFluidAccessors =
-    StencilAccessors< extrinsicMeshData::particlefluid::settlingFactor,
+      StencilMaterialAccessors< ParticleFluidBase, extrinsicMeshData::particlefluid::settlingFactor,
                       extrinsicMeshData::particlefluid::dSettlingFactor_dPressure,
                       extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration,
                       extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration,
@@ -198,7 +200,7 @@ struct FluxKernel
                       extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration >;
 
   using SlurryFluidAccessors =
-    StencilAccessors< extrinsicMeshData::slurryfluid::density,
+      StencilMaterialAccessors< SlurryFluidBase, extrinsicMeshData::slurryfluid::density,
                       extrinsicMeshData::slurryfluid::dDensity_dPressure,
                       extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration,
                       extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration,
