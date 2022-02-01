@@ -211,10 +211,7 @@ public:
       }
     }
 
-    for( int flowDofIndex=0; flowDofIndex<1; ++flowDofIndex )
-    {
-      stack.localFlowDofIndex[flowDofIndex] = m_flowDofNumber[k] + flowDofIndex;
-    }
+    stack.localFlowDofIndex[0] = m_flowDofNumber[k];
 
   }
 
@@ -267,6 +264,11 @@ public:
 
     using namespace PDEUtilities;
 
+    constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
+    constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
+    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
+
     real64 strainIncrement[6]{};
     real64 totalStress[6]{};
     typename CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps stiffness; // Could this be called dTotalStress_dStrainIncrement?
@@ -282,10 +284,7 @@ public:
     // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
 
-    constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
-    constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
-    constexpr FunctionSpace pressureTrialSpace = FunctionSpace::L2;
-    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
+
 
     real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
@@ -321,7 +320,7 @@ public:
                                                        stiffness );
 
     // Compute local linear momentum balance residual
-    LinearFormUtilities::compute< FunctionSpace::H1vector,// displacementTestSpace,
+    LinearFormUtilities::compute< displacementTestSpace,
                                   DifferentialOperator::SymmetricGradient >
     (
       stack.localResidualMomentum,

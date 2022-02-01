@@ -188,6 +188,98 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  void smallStrainUpdateMultiphase( localIndex const k,
+                                    localIndex const q,
+                                    real64 const & initialFluidPressure,
+                                    real64 const & fluidPressureOld,
+                                    real64 const & deltaFluidPressure,
+                                    real64 const ( &strainIncrement )[6],
+                                    real64 const & gravityAcceleration,
+                                    real64 const ( &gravityVector )[3],
+                                    real64 const & solidDensity,
+                                    real64 const & initialFluidDensity,
+                                    real64 const & fluidDensityOld,
+                                    real64 const & fluidDensity,
+                                    real64 const & dFluidDensity_dPressure,
+                                    real64 ( & totalStress )[6],
+                                    real64 ( & dTotalStress_dPressure )[6],
+                                    real64 ( & bodyForceIncrement )[3],
+                                    real64 ( & dBodyForce_dVolStrainIncrement )[3],
+                                    real64 ( & dBodyForce_dPressure )[3],
+                                    real64 & fluidMassContent,
+                                    real64 & fluidMassContentOld,
+                                    real64 & dFluidMassContent_dPressure,
+                                    real64 & dFluidMassContent_dVolStrainIncrement,
+                                    DiscretizationOps & stiffness ) const
+  {
+    // Compute total stress increment and its derivative w.r.t. pressure
+    m_solidUpdate.smallStrainUpdate( k,
+                                     q,
+                                     strainIncrement,
+                                     totalStress, // first effective stress increment accumulated
+                                     stiffness );
+
+    updateBiotCoefficient( k );
+
+    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
+    real64 const initialBiotCoefficient = biotCoefficient; // temporary
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( fluidPressureOld + deltaFluidPressure ) + initialBiotCoefficient * initialFluidPressure );
+
+    dTotalStress_dPressure[0] = -biotCoefficient;
+    dTotalStress_dPressure[1] = -biotCoefficient;
+    dTotalStress_dPressure[2] = -biotCoefficient;
+    dTotalStress_dPressure[3] = 0;
+    dTotalStress_dPressure[4] = 0;
+    dTotalStress_dPressure[5] = 0;
+
+    real64 dPorosity_dPressure;
+    real64 dPorosity_dVolStrain;
+    m_porosityUpdate.updateFromPressureAndStrain( k,
+                                                  q,
+                                                  deltaFluidPressure,
+                                                  strainIncrement,
+                                                  dPorosity_dPressure,
+                                                  dPorosity_dVolStrain );
+
+    real64 const porosity = m_porosityUpdate.getPorosity( k, q );
+    real64 const porosityOld = m_porosityUpdate.getOldPorosity( k, q );
+    real64 const porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
+
+    // Compute body force vector and its derivatives w.r.t. to
+    // volumetric strain and pressure. The following assumption
+    // are made at the moment:
+    // 1. dMixtureDens_dVolStrainIncrement is neglected,
+    // 2. grains are assumed incompressible
+    real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity + porosity * fluidDensity;
+    real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity + porosityInit * initialFluidDensity;
+    real64 const mixtureDensityIncrement = mixtureDensity - initialMixtureDensity;
+
+    real64 const dMixtureDens_dVolStrainIncrement = 0.0;
+    real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -solidDensity + fluidDensity )
+                                          + porosity * dFluidDensity_dPressure;
+
+    if( gravityAcceleration > 0.0 )
+    {
+      LvArray::tensorOps::scaledCopy< 3 >( bodyForceIncrement, gravityVector, mixtureDensityIncrement );
+      LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dVolStrainIncrement, gravityVector, dMixtureDens_dVolStrainIncrement );
+      LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dPressure, gravityVector, dMixtureDens_dPressure );
+    }
+
+    // Compute fluid mass contents and derivatives w.r.t. to
+    // volumetric strain and pressure
+    fluidMassContent = porosity * fluidDensity;
+    fluidMassContentOld = porosityOld * fluidDensityOld;
+    dFluidMassContent_dVolStrainIncrement = dPorosity_dVolStrain * fluidDensity;
+    dFluidMassContent_dPressure = dPorosity_dPressure * fluidDensity + porosity * dFluidDensity_dPressure;
+
+// TODO uncomment once we start using permeability model in flow.
+//    m_permUpdate.updateFromPressureStrain( k,
+//                                           q,
+//                                           pressure,
+//                                           volStrain );
+  }
+
+  GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k ) const
   {
     // This call is not general like this.

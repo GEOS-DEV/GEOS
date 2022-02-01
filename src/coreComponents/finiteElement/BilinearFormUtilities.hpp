@@ -35,7 +35,7 @@ struct Helper
 {};
 
 template<>
-struct Helper< PDEUtilities::FunctionSpace::L2,
+struct Helper< PDEUtilities::FunctionSpace::P0,
                PDEUtilities::FunctionSpace::H1vector,
                PDEUtilities::DifferentialOperator::Identity,
                PDEUtilities::DifferentialOperator::Divergence >
@@ -62,8 +62,8 @@ struct Helper< PDEUtilities::FunctionSpace::L2,
 };
 
 template<>
-struct Helper< PDEUtilities::FunctionSpace::L2,
-               PDEUtilities::FunctionSpace::L2,
+struct Helper< PDEUtilities::FunctionSpace::P0,
+               PDEUtilities::FunctionSpace::P0,
                PDEUtilities::DifferentialOperator::Identity,
                PDEUtilities::DifferentialOperator::Identity >
 {
@@ -87,7 +87,7 @@ struct Helper< PDEUtilities::FunctionSpace::L2,
 
 template<>
 struct Helper< PDEUtilities::FunctionSpace::H1vector,
-               PDEUtilities::FunctionSpace::L2,
+               PDEUtilities::FunctionSpace::P0,
                PDEUtilities::DifferentialOperator::Identity,
                PDEUtilities::DifferentialOperator::Identity >
 {
@@ -113,7 +113,7 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
 
 template<>
 struct Helper< PDEUtilities::FunctionSpace::H1vector,
-               PDEUtilities::FunctionSpace::L2,
+               PDEUtilities::FunctionSpace::P0,
                PDEUtilities::DifferentialOperator::SymmetricGradient,
                PDEUtilities::DifferentialOperator::Identity >
 {

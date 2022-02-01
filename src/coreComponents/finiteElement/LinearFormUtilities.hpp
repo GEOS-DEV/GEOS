@@ -33,7 +33,7 @@ struct Helper
 {};
 
 template<>
-struct Helper< PDEUtilities::FunctionSpace::L2,
+struct Helper< PDEUtilities::FunctionSpace::P0,
                PDEUtilities::DifferentialOperator::Identity >
 {
   template< int numTestDOF >

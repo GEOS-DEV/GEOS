@@ -44,8 +44,7 @@ enum class DifferentialOperator : integer
 enum class FunctionSpace : integer
 {
   invalid,
-  L2,
-  L2vector,
+  P0,
   H1,
   H1vector
 };
@@ -53,8 +52,7 @@ enum class FunctionSpace : integer
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( FunctionSpace,
               "invalid",
-              "L2",
-              "L2vector",
+              "P0",
               "H1",
               "H1vector" );
 

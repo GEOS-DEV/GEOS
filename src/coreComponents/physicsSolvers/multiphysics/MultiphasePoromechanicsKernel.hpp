@@ -19,6 +19,8 @@
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 
+#include "finiteElement/BilinearFormUtilities.hpp"
+#include "finiteElement/LinearFormUtilities.hpp"
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
@@ -146,7 +148,7 @@ public:
       using namespace extrinsicMeshData::flow;
 
       m_initialFluidPressure = elementSubRegion.template getExtrinsicData< initialPressure >();
-      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
+      m_fluidPressureOld = elementSubRegion.template getExtrinsicData< pressure >();
       m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< deltaPressure >();
 
       m_fluidPhaseDensityOld = elementSubRegion.template getExtrinsicData< phaseDensityOld >();
@@ -183,13 +185,18 @@ public:
             xLocal(),
             u_local(),
             uhat_local(),
-            localFlowResidual{ 0.0 },
-      localDispFlowJacobian{ {0.0} },
-      localFlowDispJacobian{ {0.0} },
-      localFlowFlowJacobian{ {0.0} },
-      localVolBalanceResidual{ 0.0 },
-      localVolBalanceJacobian{ {0.0} },
-      localFlowDofIndex{ 0 }
+			localResidualMomentum( Base::StackVariables::localResidual ),
+			dLocalResidualMomentum_dDisplacement( Base::StackVariables::localJacobian ),
+		    dLocalResidualMomentum_dPressure{ {0.0} },
+            localResidualMass{ 0.0 },
+      dLocalResidualMass_dDisplacement{ {0.0} },
+      dLocalResidualMass_dPressure{ {0.0} },
+	  dLocalResidualMass_dComponents{ {0.0} },
+      localResidualVolumeBalance{ 0.0 },
+      dLocalResidualVolumeBalance_dPressure{ {0.0} },
+      dLocalResidualVolumeBalance_dComponents{ {0.0} },
+	  localPressureDofIndex{ 0 },
+      localComponentDofIndices{ 0 }
     {}
 
 #if !defined(CALC_FEM_SHAPE_IN_KERNEL)
@@ -206,15 +213,22 @@ public:
     /// Stack storage for the element local nodal incremental displacement
     real64 uhat_local[numNodesPerElem][numDofPerTrialSupportPoint];
 
-    real64 localFlowResidual[numMaxComponents];
-    real64 localDispFlowJacobian[numDispDofPerElem][numMaxComponents + 1];
-    real64 localFlowDispJacobian[numMaxComponents][numDispDofPerElem];
-    real64 localFlowFlowJacobian[numMaxComponents][numMaxComponents + 1];
-    real64 localVolBalanceResidual[1];
-    real64 localVolBalanceJacobian[1][numMaxComponents + 1];
+    real64 ( &localResidualMomentum )[numDispDofPerElem];
+    real64 ( &dLocalResidualMomentum_dDisplacement )[numDispDofPerElem][numDispDofPerElem];
+    real64 dLocalResidualMomentum_dPressure[numDispDofPerElem][1];
+
+    real64 localResidualMass[numMaxComponents];
+    real64 dLocalResidualMass_dDisplacement[numMaxComponents][numDispDofPerElem];
+    real64 dLocalResidualMass_dPressure[numMaxComponents][1];
+    real64 dLocalResidualMass_dComponents[numMaxComponents][numMaxComponents];
+
+    real64 localResidualVolumeBalance[1];
+    real64 dLocalResidualVolumeBalance_dPressure[1][1];
+    real64 dLocalResidualVolumeBalance_dComponents[1][numMaxComponents];
 
     /// C-array storage for the element local row degrees of freedom.
-    globalIndex localFlowDofIndex[numMaxComponents + 1];
+    globalIndex localPressureDofIndex[1];
+    globalIndex localComponentDofIndices[numMaxComponents];
 
   };
   //*****************************************************************************
@@ -248,9 +262,10 @@ public:
       }
     }
 
-    for( int flowDofIndex=0; flowDofIndex < numMaxComponents + 1; ++flowDofIndex )
+    stack.localPressureDofIndex[0] = m_flowDofNumber[k];
+    for( int flowDofIndex=0; flowDofIndex < numMaxComponents; ++flowDofIndex )
     {
-      stack.localFlowDofIndex[flowDofIndex] = m_flowDofNumber[k] + flowDofIndex;
+      stack.localComponentDofIndices[flowDofIndex] = stack.localPressureDofIndex[0] + flowDofIndex + 1;
     }
 
   }
@@ -261,6 +276,13 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
+    using namespace PDEUtilities;
+
+    constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
+    constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
+    constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
+    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
+
     localIndex const NC = m_numComponents;
     localIndex const NP = m_numPhases;
 
@@ -273,11 +295,11 @@ public:
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // Evaluate total stress tensor
-    real64 strainIncrement[6] = {0.0};
-    real64 totalStress[6];
+    real64 strainIncrement[6]{};
+    real64 totalStress[6]{};
     real64 dPorosity_dPressure;
     real64 dPorosity_dVolStrainIncrement;
-    real64 dTotalStress_dPressure[6] = {0.0};
+    real64 dTotalStress_dPressure[6]{};
 
 
     // --- Update effective stress tensor (stored in totalStress)
@@ -287,7 +309,7 @@ public:
     m_constitutiveUpdate.smallStrainUpdate( k,
                                             q,
                                             m_initialFluidPressure[k],
-                                            m_fluidPressure[k],
+                                            m_fluidPressureOld[k],
                                             m_deltaFluidPressure[k],
                                             strainIncrement,
                                             totalStress,
@@ -326,36 +348,53 @@ public:
       bodyForce[2] *= mixtureDensityIncrement;
     }
 
-    // Assemble local jacobian and residual
+    // Compute local linear momentum balance residual
+    LinearFormUtilities::compute< displacementTestSpace,
+                                  DifferentialOperator::SymmetricGradient >
+    (
+      stack.localResidualMomentum,
+      dNdX,
+      totalStress,
+      -detJxW );
 
-    // --- Momentum balance
-    for( localIndex i=0; i<6; ++i )
+    if( m_gravityAcceleration > 0.0 )
     {
-      totalStress[i] *= -detJxW;
+      LinearFormUtilities::compute< displacementTestSpace,
+                                    DifferentialOperator::Identity >
+      (
+        stack.localResidualMomentum,
+        N,
+        bodyForce,
+        detJxW );
     }
 
-    FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
-                                     totalStress,
-                                     N,
-                                     bodyForce,
-                                     reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
+    // Compute local linear momentum balance residual derivatives with respect to displacement
+    BilinearFormUtilities::compute< displacementTestSpace,
+                                    displacementTrialSpace,
+                                    DifferentialOperator::SymmetricGradient,
+                                    DifferentialOperator::SymmetricGradient >
+    (
+      stack.dLocalResidualMomentum_dDisplacement,
+      dNdX,
+      stiffness, // fourth-order tensor handled via DiscretizationOps
+      dNdX,
+      -detJxW );
 
-    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+    // --- dBodyForce_dVoldStrain derivative neglected
 
-    for( integer a = 0; a < numNodesPerElem; ++a )
-    {
-      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][0] * dTotalStress_dPressure[0] * detJxW;
-      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][2] * dTotalStress_dPressure[4] * detJxW;
-      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][1] * dTotalStress_dPressure[5] * detJxW;
+    // Compute local linear momentum balance residual derivatives with respect to pressure
+    real64 Np[1] = { 1.0 };
 
-      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][1] * dTotalStress_dPressure[1] * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][2] * dTotalStress_dPressure[3] * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][0] * dTotalStress_dPressure[5] * detJxW;
-
-      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][2] * dTotalStress_dPressure[2] * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][1] * dTotalStress_dPressure[3] * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][0] * dTotalStress_dPressure[4] * detJxW;
-    }
+    BilinearFormUtilities::compute< displacementTestSpace,
+                                    pressureTrialSpace,
+                                    DifferentialOperator::SymmetricGradient,
+                                    DifferentialOperator::Identity >
+    (
+      stack.dLocalResidualMomentum_dPressure,
+      dNdX,
+      dTotalStress_dPressure,
+      Np,
+      -detJxW );
 
     if( m_gravityAcceleration > 0.0 )
     {
@@ -407,8 +446,8 @@ public:
 
         componentAmount[ic] += fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
-        stack.localFlowResidual[ic] += ( phaseCompAmountNew - phaseCompAmountOld ) * detJxW;
-        stack.localFlowFlowJacobian[ic][0] += dPhaseCompAmount_dP * detJxW;;
+        stack.localResidualMass[ic] += ( phaseCompAmountNew - phaseCompAmountOld ) * detJxW;
+        stack.dLocalResidualMass_dPressure[ic][0] += dPhaseCompAmount_dP * detJxW;;
 
         // jc - index of component w.r.t. whose compositional var the derivative is being taken
         // (i.e. col number in local matrix)
@@ -423,32 +462,33 @@ public:
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
                                              + m_fluidPhaseCompFrac( k, q, ip, ic ) * dPhaseAmount_dC[jc];
-          stack.localFlowFlowJacobian[ic][jc+1] += dPhaseCompAmount_dC  * detJxW;
+          stack.dLocalResidualMass_dComponents[ic][jc] += dPhaseCompAmount_dC  * detJxW;
         }
       }
     }
+
     for( localIndex ic = 0; ic < m_numComponents; ++ic )
     {
       for( integer a = 0; a < numNodesPerElem; ++a )
       {
-        stack.localFlowDispJacobian[ic][a*3+0] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][0] * detJxW;
-        stack.localFlowDispJacobian[ic][a*3+1] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][1] * detJxW;
-        stack.localFlowDispJacobian[ic][a*3+2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
+        stack.dLocalResidualMass_dDisplacement[ic][a*3+0] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][0] * detJxW;
+        stack.dLocalResidualMass_dDisplacement[ic][a*3+1] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][1] * detJxW;
+        stack.dLocalResidualMass_dDisplacement[ic][a*3+2] += dPorosity_dVolStrainIncrement * componentAmount[ic] * dNdX[a][2] * detJxW;
       }
     }
 
     // --- Volume balance equation
     // sum contributions to component accumulation from each phase
-    stack.localVolBalanceResidual[0] += porosityNew * detJxW;
+    stack.localResidualVolumeBalance[0] += porosityNew * detJxW;
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      stack.localVolBalanceResidual[0] -= m_fluidPhaseSaturation( k, ip ) * porosityNew * detJxW;
-      stack.localVolBalanceJacobian[0][0] -=
+      stack.localResidualVolumeBalance[0] -= m_fluidPhaseSaturation( k, ip ) * porosityNew * detJxW;
+      stack.dLocalResidualVolumeBalance_dPressure[0][0] -=
         ( m_dFluidPhaseSaturation_dPressure( k, ip ) * porosityNew + dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) ) * detJxW;
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        stack.localVolBalanceJacobian[0][jc+1] -= m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosityNew * detJxW;
+        stack.dLocalResidualVolumeBalance_dComponents[0][jc] -= m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosityNew * detJxW;
       }
     }
   }
@@ -467,16 +507,17 @@ public:
 
     real64 maxForce = 0;
 
-    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
+    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.dLocalResidualMomentum_dDisplacement );
 
     //int nFlowDof = m_numComponents + 1;
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     // Apply equation/variable change transformation(s)
     real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.localFlowDispJacobian, work );
-    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents + 1, stack.localFlowFlowJacobian, work );
-    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localFlowResidual );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.dLocalResidualMass_dDisplacement, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, 1, stack.dLocalResidualMass_dPressure, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents, stack.dLocalResidualMass_dComponents, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localResidualMass );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
@@ -486,35 +527,38 @@ public:
         if( dof < 0 || dof >= m_matrix.numRows() ) continue;
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
-                                                                                stack.localJacobian[numDofPerTestSupportPoint * localNode + dim],
+                                                                                stack.dLocalResidualMomentum_dDisplacement[numDofPerTestSupportPoint * localNode + dim],
                                                                                 numNodesPerElem * numDofPerTrialSupportPoint );
 
-        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidual[numDofPerTestSupportPoint * localNode + dim] );
-        maxForce = fmax( maxForce, fabs( stack.localResidual[numDofPerTestSupportPoint * localNode + dim] ) );
+        RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] );
+        maxForce = fmax( maxForce, fabs( stack.localResidualMomentum[numDofPerTestSupportPoint * localNode + dim] ) );
 
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                                stack.localFlowDofIndex,
-                                                                                stack.localDispFlowJacobian[numDofPerTestSupportPoint * localNode + dim],
-                                                                                m_numComponents + 1 );
+                                                                                stack.localPressureDofIndex,
+                                                                                stack.dLocalResidualMomentum_dPressure[numDofPerTestSupportPoint * localNode + dim],
+                                                                                1 );
 
       }
     }
 
-    localIndex dof = LvArray::integerConversion< localIndex >( stack.localFlowDofIndex[0] - m_dofRankOffset );
+    localIndex dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
     if( 0 <= dof && dof < m_matrix.numRows() )
     {
       for( localIndex i = 0; i < m_numComponents; ++i )
       {
         m_matrix.template addToRowBinarySearchUnsorted< serialAtomic >( dof + i,
                                                                         stack.localRowDofIndex,
-                                                                        stack.localFlowDispJacobian[i],
+                                                                        stack.dLocalResidualMass_dDisplacement[i],
                                                                         nUDof );
         m_matrix.template addToRow< serialAtomic >( dof + i,
-                                                    stack.localFlowDofIndex,
-                                                    stack.localFlowFlowJacobian[i],
-                                                    m_numComponents + 1 );
-
-        RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localFlowResidual[i] );
+                                                    stack.localPressureDofIndex,
+                                                    stack.dLocalResidualMass_dPressure[i],
+                                                    1 );
+        m_matrix.template addToRow< serialAtomic >( dof + i,
+                                                    stack.localComponentDofIndices,
+                                                    stack.dLocalResidualMass_dComponents[i],
+                                                    m_numComponents );
+        RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localResidualMass[i] );
       }
     }
 
@@ -523,11 +567,16 @@ public:
     {
 
       m_matrix.template addToRow< serialAtomic >( dof,
-                                                  stack.localFlowDofIndex,
-                                                  stack.localVolBalanceJacobian[0],
-                                                  m_numComponents + 1 );
+                                                  stack.localPressureDofIndex,
+                                                  stack.dLocalResidualVolumeBalance_dPressure[0],
+                                                  1 );
 
-      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localVolBalanceResidual[0] );
+      m_matrix.template addToRow< serialAtomic >( dof,
+                                                  stack.localComponentDofIndices,
+                                                  stack.dLocalResidualVolumeBalance_dComponents[0],
+                                                  m_numComponents);
+
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localResidualVolumeBalance[0] );
     }
 
     return maxForce;
@@ -583,7 +632,7 @@ protected:
   arrayView1d< real64 const > m_initialFluidPressure;
 
   /// The rank-global fluid pressure array.
-  arrayView1d< real64 const > m_fluidPressure;
+  arrayView1d< real64 const > m_fluidPressureOld;
 
   /// The rank-global delta-fluid pressure array.
   arrayView1d< real64 const > m_deltaFluidPressure;
