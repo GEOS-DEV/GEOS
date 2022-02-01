@@ -16,7 +16,8 @@
 #include "CellElementSubRegion.hpp"
 
 #include "common/TypeDispatch.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
+#include "mesh/MeshLevel.hpp"
+#include "mesh/generators/CellBlockUtilities.hpp"
 
 namespace geosx
 {
@@ -24,8 +25,12 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
-  CellBlock( name, parent )
+  ElementSubRegionBase( name, parent )
 {
+  registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
+
   registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
 
@@ -42,26 +47,34 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
 
 CellElementSubRegion::~CellElementSubRegion()
 {
-  // TODO Auto-generated destructor stub
+  // Left blank
 }
 
-void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
+void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
 {
-  this->setElementType( source.getElementType());
-  this->setNumNodesPerElement( source.numNodesPerElement() );
-  this->setNumFacesPerElement( source.numFacesPerElement() );
-  this->resize( source.size());
-  this->nodeList() = source.nodeList();
+  // Defines the (unique) element type of this cell element region,
+  // and its associated number of nodes, edges, faces.
+  m_elementType = cellBlock.getElementType();
+  m_numNodesPerElement = cellBlock.numNodesPerElement();
+  m_numEdgesPerElement = cellBlock.numEdgesPerElement();
+  m_numFacesPerElement = cellBlock.numFacesPerElement();
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source.localToGlobalMap();
-  this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
-  for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
-  {
-    this->m_localToGlobalMap[ i ] = sourceLocalToGlobal[ i ];
-  }
+  // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+  // before calling the `CellElementSubRegion::resize` in order to keep the first dimension.
+  // Be careful when refactoring.
+  m_toNodesRelation.resize( this->size(), m_numNodesPerElement );
+  m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
+  m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
+  this->resize( cellBlock.numElements() );
+
+  this->nodeList() = cellBlock.getElemToNodes();
+  this->edgeList() = cellBlock.getElemToEdges();
+  this->faceList() = cellBlock.getElemToFaces();
+
+  this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  source.forExternalProperties( [&]( WrapperBase & wrapper )
+  cellBlock.forExternalProperties( [&]( WrapperBase & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
@@ -266,5 +279,31 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 }
 
+void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
+                                         localIndex const localFaceIndex,
+                                         array1d< localIndex > & nodeIndices ) const
+{
+  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+}
+
+void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
+{
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  {
+    calculateCellVolumesKernel( k, X );
+  } );
+}
+
+void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
+{
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
+  this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
+  this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
+}
+
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementSubRegion, string const &, Group * const )
 
 } /* namespace geosx */

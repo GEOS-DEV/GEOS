@@ -46,7 +46,7 @@ The corresponding integrated test with coarser mesh and smaller injection durati
 
 .. code-block:: console
 
-  inputFiles/multiphysics/kgdViscosityDominated_smoke.xml
+  inputFiles/hydraulicFracturing/kgdViscosityDominated_smoke.xml
 
 Fluid rheology and rock toughness are defined in the xml blocks below. Please note that setting an absolute zero value for the rock toughness could lead to instability issue. Therefore, a low value of :math:`K_{Ic}` is used in this example.
 

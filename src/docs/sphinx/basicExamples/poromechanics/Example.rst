@@ -28,11 +28,11 @@ contained within two GEOSX input files located at:
 
 .. code-block:: console
 
-  inputFiles/poromechanics/integratedTests/PoroElastic_Terzaghi_base_direct.xml
+  inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
 
 .. code-block:: console
 
-  inputFiles/poromechanics/integratedTests/PoroElastic_Terzaghi_smoke.xml
+  inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml
 
 
 ------------------------------------------------------------------
