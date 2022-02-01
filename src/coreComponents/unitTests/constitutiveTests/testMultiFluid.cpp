@@ -318,6 +318,14 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
   StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseViscosity_dPressure( 1, 1, 2 );
   StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseViscosity_dTemperature( 1, 1, 2 );
   StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseViscosity_dGlobalCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseEnthalpy( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseEnthalpy_dPressure( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseEnthalpy_dTemperature( 1, 1, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseEnthalpy_dGlobalCompFraction( 1, 1, 2, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseInternalEnergy( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseInternalEnergy_dPressure( 1, 1, 2 );
+  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseInternalEnergy_dTemperature( 1, 1, 2 );
+  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseInternalEnergy_dGlobalCompFraction( 1, 1, 2, 2 );
   StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, 2, 2 );
   StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > dPhaseCompFraction_dPressure( 1, 1, 2, 2 );
   StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > dPhaseCompFraction_dTemperature( 1, 1, 2, 2 );
@@ -351,6 +359,18 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
     dPhaseViscosity_dPressure[0][0],
     dPhaseViscosity_dTemperature[0][0],
     dPhaseViscosity_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseEnthalpy[0][0],
+    dPhaseEnthalpy_dPressure[0][0],
+    dPhaseEnthalpy_dTemperature[0][0],
+    dPhaseEnthalpy_dGlobalCompFraction[0][0]
+  },
+  {
+    phaseInternalEnergy[0][0],
+    dPhaseInternalEnergy_dPressure[0][0],
+    dPhaseInternalEnergy_dTemperature[0][0],
+    dPhaseInternalEnergy_dGlobalCompFraction[0][0]
   },
   {
     phaseCompFraction[0][0],

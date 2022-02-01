@@ -166,6 +166,70 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseViscosity_dGlobalCompFraction,
                            NO_WRITE,
                            "Derivative of phase viscosity with respect to global component fraction" );
 
+EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy,
+                           "phaseEnthalpy",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT, // default behavior overridden by thermal models
+                           NO_WRITE,
+                           "Phase enthalpy" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseEnthalpy_dPressure,
+                           "dPhaseEnthalpy_dPressure",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase enthalpy with respect to pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseEnthalpy_dTemperature,
+                           "dPhaseEnthalpy_dTemperature",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase enthalpy with respect to temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseEnthalpy_dGlobalCompFraction,
+                           "dPhaseEnthalpy_dGlobalCompFraction",
+                           array4dLayoutPhase_dC,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase enthalpy with respect to global component fraction" );
+
+EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy,
+                           "phaseInternalEnergy",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT, // default behavior overridden by thermal models
+                           NO_WRITE,
+                           "Phase internal energy" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy_dPressure,
+                           "dPhaseInternalEnergy_dPressure",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase internal energy with respect to pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy_dTemperature,
+                           "dPhaseInternalEnergy_dTemperature",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase internal energy with respect to temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy_dGlobalCompFraction,
+                           "dPhaseInternalEnergy_dGlobalCompFraction",
+                           array4dLayoutPhase_dC,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase internal energy with respect to global component fraction" );
+
 EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            "phaseCompFraction",
                            array4dLayoutPhaseComp,

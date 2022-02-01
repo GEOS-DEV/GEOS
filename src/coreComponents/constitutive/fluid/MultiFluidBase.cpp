@@ -30,6 +30,7 @@ namespace constitutive
 
 MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
+  m_thermalFlag( false ),
   m_useMass( false )
 {
   // We make base inputs optional here, since derived classes may want to predefine/hardcode
@@ -46,6 +47,9 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
+
+  registerWrapper( viewKeyStruct::thermalFlagString(), &m_thermalFlag ).
+    setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );
@@ -69,6 +73,16 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dPressure{}, &m_phaseViscosity.dPres );
   registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dTemperature{}, &m_phaseViscosity.dTemp );
   registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction{}, &m_phaseViscosity.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseEnthalpy{}, &m_phaseEnthalpy.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseEnthalpy_dPressure{}, &m_phaseEnthalpy.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseEnthalpy_dTemperature{}, &m_phaseEnthalpy.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseEnthalpy_dGlobalCompFraction{}, &m_phaseEnthalpy.dComp );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseInternalEnergy{}, &m_phaseInternalEnergy.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseInternalEnergy_dPressure{}, &m_phaseInternalEnergy.dPres );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseInternalEnergy_dTemperature{}, &m_phaseInternalEnergy.dTemp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseInternalEnergy_dGlobalCompFraction{}, &m_phaseInternalEnergy.dComp );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::phaseCompFraction{}, &m_phaseCompFraction.value );
   registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{}, &m_phaseCompFraction.dPres );
@@ -120,6 +134,33 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
   m_totalDensity.dComp.resize( size, numPts, numComp );
 
   m_initialTotalMassDensity.resize( size, numPts );
+
+  // special treatment for the (thermal) enthalpy and internal energy fields to save a little bit of space
+  if( m_thermalFlag )
+  {
+    m_phaseEnthalpy.value.resize( size, numPts, numPhase );
+    m_phaseEnthalpy.dPres.resize( size, numPts, numPhase );
+    m_phaseEnthalpy.dTemp.resize( size, numPts, numPhase );
+    m_phaseEnthalpy.dComp.resize( size, numPts, numPhase, numComp );
+
+    m_phaseInternalEnergy.value.resize( size, numPts, numPhase );
+    m_phaseInternalEnergy.dPres.resize( size, numPts, numPhase );
+    m_phaseInternalEnergy.dTemp.resize( size, numPts, numPhase );
+    m_phaseInternalEnergy.dComp.resize( size, numPts, numPhase, numComp );
+  }
+  else
+  {
+    m_phaseEnthalpy.value.resize( size, numPts, 0 );
+    m_phaseEnthalpy.dPres.resize( size, numPts, 0 );
+    m_phaseEnthalpy.dTemp.resize( size, numPts, 0 );
+    m_phaseEnthalpy.dComp.resize( size, numPts, 0, 0 );
+
+    m_phaseInternalEnergy.value.resize( size, numPts, 0 );
+    m_phaseInternalEnergy.dPres.resize( size, numPts, 0 );
+    m_phaseInternalEnergy.dTemp.resize( size, numPts, 0 );
+    m_phaseInternalEnergy.dComp.resize( size, numPts, 0, 0 );
+  }
+
 }
 
 void MultiFluidBase::setLabels()
@@ -134,6 +175,12 @@ void MultiFluidBase::setLabels()
     setDimLabels( 2, m_phaseNames );
 
   getExtrinsicData< extrinsicMeshData::multifluid::phaseViscosity >().
+    setDimLabels( 2, m_phaseNames );
+
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseEnthalpy >().
+    setDimLabels( 2, m_phaseNames );
+
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseInternalEnergy >().
     setDimLabels( 2, m_phaseNames );
 
   getExtrinsicData< extrinsicMeshData::multifluid::phaseCompFraction >().
@@ -178,6 +225,6 @@ void MultiFluidBase::postProcessInput()
   setLabels();
 }
 
-} //namespace constitutive
+} // namespace constitutive
 
-} //namespace geosx
+} // namespace geosx

@@ -1145,6 +1145,8 @@ struct HydrostaticPressureKernel
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseDens( 1, 1, numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseMassDens( 1, 1, numPhases );
     StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseVisc( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhases );
+    StackArray< real64, 3, constitutive::MultiFluidBase::MAX_NUM_PHASES, multifluid::LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhases );
     StackArray< real64, 4, constitutive::MultiFluidBase::MAX_NUM_PHASES *constitutive::MultiFluidBase::MAX_NUM_COMPONENTS,
                 multifluid::LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhases, numComps );
     real64 totalDens = 0.0;
@@ -1174,6 +1176,8 @@ struct HydrostaticPressureKernel
                           phaseDens[0][0],
                           phaseMassDens[0][0],
                           phaseVisc[0][0],
+                          phaseEnthalpy[0][0],
+                          phaseInternalEnergy[0][0],
                           phaseCompFrac[0][0],
                           totalDens );
     pres1 = refPres - 0.5 * ( refPhaseMassDens[ipInit] + phaseMassDens[0][0][ipInit] ) * gravCoef;
@@ -1217,6 +1221,8 @@ struct HydrostaticPressureKernel
                             phaseDens[0][0],
                             phaseMassDens[0][0],
                             phaseVisc[0][0],
+                            phaseEnthalpy[0][0],
+                            phaseInternalEnergy[0][0],
                             phaseCompFrac[0][0],
                             totalDens );
       pres1 = refPres - 0.5 * ( refPhaseMassDens[ipInit] + phaseMassDens[0][0][ipInit] ) * gravCoef;
@@ -1274,6 +1280,8 @@ struct HydrostaticPressureKernel
     array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseDens( 1, 1, numPhases );
     array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseMassDens( 1, 1, numPhases );
     array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseVisc( 1, 1, numPhases );
+    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseEnthalpy( 1, 1, numPhases );
+    array3d< real64, multifluid::LAYOUT_PHASE > datumPhaseInternalEnergy( 1, 1, numPhases );
     array4d< real64, multifluid::LAYOUT_PHASE_COMP > datumPhaseCompFrac( 1, 1, numPhases, numComps );
     real64 datumTotalDens = 0.0;
 
@@ -1289,6 +1297,8 @@ struct HydrostaticPressureKernel
                           datumPhaseDens[0][0],
                           datumPhaseMassDens[0][0],
                           datumPhaseVisc[0][0],
+                          datumPhaseEnthalpy[0][0],
+                          datumPhaseInternalEnergy[0][0],
                           datumPhaseCompFrac[0][0],
                           datumTotalDens );
 

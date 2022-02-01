@@ -285,6 +285,8 @@ BlackOilFluidBase::KernelWrapper::
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
                  PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
                  PhaseComp::ViewType phaseCompFraction,
                  FluidProp::ViewType totalDensity )
   : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
@@ -293,6 +295,8 @@ BlackOilFluidBase::KernelWrapper::
                                    std::move( phaseDensity ),
                                    std::move( phaseMassDensity ),
                                    std::move( phaseViscosity ),
+                                   std::move( phaseEnthalpy ),
+                                   std::move( phaseInternalEnergy ),
                                    std::move( phaseCompFraction ),
                                    std::move( totalDensity ) ),
   m_phaseTypes( std::move( phaseTypes ) ),

@@ -90,6 +90,14 @@ public:
   virtual integer getWaterPhaseIndex() const = 0;
 
   /**
+   * @brief Get the thermal flag.
+   * @return boolean value indicating whether the model can be used to assemble the energy balance equation or not
+   * @detail if thermalFlag is true, the constitutive model compute the enthalpy and internal energy of the phase.
+   *         This can be used to check the compatibility of the constitutive model with the solver
+   */
+  bool getThermalFlag() const { return m_thermalFlag; }
+
+  /**
    * @brief Get the mass flag.
    * @return boolean value indicating whether the model is using mass-based quantities (as opposed to mole-based)
    */
@@ -179,6 +187,29 @@ public:
   arrayView2d< real64 const, multifluid::USD_FLUID > initialTotalMassDensity() const
   { return m_initialTotalMassDensity.toViewConst(); }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
+  { return m_phaseEnthalpy.value; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseEnthalpy_dPressure() const
+  { return m_phaseEnthalpy.dPres; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseEnthalpy_dTemperature() const
+  { return m_phaseEnthalpy.dTemp; }
+
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseEnthalpy_dGlobalCompFraction() const
+  { return m_phaseEnthalpy.dComp; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
+  { return m_phaseInternalEnergy.value; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseInternalEnergy_dPressure() const
+  { return m_phaseInternalEnergy.dPres; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > dPhaseInternalEnergy_dTemperature() const
+  { return m_phaseInternalEnergy.dTemp; }
+
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseInternalEnergy_dGlobalCompFraction() const
+  { return m_phaseInternalEnergy.dComp; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -186,6 +217,7 @@ public:
     static constexpr char const * componentMolarWeightString() { return "componentMolarWeight"; }
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * useMassString() { return "useMass"; }
+    static constexpr char const * thermalFlagString() { return "thermalFlag"; }
   };
 
 protected:
@@ -242,6 +274,8 @@ protected:
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
                    PhaseProp::ViewType phaseViscosity,
+                   PhaseProp::ViewType phaseEnthalpy,
+                   PhaseProp::ViewType phaseInternalEnergy,
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity )
       : m_componentMolarWeight( std::move( componentMolarWeight ) ),
@@ -250,6 +284,8 @@ protected:
       m_phaseDensity( std::move( phaseDensity ) ),
       m_phaseMassDensity( std::move( phaseMassDensity ) ),
       m_phaseViscosity( std::move( phaseViscosity ) ),
+      m_phaseEnthalpy( std::move( phaseEnthalpy ) ),
+      m_phaseInternalEnergy( std::move( phaseInternalEnergy ) ),
       m_phaseCompFraction( std::move( phaseCompFraction ) ),
       m_totalDensity( std::move( totalDensity ) )
     { }
@@ -262,6 +298,8 @@ protected:
     PhaseProp::ViewType m_phaseDensity;
     PhaseProp::ViewType m_phaseMassDensity;
     PhaseProp::ViewType m_phaseViscosity;
+    PhaseProp::ViewType m_phaseEnthalpy;
+    PhaseProp::ViewType m_phaseInternalEnergy;
     PhaseComp::ViewType m_phaseCompFraction;
     FluidProp::ViewType m_totalDensity;
 
@@ -275,6 +313,8 @@ private:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const = 0;
 
@@ -286,6 +326,8 @@ private:
                           PhaseProp::SliceType const phaseDensity,
                           PhaseProp::SliceType const phaseMassDensity,
                           PhaseProp::SliceType const phaseViscosity,
+                          PhaseProp::SliceType const phaseEnthalpy,
+                          PhaseProp::SliceType const phaseInternalEnergy,
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const = 0;
 
@@ -315,6 +357,9 @@ protected:
 
   virtual void postProcessInput() override;
 
+  // flag indicating whether the constitutive model can be used to assemble the energy balance or not
+  int m_thermalFlag;
+
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;
 
@@ -330,6 +375,8 @@ protected:
   PhaseProp m_phaseDensity;
   PhaseProp m_phaseMassDensity;
   PhaseProp m_phaseViscosity;
+  PhaseProp m_phaseEnthalpy;
+  PhaseProp m_phaseInternalEnergy;
   PhaseComp m_phaseCompFraction;
   FluidProp m_totalDensity;
 
