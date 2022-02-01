@@ -21,6 +21,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
 #include "constitutive/fluid/particleFluidSelector.hpp"
@@ -650,12 +651,12 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dComponentDensity_dPressure >(),
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration >(),
                         flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                        slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::density >(),
-                        slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dDensity_dPressure >(),
+                        slurryFluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
+                        slurryFluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration >(),
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration >(),
-                        slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::viscosity >(),
-                        slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dViscosity_dPressure >(),
+                        slurryFluidAccessors.get< extrinsicMeshData::singlefluid::viscosity>(),
+                        slurryFluidAccessors.get< extrinsicMeshData::singlefluid::dViscosity_dPressure >(),
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration >(),
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration >(),
                         slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::fluidDensity >(),
@@ -1005,8 +1006,8 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
                                                 downVector,
                                                 flowAccessors.get< extrinsicMeshData::flow::pressure >(),
                                                 flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                                slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::density >(),
-                                                slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::viscosity >(),
+                                                slurryFluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
+                                                slurryFluidAccessors.get< extrinsicMeshData::singlefluid::viscosity>(),
                                                 permAccessors.get< extrinsicMeshData::permeability::permeability >(),
                                                 permAccessors.get< extrinsicMeshData::permeability::permeabilityMultiplier >(),
                                                 flowAccessors.get< extrinsicMeshData::elementAperture >(),
@@ -1068,7 +1069,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
                                                                    m_criticalShieldsNumber,
                                                                    m_frictionCoefficient,
                                                                    particleFluidAccessors.get< extrinsicMeshData::particlefluid::settlingFactor >(),
-                                                                   slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::density >(),
+                                                                   slurryFluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
                                                                    slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::fluidDensity >(),
                                                                    slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::fluidViscosity >(),
                                                                    flowAccessors.get< extrinsicMeshData::proppant::isProppantMobile >(),
