@@ -116,11 +116,13 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     std::cout << "\n"; //debug
   }
 
-
-
-
   GEOSX_LOG_RANK_0( "Total number of particles:" << particleManager.size() );
 
+}
+
+void ParticleMeshGenerator::postProcessInput()
+{
+  GEOSX_LOG_RANK_0("Someone called ParticleMeshGenerator::postProcessInput!");
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, ParticleMeshGenerator, string const &, Group * const )
