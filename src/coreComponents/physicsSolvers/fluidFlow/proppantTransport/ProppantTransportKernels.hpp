@@ -371,12 +371,13 @@ struct ProppantPackVolumeKernel
                       extrinsicMeshData::proppant::isProppantBoundary >;
 
   using ParticleFluidAccessors =
-    StencilAccessors< extrinsicMeshData::particlefluid::settlingFactor >;
+    StencilMaterialAccessors< ParticleFluidBase, extrinsicMeshData::particlefluid::settlingFactor >;
 
   using SlurryFluidAccessors =
-    StencilAccessors< extrinsicMeshData::singlefluid::density,
-                      extrinsicMeshData::slurryfluid::fluidDensity,
-                      extrinsicMeshData::slurryfluid::fluidViscosity >;
+    StencilMaterialAccessors< SlurryFluidBase, 
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::slurryfluid::fluidDensity,
+                              extrinsicMeshData::slurryfluid::fluidViscosity >;
 
 
   template< typename VIEWTYPE >
