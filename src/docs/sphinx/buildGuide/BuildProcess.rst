@@ -38,6 +38,12 @@ Build steps
   * ``--hostconfig`` or ``-hc`` is a path to host-config file.
   * all unrecognized options are passed to CMake.
 
+  If ``--buildpath`` is not used, build directory is automatically named ``build-<config-filename-without-extension>-<buildtype>``.
+  It is possible to keep automatic naming and change the build root directory with ``--buildrootdir``.
+  In that case, build path will be set to ``<buildrootdir>/<config-filename-without-extension>-<buildtype>``.
+  Both ``--buildpath`` and ``--buildrootdir`` are incompatible and cannot be used in the same time.
+  Same pattern is applicable to install path, with ``--installpath`` and ``--installrootdir`` options.
+
 - Run the build:
 
   .. code-block:: console
