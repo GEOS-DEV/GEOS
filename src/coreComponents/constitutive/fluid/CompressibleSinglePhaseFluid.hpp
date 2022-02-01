@@ -135,6 +135,8 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
     static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * viscosibilityString() { return "viscosibility"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
@@ -152,13 +154,6 @@ protected:
   virtual void postProcessInput() override;
 
 private:
-
-  // *** Data repository keys
-  struct viewKeyStruct
-  {
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
-    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
-  };
 
   /// default density value
   real64 m_defaultDensity;
