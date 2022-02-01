@@ -76,8 +76,8 @@ struct FluxKernel
 
   using SlurryFluidAccessors =
       StencilMaterialAccessors< SlurryFluidBase,
-                                extrinsicMeshData::slurryfluid::density,
-                                extrinsicMeshData::slurryfluid::dDensity_dPressure >;
+                                extrinsicMeshData::singlefluid::density,
+                                extrinsicMeshData::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors =
     StencilMaterialAccessors< PermeabilityBase,

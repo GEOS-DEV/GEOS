@@ -21,6 +21,7 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -97,8 +98,8 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.dDensity_dPressure(),
            slurryFluid.viscosity(),
            slurryFluid.dViscosity_dPressure(),
-           slurryFluid.getExtrinsicData< extrinsicMeshData::slurryfluid::density >().getDefaultValue(),
-           slurryFluid.getExtrinsicData< extrinsicMeshData::slurryfluid::viscosity >().getDefaultValue() };
+           slurryFluid.getExtrinsicData< extrinsicMeshData::singlefluid::density >().getDefaultValue(),
+           slurryFluid.getExtrinsicData< extrinsicMeshData::singlefluid::viscosity >().getDefaultValue() };
 }
 
 void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
