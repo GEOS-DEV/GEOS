@@ -186,7 +186,7 @@ void FlowSolverBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRe
 
 void FlowSolverBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
 {
-  GEOSX_UNUSED_VAR(subRegion);
+  GEOSX_UNUSED_VAR( subRegion );
 }
 
 void FlowSolverBase::initializePreSubGroups()

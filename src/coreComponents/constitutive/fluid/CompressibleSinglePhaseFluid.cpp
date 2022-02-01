@@ -84,7 +84,7 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
                                                              localIndex const numConstitutivePointsPerParentIndex )
 {
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
-  
+
   getExtrinsicData< extrinsicMeshData::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
   getExtrinsicData< extrinsicMeshData::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
 

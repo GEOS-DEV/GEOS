@@ -688,7 +688,7 @@ protected:
    * @param subRegion The ElementSubRegionBase that will have constitutive
    *  names set.
    */
-  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR(subRegion); }
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -740,7 +740,7 @@ private:
    * @param subRegion The ElementSubRegionBase that will have constitutive
    *  names set.
    */
-  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR(subRegion); }
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
 
 
 };

@@ -174,7 +174,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
 
 
-
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -360,34 +359,34 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-  FaceManager const & faceManager = mesh.getFaceManager();
-  NodeManager const & nodeManager = mesh.getNodeManager();
-  ElementRegionManager & elemManager = mesh.getElemManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-  // Get the "face to element" map (valid for the entire mesh)
-  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
-  arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+    // Get the "face to element" map (valid for the entire mesh)
+    FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+    arrayView2d< localIndex const > const & faceToElemRegion = faceToElem.m_toElementRegion;
+    arrayView2d< localIndex const > const & faceToElemSubRegion = faceToElem.m_toElementSubRegion;
+    arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
 
-  // Get the volume for all elements
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
-    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
+    // Get the volume for all elements
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 const > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
-  // Get the coordinates for all nodes
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
+    // Get the coordinates for all nodes
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
-  // Bulk modulus accessor
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
-  // Shear modulus accessor
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-    elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+    // Bulk modulus accessor
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const bulkModulus =
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
+    // Shear modulus accessor
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
 
-  using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
-  ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
-    elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
-  ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
+    using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
+    ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
+      elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+    ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -1843,7 +1842,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
-    elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+      elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
     ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
     arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion.getReference< globalIndex_array >( tracDofKey );

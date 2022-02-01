@@ -235,21 +235,21 @@ struct PerforationKernel
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-      StencilMaterialAccessors< MultiFluidBase,
-      extrinsicMeshData::multifluid::phaseDensity,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseViscosity,
-                      extrinsicMeshData::multifluid::dPhaseViscosity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseCompFraction,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseViscosity,
+                              extrinsicMeshData::multifluid::dPhaseViscosity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
   using RelPermAccessors =
-      StencilMaterialAccessors< RelativePermeabilityBase,
-                                extrinsicMeshData::relperm::phaseRelPerm,
-                                extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+    StencilMaterialAccessors< RelativePermeabilityBase,
+                              extrinsicMeshData::relperm::phaseRelPerm,
+                              extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
 
 
   /**
@@ -443,8 +443,8 @@ struct PresTempCompFracInitializationKernel
                       extrinsicMeshData::flow::phaseVolumeFraction >;
 
   using MultiFluidAccessors =
-      StencilMaterialAccessors< MultiFluidBase,
-                                extrinsicMeshData::multifluid::phaseMassDensity >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseMassDensity >;
 
 
   /**

@@ -189,9 +189,9 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
 
       // get well variables on perforations
       arrayView1d< real64 const > const perfRate =
-      perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
+        perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
       arrayView2d< real64 const > const dPerfRate_dPres =
-      perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
+        perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
 
       arrayView1d< localIndex const > const perfWellElemIndex =
         perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );

@@ -253,11 +253,11 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                   InputError );
 
   string & relPermName = subRegion.registerWrapper< string >( viewKeyStruct::relPermNamesString() ).
-    setPlotLevel( PlotLevel::NOPLOT ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setSizedFromParent( 0 ).
-    setDescription( "Name of the relative permeability constitutive model to use" ).
-    reference();
+                           setPlotLevel( PlotLevel::NOPLOT ).
+                           setRestartFlags( RestartFlags::NO_WRITE ).
+                           setSizedFromParent( 0 ).
+                           setDescription( "Name of the relative permeability constitutive model to use" ).
+                           reference();
 
   relPermName = getConstitutiveName< RelativePermeabilityBase >( subRegion );
 
@@ -269,11 +269,11 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
   if( m_capPressureFlag )
   {
     string & capPressureName = subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 ).
-      setDescription( "Name of the capillary pressure constitutive model to use" ).
-      reference();
+                                 setPlotLevel( PlotLevel::NOPLOT ).
+                                 setRestartFlags( RestartFlags::NO_WRITE ).
+                                 setSizedFromParent( 0 ).
+                                 setDescription( "Name of the capillary pressure constitutive model to use" ).
+                                 reference();
     capPressureName = getConstitutiveName< CapillaryPressureBase >( subRegion );
     GEOSX_THROW_IF( capPressureName.empty(),
                     GEOSX_FMT( "Capillary pressure model not found on subregion {}", subRegion.getName() ),
@@ -282,12 +282,12 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   if( m_thermalFlag )
   {
-    string & thermalConductivityName = subRegion.registerWrapper<string>( viewKeyStruct::thermalConductivityNamesString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE ).
-      setSizedFromParent( 0 ).
-      setDescription( "Name of the thermal conductivity constitutive model to use" ).
-      reference();
+    string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
+                                         setPlotLevel( PlotLevel::NOPLOT ).
+                                         setRestartFlags( RestartFlags::NO_WRITE ).
+                                         setSizedFromParent( 0 ).
+                                         setDescription( "Name of the thermal conductivity constitutive model to use" ).
+                                         reference();
 
     thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
     GEOSX_THROW_IF( relPermName.empty(),
@@ -368,12 +368,14 @@ void CompositionalMultiphaseBase::validateConstitutiveModels( constitutive::Cons
 //
 //  if( m_thermalFlag )
 //  {
-//    ThermalConductivityBase const & conductivity0 = cm.getConstitutiveRelation< ThermalConductivityBase >( m_thermalConductivityModelNames[0] );
+//    ThermalConductivityBase const & conductivity0 = cm.getConstitutiveRelation< ThermalConductivityBase >(
+// m_thermalConductivityModelNames[0] );
 //    compareMultiphaseModels( conductivity0, fluid0 );
 //
 //    for( localIndex i = 1; i < m_thermalConductivityModelNames.size(); ++i )
 //    {
-//      ThermalConductivityBase const & conductivity = cm.getConstitutiveRelation< ThermalConductivityBase >( m_thermalConductivityModelNames[i] );
+//      ThermalConductivityBase const & conductivity = cm.getConstitutiveRelation< ThermalConductivityBase >(
+// m_thermalConductivityModelNames[i] );
 //      compareMultiphaseModels( conductivity, conductivity0 );
 //    }
 //  }
@@ -656,7 +658,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
-      string const & thermalConductivityName = subRegion.template getReference<string>( viewKeyStruct::thermalConductivityNamesString() );
+      string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
 
       ThermalConductivityBase const & conductivityMaterial =
         getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
@@ -1614,55 +1616,55 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       arrayView2d< real64 const, compflow::USD_COMP > const dCompDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
-    // Step 2: increment the primary variables with the accumulated Newton updates
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      pres[ei] += dPres[ei];
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      // Step 2: increment the primary variables with the accumulated Newton updates
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-        compDens[ei][ic] += dCompDens[ei][ic];
-      }
-    } );
+        pres[ei] += dPres[ei];
+        for( localIndex ic = 0; ic < numComp; ++ic )
+        {
+          compDens[ei][ic] += dCompDens[ei][ic];
+        }
+      } );
 
-    string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-    porousMaterial.saveConvergedState();
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+      porousMaterial.saveConvergedState();
 
       // Step 4: if capillary pressure is supported, send the converged porosity and permeability to the capillary pressure model
-    // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)
-    if( m_capPressureFlag )
-    {
-      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+      // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)
+      if( m_capPressureFlag )
+      {
+        arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
-      string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
-      PermeabilityBase const & permeabilityMaterial =
-        getConstitutiveModel< PermeabilityBase >( subRegion, permName );
-      arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
+        string const & permName = subRegion.getReference< string >( viewKeyStruct::permeabilityNamesString() );
+        PermeabilityBase const & permeabilityMaterial =
+          getConstitutiveModel< PermeabilityBase >( subRegion, permName );
+        arrayView3d< real64 const > const permeability = permeabilityMaterial.permeability();
 
-      string const & capPressName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
-      CapillaryPressureBase const & capPressureMaterial =
-        getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
-      capPressureMaterial.saveConvergedRockState( porosity, permeability );
-    }
+        string const & capPressName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase const & capPressureMaterial =
+          getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressName );
+        capPressureMaterial.saveConvergedRockState( porosity, permeability );
+      }
 
-    // Step 5: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model
-    // note: this is needed because the phaseVolFrac-weighted thermal conductivity treats phaseVolumeFraction explicitly for now
-    if( m_thermalFlag )
-    {
-      arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
+      // Step 5: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model
+      // note: this is needed because the phaseVolFrac-weighted thermal conductivity treats phaseVolumeFraction explicitly for now
+      if( m_thermalFlag )
+      {
+        arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
-      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
-      string const & thermName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+        string const & thermName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
 
-      ThermalConductivityBase const & thermalConductivityMaterial =
-        getConstitutiveModel< ThermalConductivityBase >( subRegion, thermName );
-      thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
-    }
+        ThermalConductivityBase const & thermalConductivityMaterial =
+          getConstitutiveModel< ThermalConductivityBase >( subRegion, thermName );
+        thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
+      }
 
+    } );
   } );
-  });
 }
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
