@@ -26,6 +26,7 @@ set( mesh_headers
      MeshManager.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
+     ParticleBlock.hpp
      ParticleManager.hpp
      ParticleRegion.hpp
      ParticleSubRegion.hpp
@@ -84,6 +85,7 @@ set( mesh_sources
      MeshManager.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
+     ParticleBlock.cpp
      ParticleManager.cpp
      ParticleRegion.cpp
      ParticleSubRegion.cpp

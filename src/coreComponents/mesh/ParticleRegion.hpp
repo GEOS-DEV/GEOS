@@ -24,9 +24,6 @@
 
 namespace geosx
 {
-class EdgeManager;
-class EmbeddedSurfaceGenerator;
-
 /**
  * @class ParticleRegion
  *
