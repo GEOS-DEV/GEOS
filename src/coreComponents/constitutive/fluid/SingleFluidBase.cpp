@@ -18,6 +18,8 @@
 
 #include "SingleFluidBase.hpp"
 
+#include "SingleFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -29,13 +31,13 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDensity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::density{}, &m_density );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::initialDensity{}, &m_initialDensity );
 
-  registerWrapper( viewKeyStruct::initialDensityString(), &m_initialDensity );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
 
-  registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dViscosity_dPressure );
 }
 
 void SingleFluidBase::postProcessInput()

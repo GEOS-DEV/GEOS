@@ -19,11 +19,13 @@
 #include "WellSolverBase.hpp"
 
 #include "mesh/DomainPartition.hpp"
-#include "mainInterface/ProblemManager.hpp"
-#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "mesh/PerforationData.hpp"
 #include "mesh/WellElementRegion.hpp"
 #include "mesh/WellElementSubRegion.hpp"
-#include "mesh/PerforationData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
+#include "physicsSolvers/fluidFlow/wells/WellSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -86,7 +88,8 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
                                                                        [&]( localIndex const,
                                                                             WellElementSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+
+    subRegion.registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
 
       subRegion.registerWrapper< string >( viewKeyStruct::fluidNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
@@ -94,7 +97,7 @@ void WellSolverBase::registerDataOnMesh( Group & meshBodies )
         setSizedFromParent( 0 );
 
       PerforationData * const perforationData = subRegion.getPerforationData();
-      perforationData->registerWrapper< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+      perforationData->registerExtrinsicData< extrinsicMeshData::well::gravityCoefficient >( getName() );
     } );
   } );
 }
@@ -132,9 +135,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
                                         real64 const & dt,
                                         DomainPartition & domain )
 {
-  // bind the stored reservoir views to the current domain
-  resetViews( domain );
-
   // saved time and current dt for residual normalization and time-dependent tables
   m_currentDt = dt;
   m_currentTime = time_n;
@@ -187,7 +187,7 @@ void WellSolverBase::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-      updateSubRegionState( subRegion );
+      updateSubRegionState( mesh, subRegion );
     } );
   } );
 
@@ -219,8 +219,6 @@ void WellSolverBase::initializePostInitialConditionsPreSubGroups()
       subRegion.reconstructLocalConnectivity();
     } );
   } );
-  // bind the stored reservoir views to the current domain
-  resetViews( domain );
 
   // Precompute solver-specific constant data (e.g. gravity-coefficient)
   precomputeData( domain );
@@ -240,15 +238,15 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
       WellControls & wellControls = getWellControls( subRegion );
       real64 const refElev = wellControls.getReferenceElevation();
 
-      arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
-      arrayView1d< real64 > const wellElemGravCoef =
-        subRegion.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+    arrayView2d< real64 const > const wellElemLocation = subRegion.getElementCenter();
+    arrayView1d< real64 > const wellElemGravCoef =
+      subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
-      arrayView2d< real64 const > const perfLocation =
-        perforationData.getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString() );
+    arrayView2d< real64 const > const perfLocation =
+      perforationData.getReference< array2d< real64 > >( PerforationData::viewKeyStruct::locationString() );
 
-      arrayView1d< real64 > const perfGravCoef =
-        perforationData.getReference< array1d< real64 > >( viewKeyStruct::gravityCoefString() );
+    arrayView1d< real64 > const perfGravCoef =
+      perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
       forAll< serialPolicy >( perforationData.size(), [=]( localIndex const iperf )
       {
@@ -267,17 +265,6 @@ void WellSolverBase::precomputeData( DomainPartition & domain )
 
     } );
   } );
-}
-
-void WellSolverBase::resetViews( DomainPartition & domain )
-{
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  m_resGravCoef.clear();
-  m_resGravCoef = elemManager.constructArrayViewAccessor< real64, 1 >( extrinsicMeshData::flow::gravityCoefficient::key() );
-  m_resGravCoef.setName( getName() + "/accessors/" + extrinsicMeshData::flow::gravityCoefficient::key() );
-
 }
 
 WellControls & WellSolverBase::getWellControls( WellElementSubRegion const & subRegion )

@@ -55,10 +55,12 @@ static const char * pvtLiquidInternalEnergyTableContent = "InternalEnergyFun Bri
 static const char * pvtLiquidEzrokhiTableContent = "DensityFun EzrokhiBrineDensity 2.01e-6 -6.34e-7 1e-4\n"
                                                    "ViscosityFun EzrokhiBrineViscosity 2.42e-7 0 1e-4";
 
-static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e6 1.5e7 5e4 367.15 369.15 1\n"
-                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1";
+static const char * pvtGasTableContent = "DensityFun SpanWagnerCO2Density 1e5 7.5e7 5e4 285.15 369.15 4.0\n" // we want to test the full
+                                                                                                             // (pres, temp) range here
+                                         "ViscosityFun FenghourCO2Viscosity 1e6 1.5e7 5e4 367.15 369.15 1.0";
 
-static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e6 1.5e7 5e4 367.15 369.15 1 0.15";
+static const char * co2FlashTableContent = "FlashModel CO2Solubility 1e5 7.5e7 5e4 285.15 369.15 4.0 0.15"; // we want to test the full
+                                                                                                            // (pres, temp) range here
 
 template< typename PVT_WRAPPER >
 void testValuesAgainstPreviousImplementation( PVT_WRAPPER const & pvtFunctionWrapper,
@@ -464,12 +466,13 @@ TEST_F( PhillipsBrineViscosityTest, brineViscosityValuesAndDeriv )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 5e-5;
 
-  real64 const savedValues[] = { 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991, 0.0009009665224,
-                                 0.0009009892304, 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991,
-                                 0.0009009665224, 0.0009009892304, 0.0009009475991, 0.0009009665224, 0.0009009892304,
-                                 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991, 0.0009009665224,
-                                 0.0009009892304, 0.0009009475991, 0.0009009665224, 0.0009009892304, 0.0009009475991,
-                                 0.0009009665224, 0.0009009892304 };
+
+  real64 const savedValues[] = { 0.000303214, 0.000301571, 0.000299598, 0.000303214, 0.000301571,
+                                 0.000299598, 0.000303214, 0.000301571, 0.000299598, 0.000303214,
+                                 0.000301571, 0.000299598, 0.000303214, 0.000301571, 0.000299598,
+                                 0.000303214, 0.000301571, 0.000299598, 0.000303214, 0.000301571,
+                                 0.000299598, 0.000303214, 0.000301571, 0.000299598, 0.000303214,
+                                 0.000301571, 0.000299598 };
 
   PhillipsBrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
@@ -804,7 +807,9 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
   real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 5e-5;
+  real64 const relTolPrevImpl = 1e-3; // the saved values have been generated with a different pressure spacing, so we loosen the tol a
+                                      // little bit
+  real64 const relTolDeriv = 5e-5;
 
   real64 const savedValues[] = { 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962, 280.2559694,
                                  278.9092508, 82.78363562, 82.56888654, 82.39168811, 135.3774839, 134.9199659, 134.5440568, 281.9140962,
@@ -821,8 +826,8 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
-                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
-        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], true, relTolPrevImpl );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTolDeriv );
         counter++;
       }
     }
@@ -842,7 +847,8 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMolarValuesAndDeriv )
   real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 5e-5;
+  real64 const relTolPrevImpl = 1e-3;
+  real64 const relTolDeriv = 5e-5;
 
   real64 const savedValues[] = { 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549, 6369.45385,
                                  6338.846609, 1881.446264, 1876.565603, 1872.538366, 3076.760999, 3066.362862, 3057.819473, 6407.138549,
@@ -859,8 +865,8 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMolarValuesAndDeriv )
       for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
-                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
-        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
+                                                 P[iPres], TC[iTemp], comp, savedValues[counter], false, relTolPrevImpl );
+        testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTolDeriv );
         counter++;
       }
     }
@@ -901,7 +907,8 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
   real64 const deltaComp = 0.2;
 
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
-  real64 const relTol = 5e-5;
+  real64 const relTolPrevImpl = 5e-4;
+  real64 const relTolDeriv = 5e-5;
 
   real64 const savedGasPhaseFrac[] = { 0.298158785, 0.298183347, 0.2982033821, 0.295950309, 0.2959791448, 0.2960026365, 0.2926988393,
                                        0.292724834, 0.2927459702, 0.499837295, 0.499854799, 0.4998690769, 0.4982634386, 0.4982839883,
@@ -924,8 +931,8 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
       {
         testValuesAgainstPreviousImplementation( flashModelWrapper,
                                                  P[iPres], TC[iTemp], comp,
-                                                 savedGasPhaseFrac[counter], savedWaterPhaseGasComp[counter], relTol );
-        testNumericalDerivatives( flashModelWrapper, P[iPres], TC[iTemp], comp, eps, relTol );
+                                                 savedGasPhaseFrac[counter], savedWaterPhaseGasComp[counter], relTolPrevImpl );
+        testNumericalDerivatives( flashModelWrapper, P[iPres], TC[iTemp], comp, eps, relTolDeriv );
         counter++;
       }
     }

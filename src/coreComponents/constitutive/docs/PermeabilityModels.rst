@@ -11,3 +11,5 @@ Permeability models
    KozenyCarmanPermeability
 
    ParallelPlatesPermeability
+
+   SlipDependentPermeability

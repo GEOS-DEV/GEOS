@@ -18,6 +18,9 @@
 
 #include "SinglePhaseWellKernels.hpp"
 
+// TODO: move keys to WellControls
+#include "SinglePhaseWell.hpp"
+
 namespace geosx
 {
 

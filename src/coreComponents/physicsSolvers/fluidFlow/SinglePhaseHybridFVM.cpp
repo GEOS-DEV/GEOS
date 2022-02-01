@@ -28,6 +28,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
 /**
@@ -286,8 +287,9 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
       faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
 
     // get the face-centered transMultiplier
+  string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
     arrayView1d< real64 const > const & transMultiplier =
-      faceManager.getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString() );
+    faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
 
     // get the face-to-nodes connectivity for the transmissibility calculation
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
@@ -298,6 +300,10 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
     // tolerance for transmissibility calculation
     real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol;
+
+  StencilAccessors< extrinsicMeshData::flow::mobility,
+                    extrinsicMeshData::flow::dMobility_dPressure >
+  flowAccessors( mesh.getElemManager(), getName() );
 
     mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
                                                                                 [&]( localIndex const,
@@ -338,8 +344,8 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                      dFacePres,
                                                      faceGravCoef,
                                                      transMultiplier,
-                                                     m_mobility.toNestedViewConst(),
-                                                     m_dMobility_dPres.toNestedViewConst(),
+                                                     flowAccessors.get( extrinsicMeshData::flow::mobility{} ),
+                                                     flowAccessors.get( extrinsicMeshData::flow::dMobility_dPressure{} ),
                                                      elemDofNumber.toNestedViewConst(),
                                                      dofManager.rankOffset(),
                                                      lengthTolerance,
@@ -452,6 +458,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
+    StencilAccessors< extrinsicMeshData::elementVolume > flowAccessors( mesh.getElemManager(), getName() );
     FaceManager const & faceManager = mesh.getFaceManager();
 
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
@@ -506,10 +513,9 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                                                      elemRegionList.toNestedViewConst(),
                                                                                      elemSubRegionList.toNestedViewConst(),
                                                                                      elemList.toNestedViewConst(),
-                                                                                     m_volume.toNestedViewConst(),
+                                                                                     flowAccessors.get( extrinsicMeshData::elementVolume{} ),
                                                                                      defaultViscosity,
                                                                                      &localResidualNorm[3] );
-
 
 
   } );

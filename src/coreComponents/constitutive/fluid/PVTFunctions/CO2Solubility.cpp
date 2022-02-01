@@ -18,6 +18,7 @@
 
 #include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
 
+#include "constitutive/fluid/PVTFunctions/CO2EOSSolver.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
@@ -125,40 +126,42 @@ real64 Par( real64 const & T, real64 const & P, real64 const * cc )
   return x;
 }
 
-real64 CO2SolubilityFunction( real64 const & tolerance,
+real64 CO2SolubilityFunction( string const & name,
+                              real64 const & tolerance,
                               real64 const & T,
                               real64 const & P,
                               real64 (* f)( real64 const & x1, real64 const & x2, real64 const & x3 ) )
 {
-  constexpr integer maxIter = 50;
-  constexpr real64 dx = 1e-10;
+  // compute the initial guess for Newton's method
+  real64 const initialReducedVolume = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
 
-  real64 Vr_int = 0.05;
-  real64 V_r = 0.75*Rgas*(T_K_f+T)/(P*P_Pa_f)*(1/V_c);
+  // define the local solver parameters
+  // for now, this is hard-coded, but we may want to let the user access the parameters at some point
+  integer const maxNumNewtonIter = 500;
+  integer const maxNumBacktrackIter = 8;
+  real64 const maxAbsUpdate = 1e12;
+  real64 const minAbsDeriv = 0;
+  real64 const allowedMinValue = 0.05; // value chosen to match previous implementation
+  real64 const presMultiplierForReporting = 1e5; // this is because P is in hectopascal in this function
 
-  // iterate until the solution of the CO2 equation of state is found
-  integer count = 0;
-  real64 dre = LvArray::NumericLimits< real64 >::infinity;
-  for(; count < maxIter && fabs( dre ) >= tolerance; ++count )
-  {
-    if( V_r < 0.0 )
-    {
-      V_r = Vr_int;
-      Vr_int += 0.05;
-    }
-    real64 const v0 = (*f)( T, P, V_r );
-    real64 const v1 = (*f)( T, P, V_r+dx );
-    dre = -v0/((v1-v0)/dx);
-    V_r += dre;
-  }
-
-  GEOSX_THROW_IF( count == maxIter,
-                  "CO2Solubility NR convergence fails! " << "dre = " << dre << ", tolerance = " << tolerance,
-                  InputError );
-  return V_r;
+  // solve the CO2 equation of state for this pair of (pres, temp)
+  // return the reduced volume
+  return CO2EOSSolver::solve( name,
+                              maxNumNewtonIter,
+                              maxNumBacktrackIter,
+                              tolerance,
+                              minAbsDeriv,
+                              maxAbsUpdate,
+                              allowedMinValue,
+                              initialReducedVolume,
+                              T,
+                              P,
+                              presMultiplierForReporting,
+                              f );
 }
 
-void calculateCO2Solubility( real64 const & tolerance,
+void calculateCO2Solubility( string const & functionName,
+                             real64 const & tolerance,
                              PTTableCoordinates const & tableCoords,
                              real64 const & salinity,
                              array1d< real64 > const & values )
@@ -182,7 +185,7 @@ void calculateCO2Solubility( real64 const & tolerance,
       real64 const T = tableCoords.getTemperature( j );
 
       // compute reduced volume by solving the CO2 equation of state
-      real64 const V_r = CO2SolubilityFunction( tolerance, T, P, &co2EOS );
+      real64 const V_r = CO2SolubilityFunction( functionName, tolerance, T, P, &co2EOS );
 
       // compute equation (6) of Duan and Sun (2003)
       real64 const logK = Par( T+T_K_f, P, mu )
@@ -226,7 +229,7 @@ TableFunction const * makeSolubilityTable( string_array const & inputParams,
   }
 
   array1d< real64 > values( tableCoords.nPressures() * tableCoords.nTemperatures() );
-  calculateCO2Solubility( tolerance, tableCoords, salinity, values );
+  calculateCO2Solubility( functionName, tolerance, tableCoords, salinity, values );
 
   string const tableName = functionName + "_table";
   if( functionManager.hasGroup< TableFunction >( tableName ) )

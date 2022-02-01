@@ -18,6 +18,8 @@
 
 #include "ParticleFluidBase.hpp"
 
+#include "ParticleFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -29,15 +31,6 @@ namespace constitutive
 ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-
-  registerWrapper( viewKeyStruct::settlingFactorString(), &m_settlingFactor );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dPressureString(), &m_dSettlingFactor_dPressure );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dProppantConcentrationString(), &m_dSettlingFactor_dProppantConcentration );
-  registerWrapper( viewKeyStruct::dSettlingFactor_dComponentConcentrationString(), &m_dSettlingFactor_dComponentConcentration );
-
-  registerWrapper( viewKeyStruct::collisionFactorString(), &m_collisionFactor );
-  registerWrapper( viewKeyStruct::dCollisionFactor_dProppantConcentrationString(), &m_dCollisionFactor_dProppantConcentration );
-
   registerWrapper( viewKeyStruct::maxProppantConcentrationString(), &m_maxProppantConcentration ).
     setApplyDefaultValue( 0.6 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -48,8 +41,15 @@ ParticleFluidBase::ParticleFluidBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Whether the collisional component of the slip velocity is considered" );
 
-  registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
+  registerExtrinsicData( extrinsicMeshData::particlefluid::settlingFactor{}, &m_settlingFactor );
+  registerExtrinsicData( extrinsicMeshData::particlefluid::dSettlingFactor_dPressure{}, &m_dSettlingFactor_dPressure );
+  registerExtrinsicData( extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration{}, &m_dSettlingFactor_dProppantConcentration );
+  registerExtrinsicData( extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration{}, &m_dSettlingFactor_dComponentConcentration );
 
+  registerExtrinsicData( extrinsicMeshData::particlefluid::collisionFactor{}, &m_collisionFactor );
+  registerExtrinsicData( extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration{}, &m_dCollisionFactor_dProppantConcentration );
+
+  registerExtrinsicData( extrinsicMeshData::particlefluid::proppantPackPermeability{}, &m_proppantPackPermeability );
 }
 
 ParticleFluidBase::~ParticleFluidBase() = default;
