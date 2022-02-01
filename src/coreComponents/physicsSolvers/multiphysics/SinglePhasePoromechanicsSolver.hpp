@@ -119,8 +119,6 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
 
-  arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
-
 protected:
 
   virtual void postProcessInput() override;
@@ -131,8 +129,6 @@ protected:
 
   string m_solidSolverName;
   string m_flowSolverName;
-
-  array1d< string > m_porousMaterialNames;
 
   // pointer to the flow sub-solver
   SinglePhaseBase * m_flowSolver;
