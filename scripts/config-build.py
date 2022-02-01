@@ -50,16 +50,34 @@ def setup_ats(scriptsdir, buildpath):
 
 parser = argparse.ArgumentParser(description="Configure cmake build.")
 
-parser.add_argument("-bp",
-                    "--buildpath",
-                    type=str,
-                    default="",
-                    help="specify path for build directory.  If not specified, will create in current directory.")
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-bp",
+                   "--buildpath",
+                   type=str,
+                   default="",
+                   help="Specify path for build directory. If both `--buildpath` and `--buildrootdir` are not specified, the build directory will be created in current directory, in a subdirectory named `build-<config-file-name>-<buildtype>`. The `--buildpath` option is not compatible with `--buildrootdir`.")
 
-parser.add_argument("-ip",
-                    "--installpath", 
-                    type=str, default="",
-                    help="specify path for installation directory.  If not specified, will create in current directory.")
+
+group.add_argument("-br",
+                   "--buildrootdir",
+                   type=str,
+                   default="",
+                   metavar="BUILD_ROOT_DIR",
+                   help="Specify path for root of build directory. The build directory will be created as `BUILD_ROOT_DIR/build-<config-file-name>-<buildtype>`. The `--buildrootdir` option is not compatible with `--buildpath`.")
+
+group = parser.add_mutually_exclusive_group()
+group.add_argument("-ip",
+                   "--installpath",
+                   type=str,
+                   default="",
+                   help="Specify path for installation directory. If both `--installpath` and `--buildpathdir` are not specified, the install directory will be created in current directory, in a subdirectory named `install-<config-file-name>-<buildtype>`. The `--installpath` option is not compatible with `--installrootdir`.")
+
+group.add_argument("-ir",
+                   "--installrootdir",
+                   type=str,
+                   default="",
+                   metavar="INSTALL_ROOT_DIR",
+                   help="Specify path for root of install directory. The install directory will be created as `INSTALL_ROOT_DIR/build-<config-file-name>-<buildtype>`. The `--installrootdir` option is not compatible with `--installpath`.")
 
 parser.add_argument("--noinstall",
                     action="store_true",
@@ -85,18 +103,13 @@ parser.add_argument("-x",
 parser.add_argument("-ecc",
                     "--exportcompilercommands",
                     action='store_true',
-	                help="generate a compilation database.  Can be used by the clang tools such as clang-modernize.  Will create a file called 'compile_commands.json' in build directory.")
+                    help="generate a compilation database.  Can be used by the clang tools such as clang-modernize.  Will create a file called 'compile_commands.json' in build directory.")
 
 parser.add_argument("-hc",
                     "--hostconfig",
                     required=True,
                     type=str,
                     help="select a specific host-config file to initalize CMake's cache")
-
-parser.add_argument("-tpl",
-                    "--thirdpartylib",
-                    action='store_true',
-                    help="build third party libraries")
 
 parser.add_argument("-gvz",
                     "--graphviz",
@@ -106,8 +119,6 @@ parser.add_argument("-gvz",
 args, unknown_args = parser.parse_known_args()
 if unknown_args:
     print("[config-build]: Passing the following unknown arguments directly to cmake... %s" % unknown_args)
-
-
 
 ########################
 # Find CMake Cache File
@@ -131,10 +142,10 @@ if args.buildpath != "":
     buildpath = args.buildpath
 else:
     # use platform info & build type
-    if args.thirdpartylib:
-        buildpath = "-".join(["../thirdPartyLibs/build",platform_info,args.buildtype.lower()])        
-    else:
-        buildpath = "-".join(["build",platform_info,args.buildtype.lower()])
+    buildpath = "-".join(["build",platform_info,args.buildtype.lower()])
+    if args.buildrootdir != "":
+        buildpath = os.path.join(args.buildrootdir, buildpath)
+
 print("buildpath = ", buildpath)
 
 buildpath = os.path.abspath(buildpath)
@@ -158,10 +169,9 @@ if not args.noinstall:
         installpath = os.path.abspath(args.installpath)
     else:
         # use platform info & build type
-        if args.thirdpartylib:
-            installpath = "-".join(["../thirdPartyLibs/install",platform_info,args.buildtype.lower()])        
-        else:
-            installpath = "-".join(["install",platform_info,args.buildtype.lower()])
+        installpath = "-".join(["install",platform_info,args.buildtype.lower()])
+        if args.installrootdir != "":
+            installpath = os.path.join(args.installrootdir, installpath)
 
     installpath = os.path.abspath(installpath)
 
@@ -209,10 +219,7 @@ if args.graphviz:
 if unknown_args:
     cmakeline += " " + " ".join( unknown_args )
 
-if args.thirdpartylib:
-    cmakeline += " %s/../thirdPartyLibs " % scriptsdir
-else:
-    cmakeline += " %s/../src " % scriptsdir
+cmakeline += " %s/../src " % scriptsdir
 
 # Dump the cmake command to file for convenience
 cmdfile = open("%s/cmake_cmd" % buildpath, "w")
