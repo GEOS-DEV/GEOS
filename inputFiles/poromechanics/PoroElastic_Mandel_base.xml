@@ -8,7 +8,6 @@
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      porousMaterialNames="{ shale }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
