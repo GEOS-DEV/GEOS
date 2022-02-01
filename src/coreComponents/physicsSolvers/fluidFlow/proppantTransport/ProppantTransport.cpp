@@ -144,7 +144,7 @@ void ProppantTransport::setConstitutiveNames( ElementSubRegionBase & subRegion )
                   GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
                   InputError );
 
-  subRegion.registerWrapper<string>( viewKeyStruct::proppantNamesString() );
+  subRegion.registerWrapper< string >( viewKeyStruct::proppantNamesString() );
   string & proppantName = subRegion.getReference< string >( viewKeyStruct::proppantNamesString() );
   proppantName = getConstitutiveName< ParticleFluidBase >( subRegion );
   GEOSX_THROW_IF( proppantName.empty(),
@@ -166,19 +166,30 @@ void ProppantTransport::initializePreSubGroups()
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
-                                                                                          CellElementSubRegion & subRegion )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                                   auto & subRegion )
 
     {
-      SlurryFluidBase const & fluid0 = cm.getConstitutiveRelation< SlurryFluidBase >( subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
-      m_numComponents = fluid0.numFluidComponents();
-      m_numDofPerCell = m_numComponents + 1;
-      if( m_numComponents > 0 )
+      if( m_numDofPerCell < 1 )
+      {
+        SlurryFluidBase const & fluid0 = cm.getConstitutiveRelation< SlurryFluidBase >( subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
+
+        m_numComponents = fluid0.numFluidComponents();
+
+        m_numDofPerCell = m_numComponents + 1;
+      }
+    } );
+
+    if( m_numComponents > 0 )
+    {
+      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                            CellElementSubRegion & subRegion )
+
       {
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >().resizeDimension< 1 >( m_numComponents );
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >().resizeDimension< 1 >( m_numComponents );
-      }
-    } );
+      } );
+    }
   } );
 }
 
