@@ -251,7 +251,6 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
     - CMAKE_BUILD_TYPE=Release
-    - BUILD_AND_TEST_ARGS=--disable-unit-tests
   - stage: builds
     name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
     <<: *geosx_linux_build
