@@ -36,7 +36,7 @@ def main():
                            python="/beegfs/jbesset/codes/GEOSX/build-test_module-release/lib/PYGEOSX/bin/python",
                            launch="mpirun",
                            extra=["-C bora"],
-                           env_extra=["physics/geosx_deps/mkl2020_gcc9.3.0_mpi4.0.3/NoCuda", "physics/pygeosx/mkl2020_gcc9.3.0_mpi4.0.3"])
+                           env_extra=["physics/geosx_deps/mkl2020_gcc9.3.0_mpi4.0.3/NoCuda"])
 
     client = Client(cluster)
     client.scale(2)
@@ -46,18 +46,18 @@ def main():
     outputSeismoTraceInterval = 5
     outputWaveFieldInterval = 100
 
-    
+
     args = []
     for acq in acqs:
         args.append((maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acq,))
-        
+
     #args = (maxTime, outputSeismoTraceInterval, outputWaveFieldInterval, acq,)
 
-    
+
     futures = client.map(acousticShot, args,
                          cmd_line = ["-i", sysargs.xml],
                          cores=4, x_partition=4)
-    
+
     #future = client.submit(acousticShot, args,
     #                       cmd_line=["-i", sysargs.xml],
     #                       cores=2, x_partition=2)

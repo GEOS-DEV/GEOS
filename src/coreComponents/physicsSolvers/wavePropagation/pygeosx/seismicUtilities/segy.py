@@ -14,7 +14,7 @@ def exportToSegy(table, shot, filename, directory, rank=0):
         else:
             os.mkdir(directory)
 
-        srcCoord = shot.source.source_list[0].coords
+        srcCoord = shot.sources.source_list[0].coords
         spec = segyio.spec()
         ilines  = [x[0] for x in rcvCoord]
         xlines  = [x[1] for x in rcvCoord]

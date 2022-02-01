@@ -1,4 +1,5 @@
 import pygeosx
+import numpy as np
 
 
 def recomputeSourceAndReceivers(solver, sources, receivers):
@@ -7,7 +8,7 @@ def recomputeSourceAndReceivers(solver, sources, receivers):
     solver.reinit()
 
 
-def updateSourceAndReceivers(solver, sources, receivers):
+def updateSourceAndReceivers( solver, sources_list=[], receivers_list=[] ):
     src_pos_geosx = solver.get_wrapper("sourceCoordinates").value()
     src_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
 
@@ -15,16 +16,34 @@ def updateSourceAndReceivers(solver, sources, receivers):
     rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
 
 
-    src_pos_geosx.resize(sources.n)
-    src_pos = [source.coords for source in sources.source_list]
-    src_pos_geosx.to_numpy()[:] = src_pos[:]
+    src_pos_geosx.resize(len(sources_list))
+    if len(sources_list) == 0:
+        src_pos_geosx.to_numpy()[:] = np.zeros((0,3))
+    else:
+        src_pos = [source.coords for source in sources_list]
+        src_pos_geosx.to_numpy()[:] = src_pos[:]
 
-    rcv_pos_geosx.resize(receivers.n)
-    rcv_pos = [receiver.coords for receiver in receivers.receivers_list]
-    rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]
+    rcv_pos_geosx.resize(len(receivers_list))
+    if len(receivers_list) == 0:
+        rcv_pos_geosx.to_numpy()[:] = np.zeros((0,3))
+    else:
+        rcv_pos = [receiver.coords for receiver in receivers_list]
+        rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]
 
     solver.reinit()
 
+def updateSourceValue( solver, value ):
+    src_value = solver.get_wrapper("sourceValue").value()
+    src_value.set_access_level(pygeosx.pylvarray.MODIFIABLE)
+    src_value.to_numpy()[:] = value[:]
+
+
+def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
+    r = np.zeros((int(maxTime/dt)+1, np.size(rtemp,1)))
+    for i in range(np.size(rtemp,1)):
+        r[:,i] = np.interp(np.linspace(0, maxTime, int(maxTime/dt)+1), np.linspace(0, maxTime, int(maxTime/dtSeismoTrace)+1), rtemp[:,i])
+
+    return r
 
 
 def resetWaveField(group):
@@ -50,8 +69,9 @@ def resetWaveField(group):
 
 
 
-def setTimeVariables(problem, maxTime, dtSeismoTrace):
+def setTimeVariables(problem, maxTime, dt, dtSeismoTrace):
     problem.get_wrapper("Events/maxTime").value()[0] = maxTime
+    problem.get_wrapper("Events/solverApplications/forceDt").value()[0] = dt
     problem.get_wrapper("/Solvers/acousticSolver/dtSeismoTrace").value()[0] = dtSeismoTrace
 
 
