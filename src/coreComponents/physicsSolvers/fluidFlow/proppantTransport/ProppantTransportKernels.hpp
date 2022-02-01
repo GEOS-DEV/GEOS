@@ -374,7 +374,7 @@ struct ProppantPackVolumeKernel
     StencilMaterialAccessors< ParticleFluidBase, extrinsicMeshData::particlefluid::settlingFactor >;
 
   using SlurryFluidAccessors =
-    StencilMaterialAccessors< SlurryFluidBase, 
+    StencilMaterialAccessors< SlurryFluidBase,
                               extrinsicMeshData::singlefluid::density,
                               extrinsicMeshData::slurryfluid::fluidDensity,
                               extrinsicMeshData::slurryfluid::fluidViscosity >;

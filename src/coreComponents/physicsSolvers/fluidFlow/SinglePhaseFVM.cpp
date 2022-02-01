@@ -334,7 +334,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
     jumpDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( jumpDofKey );
     jumpDofNumber.setName( this->getName() + "/accessors/" + jumpDofKey );
 
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
+    ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
       elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
@@ -396,7 +396,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
     elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
 
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
-        elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
+      elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
@@ -600,8 +600,8 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
       elemManager.constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( this->getName() + "/accessors/" + elemDofKey );
 
-  typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-  typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
+    typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
+    typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
 
     fsManager.apply< AquiferBoundaryCondition >( time + dt,
                                                  domain,

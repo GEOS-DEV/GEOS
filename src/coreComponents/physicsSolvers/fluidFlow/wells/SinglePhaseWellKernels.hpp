@@ -166,11 +166,11 @@ struct PerforationKernel
                       extrinsicMeshData::flow::deltaPressure >;
 
   using SingleFluidAccessors =
-      StencilMaterialAccessors< constitutive::SingleFluidBase,
-                                extrinsicMeshData::singlefluid::density,
-                                extrinsicMeshData::singlefluid::dDensity_dPressure,
-                                extrinsicMeshData::singlefluid::viscosity,
-                                extrinsicMeshData::singlefluid::dViscosity_dPressure >;
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure,
+                              extrinsicMeshData::singlefluid::viscosity,
+                              extrinsicMeshData::singlefluid::dViscosity_dPressure >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -259,8 +259,8 @@ struct PresInitializationKernel
     StencilAccessors< extrinsicMeshData::flow::pressure >;
 
   using SingleFluidAccessors =
-      StencilMaterialAccessors< constitutive::SingleFluidBase,
-                                extrinsicMeshData::singlefluid::density >;
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
