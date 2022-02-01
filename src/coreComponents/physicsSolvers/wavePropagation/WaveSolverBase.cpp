@@ -42,6 +42,11 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
+  registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
+    setInputFlag( InputFlags::FALSE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Source Value of the sources" );
+
   registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Central frequency for the time source" );

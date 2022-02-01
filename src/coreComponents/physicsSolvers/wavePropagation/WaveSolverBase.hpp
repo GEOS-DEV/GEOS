@@ -47,6 +47,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
+    static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
 
@@ -96,7 +97,7 @@ protected:
    * @param time_n the time of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) = 0;
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step
@@ -113,6 +114,8 @@ protected:
 
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
+
+  array2d< real64 > m_sourceValue;
 
   /// Central frequency for the Ricker time source
   real64 m_timeSourceFrequency;

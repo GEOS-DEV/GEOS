@@ -147,8 +147,12 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  EventBase const & eventbase = this->getGroupByPath< EventBase >( "/Problem/Events/solverApplications" );
+  real64 const & dt = eventbase.getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
 
   m_nsamplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
+
+  localIndex const nsamples = int(maxTime/dt) + 1;
 
   localIndex const numNodesPerElem = 8;
 
@@ -163,6 +167,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 }
 
@@ -240,24 +245,36 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
       } );
     } );
   } );
+
+  EventBase const & eventbase = this->getGroupByPath< EventBase >( "/Problem/Events/solverApplications" );
+  real64 const & dt = eventbase.getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+
+  forAll< EXEC_POLICY >( m_sourceValue.size( 1 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
+  {
+    for( localIndex cycle = 0; cycle < m_sourceValue.size( 0 ); ++cycle)
+    {
+      real64 time = cycle*dt;
+      m_sourceValue[cycle][isrc] = evaluateRicker( time, this->m_timeSourceFrequency, this->m_rickerOrder );
+    }
+  } );
 }
 
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
+  arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
-
+  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compare to array size", std::runtime_error);
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
+        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
       }
     }
   } );
@@ -507,7 +524,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                           arrayView1d< string const >(),
                                                           kernelFactory );
 
-  addSourceToRightHandSide( time_n, rhs );
+  addSourceToRightHandSide( cycleNumber, rhs );
 
   /// calculate your time integrators
   real64 const dt2 = dt*dt;
