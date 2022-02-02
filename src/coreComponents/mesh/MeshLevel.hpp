@@ -82,12 +82,12 @@ public:
     dataRepository::GroupKey cellManager    = { "cellManager" };
 
     static constexpr auto nodeManagerString = "nodeManager";
-    static constexpr auto particleManagerString = "particleManager";
     static constexpr auto edgeManagerString = "edgeManager";
     static constexpr auto faceManagerString = "faceManager";
 
     // This key is defined in problem manager:
     static constexpr auto elemManagerString = "ElementRegions";
+    static constexpr auto particleManagerString = "ParticleRegions";
 
     static constexpr auto embSurfNodeManagerString = "embeddedSurfacesNodeManager";
     static constexpr auto embSurfEdgeManagerString = "embeddedSurfacesEdgeManager";

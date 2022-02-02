@@ -162,6 +162,7 @@
 			<xsd:element name="Tasks" type="TasksType" maxOccurs="1" />
 			<xsd:element name="Constitutive" type="ConstitutiveType" maxOccurs="1" />
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
+			<xsd:element name="ParticleRegions" type="ParticleRegionsType" maxOccurs="1" />
 			<xsd:element name="Included" type="IncludedType" maxOccurs="1" />
 			<xsd:element name="Parameters" type="ParametersType" maxOccurs="1" />
 			<xsd:element name="Benchmarks" type="BenchmarksType" maxOccurs="1" />
@@ -2772,6 +2773,22 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+  <xsd:complexType name="ParticleRegionsType">
+    <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="ParticleRegion" type="ParticleRegionType" />
+    </xsd:choice>
+  </xsd:complexType>
+  <xsd:complexType name="ParticleRegionType">
+    <xsd:choice minOccurs="0" maxOccurs="unbounded" />
+    <!--particleBlocks => (no description available)-->
+    <xsd:attribute name="particleBlocks" type="string_array" default="{}" />
+    <!--materialList => List of materials present in this region-->
+    <xsd:attribute name="materialList" type="string_array" use="required" />
+    <!--meshBody => Mesh body that contains this region-->
+    <xsd:attribute name="meshBody" type="string" default="" />
+    <!--name => A name is required for any non-unique nodes-->
+    <xsd:attribute name="name" type="string" use="required" />
+  </xsd:complexType>
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="File" type="FileType" />
