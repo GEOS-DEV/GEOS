@@ -1,0 +1,204 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Channel }"
+      fluidNames="{ fluid }"
+      solidNames="{ rock }"
+      permeabilityNames="{ rockPerm }"
+      relPermNames="{ relperm }"
+      initialDt="1"
+      temperature="300"
+      computeCFLNumbers="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-9"
+        newtonMaxIter="15"
+        lineSearchMaxCuts="2"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 5, 10 }"
+      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
+      nx="{ 5, 5 }"
+      ny="{ 5, 5 }"
+      nz="{ 3, 3, 3, 3 }"
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="bottom"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ 10.01, 10.01,  1.01 }"/>
+    <Box
+      name="top"
+      xMin="{ -0.01, -0.01,  0.8 }"
+      xMax="{ 10.01, 10.01,  10.01 }"/>
+  </Geometry>
+
+  <Events
+    maxTime="4e8">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="2e7"
+      target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="4e6"
+      target="/Solvers/compflow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="2e7"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Channel"
+      cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <CellElementRegion
+      name="Barrier"
+      cellBlocks="{ b04, b12, b13, b09, b10, b02, b03, b07 }"
+      materialList="{ }"/>
+  </ElementRegions>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"
+        fieldName="pressure"
+        targetRegions="{ Channel }"
+        coefficientName="permeability"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Constitutive>
+    <DeadOilFluid
+      name="fluid"
+      phaseNames="{ water, gas }"
+      surfaceDensities="{ 1022.0, 0.9907 }"
+      componentMolarWeight="{ 18e-3, 16e-3 }"
+      tableFiles="{ pvtw.txt, pvdg.txt }"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+    <NullModel
+      name="nullSolid"/>
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-15, 1.0e-15, 1.0e-15 }"/>
+
+    <TableRelativePermeabilityHysteresis
+      name="relperm"
+      phaseNames="{ water, gas }"
+      drainageWettingNonWettingRelPermTableNames="{ drainageWaterRelativePermeabilityTable,
+                                                    drainageGasRelativePermeabilityTable }"
+      imbibitionNonWettingRelPermTableName="imbibitionGasRelativePermeabilityTable"      
+      imbibitionWettingRelPermTableName="imbibitionWaterRelativePermeabilityTable"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <!-- Initial pressure: ~5 bar -->
+    <FieldSpecification
+      name="topInitialPressure"
+      initialCondition="1"
+      setNames="{ top }"
+      objectPath="ElementRegions/Channel"
+      fieldName="pressure"
+      scale="5e6"/>
+    <FieldSpecification
+      name="bottomInitialPressure"
+      initialCondition="1"
+      setNames="{ bottom }"
+      objectPath="ElementRegions/Channel"
+      fieldName="pressure"
+      scale="5e6"/>
+
+    
+    <!-- Initial composition -->
+    <FieldSpecification
+      name="topInitialComposition_water"
+      initialCondition="1"
+      setNames="{ top }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.99"/>
+    <FieldSpecification
+      name="topInitialComposition_gas"
+      initialCondition="1"
+      setNames="{ top }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.01"/>
+    
+    <FieldSpecification
+      name="bottomInitialComposition_water"
+      initialCondition="1"
+      setNames="{ bottom }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.01"/>
+    <FieldSpecification
+      name="bottomInitialComposition_gas"
+      initialCondition="1"
+      setNames="{ bottom }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.99"/>    
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Functions>
+    <TableFunction
+      name="drainageWaterRelativePermeabilityTable"
+      coordinateFiles="{ drainagePhaseVolFraction_water.txt }"
+      voxelFile="drainageRelPerm_water.txt"/>
+    <TableFunction
+      name="drainageGasRelativePermeabilityTable"
+      coordinateFiles="{ drainagePhaseVolFraction_gas.txt }"
+      voxelFile="drainageRelPerm_gas.txt"/>
+    <TableFunction
+      name="imbibitionWaterRelativePermeabilityTable"
+      coordinateFiles="{ imbibitionPhaseVolFraction_water.txt }"
+      voxelFile="imbibitionRelPerm_water.txt"/>
+    <TableFunction
+      name="imbibitionGasRelativePermeabilityTable"
+      coordinateFiles="{ imbibitionPhaseVolFraction_gas.txt }"
+      voxelFile="imbibitionRelPerm_gas.txt"/>
+  </Functions>
+  
+</Problem>
