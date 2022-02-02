@@ -13,12 +13,11 @@
  */
 
 /**
- * @file ElementManagerT.cpp
+ * @file ParticleBlockManager.cpp
  */
 
-#include "CellBlockManager.hpp"
+#include "ParticleBlockManager.hpp"
 
-#include "FaceManager.hpp"
 #include <map>
 #include <vector>
 
@@ -26,18 +25,18 @@ namespace geosx
 {
 using namespace dataRepository;
 
-CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
+ParticleBlockManager::ParticleBlockManager( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent )
 {
-  this->registerGroup< Group >( keys::cellBlocks );
+  this->registerGroup< Group >( keys::particleBlocks );
 }
 
-CellBlockManager::~CellBlockManager()
+ParticleBlockManager::~ParticleBlockManager()
 {
   // TODO Auto-generated destructor stub
 }
 
-void CellBlockManager::resize( integer_array const & numElements,
+void ParticleBlockManager::resize( integer_array const & numElements,
                                string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
@@ -47,12 +46,12 @@ void CellBlockManager::resize( integer_array const & numElements,
   }
 }
 
-Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * ParticleBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
 
 
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellBlockManager, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleBlockManager, string const &, Group * const )
 }
