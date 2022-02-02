@@ -80,6 +80,12 @@ public:
                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                       arrayView1d< real64 > const & localRhs ) override;
 
+  virtual void computeStatistics( real64 const & time,
+                                  real64 const & dt,
+                                  integer cycleNumber,
+                                  DomainPartition & domain,
+                                  bool outputStatisticsToScreen ) override;
+
 protected:
 
   virtual void postProcessInput() override;

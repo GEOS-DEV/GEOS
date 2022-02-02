@@ -83,6 +83,10 @@ public:
     static constexpr auto minNumNewtonIterationsString  = "minNumberOfNewtonIterations";
     static constexpr auto timeStepCutFactorString       = "timestepCutFactor";
 
+    // simulation statistics
+    static constexpr auto totalSuccessfulNewtonNumIterationsString = "totalSuccessfulNewtonNumIterations";
+    static constexpr auto totalWastedNewtonNumIterationsString     = "numberWastedNewtonNumIterations";
+
   } viewKeys;
 
 
@@ -156,8 +160,16 @@ public:
   /// Factor by which the time step will be cut if a timestep cut is required.
   real64 m_timeStepCutFactor;
 
-  /// number of times that the time-step had to be cut
+  /// Number of times that the time-step had to be cut
   integer m_numdtAttempts;
+
+  // Simulation statistics
+
+  /// Total number of successful Newton iterations
+  integer m_totalSuccessfulNewtonNumIterations;
+
+  /// Total number of wasted Newton iterations
+  integer m_totalWastedNewtonNumIterations;
 
 };
 

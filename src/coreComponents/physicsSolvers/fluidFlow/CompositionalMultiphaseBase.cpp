@@ -57,7 +57,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
-  m_computeCFLNumbers( 0 ),
   m_capPressureFlag( 0 ),
   m_thermalFlag( 0 ),
   m_maxCompFracChange( 1.0 ),
@@ -73,11 +72,6 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use mass formulation instead of molar" );
-
-  this->registerWrapper( viewKeyStruct::computeCFLNumbersString(), &m_computeCFLNumbers ).
-    setApplyDefaultValue( 0 ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag indicating whether CFL numbers are computed or not" );
 
   this->registerWrapper( viewKeyStruct::relPermNamesString(), &m_relPermModelNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -105,6 +99,18 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Flag indicating whether local (cell-wise) chopping of negative compositions is allowed" );
+
+  // Statistics
+
+  this->registerWrapper( viewKeyStruct::averagePressureString(), &m_averagePressure );
+  this->registerWrapper( viewKeyStruct::minimumPressureString(), &m_minimumPressure );
+  this->registerWrapper( viewKeyStruct::maximumPressureString(), &m_maximumPressure );
+  this->registerWrapper( viewKeyStruct::averageTemperatureString(), &m_averageTemperature );
+  this->registerWrapper( viewKeyStruct::minimumTemperatureString(), &m_minimumTemperature );
+  this->registerWrapper( viewKeyStruct::maximumTemperatureString(), &m_maximumTemperature );
+  this->registerWrapper( viewKeyStruct::totalPoreVolumeString(), &m_totalPoreVolume );
+  this->registerWrapper( viewKeyStruct::phasePoreVolumeString(), &m_phasePoreVolume ).
+    setSizedFromParent( 0 );
 
 }
 
@@ -188,7 +194,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< dPhaseMobility_dGlobalCompDensity >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
-      if( m_computeCFLNumbers )
+      if( m_computeStatistics )
       {
         subRegion.registerExtrinsicData< phaseOutflux >( getName() ).
           reference().resizeDimension< 1 >( m_numPhases );
@@ -372,6 +378,9 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   // 3. Initialize and validate the aquifer boundary condition
   initializeAquiferBC( cm );
   validateAquiferBC( cm );
+
+  // 4. Resize the array storing phase pore volumes
+  m_phasePoreVolume.resize( m_numPhases );
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
@@ -892,7 +901,160 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
 
   // Initialize primary variables from applied initial conditions
   initializeFluidState( mesh );
+
+  // Compute some statistics on the initial state
+  computeReservoirStatistics( mesh, true );
+
 }
+
+void CompositionalMultiphaseBase::computeStatistics( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                     integer cycleNumber,
+                                                     DomainPartition & domain,
+                                                     bool outputStatisticsToScreen )
+{
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  // output the number of Newton iterations if this is the main solver
+  if( outputStatisticsToScreen && m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations > 0 )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName()
+                            << ": Total number of time steps = " << cycleNumber+1
+                            << ", successful nonlinear iterations = " << m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations
+                            << ", wasted nonlinear iterations = " << m_nonlinearSolverParameters.m_totalWastedNewtonNumIterations );
+  }
+
+  // output the average pressure, average temperature, pore volumes
+  computeReservoirStatistics( mesh, outputStatisticsToScreen );
+}
+
+void CompositionalMultiphaseBase::computeReservoirStatistics( MeshLevel const & mesh,
+                                                              bool const outputToTerminal )
+{
+  GEOSX_MARK_FUNCTION;
+
+  m_averagePressure = 0.0;
+  m_maximumPressure = 0.0;
+  m_minimumPressure = LvArray::NumericLimits< real64 >::max;
+
+  m_averageTemperature = 0.0;
+  m_maximumTemperature = 0.0;
+  m_minimumTemperature = LvArray::NumericLimits< real64 >::max;
+
+  real64 totalUncompactedPoreVolume = 0.0;
+  for( integer ip = 0; ip < m_numPhases; ++ip )
+  {
+    m_phasePoreVolume[ip] = 0.0;
+  }
+
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
+  {
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgPressureNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxPressure( 0.0 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinPressure( LvArray::NumericLimits< real64 >::max );
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionAvgTemperatureNumerator( 0.0 );
+    RAJA::ReduceMax< parallelDeviceReduce, real64 > subRegionMaxTemperature( 0.0 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > subRegionMinTemperature( LvArray::NumericLimits< real64 >::max );
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionTotalUncompactedPoreVolume( 0.0 );
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > subRegionPhaseDynamicPoreVolume[MultiFluidBase::MAX_NUM_PHASES]{};
+
+    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+    arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+    arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+    arrayView1d< real64 const > const temp = subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+
+    CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
+    arrayView1d< real64 const > const refPorosity = solid.getReferencePorosity();
+    arrayView2d< real64 const > const porosity = solid.getPorosity();
+
+    integer numPhases = m_numPhases;
+    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      // To match our "reference", we have to use reference porosity here, not the actual porosity when we compute averages
+      real64 const uncompactedPoreVolume = volume[ei] * refPorosity[ei];
+      real64 const dynamicPoreVolume = volume[ei] * porosity[ei][0];
+
+      subRegionAvgPressureNumerator += uncompactedPoreVolume * pres[ei];
+      subRegionMaxPressure.max( pres[ei] );
+      subRegionMinPressure.min( pres[ei] );
+
+      subRegionAvgTemperatureNumerator += uncompactedPoreVolume * temp[ei]; // for real thermal change pore volume to volume
+      subRegionMaxTemperature.max( temp[ei] );
+      subRegionMinTemperature.min( temp[ei] );
+
+      subRegionTotalUncompactedPoreVolume += uncompactedPoreVolume;
+      for( integer ip = 0; ip < numPhases; ++ip )
+      {
+        subRegionPhaseDynamicPoreVolume[ip] += dynamicPoreVolume * phaseVolFrac[ei][ip];
+      }
+    } );
+
+    m_averagePressure += subRegionAvgPressureNumerator.get();
+    if( subRegionMinPressure.get() < m_minimumPressure )
+    {
+      m_minimumPressure = subRegionMinPressure.get();
+    }
+    if( subRegionMaxPressure.get() > m_maximumPressure )
+    {
+      m_maximumPressure = subRegionMaxPressure.get();
+    }
+
+    m_averageTemperature += subRegionAvgTemperatureNumerator.get();
+    if( subRegionMinTemperature.get() < m_minimumTemperature )
+    {
+      m_minimumTemperature = subRegionMinTemperature.get();
+    }
+    if( subRegionMaxTemperature.get() > m_maximumTemperature )
+    {
+      m_maximumTemperature = subRegionMaxTemperature.get();
+    }
+
+    totalUncompactedPoreVolume += subRegionTotalUncompactedPoreVolume.get();
+    for( integer ip = 0; ip < m_numPhases; ++ip )
+    {
+      m_phasePoreVolume[ip] += subRegionPhaseDynamicPoreVolume[ip].get();
+    }
+
+  } );
+
+  m_averagePressure = MpiWrapper::sum( m_averagePressure );
+  m_minimumPressure = MpiWrapper::min( m_minimumPressure );
+  m_maximumPressure = MpiWrapper::max( m_maximumPressure );
+
+  m_averageTemperature = MpiWrapper::sum( m_averageTemperature );
+  m_minimumTemperature = MpiWrapper::min( m_minimumTemperature );
+  m_maximumTemperature = MpiWrapper::max( m_maximumTemperature );
+
+  m_totalPoreVolume = 0.0;
+  totalUncompactedPoreVolume = MpiWrapper::sum( totalUncompactedPoreVolume );
+  for( integer ip = 0; ip < m_numPhases; ++ip )
+  {
+    m_phasePoreVolume[ip] = MpiWrapper::sum( m_phasePoreVolume[ip] );
+    m_totalPoreVolume += m_phasePoreVolume[ip];
+  }
+
+  m_averagePressure /= totalUncompactedPoreVolume;
+  m_averageTemperature /= totalUncompactedPoreVolume;
+
+  if( outputToTerminal )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Pressure (min, average, max): " << m_minimumPressure << ", " << m_averagePressure << ", " << m_maximumPressure << " Pa" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Temperature (min, average, max): " << m_minimumTemperature << ", " << m_averageTemperature << ", " << m_maximumTemperature << " K" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Total dynamic pore volume: " << m_totalPoreVolume << " rm^3" );
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Phase dynamic pore volumes: " << m_phasePoreVolume << " rm^3" );
+  }
+
+}
+
 
 real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
                                                 real64 const & dt,
@@ -917,6 +1079,13 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
 
   // final step for completion of timestep. typically secondary variable updates and cleanup.
   implicitStepComplete( time_n, dt_return, domain );
+
+  // compute some statistics on the reservoir (CFL, average field pressure, averege field temperature)
+  if( m_computeStatistics )
+  {
+    bool const outputStatisticsToScreen = ( cycleNumber%m_statisticsOutputFrequency == 0 );
+    computeStatistics( time_n, dt_return, cycleNumber, domain, outputStatisticsToScreen );
+  }
 
   return dt_return;
 }
@@ -1563,6 +1732,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
     }
 
   } );
+
 }
 
 void CompositionalMultiphaseBase::updateState( DomainPartition & domain )

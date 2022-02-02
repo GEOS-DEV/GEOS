@@ -107,7 +107,7 @@ void CompositionalMultiphaseHybridFVM::initializePostInitialConditionsPreSubGrou
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_computeCFLNumbers )
+  if( m_computeStatistics )
   {
     GEOSX_LOG_RANK_0( catalogName() << " " << getName()
                                     << ": the computation of CFL numbers in not supported by CompositionalMultiphaseHybridFVM yet" );

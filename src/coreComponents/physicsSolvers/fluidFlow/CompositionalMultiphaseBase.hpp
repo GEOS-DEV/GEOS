@@ -118,6 +118,14 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
+  virtual void
+  computeStatistics( real64 const & time,
+                     real64 const & dt,
+                     integer cycleNumber,
+                     DomainPartition & domain,
+                     bool outputStatisticsToScreen ) override;
+
+
   /**
    * @brief Recompute component fractions from primary variables (component densities)
    * @param dataGroup the group storing the required fields
@@ -219,8 +227,6 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
-
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
@@ -230,6 +236,25 @@ public:
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
     static constexpr char const * allowLocalCompDensChoppingString() { return "allowLocalCompDensityChopping"; }
+
+    // reservoir statistics
+
+    static constexpr char const * averagePressureString() { return "averagePressure"; }
+
+    static constexpr char const * maximumPressureString() { return "maximumPressure"; }
+
+    static constexpr char const * minimumPressureString() { return "minimumPressure"; }
+
+    static constexpr char const * averageTemperatureString() { return "averageTemperature"; }
+
+    static constexpr char const * maximumTemperatureString() { return "maximumTemperature"; }
+
+    static constexpr char const * minimumTemperatureString() { return "minimumTemperature"; }
+
+    static constexpr char const * totalPoreVolumeString() { return "totalPoreVolume"; }
+
+    static constexpr char const * phasePoreVolumeString() { return "phasePoreVolume"; }
+
   };
 
   /**
@@ -302,6 +327,14 @@ public:
                                arrayView1d< real64 > const & localRhs ) const = 0;
 
   /**
+   * @brief Compute some statistics on the reservoir (average field pressure, average field temperature)
+   * @param[in] mesh the mesh level object
+   * @param[in] outputToTerminal flag to decide whether this function outputs to terminal or not
+   */
+  void computeReservoirStatistics( MeshLevel const & mesh,
+                                   bool const outputToTerminal );
+
+  /**
    * @brief Sets all the negative component densities (if any) to zero.
    * @param domain the physical domain object
    */
@@ -345,9 +378,6 @@ protected:
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
 
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
-
   /// name of the rel perm constitutive model
   array1d< string > m_relPermModelNames;
 
@@ -371,6 +401,32 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
+
+  // Statistics
+
+  /// average pressure in the reservoir
+  real64 m_averagePressure;
+
+  /// minimum pressure in the reservoir
+  real64 m_minimumPressure;
+
+  /// maximum pressure in the reservoir
+  real64 m_maximumPressure;
+
+  /// average temperature in the reservoir
+  real64 m_averageTemperature;
+
+  /// minimum temperature in the reservoir
+  real64 m_minimumTemperature;
+
+  /// maximum temperature in the reservoir
+  real64 m_maximumTemperature;
+
+  /// total reservoir pore volume at reservoir conditions
+  real64 m_totalPoreVolume;
+
+  /// phase pore volumes at reservoir conditions
+  array1d< real64 > m_phasePoreVolume;
 
 };
 

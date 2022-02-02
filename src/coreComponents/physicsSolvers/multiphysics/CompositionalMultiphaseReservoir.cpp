@@ -68,6 +68,24 @@ void CompositionalMultiphaseReservoir::initializePostInitialConditionsPreSubGrou
   }
 }
 
+void CompositionalMultiphaseReservoir::computeStatistics( real64 const & time,
+                                                          real64 const & dt,
+                                                          integer cycleNumber,
+                                                          DomainPartition & domain,
+                                                          bool outputStatisticsToScreen )
+{
+  // output the number of Newton iterations if this is the main solver
+  if( outputStatisticsToScreen && m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations > 0 )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, getName()
+                            << ": Total number of time steps = " << cycleNumber+1
+                            << ", successful nonlinear iterations = " << m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations
+                            << ", wasted nonlinear iterations = " << m_nonlinearSolverParameters.m_totalWastedNewtonNumIterations );
+  }
+
+  m_flowSolver->computeStatistics( time, dt, cycleNumber, domain, outputStatisticsToScreen );
+}
+
 void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartition const & domain,
                                                                    DofManager const & dofManager,
                                                                    SparsityPatternView< globalIndex > const & pattern ) const

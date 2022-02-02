@@ -21,7 +21,9 @@ using namespace dataRepository;
 
 NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
                                                       Group * const parent ):
-  Group( name, parent )
+  Group( name, parent ),
+  m_totalSuccessfulNewtonNumIterations( 0 ),
+  m_totalWastedNewtonNumIterations( 0 )
 {
   setInputFlags( InputFlags::OPTIONAL );
 
@@ -99,7 +101,8 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Maximum number of time sub-steps allowed for the solver" );
 
-
+  registerWrapper( viewKeysStruct::totalSuccessfulNewtonNumIterationsString, &m_totalSuccessfulNewtonNumIterations );
+  registerWrapper( viewKeysStruct::totalWastedNewtonNumIterationsString, &m_totalWastedNewtonNumIterations );
 
 }
 

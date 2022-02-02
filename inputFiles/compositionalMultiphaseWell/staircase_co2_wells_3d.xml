@@ -7,6 +7,8 @@
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
       logLevel="1"
+      computeStatistics="1"
+      statisticsOutputFrequency="2"
       targetRegions="{ Channel, wellRegion1, wellRegion2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"

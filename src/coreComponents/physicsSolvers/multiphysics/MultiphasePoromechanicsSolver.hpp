@@ -98,6 +98,13 @@ public:
                         DomainPartition & domain ) override;
 
   virtual void
+  computeStatistics( real64 const & time,
+                     real64 const & dt,
+                     integer cycleNumber,
+                     DomainPartition & domain,
+                     bool outputStatisticsToScreen ) override;
+
+  virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
   virtual real64

@@ -75,6 +75,16 @@ SolverBase::SolverBase( string const & name,
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
     setDescription( "Initial time-step value required by the solver to the event manager." );
 
+  registerWrapper( viewKeyStruct::computeStatisticsString(), &m_computeStatistics ).
+    setApplyDefaultValue( 0 ). // do nothing by default
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating whether statistics are computed or not" );
+
+  registerWrapper( viewKeyStruct::statisticsOutputFrequencyString(), &m_statisticsOutputFrequency ).
+    setApplyDefaultValue( 10 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Flag indicating the frequency of the output of statistics to screen" );
+
   registerGroup( groupKeyStruct::linearSolverParametersString(), &m_linearSolverParameters );
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
 
@@ -603,11 +613,13 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
     if( isConverged )
     {
+      m_nonlinearSolverParameters.m_totalSuccessfulNewtonNumIterations += newtonIter;
       break; // out of outer loop
     }
     else
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
+      m_nonlinearSolverParameters.m_totalWastedNewtonNumIterations += newtonIter;
       stepDt *= dtCutFactor;
       GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
     }
@@ -646,6 +658,13 @@ void SolverBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
 {
   GEOSX_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
 }
+
+void SolverBase::computeStatistics( real64 const & GEOSX_UNUSED_PARAM( time ),
+                                    real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                    integer GEOSX_UNUSED_PARAM( cycleNumber ),
+                                    DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                    bool GEOSX_UNUSED_PARAM( outputStatisticsToScreen ) )
+{}
 
 void SolverBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
                             DofManager & GEOSX_UNUSED_PARAM( dofManager ) ) const

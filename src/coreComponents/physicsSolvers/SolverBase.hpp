@@ -445,7 +445,7 @@ public:
    * instance, a line search may apply a negative scaling factor to remove part of the previously
    * applied solution.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics solver in order to use an implicit
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    *
    */
@@ -469,7 +469,7 @@ public:
    * the beginning of the step. This is useful for cases where convergence was not achieved, and
    * a cut in timestep was required.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics solver in order to use an implicit
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -485,7 +485,7 @@ public:
    * example, the acceptance of the solution will occur during this step, and deallocation of
    * temporaries will be be performed in this function.
    *
-   * @note This function must be overridden in the derived physics solver in order to use an implict
+   * @note This function must be overridden in the derived physics solver in order to use an implicit
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
@@ -493,6 +493,24 @@ public:
                         real64 const & dt,
                         DomainPartition & domain );
 
+
+  /**
+   * @brief compute all the statistics documenting the state of the field and the behavior of the solver
+   * @param time previous time value
+   * @param dt time step
+   * @param cycleNumber current time step number
+   * @param domain the physical domain object
+   * @param outputStatisticsToScreen flag to decide whether the computed statistics (or at least some of them) are output to screen
+   *
+   * This function performs whatever tasks are needed to provide the user with a description of the dynamics
+   * taking place in the domain, as well as some statistics on the behavior of the solver
+   */
+  virtual void
+  computeStatistics( real64 const & time,
+                     real64 const & dt,
+                     integer cycleNumber,
+                     DomainPartition & domain,
+                     bool outputStatisticsToScreen );
 
   /*
    * Returns the requirement for the next time-step to the event executing the solver.
@@ -516,6 +534,9 @@ public:
     static constexpr char const * maxStableDtString() { return "maxStableDt"; }
     static constexpr char const * discretizationString() { return "discretization"; }
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
+
+    static constexpr char const * computeStatisticsString() { return "computeStatistics"; }
+    static constexpr char const * statisticsOutputFrequencyString() { return "statisticsOutputFrequency"; }
   };
 
   struct groupKeyStruct
@@ -694,6 +715,12 @@ protected:
   real64 m_cflFactor;
   real64 m_maxStableDt;
   real64 m_nextDt;
+
+  /// flag indicating whether reservoir statistics or not will be computed or not
+  integer m_computeStatistics;
+
+  /// flag indicating the frequency of the terminal outputs
+  integer m_statisticsOutputFrequency;
 
   /// name of the FV discretization object in the data repository
   string m_discretizationName;
