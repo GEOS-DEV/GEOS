@@ -13,13 +13,13 @@
  */
 
 /**
- * @file CellBlockManager.hpp
+ * @file ParticleBlockManager.hpp
  */
 
-#ifndef GEOSX_MESH_CELLBLOCKMANAGER_H_
-#define GEOSX_MESH_CELLBLOCKMANAGER_H_
+#ifndef GEOSX_MESH_PARTICLEBLOCKMANAGER_H_
+#define GEOSX_MESH_PARTICLEBLOCKMANAGER_H_
 
-#include "CellBlock.hpp"
+#include "ParticleBlock.hpp"
 
 namespace geosx
 {
@@ -28,43 +28,43 @@ namespace dataRepository
 {
 namespace keys
 {
-/// String for cellBlocks
-string const cellBlocks = "cellBlocks";
+/// String for particleBlocks
+string const particleBlocks = "particleBlocks";
 }
 }
 
 /**
- * @class CellBlockManager
- * @brief The CellBlockManager class provides an interface to ObjectManagerBase in order to manage CellBlock data.
+ * @class ParticleBlockManager
+ * @brief The ParticleBlockManager class provides an interface to ObjectManagerBase in order to manage ParticleBlock data.
  */
-class CellBlockManager : public ObjectManagerBase
+class ParticleBlockManager : public ObjectManagerBase
 {
 public:
 
   /**
-   * @brief The function is to return the name of the CellBlockManager in the object catalog
+   * @brief The function is to return the name of the ParticleBlockManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
   static string catalogName()
   {
-    return "CellBlockManager";
+    return "ParticleBlockManager";
   }
 
   virtual const string getCatalogName() const override final
-  { return CellBlockManager::catalogName(); }
+  { return ParticleBlockManager::catalogName(); }
 
 
   /**
-   * @brief Constructor for CellBlockManager object.
-   * @param name name of this instantiation of CellBlockManager
-   * @param parent pointer to the parent Group of this instantiation of CellBlockManager
+   * @brief Constructor for ParticleBlockManager object.
+   * @param name name of this instantiation of ParticleBlockManager
+   * @param parent pointer to the parent Group of this instantiation of ParticleBlockManager
    */
-  CellBlockManager( string const & name, Group * const parent );
+  ParticleBlockManager( string const & name, Group * const parent );
 
   /**
    * @brief Destructor
    */
-  virtual ~CellBlockManager() override;
+  virtual ~ParticleBlockManager() override;
 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
@@ -83,9 +83,9 @@ public:
    * @param regionName name of the element sub-region
    * @return pointer to the element sub-region
    */
-  CellBlock & getRegion( string const & regionName )
+  ParticleBlock & getRegion( string const & regionName )
   {
-    return this->getGroup( dataRepository::keys::cellBlocks ).getGroup< CellBlock >( regionName );
+    return this->getGroup( dataRepository::keys::particleBlocks ).getGroup< ParticleBlock >( regionName );
   }
 
 
@@ -97,7 +97,7 @@ public:
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
   {
-    this->getGroup( dataRepository::keys::cellBlocks ).forSubGroups< CellBlock >( lambda );
+    this->getGroup( dataRepository::keys::particleBlocks ).forSubGroups< ParticleBlock >( lambda );
   }
 
 private:
@@ -105,15 +105,15 @@ private:
   /**
    * @brief Copy constructor.
    */
-  CellBlockManager( const CellBlockManager & );
+  ParticleBlockManager( const ParticleBlockManager & );
 
   /**
    * @brief Copy assignment operator.
    * @return reference to this object
    */
-  CellBlockManager & operator=( const CellBlockManager & );
+  ParticleBlockManager & operator=( const ParticleBlockManager & );
 
 
 };
 }
-#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
+#endif /* GEOSX_MESH_PARTICLEBLOCKMANAGER_H_ */

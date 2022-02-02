@@ -424,8 +424,6 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
 
       // Import Element Regions
       ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
-      GEOSX_LOG_RANK_0("elementManager data hierarchy:");
-      elementManager.printDataHierarchy(1);
       xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
       for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
       {
@@ -449,8 +447,6 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
 
       // Import Particle Regions
       ParticleManager & particleManager = meshBody.getMeshLevel( 0 ).getParticleManager();
-      GEOSX_LOG_RANK_0("particleManager data hierarchy:");
-      particleManager.printDataHierarchy(1);
       xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( particleManager.getName().c_str());
       for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
       {
