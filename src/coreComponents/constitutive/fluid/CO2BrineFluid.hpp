@@ -19,8 +19,10 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_
 
+#include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
+#include "constitutive/fluid/PhaseModel.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineEnthalpy.hpp"
 #include "constitutive/fluid/PVTFunctions/BrineInternalEnergy.hpp"
 #include "constitutive/fluid/PVTFunctions/CO2Enthalpy.hpp"
@@ -43,9 +45,7 @@ namespace geosx
 namespace constitutive
 {
 
-template< typename P1DENS, typename P1VISC, typename P1ENTH, typename P1INTENERGY,
-          typename P2DENS, typename P2VISC, typename P2ENTH, typename P2INTENERGY,
-          typename FLASH >
+template< typename PHASE1, typename PHASE2, typename FLASH >
 class CO2BrineFluid : public MultiFluidBase
 {
 public:
@@ -62,6 +62,8 @@ public:
   static string catalogName();
 
   virtual string getCatalogName() const override { return catalogName(); }
+
+  virtual bool isThermal() const override;
 
   /**
    * @brief Kernel wrapper class for CO2BrineFluid.
@@ -109,14 +111,8 @@ private:
 
     KernelWrapper( integer p1Index,
                    integer p2Index,
-                   P1DENS const & p1Density,
-                   P1VISC const & p1Viscosity,
-                   P1ENTH const & p1Enthalpy,
-                   P1INTENERGY const & p1IntEnergy,
-                   P2DENS const & p2Density,
-                   P2VISC const & p2Viscosity,
-                   P2ENTH const & p2Enthalpy,
-                   P2INTENERGY const & p2IntEnergy,
+                   PHASE1 const & phase1,
+                   PHASE2 const & phase2,
                    FLASH const & flash,
                    arrayView1d< real64 const > componentMolarWeight,
                    bool const useMass,
@@ -136,43 +132,28 @@ private:
     integer m_p2Index;
 
 
-    // Brine constitutive kernel wrappers
-
-    /// Kernel wrapper for brine density updates
-    typename P1DENS::KernelWrapper m_p1Density;
-
-    /// Kernel wrapper for brine viscosity updates
-    typename P1VISC::KernelWrapper m_p1Viscosity;
-
-    /// Kernel wrapper for brine enthalpy updates
-    typename P1ENTH::KernelWrapper m_p1Enthalpy;
-
-    /// Kernel wrapper for brine internal energy updates
-    typename P1INTENERGY::KernelWrapper m_p1IntEnergy;
-
+    /// Brine constitutive kernel wrappers
+    typename PHASE1::KernelWrapper m_phase1;
 
     // CO2 constitutive kernel wrapper
-
-    /// Kernel wrapper for CO2 density updates
-    typename P2DENS::KernelWrapper m_p2Density;
-
-    /// Kernel wrapper for CO2 viscosity updates
-    typename P2VISC::KernelWrapper m_p2Viscosity;
-
-    /// Kernel wrapper for CO2 enthalpy updates
-    typename P2ENTH::KernelWrapper m_p2Enthalpy;
-
-    /// Kernel wrapper for CO2 internal energy updates
-    typename P2INTENERGY::KernelWrapper m_p2IntEnergy;
-
+    typename PHASE2::KernelWrapper m_phase2;
 
     // Flash kernel wrapper
-
-    /// Kernel wrapper for phase fraction and phase component fraction updates
     typename FLASH::KernelWrapper m_flash;
   };
 
   virtual integer getWaterPhaseIndex() const override final;
+
+  /**
+   * @brief Names of the submodels for input
+   */
+  enum class SubModelInputNames : integer
+  {
+    DENSITY,         ///< the keyword for the density model
+    VISCOSITY,       ///< the keyword for the viscosity model
+    ENTHALPY,        ///< the keyword for the enthalpy model
+    INTERNALENERGY,  ///< the keyword for the internal energy model
+  };
 
   /**
    * @brief Create an update kernel wrapper.
@@ -207,70 +188,40 @@ private:
   integer m_p2Index;
 
 
-  // Brine constitutive models
-
-  /// Pointer to the brine density model
-  std::unique_ptr< P1DENS > m_p1Density;
-
-  /// Pointer to the brine viscosity model
-  std::unique_ptr< P1VISC > m_p1Viscosity;
-
-  /// Pointer to the brine enthalpy model
-  std::unique_ptr< P1ENTH > m_p1Enthalpy;
-
-  /// Pointer to the brine internal energy model
-  std::unique_ptr< P1INTENERGY > m_p1IntEnergy;
-
+  /// Brine constitutive models
+  std::unique_ptr< PHASE1 > m_phase1;
 
   // CO2 constitutive models
-
-  /// Pointer to the CO2 density model
-  std::unique_ptr< P2DENS > m_p2Density;
-
-  /// Pointer to the CO2 viscosity model
-  std::unique_ptr< P2VISC > m_p2Viscosity;
-
-  /// Pointer to the CO2 enthalpy model
-  std::unique_ptr< P2ENTH > m_p2Enthalpy;
-
-  /// Pointer to the CO2 internal energy model
-  std::unique_ptr< P2INTENERGY > m_p2IntEnergy;
-
+  std::unique_ptr< PHASE2 > m_phase2;
 
   // Flash model
-
-  /// Pointer to the flash model
   std::unique_ptr< FLASH > m_flash;
 
 };
 
 // these aliases are useful in constitutive dispatch
 using CO2BrinePhillipsFluid =
-  CO2BrineFluid< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction,
-                 PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction,
+  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
                  PVTProps::CO2Solubility >;
 using CO2BrinePhillipsThermalFluid =
-  CO2BrineFluid< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy,
-                 PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy,
+  CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
                  PVTProps::CO2Solubility >;
 
 using CO2BrineEzrokhiFluid =
-  CO2BrineFluid< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction,
-                 PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction,
+  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
                  PVTProps::CO2Solubility >;
 using CO2BrineEzrokhiThermalFluid =
-  CO2BrineFluid< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy,
-                 PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy,
+  CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
+                 PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
                  PVTProps::CO2Solubility >;
 
-template< typename P1DENS, typename P1VISC, typename P1ENTH, typename P1INTENERGY,
-          typename P2DENS, typename P2VISC, typename P2ENTH, typename P2INTENERGY,
-          typename FLASH >
+template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOSX_HOST_DEVICE
 inline void
-CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
-               P2DENS, P2VISC, P2ENTH, P2INTENERGY,
-               FLASH >::KernelWrapper::
+CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -326,51 +277,51 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
 
   // 3. Compute phase densities and phase viscosities
 
-  m_p1Density.compute( pressure,
-                       temperatureInCelsius,
-                       phaseCompFraction[ip1].toSliceConst(),
-                       phaseDensity[ip1],
-                       m_useMass );
-  m_p1Viscosity.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip1].toSliceConst(),
-                         phaseViscosity[ip1],
-                         m_useMass );
+  m_phase1.density.compute( pressure,
+                            temperatureInCelsius,
+                            phaseCompFraction[ip1].toSliceConst(),
+                            phaseDensity[ip1],
+                            m_useMass );
+  m_phase1.viscosity.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction[ip1].toSliceConst(),
+                              phaseViscosity[ip1],
+                              m_useMass );
 
-  m_p2Density.compute( pressure,
-                       temperatureInCelsius,
-                       phaseCompFraction[ip2].toSliceConst(),
-                       phaseDensity[ip2],
-                       m_useMass );
-  m_p2Viscosity.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip2].toSliceConst(),
-                         phaseViscosity[ip2],
-                         m_useMass );
+  m_phase2.density.compute( pressure,
+                            temperatureInCelsius,
+                            phaseCompFraction[ip2].toSliceConst(),
+                            phaseDensity[ip2],
+                            m_useMass );
+  m_phase2.viscosity.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction[ip2].toSliceConst(),
+                              phaseViscosity[ip2],
+                              m_useMass );
 
   // 4. Compute enthalpy and internal energy
 
-  m_p1Enthalpy.compute( pressure,
-                        temperatureInCelsius,
-                        phaseCompFraction[ip1].toSliceConst(),
-                        phaseEnthalpy[ip1],
-                        m_useMass );
-  m_p1IntEnergy.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip1].toSliceConst(),
-                         phaseInternalEnergy[ip1],
-                         m_useMass );
+  m_phase1.enthalpy.compute( pressure,
+                             temperatureInCelsius,
+                             phaseCompFraction[ip1].toSliceConst(),
+                             phaseEnthalpy[ip1],
+                             m_useMass );
+  m_phase1.internalEnergy.compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip1].toSliceConst(),
+                                   phaseInternalEnergy[ip1],
+                                   m_useMass );
 
-  m_p2Enthalpy.compute( pressure,
-                        temperatureInCelsius,
-                        phaseCompFraction[ip2].toSliceConst(),
-                        phaseEnthalpy[ip2],
-                        m_useMass );
-  m_p2IntEnergy.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip2].toSliceConst(),
-                         phaseInternalEnergy[ip2],
-                         m_useMass );
+  m_phase2.enthalpy.compute( pressure,
+                             temperatureInCelsius,
+                             phaseCompFraction[ip2].toSliceConst(),
+                             phaseEnthalpy[ip2],
+                             m_useMass );
+  m_phase2.internalEnergy.compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction[ip2].toSliceConst(),
+                                   phaseInternalEnergy[ip2],
+                                   m_useMass );
 
   // 5. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
@@ -386,18 +337,18 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
     // 5.1.0. Compute the phase molecular weights (ultimately, get that from the PVT function)
     real64 phaseMW[2]{};
     real64 phaseMolarDens = 0.0;
-    m_p1Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip1].toSliceConst(),
-                         phaseMolarDens,
-                         false );
+    m_phase1.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction[ip1].toSliceConst(),
+                              phaseMolarDens,
+                              false );
     phaseMW[ip1] = phaseDensity[ip1] / phaseMolarDens;
 
-    m_p2Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip2].toSliceConst(),
-                         phaseMolarDens,
-                         false );
+    m_phase2.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction[ip2].toSliceConst(),
+                              phaseMolarDens,
+                              false );
     phaseMW[ip2] = phaseDensity[ip2] / phaseMolarDens;
 
     // 5.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
@@ -432,16 +383,16 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
   else
   {
     // for now, we have to compute the phase mass density here
-    m_p1Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip1].toSliceConst(),
-                         phaseMassDensity[ip1],
-                         true );
-    m_p2Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction[ip2].toSliceConst(),
-                         phaseMassDensity[ip2],
-                         true );
+    m_phase1.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction[ip1].toSliceConst(),
+                              phaseMassDensity[ip1],
+                              true );
+    m_phase2.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction[ip2].toSliceConst(),
+                              phaseMassDensity[ip2],
+                              true );
   }
 
   // TODO: extract the following piece of code and write a function that can be used here and in MultiFluidPVTPackageWrapper
@@ -461,14 +412,10 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
   }
 }
 
-template< typename P1DENS, typename P1VISC, typename P1ENTH, typename P1INTENERGY,
-          typename P2DENS, typename P2VISC, typename P2ENTH, typename P2INTENERGY,
-          typename FLASH >
+template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOSX_HOST_DEVICE
 inline void
-CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
-               P2DENS, P2VISC, P2ENTH, P2INTENERGY,
-               FLASH >::KernelWrapper::
+CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -533,67 +480,67 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
 
   // 3. Compute phase densities and phase viscosities
 
-  m_p1Density.compute( pressure,
-                       temperatureInCelsius,
-                       phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                       phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                       phaseDensity.value[ip1], phaseDensity.dPres[ip1],
-                       phaseDensity.dTemp[ip1], phaseDensity.dComp[ip1],
-                       m_useMass );
-  m_p1Viscosity.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseViscosity.value[ip1], phaseViscosity.dPres[ip1],
-                         phaseViscosity.dTemp[ip1], phaseViscosity.dComp[ip1],
-                         m_useMass );
-  m_p2Density.compute( pressure,
-                       temperatureInCelsius,
-                       phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                       phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                       phaseDensity.value[ip2], phaseDensity.dPres[ip2],
-                       phaseDensity.dTemp[ip2], phaseDensity.dComp[ip2],
-                       m_useMass );
-  m_p2Viscosity.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseViscosity.value[ip2], phaseViscosity.dPres[ip2],
-                         phaseViscosity.dTemp[ip2], phaseViscosity.dComp[ip2],
-                         m_useMass );
+  m_phase1.density.compute( pressure,
+                            temperatureInCelsius,
+                            phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
+                            phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
+                            phaseDensity.value[ip1], phaseDensity.dPres[ip1],
+                            phaseDensity.dTemp[ip1], phaseDensity.dComp[ip1],
+                            m_useMass );
+  m_phase1.viscosity.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
+                              phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
+                              phaseViscosity.value[ip1], phaseViscosity.dPres[ip1],
+                              phaseViscosity.dTemp[ip1], phaseViscosity.dComp[ip1],
+                              m_useMass );
+  m_phase2.density.compute( pressure,
+                            temperatureInCelsius,
+                            phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
+                            phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
+                            phaseDensity.value[ip2], phaseDensity.dPres[ip2],
+                            phaseDensity.dTemp[ip2], phaseDensity.dComp[ip2],
+                            m_useMass );
+  m_phase2.viscosity.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
+                              phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
+                              phaseViscosity.value[ip2], phaseViscosity.dPres[ip2],
+                              phaseViscosity.dTemp[ip2], phaseViscosity.dComp[ip2],
+                              m_useMass );
 
 
   // 4. Compute enthalpy and internal energy
 
-  m_p1Enthalpy.compute( pressure,
-                        temperatureInCelsius,
-                        phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                        phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                        phaseEnthalpy.value[ip1], phaseEnthalpy.dPres[ip1],
-                        phaseEnthalpy.dTemp[ip1], phaseEnthalpy.dComp[ip1],
-                        m_useMass );
-  m_p1IntEnergy.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseInternalEnergy.value[ip1], phaseInternalEnergy.dPres[ip1],
-                         phaseInternalEnergy.dTemp[ip1], phaseInternalEnergy.dComp[ip1],
-                         m_useMass );
+  m_phase1.enthalpy.compute( pressure,
+                             temperatureInCelsius,
+                             phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
+                             phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
+                             phaseEnthalpy.value[ip1], phaseEnthalpy.dPres[ip1],
+                             phaseEnthalpy.dTemp[ip1], phaseEnthalpy.dComp[ip1],
+                             m_useMass );
+  m_phase1.internalEnergy.compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
+                                   phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
+                                   phaseInternalEnergy.value[ip1], phaseInternalEnergy.dPres[ip1],
+                                   phaseInternalEnergy.dTemp[ip1], phaseInternalEnergy.dComp[ip1],
+                                   m_useMass );
 
-  m_p2Enthalpy.compute( pressure,
-                        temperatureInCelsius,
-                        phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                        phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                        phaseEnthalpy.value[ip2], phaseEnthalpy.dPres[ip2],
-                        phaseEnthalpy.dTemp[ip2], phaseEnthalpy.dComp[ip2],
-                        m_useMass );
-  m_p2IntEnergy.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseInternalEnergy.value[ip2], phaseInternalEnergy.dPres[ip2],
-                         phaseInternalEnergy.dTemp[ip2], phaseInternalEnergy.dComp[ip2],
-                         m_useMass );
+  m_phase2.enthalpy.compute( pressure,
+                             temperatureInCelsius,
+                             phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
+                             phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
+                             phaseEnthalpy.value[ip2], phaseEnthalpy.dPres[ip2],
+                             phaseEnthalpy.dTemp[ip2], phaseEnthalpy.dComp[ip2],
+                             m_useMass );
+  m_phase2.internalEnergy.compute( pressure,
+                                   temperatureInCelsius,
+                                   phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
+                                   phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
+                                   phaseInternalEnergy.value[ip2], phaseInternalEnergy.dPres[ip2],
+                                   phaseInternalEnergy.dTemp[ip2], phaseInternalEnergy.dComp[ip2],
+                                   m_useMass );
 
   // 5. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
 
@@ -618,13 +565,13 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
     real64 dPhaseMolarDens_dPres = 0.0;
     real64 dPhaseMolarDens_dTemp = 0.0;
     stackArray1d< real64, numComps > dPhaseMolarDens_dComp( 2 );
-    m_p2Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseMolarDens, dPhaseMolarDens_dPres,
-                         dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp.toSlice(),
-                         false );
+    m_phase2.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
+                              phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
+                              phaseMolarDens, dPhaseMolarDens_dPres,
+                              dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp.toSlice(),
+                              false );
     phaseMW[ip2] = phaseDensity.value[ip2] / phaseMolarDens;
     dPhaseMW_dPres[ip2] = phaseDensity.dPres[ip2] / phaseMolarDens - phaseMW[ip2] * dPhaseMolarDens_dPres / phaseMolarDens;
     dPhaseMW_dTemp[ip2] = phaseDensity.dTemp[ip2] / phaseMolarDens - phaseMW[ip2] * dPhaseMolarDens_dTemp / phaseMolarDens;
@@ -632,13 +579,13 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
     {
       dPhaseMW_dComp[ip2][ic] = phaseDensity.dComp[ip2][ic] / phaseMolarDens - phaseMW[ip2] * dPhaseMolarDens_dComp[ic] / phaseMolarDens;
     }
-    m_p1Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseMolarDens, dPhaseMolarDens_dPres,
-                         dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp.toSlice(),
-                         false );
+    m_phase1.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
+                              phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
+                              phaseMolarDens, dPhaseMolarDens_dPres,
+                              dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp.toSlice(),
+                              false );
     phaseMW[ip1] = phaseDensity.value[ip1] / phaseMolarDens;
     dPhaseMW_dPres[ip1] = phaseDensity.dPres[ip1] / phaseMolarDens - phaseMW[ip1] * dPhaseMolarDens_dPres / phaseMolarDens;
     dPhaseMW_dTemp[ip1] = phaseDensity.dTemp[ip1] / phaseMolarDens - phaseMW[ip1] * dPhaseMolarDens_dTemp / phaseMolarDens;
@@ -734,20 +681,20 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
   else
   {
     // for now, we have to compute the phase mass density here
-    m_p1Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseMassDensity.value[ip1], phaseMassDensity.dPres[ip1],
-                         phaseMassDensity.dTemp[ip1], phaseMassDensity.dComp[ip1],
-                         true );
-    m_p2Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseMassDensity.value[ip2], phaseMassDensity.dPres[ip2],
-                         phaseMassDensity.dTemp[ip2], phaseMassDensity.dComp[ip2],
-                         true );
+    m_phase1.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
+                              phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
+                              phaseMassDensity.value[ip1], phaseMassDensity.dPres[ip1],
+                              phaseMassDensity.dTemp[ip1], phaseMassDensity.dComp[ip1],
+                              true );
+    m_phase2.density.compute( pressure,
+                              temperatureInCelsius,
+                              phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
+                              phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
+                              phaseMassDensity.value[ip2], phaseMassDensity.dPres[ip2],
+                              phaseMassDensity.dTemp[ip2], phaseMassDensity.dComp[ip2],
+                              true );
   }
 
   // TODO: extract the following piece of code and write a function that can be used here and in MultiFluidPVTPackageWrapper
@@ -791,13 +738,9 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
   }
 }
 
-template< typename P1DENS, typename P1VISC, typename P1ENTH, typename P1INTENERGY,
-          typename P2DENS, typename P2VISC, typename P2ENTH, typename P2INTENERGY,
-          typename FLASH >
+template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOSX_HOST_DEVICE inline void
-CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
-               P2DENS, P2VISC, P2ENTH, P2INTENERGY,
-               FLASH >::KernelWrapper::
+CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
   update( localIndex const k,
           localIndex const q,
           real64 const pressure,
@@ -817,8 +760,32 @@ CO2BrineFluid< P1DENS, P1VISC, P1ENTH, P1INTENERGY,
            m_totalDensity( k, q ) );
 }
 
+/// Declare strings associated with enumeration values
+/// Needed for now, because we don't use the catalogNames for input (yet)
+ENUM_STRINGS( CO2BrinePhillipsFluid::SubModelInputNames,
+              "DensityFun",
+              "ViscosityFun",
+              "EnthalpyFun",
+              "InternalEnergyFun" );
+ENUM_STRINGS( CO2BrinePhillipsThermalFluid::SubModelInputNames,
+              "DensityFun",
+              "ViscosityFun",
+              "EnthalpyFun",
+              "InternalEnergyFun" );
+ENUM_STRINGS( CO2BrineEzrokhiFluid::SubModelInputNames,
+              "DensityFun",
+              "ViscosityFun",
+              "EnthalpyFun",
+              "InternalEnergyFun" );
+ENUM_STRINGS( CO2BrineEzrokhiThermalFluid::SubModelInputNames,
+              "DensityFun",
+              "ViscosityFun",
+              "EnthalpyFun",
+              "InternalEnergyFun" );
+
+
 } // namespace constitutive
 
 } // namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_FLUID_MULTIPHASEMULTICOMPONENTFLUID_HPP_
+#endif //GEOSX_CONSTITUTIVE_FLUID_CO2BRINEFLUID_HPP_

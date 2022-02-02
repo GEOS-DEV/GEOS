@@ -30,7 +30,6 @@ namespace constitutive
 
 MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent ),
-  m_thermalFlag( false ),
   m_useMass( false )
 {
   // We make base inputs optional here, since derived classes may want to predefine/hardcode
@@ -47,9 +46,6 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::phaseNamesString(), &m_phaseNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
-
-  registerWrapper( viewKeyStruct::thermalFlagString(), &m_thermalFlag ).
-    setRestartFlags( RestartFlags::NO_WRITE );
 
   registerWrapper( viewKeyStruct::useMassString(), &m_useMass ).
     setRestartFlags( RestartFlags::NO_WRITE );

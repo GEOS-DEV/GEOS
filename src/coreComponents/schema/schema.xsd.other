@@ -920,8 +920,6 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
@@ -1030,8 +1028,6 @@
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
@@ -1102,8 +1098,6 @@
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
@@ -1174,8 +1168,6 @@
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
@@ -1246,8 +1238,6 @@
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
@@ -1326,8 +1316,6 @@
 		<xsd:attribute name="phaseMassDensity" type="real64_array3d" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->
@@ -1486,8 +1474,6 @@
 		<xsd:attribute name="phaseTypes" type="integer_array" />
 		<!--phaseViscosity => Phase viscosity-->
 		<xsd:attribute name="phaseViscosity" type="real64_array3d" />
-		<!--thermalFlag => (no description available)-->
-		<xsd:attribute name="thermalFlag" type="integer" />
 		<!--totalDensity => Total density-->
 		<xsd:attribute name="totalDensity" type="real64_array2d" />
 		<!--useMass => (no description available)-->

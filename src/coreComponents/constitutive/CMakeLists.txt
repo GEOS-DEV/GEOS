@@ -29,6 +29,7 @@ set( constitutive_headers
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiFluidExtrinsicData.hpp
+     fluid/PhaseModel.hpp
      fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp

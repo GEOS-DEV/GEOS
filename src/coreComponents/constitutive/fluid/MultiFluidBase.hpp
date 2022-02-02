@@ -92,10 +92,10 @@ public:
   /**
    * @brief Get the thermal flag.
    * @return boolean value indicating whether the model can be used to assemble the energy balance equation or not
-   * @detail if thermalFlag is true, the constitutive model compute the enthalpy and internal energy of the phase.
+   * @detail if isThermal is true, the constitutive model compute the enthalpy and internal energy of the phase.
    *         This can be used to check the compatibility of the constitutive model with the solver
    */
-  bool getThermalFlag() const { return m_thermalFlag; }
+  virtual bool isThermal() const { return false; }
 
   /**
    * @brief Get the mass flag.
