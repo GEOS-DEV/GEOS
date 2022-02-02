@@ -217,7 +217,6 @@ public:
     static constexpr char const * componentMolarWeightString() { return "componentMolarWeight"; }
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * useMassString() { return "useMass"; }
-    static constexpr char const * thermalFlagString() { return "thermalFlag"; }
   };
 
 protected:
@@ -356,9 +355,6 @@ private:
 protected:
 
   virtual void postProcessInput() override;
-
-  // flag indicating whether the constitutive model can be used to assemble the energy balance or not
-  int m_thermalFlag;
 
   // flag indicating whether input/output component fractions are treated as mass fractions
   int m_useMass;
