@@ -429,7 +429,8 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       real64 const t0 = m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0]; // this is a bit insane to access perm
       real64 const t1 = m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
 
-      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
+      //real64 const harmonicWeight   = t0*t1 / sumOfTrans;
+      real64 const harmonicWeight   = sumOfTrans > 0.0 ? (t0*t1) / sumOfTrans : 0.0;
       real64 const arithmeticWeight = 0.25 * (t0+t1);
 
       real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
@@ -441,8 +442,10 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       real64 const dt1_dvar1 = m_weights[iconn][1] * dCoeff_dVar1[er1][esr1][ei1][0][0];
 
       real64 dHarmonic_dvar1[2];
-      dHarmonic_dvar1[0] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-      dHarmonic_dvar1[1] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      //dHarmonic_dvar1[0] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      //dHarmonic_dvar1[1] = ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      dHarmonic_dvar1[0] = sumOfTrans > 0.0 ? ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans ) : 0.0;
+      dHarmonic_dvar1[1] = sumOfTrans > 0.0 ? ( dt0_dvar1 * t1 * sumOfTrans - dt0_dvar1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans ) : 0.0;
 
       real64 dArithmetic_dvar1[2];
       dArithmetic_dvar1[0] = 0.25 * dt0_dvar1;
@@ -455,8 +458,10 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0][0];
 
       real64 dHarmonic_dvar2[2];
-      dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
-      dHarmonic_dvar2[1] = ( t0 * dt1_dvar2 * sumOfTrans - dt1_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      //dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      //dHarmonic_dvar2[1] = ( t0 * dt1_dvar2 * sumOfTrans - dt1_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      dHarmonic_dvar2[0] = sumOfTrans > 0.0 ? ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans ) : 0.0;
+      dHarmonic_dvar2[1] = sumOfTrans > 0.0 ? ( t0 * dt1_dvar2 * sumOfTrans - dt1_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans ) : 0.0;
 
       real64 dArithmetic_dvar2[2];
       dArithmetic_dvar2[0] = 0.25 * dt0_dvar2;
