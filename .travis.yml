@@ -143,13 +143,9 @@ return_script: &return_script
   script:
   # Verifies if all the "checks" jobs passed
   - |
-    states=$(curl -sS -H "Travis-API-Version: 3" \
-             -X GET https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/jobs | \
-             jq -r '.jobs[] | select( (.stage.name == "checks") and
-             (.allow_failure == true)) | .state ')
-  - num_states=$(echo $states | wc -w)
-  - num_passed=$(echo $states | grep -o "passed" | wc -w)
-  - if [[ $num_states == $num_passed ]]; then exit 0; else exit 1; fi
+    exit $(curl -sS -H "Travis-API-Version: 3" \
+           -X GET https://api.travis-ci.com/build/$TRAVIS_BUILD_ID/jobs | \
+           jq '[ .jobs[] | select( (.stage.name == "checks") and (.allow_failure == true) and (.state != "passed")) ] | length')
 
 stages:
 - checks
@@ -255,7 +251,6 @@ jobs:
     env:
     - DOCKER_REPOSITORY=geosx/ubuntu20.04-gcc9
     - CMAKE_BUILD_TYPE=Release
-    - BUILD_AND_TEST_ARGS=--disable-unit-tests
   - stage: builds
     name: Ubuntu debug (20.04, gcc 10.3.0, open-mpi 4.0.3)
     <<: *geosx_linux_build

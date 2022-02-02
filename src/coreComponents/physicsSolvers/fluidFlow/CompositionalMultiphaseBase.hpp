@@ -137,13 +137,13 @@ public:
   void updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant relperm models using current values of phase volume fraction
    * @param castedRelPerm the group storing the required fields
    */
   void updateRelPermModel( ObjectManagerBase & castedRelPerm, localIndex const targetIndex ) const;
 
   /**
-   * @brief Update all relevant fluid models using current values of pressure and composition
+   * @brief Update all relevant capillary pressure models using current values of phase volume fraction
    * @param castedCapPres the group storing the required fields
    */
   void updateCapPressureModel( ObjectManagerBase & castedCapPres, localIndex const targetIndex ) const;
@@ -207,6 +207,8 @@ public:
 
   arrayView1d< string const > capPresModelNames() const { return m_capPressureModelNames; }
 
+  arrayView1d< string const > thermalConductivityModelNames() const { return m_thermalConductivityModelNames; }
+
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
     static constexpr char const * elemDofFieldString() { return "compositionalVariables"; }
@@ -222,6 +224,8 @@ public:
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
 
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
+
+    static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -329,11 +333,6 @@ protected:
    */
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   */
-  void resetViews( MeshLevel & mesh ) override;
-
   /// the max number of fluid phases
   integer m_numPhases;
 
@@ -358,6 +357,12 @@ protected:
   /// name of the cap pressure constitutive model
   array1d< string > m_capPressureModelNames;
 
+  /// flag to determine whether or not this is a thermal simulation
+  integer m_thermalFlag;
+
+  /// name of the thermal conductivity model
+  array1d< string > m_thermalConductivityModelNames;
+
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
 
@@ -366,38 +371,6 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowCompDensChopping;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_COMP_DC > > m_dCompFrac_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseVolFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseVolFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseVolFrac_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMob;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_dPhaseMob_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, compflow::USD_PHASE_DC > > m_dPhaseMob_dCompDens;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::relperm::USD_RELPERM > > m_phaseRelPerm;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseVisc;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dPhaseDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dPhaseDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_phaseMassDens;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > > m_dPhaseMassDens_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > > m_dPhaseMassDens_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_phaseCompFrac;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > > m_dPhaseCompFrac_dPres;
-  ElementRegionManager::ElementViewAccessor< arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > > m_dPhaseCompFrac_dComp;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const, constitutive::cappres::USD_CAPPRES > > m_phaseCapPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const, constitutive::cappres::USD_CAPPRES_DS > > m_dPhaseCapPressure_dPhaseVolFrac;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_totalDensOld;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const, compflow::USD_PHASE > > m_phaseMobOld;
 
 };
 

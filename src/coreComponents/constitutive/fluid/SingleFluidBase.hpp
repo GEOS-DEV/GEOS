@@ -185,20 +185,6 @@ public:
   real64 defaultDensity() const { return m_defaultDensity; }
   real64 defaultViscosity() const { return m_defaultViscosity; }
 
-  // *** Data repository keys
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
-    static constexpr char const * densityString() { return "density"; }
-    static constexpr char const * dDens_dPresString() { return "dDensity_dPressure"; }
-    static constexpr char const * initialDensityString() { return "initialDensity"; }
-
-    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
-    static constexpr char const * viscosityString() { return "viscosity"; }
-    static constexpr char const * dVisc_dPresString() { return "dViscosity_dPressure"; }
-  };
-
 protected:
 
   virtual void postProcessInput() override;
@@ -214,6 +200,14 @@ protected:
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;
 
+private:
+
+  // *** Data repository keys
+  struct viewKeyStruct
+  {
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+  };
 };
 
 } //namespace constitutive
