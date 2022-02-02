@@ -11,6 +11,7 @@ maximumTemperature        real64                                        (no desc
 minimumPressure           real64                                        (no description available)                                                  
 minimumTemperature        real64                                        (no description available)                                                  
 phasePoreVolume           real64_array                                  (no description available)                                                  
+thermalConductivityNames  string_array                                  Name of the thermal conductivity constitutive model to use                  
 totalPoreVolume           real64                                        (no description available)                                                  
 facePressure              real64_array :ref:`DATASTRUCTURE_FaceManager` Face pressure                                                               
 gravityCoefficient        real64_array :ref:`DATASTRUCTURE_FaceManager` Gravity coefficient (dot product of gravity acceleration by gravity vector) 

@@ -101,20 +101,18 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
     // This will fill J_WR, and J_RW
     forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
     {
-      // working arrays
-      globalIndex eqnRowIndexRes = 0;
-      stackArray1d< globalIndex, 2 > eqnRowIndicesWell( wellNDOF );
-      globalIndex dofColIndexRes = 0;
-      stackArray1d< globalIndex, 2 > dofColIndicesWell( wellNDOF );
-
-      // get the reservoir (sub)region and element indices
+      // Get the reservoir (sub)region and element indices
       localIndex const er = resElementRegion[iperf];
       localIndex const esr = resElementSubRegion[iperf];
       localIndex const ei = resElementIndex[iperf];
       localIndex const iwelem = perfWellElemIndex[iperf];
 
-      eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
-      dofColIndexRes = resDofNumber[er][esr][ei];
+      globalIndex const eqnRowIndexRes = resDofNumber[er][esr][ei] - rankOffset;
+      globalIndex const dofColIndexRes = resDofNumber[er][esr][ei];
+
+      // Working arrays
+      stackArray1d< globalIndex, 2 > eqnRowIndicesWell( wellNDOF );
+      stackArray1d< globalIndex, 2 > dofColIndicesWell( wellNDOF );
 
       for( localIndex idof = 0; idof < wellNDOF; ++idof )
       {

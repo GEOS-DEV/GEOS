@@ -186,7 +186,8 @@ struct FluxKernel
 
   using CellBasedFluxFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::gravityCoefficient >;
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::elementAperture >;
 
   using ParticleFluidAccessors =
     StencilAccessors< extrinsicMeshData::particlefluid::settlingFactor,
