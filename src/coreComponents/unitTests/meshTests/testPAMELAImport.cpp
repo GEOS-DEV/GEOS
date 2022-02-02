@@ -16,7 +16,7 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-#include "tests/meshFileNames.hpp"
+#include "tests/meshDirName.hpp"
 #include "mesh/MeshManager.hpp"
 
 // TPL includes
@@ -95,6 +95,8 @@ void TestMeshImport( string const & inputStringMesh,
 
 TEST( PAMELAImport, testGMSH )
 {
+  std::string const gmshFilePath = testMeshDir + "/toy_model.msh";
+
   conduit::Node node;
   Group root( "root", node );
   MeshManager meshManager( "mesh", &root );
@@ -125,6 +127,8 @@ TEST( PAMELAImport, testGMSH )
 
 TEST( PAMELAImport, testECLIPSE )
 {
+  std::string const eclipseFilePath = testMeshDir + "/toy_model.GRDECL";
+
   conduit::Node node;
   Group root( "root", node );
   MeshManager meshManager( "mesh", &root );

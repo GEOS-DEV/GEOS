@@ -449,6 +449,7 @@ std::vector< vtkDataArray * > findArrayToBeImported( vtkUnstructuredGrid & mesh 
     }
     if( dataType != VTK_FLOAT && dataType != VTK_DOUBLE )
     {
+      // TODO check on "attribute" + make a specific constant for this.
       GEOSX_LOG_RANK_0( "Underlying data Type " << curArray->GetDataTypeAsString() << " for array "
                                                 << curArray->GetName() << " is not supported by GEOSX and will be ignored "
                                                 << "(Only double and float are supported)" );
@@ -595,7 +596,7 @@ void writeCellBlock( string const & name,
 {
 
   localIndex numCells = cellIds.size();
-  assert( region_id >= -1 );
+  GEOSX_ASSERT( region_id >= -1 );
   string const cellBlockName = region_id != -1 ? std::to_string( region_id ) + "_" + name : name;
 
   CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( cellBlockName );
@@ -747,8 +748,8 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   };
   importFieldsForElementType( "hexahedron", m_regionsHex ); // FIXME. Why this name?
   importFieldsForElementType( "tetrahedron", m_regionsTetra );
-  importFieldsForElementType( "wedges", m_regionsWedges );
-  importFieldsForElementType( "pyramids", m_regionsPyramids );
+  importFieldsForElementType( "wedges", m_regionsWedges ); // TODO plural or singular
+  importFieldsForElementType( "pyramids", m_regionsPyramids ); // TODO plural or singular
 
   std::map< string, string_array > fieldNames;
   for( vtkDataArray * vtkArray: m_arraysToBeImported )

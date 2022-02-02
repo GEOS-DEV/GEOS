@@ -1,0 +1,3 @@
+#include "common/DataTypes.hpp"
+
+static std::string const testMeshDir = "@TEST_MESH_DIR@";
