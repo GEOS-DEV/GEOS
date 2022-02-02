@@ -19,6 +19,8 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 // TPL includes
@@ -29,6 +31,21 @@ namespace geosx
 {
 namespace testing
 {
+
+void initializeTable( string const & tableName,
+                      array1d< array1d< real64 > > const & coordinates,
+                      array1d< real64 > const & values )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  TableFunction & table =
+    dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), tableName ) );
+  table.setTableCoordinates( coordinates );
+  table.setTableValues( values );
+  table.reInitializeFunction();
+
+  table.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+}
 
 template< typename MODEL, typename VAR, typename D_VAR_D_SAT >
 void testNumericalDerivatives( dataRepository::Group & parent,

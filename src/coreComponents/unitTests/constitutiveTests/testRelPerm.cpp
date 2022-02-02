@@ -15,7 +15,6 @@
 // Source includes
 #include "constitutiveTestHelpers.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
-#include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 
@@ -169,8 +168,6 @@ RelativePermeabilityBase & makeVanGenuchtenBakerRelPermThreePhase( string const 
 
 RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group & parent )
 {
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   // 1) First, define the tables (to values that matters for our use cases)
 
   // 1D table, various interpolation methods
@@ -355,19 +352,12 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
   values_g[39] = 5.275887e-1;
   values_g[40] = 5.500000e-1;
 
-  TableFunction & table_w = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "water_swg" ) );
-  table_w.setTableCoordinates( coordinates_w );
-  table_w.setTableValues( values_w );
-  table_w.reInitializeFunction();
-
-  table_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  TableFunction & table_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "gas_swg" ) );
-  table_g.setTableCoordinates( coordinates_g );
-  table_g.setTableValues( values_g );
-  table_g.reInitializeFunction();
-
-  table_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  initializeTable( "water_swg",
+                   coordinates_w,
+                   values_w );
+  initializeTable( "gas_swg",
+                   coordinates_g,
+                   values_g );
 
   // 2) Then set up the constitutive model
 
@@ -388,8 +378,6 @@ RelativePermeabilityBase & makeTableRelPermTwoPhase( string const & name, Group 
 
 RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & name, Group & parent )
 {
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   // 1) First, define the tables (to values that matters for our use cases)
 
   // 1D table, various interpolation methods
@@ -617,26 +605,15 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   imbibitionValues_g[39] = 5.221327e-1;
   imbibitionValues_g[40] = 5.500000e-1;
 
-  TableFunction & drainageTable_w = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "drainageWater_swg" ) );
-  drainageTable_w.setTableCoordinates( coordinates_w );
-  drainageTable_w.setTableValues( drainageValues_w );
-  drainageTable_w.reInitializeFunction();
-
-  drainageTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  TableFunction & drainageTable_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "drainageGas_swg" ) );
-  drainageTable_g.setTableCoordinates( coordinates_g );
-  drainageTable_g.setTableValues( drainageValues_g );
-  drainageTable_g.reInitializeFunction();
-
-  drainageTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  TableFunction & imbibitionTable_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "imbibitionGas_swg" ) );
-  imbibitionTable_g.setTableCoordinates( coordinates_g );
-  imbibitionTable_g.setTableValues( imbibitionValues_g );
-  imbibitionTable_g.reInitializeFunction();
-
-  imbibitionTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  initializeTable( "drainageWater_swg",
+                   coordinates_w,
+                   drainageValues_w );
+  initializeTable( "drainageGas_swg",
+                   coordinates_g,
+                   drainageValues_g );
+  initializeTable( "imbibitionGas_swg",
+                   coordinates_g,
+                   imbibitionValues_g );
 
   // 2) Then set up the constitutive model
 
@@ -667,8 +644,6 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
 
 RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Group & parent )
 {
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   // 1) First, define the tables
 
   // 1D table, various interpolation methods
@@ -693,19 +668,12 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_ow_w = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "water_swof" ) );
-  table_ow_w.setTableCoordinates( coordinates );
-  table_ow_w.setTableValues( values );
-  table_ow_w.reInitializeFunction();
-
-  table_ow_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  TableFunction & table_ow_o = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "oil_swof" ) );
-  table_ow_o.setTableCoordinates( coordinates );
-  table_ow_o.setTableValues( values );
-  table_ow_o.reInitializeFunction();
-
-  table_ow_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  initializeTable( "water_swof",
+                   coordinates,
+                   values );
+  initializeTable( "oil_swof",
+                   coordinates,
+                   values );
 
   // 1.a) Second pair of phases (og)
 
@@ -722,19 +690,12 @@ RelativePermeabilityBase & makeTableRelPermThreePhase( string const & name, Grou
     values[i] = coordinates[0][i]*coordinates[0][i]*coordinates[0][i];
   }
 
-  TableFunction & table_og_g = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "gas_sgof" ) );
-  table_og_g.setTableCoordinates( coordinates );
-  table_og_g.setTableValues( values );
-  table_og_g.reInitializeFunction();
-
-  table_og_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-  TableFunction & table_og_o = dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), "oil_sgof" ) );
-  table_og_o.setTableCoordinates( coordinates );
-  table_og_o.setTableValues( values );
-  table_og_o.reInitializeFunction();
-
-  table_og_o.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+  initializeTable( "gas_sgof",
+                   coordinates,
+                   values );
+  initializeTable( "oil_sgof",
+                   coordinates,
+                   values );
 
   // 2) Then set up the constitutive model
 

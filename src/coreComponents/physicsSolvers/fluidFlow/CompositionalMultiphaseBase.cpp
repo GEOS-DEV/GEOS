@@ -586,11 +586,12 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh )
     // - This step depends phaseRelPerm
     updatePhaseMobility( subRegion, targetIndex );
 
-    // 4.4 Finally, we initialize the thermal conductivity
+    // 4.5 Finally, we initialize the thermal conductivity
     //
     // Note:
     // - This must be called after updatePorosityAndPermeability and updatePhaseVolumeFraction
     // - This step depends on porosity and phaseVolFraction
+    // - Energy balance is not supported yet, so the following flag is always false for now
     if( m_thermalFlag )
     {
       // initialized porosity

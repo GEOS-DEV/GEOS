@@ -575,7 +575,7 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
     // Step 2: get the normalized value of saturation
     real64 const ratio = ( Smxi - Swc ) / ( Scrt - Shy );
     real64 const Snorm = Smxi - ( Scrt - S ) * ratio; // normalized saturation from equation 2.166
-    real64 const dSnorm_dS =  -ratio;
+    real64 const dSnorm_dS =  ratio;
     real64 dkri_dSnorm = 0.0;
     real64 const krwiAtSnorm = imbibitionRelPermKernelWrapper.compute( &Snorm, &dkri_dSnorm );
     real64 const dkriAtSnorm_dS = dkri_dSnorm * dSnorm_dS;

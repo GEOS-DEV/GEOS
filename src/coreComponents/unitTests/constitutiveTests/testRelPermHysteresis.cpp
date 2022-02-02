@@ -16,7 +16,6 @@
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "common/DataTypes.hpp"
 #include "constitutiveTestHelpers.hpp"
-#include "functions/FunctionManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "mainInterface/initialization.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
@@ -33,8 +32,6 @@ using namespace geosx::dataRepository;
 
 TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string const & name, Group & parent )
 {
-  FunctionManager & functionManager = FunctionManager::getInstance();
-
   // 1) First, define the tables (to values that matters for our use cases)
 
   // 1D table, various interpolation methods
@@ -47,7 +44,7 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   coordinates_dw.resize( 1 );
   coordinates_dw[0].resize( Naxis1 );
 
-  coordinates_dw[0][0] = 0.22000;
+  coordinates_dw[0][0] = 0.22000; // Swc = 0.22
   coordinates_dw[0][1] = 0.25000;
   coordinates_dw[0][2] = 0.30000;
   coordinates_dw[0][3] = 0.35000;
@@ -62,13 +59,13 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   coordinates_dw[0][12] = 0.72000;
   coordinates_dw[0][13] = 0.82000;
   coordinates_dw[0][14] = 0.91000;
-  coordinates_dw[0][15] = 1.00000;
+  coordinates_dw[0][15] = 1.00000; // consistent with Swmaxd = 1-Sgcrd = 1-0 = 1
 
   array1d< real64_array > coordinates_iw;
   coordinates_iw.resize( 1 );
   coordinates_iw[0].resize( Naxis4 );
 
-  coordinates_iw[0][0] = 0.22000;
+  coordinates_iw[0][0] = 0.22000; // Swc = 0.22
   coordinates_iw[0][1] = 0.25000;
   coordinates_iw[0][2] = 0.30000;
   coordinates_iw[0][3] = 0.35000;
@@ -79,15 +76,14 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   coordinates_iw[0][8] = 0.60000;
   coordinates_iw[0][9] = 0.65000;
   coordinates_iw[0][10] = 0.66000;
-  coordinates_iw[0][11] = 0.70000;
-  // note that this stops at Sw because Swmax = 1-Sgrc = 1-0.3 = 0.7
+  coordinates_iw[0][11] = 0.70000; // consistent with Swmaxi = 1-Sgcri = 1-0.3 = 0.7
 
   // Gas phase saturation, fifth column of Table 2
   array1d< real64_array > coordinates_dg;
   coordinates_dg.resize( 1 );
   coordinates_dg[0].resize( Naxis2 );
 
-  coordinates_dg[0][0] = 0.000;
+  coordinates_dg[0][0] = 0.000; // Sgcrd = 0.0
   coordinates_dg[0][1] = 0.010;
   coordinates_dg[0][2] = 0.030;
   coordinates_dg[0][3] = 0.050;
@@ -105,13 +101,13 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   coordinates_dg[0][15] = 0.650;
   coordinates_dg[0][16] = 0.700;
   coordinates_dg[0][17] = 0.750;
-  coordinates_dg[0][18] = 0.780;
+  coordinates_dg[0][18] = 0.780; // consistent with Swc = 0.22
 
   array1d< real64_array > coordinates_ig;
   coordinates_ig.resize( 1 );
   coordinates_ig[0].resize( Naxis3 );
 
-  coordinates_ig[0][0] = 0.300;
+  coordinates_ig[0][0] = 0.300; // Sgcri = 0.3
   coordinates_ig[0][1] = 0.350;
   coordinates_ig[0][2] = 0.400;
   coordinates_ig[0][3] = 0.450;
@@ -121,7 +117,7 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   coordinates_ig[0][7] = 0.650;
   coordinates_ig[0][8] = 0.700;
   coordinates_ig[0][9] = 0.750;
-  coordinates_ig[0][10] = 0.780;
+  coordinates_ig[0][10] = 0.780; // consistent with Swc = 0.22
 
   // then define the bounding drainage and imbibibition relative permeability
 
@@ -197,38 +193,52 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   imbibitionValues_g[9] = 0.90773047;
   imbibitionValues_g[10] = 1.;
 
+  initializeTable( "drainageWater_swg",
+                   coordinates_dw,
+                   drainageValues_w );
+  initializeTable( "drainageGas_swg",
+                   coordinates_dg,
+                   drainageValues_g );
+  initializeTable( "imbibitionWater_swg",
+                   coordinates_iw,
+                   imbibitionValues_w );
+  initializeTable( "imbibitionGas_swg",
+                   coordinates_ig,
+                   imbibitionValues_g );
 
-  TableFunction & drainageTable_w = dynamicCast< TableFunction & >(
-    *functionManager.createChild( TableFunction::catalogName(), "drainageWater_swg" ) );
-  drainageTable_w.setTableCoordinates( coordinates_dw );
-  drainageTable_w.setTableValues( drainageValues_w );
-  drainageTable_w.reInitializeFunction();
+  /*
+     TableFunction & drainageTable_w = dynamicCast< TableFunction & >(
+   * functionManager.createChild( TableFunction::catalogName(), "drainageWater_swg" ) );
+     drainageTable_w.setTableCoordinates( coordinates_dw );
+     drainageTable_w.setTableValues( drainageValues_w );
+     drainageTable_w.reInitializeFunction();
 
-  drainageTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+     drainageTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & drainageTable_g = dynamicCast< TableFunction & >(
-    *functionManager.createChild( TableFunction::catalogName(), "drainageGas_swg" ) );
-  drainageTable_g.setTableCoordinates( coordinates_dg );
-  drainageTable_g.setTableValues( drainageValues_g );
-  drainageTable_g.reInitializeFunction();
+     TableFunction & drainageTable_g = dynamicCast< TableFunction & >(
+   * functionManager.createChild( TableFunction::catalogName(), "drainageGas_swg" ) );
+     drainageTable_g.setTableCoordinates( coordinates_dg );
+     drainageTable_g.setTableValues( drainageValues_g );
+     drainageTable_g.reInitializeFunction();
 
-  drainageTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+     drainageTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & imbibitionTable_w = dynamicCast< TableFunction & >(
-    *functionManager.createChild( TableFunction::catalogName(), "imbibitionWater_swg" ) );
-  imbibitionTable_w.setTableCoordinates( coordinates_iw );
-  imbibitionTable_w.setTableValues( imbibitionValues_w );
-  imbibitionTable_w.reInitializeFunction();
+     TableFunction & imbibitionTable_w = dynamicCast< TableFunction & >(
+   * functionManager.createChild( TableFunction::catalogName(), "imbibitionWater_swg" ) );
+     imbibitionTable_w.setTableCoordinates( coordinates_iw );
+     imbibitionTable_w.setTableValues( imbibitionValues_w );
+     imbibitionTable_w.reInitializeFunction();
 
-  imbibitionTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+     imbibitionTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
 
-  TableFunction & imbibitionTable_g = dynamicCast< TableFunction & >(
-    *functionManager.createChild( TableFunction::catalogName(), "imbibitionGas_swg" ) );
-  imbibitionTable_g.setTableCoordinates( coordinates_ig );
-  imbibitionTable_g.setTableValues( imbibitionValues_g );
-  imbibitionTable_g.reInitializeFunction();
+     TableFunction & imbibitionTable_g = dynamicCast< TableFunction & >(
+   * functionManager.createChild( TableFunction::catalogName(), "imbibitionGas_swg" ) );
+     imbibitionTable_g.setTableCoordinates( coordinates_ig );
+     imbibitionTable_g.setTableValues( imbibitionValues_g );
+     imbibitionTable_g.reInitializeFunction();
 
-  imbibitionTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+     imbibitionTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+   */
 
   // 2) Then set up the constitutive model
 

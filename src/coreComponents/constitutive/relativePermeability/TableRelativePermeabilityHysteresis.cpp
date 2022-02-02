@@ -555,7 +555,7 @@ void TableRelativePermeabilityHysteresis::computeLandCoefficient()
 
   if( m_phaseHasHysteresis[IPT::WETTING] && m_phaseHasHysteresis[IPT::NONWETTING] )
   {
-    GEOSX_WARNING_IF( numPhases == 2 && !isZero( m_landParam[IPT::WETTING] - m_landParam[IPT::NONWETTING] ),
+    GEOSX_WARNING_IF( numPhases == 2 && LvArray::math::abs( m_landParam[IPT::WETTING] - m_landParam[IPT::NONWETTING] ) > 1e-6,
                       GEOSX_FMT( "{}: For two-phase flow, the Land parameters computed from the wetting and non-wetting relperm curves should match.\n"
                                  "However, we found that the wetting Land parameter is {}, "
                                  "whereas the nonwetting Land parameter is {}. "
