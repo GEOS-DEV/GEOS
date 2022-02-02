@@ -303,6 +303,9 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
   elementManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
+  ParticleManager & particleManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getParticleManager(); // TODO is this necessary? SJP
+  particleManager.generateDataStructureSkeleton( 0 );
+  schemaUtilities::SchemaConstruction( particleManager, schemaRoot, targetChoiceNode, documentationType );
 
 
   // Add entries that are only used in the pre-processor
@@ -418,8 +421,11 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     {
       string const meshBodyName = meshBody.getName();
       GEOSX_LOG_RANK_0( "MeshBody " << meshBodyName );
-      ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
 
+      // Import Element Regions
+      ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
+      GEOSX_LOG_RANK_0("elementManager data hierarchy:");
+      elementManager.printDataHierarchy(1);
       xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
       for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
       {
@@ -429,18 +435,43 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
         regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
                                                                     regionNode.attribute( "meshBody" ).value() );
 
-
-
         string const cellBlocks = regionNode.attribute( "cellBlocks" ).value();
 
         if( regionMeshBodyName==meshBodyName )
         {
+          std::cout<<regionNode.name()<<std::endl;
           std::cout<<regionName<<" "<<cellBlocks<<std::endl;
           Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
           newRegion->processInputFileRecursive( regionNode );
         }
 
       }
+
+      // Import Particle Regions
+      ParticleManager & particleManager = meshBody.getMeshLevel( 0 ).getParticleManager();
+      GEOSX_LOG_RANK_0("particleManager data hierarchy:");
+      particleManager.printDataHierarchy(1);
+      xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( particleManager.getName().c_str());
+      for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
+      {
+
+        string const regionName = regionNode.attribute( "name" ).value();
+        string const
+        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
+                                                                    regionNode.attribute( "meshBody" ).value() );
+
+        string const particleBlocks = regionNode.attribute( "particleBlocks" ).value();
+
+        if( regionMeshBodyName==meshBodyName )
+        {
+          std::cout<<regionNode.name()<<std::endl;
+          std::cout<<regionName<<" "<<particleBlocks<<std::endl;
+          Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
+          newRegion->processInputFileRecursive( regionNode );
+        }
+
+      }
+
 //      elementManager.processInputFileRecursive( elementRegionsNode );
     });
   }

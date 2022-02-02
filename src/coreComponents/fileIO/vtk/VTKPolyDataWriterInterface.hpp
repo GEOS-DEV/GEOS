@@ -33,6 +33,7 @@ class ElementRegionBase;
 class EmbeddedSurfaceNodeManager;
 class ElementRegionManager;
 class NodeManager;
+class ParticleManager;
 
 namespace vtk
 {

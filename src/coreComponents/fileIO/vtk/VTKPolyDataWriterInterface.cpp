@@ -713,6 +713,7 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
 void writeVtmFile( real64 const time,
                    string const & meshBodyName,
                    ElementRegionManager const & elemManager,
+                   ParticleManager const & particleManager,
                    VTKVTMWriter const & vtmWriter )
 {
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
@@ -734,13 +735,15 @@ void writeVtmFile( real64 const time,
   {
     vtmWriter.addBlock( meshBodyName );
     vtmWriter.addSubBlock( meshBodyName, CellElementRegion::catalogName() );
-    vtmWriter.addSubBlock( meshBodyName,  WellElementRegion::catalogName() );
-    vtmWriter.addSubBlock( meshBodyName,  SurfaceElementRegion::catalogName() );
+    vtmWriter.addSubBlock( meshBodyName, WellElementRegion::catalogName() );
+    vtmWriter.addSubBlock( meshBodyName, SurfaceElementRegion::catalogName() );
+    vtmWriter.addSubBlock( meshBodyName, ParticleRegion::catalogName() );
   }
 
   elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
   elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
   elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
+  particleManager.forParticleRegions< ParticleRegion >( writeSubBlocks );
 
   if( mpiRank == 0 )
   {
@@ -804,12 +807,13 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( a );
     string const meshBodyName = meshBody.getName();
     ElementRegionManager const & elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
+    ParticleManager const & particleManager = meshBody.getMeshLevel( 0 ).getParticleManager();
     NodeManager const & nodeManager = meshBody.getMeshLevel( 0 ).getNodeManager();
     EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshBody.getMeshLevel( 0 ).getEmbSurfNodeManager();
     writeCellElementRegions( time, elemManager, nodeManager );
     writeWellElementRegions( time, elemManager, nodeManager );
     writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager );
-    writeVtmFile( time, meshBodyName, elemManager, vtmWriter );
+    writeVtmFile( time, meshBodyName, elemManager, particleManager, vtmWriter );
   }
 
   if( cycle != m_previousCycle )

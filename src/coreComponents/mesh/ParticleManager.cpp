@@ -12,414 +12,632 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file ParticleManager.cpp
- */
+#include <map>
+#include <vector>
 
 #include "ParticleManager.hpp"
-#include "FaceManager.hpp"
-#include "EdgeManager.hpp"
-#include "ToElementRelation.hpp"
-#include "BufferOps.hpp"
+
 #include "common/TimingMacros.hpp"
-#include "ElementRegionManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "ParticleBlockManager.hpp"
+#include "mesh/MeshManager.hpp"
+#include "schema/schemaUtilities.hpp"
 
 namespace geosx
 {
-
 using namespace dataRepository;
 
-// *********************************************************************************************************************
-/**
- * @return
- */
-//START_SPHINX_REFPOS_REG
-ParticleManager::ParticleManager( string const & name,
-                          Group * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_referencePosition( 0, 3 )
+ParticleRegion::ParticleRegion( string const & name, Group * const parent ):
+  ObjectManagerBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
-  //END_SPHINX_REFPOS_REG
-  this->registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
-  this->registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
-  this->registerWrapper( viewKeyStruct::elementRegionListString(), &elementRegionList() );
-  this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
-  this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
-
+  setInputFlags( InputFlags::OPTIONAL );
+  this->registerGroup< Group >( ParticleRegion::groupKeyStruct::elementRegionsGroup() );
 }
 
-
-ParticleManager::~ParticleManager()
-{}
-
-
-void ParticleManager::resize( localIndex const newSize )
+ParticleRegion::~ParticleRegion()
 {
-  m_toFacesRelation.resize( newSize, 2 * getFaceMapOverallocation() );
-  m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
-  m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
-  m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
-  m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
-  ObjectManagerBase::resize( newSize );
+  // TODO Auto-generated destructor stub
 }
 
-
-void ParticleManager::setEdgeMaps( EdgeManager const & edgeManager )
+localIndex ParticleRegion::numCellBlocks() const
 {
-  GEOSX_MARK_FUNCTION;
-
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList();
-  localIndex const numEdges = edgeToNodeMap.size( 0 );
-  localIndex const numNodes = size();
-
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager.maxEdgesPerNode() );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
-
-  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
+  localIndex numCellBlocks = 0;
+  this->forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & )
   {
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 1 ), edgeID );
-    totalNodeEdges += 2;
+    numCellBlocks += 1;
   } );
+  return numCellBlocks;
+}
 
-  // Resize the node to edge map.
-  m_toEdgesRelation.resize( 0 );
-
-  // Reserve space for the number of current nodes plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  m_toEdgesRelation.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
-  m_toEdgesRelation.reserveValues( valuesToReserve );
-
-  // Append the individual sets.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+void ParticleRegion::resize( integer_array const & numElements,
+                                   string_array const & regionNames,
+                                   string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
+{
+  localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
+  for( localIndex reg=0; reg<n_regions; ++reg )
   {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
+    this->getRegion( reg ).resize( numElements[reg] );
   }
+}
 
-  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation.toView();
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+void ParticleRegion::setMaxGlobalIndex()
+{
+  forElementSubRegions< ElementSubRegionBase >( [this] ( ElementSubRegionBase const & subRegion )
   {
-    localIndex * const edges = toEdgesTemp[ nodeID ];
-    localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
-    localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
-    toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
+    m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
 
-  m_toEdgesRelation.setRelatedObject( edgeManager );
+  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
+                         &m_maxGlobalIndex,
+                         1,
+                         MPI_MAX,
+                         MPI_COMM_GEOSX );
 }
 
 
-void ParticleManager::setFaceMaps( FaceManager const & faceManager )
+
+Group * ParticleRegion::createChild( string const & childKey, string const & childName )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
+                  "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
+  GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
-  localIndex const numFaces = faceToNodes.size();
-  localIndex const numNodes = size();
+  Group & elementRegions = this->getGroup( ParticleRegion::groupKeyStruct::elementRegionsGroup() );
+  return &elementRegions.registerGroup( childName,
+                                        CatalogInterface::factory( childKey, childName, &elementRegions ) );
 
-  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager.maxFacesPerNode() );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
+}
 
-  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
+void ParticleRegion::expandObjectCatalogs()
+{
+  ObjectManagerBase::CatalogInterface::CatalogType const & catalog = ObjectManagerBase::getCatalog();
+  for( ObjectManagerBase::CatalogInterface::CatalogType::const_iterator iter = catalog.begin();
+       iter!=catalog.end();
+       ++iter )
   {
-    localIndex const numFaceNodes = faceToNodes.sizeOfArray( faceID );
-    totalNodeFaces += numFaceNodes;
-    for( localIndex a = 0; a < numFaceNodes; ++a )
+    string const key = iter->first;
+    if( key.find( "ElementRegion" ) != string::npos )
     {
-      toFacesTemp.emplaceBackAtomic< parallelHostAtomic >( faceToNodes( faceID, a ), faceID );
+      this->createChild( key, key );
     }
-  } );
-
-  // Resize the node to face map.
-  m_toFacesRelation.resize( 0 );
-
-  // Reserve space for the number of nodes faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  m_toFacesRelation.reserve( entriesToReserve );
-
-  // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
-  localIndex const valuesToReserve = totalNodeFaces.get() + numNodes * FaceManager::nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
-  m_toFacesRelation.reserveValues( valuesToReserve );
-
-  // Append the individual arrays.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + getFaceMapOverallocation() );
   }
-
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex * const faces = toFacesTemp[ nodeID ];
-    localIndex const numNodeFaces = toFacesTemp.sizeOfArray( nodeID );
-    localIndex const numUniqueFaces = LvArray::sortedArrayManipulation::makeSortedUnique( faces, faces + numNodeFaces );
-    m_toFacesRelation.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
-  } );
-
-  m_toFacesRelation.setRelatedObject( faceManager );
 }
 
 
-void ParticleManager::setElementMaps( ElementRegionManager const & elementRegionManager )
+void ParticleRegion::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                                xmlWrapper::xmlNode schemaParent,
+                                                integer documentationType )
 {
-  GEOSX_MARK_FUNCTION;
-
-  ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
-  ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
-  ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
-  localIndex const numNodes = size();
-
-  // The number of elements attached to the each node.
-  array1d< localIndex > elemsPerNode( numNodes );
-
-  // The total number of elements, the sum of elemsPerNode.
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
-
-  elementRegionManager.
-    forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
+  xmlWrapper::xmlNode targetChoiceNode = schemaParent.child( "xsd:choice" );
+  if( targetChoiceNode.empty() )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap, &subRegion] ( localIndex const k )
+    targetChoiceNode = schemaParent.prepend_child( "xsd:choice" );
+    targetChoiceNode.append_attribute( "minOccurs" ) = "0";
+    targetChoiceNode.append_attribute( "maxOccurs" ) = "unbounded";
+  }
+
+  std::set< string > names;
+  this->forElementRegions( [&]( ElementRegionBase & elementRegion )
+  {
+    names.insert( elementRegion.getName() );
+  } );
+
+  for( string const & name: names )
+  {
+    schemaUtilities::SchemaConstruction( getRegion( name ), schemaRoot, targetChoiceNode, documentationType );
+  }
+}
+
+void ParticleRegion::generateMesh( Group & cellBlockManager )
+{
+  this->forElementRegions< CellElementRegion, SurfaceElementRegion >( [&]( auto & elemRegion )
+  {
+    elemRegion.generateMesh( cellBlockManager.getGroup( keys::cellBlocks ) );
+  } );
+}
+
+void ParticleRegion::generateCellToEdgeMaps( FaceManager const & faceManager )
+{
+  /*
+   * Create cell to edges map
+   * I use the existing maps from cells to faces and from faces to edges.
+   */
+  localIndex faceIndex, edgeIndex;
+  int count = 0;
+  bool isUnique = true;
+
+  this->forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+  {
+    FixedOneToManyRelation & cellToEdges = subRegion.edgeList();
+    FixedOneToManyRelation const & cellToFaces = subRegion.faceList();
+    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager.edgeList();
+
+    //loop over the cells
+    for( localIndex kc = 0; kc < subRegion.size(); kc++ )
     {
-      localIndex const numIndependedNodes = subRegion.numIndependentNodesPerElement();
-      totalNodeElems += numIndependedNodes;
-      for( localIndex a = 0; a < numIndependedNodes; ++a )
+      count = 0;
+      for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); kf++ )
       {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
+        // loop over edges of each face
+        faceIndex = cellToFaces[kc][kf];
+        for( localIndex ke = 0; ke < faceToEdges.sizeOfArray( faceIndex ); ke++ )
+        {
+          isUnique = true;
+          edgeIndex = faceToEdges[faceIndex][ke];
+
+          //loop over edges that have already been added to the element.
+          for( localIndex kec = 0; kec < count+1; kec++ )
+          {
+            // make sure that the edge has not been counted yet
+            if( cellToEdges( kc, kec ) == edgeIndex )
+            {
+              isUnique = false;
+              break;
+            }
+          }
+          if( isUnique )
+          {
+            cellToEdges( kc, count ) = edgeIndex;
+            count++;
+          }
+
+        } // end edge loop
+      } // end face loop
+    } // end cell loop
+  } );
+}
+
+void ParticleRegion::generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager )
+{
+  this->forElementRegions< CellElementRegion >( [&]( CellElementRegion & elemRegion )
+  {
+    elemRegion.generateAggregates( faceManager, nodeManager );
+  } );
+}
+
+void ParticleRegion::generateWells( MeshManager & meshManager,
+                                          MeshLevel & meshLevel )
+{
+  NodeManager & nodeManager = meshLevel.getNodeManager();
+
+  // get the offsets to construct local-to-global maps for well nodes and elements
+  nodeManager.setMaxGlobalIndex();
+  globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
+  localIndex const elemOffsetLocal  = this->getNumberOfElements();
+  globalIndex const elemOffsetGlobal = MpiWrapper::sum( elemOffsetLocal );
+
+  globalIndex wellElemCount = 0;
+  globalIndex wellNodeCount = 0;
+
+  // construct the wells one by one
+  forElementRegions< WellElementRegion >( [&]( WellElementRegion & wellRegion )
+  {
+
+    // get the global well geometry from the well generator
+    string const generatorName = wellRegion.getWellGeneratorName();
+    InternalWellGenerator const & wellGeometry =
+      meshManager.getGroup< InternalWellGenerator >( generatorName );
+
+    // generate the local data (well elements, nodes, perforations) on this well
+    // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
+    // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
+    wellRegion.generateWell( meshLevel, wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
+
+    // increment counters with global number of nodes and elements
+    wellElemCount += wellGeometry.getNumElements();
+    wellNodeCount += wellGeometry.getNumNodes();
+
+    string const & subRegionName = wellRegion.getSubRegionName();
+    WellElementSubRegion &
+    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
+                  .getGroup< WellElementSubRegion >( subRegionName );
+
+    globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
+
+    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
+                    "Invalid partitioning in well " << subRegionName );
+
+  } );
+
+  // communicate to rebuild global node info since we modified global ordering
+  nodeManager.setMaxGlobalIndex();
+}
+
+int ParticleRegion::PackSize( string_array const & wrapperNames,
+                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return PackPrivate< false >( junk, wrapperNames, packList );
+}
+
+int ParticleRegion::Pack( buffer_unit_type * & buffer,
+                                string_array const & wrapperNames,
+                                ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  return PackPrivate< true >( buffer, wrapperNames, packList );
+}
+
+template< bool DOPACK >
+int
+ParticleRegion::PackPrivate( buffer_unit_type * & buffer,
+                                   string_array const & wrapperNames,
+                                   ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  int packedSize = 0;
+
+//  packedSize += Group::Pack( buffer, wrapperNames, {}, 0, 0);
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+
+  parallelDeviceEvents events;
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
+      [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
+      }
+      else
+      {
+        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
       }
     } );
-  } );
-
-  // Resize the node to elem map.
-  toElementRegionList.resize( 0 );
-  toElementSubRegionList.resize( 0 );
-  toElementList.resize( 0 );
-
-  // Reserve space for the number of current faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  toElementRegionList.reserve( entriesToReserve );
-  toElementSubRegionList.reserve( entriesToReserve );
-  toElementList.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeElems.get() + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
-  toElementRegionList.reserveValues( valuesToReserve );
-  toElementSubRegionList.reserveValues( valuesToReserve );
-  toElementList.reserveValues( valuesToReserve );
-
-  // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    toElementRegionList.appendArray( 0 );
-    toElementSubRegionList.appendArray( 0 );
-    toElementList.appendArray( 0 );
-
-    toElementRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementSubRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
   }
 
-  // Populate the element maps.
-  // Note that this can't be done in parallel because the three element lists must be in the same order.
-  // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
-  elementRegionManager.
-    forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
-                                                            ( localIndex const er, localIndex const esr, ElementRegionBase const &,
-                                                            CellElementSubRegion const & subRegion )
+  waitAllDeviceEvents( events );
+  return packedSize;
+}
+
+
+int ParticleRegion::Unpack( buffer_unit_type const * & buffer,
+                                  ElementViewAccessor< arrayView1d< localIndex > > & packList )
+{
+  return unpackPrivate( buffer, packList );
+}
+
+int ParticleRegion::Unpack( buffer_unit_type const * & buffer,
+                                  ElementReferenceAccessor< array1d< localIndex > > & packList )
+{
+  return unpackPrivate( buffer, packList );
+}
+
+template< typename T >
+int ParticleRegion::unpackPrivate( buffer_unit_type const * & buffer,
+                                         T & packList )
+{
+  int unpackedSize = 0;
+
+  string name;
+  unpackedSize += bufferOps::Unpack( buffer, name );
+
+  GEOSX_ERROR_IF( name != this->getName(), "Unpacked name (" << name << ") does not equal object name (" << this->getName() << ")" );
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  parallelDeviceEvents events;
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
+      [&]( localIndex const esr, ElementSubRegionBase & subRegion )
     {
-      for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
-      {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        toElementRegionList.emplaceBack( nodeIndex, er );
-        toElementSubRegionList.emplaceBack( nodeIndex, esr );
-        toElementList.emplaceBack( nodeIndex, k );
-      }
-    }
-  } );
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
 
-  this->m_toElements.setElementRegionManager( elementRegionManager );
-}
+      /// THIS IS WRONG??
+      arrayView1d< localIndex > & elemList = packList[kReg][esr];
 
-
-void ParticleManager::compressRelationMaps()
-{
-  m_toEdgesRelation.compress();
-  m_toFacesRelation.compress();
-  m_toElements.m_toElementRegion.compress();
-  m_toElements.m_toElementSubRegion.compress();
-  m_toElements.m_toElementIndex.compress();
-}
-
-
-void ParticleManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
-{
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
-
-  if( this->hasWrapper( "usedFaces" ) )
-  {
-    exclusionList.insert( this->getWrapperIndex( "usedFaces" ));
+      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
+    } );
   }
+
+  waitAllDeviceEvents( events );
+  return unpackedSize;
+}
+
+int ParticleRegion::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return PackGlobalMapsPrivate< false >( junk, packList );
+}
+
+int ParticleRegion::PackGlobalMaps( buffer_unit_type * & buffer,
+                                          ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  return PackGlobalMapsPrivate< true >( buffer, packList );
+}
+template< bool DOPACK >
+int
+ParticleRegion::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                                             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  int packedSize = 0;
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
+      [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.packGlobalMaps( buffer, elemList, 0 );
+      }
+      else
+      {
+        packedSize += subRegion.packGlobalMapsSize( elemList, 0 );
+      }
+    } );
+  }
+
+  return packedSize;
 }
 
 
-localIndex ParticleManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+int
+ParticleRegion::UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                                        ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
+{
+  int unpackedSize = 0;
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  packList.resize( numRegionsRead );
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  {
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    packList[kReg].resize( numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
+      [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+    {
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = packList[kReg][esr].get();
+
+      unpackedSize += subRegion.unpackGlobalMaps( buffer, elemList, 0 );
+    } );
+  }
+
+  return unpackedSize;
+}
+
+
+
+int ParticleRegion::PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packUpDownMapsPrivate< false >( junk, packList );
+}
+int ParticleRegion::PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return packUpDownMapsPrivate< false >( junk, packList );
 }
 
-
-localIndex ParticleManager::packUpDownMaps( buffer_unit_type * & buffer,
-                                        arrayView1d< localIndex const > const & packList ) const
+int ParticleRegion::PackUpDownMaps( buffer_unit_type * & buffer,
+                                          ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+{
+  return packUpDownMapsPrivate< true >( buffer, packList );
+}
+int ParticleRegion::PackUpDownMaps( buffer_unit_type * & buffer,
+                                          ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
 {
   return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
-
-template< bool DOPACK >
-localIndex ParticleManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+template< bool DOPACK, typename T >
+int
+ParticleRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                             T const & packList ) const
 {
-  localIndex packedSize = 0;
+  int packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toEdgesRelation.toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToEdges,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_toEdgesRelation.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToFaces,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_toFacesRelation.relatedObjectLocalToGlobal() );
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_toElements,
-                                           packList,
-                                           m_toElements.getElementRegionManager() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
+      [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.packUpDownMaps( buffer, elemList );
+      }
+      else
+      {
+        packedSize += subRegion.packUpDownMapsSize( elemList );
+      }
+    } );
+  }
+
+  return packedSize;
+}
+//template int
+//ParticleRegion::
+//PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
+//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+//template int
+//ParticleRegion::
+//PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
+//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+
+
+int
+ParticleRegion::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                                        ElementReferenceAccessor< localIndex_array > & packList,
+                                        bool const overwriteMap )
+{
+  int unpackedSize = 0;
+
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
+
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
+  {
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
+
+    ElementRegionBase & elemRegion = getRegion( regionName );
+
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
+      [&]( localIndex const kSubReg, ElementSubRegionBase & subRegion )
+    {
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackUpDownMaps( buffer, elemList, false, overwriteMap );
+    } );
+  }
+
+  return unpackedSize;
+}
+
+int ParticleRegion::packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                     string const fractureRegionName ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packFracturedElementsPrivate< false >( junk, packList, fractureRegionName );
+}
+
+int ParticleRegion::packFracturedElements( buffer_unit_type * & buffer,
+                                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                 string const fractureRegionName ) const
+{
+  return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
+}
+template< bool DOPACK >
+int
+ParticleRegion::packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                    string const fractureRegionName ) const
+{
+  int packedSize = 0;
+
+  SurfaceElementRegion const & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+  arrayView1d< globalIndex const > const embeddedSurfacesLocalToGlobal =
+    embeddedSurfaceSubRegion.localToGlobalMap();
+
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const esr, CellElementSubRegion const & subRegion )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+
+      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      if( DOPACK )
+      {
+        packedSize += subRegion.packFracturedElements( buffer, elemList, embeddedSurfacesLocalToGlobal );
+      }
+      else
+      {
+        packedSize += subRegion.packFracturedElementsSize( elemList, embeddedSurfacesLocalToGlobal );
+      }
+    } );
+  }
+
   return packedSize;
 }
 
-
-localIndex ParticleManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                          localIndex_array & packList,
-                                          bool const overwriteUpMaps,
-                                          bool const )
+int
+ParticleRegion::unpackFracturedElements( buffer_unit_type const * & buffer,
+                                               ElementReferenceAccessor< localIndex_array > & packList,
+                                               string const fractureRegionName )
 {
-  localIndex unPackedSize = 0;
+  int unpackedSize = 0;
 
-  string temp;
-  unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::edgeListString(), "" );
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toEdgesRelation,
-                                     packList,
-                                     m_unmappedGlobalIndicesInToEdges,
-                                     this->globalToLocalMap(),
-                                     m_toEdgesRelation.relatedObjectGlobalToLocal(),
-                                     overwriteUpMaps );
+  SurfaceElementRegion & embeddedSurfaceRegion =
+    this->getRegion< SurfaceElementRegion >( fractureRegionName );
+  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
+    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-  unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::faceListString(), "" );
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     m_toFacesRelation,
-                                     packList,
-                                     m_unmappedGlobalIndicesInToFaces,
-                                     this->globalToLocalMap(),
-                                     m_toFacesRelation.relatedObjectGlobalToLocal(),
-                                     overwriteUpMaps );
+  unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal =
+    embeddedSurfaceSubRegion.globalToLocalMap();
 
-  unPackedSize += bufferOps::Unpack( buffer, temp );
-  GEOSX_ERROR_IF( temp != viewKeyStruct::elementListString(), "" );
-  unPackedSize += bufferOps::Unpack( buffer,
-                                     this->m_toElements,
-                                     packList,
-                                     m_toElements.getElementRegionManager(),
-                                     overwriteUpMaps );
+  localIndex numRegionsRead;
+  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
 
-  return unPackedSize;
-}
-
-
-void ParticleManager::fixUpDownMaps( bool const clearIfUnmapped )
-{
-  ObjectManagerBase::fixUpDownMaps( m_toEdgesRelation,
-                                    m_toEdgesRelation.relatedObjectGlobalToLocal(),
-                                    m_unmappedGlobalIndicesInToEdges,
-                                    clearIfUnmapped );
-
-  ObjectManagerBase::fixUpDownMaps( m_toFacesRelation,
-                                    m_toFacesRelation.relatedObjectGlobalToLocal(),
-                                    m_unmappedGlobalIndicesInToFaces,
-                                    clearIfUnmapped );
-
-}
-
-
-void ParticleManager::depopulateUpMaps( std::set< localIndex > const & receivedNodes,
-                                    array2d< localIndex > const & edgesToNodes,
-                                    ArrayOfArraysView< localIndex const > const & facesToNodes,
-                                    ElementRegionManager const & elemRegionManager )
-{
-
-  ObjectManagerBase::cleanUpMap( receivedNodes, m_toEdgesRelation.toView(), edgesToNodes );
-  ObjectManagerBase::cleanUpMap( receivedNodes, m_toFacesRelation.toView(), facesToNodes );
-
-  for( auto const & targetIndex : receivedNodes )
+  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
   {
-    std::set< std::tuple< localIndex, localIndex, localIndex > > eraseList;
-    for( localIndex k=0; k<m_toElements.m_toElementRegion.sizeOfArray( targetIndex ); ++k )
-    {
-      localIndex const elemRegionIndex    = m_toElements.m_toElementRegion[targetIndex][k];
-      localIndex const elemSubRegionIndex = m_toElements.m_toElementSubRegion[targetIndex][k];
-      localIndex const elemIndex          = m_toElements.m_toElementIndex[targetIndex][k];
+    string regionName;
+    unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-      CellElementSubRegion const & subRegion = elemRegionManager.getRegion( elemRegionIndex ).
-                                                 getSubRegion< CellElementSubRegion >( elemSubRegionIndex );
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const downmap = subRegion.nodeList();
-      bool hasTargetIndex = false;
+    ElementRegionBase & elemRegion = getRegion( regionName );
 
-      for( localIndex a=0; a<downmap.size( 1 ); ++a )
-      {
-        localIndex const compositeLocalIndex = downmap( elemIndex, a );
-        if( compositeLocalIndex==targetIndex )
-        {
-          hasTargetIndex=true;
-        }
-      }
-      if( !hasTargetIndex )
-      {
-        eraseList.insert( std::make_tuple( elemRegionIndex, elemSubRegionIndex, elemIndex ) );
-      }
-    }
-    for( auto const & val : eraseList )
+    localIndex numSubRegionsRead;
+    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
+    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
+      [&]( localIndex const kSubReg, CellElementSubRegion & subRegion )
     {
-      erase( m_toElements, targetIndex, std::get< 0 >( val ), std::get< 1 >( val ), std::get< 2 >( val ) );
-    }
+      string subRegionName;
+      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
+
+      /// THIS IS WRONG
+      localIndex_array & elemList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackFracturedElements( buffer, elemList, embeddedSurfacesGlobalToLocal );
+    } );
   }
+
+  return unpackedSize;
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleManager, string const &, Group * const )
 
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleRegion, string const &, Group * const )
 }
