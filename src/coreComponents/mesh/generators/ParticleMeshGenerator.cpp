@@ -100,7 +100,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   }
 
   // Rank 0 will have to broadcast the particle information to all ranks at some point, probably here. Let's skip this for now and get serial MPM working.
-  // Is it better to send all the particle info to all ranks and let each rank perform spatial partitioning, or have rank 0 do the partitioning and only send the necessary pieces to each rank?
+  // All ranks should, for now, read in the entire particle file and throw out what they don't need. Ultimately, probably better to have separate files for each rank.
 
   particleManager.resize( numParticles );
   arrayView2d< real64, particles::REFERENCE_POSITION_USD > const & X = particleManager.referencePosition();

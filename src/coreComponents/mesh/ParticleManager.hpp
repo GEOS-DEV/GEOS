@@ -13,505 +13,1646 @@
  */
 
 /**
- * @file ParticleManager.hpp
+ * @file ParticleRegion.hpp
  */
 
-#ifndef GEOSX_MESH_PARTICLEMANAGER_HPP_
-#define GEOSX_MESH_PARTICLEMANAGER_HPP_
+#ifndef GEOSX_MESH_PARTICLEMANAGER_HPP
+#define GEOSX_MESH_PARTICLEMANAGER_HPP
 
+#include "ParticleBlock.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
+#include "ParticleRegion.hpp"
+#include "ParticleSubRegion.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "CellBlockManager.hpp"
-#include "ToElementRelation.hpp"
-
-class SiloFile;
+#include "dataRepository/ReferenceWrapper.hpp"
 
 namespace geosx
 {
 
-class CellBlock;
-class FaceManager;
-class EdgeManager;
-class ElementRegionManager;
-
+class MeshManager;
 
 /**
- * @class ParticleManager
- * @brief The ParticleManager class provides an interface to ObjectManagerBase in order to manage particle data.
- *
- * The ParticleManagerT class manages the particle data using the
- * ObjectDataStructureBaseT as a data manager.
- * This means that each field is stored in an array where each array entry
- * corresponds to a particle.
+ * @class ParticleRegion
+ * @brief The ParticleRegion class provides an interface to ObjectManagerBase in order to manage ElementRegion
+ * data
  */
-class ParticleManager : public ObjectManagerBase
+class ParticleRegion : public ObjectManagerBase
 {
 public:
 
-  //START_SPHINX_INCLUDE_01
-
-  /// nodeToEdge map type
-  using EdgeMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
-
-  /// nodeToFace map type
-  using FaceMapType = InterObjectRelation< ArrayOfSets< localIndex > >;
-
-  /// nodeToElement map type
-  using ElemMapType = OrderedVariableToManyElementRelation;
-  //END_SPHINX_INCLUDE_01
-
   /**
-   * @brief return default size of the value array in the node-to-edge mapping
-   * @return default size of value array in the node-to-edge mapping
+   * @brief Group key associated with elementRegionsGroup.
    */
-  inline localIndex getEdgeMapOverallocation()
-  { return 8; }
-
-  /**
-   * @brief return default size of the value in the node-to-face mapping
-   * @return default size of value array in the node-to-face mapping
-   */
-  inline localIndex getFaceMapOverallocation()
-  { return 8; }
-
-  /**
-   * @brief return default size of the value array in the node-to-element mapping
-   * @return default size of value array in the node-to-element mapping
-   */
-  inline localIndex getElemMapOverAllocation()
-  { return 8; }
-
-/**
- * @name Constructors/destructor
- */
-  ///@{
-
-  /**
-   * @brief Main constructor for ParticleManager Objects.
-   * @param [in] name the name of this instantiation of ParticleManager
-   * @param [in] parent the parent group of this instantiation of ParticleManager
-   */
-  ParticleManager( string const & name,
-               dataRepository::Group * const parent );
-
-  /**
-   * @brief The default ParticleManager destructor.
-   */
-  ~ParticleManager() override;
-
-  /// @cond DO_NOT_DOCUMENT
-  /**
-   * @brief deleted constructor
-   */
-  ParticleManager() = delete;
-
-  /**
-   * @brief deleted copy constructor
-   */
-  ParticleManager( const ParticleManager & init ) = delete;
-
-  /**
-   * @brief deleted assignement operator
-   */
-  ParticleManager & operator=( const ParticleManager & ) = delete;
-  /// @endcond
-
-  ///@}
-
-  /**
-   * @brief Resize the ParticleManager, and all its member vectors that relate nodes to faces, to edges, and to elements.
-   * @details the size of the ParticleManager is the number of nodes
-   * @param[in] newsize the new size of the ParticleManager
-   */
-  virtual void resize( localIndex const newsize ) override;
-
-  /**
-   * @name Static Factory Catalog Functions
-   */
-  ///@{
-
-  /**
-   * @brief Return the name of the node manager in the object catalog.
-   * @return string that contains the ParticleManager catalog name
-   */
-  static string catalogName()
-  { return "ParticleManager"; }
-
-  /**
-   * @brief Provide a virtual access to catalogName().
-   * @return string that contains the ParticleManager catalog name
-   */
-  const string getCatalogName() const override final
-  { return ParticleManager::catalogName(); }
-
-  ///@}
-
-  /**
-   * @brief Link the EdgeManager \p edgeManager to the ParticleManager, and performs the node-to-edge mapping.
-   * @param [in] edgeManager the edgeManager to assign this ParticleManager
-   */
-  void setEdgeMaps( EdgeManager const & edgeManager );
-
-  /**
-   * @brief Link the FaceManager \p faceManager to the ParticleManager, and performs the node-to-face mapping.
-   * @param [in] faceManager the faceManager to assign this ParticleManager
-   */
-  void setFaceMaps( FaceManager const & faceManager );
-
-  /**
-   * @brief Assign the ElementRegionManager \p elementRegionManager to the ParticleManager, and performs the node-to-element mapping
-   * @param [in] elementRegionManager the ElementRegionManager to assign this ParticleManager
-   */
-  void setElementMaps( ElementRegionManager const & elementRegionManager );
-
-  /**
-   * @brief Compress all ParticleManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
-   * @note The method used here on each arrays (compress) does not free any memory.
-   */
-  void compressRelationMaps();
-
-  /**
-   * @name Packing methods
-   */
-  ///@{
-
-  /**
-   * @brief Creates an array listing all excluded local indices values.
-   * @param [in,out] exclusionList Sorted array with excluded local indices
-   */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-
-  /**
-   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] packList the list of node indices that we wish to get the size of after packing
-   * @return a localIndex value representing the size of packList if it were packed
-   * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
-   */
-  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
-
-  /**
-   * @brief Packs an array of node indices into a buffer.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in,out] buffer buffer to pack the node index data into
-   * @param [in] packList the indices of nodes that should be packed
-   * @return a localIndex value representing the size of the packed data
-   */
-  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
-                                     arrayView1d< localIndex const > const & packList ) const override;
-
-  /**
-   * @brief Unpack a buffer to an array of node indices.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] buffer buffer with the packed data
-   * @param [inout] packList an array of localIndex values that we wish to unpack to
-   * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
-   * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
-   * @return a localIndex value representing the size of the unpacked list
-   */
-  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
-                                       bool const overwriteUpMaps,
-                                       bool const overwriteDownMaps ) override;
-
-  /**
-   * @brief Call fixUpDownMaps for nodes-to-edges and nodes-to-faces maps.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] clearIfUnmapped boolean: true to remove if it is not mapped
-   */
-  void fixUpDownMaps( bool const clearIfUnmapped );
-
-  ///@}
-
-  /**
-   * @brief Clean up the mappings between nodes and edges, faces, elements based on a new (updated) list of nodes, in order to keep only
-   * relevant mappings.
-   * @param [in] receivedNodes the new list of target node indices
-   * @param [in] edgesToNodes map to go from edges to nodes
-   * @param [in] facesToNodes map to go from faces to nodes
-   * @param [in] elemRegionManager Element Region Manager
-   */
-  void depopulateUpMaps( std::set< localIndex > const & receivedNodes,
-                         array2d< localIndex > const & edgesToNodes,
-                         ArrayOfArraysView< localIndex const > const & facesToNodes,
-                         ElementRegionManager const & elemRegionManager );
-
-  /**
-   * @name viewKeyStruct/groupKeyStruct
-   */
-  ///@{
-
-  /**
-   *  @brief contains the added view access keys to be bound with class data member.
-   *  @struct viewKeyStruct
-   */
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
+  struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// @return String to access the reference position
-    static constexpr char const * referencePositionString() { return "ReferencePosition"; }
+    /// @return element regions group string key
+    static constexpr auto elementRegionsGroup() { return "elementRegionsGroup"; }
+  };
 
-    /// @return String to access the location of the nodes
-    static constexpr char const * EmbSurfNodesPositionString() { return "EmbSurfNodesPosition"; }
+  /**
+   * Limit on max number of nodes for each element
+   */
+  constexpr static int maxNumNodesPerElem = 8;
 
-    /// @return String to access the displacement
-    static constexpr char const * totalDisplacementString() { return "TotalDisplacement"; }
+  /**
+   * @brief The ElementViewAccessor at the ParticleRegion level is an array of array of VIEWTYPE.
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
 
-    /// @return String to access the incremental displacement
-    static constexpr char const * incrementalDisplacementString() { return "IncrementalDisplacement"; }
+  /**
+   * @brief The ElementViewAccessor at the ParticleRegion level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedView().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementView = typename ElementViewAccessor< VIEWTYPE >::NestedViewType;
 
-    /// @return String to access the edge map
-    static constexpr char const * edgeListString() { return "edgeList"; }
+  /**
+   * @brief The ElementViewAccessor at the ParticleRegion level is the
+   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedViewConst().
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = typename ElementViewAccessor< VIEWTYPE >::NestedViewTypeConst;
 
-    /// @return String to access the face map
-    static constexpr char const * faceListString() { return "faceList"; }
+  /**
+   * @brief The ElementViewAccessor at the ParticleRegion level is a 2D array of ReferenceWrapper around VIEWTYPE.
+   * @tparam VIEWTYPE data type
+   */
+  template< typename VIEWTYPE >
+  using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > >;
 
-    /// @return String to access the element region map
-    static constexpr char const * elementRegionListString() { return "elemRegionList"; }
+  /**
+   * @brief The MaterialViewAccessor at the ParticleRegion level is a 3D array of VIEWTYPE.
+   * @tparam VIEWTYPE data type
+   * var[elementRegionIndex][elementSubRegionIndex][materialIndexInRegion]
+   */
+  template< typename VIEWTYPE >
+  using MaterialViewAccessor = array1d< array1d< array1d< VIEWTYPE > > >;
 
-    /// @return String to access the element subregion map
-    static constexpr char const * elementSubRegionListString() { return "elemSubRegionList"; }
+  /**
+   * @brief The ConstitutiveRelationAccessor at the ParticleRegion level is a 3D array of CONSTITUTIVE_TYPE
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  using ConstitutiveRelationAccessor = array1d< array1d< array1d< CONSTITUTIVE_TYPE * > > >;
 
-    /// @return String to access the element map
-    static constexpr char const * elementListString() { return "elemList"; }
+  /**
+   * @brief The function is to return the name of the ParticleRegion in the object catalog
+   * @return string that contains the catalog name used to register/lookup this class in  the object catalog
+   */
+  static const string catalogName()
+  { return "ZoneManager"; }
 
-    /// Accessor to reference position
-    dataRepository::ViewKey referencePosition       = { referencePositionString() };
+  /**
+   * @brief Virtual access to catalogName()
+   * @return string that contains the catalog name used to register/lookup this class in the object catalog
+   */
+  virtual const string getCatalogName() const override final
+  { return ParticleRegion::catalogName(); }
 
-    /// Accessor to displacement
-    dataRepository::ViewKey totalDisplacement       = { totalDisplacementString() };
+  /**
+   * @brief Constructor.
+   * @param [in] name the name of this ObjectManager
+   * @param [in] parent the parent Group
+   */
+  ParticleRegion( string const & name, Group * const parent );
 
-    /// Accessor to incremental displacement
-    dataRepository::ViewKey incrementalDisplacement = { incrementalDisplacementString() };
+  /**
+   * @brief Destructor
+   */
+  virtual ~ParticleRegion() override;
 
-    /// Accessor to edge map
-    dataRepository::ViewKey edgeList                = { edgeListString() };
-
-    /// Accessor to face map
-    dataRepository::ViewKey faceList                = { faceListString() };
-
-    /// Accessor to element region map
-    dataRepository::ViewKey elementRegionList       = { elementRegionListString() };
-
-    /// Accessor to element subregion map
-    dataRepository::ViewKey elementSubRegionList    = { elementSubRegionListString() };
-
-    /// Accessor to element map
-    dataRepository::ViewKey elementList             = { elementListString() };
-
-    /// Accessor to velocity
-    dataRepository::ViewKey velocity                = { dataRepository::keys::Velocity };
-
-    /// Accessor to acceleration
-    dataRepository::ViewKey acceleration            = { dataRepository::keys::Acceleration };
+  /**
+   * @brief Get the number of elements in all ElementSubRegions of type T.
+   * @return number of elements
+   */
+  template< typename T = ElementSubRegionBase >
+  localIndex getNumberOfElements() const
+  {
+    localIndex numElem = 0;
+    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & cellBlock )
+    {
+      numElem += cellBlock.size();
+    } );
+    return numElem;
   }
-  /// viewKeys
-  viewKeys;
 
-  ///@}
+//  void Initialize(  ){}
 
   /**
-   * \defgroup Accessors for ParticleManager fixed data
-   * @{
+   * @brief Generate the mesh.
+   * @param [in] cellBlockManager pointer to the CellBlockManager
    */
+  void generateMesh( Group & cellBlockManager );
 
   /**
-   * @brief Provide an immutable accessor to the nodes-to-edges relation.
-   * @return const reference to  nodes-to-edges relation
+   * @brief Generate the cell-to-edge map
+   * @param [in] faceManager pointer to the FaceManager
    */
-  EdgeMapType const & edgeList() const { return m_toEdgesRelation; }
+  void generateCellToEdgeMaps( FaceManager const & faceManager );
 
   /**
-   * @brief Get a mutable accessor to the node-to-edges relation.
-   * @return reference to nodes-to-edges relation
+   * @brief Generate the aggregates.
+   * @param [in] faceManager pointer to the FaceManager
+   * @param [in] nodeManager pointer to the NodeManager
    */
-  EdgeMapType & edgeList() { return m_toEdgesRelation; }
+  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
 
   /**
-   * @brief Provide a const accessor to the nodes-to-faces relation.
-   * @return const reference to nodes-to-faces relation
+   * @brief Generate the wells.
+   * @param [in] meshManager pointer to meshManager
+   * @param [in] meshLevel pointer to meshLevel
    */
-  FaceMapType const & faceList() const { return m_toFacesRelation; }
+  void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
 
   /**
-   * @brief Get the nodes-to-faces relation.
-   * @return reference to nodes-to-faces relation
+   * @brief Create a new ElementRegion object as a child of this group.
+   * @param childKey catalog key of the new ElementRegion derived type to create
+   * @param childName name of the new ElementRegion object
+   * @return pointer to the created ElementRegion object
    */
-  FaceMapType & faceList() { return m_toFacesRelation; }
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
+//  virtual void ReadXMLsub( xmlWrapper::xmlNode const & targetNode ) override;
 
   /**
-   * @brief Get the nodes-to-elements relation.
-   * @return reference to nodes-to-elements relation
+   * @brief Expand any catalogs in the data structure
    */
-  ElemMapType & toElementRelation() {return m_toElements;}
+  virtual void expandObjectCatalogs() override;
 
   /**
-   * @brief Provide a const accessor to the nodes-to-elements relation.
-   * @details The returned ElemMapType gives access, for one node
-   * to the element index, the element sub region, and the element region
-   * in relation with a node
-   * @return const reference to nodes-to-elements relation
+   * @brief Inform the schema generator of any deviations between the xml and GEOS data structures.
+   * @param schemaRoot        XML node corresponding to the root
+   * @param schemaParent      XML node for the parent node
+   * @param documentationType type of XML schema generated
    */
-  ElemMapType const & toElementRelation() const {return m_toElements;}
+  virtual void setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
+                                    xmlWrapper::xmlNode schemaParent,
+                                    integer documentationType ) override;
+
+  using Group::resize;
 
   /**
-   * @brief Get the mutable nodes-to-elements-regions relation.
-   * @return reference to nodes-to-elements-regions relation
+   * @brief Set the number of elements for a set of element regions.
+   * @param numElements list of the new element numbers
+   * @param regionNames list of the element region names
+   * @param elementTypes list of the element types
    */
-  ArrayOfArrays< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
+  void resize( integer_array const & numElements,
+               string_array const & regionNames,
+               string_array const & elementTypes );
 
   /**
-   * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
-   * @return const reference to nodes-to-elements-regions relation
+   * @brief Set the maximum local and global index.
    */
-  ArrayOfArraysView< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
+  virtual void setMaxGlobalIndex() override final;
 
   /**
-   * @brief Get the mutable nodes-to-elements-subregions relation.
-   * @return reference to nodes-to-elements-subregions relation
+   * @brief Get a collection of element regions
+   * @return reference to immutable subGroupMap
    */
-  ArrayOfArrays< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
+  subGroupMap const & getRegions() const
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getSubGroups();
+  }
 
   /**
-   * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
-   * @return const reference to nodes-to-elements-subregions relation
+   * @brief Get a collection of element regions.
+   * @return reference to mutable subGroupMap
    */
-  ArrayOfArraysView< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
+  subGroupMap & getRegions()
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getSubGroups();
+  }
 
   /**
-   * @brief Get the mutable nodes-to-elements indices.
-   * @return reference to nodes-to-elements indices
+   * @brief Get a element region.
+   * @param key The key of element region, either name or number.
+   * @return Reference to const T.
    */
-  ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
+  template< typename T=ElementRegionBase, typename KEY_TYPE=void >
+  T const & getRegion( KEY_TYPE const & key ) const
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
+  }
 
   /**
-   * @brief Provide an immutable arrayView to the nodes-to-elements indices.
-   * @return const reference to nodes-to-elements indices
+   * @brief Get a element region.
+   * @param key The key of the element region, either name or number.
+   * @return Reference to T.
    */
+  template< typename T=ElementRegionBase, typename KEY_TYPE=void >
+  T & getRegion( KEY_TYPE const & key )
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
+  }
 
-  ArrayOfArraysView< localIndex const > elementList() const
-  { return m_toElements.m_toElementIndex.toViewConst(); }
-
-  //START_SPHINX_REFPOS_ACCESS
-  /**
-   * @brief Get the mutable reference position array. This table will contain all the node coordinates.
-   * @return reference position array
-   */
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
-
-  /**
-   * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
-   * @return an immutable arrayView of the reference position.
-   */
-
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
-  { return m_referencePosition; }
-  //END_SPHINX_REFPOS_ACCESS
+  template< typename T=ElementRegionBase >
+  bool hasRegion( string const & name ) const
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).hasGroup< T >( name );
+  }
 
   /**
-   * @brief Get a mutable total displacement array.
-   * @return the total displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the total displacement does not exist
+   * @brief Get number of the regions.
+   * @return number of the regions
    */
-  array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > & totalDisplacement()
-  { return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
+  localIndex numRegions() const
+  {
+    return this->getRegions().size();
+  }
 
   /**
-   * @brief Provide an immutable arrayView to the total displacement array.
-   * @return immutable arrayView of the total displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the total displacement does not exist
+   * @brief Get number of the cell blocks.
+   * @return number of the cell blocks
    */
-  arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > totalDisplacement() const
-  {return getReference< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( viewKeys.totalDisplacement ); }
+  localIndex numCellBlocks() const;
 
   /**
-   * @brief Get a mutable incremental displacement array.
-   * @return the incremental displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the incremental displacement does not exist
+   * @brief This function is used to launch kernel function over all the element regions with region type =
+   * ElementRegionBase.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
    */
-  array2d< real64, nodes::INCR_DISPLACEMENT_PERM > & incrementalDisplacement()
-  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+  void forElementRegions( LAMBDA && lambda )
+  {
+    this->getGroup( groupKeyStruct::elementRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
-   * @brief Provide an immutable arrayView to the incremental displacement array.
-   * @return immutable arrayView of the incremental displacement array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the total incremental does not exist
+   * @brief This const function is used to launch kernel function over all the element regions with region type =
+   * ElementRegionBase.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
    */
-  arrayView2d< real64 const, nodes::INCR_DISPLACEMENT_USD > incrementalDisplacement() const
-  { return getReference< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( viewKeys.incrementalDisplacement ); }
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+  void forElementRegions( LAMBDA && lambda ) const
+  {
+    this->getGroup( groupKeyStruct::elementRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
-   * @brief Get a mutable velocity array.
-   * @return the velocity array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the velocity array does not exist
+   * @brief This function is used to launch kernel function over the target element regions with region type =
+   * ElementRegionBase.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
    */
-  array2d< real64, nodes::VELOCITY_PERM > & velocity()
-  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+  {
+    this->getGroup( groupKeyStruct::elementRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
-   * @brief Provide an immutable arrayView to the velocity array.
-   * @return immutable arrayView of the velocity array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the velocity array does not exist
+   * @brief This const function is used to launch kernel function over the target element regions with region type =
+   * ElementRegionBase.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
    */
-  arrayView2d< real64 const, nodes::VELOCITY_USD > velocity() const
-  { return getReference< array2d< real64, nodes::VELOCITY_PERM > >( viewKeys.velocity ); }
+  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
+  {
+    this->getGroup( groupKeyStruct::elementRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
-   * @brief Get a mutable acceleration array.
-   * @return the acceleration array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the acceleration array does not exist
+   * @brief This const function is used to launch kernel function over all the types of element regions.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
    */
-  array2d< real64, nodes::ACCELERATION_PERM > & acceleration()
-  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
+  template< typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda ) const
+  {
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
+                               WellElementRegion >( std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
-   * @brief Provide an immutable arrayView to the acceleration array.
-   * @return immutable arrayView of the acceleration array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the acceleration array does not exist
+   * @brief This function is used to launch kernel function over all the types of element regions.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
    */
-  arrayView2d< real64 const, nodes::ACCELERATION_USD > acceleration() const
-  { return getReference< array2d< real64, nodes::ACCELERATION_PERM > >( viewKeys.acceleration ); }
+  template< typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda )
+  {
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
+                               WellElementRegion >( std::forward< LAMBDA >( lambda ) );
+  }
 
-  ///@}
+  /**
+   * @brief This function is used to launch kernel function over all the element regions that can be casted to one of
+   * the specified region types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda )
+  {
+    for( localIndex er=0; er<this->numRegions(); ++er )
+    {
+      ElementRegionBase & elementRegion = this->getRegion( er );
+
+      Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( elementRegion, [&]( auto & castedRegion )
+      {
+        lambda( er, castedRegion );
+      } );
+    }
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over all the element regions that can be casted to one
+   * of the specified region types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LAMBDA >
+  void forElementRegionsComplete( LAMBDA lambda ) const
+  {
+    for( localIndex er=0; er<this->numRegions(); ++er )
+    {
+      ElementRegionBase const & elementRegion = this->getRegion( er );
+
+      Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( elementRegion, [&]( auto const & castedRegion )
+      {
+        lambda( er, castedRegion );
+      } );
+    }
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element regions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
+  {
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
+                               WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the specified target element regions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
+  {
+    forElementRegionsComplete< CellElementRegion, SurfaceElementRegion,
+                               WellElementRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the specified target element regions with region type =
+   * specified element region types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda )
+  {
+    forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegions, [&] ( localIndex const targetIndex,
+                                                                          auto & elementRegion )
+    {
+      lambda( targetIndex, elementRegion.getIndexInParent(), elementRegion );
+    } );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element regions with region
+   * type = specified element region types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA lambda ) const
+  {
+    forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegions, [&] ( localIndex const targetIndex,
+                                                                          auto const & elementRegion )
+    {
+      lambda( targetIndex, elementRegion.getIndexInParent(), elementRegion );
+    } );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the element subregions of all the subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the element subregions of all the subregion
+   * types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
+  {
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+  {
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementSubRegions< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                          WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the element subregions of the specified subregion
+   * types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda )
+  {
+    forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >(
+      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const,
+                                                   localIndex const,
+                                                   ElementRegionBase &,
+                                                   auto & subRegion )
+    {
+      lambda( subRegion );
+    }
+      );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the element subregions of the specified subregion
+   * types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegions( LAMBDA && lambda ) const
+  {
+    forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >(
+      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const,
+                                                   localIndex const,
+                                                   ElementRegionBase const &,
+                                                   auto const & subRegion )
+    {
+      lambda( subRegion );
+    } );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions with the
+   * specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+  {
+    forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
+                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                                   localIndex const,
+                                                                                                                   localIndex const,
+                                                                                                                   ElementRegionBase &,
+                                                                                                                   auto & subRegion )
+    {
+      lambda( targetIndex, subRegion );
+    } );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions with the
+   * specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegions,
+                                                                      [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
+                                                                                                                   localIndex const,
+                                                                                                                   localIndex const,
+                                                                                                                   ElementRegionBase const &,
+                                                                                                                   auto const & subRegion )
+    {
+      lambda( targetIndex, subRegion );
+    } );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the element subregions of all subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA && lambda ) const
+  {
+    forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                                  WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the element subregions of all subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA && lambda )
+  {
+    forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
+                                  WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+  {
+    forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
+                                                                                                                                std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementSubRegionsComplete< CellElementSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
+                                                                                                                                std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over all the element subregions that can be casted to one of
+   * the specified subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA && lambda )
+  {
+    for( localIndex er=0; er<this->numRegions(); ++er )
+    {
+      ElementRegionBase & elementRegion = this->getRegion( er );
+
+      for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+      {
+        ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
+
+        Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        } );
+      }
+    }
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over all the element subregions that can be casted to
+   * one of the specified subregion types.
+   * @tparam LAMBDA type of the user-provided function
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forElementSubRegionsComplete( LAMBDA && lambda ) const
+  {
+    for( localIndex er=0; er<this->numRegions(); ++er )
+    {
+      ElementRegionBase const & elementRegion = this->getRegion( er );
+
+      for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+      {
+        ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
+
+        Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+        {
+          lambda( er, esr, elementRegion, castedSubRegion );
+        } );
+      }
+    }
+  }
+
+  /**
+   * @brief This function is used to launch kernel function over the specified target element subregions that can be
+   * casted to one of the specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
+  {
+    forElementRegions( targetRegions, [&] ( localIndex const targetIndex, ElementRegionBase & elementRegion )
+    {
+      localIndex const er = elementRegion.getIndexInParent();
+
+      if( er>-1 )
+      {
+        for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+        {
+          ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
+
+          Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+          {
+            lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
+          } );
+        }
+      }
+    } );
+  }
+
+  /**
+   * @brief This const function is used to launch kernel function over the specified target element subregions that can
+   * be casted to one of the specified subregion types.
+   * @tparam LOOKUP_CONTAINER type of container of names or indices
+   * @tparam LAMBDA type of the user-provided function
+   * @param targetRegions target element region names or indices
+   * @param lambda kernel function
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  void forElementSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
+  {
+    forElementRegions( targetRegions, [&] ( localIndex const targetIndex, ElementRegionBase const & elementRegion )
+    {
+      localIndex const er = elementRegion.getIndexInParent();
+
+      if( er>-1 )
+      {
+        for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+        {
+          ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
+
+          Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+          {
+            lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
+          } );
+        }
+      }
+    } );
+  }
+
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam TRAIT data type
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructExtrinsicAccessor( string const & neighborName = string() ) const;
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructViewAccessor( string const & name, string const & neighborName = string() ) const;
+
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructViewAccessor( string const & name, string const & neighborName = string() );
+
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
+   * @tparam T data type
+   * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
+   * @param name view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
+   */
+  template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  constructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains pointers to wrapped VIEWTYPE data
+   */
+  template< typename VIEWTYPE >
+  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
+  constructReferenceAccessor( string const & viewName, string const & neighborName = string() ) const;
+
+  /**
+   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains pointers to wrapped VIEWTYPE data
+   */
+  template< typename VIEWTYPE >
+  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
+  constructReferenceAccessor( string const & viewName, string const & neighborName = string() );
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param cm pointer to ConstitutiveManager
+   * @return MaterialViewAccessor that contains VIEWTYPE data
+   */
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  MaterialViewAccessor< LHS >
+  constructFullMaterialViewAccessor( string const & viewName,
+                                     constitutive::ConstitutiveManager const & cm ) const;
+
+  /**
+   * @brief This is a function to construct a MaterialViewAccessor to access the material data.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param cm pointer to ConstitutiveManager
+   * @return MaterialViewAccessor that contains VIEWTYPE data
+   */
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  MaterialViewAccessor< LHS >
+  constructFullMaterialViewAccessor( string const & viewName,
+                                     constitutive::ConstitutiveManager const & cm );
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
+   * @tparam TRAIT mesh data trait
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam TRAIT mesh data trait
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename MATERIALTYPE, typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( bool const allowMissingViews = false ) const;
+
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructMaterialViewAccessor( string const & viewName,
+                                 arrayView1d< string const > const & regionNames,
+                                 string const & materialKeyName,
+                                 bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief This is a function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains VIEWTYPE data
+   */
+  template< typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructMaterialViewAccessor( string const & viewName,
+                                 arrayView1d< string const > const & regionNames,
+                                 string const & materialKeyName,
+                                 bool const allowMissingViews = false );
+
+  /**
+   * @brief Construct a view accessor for material data, assuming array as storage type
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
+   * @param viewName view name of the data
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
+   * @return MaterialViewAccessor that contains the data views
+   */
+  template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  constructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      string const & materialKeyName,
+                                      bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief Construct a const view accessor to material data for specified material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @return ElementViewAccessor that contains VIEWTYPE data. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructMaterialViewAccessor( string const & viewName ) const;
+
+  /**
+   * @brief Construct a const view accessor for material data, assuming array as storage type
+   * @tparam MATERIALTYPE
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
+   * @param viewName view name of the data
+   * @return MaterialViewAccessor that contains the data views. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  constructMaterialArrayViewAccessor( string const & viewName ) const;
+
+  /**
+   * @brief Construct a ConstitutiveRelationAccessor.
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   * @param cm pointer to ConstitutiveManager
+   * @return ConstitutiveRelationAccessor
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+  constructFullConstitutiveAccessor( constitutive::ConstitutiveManager const & cm ) const;
+
+
+  /**
+   * @brief Construct a ConstitutiveRelationAccessor.
+   * @tparam CONSTITUTIVE_TYPE constitutive type
+   * @param cm pointer to ConstitutiveManager
+   * @return ConstitutiveRelationAccessor
+   */
+  template< typename CONSTITUTIVE_TYPE >
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+  constructFullConstitutiveAccessor( constitutive::ConstitutiveManager const & cm );
+
+  using Group::packSize;
+  using Group::pack;
+  using ObjectManagerBase::packGlobalMapsSize;
+  using ObjectManagerBase::packGlobalMaps;
+  using ObjectManagerBase::unpackGlobalMaps;
+  using ObjectManagerBase::packUpDownMapsSize;
+  using ObjectManagerBase::packUpDownMaps;
+  using ObjectManagerBase::unpackUpDownMaps;
+
+  /**
+   * @brief Get the buffer size needed to pack a list of wrappers.
+   * @param wrapperNames list of wrapper names
+   * @param packList list of indices to pack
+   * @return the size of the buffer required to pack the wrappers
+   */
+  int PackSize( string_array const & wrapperNames,
+                ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Pack a list of wrappers to a buffer.
+   * @param buffer pointer to the buffer to be packed
+   * @param wrapperNames list of wrapper names
+   * @param packList list of indices to pack
+   * @return the size of data packed to the buffer
+   */
+  int Pack( buffer_unit_type * & buffer,
+            string_array const & wrapperNames,
+            ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /// @copydoc dataRepository::Group::unpack
+  using ObjectManagerBase::unpack;
+
+  /**
+   * @brief Unpack a buffer.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to unpack
+   * @return the size of data unpacked
+   */
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementViewAccessor< arrayView1d< localIndex > > & packList );
+
+  /**
+   * @brief Unpack a buffer.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to unpack
+   * @return the size of data unpacked.
+   */
+  int Unpack( buffer_unit_type const * & buffer,
+              ElementReferenceAccessor< array1d< localIndex > > & packList );
+
+  /**
+   * @brief Get the size of the buffer to be packed.
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
+  int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Pack a buffer.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
+  int PackGlobalMaps( buffer_unit_type * & buffer,
+                      ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Unpack a buffer.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @return the size of the data unpacked
+   */
+  int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+                        ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
+
+  /**
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
+  int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
+  int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Pack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of data packed.
+   */
+  int PackUpDownMaps( buffer_unit_type * & buffer,
+                      ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
+
+  /**
+   * @brief Unpack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @param overwriteMap flag to indicate whether to overwrite the local map
+   * @return the size of data packed.
+   */
+  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+                        ElementReferenceAccessor< localIndex_array > & packList,
+                        bool const overwriteMap );
+
+  /**
+   * @brief Get the buffer size needed to pack the set of fractured elements and the map toEmbSurfaces.
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the buffer size needed to pack the data
+   */
+  int packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                 string const fractureRegionName ) const;
+
+  /**
+   * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the size of the data packed
+   */
+  int packFracturedElements( buffer_unit_type * & buffer,
+                             ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                             string const fractureRegionName ) const;
+
+  /**
+   * @brief Unpack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the size of the data unpacked
+   */
+  int unpackFracturedElements( buffer_unit_type const * & buffer,
+                               ElementReferenceAccessor< localIndex_array > & packList,
+                               string const fractureRegionName );
+
 
 private:
 
   /**
-   * @brief Pack the upward and downward pointing maps into a buffer.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
-   * @param buffer the buffer to pack data into
-   * @param packList the indices of nodes that should be packed.
-   * @return size of data packed in terms of number of chars
+   * @brief Pack a list of wrappers or get the buffer size needed to pack.
+   * @param buffer pointer to the buffer to be packed
+   * @param wrapperNames list of wrapper names
+   * @param packList list of indices to pack
+   * @return the size of the buffer required to pack the wrappers
    */
   template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  int PackPrivate( buffer_unit_type * & buffer,
+                   string_array const & wrapperNames,
+                   ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
+  /**
+   * @brief Pack a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
+  template< bool DOPACK >
+  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
+                             ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
+  /**
+   * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @return the size of the data packed
+   */
+  template< bool DOPACK, typename T >
+  int
+  packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                         T const & packList ) const;
+  /**
+   * @brief Unpack element-to-node and element-to-face maps.
+   * @param buffer pointer to the buffer to be unpacked
+   * @param packList list of indices to pack
+   * @return the size of the data unpacked
+   */
+  template< typename T >
+  int unpackPrivate( buffer_unit_type const * & buffer,
+                     T & packList );
 
-  //START_SPHINX_REFPOS
-  /// reference position of the nodes
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
-  //END_SPHINX_REFPOS
+  /**
+   * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
+   * @param buffer pointer to the buffer to be packed
+   * @param packList list of indices to pack
+   * @param fractureRegionName name of the fracture region
+   * @return the size of the data packed
+   */
+  template< bool DOPACK >
+  int
+  packFracturedElementsPrivate( buffer_unit_type * & buffer,
+                                ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                string const fractureRegionName ) const;
 
-  /// nodes-to-edges relation
-  EdgeMapType m_toEdgesRelation;
+  /**
+   * @brief Copy constructor.
+   */
+  ParticleRegion( const ParticleRegion & );
 
-  /// nodes-to-faces relation
-  FaceMapType m_toFacesRelation;
+  /**
+   * @brief Copy assignment operator.
+   * @return reference to this object
+   */
+  ParticleRegion & operator=( const ParticleRegion & );
 
-  /// nodes-to-element relation
-  ElemMapType m_toElements;
-
-  /// map of global to local indices for edges
-  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToEdges;
-
-  /// map of global to local indices for faces
-  map< localIndex, SortedArray< globalIndex > > m_unmappedGlobalIndicesInToFaces;
-
-  /// map of global to local indices for elements
-  map< localIndex, array1d< array1d< SortedArray< globalIndex > > > > m_unmappedGlobalIndicesInToElems;
 
 };
+
+
+template< typename VIEWTYPE, typename LHS >
+ParticleRegion::ElementViewAccessor< LHS >
+ParticleRegion::constructViewAccessor( string const & viewName, string const & neighborName ) const
+{
+  ElementViewAccessor< LHS > viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
+    {
+      Group const * group = &elemRegion.getSubRegion( kSubReg );
+
+      if( !neighborName.empty() )
+      {
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
+      }
+
+      dataRepository::Wrapper< VIEWTYPE > const * const wrapper = group->getWrapperPointer< VIEWTYPE >( viewName );
+      if( wrapper )
+      {
+        viewAccessor[kReg][kSubReg] = wrapper->reference();
+      }
+    }
+  }
+  return viewAccessor;
 }
 
-#endif // MESH_PARTICLEMANAGER_HPP_
+
+template< typename VIEWTYPE, typename LHS >
+ParticleRegion::ElementViewAccessor< LHS >
+ParticleRegion::
+  constructViewAccessor( string const & viewName, string const & neighborName )
+{
+  ElementViewAccessor< LHS > viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
+    {
+      Group * group = &elemRegion.getSubRegion( kSubReg );
+
+      if( !neighborName.empty() )
+      {
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
+      }
+
+      dataRepository::Wrapper< VIEWTYPE > * const wrapper = group->getWrapperPointer< VIEWTYPE >( viewName );
+      if( wrapper )
+      {
+        viewAccessor[kReg][kSubReg] = wrapper->reference();
+      }
+    }
+  }
+  return viewAccessor;
+}
+
+template< typename TRAIT >
+ParticleRegion::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ParticleRegion::
+  constructExtrinsicAccessor( string const & neighborName ) const
+{
+  return constructViewAccessor< typename TRAIT::type,
+                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+}
+
+
+template< typename T, int NDIM, typename PERM >
+ParticleRegion::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ParticleRegion::
+  constructArrayViewAccessor( string const & name, string const & neighborName ) const
+{
+  return constructViewAccessor< Array< T, NDIM, PERM >,
+                                ArrayView< T const, NDIM, getUSD< PERM > >
+                                >( name, neighborName );
+}
+
+template< typename VIEWTYPE >
+ParticleRegion::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
+ParticleRegion::
+  constructReferenceAccessor( string const & viewName, string const & neighborName ) const
+{
+  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    {
+      Group const * group = &elemRegion.getSubRegion( kSubReg );
+
+      if( !neighborName.empty() )
+      {
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
+      }
+
+      if( group->hasWrapper( viewName ) )
+      {
+        viewAccessor[kReg][kSubReg].set( group->getReference< VIEWTYPE >( viewName ) );
+      }
+    }
+  }
+  return viewAccessor;
+}
+
+template< typename VIEWTYPE >
+ParticleRegion::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
+ParticleRegion::
+  constructReferenceAccessor( string const & viewName, string const & neighborName )
+{
+  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
+  viewAccessor.resize( numRegions() );
+  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    {
+      Group * group = &elemRegion.getSubRegion( kSubReg );
+
+      if( !neighborName.empty() )
+      {
+        group = &group->getGroup( ObjectManagerBase::groupKeyStruct::neighborDataString() ).getGroup( neighborName );
+      }
+
+      if( group->hasWrapper( viewName ) )
+      {
+        viewAccessor[kReg][kSubReg].set( group->getReference< VIEWTYPE >( viewName ) );
+      }
+    }
+  }
+  return viewAccessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ParticleRegion::MaterialViewAccessor< LHS >
+ParticleRegion::
+  constructFullMaterialViewAccessor( string const & viewName,
+                                     constitutive::ConstitutiveManager const & cm ) const
+{
+  MaterialViewAccessor< LHS > accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    {
+      ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+
+      accessor[kReg][kSubReg].resize( cm.numSubGroups() );
+
+      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      {
+        string const & constitutiveName = cm.getGroup( matIndex ).getName();
+        dataRepository::Group const * const constitutiveRelation = constitutiveGroup.getGroupPointer( constitutiveName );
+        if( constitutiveRelation != nullptr )
+        {
+          dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation->getWrapperPointer< VIEWTYPE >( viewName );
+          if( wrapper )
+          {
+            accessor[kReg][kSubReg][matIndex] = wrapper->reference();
+          }
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ParticleRegion::MaterialViewAccessor< LHS >
+ParticleRegion::
+  constructFullMaterialViewAccessor( string const & viewName,
+                                     constitutive::ConstitutiveManager const & cm )
+{
+  MaterialViewAccessor< LHS > accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    {
+      ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
+
+      accessor[kReg][kSubReg].resize( cm.numSubGroups() );
+
+      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      {
+        string const & constitutiveName = cm.getGroup( matIndex ).getName();
+        dataRepository::Group * const constitutiveRelation = constitutiveGroup.getGroupPointer( constitutiveName );
+        if( constitutiveRelation != nullptr )
+        {
+          dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation->getWrapperPointer< VIEWTYPE >( viewName );
+          if( wrapper )
+          {
+            accessor[kReg][kSubReg][matIndex] = wrapper->reference();
+          }
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ParticleRegion::ElementViewAccessor< LHS >
+ParticleRegion::constructMaterialViewAccessor( string const & viewName,
+                                                     arrayView1d< string const > const & regionNames,
+                                                     string const & materialKeyName,
+                                                     bool const allowMissingViews ) const
+{
+  ElementViewAccessor< LHS > accessor;
+
+  // Resize the accessor to all regions and subregions
+  accessor.resize( numRegions() );
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
+  {
+    accessor[kReg].resize( getRegion( kReg ).numSubRegions() );
+  }
+
+  subGroupMap const & regionMap = getRegions();
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex k = 0; k < regionNames.size(); ++k )
+  {
+    localIndex const er = regionMap.getIndex( regionNames[k] );
+    if( er >=0 )
+    {
+      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      ElementRegionBase const & region = getRegion( er );
+
+      region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                             ElementSubRegionBase const & subRegion )
+      {
+        string const & materialName = subRegion.getReference<string>( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+
+        dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
+        if( wrapper )
+        {
+          accessor[er][esr] = wrapper->reference();
+        }
+        else
+        {
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
+        }
+      } );
+    }
+  }
+  return accessor;
+}
+
+template< typename VIEWTYPE, typename LHS >
+ParticleRegion::ElementViewAccessor< LHS >
+ParticleRegion::constructMaterialViewAccessor( string const & viewName,
+                                                     arrayView1d< string const > const & regionNames,
+                                                     string const & materialKeyName,
+                                                     bool const allowMissingViews )
+{
+  ElementViewAccessor< LHS > accessor;
+
+  // Resize the accessor to all regions and subregions
+  accessor.resize( numRegions() );
+  for( localIndex kReg = 0; kReg < numRegions(); ++kReg )
+  {
+    accessor[kReg].resize( getRegion( kReg ).numSubRegions() );
+  }
+
+  subGroupMap const & regionMap = getRegions();
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex k = 0; k < regionNames.size(); ++k )
+  {
+    localIndex const er = regionMap.getIndex( regionNames[k] );
+    if( er >=0 )
+    {
+      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      ElementRegionBase & region = getRegion( er );
+
+      region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+      {
+        string const & materialName = subRegion.getReference<string>( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+
+        dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
+        if( wrapper )
+        {
+          accessor[er][esr] = wrapper->reference();
+        }
+        else
+        {
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
+        }
+      } );
+    }
+  }
+  return accessor;
+}
+
+template< typename TRAIT >
+ParticleRegion::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ParticleRegion::
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
+                                                                                         regionNames,
+                                                                                         materialNames,
+                                                                                         allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename TRAIT >
+ParticleRegion::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ParticleRegion::
+  constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
+{
+  GEOSX_UNUSED_VAR(allowMissingViews);
+  return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
+}
+
+
+template< typename T, int NDIM, typename PERM >
+ParticleRegion::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ParticleRegion::
+  constructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      string const & materialKeyName,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName,
+                                                                                                              regionNames,
+                                                                                                              materialKeyName,
+                                                                                                              allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS >
+ParticleRegion::ElementViewAccessor< LHS >
+ParticleRegion::constructMaterialViewAccessor( string const & viewName ) const
+{
+  ElementViewAccessor< LHS > accessor( numRegions() );
+
+  // Resize the accessor to all regions and subregions
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    accessor[er].resize( getRegion( er ).numSubRegions() );
+  }
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    ElementRegionBase const & region = getRegion( er );
+
+    region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                           ElementSubRegionBase const & subRegion )
+    {
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+
+      string materialName;
+      constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
+      {
+        materialName = constitutiveRelation.getName();
+        if ( constitutiveRelation.template hasWrapper( viewName ) ) //NOTE (matteo): I have added this check to allow for the view to be missing. I am not sure this is the default behaviour we want though.
+        {
+          accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
+        }
+      } );
+    } );
+  }
+  return accessor;
+}
+
+template< typename MATERIALTYPE, typename T, int NDIM, typename PERM >
+ParticleRegion::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ParticleRegion::constructMaterialArrayViewAccessor( string const & viewName ) const
+{
+  return constructMaterialViewAccessor< MATERIALTYPE, Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName );
+}
+
+template< typename CONSTITUTIVE_TYPE >
+ParticleRegion::ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+ParticleRegion::constructFullConstitutiveAccessor( constitutive::ConstitutiveManager const & cm ) const
+{
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE > accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase const & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    {
+      ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+      accessor[kReg][kSubReg].resize( cm.numSubGroups() );
+
+      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      {
+        string const & constitutiveName = cm.getGroup( matIndex ).getName();
+
+        CONSTITUTIVE_TYPE * const
+        constitutiveRelation = constitutiveGroup.getGroupPointer< CONSTITUTIVE_TYPE >( constitutiveName );
+        if( constitutiveRelation != nullptr )
+        {
+          accessor[kReg][kSubReg][matIndex] = constitutiveRelation;
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+template< typename CONSTITUTIVE_TYPE >
+ParticleRegion::ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE >
+ParticleRegion::constructFullConstitutiveAccessor( constitutive::ConstitutiveManager const & cm )
+{
+  ConstitutiveRelationAccessor< CONSTITUTIVE_TYPE > accessor;
+  accessor.resize( numRegions() );
+  for( localIndex kReg=0; kReg<numRegions(); ++kReg )
+  {
+    ElementRegionBase & elemRegion = getRegion( kReg );
+    accessor[kReg].resize( elemRegion.numSubRegions() );
+
+    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    {
+      ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
+      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
+      accessor[kReg][kSubReg].resize( cm.numSubGroups() );
+
+      for( localIndex matIndex=0; matIndex<cm.numSubGroups(); ++matIndex )
+      {
+        string const & constitutiveName = cm.getGroup( matIndex ).getName();
+
+        CONSTITUTIVE_TYPE * const
+        constitutiveRelation = constitutiveGroup.getGroupPointer< CONSTITUTIVE_TYPE >( constitutiveName );
+        if( constitutiveRelation != nullptr )
+        {
+          accessor[kReg][kSubReg][matIndex] = constitutiveRelation;
+        }
+      }
+    }
+  }
+  return accessor;
+}
+
+}
+#endif /* GEOSX_MESH_PARTICLEMANAGER_HPP */
