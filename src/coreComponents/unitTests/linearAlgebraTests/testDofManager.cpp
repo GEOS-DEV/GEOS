@@ -456,17 +456,17 @@ protected:
 
     using Matrix = typename LAI::ParallelMatrix;
 
-    using PatternFunc = void ( * )( MeshLevel const & mesh,
+    using PatternFunc = void ( * )( DomainPartition const & mesh,
                                     string const & dofIndexKey,
-                                    string_array const & regions,
+                                    std::vector<DofManager::Regions> const & regions,
                                     globalIndex const rankOffset,
                                     localIndex const numComp,
                                     CRSMatrix< real64 > & sparsity );
 
-    using CoupledPatternFunc = void ( * )( MeshLevel const & mesh,
+    using CoupledPatternFunc = void ( * )( DomainPartition const & mesh,
                                            string const & dofIndexKey1,
                                            string const & dofIndexKey2,
-                                           string_array const & regions,
+                                           std::vector<DofManager::Regions> const & regions,
                                            globalIndex const rankOffset,
                                            localIndex const numComp1,
                                            localIndex const numComp2,
@@ -479,7 +479,7 @@ protected:
       DofManager::Connector connectivity;
       localIndex components;
       PatternFunc makePattern;
-      std::vector< string > regions = {};
+      std::vector< DofManager::Regions > regions = {};
     };
 
     struct CouplingDesc
@@ -487,7 +487,7 @@ protected:
       DofManager::Connector connectivity;
       CoupledPatternFunc makeCouplingPattern;
       bool symmetric = true;
-      std::vector< string > regions = {};
+      std::vector< DofManager::Regions > regions = {};
     };
 
     void addFields( std::vector< FieldDesc > fields,
@@ -503,7 +503,7 @@ protected:
       {
         std::pair< string, string > const & fieldNames = entry.first;
         CouplingDesc const & c = entry.second;
-        string_array const regions = getRegions( domain, c.regions );
+        std::vector<DofManager::Regions> const regions = getRegions( domain, c.regions );
         dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, regions, c.symmetric );
       }
       dofManager.reorderByRank();
@@ -645,7 +645,7 @@ protected:
         DofManager::Location::Elem,
         DofManager::Connector::Face,
         2, makeSparsityTPFA,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       }
     } );
   }
@@ -675,7 +675,7 @@ protected:
         DofManager::Location::Node,
         DofManager::Connector::Elem,
         3, makeSparsityFEM,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       }
     } );
   }
@@ -705,7 +705,7 @@ protected:
         DofManager::Location::Elem,
         DofManager::Connector::None,
         2, makeSparsityMass,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       }
     } );
   }
@@ -735,7 +735,7 @@ protected:
         DofManager::Location::Face,
         DofManager::Connector::Elem,
         2, makeSparsityFlux,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       }
     } );
   }
@@ -777,13 +777,13 @@ protected:
         DofManager::Location::Node,
         DofManager::Connector::Elem,
         3, makeSparsityFEM,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       },
       { "pressure",
         DofManager::Location::Elem,
         DofManager::Connector::Face,
         2, makeSparsityTPFA,
-        { "region1", "region2", "region4" }
+        { {"mesh", "Level00", { "region1", "region2", "region4" } } }
       }
     },
     {
@@ -792,7 +792,7 @@ protected:
         { DofManager::Connector::Elem,
           makeSparsityFEM_FVM,
           true,
-          { "region4" }
+          { {"mesh", "Level00", { "region4" } } }
         }
       }
     } );
@@ -936,7 +936,7 @@ protected:
         DofManager::Location::Elem,
         DofManager::Connector::Face,
         3, nullptr,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", {"region1", "region3", "region4"} } }
       }
     },
     {
@@ -952,13 +952,13 @@ protected:
         DofManager::Location::Node,
         DofManager::Connector::Elem,
         3, nullptr,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       },
       { "pressure",
         DofManager::Location::Elem,
         DofManager::Connector::Face,
         2, nullptr,
-        { "region1", "region2", "region4" }
+        { {"mesh", "Level00", { "region1", "region2", "region4" } } }
       }
     },
     {
@@ -970,7 +970,7 @@ protected:
         { DofManager::Connector::Elem,
           nullptr,
           true,
-          { "region4" }
+          { {"mesh", "Level00", { "region4" } } }
         }
       }
     } );
@@ -984,13 +984,13 @@ protected:
         DofManager::Location::Node,
         DofManager::Connector::Elem,
         3, nullptr,
-        { "region1", "region3", "region4" }
+        { {"mesh", "Level00", { "region1", "region3", "region4" } } }
       },
       { "pressure",
         DofManager::Location::Elem,
         DofManager::Connector::Face,
         2, nullptr,
-        { {"mesh", "0", {"region1", "region2", "region4"} } }
+        { {"mesh", "Level00", {"region1", "region2", "region4"} } }
       }
     },
     {
@@ -1002,7 +1002,7 @@ protected:
         { DofManager::Connector::Elem,
           nullptr,
           true,
-          { "region4" }
+          { {"mesh", "Level00", { "region4" } } }
         }
       }
     }
@@ -1017,13 +1017,13 @@ protected:
         DofManager::Location::Node,
         DofManager::Connector::Elem,
         3, nullptr,
-        { "region1", "region3", "region4" }
+        { { "mesh", "Level00", { "region1", "region3", "region4" } } }
       },
       { "pressure",
         DofManager::Location::Elem,
         DofManager::Connector::Face,
         2, nullptr,
-        { "region1", "region2", "region4" }
+        { { "mesh", "Level00", { "region1", "region2", "region4" } } }
       }
     },
     {
@@ -1035,7 +1035,7 @@ protected:
         { DofManager::Connector::Elem,
           nullptr,
           true,
-          { "region4" }
+          { {"mesh", "Level00", { "region4" } } }
         }
       }
     }
