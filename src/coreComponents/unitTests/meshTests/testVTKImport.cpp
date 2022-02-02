@@ -16,93 +16,49 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-//#include "mesh/generators/VTKMeshGenerator.hpp"
 #include "tests/meshDirName.hpp"
 #include "mesh/MeshManager.hpp"
-//#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
+// TODO unduplicate
+#define SKIP_TEST_IF( COND, REASON ) \
+  do \
+  { \
+    if( COND ) \
+    { \
+      GTEST_SKIP_( ": " REASON ); \
+    } \
+  } while( 0 )
+
+#define SKIP_TEST_IN_SERIAL( REASON ) \
+  do \
+  { \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
+    SKIP_TEST_IF( mpiSize == 1, REASON ); \
+  } while( 0 )
+
+#define SKIP_TEST_IN_PARALLEL( REASON ) \
+  do \
+  { \
+    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
+    SKIP_TEST_IF( mpiSize != 1, REASON ); \
+  } while( 0 )
+
+
 using namespace geosx;
 using namespace geosx::dataRepository;
 
 // TODO move in the functions?
-static const std::string vtkFilePath = testMeshDir + "/cube.vtk";
-static const std::string vtuFilePath = testMeshDir +  + "/cube.vtu";
-static const std::string pvtuFilePath = testMeshDir +  + "/cube.pvtu";
-static const std::string medleyFilePath = testMeshDir +  + "/medley.vtk";
-
-void TestMeshImport( string const & meshFilePath )
-{
-  conduit::Node node;
-  Group root( "root", node );
-  MeshManager meshManager( "mesh", &root );
-
-  std::stringstream inputStreamMesh;
-  inputStreamMesh <<
-    "<?xml version=\"1.0\" ?>" <<
-    "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <VTKMeshGenerator name=\"Cube\" " <<
-    "  file=\"" << meshFilePath.c_str()<< "\"/>"<<
-    "</Mesh>";
-  const string inputStringMesh = inputStreamMesh.str();
-
-  std::stringstream inputStreamRegion;
-  inputStreamRegion <<
-    "<?xml version=\"1.0\" ?>" <<
-    "  <CellElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <CellElementRegion name=\"0\" cellBlocks=\"{hexahedron}\" materialList=\"{water, rock}\"/>" <<
-    "</ElementRegions>";
-  string inputStringRegion = inputStreamRegion.str();
-
-  // Load the mesh
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlDocument.load_buffer( inputStringMesh.c_str(), inputStringMesh.size() );
-
-  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
-  meshManager.processInputFileRecursive( xmlMeshNode );
-  meshManager.postProcessInputRecursive();
-
-  // Create the domain and generate the Mesh
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", &root ) );
-  meshManager.generateMeshes( *domain );
-
-  MeshBody & meshBody = domain->getMeshBody( 0 );
-  MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-  // Create the ElementRegions
-  xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
-
-  xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child( "ElementRegions" );
-  elemManager.processInputFileRecursive( xmlRegionNode );
-  elemManager.postProcessInputRecursive();
-
-  Group & cellBlockManager = domain->getGroup( keys::cellManager );
-
-  elemManager.generateMesh( cellBlockManager );
-
-}
-
-TEST( VTKImport, testVTK )
-{
-  TestMeshImport( vtkFilePath );
-}
-
-TEST( VTKImport, testVTU )
-{
-  TestMeshImport( vtuFilePath );
-}
-
-TEST( VTKImport, testPVTU )
-{
-  TestMeshImport( pvtuFilePath );
-}
+static const std::string cubeVTK = testMeshDir + "/cube.vtk";
+static const std::string cubeVTU = testMeshDir + + "/cube.vtu";
+static const std::string cubePVTU = testMeshDir + + "/cube.pvtu";
+static const std::string medleyVTK = testMeshDir + + "/medley.vtk";
 
 template< class V >
-void MyTestMeshImport( string const & meshFilePath, V const & validate )
+void TestMeshImport( string const & meshFilePath, V const & validate )
 {
   conduit::Node node;
   Group root( "root", node );
@@ -133,8 +89,7 @@ void MyTestMeshImport( string const & meshFilePath, V const & validate )
   meshManager.postProcessInputRecursive();
 
   // Create the domain and generate the Mesh
-//  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", &root ) );
-  DomainPartition * domain = new DomainPartition( "domain", &root );
+  auto domain = std::make_unique< DomainPartition >( "domain", &root );
   meshManager.generateMeshes( *domain );
 //  meshManager.importFields( *domain );
 
@@ -154,11 +109,40 @@ void MyTestMeshImport( string const & meshFilePath, V const & validate )
   elemManager.generateMesh( cellBlockManager );
 
   validate( meshLevel.getNodeManager(), cellBlockManager );
-
-  std::cout << "Hello" << std::endl;
 }
 
-TEST( MyVTKImport, serialCube )
+/**
+ * @brief Returns the expected value depending on the MPI context.
+ * @tparam T Type of the expected value.
+ * @param[in] expectedSerial Expected value for serial case.
+ * @param[in] expectedParallel Expected values for parallel MPI cases, for the current MPI rank.
+ *        The length of the list should match the size of the MPI communicator @p comm.
+ *        The @p i^th element of the list will be chosen for MPI rank @p i.
+ * @param[in] comm The MPI_Comm communicator that the function will act on.
+ * @return The expected value.
+ *
+ * @note This function is meant to be used to run the same test in serial or parallel environments.
+ */
+template< typename T >
+T expected( T expectedSerial,
+            std::initializer_list< T > expectedParallel,
+            MPI_Comm const & comm=MPI_COMM_GEOSX )
+{
+  int const mpiSize = MpiWrapper::commSize( comm );
+  if( mpiSize == 1 )
+  {
+    return expectedSerial;
+  }
+  else
+  {
+    GEOSX_ASSERT( expectedParallel.size() == std::size_t( mpiSize ) );
+    std::vector< T > tmp( expectedParallel );
+    return tmp[MpiWrapper::commRank( comm )];
+  }
+}
+
+
+TEST( MyVTKImport, cube )
 {
   auto validate = [](NodeManager const & nodeManager, Group const & cellBlockManager) -> void
   {
@@ -179,28 +163,46 @@ TEST( MyVTKImport, serialCube )
     // - All 36 `Hexahedron` elements are in "region" 3 except the last two in regions -1 and 9.
     // - All 36 `Vertex` elements are in "region" 4 except the last two in regions -1 and 9.
 
-//    NodeManager const & nodeManager = meshLevel.getNodeManager();
-    localIndex const numNodes = nodeManager.size();
-    ASSERT_EQ( numNodes, 64 );
-    ASSERT_EQ( nodeManager.faceList().size(), 64 ); // The information are not filled yet.
-    ASSERT_EQ( nodeManager.elementList().size(), 64 ); // The information are not filled yet.
+    // When run in parallel with two MPI ranks, the central hexahedra are on the splitting boundary.
+    // The VTK default pattern is to assign the cell to one unique rank.
+    // It happens to be the first one in our case.
+    // This way, rank 0 (lower `x`) gets 18 hexaedra and 48 nodes,
+    // while rank 1 (greater `x`) gets 9 hexahedra and 32 nodes.
+
+    // This pattern could be influenced by settings the parameters of
+    // vtkRedistributeDataSetFilter::SetBoundaryMode(...) to
+    // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
+    localIndex const expectedNumNodes = expected(64 , { 48, 32 });
+    ASSERT_EQ( nodeManager.size(), expectedNumNodes );
+    // The information in the tables is not filled yet. We can check the consistency of the sizes.
+    ASSERT_EQ( nodeManager.faceList().size(), expectedNumNodes );
+    ASSERT_EQ( nodeManager.elementList().size(), expectedNumNodes );
 
     // We have all the 4 x 4  x 4 = 64 nodes in the "all" set.
     WrapperBase const & allNodes = nodeManager.sets().getWrapperBase( "all" );
-    ASSERT_EQ( allNodes.size(), 64 );
+    ASSERT_EQ( allNodes.size(), expectedNumNodes );
+
     // The "-1" set contains 3 quads connected in L shape.
-    WrapperBase const & noRegionNodes = nodeManager.sets().getWrapperBase( "-1" );
-    ASSERT_EQ( noRegionNodes.size(), 8 );
+    // 2 of those quads touch in the center of the cube: 6 nodes for MPI rank 0.
+    // Rank 1 only has one cube: 4 nodes.
+    WrapperBase const & nodesNoRegion = nodeManager.sets().getWrapperBase( "-1" );
+    ASSERT_EQ( nodesNoRegion.size(), expected( 8, { 6, 4 } ) );
+
     // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
-    // minus an extra node (node 55) that belongs to regions 2 and 9 only.
+    // minus an extra node that belongs to regions -1 and 9 only.
     WrapperBase const & nodesRegion2 = nodeManager.sets().getWrapperBase( "2" );
-    ASSERT_EQ( nodesRegion2.size(), 55 );
-    // Region "9" has only one quad.
+    ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
+
+    // Region "9" has only one quad, on the greater `x` direction.
+    // This hex will belong to MPI rank 1.
     WrapperBase const & nodesRegion9 = nodeManager.sets().getWrapperBase( "9" );
-    ASSERT_EQ( nodesRegion9.size(), 4 );
+    ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
 
     // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
     ASSERT_EQ( cellBlockManager.getGroup( keys::cellBlocks ).numSubGroups(), 3 );
+    GEOSX_LOG_RANK(cellBlockManager.getGroup( keys::cellBlocks ).getGroup(0).getName());
+    GEOSX_LOG_RANK(cellBlockManager.getGroup( keys::cellBlocks ).getGroup(1).getName());
+    GEOSX_LOG_RANK(cellBlockManager.getGroup( keys::cellBlocks ).getGroup(2).getName());
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
     CellBlock const & hexs = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "hexahedron" );
@@ -215,29 +217,31 @@ TEST( MyVTKImport, serialCube )
       ASSERT_EQ( h->faceList().size( 1 ), 6 );
     }
 
-    std::pair< CellBlock const *, localIndex > const p{ &hexs, 1 }, p3{ &hexs3, 25 }, p9{ &hexs9, 1 };
+    std::pair< CellBlock const *, localIndex > const p{ &hexs, expected( 1, { 1, 0 } ) },
+      p3{ &hexs3, expected( 25, { 17, 8 } ) },
+      p9{ &hexs9, expected( 1, { 0, 1 } ) };
     for( auto const & hs: { p, p3, p9 } )
     {
       CellBlock const * h = hs.first;
-      localIndex const & result = hs.second;
+      localIndex const & expectedSize = hs.second;
 
-      ASSERT_EQ( h->size(), result );
-      ASSERT_EQ( h->nodeList().size( 0 ), result );
-      ASSERT_EQ( h->edgeList().size( 0 ), result );
-      ASSERT_EQ( h->faceList().size( 0 ), result );
+      ASSERT_EQ( h->size(), expectedSize );
+      ASSERT_EQ( h->nodeList().size( 0 ), expectedSize );
+      ASSERT_EQ( h->edgeList().size( 0 ), expectedSize );
+      ASSERT_EQ( h->faceList().size( 0 ), expectedSize );
     }
 
     // TODO importFields?
   };
 
-  MyTestMeshImport( vtkFilePath, validate );
-  MyTestMeshImport( vtuFilePath, validate );
-  MyTestMeshImport( vtkFilePath, validate );
+  TestMeshImport( cubeVTK, validate );
+  TestMeshImport( cubeVTU, validate );
+//  TestMeshImport( cubePVTU, validate );
 }
 
 TEST( MyVTKImport, medley )
 {
-//  CommunicationTools c;
+  SKIP_TEST_IN_PARALLEL("Neither relevant nor implemented in parallel");
 
   auto validate = [](NodeManager const & nodeManager, Group const & cellBlockManager) -> void
   {
@@ -303,7 +307,7 @@ TEST( MyVTKImport, medley )
     }
   };
 
-  MyTestMeshImport( medleyFilePath, validate );
+  TestMeshImport( medleyVTK, validate );
 }
 
 
