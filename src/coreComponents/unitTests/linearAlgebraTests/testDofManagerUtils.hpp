@@ -77,18 +77,31 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
  *
  * Mainly used to allow empty region lists to mean all regions.
  */
-string_array getRegions( MeshLevel const * const mesh, std::vector< string > const & input )
+std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, std::vector< DofManager::Regions > const & input )
 {
-  string_array regions;
+  std::vector< DofManager::Regions > regions;
   if( !input.empty() )
   {
-    regions.insert( 0, input.begin(), input.end() );
+    for( DofManager::Regions const & supportRegion : input )
+    {
+      regions.emplace_back( supportRegion );
+    }
   }
   else
   {
-    mesh->getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
+    domain.forMeshBodies( [&] ( MeshBody const & meshBody )
     {
-      regions.emplace_back( region.getName() );
+      DofManager::Regions supportRegion;
+      supportRegion.meshBodyName = meshBody.getName();
+      meshBody.forMeshLevels( [&] ( MeshLevel const & meshLevel )
+      {
+        supportRegion.meshLevelName = meshLevel.getName();
+        meshLevel.getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
+        {
+          supportRegion.regionNames.emplace_back( region.getName() );
+        } );
+      } );
+      regions.emplace_back( supportRegion );
     } );
   }
   return regions;
@@ -145,18 +158,18 @@ template< DofManager::Location LOC >
 struct forLocalObjectsImpl
 {
   template< typename LAMBDA >
-  static void f( MeshLevel const * const mesh,
+  static void f( MeshLevel const & mesh,
                  string_array const & regions,
                  LAMBDA lambda )
   {
     using helper = testMeshHelper< LOC >;
-    ObjectManagerBase const & manager = mesh->getGroup< ObjectManagerBase >( helper::managerKey() );
+    ObjectManagerBase const & manager = mesh.getGroup< ObjectManagerBase >( helper::managerKey() );
 
     arrayView1d< integer const > ghostRank = manager.ghostRank();
 
     array1d< bool > visited( ghostRank.size() );
 
-    mesh->getElemManager().forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+    mesh.getElemManager().forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
     {
       using MapType = typename helper::template ElemToObjMap< std::remove_reference_t< decltype( subRegion ) > >;
 
@@ -182,12 +195,12 @@ template<>
 struct forLocalObjectsImpl< DofManager::Location::Elem >
 {
   template< typename LAMBDA >
-  static void f( MeshLevel const * const mesh,
+  static void f( MeshLevel const & mesh,
                  string_array const & regions,
                  LAMBDA lambda )
   {
     // make a list of regions
-    ElementRegionManager const & elemManager = mesh->getElemManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegionsComplete< ElementSubRegionBase >( regions,
                                                                       [&]( localIndex const,
@@ -220,7 +233,7 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
  * @param lambda  the lambda to apply
  */
 template< DofManager::Location LOC, typename LAMBDA >
-void forLocalObjects( MeshLevel const * const mesh,
+void forLocalObjects( MeshLevel const & mesh,
                       array1d< string > const & regions,
                       LAMBDA && lambda )
 {
@@ -235,10 +248,16 @@ void forLocalObjects( MeshLevel const * const mesh,
  * @return the number of locally owned objects (e.g. nodes)
  */
 template< DofManager::Location LOC >
-localIndex countLocalObjects( MeshLevel const * const mesh, array1d< string > const & regions )
+localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::Regions > const & support )
 {
   localIndex numLocal = 0;
-  forLocalObjects< LOC >( mesh, regions, [&]( auto const & ) { ++numLocal; } );
+  for( DofManager::Regions const & regions : support )
+  {
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
+
+    forLocalObjects< LOC >( meshLevel, regions.regionNames, [&]( auto const & ) { ++numLocal; } );
+  }
   return numLocal;
 }
 
@@ -250,15 +269,15 @@ localIndex countLocalObjects( MeshLevel const * const mesh, array1d< string > co
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated, must be properly sized.
  */
-void makeSparsityTPFA( MeshLevel const * const mesh,
+void makeSparsityTPFA( MeshLevel const & mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  FaceManager const & faceManager = mesh->getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
     elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
@@ -325,15 +344,15 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
  * @param numComp     number of components per node
  * @param sparsity    the matrix to be populated, must be properly sized.
  */
-void makeSparsityFEM( MeshLevel const * const mesh,
+void makeSparsityFEM( MeshLevel const & mesh,
                       string const & dofIndexKey,
                       string_array const & regions,
                       globalIndex const rankOffset,
                       localIndex const numComp,
                       CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  NodeManager const & nodeManager = mesh->getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   arrayView1d< globalIndex const > nodeDofIndex = nodeManager.getReference< array1d< globalIndex > >( dofIndexKey );
 
@@ -383,7 +402,7 @@ void makeSparsityFEM( MeshLevel const * const mesh,
  * @param numCompElem     number of components per element
  * @param sparsity        the matrix to be populated, must be properly sized.
  */
-void makeSparsityFEM_FVM( MeshLevel const * const mesh,
+void makeSparsityFEM_FVM( MeshLevel const & mesh,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
                           string_array const & regions,
@@ -392,8 +411,8 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
                           localIndex const numCompElem,
                           CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  NodeManager const & nodeManager = mesh->getNodeManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  NodeManager const & nodeManager = mesh.getNodeManager();
 
   arrayView1d< globalIndex const > nodeDofIndex =
     nodeManager.getReference< array1d< globalIndex > >( dofIndexKeyNode );
@@ -468,14 +487,14 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated
  */
-void makeSparsityMass( MeshLevel const * const mesh,
+void makeSparsityMass( MeshLevel const & mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
     elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
@@ -514,15 +533,15 @@ void makeSparsityMass( MeshLevel const * const mesh,
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated
  */
-void makeSparsityFlux( MeshLevel const * const mesh,
+void makeSparsityFlux( MeshLevel const & mesh,
                        string const & dofIndexKey,
                        string_array const & regions,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  FaceManager const & faceManager = mesh->getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView1d< globalIndex const > faceDofIndex =
     faceManager.getReference< array1d< globalIndex > >( dofIndexKey );
