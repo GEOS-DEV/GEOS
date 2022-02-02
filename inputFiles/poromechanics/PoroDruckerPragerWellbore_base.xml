@@ -155,7 +155,6 @@
   name="PoromechanicsSolver" 
   solidSolverName="mechanicsSolver"
   fluidSolverName="SinglePhaseFlowSolver"
-  porousMaterialNames="{porousRock}"
   logLevel="1"
   discretization="FE1"
   targetRegions="{Omega}">
