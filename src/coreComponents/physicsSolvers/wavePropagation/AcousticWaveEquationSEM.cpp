@@ -251,7 +251,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
 
   forAll< EXEC_POLICY >( m_sourceValue.size( 1 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
-    for( localIndex cycle = 0; cycle < m_sourceValue.size( 0 ); ++cycle)
+    for( localIndex cycle = 0; cycle < m_sourceValue.size( 0 ); ++cycle )
     {
       real64 time = cycle*dt;
       m_sourceValue[cycle][isrc] = evaluateRicker( time, this->m_timeSourceFrequency, this->m_rickerOrder );
@@ -267,7 +267,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
   arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compare to array size", std::runtime_error);
+  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compare to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
@@ -313,16 +313,16 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
     {
       if( this->m_outputSeismoTrace == 1 )
       {
-	if( receiverIsLocal[ircv] == 1 )
+        if( receiverIsLocal[ircv] == 1 )
         {
-	  // Note: this "manual" output to file is temporary
-	  //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-	  // TODO: remove saveSeismo and replace with TimeHistory
-	  for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
-	  {
-	    this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
-	  }
-	}
+          // Note: this "manual" output to file is temporary
+          //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+          // TODO: remove saveSeismo and replace with TimeHistory
+          for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
+          {
+            this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+          }
+        }
       }
     } );
   }

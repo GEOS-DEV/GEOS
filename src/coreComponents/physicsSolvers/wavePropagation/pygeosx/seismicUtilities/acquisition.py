@@ -42,7 +42,7 @@ class Acquisition:
         if output is not None:
             self.output = output
         else:
-            self.output = os.path.join(os.getcwd(),"outputSismoTrace/")
+            self.output = os.path.join(os.getcwd(),"seismoTrace/")
             if os.path.exists(self.output):
                 pass
             else:

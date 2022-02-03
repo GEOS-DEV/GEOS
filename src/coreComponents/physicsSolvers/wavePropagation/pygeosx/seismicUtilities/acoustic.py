@@ -1,5 +1,7 @@
 import pygeosx
 import numpy as np
+import os
+import h5py
 
 
 def recomputeSourceAndReceivers(solver, sources, receivers):
@@ -73,6 +75,91 @@ def setTimeVariables(problem, maxTime, dt, dtSeismoTrace):
     problem.get_wrapper("Events/maxTime").value()[0] = maxTime
     problem.get_wrapper("Events/solverApplications/forceDt").value()[0] = dt
     problem.get_wrapper("/Solvers/acousticSolver/dtSeismoTrace").value()[0] = dtSeismoTrace
+
+
+
+def computeFullGradient(directory_in_str, acquisition):
+    directory = os.fsencode(directory_in_str)
+
+    limited_aperture_flag = acquisition.limited_aperture
+    nfiles = len(acquisition.shots)
+
+    n=0
+    while True:
+        file_list = os.listdir(directory)
+        if len(file_list) != 0:
+            filename = os.fsdecode(file_list[0])
+            h5p = h5py.File(os.path.join(directory_in_str,filename), "r")
+            keys = list(h5p.keys())
+            n += 1
+            break
+        else:
+            continue
+
+    h5F = h5py.File("fullGradient.hdf5", "w")
+    h5F.create_dataset("fullGradient_np1", data = h5p[keys[0]], dtype='d', chunks=True, maxshape=(nfiles, None))
+    h5F.create_dataset("fullGradient_np1 ReferencePosition", data = h5p[keys[-2]], chunks=True, maxshape=(nfiles, None, 3))
+    h5F.create_dataset("fullGradient_np1 Time", data = h5p[keys[-1]])
+    keysF = list(h5F.keys())
+
+    h5p.close()
+    os.remove(os.path.join(directory_in_str,filename))
+
+    while True:
+        file_list = os.listdir(directory)
+        if n == nfiles:
+            break
+        elif len(file_list) > 0:
+            for file in os.listdir(directory):
+                filename = os.fsdecode(file)
+                if filename.startswith("partialGradient"):
+                    h5p = h5py.File(os.path.join(directory_in_str, filename), 'r')
+                    keysp = list(h5p.keys())
+
+                    if limited_aperture_flag:
+                        indp = 0
+                        ind = []
+                        for coordsp in h5p[keysp[-2]][0]:
+                            indF = 0
+                            flag = 0
+                            for coordsF in h5F[keysF[-2]][0]:
+                                if not any(coordsF - coordsp):
+                                    h5F[keysF[0]][:, indF] += h5p[keysp[0]][:,indp]
+                                    flag = 1
+                                    break
+                                indF += 1
+                            if flag == 0:
+                                ind.append(indp)
+                            indp += 1
+
+                        if len(ind) > 0:
+                            h5F[keysF[0]].resize(h5F[keysF[0]].shape[1] + len(ind), axis=1)
+                            h5F[keysF[-2]].resize(h5F[keysF[-2]].shape[1] + len(ind), axis=1)
+
+                            h5F[keysF[0]][:, -len(ind):] = h5p[keysp[0]][:, ind]
+                            h5F[keysF[-2]][:, -len(ind):] = h5p[keysp[-2]][:, ind]
+
+                    else:
+                        h5F[keysF[0]][:,:] += h5p[keysp[0]][:,:]
+
+                    h5p.close()
+                    os.remove(os.path.join(directory_in_str,filename))
+                    n+=1
+                else:
+                    continue
+
+        else:
+            continue
+
+    ind = np.lexsort((h5F[keysF[-2]][0][:,2], h5F[keysF[-2]][0][:,1], h5F[keysF[-2]][0][:,0]))
+    h5F[keysF[-2]][:,:] = h5F[keysF[-2]][:,ind]
+    h5F[keysF[0]][:,:] = h5F[keysF[0]][:,ind]
+
+    h5F.close()
+    os.rmdir(directory_in_str)
+
+    return h5F
+
 
 
 def print_pressure(pressure, ishot):

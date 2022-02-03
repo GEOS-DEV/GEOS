@@ -6,10 +6,10 @@ from queue import Queue
 import uuid
 import copy
 import subprocess
-from time import sleep 
+from time import sleep
 import inspect
 from utils import args_to_json
-from tempfile import mkstemp  
+from tempfile import mkstemp
 
 class Cluster():
     def __init__(self,
@@ -44,7 +44,7 @@ class Cluster():
         self.work=None
         self.launch=launch
         self.gpu=gpu
- 
+
     def job_file(self):
         handle, filename = mkstemp(suffix=".sh", dir=os.getcwd())
         with open(filename, "w") as f:
@@ -52,7 +52,7 @@ class Cluster():
                 f.write(line + "\n")
 
         os.close(handle)
-        
+
         return filename
 
 
@@ -61,18 +61,18 @@ class Cluster():
             self.run = "%s -np %d " %(self.launch, cores)
         else:
             self.run = "%s -n %d " %(self.launch, cores)
-        
+
         if self.gpu==True:
             self.run += "-g 1 "
-        self.run += "%s seismicUtilities/wrapper.py " % self.python    
-        
+        self.run += "%s seismicUtilities/wrapper.py " % self.python
+
     def _add_cmd_line(self, cmd_line):
         if isinstance(cmd_line, list):
             for cmd in cmd_line:
                 self.run += "%s " %cmd
         else:
             self.run += "%s " %cmd_line
-            
+
 
     def _add_partition_to_cmd(self, x, y, z):
         self.run += "-x %d -y %d -z %d" %(x, y, z) + " "
@@ -134,7 +134,7 @@ class SLURMCluster(Cluster):
 
         if nodes is not None:
             header_lines.append("#SBATCH -N %d" % self.nodes)
-            
+
         if launch == "mpirun":
             header_lines.append("#SBATCH -n %d" % self.cores)
        # if cores is not None:
@@ -414,7 +414,7 @@ class Client:
              futures):
 
         work_queue = Queue()
-        
+
         for arg in args:
             work_queue.put(arg)
 
@@ -472,14 +472,14 @@ class Client:
 
         cluster._add_args_to_cmd(cmd_args)
         cluster.finalize_script()
-        
+
         bashfile = cluster.job_file()
         output = cluster.runJob(bashfile)
-        
+
         if cluster.type == "slurm":
             job_id = output.split()[-1].decode()
         else:
-            job_id = output.split()[1][1:-1].decode() 
+            job_id = output.split()[1][1:-1].decode()
 
         cluster.setErrOut(job_id)
         print("Job : " + job_id+ " has been submited")
@@ -499,8 +499,8 @@ class Client:
         if n is not None:
             for i in range(n-1):
                 self.cluster.append(copy.deepcopy(cluster))
-                
-        
+
+
 
 
     def create_output(self):
@@ -567,7 +567,7 @@ class Future:
                 self.state = "RUNNING"
                 sleep(1)
                 return 0
-            elif status in ["CG","CD","DONE"]:
+            elif status in ["CD","DONE"]:
                 self.state = "COMPLETED"
                 result = self.getResult()
                 print("Job " + self.job_id + " has been completed\n")
