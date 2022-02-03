@@ -157,23 +157,15 @@ vtkSmartPointer< vtkMultiProcessController > getVTKController()
  */
 vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
 {
-  string_array filePathTokenized = stringutilities::tokenize( filePath, "." ); //TODO maybe code a method in Path to get the file extension?
-  string extension = filePathTokenized[filePathTokenized.size() - 1];
+  string const extension = stringutilities::tokenize( filePath, "." ).back(); //TODO maybe code a method in Path to get the file extension?
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
-
-  auto read = [&]( auto vtkUgReader ) // auto can be multiple types in the same function
-  {
-    vtkUgReader->SetFileName( filePath.c_str() );
-    vtkUgReader->Update();
-    loadedMesh = vtkUgReader->GetOutput();
-  };
 
   if( extension == "pvtu" )
   {
     vtkSmartPointer< vtkXMLPUnstructuredGridReader > vtkUgReader = vtkSmartPointer< vtkXMLPUnstructuredGridReader >::New();
     vtkUgReader->SetFileName( filePath.c_str() );
     vtkUgReader->UpdateInformation();
-    int numberOfPieces = vtkUgReader->GetNumberOfPieces();
+    int const numberOfPieces = vtkUgReader->GetNumberOfPieces();
     if( MpiWrapper::commSize() == 1 )
     {
       vtkUgReader->Update();
@@ -182,7 +174,7 @@ vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
     {
       if( MpiWrapper::commRank() < numberOfPieces )
       {
-        vtkUgReader->UpdatePiece( MpiWrapper::commRank(), 2, 0 );
+        vtkUgReader->UpdatePiece( MpiWrapper::commRank(), 2, 0 ); // TODO What's that numPieces = 2?
       }
     }
     loadedMesh = vtkUgReader->GetOutput();
@@ -191,6 +183,13 @@ vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
   {
     if( MpiWrapper::commRank() == 0 )
     {
+      auto read = [&]( auto vtkUgReader ) // auto can be multiple types in the same function
+      {
+        vtkUgReader->SetFileName( filePath.c_str() );
+        vtkUgReader->Update();
+        loadedMesh = vtkUgReader->GetOutput();
+      };
+
       if( extension == "vtk" )
       {
         read( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
@@ -462,11 +461,11 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
 }
 
 /**
- * @brief Find the properties to be imported
- * @details all the float and double vtkArrays will be imported
- * @return a vector containing all the vtkDataArray that can be imported
+ * @brief Find the properties that can be imported.
+ * @details All the float and double vtkArrays can be imported.
+ * @return The list of the arrays.
  */
-std::vector< vtkDataArray * > findArrayToBeImported( vtkSmartPointer< vtkUnstructuredGrid > mesh )
+std::vector< vtkDataArray * > findImportableArrays( vtkSmartPointer< vtkUnstructuredGrid > mesh )
 {
   std::vector< vtkDataArray * > arrayToBeImported;
   vtkCellData * cellData = mesh->GetCellData();
@@ -530,7 +529,7 @@ ElementType convertVtkToGeosxElementType( VTKCellType cellType )
 void writeHexahedronVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                               std::vector< vtkIdType > const & cellIds,
                               arrayView2d< localIndex, cells::NODE_MAP_USD > cellToVertex,
-                              arrayView1d< globalIndex > const & localToGlobal )
+                              arrayView1d< globalIndex > localToGlobal )
 {
   localIndex cellCount = 0;
   vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( mesh->GetCellData(), "GlobalCellIds" );
@@ -561,7 +560,7 @@ void writeHexahedronVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
 void writeWedgeVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                          std::vector< vtkIdType > const & cellIds,
                          arrayView2d< localIndex, cells::NODE_MAP_USD > cellToVertex,
-                         arrayView1d< globalIndex > const & localToGlobal )
+                         arrayView1d< globalIndex > localToGlobal )
 {
   localIndex cellCount = 0;
   vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( mesh->GetCellData(), "GlobalCellIds" );
@@ -586,9 +585,9 @@ void writeWedgeVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  * @param[in,out] cellBlock The cell block to be written
  */
-void fillCellBlock( int cellType,
+void fillCellBlock( vtkSmartPointer< vtkUnstructuredGrid > mesh,
+                    int cellType,
                     std::vector< vtkIdType > const & cellIds,
-                    vtkSmartPointer< vtkUnstructuredGrid > mesh,
                     CellBlock & cellBlock )
 {
   localIndex const numNodesPerElement = cellBlock.numNodesPerElement();
@@ -652,9 +651,15 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
   return materialWrapperNames;
 }
 
+/**
+ * @brief Imports 2d and 3d arrays from @p vtkArray to @p wrapper, only for @p cellIds
+ * @param cellIds The cells for which we should copy the data.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
 void importMaterialField( std::vector< vtkIdType > const & cellIds,
-                          WrapperBase & wrapper,
-                          vtkDataArray * vtkArray )
+                          vtkDataArray * vtkArray,
+                          WrapperBase & wrapper )
 {
   // Scalar material fields are stored as 2D arrays, vector/tensor are 3D
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 2, 3 > >;
@@ -667,32 +672,38 @@ void importMaterialField( std::vector< vtkIdType > const & cellIds,
     localIndex cellCount = 0;
     for( vtkIdType c: cellIds )
     {
-      int comp = 0;
+      int componentIdx = 0;
       for( localIndex q = 0; q < view.size( 1 ); ++q )
       {
         // The same value is copied for all quadrature points.
         LvArray::forValuesInSlice( view[cellCount][q], [&]( auto & val )
         {
-          val = vtkArray->GetComponent( c, comp );
+          val = vtkArray->GetComponent( c, componentIdx );
         } );
       }
       cellCount++;
-      comp++;
+      componentIdx++;
     }
   } );
 }
 
+/**
+ * @brief Imports 1d and 2d arrays from @p vtkArray to @p wrapper, only for @p cellIds
+ * @param cellIds The cells for which we should copy the data.
+ * @param vtkArray The source.
+ * @param wrapper The destination.
+ */
 void importRegularField( std::vector< vtkIdType > const & cellIds,
-                         WrapperBase & wrapper,
-                         vtkDataArray * vtkArray )
+                         vtkDataArray * vtkArray,
+                         WrapperBase & wrapper )
 {
-
   using ImportTypes = types::ArrayTypes< types::RealTypes, types::DimsRange< 1, 2 > >;
   types::dispatch( ImportTypes{}, wrapper.getTypeId(), true, [&]( auto array )
   {
     using ArrayType = decltype( array );
     Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
     auto const view = wrapperT.reference().toView();
+
     localIndex cellCount = 0;
     for( vtkIdType c: cellIds )
     {
@@ -705,11 +716,11 @@ void importRegularField( std::vector< vtkIdType > const & cellIds,
   } );
 }
 
-void importFieldOnCellElementSubRegion( VTKCellType vtkCellType,
+void importFieldOnCellElementSubRegion( int regionId,
+                                        VTKCellType vtkCellType,
                                         std::vector< vtkIdType > const & cellIds,
-                                        int regionId,
                                         ElementRegionManager & elemManager,
-                                        std::vector< vtkDataArray * > const & arraysTobeImported )
+                                        std::vector< vtkDataArray * > const & importableArrays )
 {
   string const cellBlockName = buildCellBlockName( vtkCellType, regionId );
 
@@ -717,9 +728,9 @@ void importFieldOnCellElementSubRegion( VTKCellType vtkCellType,
   {
     if( subRegion.getName() == cellBlockName )
     {
-      /// Writing properties
+      // Writing properties
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
-      for( vtkDataArray * vtkArray: arraysTobeImported )
+      for( vtkDataArray * vtkArray: importableArrays )
       {
         if( materialWrapperNames.count( vtkArray->GetName() ) == 0 )
         {
@@ -728,11 +739,11 @@ void importFieldOnCellElementSubRegion( VTKCellType vtkCellType,
         WrapperBase & wrapper = subRegion.getWrapperBase( vtkArray->GetName() );
         if( materialWrapperNames.count( vtkArray->GetName() ) > 0 && wrapper.numArrayDims() > 1 )
         {
-          importMaterialField( cellIds, wrapper, vtkArray );
+          importMaterialField( cellIds, vtkArray, wrapper );
         }
         else
         {
-          importRegularField( cellIds, wrapper, vtkArray );
+          importRegularField( cellIds, vtkArray, wrapper );
         }
       }
     }
@@ -748,7 +759,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   {
     for( auto & cellBlock: cellBlocks )
     {
-      importFieldOnCellElementSubRegion( vtkCellType, cellBlock.second, cellBlock.first, elemManager, m_arraysToBeImported );
+      importFieldOnCellElementSubRegion( cellBlock.first, vtkCellType, cellBlock.second, elemManager, m_importableArrays );
     }
   };
 
@@ -758,7 +769,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   importFieldsForElementType( VTK_PYRAMID, m_regionsPyramids );
 
   std::map< string, string_array > fieldNames;
-  for( vtkDataArray * vtkArray: m_arraysToBeImported )
+  for( vtkDataArray * vtkArray: m_importableArrays )
   {
     fieldNames["elems"].emplace_back( vtkArray->GetName() );
   }
@@ -766,22 +777,20 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
 }
 
-/**
- * @brief Build all the cell blocks.
- * @param[in] domain the domain in which the cell blocks will be written
- * @param[in] regionsHex map from region index to the hexahedron indexes in this region
- * @param[in] regionsTetra map from region index to the tetra indexes in this region
- * @param[in] regionsWedges map from region index to the wedges indexes in this region
- * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
- * @param[in] regions a set containing all the region indexes
- * @param[in] arraysToBeImported a vector containing all the vtkDataArray that can be imported
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
- */
-void buildCellBlocks( std::map< int, std::vector< vtkIdType > > const & regionsHex,
+ /**
+  * @brief Build all the cell blocks.
+  * @param[in] mesh the vtkUnstructuredGrid that is loaded
+  * @param[in] regionsHex map from region index to the hexahedron indexes in this region
+  * @param[in] regionsTetra map from region index to the tetra indexes in this region
+  * @param[in] regionsWedges map from region index to the wedges indexes in this region
+  * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
+  * @param[out] cellBlockManager The instance that stores the cell blocks.
+  */
+void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
+                      std::map< int, std::vector< vtkIdType > > const & regionsHex,
                       std::map< int, std::vector< vtkIdType > > const & regionsTetra,
                       std::map< int, std::vector< vtkIdType > > const & regionsWedges,
                       std::map< int, std::vector< vtkIdType > > const & regionsPyramids,
-                      vtkSmartPointer< vtkUnstructuredGrid > mesh,
                       CellBlockManager & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
@@ -799,7 +808,7 @@ void buildCellBlocks( std::map< int, std::vector< vtkIdType > > const & regionsH
       cellBlock.setElementType( convertVtkToGeosxElementType( vtkType ) );
       cellBlock.resize( cellIds.size() );
 
-      fillCellBlock( vtkType, cellIds, mesh, cellBlock );
+      fillCellBlock( mesh, vtkType, cellIds, cellBlock );
     }
   };
 
@@ -809,12 +818,12 @@ void buildCellBlocks( std::map< int, std::vector< vtkIdType > > const & regionsH
   fct( VTK_PYRAMID, regionsPyramids );
 }
 
-/**
- * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
- * @param[in] allSurfaces the surfaces id to be imported
- * @param[in] surfacesIdsToCellsIds map from the surfaces index to the list of cells in this surface in this rank
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
- */
+ /**
+  * @brief
+  * @param[in] mesh the vtkUnstructuredGrid that is loaded
+  * @param[in] surfacesIdsToCellsIds map from the surfaces index to the list of cells in this surface in this rank
+  * @param[out] cellBlockManager The instance that stores the node sets.
+  */
 void buildSurfaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                     std::map< int, std::vector< vtkIdType > > const & surfacesIdsToCellsIds,
                     CellBlockManager & cellBlockManager )
@@ -852,7 +861,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = loadVTKMesh( m_filePath );
 
-  // Smart Pointer to the Mesh in the data structure of VTK.
+  // The VTK mesh to be imported into GEOSX.
   vtkSmartPointer< vtkUnstructuredGrid > vtkMesh = redistributeMesh( *loadedMesh );
 
   Group & meshBodies = domain.getMeshBodies();
@@ -868,9 +877,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = countCellsAndFaces( vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
 
-  m_arraysToBeImported = findArrayToBeImported( vtkMesh );
+  m_importableArrays = findImportableArrays( vtkMesh );
 
-  buildCellBlocks( m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, vtkMesh, cellBlockManager );
+  buildCellBlocks( vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, cellBlockManager );
 
   buildSurfaces( vtkMesh, surfacesIdsToCellsIds, cellBlockManager );
 

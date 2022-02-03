@@ -128,7 +128,7 @@ private:
   std::map< int, std::vector< vtkIdType > > m_regionsWedges;
   std::map< int, std::vector< vtkIdType > > m_regionsPyramids;
 
-  std::vector< vtkDataArray * > m_arraysToBeImported;
+  std::vector< vtkDataArray * > m_importableArrays;
 };
 }
 #endif /* GEOSX_MESHUTILITIES_VTKMESHGENERATOR_HPP */
