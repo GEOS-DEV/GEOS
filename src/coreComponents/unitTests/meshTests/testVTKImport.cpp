@@ -64,55 +64,21 @@ static const std::string medleyVTK = testMeshDir + + "/medley.vtk";
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
 {
+  string const meshNode = "<Mesh ><VTKMeshGenerator name=\"Cube\" file=\"" + meshFilePath + "\" /></Mesh>";
+  xmlWrapper::xmlDocument xmlDocument;
+  xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
+  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
+
   conduit::Node node;
   Group root( "root", node );
+
   MeshManager meshManager( "mesh", &root );
-
-  std::stringstream inputStreamMesh;
-  inputStreamMesh <<
-                  "<?xml version=\"1.0\" ?>" <<
-                  "<Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-                  "  <VTKMeshGenerator name=\"Cube\" file=\"" << meshFilePath << "\" />"<<
-                  "</Mesh>";
-  const string inputStringMesh = inputStreamMesh.str();
-
-  std::stringstream inputStreamRegion;
-  inputStreamRegion <<
-                    "<?xml version=\"1.0\" ?>" <<
-                    "  <CellElementRegions xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-                    "  <CellElementRegion name=\"0\" cellBlocks=\"{hexahedron, 0_pyramids}\" materialList=\"{water, rock}\"/>" <<
-                    "</ElementRegions>"; // FIXME What is this cellBlocks="{hexahedron}"?
-  string inputStringRegion = inputStreamRegion.str();
-
-  // Load the mesh
-  xmlWrapper::xmlDocument xmlDocument;
-  xmlDocument.load_buffer( inputStringMesh.c_str(), inputStringMesh.size() );
-
-  xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
   meshManager.processInputFileRecursive( xmlMeshNode );
   meshManager.postProcessInputRecursive();
+  DomainPartition domain( "domain", &root );
+  meshManager.generateMeshes( domain );
 
-  // Create the domain and generate the Mesh
-  auto domain = std::make_unique< DomainPartition >( "domain", &root );
-  meshManager.generateMeshes( *domain );
-//  meshManager.importFields( *domain );
-
-  MeshBody & meshBody = domain->getMeshBody( 0 );
-  MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-  // Create the ElementRegions
-  xmlDocument.load_buffer( inputStringRegion.c_str(), inputStringRegion.size() );
-
-  xmlWrapper::xmlNode xmlRegionNode = xmlDocument.child( "ElementRegions" );
-  elemManager.processInputFileRecursive( xmlRegionNode );
-  elemManager.postProcessInputRecursive();
-
-  CellBlockManagerABC & cellBlockManager = domain->getGroup< CellBlockManagerABC >( keys::cellManager );
-
-  elemManager.generateMesh( cellBlockManager );
-
-  validate( cellBlockManager );
+  validate( domain.getGroup< CellBlockManagerABC >( keys::cellManager ) );
 }
 
 /**
@@ -146,7 +112,7 @@ T expected( T expectedSerial,
 }
 
 
-TEST( MyVTKImport, cube )
+TEST( VTKImport, cube )
 {
   auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
@@ -209,9 +175,9 @@ TEST( MyVTKImport, cube )
     GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 2 ).getName() );
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    CellBlockABC const & hexs = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "hexahedron" );
-    CellBlockABC const & hexs3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_hexahedron" );
-    CellBlockABC const & hexs9 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "9_hexahedron" );
+    CellBlockABC const & hexs = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "hexahedra" );
+    CellBlockABC const & hexs3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_hexahedra" );
+    CellBlockABC const & hexs9 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "9_hexahedra" );
 
     for( CellBlockABC const * h: { &hexs, &hexs3, &hexs9 } )
     {
@@ -243,7 +209,7 @@ TEST( MyVTKImport, cube )
 //  TestMeshImport( cubePVTU, validate );
 }
 
-TEST( MyVTKImport, medley )
+TEST( VTKImport, medley )
 {
   SKIP_TEST_IN_PARALLEL("Neither relevant nor implemented in parallel");
 
@@ -268,17 +234,18 @@ TEST( MyVTKImport, medley )
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
     CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_pyramids" );
-    CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_hexahedron" );
+    CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_hexahedra" );
     CellBlockABC const & zone2 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "2_wedges" );
-    CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_tetrahedron" );
+    CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_tetrahedra" );
 
-    for( string prefix: { "0", "1", "2", "3" } )
+    std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra" };
+    for( std::size_t prefix: { 0, 1, 2, 3 } )
     {
-      for( string elementType: { "pyramids", "hexahedron", "wedges", "tetrahedron" } )
+      for( std::size_t i; i < 4; ++i )
       {
-        string const name = prefix + "_" + elementType;
+        string const name = std::to_string( prefix ) + "_" + elementNames[i];
         CellBlockABC const & zone = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name );
-        ASSERT_EQ( zone.size(), name == "0_pyramids" or name == "1_hexahedron" or name == "2_wedges" or name == "3_tetrahedron" ? 1 : 0 );
+        ASSERT_EQ( zone.size(), prefix == i ? 1 : 0 );
       }
     }
 

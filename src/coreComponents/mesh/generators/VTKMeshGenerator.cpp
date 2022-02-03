@@ -108,9 +108,9 @@ string getCellName( VTKCellType vtkCellType )
   switch( vtkCellType )
   {
     case VTK_HEXAHEDRON:
-      return "hexahedron";
+      return "hexahedra";
     case VTK_TETRA:
-      return "tetrahedron";
+      return "tetrahedra";
     case VTK_WEDGE:
       return "wedges"; // TODO plural or singular
     case VTK_PYRAMID:
