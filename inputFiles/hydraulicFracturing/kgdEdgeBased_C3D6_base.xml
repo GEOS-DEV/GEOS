@@ -13,7 +13,6 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
       targetRegions="{ Fracture }"
