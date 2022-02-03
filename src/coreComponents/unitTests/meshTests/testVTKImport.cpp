@@ -22,44 +22,17 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
+#include "codingUtilities/UnitTestUtilities.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
 
-// TODO unduplicate
-#define SKIP_TEST_IF( COND, REASON ) \
-  do \
-  { \
-    if( COND ) \
-    { \
-      GTEST_SKIP_( ": " REASON ); \
-    } \
-  } while( 0 )
-
-#define SKIP_TEST_IN_SERIAL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize == 1, REASON ); \
-  } while( 0 )
-
-#define SKIP_TEST_IN_PARALLEL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize != 1, REASON ); \
-  } while( 0 )
-
-
 using namespace geosx;
+using namespace geosx::testing;
 using namespace geosx::dataRepository;
 
 // TODO move in the functions?
-static const std::string cubeVTK = testMeshDir + "/cube.vtk";
-static const std::string cubeVTU = testMeshDir + + "/cube.vtu";
-static const std::string cubePVTU = testMeshDir + + "/cube.pvtu";
-static const std::string medleyVTK = testMeshDir + + "/medley.vtk";
 
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
@@ -78,39 +51,10 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
   DomainPartition domain( "domain", &root );
   meshManager.generateMeshes( domain );
 
+  // TODO Field import is not tested yet. Proper refactoring needs to be done first.
+
   validate( domain.getGroup< CellBlockManagerABC >( keys::cellManager ) );
 }
-
-/**
- * @brief Returns the expected value depending on the MPI context.
- * @tparam T Type of the expected value.
- * @param[in] expectedSerial Expected value for serial case.
- * @param[in] expectedParallel Expected values for parallel MPI cases, for the current MPI rank.
- *        The length of the list should match the size of the MPI communicator @p comm.
- *        The @p i^th element of the list will be chosen for MPI rank @p i.
- * @param[in] comm The MPI_Comm communicator that the function will act on.
- * @return The expected value.
- *
- * @note This function is meant to be used to run the same test in serial or parallel environments.
- */
-template< typename T >
-T expected( T expectedSerial,
-            std::initializer_list< T > expectedParallel,
-            MPI_Comm const & comm=MPI_COMM_GEOSX )
-{
-  int const mpiSize = MpiWrapper::commSize( comm );
-  if( mpiSize == 1 )
-  {
-    return expectedSerial;
-  }
-  else
-  {
-    GEOSX_ASSERT( expectedParallel.size() == std::size_t( mpiSize ) );
-    std::vector< T > tmp( expectedParallel );
-    return tmp[MpiWrapper::commRank( comm )];
-  }
-}
-
 
 TEST( VTKImport, cube )
 {
@@ -200,9 +144,11 @@ TEST( VTKImport, cube )
       ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
       ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
     }
-
-    // TODO importFields?
   };
+
+  std::string const cubeVTK = testMeshDir + "/cube.vtk";
+  std::string const cubeVTU = testMeshDir + +"/cube.vtu";
+//  std::string const cubePVTU = testMeshDir + +"/cube.pvtu";
 
   TestMeshImport( cubeVTK, validate );
   TestMeshImport( cubeVTU, validate );
@@ -211,7 +157,7 @@ TEST( VTKImport, cube )
 
 TEST( VTKImport, medley )
 {
-  SKIP_TEST_IN_PARALLEL("Neither relevant nor implemented in parallel");
+  SKIP_TEST_IN_PARALLEL( "Neither relevant nor implemented in parallel" );
 
   auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
@@ -277,6 +223,8 @@ TEST( VTKImport, medley )
       ASSERT_EQ( z->getElemToFaces().size( 0 ), 1 );
     }
   };
+
+  std::string const medleyVTK = testMeshDir + + "/medley.vtk";
 
   TestMeshImport( medleyVTK, validate );
 }
