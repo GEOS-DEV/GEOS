@@ -17,7 +17,7 @@ exclusionStrings = [ 'sizedFromParent', 'different shapes', 'but not the' ]
 numTrailingLines = 1
 
 
-for fileName in findFiles(sys.argv[1]):#'integratedTests'):
+for fileName in findFiles(sys.argv[1]):
     #fileName = 'integratedTests/compositionalMultiphaseFlow/4comp_2ph_1d_01/4comp_2ph_1d_01.data'
     print( 'Processing ',fileName )
 
