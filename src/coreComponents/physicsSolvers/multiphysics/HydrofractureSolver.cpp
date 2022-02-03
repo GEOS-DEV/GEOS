@@ -482,8 +482,6 @@ void HydrofractureSolver::setupSystem( DomainPartition & domain,
 
   GEOSX_UNUSED_VAR( setSparsity );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   dofManager.setDomain( domain );
 
   setupDofs( domain, dofManager );
