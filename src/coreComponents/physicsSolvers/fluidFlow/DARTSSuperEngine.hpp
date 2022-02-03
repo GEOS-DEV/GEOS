@@ -220,7 +220,7 @@ public:
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
-    static constexpr char const * allowLocalCompFractionChoppingString() { return "allowLocalCompFractionChopping"; }
+    static constexpr char const * allowLocalOBLChoppingString() { return "allowLocalOBLChoppingString"; }
   };
 
   /**
@@ -323,7 +323,7 @@ protected:
   real64 m_minScalingFactor;
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
-  integer m_allowCompFracChopping;
+  integer m_allowOBLChopping;
 };
 
 

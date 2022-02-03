@@ -138,6 +138,7 @@ public:
 
 };
 
+/******************************** Kernel launch machinery ********************************/
 namespace internal
 {
 
@@ -280,10 +281,9 @@ public:
     // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
     state[0] = (m_pressure[ei] + m_dPressure[ei]) * pascalToBarMult;
 
-    for( integer i = 1; i < numComps - 1; i++ )
+    for( integer i = 1; i < numComps; i++ )
     {
       state[i] = compFrac[i - 1] + dCompFrac[i - 1];
-      //printf ( " %lf,", state[i] );
     }
 
     if( enableEnergyBalance )
@@ -312,6 +312,14 @@ public:
         printf ( "]\n" );
       }
     }
+
+    printf ( "element %ld: [", ei );
+    for( integer i = 0; i < numDofs; i++ )
+    {
+      printf ( "%lf, ", state[i] );
+    }
+
+    printf ( "]\n" );
   }
 
 protected:
@@ -1414,12 +1422,11 @@ struct ResidualNormKernel
   template< typename POLICY, typename REDUCE_POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
-                      integer const numComponents,
+                      integer const numDofs,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
-                      arrayView1d< real64 const > const & refPoro,
-                      arrayView1d< real64 const > const & volume,
-                      arrayView1d< real64 const > const & totalDensOld,
+                      arrayView1d< real64 const > const & refPoreVolume,
+                      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLOperatorValuesOld,
                       real64 & localResidualNorm )
   {
     RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
@@ -1429,18 +1436,16 @@ struct ResidualNormKernel
       if( ghostRank[ei] < 0 )
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const normalizer = totalDensOld[ei] * refPoro[ei] * volume[ei];
 
-        for( integer idof = 0; idof < numComponents + 1; ++idof )
+        for( integer idof = 0; idof < numDofs; ++idof )
         {
-          real64 const val = localResidual[localRow + idof] / normalizer;
+          real64 const val = localResidual[localRow + idof] / (OBLOperatorValuesOld[ei][idof] * refPoreVolume[ei]);
           localSum += val * val;
         }
       }
     } );
     localResidualNorm += localSum.get();
   }
-
 };
 
 
@@ -1452,14 +1457,17 @@ struct SolutionCheckKernel
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
-          localIndex const numComponents,
+          localIndex const numComps,
+          bool const enableThermalBalance,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & pres,
           arrayView1d< real64 const > const & dPres,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
-          integer const allowCompDensChopping,
+          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
+          arrayView2d< real64 const, compflow::USD_COMP > const & dCompFrac,
+          arrayView1d< real64 const > const & temp,
+          arrayView1d< real64 const > const & dTemp,
+          integer const allowOBLChopping,
           real64 const scalingFactor )
   {
     real64 constexpr eps = minDensForDivision;
@@ -1471,32 +1479,38 @@ struct SolutionCheckKernel
       if( ghostRank[ei] < 0 )
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
-        {
-          real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
-          check.min( newPres >= 0.0 );
-        }
 
-        // if component density chopping is not allowed, the time step fails if a component density is negative
-        // otherwise, we just check that the total density is positive, and negative component densities
-        // will be chopped (i.e., set to zero) in ApplySystemSolution)
-        if( !allowCompDensChopping )
+        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
+        check.min( newPres >= 0.0 );
+
+        // if OBL chopping is not allowed, the time step fails if a component fraction is negative
+        // otherwise, we just check that the total fraction is positive, and out-of-OBL-bounds component fractions
+        // will be chopped (i.e., set to minimum OBL limit) in ApplySystemSolution)
+        if( !allowOBLChopping )
         {
-          for( integer ic = 0; ic < numComponents; ++ic )
+          for( integer ic = 0; ic < numComps; ++ic )
           {
-            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-            check.min( newDens >= 0.0 );
+            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic];
+            check.min( newCompFrac >= 0.0 );
           }
         }
         else
         {
-          real64 totalDens = 0.0;
-          for( integer ic = 0; ic < numComponents; ++ic )
+          real64 fracSum = 0.0;
+          for( integer ic = 0; ic < numComps; ++ic )
           {
-            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
-            totalDens += (newDens > 0.0) ? newDens : 0.0;
+            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic];
+            fracSum += (newCompFrac > 0.0) ? newCompFrac : 0.0;
           }
-          check.min( totalDens >= eps );
+          check.min( fracSum >= eps );
         }
+
+        if( enableThermalBalance )
+        {
+          real64 const newTemp = temp[ei] + dTemp[ei] + scalingFactor * localSolution[localRow + numComps];
+          check.min( newTemp >= 0.0 );
+        }
+
       }
     } );
     return check.get();
@@ -1504,44 +1518,7 @@ struct SolutionCheckKernel
 
 };
 
-
-
-/******************************** Kernel launch machinery ********************************/
-
-// template< typename KERNELWRAPPER, typename ... ARGS >
-// void KernelLaunchSelector1( integer const numComps, ARGS && ... args )
-// {
-//   internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
-//   {
-//     KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
-//   } );
-// }
-
-// template< typename KERNELWRAPPER, typename ... ARGS >
-// void KernelLaunchSelector2( integer const numComps, integer const numPhase, ARGS && ... args )
-// {
-//   // Ideally this would be inside the dispatch, but it breaks on Summit with GCC 9.1.0 and CUDA 11.0.3.
-//   if( numPhase == 2 )
-//   {
-//     internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
-//     {
-//       KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args ) ... );
-//     } );
-//   }
-//   else if( numPhase == 3 )
-//   {
-//     internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
-//     {
-//       KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args ) ... );
-//     } );
-//   }
-//   else
-//   {
-//     GEOSX_ERROR( "Unsupported number of phases: " << numPhase );
-//   }
-// }
-
-} // namespace CompositionalMultiphaseBaseKernels
+} // namespace DARTSSuperEngineKernels
 
 } // namespace geosx
 

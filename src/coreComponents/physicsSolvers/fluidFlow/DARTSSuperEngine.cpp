@@ -98,6 +98,11 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Exponent of dynamic transmissibility multiplier" );
 
+  this->registerWrapper( viewKeyStruct::allowLocalOBLChoppingString(), &m_allowOBLChopping ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Allow keeping solution within OBL limits" );
+
   this->registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of component names" );
@@ -286,31 +291,28 @@ real64 DARTSSuperEngine::calculateResidualNorm( DomainPartition const & domain,
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   real64 localResidualNorm = 0.0;
 
-  //globalIndex const rankOffset = dofManager.rankOffset();
+  globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    // arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    // arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-    // arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+    arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLValsOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
+    arrayView1d< real64 const > const & refPoreVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
 
-    //CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
-    // arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
 
     real64 subRegionResidualNorm = 0.0;
-    // ResidualNormKernel::launch< parallelDevicePolicy<>,
-    //                             parallelDeviceReduce >( localRhs,
-    //                                                     rankOffset,
-    //                                                     numFluidComponents(),
-    //                                                     dofNumber,
-    //                                                     elemGhostRank,
-    //                                                     referencePorosity,
-    //                                                     volume,
-    //                                                     totalDensOld,
-    //                                                     subRegionResidualNorm );
+    ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                parallelDeviceReduce >( localRhs,
+                                                        rankOffset,
+                                                        m_numDofPerCell,
+                                                        dofNumber,
+                                                        elemGhostRank,
+                                                        refPoreVolume,
+                                                        OBLValsOld,
+                                                        subRegionResidualNorm );
     localResidualNorm += subRegionResidualNorm;
 
   } );
@@ -421,31 +423,37 @@ bool DARTSSuperEngine::checkSystemSolution( DomainPartition const & domain,
 
   forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
   {
-    // arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    // arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
-    // arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-    // arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >(
-    // extrinsicMeshData::flow::deltaPressure::key() );
-    // arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-    //   subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-    // arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-    //   subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+    arrayView1d< real64 const > const & pres =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    arrayView1d< real64 const > const & dPres =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
+    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+    arrayView2d< real64 const, compflow::USD_COMP > const & dCompFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
+    arrayView1d< real64 const > const & temp =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+    arrayView1d< real64 const > const & dTemp =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaTemperature::key() );
 
-    localIndex const subRegionSolutionCheck = 0.0;
-
-    // subRegionSolutionCheck = SolutionCheckKernel::launch< parallelDevicePolicy<>,
-    //                                parallelDeviceReduce >( localSolution,
-    //                                                        dofManager.rankOffset(),
-    //                                                        numFluidComponents(),
-    //                                                        dofNumber,
-    //                                                        elemGhostRank,
-    //                                                        pres,
-    //                                                        dPres,
-    //                                                        compDens,
-    //                                                        dCompDens,
-    //                                                        m_allowCompDensChopping,
-    //                                                        scalingFactor );
+    localIndex const subRegionSolutionCheck = SolutionCheckKernel::launch< parallelDevicePolicy<>,
+                                                                           parallelDeviceReduce >( localSolution,
+                                                                                                   dofManager.rankOffset(),
+                                                                                                   m_numComponents,
+                                                                                                   m_enableEnergyBalance,
+                                                                                                   dofNumber,
+                                                                                                   elemGhostRank,
+                                                                                                   pres,
+                                                                                                   dPres,
+                                                                                                   compFrac,
+                                                                                                   dCompFrac,
+                                                                                                   temp,
+                                                                                                   dTemp,
+                                                                                                   m_allowOBLChopping,
+                                                                                                   scalingFactor );
 
     localCheck = std::min( localCheck, subRegionSolutionCheck );
   } );
@@ -640,11 +648,11 @@ void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n )
                                              localMatrix,
                                              localRhs );
 
-  assembleFluxTerms( dt,
-                     domain,
-                     dofManager,
-                     localMatrix,
-                     localRhs );
+  // assembleFluxTerms( dt,
+  //                    domain,
+  //                    dofManager,
+  //                    localMatrix,
+  //                    localRhs );
 
 
 }
@@ -1110,6 +1118,9 @@ void DARTSSuperEngine::updateState( DomainPartition & domain )
   {
     // update porosity and permeability
     updatePorosityAndPermeability( subRegion, targetIndex );
+
+    // update operator values
+    updateOBLOperators( subRegion );
   } );
 }
 
