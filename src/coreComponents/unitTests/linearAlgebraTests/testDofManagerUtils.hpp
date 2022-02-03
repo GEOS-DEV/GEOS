@@ -79,30 +79,18 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
  */
 std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, std::vector< DofManager::Regions > const & input )
 {
-  std::vector< DofManager::Regions > regions;
-  if( !input.empty() )
+  std::vector< DofManager::Regions > regions( input.begin(), input.end() );
+  for( DofManager::Regions & support : regions )
   {
-    for( DofManager::Regions const & supportRegion : input )
+    if( support.regionNames.empty() )
     {
-      regions.emplace_back( supportRegion );
-    }
-  }
-  else
-  {
-    domain.forMeshBodies( [&] ( MeshBody const & meshBody )
-    {
-      DofManager::Regions supportRegion;
-      supportRegion.meshBodyName = meshBody.getName();
-      meshBody.forMeshLevels( [&] ( MeshLevel const & meshLevel )
+      MeshBody const & meshBody = domain.getMeshBody( support.meshBodyName );
+      MeshLevel const & meshLevel = meshBody.getMeshLevel( support.meshLevelName );
+      meshLevel.getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
       {
-        supportRegion.meshLevelName = meshLevel.getName();
-        meshLevel.getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
-        {
-          supportRegion.regionNames.emplace_back( region.getName() );
-        } );
+        support.regionNames.emplace_back( region.getName() );
       } );
-      regions.emplace_back( supportRegion );
-    } );
+    }
   }
   return regions;
 }
