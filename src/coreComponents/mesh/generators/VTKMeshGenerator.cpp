@@ -331,25 +331,24 @@ std::vector< TYPE > communicateAttributes( std::vector< TYPE > const & attribute
 }
 
 /**
- * @brief This method is used to preprocess the VTK mesh and count the number of cells, facets, regions
- * and surfaces over the current MPI rank
+ * @brief This method is used to preprocess the VTK mesh and count the number of cells, facets, regions and surfaces over the current MPI rank
+ * @param[in] mesh the vtkUnstructuredGrid that is loaded
  * @param[out] regionsHex map from region index to the hexahedron indexes
  * @param[out] regionsTetra map from region index to the tetra indexes
  * @param[out] regionsWedges map from region index to the wedges indexes
  * @param[out] regionsPyramids map from region index to the pyramids indexes
- * @param[out] regions a set containing all the region indexes
- * @param[out] surfaces a set containing all the surface indexes, from this MPI rank
- * @param[out] allSurfaces a vector containing all the surfaces among all the MPI rank
- * @param[in] mesh the vtkUnstructuredGrid that is loaded
+ * @return A map from the surface indices to the associated cell ids for the current rank.
+ * The mapping contains the surface indices for the whole simulation across the MPI ranks,
+ * even if there is no cell for current rank (then the list will be empty).
  */
-void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex, // TODO rename regionToHexs, regionToTets...
-                         std::map< int, std::vector< vtkIdType > > & regionsTetra,
-                         std::map< int, std::vector< vtkIdType > > & regionsWedges,
-                         std::map< int, std::vector< vtkIdType > > & regionsPyramids,
-                         std::map< int, std::vector< vtkIdType > > & surfaces, // TODO naming?
-                         std::vector< int > & allSurfaces,
-                         vtkSmartPointer< vtkUnstructuredGrid > mesh )
+std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
+                                                              std::map< int, std::vector< vtkIdType > > & regionsHex,
+                                                              std::map< int, std::vector< vtkIdType > > & regionsTetra,
+                                                              std::map< int, std::vector< vtkIdType > > & regionsWedges,
+                                                              std::map< int, std::vector< vtkIdType > > & regionsPyramids )
 {
+  std::map< int, std::vector< vtkIdType > > surfacesIdsToCellsIds;
+
   vtkIntArray const * const attributeDataArray = getDataArrayOptional< vtkIntArray >( mesh->GetCellData(), "attribute" );
 
   auto countCell = [&]( localIndex c,
@@ -357,7 +356,7 @@ void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex,
   {
     if( attributeDataArray != nullptr )
     {
-      int region = attributeDataArray->GetValue( c );
+      int const region = attributeDataArray->GetValue( c );
       GEOSX_LOG_RANK_0_IF( region < 0, "Attribute value " << region << " not supported, please use value >=0 to describe regions" );
       regionsElem[region].push_back( c );
     }
@@ -370,27 +369,27 @@ void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex,
 
   for( vtkIdType c = 0; c < mesh->GetNumberOfCells(); c++ )
   {
-    if( mesh->GetCellType( c ) == VTK_HEXAHEDRON )
+    if( VTK_HEXAHEDRON == mesh->GetCellType( c ) )
     {
       countCell( c, regionsHex );
     }
-    else if( mesh->GetCellType( c ) == VTK_TETRA )
+    else if( VTK_TETRA == mesh->GetCellType( c ) )
     {
       countCell( c, regionsTetra );
     }
-    else if( mesh->GetCellType( c ) == VTK_WEDGE )
+    else if( VTK_WEDGE == mesh->GetCellType( c ) )
     {
       countCell( c, regionsWedges );
     }
-    else if( mesh->GetCellType( c ) == VTK_PYRAMID )
+    else if( VTK_PYRAMID == mesh->GetCellType( c ) )
     {
       countCell( c, regionsPyramids );
     }
-    else if( mesh->GetCellType( c ) == VTK_TRIANGLE || mesh->GetCellType( c ) == VTK_QUAD )
+    else if( VTK_TRIANGLE == mesh->GetCellType( c ) || VTK_QUAD == mesh->GetCellType( c ) )
     {
       if( attributeDataArray != nullptr )
       {
-        surfaces[attributeDataArray->GetValue( c )].push_back( c );
+        surfacesIdsToCellsIds[attributeDataArray->GetValue( c )].push_back( c );
       }
     }
   }
@@ -448,12 +447,18 @@ void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex,
 
   // Communicate all the surfaces attributes to the ranks
   std::vector< int > surfaceVector;
-  surfaceVector.reserve( surfaces.size() );
-  for( auto & surface: surfaces )
+  surfaceVector.reserve( surfacesIdsToCellsIds.size() );
+  for( auto & surface: surfacesIdsToCellsIds )
   {
     surfaceVector.push_back( surface.first );
   }
-  allSurfaces = communicateAttributes( surfaceVector );
+  std::vector< int > const allSurfaces = communicateAttributes( surfaceVector );
+  for( auto const & s: allSurfaces )
+  {
+    surfacesIdsToCellsIds[s];
+  }
+
+  return surfacesIdsToCellsIds;
 }
 
 /**
@@ -517,15 +522,15 @@ ElementType convertVtkToGeosxElementType( VTKCellType cellType )
 /**
  * @brief Write the hexahedron vertices
  * @details The node ordering from VTK differs from the node ordering in GEOSX
- * @param[in,out] cellToVertex list of nodes organized per cells
- * @param[in] cellIds the hex indexes within this region
- * @param[in,out] localToGLobal the local index to global index map
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
+ * @param[in] cellIds the hex indexes within this region
+ * @param[out] cellToVertex list of nodes organized per cells
+ * @param[out] localToGlobal the local index to global index map
  */
-void writeHexahedronVertices( arrayView2d< localIndex, cells::NODE_MAP_USD > cellToVertex,
+void writeHexahedronVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                               std::vector< vtkIdType > const & cellIds,
-                              arrayView1d< globalIndex > const & localToGlobal,
-                              vtkSmartPointer< vtkUnstructuredGrid > mesh )
+                              arrayView2d< localIndex, cells::NODE_MAP_USD > cellToVertex,
+                              arrayView1d< globalIndex > const & localToGlobal )
 {
   localIndex cellCount = 0;
   vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( mesh->GetCellData(), "GlobalCellIds" );
@@ -553,10 +558,10 @@ void writeHexahedronVertices( arrayView2d< localIndex, cells::NODE_MAP_USD > cel
  * @param[in,out] localToGLobal the local index to global index map
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void writeWedgeVertices( arrayView2d< localIndex, cells::NODE_MAP_USD > cellToVertex,
+void writeWedgeVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                          std::vector< vtkIdType > const & cellIds,
-                         arrayView1d< globalIndex > const & localToGlobal,
-                         vtkSmartPointer< vtkUnstructuredGrid > mesh )
+                         arrayView2d< localIndex, cells::NODE_MAP_USD > cellToVertex,
+                         arrayView1d< globalIndex > const & localToGlobal )
 {
   localIndex cellCount = 0;
   vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( mesh->GetCellData(), "GlobalCellIds" );
@@ -593,12 +598,12 @@ void fillCellBlock( int cellType,
   // Writing connectivity and Local to Global
   if( cellType == VTK_HEXAHEDRON ) // Special case for hexahedron because of the ordering
   {
-    writeHexahedronVertices( cellToVertex, cellIds, localToGlobal, mesh );
+    writeHexahedronVertices( mesh, cellIds, cellToVertex, localToGlobal );
     return;
   }
   if( cellType == VTK_WEDGE ) // Special case for wedge because of the ordering
   {
-    writeWedgeVertices( cellToVertex, cellIds, localToGlobal, mesh );
+    writeWedgeVertices( mesh, cellIds, cellToVertex, localToGlobal );
     return;
   }
   vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( mesh->GetCellData(), "GlobalCellIds" );
@@ -807,24 +812,24 @@ void buildCellBlocks( std::map< int, std::vector< vtkIdType > > const & regionsH
 /**
  * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
  * @param[in] allSurfaces the surfaces id to be imported
- * @param[in] surfaces map from the surfaces index to the list of cells in this surface in this rank
+ * @param[in] surfacesIdsToCellsIds map from the surfaces index to the list of cells in this surface in this rank
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void buildSurfaces( CellBlockManager & cellBlockManager,
-                    std::vector< int > const & allSurfaces,
-                    std::map< int, std::vector< vtkIdType > > surfaces,
-                    vtkSmartPointer< vtkUnstructuredGrid > mesh )
+void buildSurfaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
+                    std::map< int, std::vector< vtkIdType > > const & surfacesIdsToCellsIds,
+                    CellBlockManager & cellBlockManager )
 {
   std::map< string, SortedArray< localIndex > > & nodeSets = cellBlockManager.getNodeSets();
-  // Create all surfaces (even those which are empty in this rank)
-  for( int surface: allSurfaces )
+
+  for( auto const & s2c: surfacesIdsToCellsIds )
   {
-    nodeSets[std::to_string( surface )];
-  }
-  for( auto surface: surfaces )
-  {
-    SortedArray< localIndex > & curNodeSet = nodeSets[ std::to_string( surface.first ) ];
-    for( vtkIdType c: surface.second )
+    int const & surfaceId = s2c.first;
+    std::vector< vtkIdType > const & cellIds = s2c.second;
+
+    // Get or create all surfaces (even those which are empty in this rank)
+    SortedArray< localIndex > & curNodeSet = nodeSets[ std::to_string( surfaceId ) ];
+
+    for( vtkIdType const & c: cellIds )
     {
       vtkCell * currentCell = mesh->GetCell( c );
       for( localIndex v = 0; v < currentCell->GetNumberOfPoints(); v++ )
@@ -861,16 +866,13 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   domain.getMetisNeighborList() = computePotentialNeighborLists( vtkMesh->GetBounds(), globalLength );
 
-  std::map< int, std::vector< vtkIdType > > surfaces; //local to this rank
-  std::vector< int > allSurfaces; // global to the whole mesh // TODO merge surfaces and allSurfaces, so surfaces contains all the surfaces, even with some empty std::vector< vtkIdType >?
-
-  countCellsAndFaces( m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, surfaces, allSurfaces, vtkMesh );
+  std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = countCellsAndFaces( vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
 
   m_arraysToBeImported = findArrayToBeImported( vtkMesh );
 
   buildCellBlocks( m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, vtkMesh, cellBlockManager );
 
-  buildSurfaces( cellBlockManager, allSurfaces, surfaces, vtkMesh );
+  buildSurfaces( vtkMesh, surfacesIdsToCellsIds, cellBlockManager );
 
   cellBlockManager.buildMaps();
 }
