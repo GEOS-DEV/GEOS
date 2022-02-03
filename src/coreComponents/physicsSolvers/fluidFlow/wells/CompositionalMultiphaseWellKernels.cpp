@@ -766,7 +766,8 @@ template< localIndex NC, localIndex NP >
 GEOSX_HOST_DEVICE
 void
 PerforationKernel::
-  compute( real64 const & resPres,
+  compute( bool const & disableReservoirToWellFlow,
+           real64 const & resPres,
            real64 const & dResPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
@@ -891,8 +892,9 @@ PerforationKernel::
     {
 
       // skip the rest of the calculation if the phase is absent
+      // or if crossflow is disabled for injectors
       bool const phaseExists = (resPhaseVolFrac[ip] > 0);
-      if( !phaseExists )
+      if( !phaseExists || disableReservoirToWellFlow )
       {
         continue;
       }
@@ -1081,6 +1083,7 @@ template< localIndex NC, localIndex NP >
 void
 PerforationKernel::
   launch( localIndex const size,
+          bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
@@ -1131,7 +1134,8 @@ PerforationKernel::
     // get the index of the well elem
     localIndex const iwelem = perfWellElemIndex[iperf];
 
-    compute< NC, NP >( resPres[er][esr][ei],
+    compute< NC, NP >( disableReservoirToWellFlow,
+                       resPres[er][esr][ei],
                        dResPres[er][esr][ei],
                        resPhaseVolFrac[er][esr][ei],
                        dResPhaseVolFrac_dPres[er][esr][ei],
@@ -1171,6 +1175,7 @@ PerforationKernel::
   template \
   void PerforationKernel:: \
     launch< NC, NP >( localIndex const size, \
+                      bool const disableReservoirToWellFlow, \
                       ElementViewConst< arrayView1d< real64 const > > const & resPres, \
                       ElementViewConst< arrayView1d< real64 const > > const & dResPres, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac, \
