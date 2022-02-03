@@ -190,8 +190,8 @@ The package can be installed in the GEOSX build directory via the following comm
     make geosx_xml_tools
 
 During the installation step, multiple scripts will be created in the `bin` directory alongside `geosx`: `preprocess_xml`, `format_xml`, and `geosx_preprocessed`.
-The build process creates a new virtual python environment, which is derived from the version of python used to configure GEOSX or a version indicated via the `PYTHON_POST_EXECUTABLE` variable in the cmake host configuration.
-At minimum, the parent python environment must have the `virtualenv` package installed.
+The build process will attempt to install the required packages within the distribution specified by `PYTHON_POST_EXECUTABLE`, `Python3_EXECUTABLE` (used by pygeosx), or the verion of python used to configure GEOSX.
+If the user does not have write access for the target python distribution, the installation will attempt to create a new virtual python environment (which requires the virtualenv package).
 The `geosx_xml_tools` package depends on `lxml`, so if it is not present within the parent environment, the install script will attempt to fetch it from the internet using pip.
 
 Usage

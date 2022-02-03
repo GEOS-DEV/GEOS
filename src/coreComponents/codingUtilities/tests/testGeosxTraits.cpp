@@ -213,3 +213,20 @@ TEST( testGeosxTraits, hasCopyAssignment )
   static_assert( hasCopyAssignmentOp< Foo >, "Should be true." );
   static_assert( !hasCopyAssignmentOp< Bar >, "Should be false." );
 }
+
+struct A
+{};
+
+struct B
+{};
+
+struct C
+{};
+
+TEST( testGeosxTraits, typeListIndex )
+{
+  static_assert( type_list_index< A, std::tuple< A, B > > == 0, "Should be true." );
+  static_assert( type_list_index< B, std::tuple< A, B > > == 1, "Should be true." );
+  static_assert( type_list_index< C, std::tuple< A, B > > == 2, "Should be true." );
+  static_assert( type_list_index< A, std::tuple<> > == 0, "Should be true." );
+}

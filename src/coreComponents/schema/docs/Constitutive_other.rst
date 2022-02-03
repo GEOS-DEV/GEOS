@@ -16,9 +16,10 @@ CompressibleSinglePhaseFluid                node :ref:`DATASTRUCTURE_Compressibl
 CompressibleSolidCarmanKozenyPermeability   node :ref:`DATASTRUCTURE_CompressibleSolidCarmanKozenyPermeability`   
 CompressibleSolidConstantPermeability       node :ref:`DATASTRUCTURE_CompressibleSolidConstantPermeability`       
 CompressibleSolidParallelPlatesPermeability node :ref:`DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability` 
-CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability` 
-CompressibleSolidWillisRichardsPermeability node :ref:`DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability` 
+CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_CompressibleSolidSlipDependentPermeability`
+CompressibleSolidWillisRichardsPermeability node :ref:`DATASTRUCTURE_CompressibleSolidWillisRichardsPermeability`   
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
+ConstantThermalConductivity                 node :ref:`DATASTRUCTURE_ConstantThermalConductivity`                 
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`              
@@ -32,6 +33,7 @@ ElasticOrthotropic                          node :ref:`DATASTRUCTURE_ElasticOrth
 ElasticTransverseIsotropic                  node :ref:`DATASTRUCTURE_ElasticTransverseIsotropic`                  
 ExtendedDruckerPrager                       node :ref:`DATASTRUCTURE_ExtendedDruckerPrager`                       
 FrictionlessContact                         node :ref:`DATASTRUCTURE_FrictionlessContact`                         
+JFunctionCapillaryPressure                  node :ref:`DATASTRUCTURE_JFunctionCapillaryPressure`                  
 ModifiedCamClay                             node :ref:`DATASTRUCTURE_ModifiedCamClay`                             
 NullModel                                   node :ref:`DATASTRUCTURE_NullModel`                                   
 ParallelPlatesPermeability                  node :ref:`DATASTRUCTURE_ParallelPlatesPermeability`                  
@@ -47,12 +49,13 @@ ProppantPermeability                        node :ref:`DATASTRUCTURE_ProppantPer
 ProppantPorosity                            node :ref:`DATASTRUCTURE_ProppantPorosity`                            
 ProppantSlurryFluid                         node :ref:`DATASTRUCTURE_ProppantSlurryFluid`                         
 ProppantSolidProppantPermeability           node :ref:`DATASTRUCTURE_ProppantSolidProppantPermeability`           
-SlipDependentPermeability                   node :ref:`DATASTRUCTURE_SlipDependentPermeability`                  
+SlipDependentPermeability                   node :ref:`DATASTRUCTURE_SlipDependentPermeability`                   
 TableCapillaryPressure                      node :ref:`DATASTRUCTURE_TableCapillaryPressure`                      
 TableRelativePermeability                   node :ref:`DATASTRUCTURE_TableRelativePermeability`                   
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
-VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure` 
-WillisRichardsPermeability                  node :ref:`DATASTRUCTURE_WillisRichardsPermeability`               
+VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
+VolumeWeightedThermalConductivity           node :ref:`DATASTRUCTURE_VolumeWeightedThermalConductivity`
+WillisRichardsPermeability                  node :ref:`DATASTRUCTURE_WillisRichardsPermeability`           
 =========================================== ==== ================================================================ 
 
 

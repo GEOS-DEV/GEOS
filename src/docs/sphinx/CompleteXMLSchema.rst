@@ -211,6 +211,13 @@ Element: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
+.. _XML_ConstantThermalConductivity:
+
+Element: ConstantThermalConductivity
+====================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
+
+
 .. _XML_Constitutive:
 
 Element: Constitutive
@@ -461,6 +468,13 @@ Element: InternalWell
 Element: InternalWellbore
 =========================
 .. include:: ../../coreComponents/schema/docs/InternalWellbore.rst
+
+
+.. _XML_JFunctionCapillaryPressure:
+
+Element: JFunctionCapillaryPressure
+===================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
 
 
 .. _XML_LagrangianContact:
@@ -946,6 +960,13 @@ Element: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
 
 
+.. _XML_VolumeWeightedThermalConductivity:
+
+Element: VolumeWeightedThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
+
+
 .. _XML_WillisRichardsPermeability:
 
 Element: WillisRichardsPermeability
@@ -1186,6 +1207,13 @@ Datastructure: CompressibleSolidWillisRichardsPermeability
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantThermalConductivity:
+
+Datastructure: ConstantThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1452,6 +1480,13 @@ Datastructure: InternalWell
 Datastructure: InternalWellbore
 ===============================
 .. include:: ../../coreComponents/schema/docs/InternalWellbore_other.rst
+
+
+.. _DATASTRUCTURE_JFunctionCapillaryPressure:
+
+Datastructure: JFunctionCapillaryPressure
+=========================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
 
 
 .. _DATASTRUCTURE_LagrangianContact:
@@ -1951,6 +1986,13 @@ Datastructure: VanGenuchtenCapillaryPressure
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
 
 
+.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
+
+Datastructure: VolumeWeightedThermalConductivity
+================================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
+
+
 .. _DATASTRUCTURE_WillisRichardsPermeability:
 
 Datastructure: WillisRichardsPermeability
@@ -1977,20 +2019,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_cellBlocks:
-
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
