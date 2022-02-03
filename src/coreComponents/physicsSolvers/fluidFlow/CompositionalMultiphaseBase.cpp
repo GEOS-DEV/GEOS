@@ -334,97 +334,49 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
-void CompositionalMultiphaseBase::validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const
+void CompositionalMultiphaseBase::initializeAquiferBC( Group const & meshBodies, ConstitutiveManager const & cm ) const
 {
-//  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[0] );
-//
-//  for( localIndex i = 1; i < m_fluidModelNames.size(); ++i )
-//  {
-//    MultiFluidBase const & fluid = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[i] );
-//    compareMultiphaseModels( fluid, fluid0 );
-//    compareMulticomponentModels( fluid, fluid0 );
-//  }
-//
-//  RelativePermeabilityBase const & relPerm0 = cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[0] );
-//  compareMultiphaseModels( relPerm0, fluid0 );
-//
-//  for( localIndex i = 1; i < m_relPermModelNames.size(); ++i )
-//  {
-//    RelativePermeabilityBase const & relPerm = cm.getConstitutiveRelation< RelativePermeabilityBase >( m_relPermModelNames[i] );
-//    compareMultiphaseModels( relPerm, relPerm0 );
-//  }
-//
-//  if( m_capPressureFlag )
-//  {
-//    CapillaryPressureBase const & capPres0 = cm.getConstitutiveRelation< CapillaryPressureBase >( m_capPressureModelNames[0] );
-//    compareMultiphaseModels( capPres0, fluid0 );
-//
-//    for( localIndex i = 1; i < m_capPressureModelNames.size(); ++i )
-//    {
-//      CapillaryPressureBase const & capPres = cm.getConstitutiveRelation< CapillaryPressureBase >( m_capPressureModelNames[i] );
-//      compareMultiphaseModels( capPres, capPres0 );
-//    }
-//  }
-//
-//  if( m_thermalFlag )
-//  {
-//    ThermalConductivityBase const & conductivity0 = cm.getConstitutiveRelation< ThermalConductivityBase >(
-// m_thermalConductivityModelNames[0] );
-//    compareMultiphaseModels( conductivity0, fluid0 );
-//
-//    for( localIndex i = 1; i < m_thermalConductivityModelNames.size(); ++i )
-//    {
-//      ThermalConductivityBase const & conductivity = cm.getConstitutiveRelation< ThermalConductivityBase >(
-// m_thermalConductivityModelNames[i] );
-//      compareMultiphaseModels( conductivity, conductivity0 );
-//    }
-//  }
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
+  {
+
+    auto const target = m_meshTargets.begin();
+    string const meshBodyName = target->first;
+    arrayView1d< string const > const & regionNames = target->second.toViewConst();
+    MeshBody const & meshBody = meshBodies.template getGroup< MeshBody >( meshBodyName );
+    MeshLevel const & mesh = meshBody.getMeshLevel(0);
+
+    ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion(regionNames[0]).getSubRegion(0);
+    string const fluidName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+    MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( fluidName );
+
+    // set the gravity vector (needed later for the potential diff calculations)
+    bc.setGravityVector( gravityVector() );
+
+    // set the water phase index in the Aquifer boundary condition
+    // note: if the water phase is not found, the fluid model is going to throw an error
+    integer const waterPhaseIndex = fluid0.getWaterPhaseIndex();
+    bc.setWaterPhaseIndex( waterPhaseIndex );
+
+
+
+
+    arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
+    arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
+
+    GEOSX_ERROR_IF_NE_MSG( fluid0.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
+                           "Mismatch in number of components between constitutive model "
+                           << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
+
+    for( localIndex ic = 0; ic < fluid0.numFluidComponents(); ++ic )
+    {
+      GEOSX_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
+                             "Mismatch in component names between constitutive model "
+                             << fluid0.getName() << " and the water phase components in aquifer " << bc.getName() );
+    }
+  } );
 }
-
-void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const & cm ) const
-{
-//  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-//  string fluidName;
-//
-//  fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-//  MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( fluidName );
-//
-//  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
-//  {
-//    // set the gravity vector (needed later for the potential diff calculations)
-//    bc.setGravityVector( gravityVector() );
-//
-//    // set the water phase index in the Aquifer boundary condition
-//    // note: if the water phase is not found, the fluid model is going to throw an error
-//    integer const waterPhaseIndex = fluid0.getWaterPhaseIndex();
-//    bc.setWaterPhaseIndex( waterPhaseIndex );
-//  } );
-}
-
-void CompositionalMultiphaseBase::validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const
-{
-//  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-//
-//  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
-//  {
-//    arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
-//    arrayView1d< string const > const & aquiferWaterPhaseCompNames = bc.getWaterPhaseComponentNames();
-//
-//    GEOSX_ERROR_IF_NE_MSG( fluid.numFluidComponents(), aquiferWaterPhaseCompFrac.size(),
-//                           "Mismatch in number of components between constitutive model "
-//                           << fluid.getName() << " and the water phase composition in aquifer " << bc.getName() );
-//
-//    for( localIndex ic = 0; ic < fluid.numFluidComponents(); ++ic )
-//    {
-//      GEOSX_ERROR_IF_NE_MSG( fluid.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
-//                             "Mismatch in component names between constitutive model "
-//                             << fluid.getName() << " and the water phase components in aquifer " << bc.getName() );
-//    }
-//  } );
-//}
-
-} // namespace
 
 
 void CompositionalMultiphaseBase::initializePreSubGroups()
@@ -433,10 +385,8 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
-  MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
   // 1. Validate various models against each other (must have same phases and components)
-  validateConstitutiveModels( cm );
 
   // 3. Set the value of temperature
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -454,8 +404,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   } );
 
   // 3. Initialize and validate the aquifer boundary condition
-  initializeAquiferBC( cm );
-  validateAquiferBC( cm );
+  initializeAquiferBC( domain.getMeshBodies(), cm );
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const

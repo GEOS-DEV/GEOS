@@ -102,10 +102,11 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   integer constexpr numDofPerNode = 3;
 
   DofManager dofManager( "test" );
-  dofManager.setDomain( meshLevel );
+  dofManager.setDomain( domain );
 
-  string_array regions;
-  regions.emplace_back( "region1" );
+  std::vector< DofManager::Regions > regions;
+  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  regions.emplace_back( region );
 
   dofManager.addField( "nodalVariable", DofManager::Location::Node, 3, regions );
   dofManager.addCoupling( "nodalVariable", "nodalVariable", DofManager::Connector::Elem );
@@ -152,13 +153,14 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   integer constexpr numDofPerCell = 3;
 
   DofManager dofManager( "test" );
-  dofManager.setDomain( meshLevel );
+  dofManager.setDomain( domain );
 
-  string_array regions;
-  regions.emplace_back( "region1" );
+  std::vector< DofManager::Regions > regions;
+  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  regions.emplace_back( region );
 
-  dofManager.addField( "cellCentered", DofManager::Location::Elem, 1, regions );
-  dofManager.addCoupling( "cellCentered", "cellCentered", DofManager::Connector::Face );
+  dofManager.addField( fieldName, DofManager::Location::Elem, numDofPerCell, regions );
+  dofManager.addCoupling( fieldName, fieldName, DofManager::Connector::Face );
   dofManager.reorderByRank();
 
   Vector cellCenteredVariable;
