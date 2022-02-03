@@ -408,8 +408,9 @@ real64 ReservoirSolverBase::scalingForSystemSolution( DomainPartition const & do
   real64 const flowScalingFactor = m_flowSolver->scalingForSystemSolution( domain, dofManager, localSolution );
   real64 const wellScalingFactor = m_wellSolver->scalingForSystemSolution( domain, dofManager, localSolution );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "Scaling factor for the reservoir: " << flowScalingFactor
-                                                                  << "; for the well(s): " << wellScalingFactor );
+  GEOSX_LOG_LEVEL_RANK_0( 2, getName() << ": "
+                                       << "Scaling factor for the reservoir: " << flowScalingFactor
+                                       << "; for the well(s): " << wellScalingFactor );
 
   return LvArray::math::min( flowScalingFactor, wellScalingFactor );
 }

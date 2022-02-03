@@ -233,6 +233,12 @@ public:
    */
   bool wellIsOpen( real64 const & currentTime ) const;
 
+  /**
+   * @brief Getter for the flag to disable crossflow in injectors
+   * @return the flag deciding whether crossflow is allowed or not
+   */
+  bool disableInjectorCrossflow() const { return m_disableInjectorCrossflow; }
+
   ///@}
 
   /**
@@ -271,6 +277,8 @@ public:
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
+    /// string key for the crossflow flag
+    static constexpr char const * disableInjectorCrossflowString() { return "disableInjectorCrossflow"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -328,6 +336,9 @@ private:
 
   /// BHP table name
   string m_targetBHPTableName;
+
+  /// Flag to disable crossflow for injector
+  integer m_disableInjectorCrossflow;
 
   /// Total rate table
   TableFunction * m_targetTotalRateTable;

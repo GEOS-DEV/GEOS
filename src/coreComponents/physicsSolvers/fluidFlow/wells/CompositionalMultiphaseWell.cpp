@@ -957,13 +957,6 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                                WellElementSubRegion const & subRegion )
   {
 
-    // for now, we do not want to model storage effects in the wells (unless the well is shut)
-    WellControls const & wellControls = getWellControls( subRegion );
-    if( wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
-    {
-      return;
-    }
-
     // get the degrees of freedom and ghosting info
     arrayView1d< globalIndex const > const & wellElemDofNumber =
       subRegion.getReference< array1d< globalIndex > >( wellDofKey );
@@ -1244,6 +1237,9 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & mes
   // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
   // therefore, we do not want to compute perforation rates and we simply assume they are zero
   WellControls const & wellControls = getWellControls( subRegion );
+  WellControls::Type const wellType = wellControls.getType();
+  bool const disableReservoirToWellFlow =
+    ( wellType == WellControls::Type::INJECTOR ) && wellControls.disableInjectorCrossflow();
   if( !wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
   {
     return;
@@ -1311,6 +1307,7 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & mes
     KernelLaunchSelector2< PerforationKernel >( numFluidComponents(),
                                                 numFluidPhases(),
                                                 perforationData->size(),
+                                                disableReservoirToWellFlow,
                                                 resCompFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
                                                 resCompFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
                                                 resCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
