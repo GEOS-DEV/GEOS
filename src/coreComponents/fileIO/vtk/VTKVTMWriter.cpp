@@ -52,6 +52,21 @@ void VTKVTMWriter::addBlock( string const & blockName ) const
   blockNode.append_attribute( "name" ) = blockName.c_str();
 }
 
+bool VTKVTMWriter::hasBlock( string const & blockName ) const
+{
+  bool hasChild = false;
+  auto vtkMultiBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" );
+  for( xmlWrapper::xmlNode childNode : vtkMultiBlockNode.children() )
+  {
+    string childName = childNode.attribute( "name" ).value();
+    if ( childName == blockName )
+    {
+      hasChild = true;
+    }
+  }
+  return hasChild;
+}
+
 void VTKVTMWriter::addSubBlock( string const & blockName, string const & subBlockName ) const
 {
   auto blockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" ).find_child_by_attribute( "Block", "name", blockName.c_str() );

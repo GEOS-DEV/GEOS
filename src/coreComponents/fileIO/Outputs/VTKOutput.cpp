@@ -29,7 +29,6 @@ VTKOutput::VTKOutput( string const & name,
   m_plotFileRoot( name ),
   m_writeFaceMesh(),
   m_plotLevel(),
-  m_writeBinaryData( 1 ),
   m_writer( getOutputDirectory() + '/' + m_plotFileRoot )
 {
   registerWrapper( viewKeysStruct::plotFileRoot, &m_plotFileRoot ).
@@ -47,10 +46,14 @@ VTKOutput::VTKOutput( string const & name,
     setDescription( "Level detail plot. Only fields with lower of equal plot level will be output." );
 
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
-    setApplyDefaultValue( 1 ).
+    setApplyDefaultValue( m_writeBinaryData ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Output the data in binary format" );
+    setDescription( "Output the data in binary format.  Valid options:\n" + EnumStrings< vtk::VTKOutputMode >::concat( "\n* " ) );
 
+  registerWrapper( viewKeysStruct::outputRegionTypeString, &m_outputRegionType ).
+    setApplyDefaultValue( m_outputRegionType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Output region types.  Valid options:\n " + EnumStrings< vtk::VTKRegionTypes >::concat( "\n* " ));
 }
 
 VTKOutput::~VTKOutput()
@@ -68,14 +71,8 @@ bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
-  if( m_writeBinaryData )
-  {
-    m_writer.setOutputMode( vtk::VTKOutputMode::BINARY );
-  }
-  else
-  {
-    m_writer.setOutputMode( vtk::VTKOutputMode::ASCII );
-  }
+  m_writer.setOutputMode(m_writeBinaryData);
+  m_writer.setOutputRegionType(m_outputRegionType);
   m_writer.setPlotLevel( m_plotLevel );
   m_writer.write( time_n, cycleNumber, domain );
 

@@ -46,7 +46,8 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_pvd( m_outputName + ".pvd" ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
   m_previousCycle( -1 ),
-  m_outputMode( VTKOutputMode::BINARY )
+  m_outputMode( VTKOutputMode::BINARY ),
+  m_outputRegionType( VTKRegionTypes::ALL )
 {}
 
 static string paddedRank( MPI_Comm const & comm, int const rank = -1 )
@@ -708,42 +709,50 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
   } );
 }
 
-/**
- * @brief Writes a VTM file for the time-step \p time.
- * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
- * @param[in] cycle the current cycle number
- * @param[in] elemManager the ElementRegionManager containing all the regions to be output and referred to in the VTM file
- * @param[in] vtmWriter a writer specialized for the VTM file format
- */
-void writeVtmFile( integer const cycle,
-                   ElementRegionManager const & elemManager,
-                   VTKVTMWriter const & vtmWriter )
+
+void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
+                                               ElementRegionManager const & elemManager,
+                                               VTKVTMWriter const & vtmWriter ) const
 {
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  auto writeSubBlocks = [&]( ElementRegionBase const & region )
+  auto addRegion = [&]( ElementRegionBase const & region )
   {
+    if( mpiRank == 0 )
+    {
+      if ( !vtmWriter.hasBlock( region.getCatalogName() ) )
+      {
+        vtmWriter.addBlock( region.getCatalogName() );
+      }
+    }
+
     std::vector< localIndex > const nbElemsInRegion = gatherNbElementsInRegion( region, MPI_COMM_GEOSX );
     vtmWriter.addSubBlock( region.getCatalogName(), region.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
       if( mpiRank == 0 && nbElemsInRegion[i] > 0 )
       {
-        string const dataSetFile = std::to_string( cycle ) + "/" + paddedRank( MPI_COMM_GEOSX, i ) + "_" + region.getName() + ".vtu";
+        string const dataSetFile = GEOSX_FMT( "{:06d}/{}_{}.vtu", cycle, paddedRank( MPI_COMM_GEOSX, i ), region.getName() );
         vtmWriter.addDataToSubBlock( region.getCatalogName(), region.getName(), dataSetFile, i );
       }
     }
   };
-  if( mpiRank == 0 )
+
+  // Output each of the region types
+  if ( ( m_outputRegionType == VTKRegionTypes::CELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
   {
-    vtmWriter.addBlock( CellElementRegion::catalogName() );
-    vtmWriter.addBlock( WellElementRegion::catalogName() );
-    vtmWriter.addBlock( SurfaceElementRegion::catalogName() );
+    elemManager.forElementRegions< CellElementRegion >( addRegion );
   }
 
-  elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
-  elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
-  elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
+  if ( ( m_outputRegionType == VTKRegionTypes::WELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  {
+    elemManager.forElementRegions< WellElementRegion >( addRegion );
+  }
+
+  if ( ( m_outputRegionType == VTKRegionTypes::SURFACE ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  {
+    elemManager.forElementRegions< SurfaceElementRegion >( addRegion );
+  }
 
   if( mpiRank == 0 )
   {
@@ -774,7 +783,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( integer const cycle,
 
 string VTKPolyDataWriterInterface::getCycleSubFolder( integer const cycle ) const
 {
-  return joinPath( m_outputName, std::to_string( cycle ) );
+  return joinPath( m_outputName, GEOSX_FMT( "{:06d}", cycle ) );
 }
 
 void VTKPolyDataWriterInterface::write( real64 const time,
