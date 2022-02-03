@@ -157,8 +157,8 @@ vtkSmartPointer< vtkMultiProcessController > getVTKController()
  */
 vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
 {
-  string const extension = stringutilities::tokenize( filePath, "." ).back(); //TODO maybe code a method in Path to get the file extension?
-  vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
+  string const extension = stringutilities::tokenize( filePath, "." ).back(); // TODO maybe code a method in Path to get the file extension?
+  vtkSmartPointer< vtkUnstructuredGrid > loadedMesh;
 
   if( extension == "pvtu" )
   {
@@ -170,12 +170,9 @@ vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
     {
       vtkUgReader->Update();
     }
-    else
+    else if( MpiWrapper::commRank() < numberOfPieces )
     {
-      if( MpiWrapper::commRank() < numberOfPieces )
-      {
-        vtkUgReader->UpdatePiece( MpiWrapper::commRank(), 2, 0 ); // TODO What's that numPieces = 2?
-      }
+      vtkUgReader->UpdatePiece( MpiWrapper::commRank(), 2, 0 ); // TODO What's that numPieces = 2?
     }
     loadedMesh = vtkUgReader->GetOutput();
   }
@@ -187,21 +184,25 @@ vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
       {
         vtkUgReader->SetFileName( filePath.c_str() );
         vtkUgReader->Update();
-        loadedMesh = vtkUgReader->GetOutput();
+        return vtkUgReader->GetOutput();
       };
 
       if( extension == "vtk" )
       {
-        read( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
+        loadedMesh = read( vtkSmartPointer< vtkUnstructuredGridReader >::New() );
       }
       else if( extension == "vtu" )
       {
-        read( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
+        loadedMesh = read( vtkSmartPointer< vtkXMLUnstructuredGridReader >::New() );
       }
       else
       {
         GEOSX_ERROR( extension << " is not a recognized extension for using the VTK reader with GEOSX. Please use .vtk or .vtu" );
       }
+    }
+    else
+    {
+      loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
     }
   }
 
