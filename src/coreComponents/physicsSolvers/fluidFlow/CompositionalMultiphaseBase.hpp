@@ -309,23 +309,12 @@ protected:
 
   virtual void initializePreSubGroups() override;
 
-  /**
-   * @brief Checks constitutive models for consistency
-   * @param[in] domain reference to the domain
-   */
-  void validateConstitutiveModels( constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
-   * @brief Checks aquifer boundary condition for consistency
-   * @param[in] cm reference to the global constitutive model manager
-   */
-  void validateAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
    */
-  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
+  void initializeAquiferBC( Group const & meshBodies, constitutive::ConstitutiveManager const & cm ) const;
 
 
   /// the max number of fluid phases

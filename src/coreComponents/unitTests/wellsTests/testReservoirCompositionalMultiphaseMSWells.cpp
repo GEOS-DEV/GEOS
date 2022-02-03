@@ -221,9 +221,6 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
 

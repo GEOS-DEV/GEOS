@@ -1993,7 +1993,6 @@ Datastructure: WellElementRegionuniqueSubRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
 
 
-<<<<<<< HEAD
 .. _DATASTRUCTURE_cellBlocks:
 
 Datastructure: cellBlocks
@@ -2008,8 +2007,6 @@ Datastructure: cellManager
 .. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
-=======
->>>>>>> develop
 .. _DATASTRUCTURE_commandLine:
 
 Datastructure: commandLine
