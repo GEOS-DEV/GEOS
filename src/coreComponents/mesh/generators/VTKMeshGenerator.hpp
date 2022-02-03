@@ -25,8 +25,7 @@
 
 #include "MeshGeneratorBase.hpp"
 
-#include <vtkSmartPointer.h>
-#include <vtkUnstructuredGrid.h>
+#include <vtkDataArray.h>
 
 #include <map>
 
@@ -120,9 +119,6 @@ private:
   Group * createChild( string const & childKey, string const & childName ) override;
 
 private:
-
-  /// Smart Pointer to the Mesh in the data structure of VTK.
-  vtkSmartPointer< vtkUnstructuredGrid >  m_vtkMesh;
 
   /// Path to the mesh file
   Path m_filePath;
