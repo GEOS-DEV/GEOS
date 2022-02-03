@@ -108,7 +108,7 @@ private:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void importFields( DomainPartition & domain ) const override;
+  virtual void importFields( DomainPartition & elementName ) const override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
