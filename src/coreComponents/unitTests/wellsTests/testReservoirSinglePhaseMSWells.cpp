@@ -277,8 +277,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
                                                            arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                                         [&]( localIndex const,
-                                                                              WellElementSubRegion & subRegion )
+                                                                        [&]( localIndex const,
+                                                                             WellElementSubRegion & subRegion )
     {
 
       // get the degrees of freedom and ghosting information
