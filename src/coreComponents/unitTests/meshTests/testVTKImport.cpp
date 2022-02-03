@@ -19,6 +19,10 @@
 #include "tests/meshDirName.hpp"
 #include "mesh/MeshManager.hpp"
 
+#include "mesh/generators/CellBlockManagerABC.hpp"
+#include "mesh/generators/CellBlockABC.hpp"
+
+
 // TPL includes
 #include <gtest/gtest.h>
 #include <conduit.hpp>
@@ -104,11 +108,11 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
   elemManager.processInputFileRecursive( xmlRegionNode );
   elemManager.postProcessInputRecursive();
 
-  Group & cellBlockManager = domain->getGroup( keys::cellManager );
+  CellBlockManagerABC & cellBlockManager = domain->getGroup< CellBlockManagerABC >( keys::cellManager );
 
   elemManager.generateMesh( cellBlockManager );
 
-  validate( meshLevel.getNodeManager(), cellBlockManager );
+  validate( cellBlockManager );
 }
 
 /**
@@ -144,7 +148,7 @@ T expected( T expectedSerial,
 
 TEST( MyVTKImport, cube )
 {
-  auto validate = [](NodeManager const & nodeManager, Group const & cellBlockManager) -> void
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
     // `cube.vtk` is a cube made by 3 x 3 x 3 = 27 Hexahedron 3d-elements.
     // It contains 4 x 4 x 4 = 64 nodes.
@@ -172,63 +176,63 @@ TEST( MyVTKImport, cube )
     // This pattern could be influenced by settings the parameters of
     // vtkRedistributeDataSetFilter::SetBoundaryMode(...) to
     // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
-    localIndex const expectedNumNodes = expected(64 , { 48, 32 });
-    ASSERT_EQ( nodeManager.size(), expectedNumNodes );
+    localIndex const expectedNumNodes = expected( 64, { 48, 32 } );
+    ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
     // The information in the tables is not filled yet. We can check the consistency of the sizes.
-    ASSERT_EQ( nodeManager.faceList().size(), expectedNumNodes );
-    ASSERT_EQ( nodeManager.elementList().size(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.getNodeToElements().size(), expectedNumNodes );
 
     // We have all the 4 x 4  x 4 = 64 nodes in the "all" set.
-    WrapperBase const & allNodes = nodeManager.sets().getWrapperBase( "all" );
+    SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), expectedNumNodes );
 
     // The "-1" set contains 3 quads connected in L shape.
     // 2 of those quads touch in the center of the cube: 6 nodes for MPI rank 0.
     // Rank 1 only has one cube: 4 nodes.
-    WrapperBase const & nodesNoRegion = nodeManager.sets().getWrapperBase( "-1" );
+    SortedArray< localIndex > const & nodesNoRegion = cellBlockManager.getNodeSets().at( "-1" );
     ASSERT_EQ( nodesNoRegion.size(), expected( 8, { 6, 4 } ) );
 
     // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
     // minus an extra node that belongs to regions -1 and 9 only.
-    WrapperBase const & nodesRegion2 = nodeManager.sets().getWrapperBase( "2" );
+    SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
     ASSERT_EQ( nodesRegion2.size(), expected( 55, { 39, 27 } ) );
 
     // Region "9" has only one quad, on the greater `x` direction.
     // This hex will belong to MPI rank 1.
-    WrapperBase const & nodesRegion9 = nodeManager.sets().getWrapperBase( "9" );
+    SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
     ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
 
     // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
-    ASSERT_EQ( cellBlockManager.getGroup( keys::cellBlocks ).numSubGroups(), 3 );
-    GEOSX_LOG_RANK(cellBlockManager.getGroup( keys::cellBlocks ).getGroup(0).getName());
-    GEOSX_LOG_RANK(cellBlockManager.getGroup( keys::cellBlocks ).getGroup(1).getName());
-    GEOSX_LOG_RANK(cellBlockManager.getGroup( keys::cellBlocks ).getGroup(2).getName());
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 3 );
+    GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 0 ).getName() );
+    GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 1 ).getName() );
+    GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 2 ).getName() );
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    CellBlock const & hexs = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "hexahedron" );
-    CellBlock const & hexs3 = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "3_hexahedron" );
-    CellBlock const & hexs9 = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "9_hexahedron" );
+    CellBlockABC const & hexs = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "hexahedron" );
+    CellBlockABC const & hexs3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_hexahedron" );
+    CellBlockABC const & hexs9 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "9_hexahedron" );
 
-    for( CellBlock const * h: { &hexs, &hexs3, &hexs9 } )
+    for( CellBlockABC const * h: { &hexs, &hexs3, &hexs9 } )
     {
       // 8 nodes, 12 edges and 6 faces per hex.
-      ASSERT_EQ( h->nodeList().size( 1 ), 8 );
-      ASSERT_EQ( h->edgeList().size( 1 ), 12 );
-      ASSERT_EQ( h->faceList().size( 1 ), 6 );
+      ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
+      ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
+      ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
     }
 
-    std::pair< CellBlock const *, localIndex > const p{ &hexs, expected( 1, { 1, 0 } ) },
+    std::pair< CellBlockABC const *, localIndex > const p{ &hexs, expected( 1, { 1, 0 } ) },
       p3{ &hexs3, expected( 25, { 17, 8 } ) },
       p9{ &hexs9, expected( 1, { 0, 1 } ) };
     for( auto const & hs: { p, p3, p9 } )
     {
-      CellBlock const * h = hs.first;
+      CellBlockABC const * h = hs.first;
       localIndex const & expectedSize = hs.second;
 
       ASSERT_EQ( h->size(), expectedSize );
-      ASSERT_EQ( h->nodeList().size( 0 ), expectedSize );
-      ASSERT_EQ( h->edgeList().size( 0 ), expectedSize );
-      ASSERT_EQ( h->faceList().size( 0 ), expectedSize );
+      ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
+      ASSERT_EQ( h->getElemToEdges().size( 0 ), expectedSize );
+      ASSERT_EQ( h->getElemToFaces().size( 0 ), expectedSize );
     }
 
     // TODO importFields?
@@ -243,7 +247,7 @@ TEST( MyVTKImport, medley )
 {
   SKIP_TEST_IN_PARALLEL("Neither relevant nor implemented in parallel");
 
-  auto validate = [](NodeManager const & nodeManager, Group const & cellBlockManager) -> void
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
     // `medley.vtk` is made of four elements.
     // - Element 0 is a pyramid, in region 0.
@@ -253,57 +257,57 @@ TEST( MyVTKImport, medley )
     // All the elements belong to a region. Therefore, there is no "-1" region.
     // It contains 12 nodes.
 
-   localIndex const numNodes = nodeManager.size();
+    localIndex const numNodes = cellBlockManager.numNodes();
     ASSERT_EQ( numNodes, 12 );
 
-    WrapperBase const & allNodes = nodeManager.sets().getWrapperBase( "all" );
+    SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), 12 );
 
     // 4 elements types x 4 regions = 16 sub-groups
-    ASSERT_EQ( cellBlockManager.getGroup( keys::cellBlocks ).numSubGroups(), 16 );
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 16 );
 
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    CellBlock const & zone0 = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "0_pyramids" );
-    CellBlock const & zone1 = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "1_hexahedron" );
-    CellBlock const & zone2 = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "2_wedges" );
-    CellBlock const & zone3 = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( "3_tetrahedron" );
+    CellBlockABC const & zone0 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "0_pyramids" );
+    CellBlockABC const & zone1 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "1_hexahedron" );
+    CellBlockABC const & zone2 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "2_wedges" );
+    CellBlockABC const & zone3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_tetrahedron" );
 
     for( string prefix: { "0", "1", "2", "3" } )
     {
       for( string elementType: { "pyramids", "hexahedron", "wedges", "tetrahedron" } )
       {
         string const name = prefix + "_" + elementType;
-        CellBlock const & zone = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( name );
+        CellBlockABC const & zone = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name );
         ASSERT_EQ( zone.size(), name == "0_pyramids" or name == "1_hexahedron" or name == "2_wedges" or name == "3_tetrahedron" ? 1 : 0 );
       }
     }
 
     // Pyramid
-    ASSERT_EQ( zone0.nodeList().size( 1 ), 5 );
-    ASSERT_EQ( zone0.edgeList().size( 1 ), 8 );
-    ASSERT_EQ( zone0.faceList().size( 1 ), 5 );
+    ASSERT_EQ( zone0.getElemToNodes().size( 1 ), 5 );
+    ASSERT_EQ( zone0.getElemToEdges().size( 1 ), 8 );
+    ASSERT_EQ( zone0.getElemToFaces().size( 1 ), 5 );
 
     // Hexahedron
-    ASSERT_EQ( zone1.nodeList().size( 1 ), 8 );
-    ASSERT_EQ( zone1.edgeList().size( 1 ), 12 );
-    ASSERT_EQ( zone1.faceList().size( 1 ), 6 );
+    ASSERT_EQ( zone1.getElemToNodes().size( 1 ), 8 );
+    ASSERT_EQ( zone1.getElemToEdges().size( 1 ), 12 );
+    ASSERT_EQ( zone1.getElemToFaces().size( 1 ), 6 );
 
     // Wedges
-    ASSERT_EQ( zone2.nodeList().size( 1 ), 6 );
-    ASSERT_EQ( zone2.edgeList().size( 1 ), 9 );
-    ASSERT_EQ( zone2.faceList().size( 1 ), 5 );
+    ASSERT_EQ( zone2.getElemToNodes().size( 1 ), 6 );
+    ASSERT_EQ( zone2.getElemToEdges().size( 1 ), 9 );
+    ASSERT_EQ( zone2.getElemToFaces().size( 1 ), 5 );
 
     // Tetrahedron
-    ASSERT_EQ( zone3.nodeList().size( 1 ), 4 );
-    ASSERT_EQ( zone3.edgeList().size( 1 ), 6 );
-    ASSERT_EQ( zone3.faceList().size( 1 ), 4 );
+    ASSERT_EQ( zone3.getElemToNodes().size( 1 ), 4 );
+    ASSERT_EQ( zone3.getElemToEdges().size( 1 ), 6 );
+    ASSERT_EQ( zone3.getElemToFaces().size( 1 ), 4 );
 
     for( auto const & z: { &zone0, &zone1, &zone2, &zone3 } )
     {
       ASSERT_EQ( z->size(), 1 );
-      ASSERT_EQ( z->nodeList().size( 0 ), 1 );
-      ASSERT_EQ( z->edgeList().size( 0 ), 1 );
-      ASSERT_EQ( z->faceList().size( 0 ), 1 );
+      ASSERT_EQ( z->getElemToNodes().size( 0 ), 1 );
+      ASSERT_EQ( z->getElemToEdges().size( 0 ), 1 );
+      ASSERT_EQ( z->getElemToFaces().size( 0 ), 1 );
     }
   };
 

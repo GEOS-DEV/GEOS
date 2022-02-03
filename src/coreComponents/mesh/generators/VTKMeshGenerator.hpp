@@ -24,7 +24,6 @@
 #include "codingUtilities/StringUtilities.hpp"
 
 #include "MeshGeneratorBase.hpp"
-#include "mesh/CellBlockManager.hpp"
 
 #include <vtkSmartPointer.h>
 #include <vtkUnstructuredGrid.h>
