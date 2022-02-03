@@ -1677,8 +1677,8 @@ PresTempCompFracInitializationKernel::
     //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
     //       be used for initialization
     pressureControl = ( wellType == WellControls::Type::PRODUCER )
-                      ? 0.5 * pres
-                      : 2.0 * pres;
+                      ? 0.75 * pres
+                      : 1.25 * pres;
   }
 
   GEOSX_THROW_IF( pressureControl <= 0,
