@@ -78,7 +78,7 @@ public:
     static constexpr auto writeFEMFaces = "writeFEMFaces";
     static constexpr auto plotLevel = "plotLevel";
     static constexpr auto binaryString = "writeBinaryData";
-
+    static constexpr auto outputRegionTypeString = "outputRegionType";
   } vtkOutputViewKeys;
   /// @endcond
 
@@ -87,7 +87,12 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
-  integer m_writeBinaryData;
+
+  /// VTK output mode
+  vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;
+  
+  /// VTK output region filter
+  vtk::VTKRegionTypes m_outputRegionType = vtk::VTKRegionTypes::ALL;
 
   vtk::VTKPolyDataWriterInterface m_writer;
 

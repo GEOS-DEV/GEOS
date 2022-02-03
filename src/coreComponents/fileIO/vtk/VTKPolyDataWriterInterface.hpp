@@ -20,6 +20,7 @@
 #include "dataRepository/Wrapper.hpp"
 #include "fileIO/vtk/VTKPVDWriter.hpp"
 #include "fileIO/vtk/VTKVTMWriter.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 class vtkUnstructuredGrid;
 class vtkPointData;
@@ -42,6 +43,26 @@ enum struct VTKOutputMode
   BINARY,
   ASCII
 };
+
+enum struct VTKRegionTypes
+{
+  CELL,
+  WELL,
+  SURFACE,
+  ALL
+};
+
+/// Declare strings associated with output enumeration values.
+ENUM_STRINGS( VTKOutputMode,
+              "binary",
+              "ascii" );
+
+/// Declare strings associated with region type enumeration values.
+ENUM_STRINGS( VTKRegionTypes,
+              "cell",
+              "well",
+              "surface",
+              "all" );
 
 /**
  * @brief Encapsulate output methods for vtk
@@ -73,6 +94,15 @@ public:
   void setOutputMode( VTKOutputMode mode )
   {
     m_outputMode = mode;
+  }
+
+  /**
+   * @brief Set the output region type
+   * @param[in] output region type to be set
+   */
+  void setOutputRegionType( VTKRegionTypes regionType )
+  {
+    m_outputRegionType = regionType;
   }
 
   /**
@@ -173,6 +203,16 @@ private:
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
 
   /**
+   * @brief Writes a VTM file for the time-step \p time.
+   * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
+   * @param[in] cycle the current cycle number
+   * @param[in] elemManager the ElementRegionManager containing all the regions to be output and referred to in the VTM file
+   * @param[in] vtmWriter a writer specialized for the VTM file format
+   */
+  void writeVtmFile( integer const cycle,
+                     ElementRegionManager const & elemManager,
+                     VTKVTMWriter const & vtmWriter ) const;
+  /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
    * @param[in] nodeManager the NodeManager associated with the domain being written
@@ -222,6 +262,9 @@ private:
 
   /// Output mode, could be ASCII or BINARAY
   VTKOutputMode m_outputMode;
+
+  /// Region output type, could be CELL, WELL, SURFACE, or ALL
+  VTKRegionTypes m_outputRegionType;
 };
 
 } // namespace vtk

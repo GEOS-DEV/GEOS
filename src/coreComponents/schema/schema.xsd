@@ -1029,19 +1029,37 @@ the relative residual norm satisfies:
 	<xsd:complexType name="VTKType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--outputRegionType => Output region types.  Valid options:
+ cell
+* well
+* surface
+* all-->
+		<xsd:attribute name="outputRegionType" type="geosx_vtk_VTKRegionTypes" default="all" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => Name of the root file for this output.-->
 		<xsd:attribute name="plotFileRoot" type="string" default="VTK" />
 		<!--plotLevel => Level detail plot. Only fields with lower of equal plot level will be output.-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
-		<!--writeBinaryData => Output the data in binary format-->
-		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
+		<!--writeBinaryData => Output the data in binary format.  Valid options:
+binary
+* ascii-->
+		<xsd:attribute name="writeBinaryData" type="geosx_vtk_VTKOutputMode" default="binary" />
 		<!--writeFEMFaces => (no description available)-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_vtk_VTKRegionTypes">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|cell|well|surface|all" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_vtk_VTKOutputMode">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|binary|ascii" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
