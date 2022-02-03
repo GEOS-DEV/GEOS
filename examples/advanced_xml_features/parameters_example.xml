@@ -35,7 +35,7 @@ XML Units:
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
+      targetRegions="{ Fracture }">
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>

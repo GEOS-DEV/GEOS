@@ -250,8 +250,6 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
   localIndex const NC = solver.numFluidComponents();
   localIndex const NP = solver.numFluidPhases();
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   solver.forMeshTargets( domain.getMeshBodies(),
                          [&]( string const,
                               MeshLevel & mesh,
@@ -370,8 +368,6 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
 {
   localIndex const NC = solver.numFluidComponents();
   localIndex const NP = solver.numFluidPhases();
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   solver.forMeshTargets( domain.getMeshBodies(),
                          [&]( string const,

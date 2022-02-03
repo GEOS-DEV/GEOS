@@ -550,7 +550,6 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase const & subRegion )
     {
-      string const dofKey = dofManager.getKey( extrinsicMeshData::proppant::proppantConcentration::key() );
       arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
@@ -612,7 +611,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel const & mesh,
-                                               arrayView1d< string const > const & targetRegionsNames )
+                                               arrayView1d< string const > const & )
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
 

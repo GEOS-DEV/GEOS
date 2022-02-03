@@ -466,8 +466,6 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
-
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
