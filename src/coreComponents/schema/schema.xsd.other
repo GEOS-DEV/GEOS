@@ -1579,10 +1579,10 @@
 		<xsd:attribute name="dCompDens_dPres" type="real64_array3d" />
 		<!--dDens_dCompConc => Derivative of density with respect to component concentration-->
 		<xsd:attribute name="dDens_dCompConc" type="real64_array3d" />
-		<!--dDens_dPres => Derivative of density with respect to pressure-->
-		<xsd:attribute name="dDens_dPres" type="real64_array2d" />
 		<!--dDens_dProppantConc => Derivative of density with respect to proppant concentration-->
 		<xsd:attribute name="dDens_dProppantConc" type="real64_array2d" />
+		<!--dDensity_dPressure => Derivative of density with respect to pressure-->
+		<xsd:attribute name="dDensity_dPressure" type="real64_array2d" />
 		<!--dFluidDens_dCompConc => Derivative of fluid density with respect to component concentration-->
 		<xsd:attribute name="dFluidDens_dCompConc" type="real64_array3d" />
 		<!--dFluidDens_dPres => Derivative of fluid density with respect to pressure-->
@@ -1593,12 +1593,14 @@
 		<xsd:attribute name="dFluidVisc_dPres" type="real64_array2d" />
 		<!--dVisc_dCompConc => Derivative of viscosity with respect to component concentration-->
 		<xsd:attribute name="dVisc_dCompConc" type="real64_array3d" />
-		<!--dVisc_dPres => Derivative of viscosity with respect to pressure-->
-		<xsd:attribute name="dVisc_dPres" type="real64_array2d" />
 		<!--dVisc_dProppantConc => Derivative of viscosity with respect to proppant concentration-->
 		<xsd:attribute name="dVisc_dProppantConc" type="real64_array2d" />
+		<!--dViscosity_dPressure => Derivative of viscosity with respect to pressure-->
+		<xsd:attribute name="dViscosity_dPressure" type="real64_array2d" />
 		<!--density => Density-->
 		<xsd:attribute name="density" type="real64_array2d" />
+		<!--initialDensity => Initial density-->
+		<xsd:attribute name="initialDensity" type="real64_array2d" />
 		<!--viscosity => Viscosity-->
 		<xsd:attribute name="viscosity" type="real64_array2d" />
 	</xsd:complexType>
@@ -1873,19 +1875,6 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-<<<<<<< HEAD
-=======
-		<!--rhs => RHS => AcousticSEM-->
-		<xsd:attribute name="rhs" type="real64_array" />
-		<!--ruptureTime => Time that the object was ruptured/split. => SurfaceGenerator-->
-		<xsd:attribute name="ruptureTime" type="real64_array" />
-		<!--stiffnessVector => Stiffness vector contains R_h*Pressure_n. => AcousticSEM-->
-		<xsd:attribute name="stiffnessVector" type="real64_array" />
-		<!--uhatTilde => An array that holds the incremental displacement predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="uhatTilde" type="real64_array2d" />
-		<!--velocityTilde => An array that holds the velocity predictors on the nodes. => SolidMechanicsLagrangianSSLE, SolidMechanics_LagrangianFEM-->
-		<xsd:attribute name="velocityTilde" type="real64_array2d" />
->>>>>>> develop
 	</xsd:complexType>
 	<xsd:complexType name="CellElementRegionType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
