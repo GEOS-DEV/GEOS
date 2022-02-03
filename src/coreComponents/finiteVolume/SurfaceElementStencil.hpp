@@ -162,6 +162,17 @@ public:
                        real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
                        real64 ( &dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const;
 
+/**
+ * @brief Compute weigths and derivatives w.r.t to one variable.
+ * @param[in] iconn connection index
+ * @param[out] weight view weights
+ * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+ */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
+                       real64 ( &dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const;
+
 
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
@@ -391,6 +402,69 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
 
 
 }
+
+GEOSX_HOST_DEVICE
+inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
+                                                          real64 ( & weight )[MAX_NUM_OF_CONNECTIONS][2],
+                                                          real64 ( & dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const
+{
+
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    sumOfTrans += m_weights[iconn][k];
+  }
+
+  localIndex k[2];
+  localIndex connectionIndex = 0;
+  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    {
+      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
+      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
+      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
+
+      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
+      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
+      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
+
+      real64 const t0 = m_weights[iconn][0];
+      real64 const t1 = m_weights[iconn][1];
+
+      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0+t1);
+
+      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+
+      weight[connectionIndex][0] = value;
+      weight[connectionIndex][1] = -value;
+
+      real64 const dt0 = m_weights[iconn][0];
+      real64 const dt1 = m_weights[iconn][1];
+
+      real64 dHarmonic[2];
+      dHarmonic[0] = ( dt0 * t1 * sumOfTrans - dt0 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+      dHarmonic[1] = ( t0 * dt1 * sumOfTrans - dt1 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
+
+      real64 dArithmetic[2];
+      dArithmetic[0] = 0.25 * dt0;
+      dArithmetic[1] = 0.25 * dt1;
+
+      dWeight_dVar[connectionIndex][0] = m_meanPermCoefficient * dHarmonic[0] + (1 - m_meanPermCoefficient) * dArithmetic[0];
+      dWeight_dVar[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic[1] + (1 - m_meanPermCoefficient) * dArithmetic[1] );
+
+      connectionIndex++;
+    }
+  }
+
+
+}
+
 
 
 GEOSX_HOST_DEVICE

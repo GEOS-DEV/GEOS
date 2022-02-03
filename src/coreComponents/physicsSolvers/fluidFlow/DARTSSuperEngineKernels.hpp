@@ -533,7 +533,7 @@ public:
     arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
 
     // [1] fill diagonal part for both mass (and energy equations if needed, only fluid energy is involved here)
-    for( uint8_t c = 0; c < numDofs; c++ )
+    for( integer c = 0; c < numDofs; c++ )
     {
       stack.localResidual[c] = m_referencePoreVolume[ei] * (OBLVals[ACC_OP + c] - OBLValsOld[ACC_OP + c]);   // acc operators
       // only
@@ -541,7 +541,7 @@ public:
       // Add reaction term to diagonal of reservoir cells (here the volume is pore volume or block volume):
       stack.localResidual[c] += (m_referencePoreVolume[ei] + m_referenceRockVolume[ei]) * m_dt * OBLVals[KIN_OP + c] * m_rockKineticRateFactor[ei]; // kinetics
 
-      for( uint8_t v = 0; v < numDofs; v++ )
+      for( integer v = 0; v < numDofs; v++ )
       {
         stack.localJacobian[c][v] = m_referencePoreVolume[ei] * OBLDers[ACC_OP + c][v];   // der of accumulation term
 
@@ -555,7 +555,7 @@ public:
     {
       stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLValsOld[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
 
-      for( uint8_t v = 0; v < numDofs; v++ )
+      for( integer v = 0; v < numDofs; v++ )
       {
         stack.localJacobian[numDofs-1][v] += m_referenceRockVolume[ei] * OBLDers[RE_INTER_OP][v] * m_rockVolumetricHeatCapacity[ei];
       }   // end of fill offdiagonal part + contribute to diagonal
@@ -740,6 +740,8 @@ public:
                       extrinsicMeshData::flow::deltaGlobalCompFraction,
                       extrinsicMeshData::flow::temperature,
                       extrinsicMeshData::flow::deltaTemperature,
+                      extrinsicMeshData::flow::referencePorosity,
+                      extrinsicMeshData::flow::rockThermalConductivity,
                       extrinsicMeshData::flow::OBLOperatorValues,
                       extrinsicMeshData::flow::OBLOperatorDerivatives >;
 
@@ -762,17 +764,21 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FaceBasedAssemblyKernelBase( globalIndex const rankOffset,
-                               integer const capPressureFlag,
                                DofNumberAccessor const & dofNumberAccessor,
                                CompFlowAccessors const & compFlowAccessors,
                                PermeabilityAccessors const & permeabilityAccessors,
                                real64 const & dt,
+                               real64 const & transMultExp,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
     :     m_rankOffset( rankOffset ),
     m_dt( dt ),
+    m_transMultExp (),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
     m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
+    m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),
+    m_referencePorosity( compFlowAccessors.get( extrinsicMeshData::flow::referencePorosity {} ) ),
+    m_rockThermalConductivity( compFlowAccessors.get( extrinsicMeshData::flow::rockThermalConductivity {} ) ),
     m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
     m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
     m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
@@ -795,12 +801,18 @@ protected:
   /// Time step size
   real64 const m_dt;
 
+  /// trans multiplier
+  real64 m_transMultExp;
+
   /// Views on dof numbers
   ElementViewConst< arrayView1d< globalIndex const > > const m_dofNumber;
 
   /// Views on permeability
   ElementViewConst< arrayView3d< real64 const > > m_permeability;
   ElementViewConst< arrayView3d< real64 const > > m_dPerm_dPres;
+  ElementViewConst< arrayView1d< real64 const > > m_referencePorosity;
+  ElementViewConst< arrayView1d< real64 const > > m_rockThermalConductivity;
+
 
   /// Views on ghost rank numbers and gravity coefficients
   ElementViewConst< arrayView1d< integer const > > const m_ghostRank;
@@ -905,20 +917,20 @@ public:
    * @param[inout] localRhs the local right-hand side vector
    */
   FaceBasedAssemblyKernel( globalIndex const rankOffset,
-                           integer const capPressureFlag,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            real64 const & dt,
+                           real64 const & transMultExp,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
     : FaceBasedAssemblyKernelBase( rankOffset,
-                                   capPressureFlag,
                                    dofNumberAccessor,
                                    compFlowAccessors,
                                    permeabilityAccessors,
                                    dt,
+                                   transMultExp,
                                    localMatrix,
                                    localRhs ),
     m_stencilWrapper( stencilWrapper ),
@@ -941,26 +953,16 @@ public:
      * @param[in] numElems number of elements for this connection
      */
     GEOSX_HOST_DEVICE
-    StackVariables( localIndex const size, localIndex numElems )
-      : stencilSize( size ),
-      numFluxElems( numElems ),
-      dofColIndices( size * numDofs ),
-      localFlux( numElems * numEqns ),
-      localFluxJacobian( numElems * numEqns, size * numDofs )
+    StackVariables()
+      : dofColIndices( maxNumElems * numDofs ),
+      localFlux( numEqns ),
+      localFluxJacobian( numEqns, maxNumElems * numDofs )
     {}
-
-    // Stencil information
-
-    /// Stencil size for a given connection
-    localIndex const stencilSize;
-
-    /// Number of elements for a given connection
-    localIndex const numFluxElems;
-
-    // Transmissibility and derivatives
 
     /// Transmissibility
     real64 transmissibility[maxNumConns][2]{};
+    /// Thermal Transmissibility
+    real64 diffusiveTransmissibility[maxNumConns][2]{};
     /// Derivatives of transmissibility with respect to pressure
     real64 dTrans_dPres[maxNumConns][2]{};
 
@@ -969,31 +971,13 @@ public:
     /// Indices of the matrix rows/columns corresponding to the dofs in this face
     stackArray1d< globalIndex, maxNumElems * numDofs > dofColIndices;
 
-    /// Storage for the face local residual vector (all equations except volume balance)
-    stackArray1d< real64, maxNumElems * numEqns > localFlux;
+    /// Storage for the face local residual vector
+    stackArray1d< real64, numEqns > localFlux;
     /// Storage for the face local Jacobian matrix
-    stackArray2d< real64, maxNumElems * numEqns * maxStencilSize * numDofs > localFluxJacobian;
+    stackArray2d< real64, maxNumElems * numEqns *  numDofs > localFluxJacobian;
 
   };
 
-
-  /**
-   * @brief Getter for the stencil size at this connection
-   * @param[in] iconn the connection index
-   * @return the size of the stencil at this connection
-   */
-  GEOSX_HOST_DEVICE
-  localIndex stencilSize( localIndex const iconn ) const
-  { return meshMapUtilities::size1( m_sei, iconn ); }
-
-  /**
-   * @brief Getter for the number of elements at this connection
-   * @param[in] iconn the connection index
-   * @return the number of elements at this connection
-   */
-  GEOSX_HOST_DEVICE
-  localIndex numPointsInFlux( localIndex const iconn ) const
-  { return m_stencilWrapper.numPointsInFlux( iconn ); }
 
 
   /**
@@ -1005,8 +989,13 @@ public:
   void setup( localIndex const iconn,
               StackVariables & stack ) const
   {
+    // The kernel is only designed for TPFA
+    GEOSX_ASSERT_EQ( maxNumElems, 2 );
+    GEOSX_ASSERT_EQ( maxNumConns, 1 );
+    GEOSX_ASSERT_EQ( maxStencilSize, 2 );
+
     // set degrees of freedom indices for this face
-    for( integer i = 0; i < stack.stencilSize; ++i )
+    for( integer i = 0; i < maxStencilSize; ++i )
     {
       globalIndex const offset = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
 
@@ -1030,6 +1019,9 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
+
+
+
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
@@ -1037,53 +1029,228 @@ public:
                                      stack.transmissibility,
                                      stack.dTrans_dPres );
 
+    m_stencilWrapper.computeWeights( iconn,
+                                     stack.diffusiveTransmissibility,
+                                     stack.dTrans_dPres );
 
-    // calculate quantities on primary connected cells
-    for( integer i = 0; i < stack.numFluxElems; ++i )
+
+    // As a first iteration, do everything in TPFA style: i is the left (minus) element, j is the right(plus) element.
+    // Consider inflow and outflow to and from element i.
+
+    localIndex const erI  = m_seri( iconn, 0 );
+    localIndex const esrI = m_sesri( iconn, 0 );
+    localIndex const eiI  = m_sei( iconn, 0 );
+
+    localIndex const erJ  = m_seri( iconn, 1 );
+    localIndex const esrJ = m_sesri( iconn, 1 );
+    localIndex const eiJ  = m_sei( iconn, 1 );
+
+    arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsI = m_OBLOperatorValues[erI][esrI][eiI];
+    arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersI = m_OBLOperatorDerivatives[erI][esrI][eiI];
+
+    arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsJ = m_OBLOperatorValues[erJ][esrJ][eiJ];
+    arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersJ = m_OBLOperatorDerivatives[erJ][esrJ][eiJ];
+
+    // single gravity coefficient and transimissibility values correspond to the current connection
+    real64 const gravCoef = m_gravCoef[erI][esrI][eiI] - m_gravCoef[erJ][esrJ][eiJ];
+    real64 const trans = stack.transmissibility[0][0];
+    real64 const transD = stack.diffusiveTransmissibility[0][0];
+
+
+    real64 transMult = 1;
+    real64 transMultDerI[numDofs];
+    real64 transMultDerJ[numDofs];
+    if( m_transMultExp > 0 )
     {
-      localIndex const er  = m_seri( iconn, i );
-      localIndex const esr = m_sesri( iconn, i );
-      localIndex const ei  = m_sei( iconn, i );
+      // Calculate transmissibility multiplier:
+
+      // Take average interface porosity:
+      real64 const poroAverage = (OBLValsI[PORO_OP] + OBLValsJ[PORO_OP]) * 0.5;
+      real64 const transMultD = m_transMultExp * pow( poroAverage, m_transMultExp - 1 ) * 0.5;
+
+      for( integer v = 0; v < numDofs; v++ )
+      {
+        transMultDerI[v] = transMultD * OBLDersI[PORO_OP][v];
+        transMultDerJ[v] = transMultD * OBLDersJ[PORO_OP][v];
+      }
+      transMult = pow( poroAverage, m_transMultExp );
+    }
+    else
+    {
+      for( integer v = 0; v < numDofs; v++ )
+      {
+        transMultDerI[v] = 0;
+        transMultDerJ[v] = 0;
+      }
     }
 
-    // presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] + m_dPres[er][esr][ei] - capPressure);
-    // dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP)
-    //                    + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] + m_dPres[er][esr][ei] - capPressure);
-    // for( integer jc = 0; jc < numComps; ++jc )
-    // {
-    //   dPresGrad_dC[i][jc] += -stack.transmissibility[0][i] * dCapPressure_dC[jc];
-    // }
-
-    // real64 const gravD     = stack.transmissibility[0][i] * m_gravCoef[er][esr][ei];
-    // real64 const dGravD_dP = stack.dTrans_dPres[0][i] * m_gravCoef[er][esr][ei];
-
-    // // the density used in the potential difference is always a mass density
-    // // unlike the density used in the phase mobility, which is a mass density
-    // // if useMass == 1 and a molar density otherwise
-    // gravHead += densMean * gravD;
+    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ]) - (m_pres[erI][esrI][eiI] + m_dPres[erI][esrI][eiI]);
 
 
+    // [2] fill offdiagonal part + contribute to diagonal, only fluid part is considered in energy equation
+    for( integer p = 0; p < numPhases; p++ )
+    {     // loop over number of phases for convective operator
 
-    // // populate local flux vector and derivatives
-    // for( integer ic = 0; ic < numComps; ++ic )
-    // {
-    //   stack.localFlux[ic]           =  m_dt * stack.compFlux[ic];
-    //   stack.localFlux[numComps + ic] = -m_dt * stack.compFlux[ic];
+      // calculate gravity term for phase p
+      real64 const avg_density = (OBLValsI[GRAV_OP + p] + OBLValsJ[GRAV_OP + p]) / 2;
 
-    //   for( integer ke = 0; ke < stack.stencilSize; ++ke )
-    //   {
-    //     localIndex const localDofIndexPres = ke * numDofs;
-    //     stack.localFluxJacobian[ic][localDofIndexPres]           =  m_dt * stack.dCompFlux_dP[ke][ic];
-    //     stack.localFluxJacobian[numComps + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
+      // p = 1 means oil phase, it's reference phase. pw=po-pcow, pg=po-(-pcog).
+      real64 const phase_p_diff = pDiff + avg_density * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p];
 
-    //     for( integer jc = 0; jc < numComps; ++jc )
-    //     {
-    //       localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-    //       stack.localFluxJacobian[ic][localDofIndexComp]           =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
-    //       stack.localFluxJacobian[numComps + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
-    //     }
-    //   }
-    // }
+      // calculate partial derivatives for gravity and capillary terms
+      real64 gravPcDerI[numDofs];
+      real64 gravPcDerJ[numDofs];
+      for( integer v = 0; v < numDofs; v++ )
+      {
+        gravPcDerI[v] = -(OBLDersI[GRAV_OP + p][v]) * gravCoef / 2 - OBLDersI[PC_OP + p][v];
+        gravPcDerJ[v] = -(OBLDersJ[GRAV_OP + p][v]) * gravCoef / 2 + OBLDersJ[PC_OP + p][v];
+      }
+
+      real64 phase_gamma_p_diff = transMult * trans * m_dt * phase_p_diff;
+
+      if( phase_p_diff < 0 )
+      {
+        // mass and energy outflow with effect of gravity and capillarity
+        for( integer c = 0; c < numDofs; c++ )
+        {
+          real64 c_flux = transMult * trans * m_dt * OBLValsI[FLUX_OP + p * numDofs + c];
+
+          stack.localFlux[c] -= phase_p_diff * c_flux;     // flux operators only
+          for( integer v = 0; v < numDofs; v++ )
+          {
+            stack.localFluxJacobian[c][v] -= (phase_gamma_p_diff * OBLDersI[FLUX_OP + p * numDofs + c][v] +
+                                              trans * m_dt * phase_p_diff * transMultDerI[v] * OBLValsI[FLUX_OP + p * numDofs + c]);
+            stack.localFluxJacobian[c][v] += c_flux * gravPcDerI[v];
+            stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
+
+            if( v == 0 )
+            {
+              stack.localFluxJacobian[c][numDofs + v] -= c_flux;
+              stack.localFluxJacobian[c][v] += c_flux;
+            }
+          }
+        }
+      }
+      else
+      {
+        // mass and energy inflow with effect of gravity and capillarity
+        for( integer c = 0; c < numDofs; c++ )
+        {
+          real64 c_flux = transMult * trans * m_dt * OBLValsJ[FLUX_OP + p * numDofs + c];
+
+          stack.localFlux[c] -= phase_p_diff * c_flux;     // flux operators only
+          for( integer v = 0; v < numDofs; v++ )
+          {
+            stack.localFluxJacobian[c][numDofs + v] -= (phase_gamma_p_diff * OBLDersJ[FLUX_OP + p * numDofs + c][v] +
+                                                        trans * m_dt * phase_p_diff * transMultDerJ[v] * OBLValsJ[FLUX_OP + p * numDofs + c]);
+            stack.localFluxJacobian[c][v] += c_flux * gravPcDerI[v];
+            stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
+            if( v == 0 )
+            {
+              stack.localFluxJacobian[c][v] += c_flux;     //-= Jac[jac_idx + c * numDofs];
+              stack.localFluxJacobian[c][numDofs + v] -= c_flux;      // -trans * m_dt * op_vals[NC + c];
+            }
+          }
+        }
+      }
+
+    }     // end of loop over number of phases for convective operator with gravity and capillarity
+
+    // [3] Additional diffusion code here:   (phi_p * S_p) * (rho_p * D_cp * Delta_x_cp)  or (phi_p * S_p) * (kappa_p * Delta_T)
+
+    real64 const poroAverage = (m_referencePorosity[erI][esrI][eiI] + m_referencePorosity[erJ][esrJ][eiJ]) * 0.5;     // diffusion term
+                                                                                                                      // depends on total
+    // porosity!
+
+
+    // Add diffusion term to the residual:
+    for( integer c = 0; c < numDofs; c++ )
+    {
+      for( integer p = 0; p < numPhases; p++ )
+      {
+        real64 grad_con = OBLValsJ[GRAD_OP + c * numPhases + p] - OBLValsI[GRAD_OP + c * numPhases + p];
+
+        if( grad_con < 0 )
+        {
+          // Diffusion flows from cell i to j (high to low), use upstream quantity from cell i for compressibility and saturation (mass or
+          // energy):
+          real64 diff_mob_ups_m = m_dt * transD * poroAverage * OBLValsI[UPSAT_OP + p];
+
+          stack.localFlux[c] -= diff_mob_ups_m * grad_con;       // diffusion term
+
+          // Add diffusion terms to Jacobian:
+          for( integer v = 0; v < numDofs; v++ )
+          {
+            stack.localFluxJacobian[c][v] += diff_mob_ups_m * OBLDersI[GRAD_OP + c * numPhases + p][v];
+            stack.localFluxJacobian[c][numDofs + v] -= diff_mob_ups_m * OBLDersJ[GRAD_OP + c * numPhases + p][v];
+
+            stack.localFluxJacobian[c][v] -= grad_con * m_dt * transD * poroAverage * OBLDersI[UPSAT_OP + p][v];
+          }
+        }
+        else
+        {
+          // Diffusion flows from cell j to i (high to low), use upstream quantity from cell j for density and saturation:
+          real64 diff_mob_ups_m = m_dt * transD * poroAverage * OBLValsJ[UPSAT_OP + p];
+
+          stack.localFlux[c] -= diff_mob_ups_m * grad_con;       // diffusion term
+
+          // Add diffusion terms to Jacobian:
+          for( integer v = 0; v < numDofs; v++ )
+          {
+            stack.localFluxJacobian[c][v] += diff_mob_ups_m * OBLDersI[GRAD_OP + c * numPhases + p][v];
+            stack.localFluxJacobian[c][numDofs + v] -= diff_mob_ups_m * OBLDersJ[GRAD_OP + c * numPhases + p][v];
+
+            stack.localFluxJacobian[c][numDofs + v] -= grad_con * m_dt * transD * poroAverage * OBLDersJ[UPSAT_OP + p][v];
+          }
+        }
+      }
+    }
+
+    // [4] add rock conduction
+    if( enableEnergyBalance )
+    {
+      real64 const tDiff = OBLValsJ[RE_TEMP_OP] - OBLValsI[RE_TEMP_OP];
+      real64 const gammaTDiff = transD * m_dt * tDiff;
+
+      if( tDiff < 0 )
+      {
+        real64 const poroI = m_referencePorosity[erI][esrI][eiI];
+        real64 const rockCondI = m_rockThermalConductivity[erI][esrI][eiI];
+
+        // rock heat transfers flows from cell i to j
+        stack.localFlux[numComps] -= gammaTDiff * OBLValsI[ROCK_COND] * (1 - poroI) * rockCondI;
+        for( integer v = 0; v < numDofs; v++ )
+        {
+          stack.localFluxJacobian[numComps][v] -= gammaTDiff * OBLDersI[ROCK_COND][v] * (1 - poroI) * rockCondI;
+          // the last variable - T
+          if( v == numDofs - 1 )
+          {
+            stack.localFluxJacobian[numComps][numDofs + v] -= transD * m_dt * OBLValsI[ROCK_COND] * (1 - poroI) * rockCondI;
+            stack.localFluxJacobian[numComps][v] += transD * m_dt * OBLValsI[ROCK_COND] * (1 - poroI) * rockCondI;
+          }
+        }
+      }
+      else
+      {
+        real64 const poroJ = m_referencePorosity[erJ][esrJ][eiJ];
+        real64 const rockCondJ = m_rockThermalConductivity[erJ][esrJ][eiJ];
+
+        // rock heat transfers flows from cell j to i
+        stack.localFlux[numComps] -= gammaTDiff * OBLValsJ[ROCK_COND] * (1 - poroJ) * rockCondJ;     // energy
+        // cond
+        // operator
+        for( integer v = 0; v < numDofs; v++ )
+        {
+          stack.localFluxJacobian[numComps][numDofs + v] -= gammaTDiff * OBLDersJ[ROCK_COND][v] * (1 - poroJ) * rockCondJ;
+          // the last variable - T
+          if( v == numDofs - 1 )
+          {
+            stack.localFluxJacobian[numComps][v] += transD * m_dt * OBLValsJ[ROCK_COND] * (1 - poroJ) * rockCondJ;
+            stack.localFluxJacobian[numComps][numDofs + v] -= transD * m_dt * OBLValsJ[ROCK_COND] * (1 - poroJ) * rockCondJ;
+          }
+        }
+      }
+    }
   }
 
   /**
@@ -1095,33 +1262,39 @@ public:
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
-
-    // Apply equation/variable change transformation(s)
-    stackArray1d< real64, maxStencilSize * numDofs > work( stack.stencilSize * numDofs );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComps, numDofs*stack.stencilSize, stack.numFluxElems,
-                                                             stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComps, stack.numFluxElems,
-                                                               stack.localFlux );
-
     // Add to residual/jacobian
-    for( integer i = 0; i < stack.numFluxElems; ++i )
+    for( integer i = 0; i < maxNumElems; ++i )
     {
+      // during first loop iteration, we fill the equations for element i as is.
+      if( i == 1 )
+      {
+        // during second (and the last) loop iteration, we fill now the equations for element j.
+        // here, we need to multiply all values by -1
+        for( integer ic = 0; ic < numComps; ++ic )
+        {
+          stack.localFlux[ic] *= -1;
+          for( integer v = 0; v < 2 * numDofs; ++v )
+          {
+            stack.localFluxJacobian[ic][v] *= -1;
+          }
+        }
+      }
+
       if( m_ghostRank[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )] < 0 )
       {
         globalIndex const globalRow = m_dofNumber[m_seri( iconn, i )][m_sesri( iconn, i )][m_sei( iconn, i )];
         localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - m_rankOffset );
         GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GT( m_localMatrix.numRows(), localRow + numComps );
+        GEOSX_ASSERT_GE( m_localMatrix.numRows(), localRow + numEqns );
 
         for( integer ic = 0; ic < numComps; ++ic )
         {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numComps + ic] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[ic] );
           m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + ic,
             stack.dofColIndices.data(),
-            stack.localFluxJacobian[i * numComps + ic].dataIfContiguous(),
-            stack.stencilSize * numDofs );
+            stack.localFluxJacobian[ic].dataIfContiguous(),
+            maxNumElems * numDofs );
         }
       }
     }
@@ -1141,15 +1314,17 @@ public:
   {
     GEOSX_MARK_FUNCTION;
 
-    forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    if( numConnections )
     {
-      typename KERNEL_TYPE::StackVariables stack( kernelComponent.stencilSize( iconn ),
-                                                  kernelComponent.numPointsInFlux( iconn ) );
+      forAll< POLICY >( numConnections, [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+      {
+        typename KERNEL_TYPE::StackVariables stack;
 
-      kernelComponent.setup( iconn, stack );
-      kernelComponent.computeFlux( iconn, stack );
-      kernelComponent.complete( iconn, stack );
-    } );
+        kernelComponent.setup( iconn, stack );
+        kernelComponent.computeFlux( iconn, stack );
+        kernelComponent.complete( iconn, stack );
+      } );
+    }
   }
 
 private:
@@ -1197,6 +1372,7 @@ public:
   createAndLaunch( integer const numPhases,
                    integer const numComps,
                    bool const enableEnergyBalance,
+                   real64 const & transMultExp,
                    globalIndex const rankOffset,
                    string const & dofKey,
                    string const & solverName,
@@ -1222,8 +1398,8 @@ public:
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName, targetRegionNames, permeabilityModelNames );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, permeabilityAccessors,
-                          dt, localMatrix, localRhs );
+      KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, permeabilityAccessors,
+                          dt, transMultExp, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
   }

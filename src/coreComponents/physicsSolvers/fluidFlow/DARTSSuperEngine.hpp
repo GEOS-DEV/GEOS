@@ -214,6 +214,8 @@ public:
 
     static constexpr char const * OBLOperatorsTableFileString() { return "OBLOperatorsTableFile"; }
 
+    static constexpr char const * transMultExpString() { return "transMultExp"; }
+
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
@@ -313,6 +315,9 @@ protected:
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
+
+  /// exponent of dynamic transmissibility multiplier
+  real64 m_transMultExp;
 
   /// minimum value of the scaling factor obtained by enforcing maxCompFracChange
   real64 m_minScalingFactor;

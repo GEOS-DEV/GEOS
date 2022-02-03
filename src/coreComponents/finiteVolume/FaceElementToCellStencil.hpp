@@ -147,6 +147,17 @@ public:
   /**
    * @brief Compute weigths and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       real64 ( &weight )[1][2],
+                       real64 ( &dWeight_dVar )[1][2] ) const;
+
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
    * @param[in] dCoeff_dVar2 view accessor to the derivative of the coefficient w.r.t to the variable 2
@@ -281,6 +292,28 @@ inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
   weight[0][1] = -halfWeight;
 
   dWeight_dVar[0][0] = 0.0 * dCoeff_dVar[er0][esr0][ei0][0][0];
+  dWeight_dVar[0][1] = 0.0;
+}
+
+GEOSX_HOST_DEVICE
+inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
+                                                             real64 ( & weight )[1][2],
+                                                             real64 ( & dWeight_dVar )[1][2] ) const
+{
+  localIndex const er0  =  m_elementRegionIndices[iconn][0];
+  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
+  localIndex const ei0  =  m_elementIndices[iconn][0];
+
+  real64 halfWeight = m_weights[iconn][0];
+
+  real64 faceConormal[3];
+
+  halfWeight *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] ) * m_transMultiplier[iconn];
+
+  weight[0][0] = halfWeight;
+  weight[0][1] = -halfWeight;
+
+  dWeight_dVar[0][0] = 0.0;
   dWeight_dVar[0][1] = 0.0;
 }
 

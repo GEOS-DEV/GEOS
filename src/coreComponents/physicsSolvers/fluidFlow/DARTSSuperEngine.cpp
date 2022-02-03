@@ -93,6 +93,11 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "File containing OBL operator values" );
 
+  this->registerWrapper( viewKeyStruct::transMultExpString(), &m_transMultExp ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Exponent of dynamic transmissibility multiplier" );
+
   this->registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of component names" );
@@ -253,6 +258,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1 >( m_numComponents );
 
       subRegion.registerExtrinsicData< referencePoreVolume >( getName() );
+      subRegion.registerExtrinsicData< referencePorosity >( getName() );
       subRegion.registerExtrinsicData< referenceRockVolume >( getName() );
 
       // thermal rock properties (again, register in any case)
@@ -514,6 +520,7 @@ void DARTSSuperEngine::initializePostInitialConditionsPreSubGroups()
     arrayView1d< real64 const > const refPorosity =  solid.getReferencePorosity();
     arrayView1d< real64 > const referenceRockVolume =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >();
     arrayView1d< real64 > const referencePoreVolume =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
+    arrayView1d< real64 > const referencePorosity =  subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePorosity >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -521,6 +528,7 @@ void DARTSSuperEngine::initializePostInitialConditionsPreSubGroups()
         return;
 
       referencePoreVolume[ei] = volume[ei] * refPorosity[ei];
+      referencePorosity[ei] = refPorosity[ei];
       referenceRockVolume[ei] = volume[ei] - referencePoreVolume[ei];
 
     } );
@@ -697,6 +705,7 @@ void DARTSSuperEngine::assembleFluxTerms( real64 const dt,
       createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
                                                  m_numComponents,
                                                  m_enableEnergyBalance,
+                                                 m_transMultExp,
                                                  dofManager.rankOffset(),
                                                  elemDofKey,
                                                  getName(),

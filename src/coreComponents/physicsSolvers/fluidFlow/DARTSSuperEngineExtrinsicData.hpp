@@ -65,6 +65,14 @@ EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
                            NO_WRITE,
                            "Accumulated temperature updates" );
 
+EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
+                           "referencePorosity",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Reference porosity" );
+
 EXTRINSIC_MESH_DATA_TRAIT( referencePoreVolume,
                            "referencePoreVolume",
                            array1d< real64 >,
