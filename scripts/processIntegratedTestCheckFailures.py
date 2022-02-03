@@ -14,27 +14,31 @@ matchStrings = [ 'Error:' ]
 #exclusionStrings = [ 'sizedFromParent', 'different shapes' ]
 exclusionStrings = [ 'sizedFromParent', 'different shapes', 'but not the' ]
 
-numTrailingLines = 1
+numTrailingLines = 5
 
 
 for fileName in findFiles(sys.argv[1]):
     #fileName = 'integratedTests/compositionalMultiphaseFlow/4comp_2ph_1d_01/4comp_2ph_1d_01.data'
-    print( 'Processing ',fileName )
 
     filteredErrors=''
 
     with open(fileName) as f:
         lines = f.readlines()
         
-        for i in range(0,len(lines)-numTrailingLines):
+        for i in range(0,len(lines)):
             line = lines[i]
             if all(matchString in line for matchString in matchStrings):
-                matchBlock = line
+                matchBlock = lines[i-1]
+                matchBlock += line
 
                 
                 for j in range(1,numTrailingLines+1):
-#                    print( len(lines),i,j, line)
-                    matchBlock += lines[i+j]
+                    if not ('0: ********************************************************************************' in lines[i+j]):
+                        matchBlock += lines[i+j]
+                    else:
+                        break
+                i += j
+#                print( j )
 
 
                 if not any( excludeString in matchBlock for excludeString in exclusionStrings):
@@ -42,6 +46,7 @@ for fileName in findFiles(sys.argv[1]):
 
         
     if( len( filteredErrors ) ):
+        print( "IN ", fileName )
         print( filteredErrors, flush=True )
 
 #for i in range(1,1+1):
