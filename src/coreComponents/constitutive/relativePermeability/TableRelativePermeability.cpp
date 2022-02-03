@@ -261,7 +261,7 @@ real64 TableRelativePermeability::validateRelativePermeabilityTable( TableFuncti
     // note that the TableFunction class has already checked that the coordinates are monotone
 
     // check phase relative permeability
-    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
+    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-15,
                     GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), relPermTable.getName() ),
                     InputError );
 
