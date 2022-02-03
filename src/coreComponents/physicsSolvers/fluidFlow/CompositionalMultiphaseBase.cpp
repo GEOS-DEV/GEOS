@@ -345,10 +345,10 @@ void CompositionalMultiphaseBase::initializeAquiferBC( Group const & meshBodies,
     string const meshBodyName = target->first;
     arrayView1d< string const > const & regionNames = target->second.toViewConst();
     MeshBody const & meshBody = meshBodies.template getGroup< MeshBody >( meshBodyName );
-    MeshLevel const & mesh = meshBody.getMeshLevel(0);
+    MeshLevel const & mesh = meshBody.getMeshLevel( 0 );
 
-    ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion(regionNames[0]).getSubRegion(0);
-    string const fluidName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
+    ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion( regionNames[0] ).getSubRegion( 0 );
+    string const fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( fluidName );
 
     // set the gravity vector (needed later for the potential diff calculations)
@@ -358,7 +358,6 @@ void CompositionalMultiphaseBase::initializeAquiferBC( Group const & meshBodies,
     // note: if the water phase is not found, the fluid model is going to throw an error
     integer const waterPhaseIndex = fluid0.getWaterPhaseIndex();
     bc.setWaterPhaseIndex( waterPhaseIndex );
-
 
 
 
