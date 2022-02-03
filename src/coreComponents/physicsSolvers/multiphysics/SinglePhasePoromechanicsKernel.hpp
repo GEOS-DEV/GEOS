@@ -276,16 +276,12 @@ public:
     real64 bodyForce[3]{};
     real64 dBodyForce_dVolStrainIncrement[3]{};
     real64 dBodyForce_dPressure[3]{};
-    real64 fluidMassContent;
-    real64 fluidMassContentOld;
+    real64 fluidMassContentIncrement;
     real64 dFluidMassContent_dPressure;
     real64 dFluidMassContent_dVolStrainIncrement;
 
     // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
-
-
-
     real64 N[numNodesPerElem];
     real64 dNdX[numNodesPerElem][3];
     FE_TYPE::calcN( q, N );
@@ -313,8 +309,7 @@ public:
                                                        bodyForce,
                                                        dBodyForce_dVolStrainIncrement,
                                                        dBodyForce_dPressure,
-                                                       fluidMassContent,
-                                                       fluidMassContentOld,
+													   fluidMassContentIncrement,
                                                        dFluidMassContent_dPressure,
                                                        dFluidMassContent_dVolStrainIncrement,
                                                        stiffness );
@@ -388,7 +383,7 @@ public:
     (
       stack.localResidualMass,
       Np,
-      fluidMassContent - fluidMassContentOld,
+	  fluidMassContentIncrement,
       detJxW );
 
     // Compute local mass balance residual derivatives with respect to displacement
