@@ -669,7 +669,9 @@ public:
    * @name Initialization and data registration
    */
   ///@{
-
+  /**
+   * @brief initialization post generation of the mesh.
+   */
   virtual void initialize_postMeshGeneration();
 
 

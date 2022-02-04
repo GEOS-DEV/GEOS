@@ -69,7 +69,15 @@ public:
   ///@}
 
 
-
+  /**
+   * @brief verify that the meshBody name specified exists in the meshBodies group. If there is only one meshBody
+   * it returns the name of the only existing mesh body.
+   *
+   * @param[in] meshBodies the meshBodies group.
+   * @param[in] meshBodyBlockName name of the meshbody to be verified
+   * @return the name of the only mesh body present if there is only one
+   * and the name specified by @p  meshBodyName if the meshBody is found.
+   */
   static string verifyMeshBodyName( Group const & meshBodies,
                                     string const & meshBodyBlockName );
 

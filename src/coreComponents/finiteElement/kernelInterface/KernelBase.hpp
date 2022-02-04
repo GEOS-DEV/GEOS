@@ -347,7 +347,7 @@ private:
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p SUBREGION_TYPE) to apply the @p KERNEL_TEMPLATE.
  * @param finiteElementName The name of the finite element.
- * @param constitutiveNames The names of the constitutive models present in the region.
+ * @param constitutiveStringName The key to the constitutive model name found on the Region.
  * @param kernelFactory The object used to construct the kernel.
  * @return The maximum contribution to the residual, which may be used to scale the residual.
  *
