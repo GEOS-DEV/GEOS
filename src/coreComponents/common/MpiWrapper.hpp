@@ -630,7 +630,7 @@ int MpiWrapper::allgather( T_SEND const * const sendbuf,
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgather() for serial run requires send and receive buffers are of the same type" );
   GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
-  *recvbuf = *sendbuf;
+  std::copy( sendbuf, sendbuf + sendcount, recvbuf )
   return 0;
 #endif
 }
@@ -649,7 +649,7 @@ int MpiWrapper::allgatherv( T_SEND const * const sendbuf,
   static_assert( std::is_same< T_SEND, T_RECV >::value,
                  "MpiWrapper::allgatherv() for serial run requires send and receive buffers are of the same type" );
   GEOSX_ERROR_IF_NE_MSG( sendcount, recvcount, "sendcount is not equal to recvcount." );
-  *recvbuf = *sendbuf;
+  std::copy( sendbuf, sendbuf + sendcount, recvbuf )
   return 0;
 #endif
 }
