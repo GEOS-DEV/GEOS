@@ -48,6 +48,7 @@ using namespace SinglePhaseBaseKernels;
 using namespace SinglePhaseFVMKernels;
 using namespace SinglePhasePoromechanicsFluxKernels;
 
+
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
                                         Group * const parent ):
@@ -675,8 +676,6 @@ SinglePhaseFVM< BASE >::calculateAndApplyMassFlux( real64 const & time_n ,
                                                    real64 const & dt ,
                                                    DomainPartition & domain )
 {
-	// MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-	// ElementRegionManager const & elementManager = mesh.getElemManager();
 	FunctionManager const & functionManager = FunctionManager::getInstance();
 
 	assembleFluxTermsExplicit( time_n, dt, domain );
@@ -705,13 +704,6 @@ SinglePhaseFVM< BASE >::calculateAndApplyMassFlux( real64 const & time_n ,
         localSet.insert( a );
       }
     }
-    /*
-    fs.applyFieldValue< FieldSpecificationAdd, parallelDevicePolicy<> >( localSet.toViewConst(),
-                                                                          time_n + dt,
-                                                                          -dt,
-                                                                          subRegion,
-																		  SinglePhaseBase::viewKeyStruct::fluidMassString() );
-																		  */
     string const & functionName = fs.getFunctionName();
     arrayView1d< real64 > const mass = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::fluidMassString() );
 
@@ -736,68 +728,55 @@ SinglePhaseFVM< BASE >::calculateAndApplyMassFlux( real64 const & time_n ,
 			      mass( kf ) += value * dt;
 			    } );
 		  }
-		  /*
-		  else
-		  {
-			  array1d< real64 > valuesArray( localSet.size() );
-			  valuesArray.setName( "massFluxBCExplicit function results" );
-			  function.evaluate( elementManager, time_n, localSet, valuesArray );
-
-			  arrayView1d< real64 const > const valuesArrayView = valuesArray;
-
-			  forAll< parallelDevicePolicy<> >( localSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-			    {
-			      localIndex const kf = localSet[ i ];
-			      mass( kf ) += valuesArrayView[kf] * dt;
-			    } );
-		  }
-		  */
 	  }
 
 
   } );
-  /*
+
   // apply pressure boundary condition in the explicit solver
   //FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  fsManager.Apply( time_n + dt,
+  fsManager.apply( time_n + dt,
                    domain,
                    "ElementRegions",
-                   viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
+				   extrinsicMeshData::flow::pressure::key(),
+                    [&]( FieldSpecificationBase const & fs,
                          string const &,
                          SortedArrayView<localIndex const> const & lset,
-                         Group * subRegion,
+						 Group & subRegion,
                          string const & ) -> void
   {
-    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+    fs.applyFieldValue<FieldSpecificationEqual>( lset,
                                                   time_n + dt,
                                                   subRegion,
-                                                  viewKeyStruct::pressureString );
-    arrayView1d< real64 const > const vol = subRegion->getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-    arrayView1d< real64 const > const poro = subRegion->getReference< array1d< real64 > >( viewKeyStruct::porosityString );
-    arrayView1d< real64 > const mass = subRegion->getReference< array1d< real64 > >( viewKeyStruct::fluidMassString );
+												  extrinsicMeshData::flow::pressure::key() );
+    arrayView1d< real64 const > const vol = subRegion.getReference< array1d< real64 > >(  CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+    arrayView1d< real64 > const mass = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::fluidMassString() );
 
     //string a = m_fluidModelNames[0];
-    Group const * const region = subRegion->getParent()->getParent();
-    string const & fluidName = m_fluidModelNames[ SolverBase::targetRegionIndex( region->getName() ) ];
-    CompressibleSinglePhaseFluid & fluid = SolverBase::GetConstitutiveModel< CompressibleSinglePhaseFluid>( *subRegion, fluidName );
+    Group & region = subRegion.getParent().getParent();
+    localIndex targetIndex = SolverBase::targetRegionIndex( region.getName() );
+
+    // ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
+    CompressibleSinglePhaseFluid & fluid = SolverBase::getConstitutiveModel< CompressibleSinglePhaseFluid>( subRegion, m_fluidModelNames[ targetIndex ] );
     real64 referenceDensity = fluid.referenceDensity();
     real64 referencePressure = fluid.referencePressure();
     real64 compressibility = fluid.compressibility();
 
+    CoupledSolidBase const & solidModel = SolverBase::getConstitutiveModel< CoupledSolidBase > ( subRegion, m_solidModelNames[targetIndex] );
+    arrayView2d< real64 const > const & porosity = solidModel.getPorosity();
     for( localIndex const a : lset )
     {
-    	mass[a] = referenceDensity / (1.0 - (fs->GetScale() -referencePressure) * compressibility) * vol[a] * poro[a];
+    	mass[a] = referenceDensity / (1.0 - (fs.getScale() -referencePressure) * compressibility) * vol[a] * porosity[a][0];
     }
-
   });
-
   // synchronize element fields
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( viewKeyStruct::fluidMassString );
+  fieldNames["elems"].emplace_back( string( SinglePhaseBase::viewKeyStruct::fluidMassString() ) );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       true );
 
-  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
-*/
 }
 
 namespace

@@ -626,7 +626,7 @@ real64 SinglePhaseBase::explicitStep( real64 const & time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  //calculateAndApplyMassFlux( time_n, dt, domain );
+  calculateAndApplyMassFlux( time_n, dt, domain );
 
   updateEOSExplicit( time_n, dt, domain );
 
