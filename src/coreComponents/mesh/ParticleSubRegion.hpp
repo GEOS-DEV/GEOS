@@ -23,9 +23,9 @@ namespace geosx
 
 /**
  * @class ParticleSubRegion
- * Class deriving from ParticleBlock further specializing the element subregion
- * for a cell element. This is the class used in the physics solvers to
- * represent a collection of mesh cell elements
+ * Class deriving from ParticleBlock further specializing the particle subregion
+ * for a particle. This is the class used in the physics solvers to
+ * represent a collection of particles of the same type.
  */
 class ParticleSubRegion : public ParticleBlock
 {
