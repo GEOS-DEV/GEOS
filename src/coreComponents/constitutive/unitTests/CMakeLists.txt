@@ -17,8 +17,9 @@ if( ENABLE_CUDA )
 endif()
 
 if( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pygroup pysolver pyfileIO)
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
+
 #
 # Add gtest C++ based tests
 #
@@ -35,5 +36,3 @@ foreach(test ${gtest_geosx_tests})
                 )
 
 endforeach()
-
-

@@ -296,16 +296,16 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
     {
       if( this->m_outputSeismoTrace == 1 )
       {
-	if( receiverIsLocal[ircv] == 1 )
+        if( receiverIsLocal[ircv] == 1 )
         {
-	  // Note: this "manual" output to file is temporary
-	  //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-	  // TODO: remove saveSeismo and replace with TimeHistory
-	  for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
-	  {
-	    this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
-	  }
-	}
+          // Note: this "manual" output to file is temporary
+          //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+          // TODO: remove saveSeismo and replace with TimeHistory
+          for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
+          {
+            this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
+          }
+        }
       }
     } );
   }
