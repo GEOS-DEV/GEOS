@@ -152,32 +152,36 @@ void SinglePhaseBase::initializePreSubGroups()
 }
 
 
-void SinglePhaseBase::updateEOSExplicit( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                         real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                         DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+void SinglePhaseBase::updateEOSExplicit( real64 const & time_n,
+                                         real64 const & dt,
+                                         DomainPartition & domain)
 {
-	/*GEOSX_MARK_FUNCTION;
-
+	GEOSX_MARK_FUNCTION;
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                   ElementSubRegionBase & subRegion )
   {
-    arrayView1d< real64 const > const vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-    arrayView1d< real64 const > const poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
-    arrayView1d< real64 const > const mass = subRegion.getReference< array1d< real64 > >( viewKeyStruct::fluidMassString );
-    arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( viewKeyStruct::pressureString );
+	  arrayView1d< real64 const > const vol = subRegion.getReference< array1d< real64 > >(  CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+	  arrayView1d< real64 const > const mass = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::fluidMassString() );
 
-    CompressibleSinglePhaseFluid & fluid = GetConstitutiveModel< CompressibleSinglePhaseFluid >( subRegion, m_fluidModelNames[targetIndex] );
-    arrayView2d< real64 > const dens = fluid.getReference< array2d< real64 > >( SingleFluidBase::viewKeyStruct::densityString );
+	  CompressibleSinglePhaseFluid & fluid = SolverBase::getConstitutiveModel< CompressibleSinglePhaseFluid>( subRegion, m_fluidModelNames[ targetIndex ] );
+	  real64 referenceDensity = fluid.referenceDensity();
+	  real64 referencePressure = fluid.referencePressure();
+	  real64 compressibility = fluid.compressibility();
+
+	  CoupledSolidBase const & solidModel = SolverBase::getConstitutiveModel< CoupledSolidBase > ( subRegion, m_solidModelNames[targetIndex] );
+	  arrayView2d< real64 const > const & poro = solidModel.getPorosity();
+
+
+    arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    arrayView2d< real64 > const dens = fluid.getReference< array2d< real64 > >( extrinsicMeshData::singlefluid::density::key() );
+
     real64 pressureCap = 1e8;
-    real64 referenceDensity = fluid.referenceDensity();
-    real64 referencePressure = fluid.referencePressure();
-    real64 compressibility = fluid.compressibility();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei] );
+      dens[ei][0] = mass[ei] / ( vol[ei] * poro[ei][0] );
 
       // TODO: this formulation of explicit solver may require applying density boundary condition before updating the pressure based on the density
       // allow negative pressure
@@ -187,27 +191,26 @@ void SinglePhaseBase::updateEOSExplicit( real64 const & GEOSX_UNUSED_PARAM( time
   } );
 
   // apply pressure boundary condition in the explicit solver
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
-  fsManager.Apply( time_n + dt, &domain, "ElementRegions", viewKeyStruct::pressureString,
-                    [&]( FieldSpecificationBase const * const fs,
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  fsManager.apply( time_n + dt,
+		           domain,
+				   "ElementRegions",
+				   extrinsicMeshData::flow::pressure::key(),
+                    [&]( FieldSpecificationBase const & fs,
                          string const &,
-                         SortedArrayView<localIndex const> const & lset,
-                         Group * subRegion,
+                         SortedArrayView< localIndex const > const & lset,
+    					 Group & subRegion,
                          string const & ) -> void
   {
-    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+    fs.applyFieldValue<FieldSpecificationEqual>( lset,
                                                   time_n + dt,
                                                   subRegion,
-                                                  viewKeyStruct::pressureString );
+												  extrinsicMeshData::flow::pressure::key() );
   });
 
   // update state based on pressure
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                  ElementSubRegionBase & subRegion )
-  {
-    updateState( domain );
-  } );
-  */
+  updateState( domain );
+
 }
 
 void SinglePhaseBase::updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const

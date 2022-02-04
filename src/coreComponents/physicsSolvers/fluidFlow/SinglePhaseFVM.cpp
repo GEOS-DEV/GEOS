@@ -756,7 +756,6 @@ SinglePhaseFVM< BASE >::calculateAndApplyMassFlux( real64 const & time_n ,
     Group & region = subRegion.getParent().getParent();
     localIndex targetIndex = SolverBase::targetRegionIndex( region.getName() );
 
-    // ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, fluidModelNames()[targetIndex] );
     CompressibleSinglePhaseFluid & fluid = SolverBase::getConstitutiveModel< CompressibleSinglePhaseFluid>( subRegion, m_fluidModelNames[ targetIndex ] );
     real64 referenceDensity = fluid.referenceDensity();
     real64 referencePressure = fluid.referencePressure();
