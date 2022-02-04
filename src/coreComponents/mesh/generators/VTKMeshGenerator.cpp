@@ -485,7 +485,7 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
  */
 std::vector< vtkDataArray * > findImportableArrays( vtkSmartPointer< vtkUnstructuredGrid > mesh )
 {
-  std::vector< vtkDataArray * > arrayToBeImported;
+  std::vector< vtkDataArray * > importableArrays;
   vtkCellData * cellData = mesh->GetCellData();
   for( int i = 0; i < cellData->GetNumberOfArrays(); i++ )
   {
@@ -505,9 +505,9 @@ std::vector< vtkDataArray * > findImportableArrays( vtkSmartPointer< vtkUnstruct
                                                 << "(Only double and float are supported)" );
       continue;
     }
-    arrayToBeImported.push_back( vtkDataArray::SafeDownCast( curArray ) );
+    importableArrays.push_back( vtkDataArray::SafeDownCast( curArray ) );
   }
-  return arrayToBeImported;
+  return importableArrays;
 }
 
 
