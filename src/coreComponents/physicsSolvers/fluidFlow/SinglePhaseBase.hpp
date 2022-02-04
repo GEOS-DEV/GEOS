@@ -91,6 +91,12 @@ public:
    */
   ///@{
 
+
+  virtual void
+  explicitStepSetup( real64 const & time_n,
+                     real64 const & dt,
+                     DomainPartition & domain ) override;
+
   virtual real64
   explicitStep( real64 const & time_n,
                 real64 const & dt,
@@ -220,6 +226,17 @@ public:
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
 
   /**
+   * @brief assembles the flux terms for all cells
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  virtual void
+  assembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                             real64 const GEOSX_UNUSED_PARAM( dt ),
+                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) {};
+
+  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param time current time
    * @param dt time step
@@ -269,6 +286,16 @@ public:
                   DofManager const & dofManager,
                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                   arrayView1d< real64 > const & localRhs ) const = 0;
+
+  /**
+   * @brief Function to update all constitutive state and dependent variables in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  virtual void updateEOSExplicit( real64 const & time_n,
+                                  real64 const & dt,
+                                  DomainPartition & domain ) override;
 
   virtual void
   updateState ( DomainPartition & domain ) override final;

@@ -68,6 +68,19 @@ public:
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
 
+  virtual void calculateAndApplyMassFlux( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                          real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                          DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
+  virtual void updateEOSExplicit( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                  DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
+
+  virtual void explicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                  DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
   /**
    * @enum TimeIntegrationOption
    *

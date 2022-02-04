@@ -280,6 +280,56 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
 
 template< typename BASE >
+void SinglePhaseFVM< BASE >::assembleFluxTermsExplicit( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                        real64 const dt ,
+                                                        DomainPartition & domain )
+{
+
+	  GEOSX_MARK_FUNCTION;
+
+	  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+	  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+	  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+	  FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+	  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+	  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
+	  	  m_referencePressure = elemManager.constructArrayViewAccessor< real64, 1 >( SinglePhaseBase::viewKeyStruct::referencePressureString() );
+	  m_referencePressure.setName( this->getName() + "/accessors/" + SinglePhaseBase::viewKeyStruct::referencePressureString() );
+
+	  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+	  ElementRegionManager & elemManager0 = meshLevel.getElemManager();
+	  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >
+	  	  m_fluidMass = elemManager0.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( SinglePhaseBase::viewKeyStruct::fluidMassString() );
+	  //m_fluidMass = elemManager0.ConstructArrayViewAccessor1< real64, 1 >( viewKeyStruct::fluidMassString );
+	  m_fluidMass.setName( this->getName() + "/accessors/" + SinglePhaseBase::viewKeyStruct::fluidMassString() );
+
+	  fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
+	  {
+	    typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+
+
+	    typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
+	    typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName(), this->targetRegionNames(), this->fluidModelNames() );
+	    typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName(), this->targetRegionNames(), this->permeabilityModelNames() );
+
+	    FluxKernel::launch( stencilWrapper,
+	                        dt,
+	                        flowAccessors.get< extrinsicMeshData::flow::pressure >(),
+	                        flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
+	                        fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
+	                        flowAccessors.get< extrinsicMeshData::flow::mobility >(),
+	                        permAccessors.get< extrinsicMeshData::permeability::permeability >(),
+							permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+							m_referencePressure.toNestedViewConst(),
+							&m_fluidMass );
+
+	  } );
+
+}
+
+template< typename BASE >
 void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UNUSED_PARAM ( time_n ),
                                                            real64 const dt,
                                                            DomainPartition const & domain,
@@ -616,6 +666,138 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
                                                     localRhs.toView() );
 
   } );
+}
+
+
+template< typename BASE >
+void
+SinglePhaseFVM< BASE >::calculateAndApplyMassFlux( real64 const & time_n ,
+                                                   real64 const & dt ,
+                                                   DomainPartition & domain )
+{
+	// MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+	// ElementRegionManager const & elementManager = mesh.getElemManager();
+	FunctionManager const & functionManager = FunctionManager::getInstance();
+
+	assembleFluxTermsExplicit( time_n, dt, domain );
+
+  // apply mass flux boundary condition
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
+  fsManager.apply( time_n + dt,
+ 	 	 	 	   domain,
+                   "ElementRegions",
+                   FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                   [&]( FieldSpecificationBase const & fs,
+                        string const &,
+                        SortedArrayView< localIndex const > const & lset,
+						Group & subRegion,
+                        string const & ) -> void
+  {
+    arrayView1d< integer const > const
+    ghostRank = subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+    SortedArray< localIndex > localSet;
+    for( localIndex const a : lset )
+    {
+      if( ghostRank[a] < 0 )
+      {
+        localSet.insert( a );
+      }
+    }
+    /*
+    fs.applyFieldValue< FieldSpecificationAdd, parallelDevicePolicy<> >( localSet.toViewConst(),
+                                                                          time_n + dt,
+                                                                          -dt,
+                                                                          subRegion,
+																		  SinglePhaseBase::viewKeyStruct::fluidMassString() );
+																		  */
+    string const & functionName = fs.getFunctionName();
+    arrayView1d< real64 > const mass = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::fluidMassString() );
+
+	  if( functionName.empty() )
+	  {
+		  real64 value = fs.getScale();
+		  forAll< parallelDevicePolicy<> >( localSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+		    {
+		      localIndex const kf = localSet[ i ];
+		      mass( kf ) += value * dt;
+		    } );
+	  }
+	  else
+	  {
+		  FunctionBase const & function = functionManager.getGroup< FunctionBase >( functionName );
+		  if( function.isFunctionOfTime() == 2 )
+		  {
+			  real64 value = fs.getScale() * function.evaluate( &time_n );
+			  forAll< parallelDevicePolicy<> >( localSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+			    {
+			      localIndex const kf = localSet[ i ];
+			      mass( kf ) += value * dt;
+			    } );
+		  }
+		  /*
+		  else
+		  {
+			  array1d< real64 > valuesArray( localSet.size() );
+			  valuesArray.setName( "massFluxBCExplicit function results" );
+			  function.evaluate( elementManager, time_n, localSet, valuesArray );
+
+			  arrayView1d< real64 const > const valuesArrayView = valuesArray;
+
+			  forAll< parallelDevicePolicy<> >( localSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+			    {
+			      localIndex const kf = localSet[ i ];
+			      mass( kf ) += valuesArrayView[kf] * dt;
+			    } );
+		  }
+		  */
+	  }
+
+
+  } );
+  /*
+  // apply pressure boundary condition in the explicit solver
+  //FieldSpecificationManager & fsManager = FieldSpecificationManager::get();
+  fsManager.Apply( time_n + dt,
+                   domain,
+                   "ElementRegions",
+                   viewKeyStruct::pressureString,
+                    [&]( FieldSpecificationBase const * const fs,
+                         string const &,
+                         SortedArrayView<localIndex const> const & lset,
+                         Group * subRegion,
+                         string const & ) -> void
+  {
+    fs->ApplyFieldValue<FieldSpecificationEqual>( lset,
+                                                  time_n + dt,
+                                                  subRegion,
+                                                  viewKeyStruct::pressureString );
+    arrayView1d< real64 const > const vol = subRegion->getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
+    arrayView1d< real64 const > const poro = subRegion->getReference< array1d< real64 > >( viewKeyStruct::porosityString );
+    arrayView1d< real64 > const mass = subRegion->getReference< array1d< real64 > >( viewKeyStruct::fluidMassString );
+
+    //string a = m_fluidModelNames[0];
+    Group const * const region = subRegion->getParent()->getParent();
+    string const & fluidName = m_fluidModelNames[ SolverBase::targetRegionIndex( region->getName() ) ];
+    CompressibleSinglePhaseFluid & fluid = SolverBase::GetConstitutiveModel< CompressibleSinglePhaseFluid>( *subRegion, fluidName );
+    real64 referenceDensity = fluid.referenceDensity();
+    real64 referencePressure = fluid.referencePressure();
+    real64 compressibility = fluid.compressibility();
+
+    for( localIndex const a : lset )
+    {
+    	mass[a] = referenceDensity / (1.0 - (fs->GetScale() -referencePressure) * compressibility) * vol[a] * poro[a];
+    }
+
+  });
+
+  // synchronize element fields
+  std::map< string, string_array > fieldNames;
+  fieldNames["elems"].emplace_back( viewKeyStruct::fluidMassString );
+
+  CommunicationTools::SynchronizeFields( fieldNames, &mesh, domain.getNeighbors(), true );
+*/
 }
 
 namespace

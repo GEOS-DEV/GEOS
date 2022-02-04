@@ -170,6 +170,17 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
+  /**
+   * @brief assembles the flux terms for all cells
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   */
+  virtual void
+  assembleFluxTermsExplicit( real64 const time_n,
+                             real64 const dt,
+                             DomainPartition & domain ) override;
+
   virtual void
   assemblePoroelasticFluxTerms( real64 const time_n,
                                 real64 const dt,
@@ -187,6 +198,18 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
+
+  /**
+   * @brief assemble the flux terms for all cells and then apply flux BC in the explicit solver
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   */
+  virtual void
+  calculateAndApplyMassFlux( real64 const & time_n,
+                             real64 const & dt,
+                             DomainPartition & domain ) override;
 
   /**@}*/
 

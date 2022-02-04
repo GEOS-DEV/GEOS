@@ -197,7 +197,11 @@ real64 SinglePhasePoromechanicsSolverDynamic::explicitStep( real64 const & time_
   GEOSX_MARK_FUNCTION;
   if( m_couplingTypeOption == CouplingTypeOption::FEM_ExplicitTransient )
   {
-	  m_solidSolver->explicitStep( time_n, dt, cycleNumber, domain );
+	  //m_flowSolver->calculateAndApplyMassFlux( time_n, dt, domain );
+	  m_solidSolver->explicitStepDisplacementUpdate( time_n, dt, cycleNumber, domain );
+	  this->updateDeformationForCoupling( domain );
+	  //m_flowSolver->updateEOSExplicit( time_n, dt, domain );
+	  m_solidSolver->explicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::FEM_ImplicitTransient )
   {

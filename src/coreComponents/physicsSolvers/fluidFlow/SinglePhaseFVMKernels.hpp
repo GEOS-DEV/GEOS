@@ -199,6 +199,54 @@ struct FluxKernel
     } );
   }
 
+  template< typename STENCILWRAPPER_TYPE >
+  static void
+  launch( STENCILWRAPPER_TYPE const & stencilWrapper,
+          real64 const dt,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & dens,
+          ElementViewConst< arrayView1d< real64 const > > const & mob,
+          ElementViewConst< arrayView3d< real64 const > > const & permeability,
+          ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
+		  ElementViewConst< arrayView1d< real64 const > > const & referencePressure,
+		  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > * const fluidMass )
+  {
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
+    typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
+
+    forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, pres, gravCoef, dens, mob,
+															  permeability, dPerm_dPres, referencePressure,
+                                                              seri, sesri, sei, fluidMass] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+      localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
+
+      // compute transmissibility
+      real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+      real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+
+      stencilWrapper.computeWeights( iconn,
+                                     permeability,
+                                     dPerm_dPres,
+                                     transmissibility,
+                                     dTrans_dPres );
+
+      compute( numFluxElems,
+               seri[iconn],
+               sesri[iconn],
+               sei[iconn],
+               transmissibility,
+               pres,
+               gravCoef,
+               dens,
+               mob,
+               dt,
+			   referencePressure,
+			   fluidMass );
+    } );
+  }
+
   /**
    * @brief Compute flux and its derivatives for a given tpfa connector.
    *
@@ -268,6 +316,65 @@ struct FluxKernel
       }
     }
   }
+
+  /**
+    * @brief Compute flux for a given tpfa connector.
+    *
+    *
+    */
+   template< localIndex MAX_NUM_OF_CONNECTIONS >
+   GEOSX_HOST_DEVICE
+   static void
+   compute( localIndex const numFluxElems,
+            arraySlice1d< localIndex const > const & seri,
+            arraySlice1d< localIndex const > const & sesri,
+            arraySlice1d< localIndex const > const & sei,
+            real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
+            ElementViewConst< arrayView1d< real64 const > > const & pres,
+            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+            ElementViewConst< arrayView2d< real64 const > > const & dens,
+            ElementViewConst< arrayView1d< real64 const > > const & mob,
+            real64 const dt,
+			ElementViewConst< arrayView1d< real64 const > > const & referencePressure,
+			ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > * const fluidMass )
+   {
+
+     localIndex k[2];
+     localIndex connectionIndex = 0;;
+     for( k[0]=0; k[0]<numFluxElems; ++k[0] )
+     {
+       for( k[1]=k[0]+1; k[1]<numFluxElems; ++k[1] )
+       {
+         real64 mobility = 0.0;
+         real64 potDif = 0.0;
+         bool hasMassTransfer = false;
+         real64 const trans[2] = {transmissibility[connectionIndex][0], transmissibility[connectionIndex][1]};
+         localIndex const regionIndex[2]    = {seri[k[0]], seri[k[1]]};
+         localIndex const subRegionIndex[2] = {sesri[k[0]], sesri[k[1]]};
+         localIndex const elementIndex[2]   = {sei[k[0]], sei[k[1]]};
+
+
+         computeSinglePhaseFlux( regionIndex, subRegionIndex, elementIndex,
+                                 trans,
+                                 pres,
+                                 gravCoef,
+                                 dens,
+                                 mob,
+								 referencePressure,
+								 mobility,
+								 potDif,
+								 hasMassTransfer );
+
+         // populate local flux
+         if (std::abs(potDif) > std::numeric_limits<real64>::min() && hasMassTransfer)
+         {
+           (*fluidMass)[seri[k[0]]][sesri[k[0]]][sei[k[0]]] -= dt * mobility * potDif;
+           (*fluidMass)[seri[k[1]]][sesri[k[1]]][sei[k[1]]] += dt * mobility * potDif;
+        }
+         connectionIndex++;
+       }
+     }
+   }
 };
 
 struct FaceDirichletBCKernel
