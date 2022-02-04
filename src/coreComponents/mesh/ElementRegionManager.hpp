@@ -243,6 +243,11 @@ public:
     return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
   }
 
+  /**
+   * @brief checks if the region @p name exists.
+   * @param name the name of the region
+   * @return true if the region is a registered group and false otherwise
+   */
   template< typename T=ElementRegionBase >
   bool hasRegion( string const & name ) const
   {
@@ -864,7 +869,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName the constitutive model name key
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ElementViewAccessor that contains VIEWTYPE data
@@ -882,7 +887,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName the constitutive model name key
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ElementViewAccessor that contains VIEWTYPE data
@@ -901,7 +906,7 @@ public:
    * @tparam PERM layout permutation sequence type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName the constitutive model name key
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
    * @return MaterialViewAccessor that contains the data views
    */
