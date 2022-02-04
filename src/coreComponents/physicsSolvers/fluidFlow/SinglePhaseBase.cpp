@@ -573,24 +573,27 @@ void SinglePhaseBase::explicitStepSetup( real64 const & time_n ,
 	static int setFlowSolverTimeStep = 0;
 	if( setFlowSolverTimeStep == 0 )
 	{
-		/*
+
 	  // initialize the fluidMass by defaultDensity (by ron)
 		forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
 	                                        ElementSubRegionBase & subRegion )
 		{
-	          arrayView1d< real64 const > const vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString );
-	          arrayView1d< real64 const > const poro = subRegion.getReference< array1d< real64 > >( viewKeyStruct::porosityString );
-	          arrayView1d< real64 > const mass = subRegion.getReference< array1d< real64 > >( viewKeyStruct::fluidMassString );
-	          CompressibleSinglePhaseFluid & fluid = GetConstitutiveModel< CompressibleSinglePhaseFluid >( subRegion, m_fluidModelNames[targetIndex] );
-	          real64 referenceDensity = fluid.referenceDensity();
+			arrayView1d< real64 const > const vol = subRegion.getReference< array1d< real64 > >(  CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+			arrayView1d< real64 > const mass = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::fluidMassString() );
+
+			CompressibleSinglePhaseFluid & fluid = SolverBase::getConstitutiveModel< CompressibleSinglePhaseFluid>( subRegion, m_fluidModelNames[ targetIndex ] );
+			real64 referenceDensity = fluid.referenceDensity();
+
+			CoupledSolidBase const & solidModel = SolverBase::getConstitutiveModel< CoupledSolidBase > ( subRegion, m_solidModelNames[targetIndex] );
+			arrayView2d< real64 const > const & poro = solidModel.getPorosity();
+
 
 	          forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
 	          {
-	          	mass[ei] =  referenceDensity * vol[ei] * poro[ei] * 1.0008;
+	          	mass[ei] =  referenceDensity * vol[ei] * poro[ei][0] * 1.000;
 	          } );
 	    } );
 	    updateState(domain);
-	    */
 
 	    forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                     ElementSubRegionBase & subRegion )
