@@ -20,6 +20,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_POROUSSOLID_HPP_
 
+#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/solid/CoupledSolid.hpp"
 #include "constitutive/solid/porosity/BiotPorosity.hpp"
 #include "constitutive/solid/SolidBase.hpp"
@@ -200,24 +201,24 @@ public:
                                     real64 const & solidDensity,
                                     real64 const & initialFluidTotalMassDensity, //
 									////////////////////////////////////////////////
-									arraySlice1d< real64 const > const & fluidPhaseDensity,
-									arraySlice1d< real64 const > const & fluidPhaseDensityOld,
-									arraySlice1d< real64 const > const & dFluidPhaseDensity_dPressure,
-									arraySlice2d< real64 const > const & dFluidPhaseDensity_dGlobalCompFraction,
+									arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseDensity,
+									arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseDensityOld,
+									arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & dFluidPhaseDensity_dPressure,
+									arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseDensity_dGlobalCompFraction,
 
-									arraySlice2d< real64 const > const & fluidPhaseCompFrac,
-									arraySlice2d< real64 const > const & fluidPhaseCompFracOld,
-									arraySlice2d< real64 const > const & dFluidPhaseCompFrac_dPressure,
-									arraySlice3d< real64 const > const & dFluidPhaseCompFraction_dGlobalCompFraction,
+									arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const & fluidPhaseCompFrac,
+									arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & fluidPhaseCompFracOld,
+									arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const & dFluidPhaseCompFrac_dPressure,
+									arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2  > const & dFluidPhaseCompFraction_dGlobalCompFraction,
 
-									arraySlice1d< real64 const > const & fluidPhaseMassDensity,
+									arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2> const & fluidPhaseMassDensity,
 
-									arraySlice1d< real64 const > const & fluidPhaseSaturation,
-									arraySlice1d< real64 const > const & fluidPhaseSaturationOld,
-									arraySlice1d< real64 const > const & dFluidPhaseSaturation_dPressure,
-									arraySlice2d< real64 const > const & dFluidPhaseSaturation_dGlobalCompDensity,
+									arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation,
+									arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturationOld,
+									arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dFluidPhaseSaturation_dPressure,
+									arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dFluidPhaseSaturation_dGlobalCompDensity,
 
-									arraySlice2d< real64 const > const & dGlobalCompFraction_dGlobalCompDensity,
+									arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dGlobalCompFraction_dGlobalCompDensity,
                                     /////////////////////////////////////////////////////////
                                     real64 ( & totalStress )[6],
                                     real64 ( & dTotalStress_dPressure )[6],

@@ -192,9 +192,9 @@ public:
       dLocalResidualMass_dDisplacement{ {0.0} },
       dLocalResidualMass_dPressure{ {0.0} },
 	  dLocalResidualMass_dComponents{ {0.0} },
-      localResidualVolumeBalance{ 0.0 },
-      dLocalResidualVolumeBalance_dPressure{ {0.0} },
-      dLocalResidualVolumeBalance_dComponents{ {0.0} },
+      localResidualPoreVolumeBalance{ 0.0 },
+      dLocalResidualPoreVolumeBalance_dPressure{ {0.0} },
+      dLocalResidualPoreVolumeBalance_dComponents{ {0.0} },
 	  localPressureDofIndex{ 0 },
       localComponentDofIndices{ 0 }
     {}
@@ -222,9 +222,9 @@ public:
     real64 dLocalResidualMass_dPressure[numMaxComponents][1];
     real64 dLocalResidualMass_dComponents[numMaxComponents][numMaxComponents];
 
-    real64 localResidualVolumeBalance[1];
-    real64 dLocalResidualVolumeBalance_dPressure[1][1];
-    real64 dLocalResidualVolumeBalance_dComponents[1][numMaxComponents];
+    real64 localResidualPoreVolumeBalance[1];
+    real64 dLocalResidualPoreVolumeBalance_dPressure[1][1];
+    real64 dLocalResidualPoreVolumeBalance_dComponents[1][numMaxComponents];
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localPressureDofIndex[1];
@@ -281,7 +281,7 @@ public:
     constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
     constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
     constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
-    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
+//    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
 
     localIndex const NC = m_numComponents;
     localIndex const NP = m_numPhases;
@@ -433,22 +433,23 @@ public:
       // Compute local mass balance residual derivatives with respect to components
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        stack.dLocalResidualMass_dComponents[ic][jc] += dComponentMassContent_dComponents[ic][jc] * detJxW;
+        stack.dLocalResidualMass_dComponents[ic][jc] = stack.dLocalResidualMass_dComponents[ic][jc]
+									                   + dComponentMassContent_dComponents[ic][jc] * detJxW;
       }
     }
 
     // --- Volume balance equation
     // sum contributions to component accumulation from each phase
-    stack.localResidualVolumeBalance[0] += porosity * detJxW;
+    stack.localResidualPoreVolumeBalance[0] += porosity * detJxW;
     for( localIndex ip = 0; ip < NP; ++ip )
     {
-      stack.localResidualVolumeBalance[0] -= m_fluidPhaseSaturation( k, ip ) * porosity * detJxW;
-      stack.dLocalResidualVolumeBalance_dPressure[0][0] -=
+      stack.localResidualPoreVolumeBalance[0] -= m_fluidPhaseSaturation( k, ip ) * porosity * detJxW;
+      stack.dLocalResidualPoreVolumeBalance_dPressure[0][0] -=
         ( m_dFluidPhaseSaturation_dPressure( k, ip ) * porosity + dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) ) * detJxW;
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        stack.dLocalResidualVolumeBalance_dComponents[0][jc] -= m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosity * detJxW;
+        stack.dLocalResidualPoreVolumeBalance_dComponents[0][jc] -= m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosity * detJxW;
       }
     }
   }
@@ -528,15 +529,15 @@ public:
 
       m_matrix.template addToRow< serialAtomic >( dof,
                                                   stack.localPressureDofIndex,
-                                                  stack.dLocalResidualVolumeBalance_dPressure[0],
+                                                  stack.dLocalResidualPoreVolumeBalance_dPressure[0],
                                                   1 );
 
       m_matrix.template addToRow< serialAtomic >( dof,
                                                   stack.localComponentDofIndices,
-                                                  stack.dLocalResidualVolumeBalance_dComponents[0],
+                                                  stack.dLocalResidualPoreVolumeBalance_dComponents[0],
                                                   m_numComponents);
 
-      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localResidualVolumeBalance[0] );
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localResidualPoreVolumeBalance[0] );
     }
 
     return maxForce;
@@ -565,6 +566,7 @@ protected:
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseDensityOld;
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseDensity_dPressure;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity_dGlobalCompFraction;
+
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
   arrayView3d< real64 const, compflow::USD_PHASE_COMP > m_fluidPhaseCompFracOld;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_dFluidPhaseCompFrac_dPressure;
