@@ -143,7 +143,8 @@ public:
    */
   struct groupStructKeys
   {
-    static constexpr char const * meshLevelsString() {return "meshLevels"; }
+    /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
+    static constexpr char const * meshLevelsString() { return "meshLevels"; }
   } groupKeys; ///< groupKeys
 
 private:

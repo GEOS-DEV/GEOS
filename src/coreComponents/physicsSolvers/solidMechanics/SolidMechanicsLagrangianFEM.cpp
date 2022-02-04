@@ -59,16 +59,8 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
   m_maxForce( 0.0 ),
   m_maxNumResolves( 10 ),
   m_strainTheory( 0 ),
-//  m_elemsAttachedToSendOrReceiveNodes(),
-//  m_elemsNotAttachedToSendOrReceiveNodes(),
-//  m_sendOrReceiveNodes(),
-//  m_nonSendOrReceiveNodes(),
-//  m_targetNodes(),
   m_iComm( CommunicationTools::getInstance().getCommID() )
 {
-//  m_sendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_sendOrReceiveNodes" );
-//  m_nonSendOrReceiveNodes.setName( "SolidMechanicsLagrangianFEM::m_nonSendOrReceiveNodes" );
-//  m_targetNodes.setName( "SolidMechanicsLagrangianFEM::m_targetNodes" );
 
   registerWrapper( viewKeyStruct::newmarkGammaString(), &m_newmarkGamma ).
     setApplyDefaultValue( 0.5 ).
@@ -119,10 +111,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain" );
 
-//  registerWrapper( viewKeyStruct::solidMaterialNamesString(), &m_solidMaterialNames ).
-//    setInputFlag( InputFlags::REQUIRED ).
-//    setDescription( "The name of the material that should be used in the constitutive updates" );
-
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
     setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -137,8 +125,6 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
 void SolidMechanicsLagrangianFEM::postProcessInput()
 {
   SolverBase::postProcessInput();
-
-//  checkModelNames( m_solidMaterialNames, viewKeyStruct::solidMaterialNamesString() );
 
   LinearSolverParameters & linParams = m_linearSolverParameters.get();
   linParams.isSymmetric = true;
@@ -287,12 +273,6 @@ void SolidMechanicsLagrangianFEM::initializePreSubGroups()
       solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
     } );
   } );
-  // Validate solid models in target regions
-//  domain.forMeshBodies( [&]( MeshBody const & meshBody )
-//  {
-//    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
-//    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
-//  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
