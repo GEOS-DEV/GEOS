@@ -49,12 +49,19 @@ public:
 	                             int const cycleNumber,
 	                             DomainPartition & domain ) override;
 
+	  virtual void
+	  explicitStepSetup( real64 const & time_n,
+	                     real64 const & dt,
+	                     DomainPartition & domain) override final;
+
 	  virtual real64 explicitStep( real64 const & time_n,
 	                               real64 const & dt,
 	                               integer const cycleNumber,
 	                               DomainPartition & domain ) override;
 
 	  void updateDeformationForCoupling( DomainPartition & domain );
+
+	  void applyPressureToFacesInExplicitSolver( DomainPartition & domain );
 
 	  enum class CouplingTypeOption : integer
 	  {

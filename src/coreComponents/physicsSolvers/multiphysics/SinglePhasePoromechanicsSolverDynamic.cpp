@@ -84,7 +84,12 @@ real64 SinglePhasePoromechanicsSolverDynamic::solverStep( real64 const & time_n,
   {
 	  dtReturn = SinglePhasePoromechanicsSolver::solverStep(time_n, dt, cycleNumber, domain);
   }
-  else
+  else if( m_couplingTypeOption == CouplingTypeOption::FEM_ExplicitTransient )
+  {
+	  explicitStepSetup( time_n, dt, domain );
+	  dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
+  }
+  else if( m_couplingTypeOption == CouplingTypeOption::FEM_ImplicitTransient )
   {
 	  dtReturn = explicitStep( time_n, dt, cycleNumber, domain );
   }
@@ -188,6 +193,78 @@ void SinglePhasePoromechanicsSolverDynamic::updateDeformationForCoupling( Domain
 
 }
 
+void SinglePhasePoromechanicsSolverDynamic::applyPressureToFacesInExplicitSolver( DomainPartition & domain )
+{
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  arrayView2d< real64 const > const & faceNormal = faceManager.faceNormal();
+  ArrayOfArraysView< localIndex const > const & faceToNodeMap = faceManager.nodeList().toViewConst();
+
+  arrayView2d<real64, nodes::ACCELERATION_USD> const & acc = nodeManager.acceleration();
+
+  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+  {
+    arrayView1d< real64 const > const & fluidPressure = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+
+    arrayView1d< real64 const > const & area = subRegion.getElementArea();
+    arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
+
+    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+    {
+      R1Tensor Nbar0, Nbar;
+      real64 temp = 0;
+      for(localIndex aa = 0; aa < 3; ++aa)
+      {
+    	  Nbar0[aa] = faceNormal[elemsToFaces[kfe][0]][aa] - faceNormal[elemsToFaces[kfe][1]][aa];
+    	  temp += Nbar0[aa] * Nbar0[aa];
+      }
+      real64 norm = sqrt(temp);
+      for(localIndex aa = 0; aa < 3; ++aa)
+    	  Nbar[aa] = Nbar0[aa] / norm;
+
+      localIndex const kf0 = elemsToFaces[kfe][0];
+      localIndex const numNodesPerFace = faceToNodeMap.sizeOfArray( kf0 );
+
+      real64 const nodalArea = area[kfe] / static_cast< real64 >( numNodesPerFace );
+
+      real64 nodalForceMag = fluidPressure[kfe] * nodalArea;
+      real64 const localNodalForce[ 3 ] = { Nbar[0] * nodalForceMag, Nbar[1] * nodalForceMag, Nbar[2] * nodalForceMag };
+
+      for( localIndex kf = 0; kf < 2; ++kf )
+      {
+        localIndex const faceIndex = elemsToFaces[kfe][kf];
+
+        for( localIndex a = 0; a < numNodesPerFace; ++a )
+        {
+          for( localIndex i = 0; i < 3; ++i )
+          {
+            // Opposite sign w.r.t. theory because of minus sign in stiffness matrix definition (K < 0)
+            acc( faceToNodeMap( faceIndex, a ), i ) += - localNodalForce[i] * pow( -1, kf );
+          }
+        }
+      }
+    } );
+  } );
+}
+
+void SinglePhasePoromechanicsSolverDynamic::explicitStepSetup( real64 const & time_n,
+                                             real64 const & dt,
+                                             DomainPartition & domain )
+{
+  m_flowSolver->explicitStepSetup( time_n, dt, domain );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+
+  forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
+                                  ElementSubRegionBase & subRegion )
+  {
+    CoupledSolidBase const & porousSolid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_flowSolver->solidModelNames()[targetIndex] );
+    porousSolid.saveConvergedState();
+  } );
+
+}
 
 real64 SinglePhasePoromechanicsSolverDynamic::explicitStep( real64 const & time_n,
                                           real64 const & dt,
@@ -197,15 +274,17 @@ real64 SinglePhasePoromechanicsSolverDynamic::explicitStep( real64 const & time_
   GEOSX_MARK_FUNCTION;
   if( m_couplingTypeOption == CouplingTypeOption::FEM_ExplicitTransient )
   {
-	  //m_flowSolver->calculateAndApplyMassFlux( time_n, dt, domain );
+	  m_flowSolver->calculateAndApplyMassFlux( time_n, dt, domain );
 	  m_solidSolver->explicitStepDisplacementUpdate( time_n, dt, cycleNumber, domain );
 	  this->updateDeformationForCoupling( domain );
-	  //m_flowSolver->updateEOSExplicit( time_n, dt, domain );
+	  m_flowSolver->updateEOSExplicit( time_n, dt, domain );
+	  this->applyPressureToFacesInExplicitSolver( domain );
 	  m_solidSolver->explicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
   }
   else if( m_couplingTypeOption == CouplingTypeOption::FEM_ImplicitTransient )
   {
 	  m_solidSolver->explicitStep( time_n, dt, cycleNumber, domain );
+
 	  //Apply deformation to flowsolver
 	  this->updateDeformationForCoupling( domain );
 	  m_flowSolver->solverStep( time_n, dt, cycleNumber, domain );

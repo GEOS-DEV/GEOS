@@ -103,6 +103,10 @@ public:
   virtual void
   resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
+  virtual void explicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                  real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                  DomainPartition & GEOSX_UNUSED_PARAM( domain )) {}
+
   virtual real64
   solverStep( real64 const & time_n,
               real64 const & dt,

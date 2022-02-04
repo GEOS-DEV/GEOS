@@ -285,9 +285,7 @@ void SinglePhaseFVM< BASE >::assembleFluxTermsExplicit( real64 const GEOSX_UNUSE
                                                         real64 const dt ,
                                                         DomainPartition & domain )
 {
-
 	  GEOSX_MARK_FUNCTION;
-
 	  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
 	  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
