@@ -590,7 +590,7 @@ void writeWedgeVertices( vtkSmartPointer< vtkUnstructuredGrid > mesh,
     cellToVertex[cellCount][2] = currentCell->GetPointId( 1 );
     cellToVertex[cellCount][3] = currentCell->GetPointId( 4 );
     cellToVertex[cellCount][4] = currentCell->GetPointId( 2 );
-    cellToVertex[cellCount][4] = currentCell->GetPointId( 5 );
+    cellToVertex[cellCount][5] = currentCell->GetPointId( 5 );
     localToGlobal[cellCount] = globalCellIdsDataArray.GetValue( c );
     cellCount++;
   }
