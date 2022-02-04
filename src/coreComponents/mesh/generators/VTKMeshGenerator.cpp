@@ -333,11 +333,11 @@ std::vector< T > gatherData( std::vector< T > const & data )
  * The mapping contains the surface indices for the whole simulation across the MPI ranks,
  * even if there is no cell for current rank (then the list will be empty).
  */
-std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
-                                                              std::map< int, std::vector< vtkIdType > > & regionsHex,
-                                                              std::map< int, std::vector< vtkIdType > > & regionsTetra,
-                                                              std::map< int, std::vector< vtkIdType > > & regionsWedges,
-                                                              std::map< int, std::vector< vtkIdType > > & regionsPyramids )
+std::map< int, std::vector< vtkIdType > > buildRegionToCellsAndFaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
+                                                                      std::map< int, std::vector< vtkIdType > > & regionsHex,
+                                                                      std::map< int, std::vector< vtkIdType > > & regionsTetra,
+                                                                      std::map< int, std::vector< vtkIdType > > & regionsWedges,
+                                                                      std::map< int, std::vector< vtkIdType > > & regionsPyramids )
 {
   std::map< int, std::vector< vtkIdType > > surfacesIdsToCellsIds;
 
@@ -413,8 +413,8 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
   // Communicate all the region names
   // TODO if in a mesh, there is for instance a region with tetra, and a region without tetra,
   //      they will both contain a cell block tetrahedron
-  std::vector< int > allCellBlockRegionIndex = gatherData( cellBlockRegionIndex );
-  std::vector< ElementType > allCellBlockElementType = gatherData( cellBlockElementType );
+  std::vector< int > const allCellBlockRegionIndex = gatherData( cellBlockRegionIndex );
+  std::vector< ElementType > const allCellBlockElementType = gatherData( cellBlockElementType );
   for( std::size_t i = 0; i < allCellBlockRegionIndex.size(); i++ )
   {
     for( std::size_t j = 0; j < allCellBlockElementType.size(); j++ )
@@ -879,7 +879,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   // TODO Check that the neighbor information set is bulletproof
   domain.getMetisNeighborList() = computeMPINeighborRanks( cuts );
 
-  std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = countCellsAndFaces( m_vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
+  std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = buildRegionToCellsAndFaces( m_vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
 
   m_importableArrays = findImportableArrays( m_vtkMesh );
 
