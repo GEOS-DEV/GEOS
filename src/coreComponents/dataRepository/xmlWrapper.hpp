@@ -187,6 +187,9 @@ static void equate( Array< T, NDIM, PERM > const & lhs, T const & rhs )
 
 /**
  * @brief Stub that for unreadable types that errors out.
+ * @tparam T the type of variable fill with xml attribute.
+ * @tparam U the type of the default value.
+ * @param name the name of the xml attribute hat cannot be parsed.
  * @return false.
  */
 template< typename T, typename U >

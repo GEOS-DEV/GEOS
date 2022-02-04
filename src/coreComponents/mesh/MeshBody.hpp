@@ -143,6 +143,7 @@ public:
    */
   struct groupStructKeys
   {
+    /// @return the string key under which the meshLevels group is registered
     static constexpr char const * meshLevelsString() {return "meshLevels"; }
   } groupKeys; ///< groupKeys
 
