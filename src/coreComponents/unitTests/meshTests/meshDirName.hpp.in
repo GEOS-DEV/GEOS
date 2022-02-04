@@ -1,3 +1,8 @@
 #include "common/DataTypes.hpp"
 
-static std::string const testMeshDir = "@TEST_MESH_DIR@";
+namespace geosx
+{
+
+static string const testMeshDir = "@TEST_MESH_DIR@";
+
+}
