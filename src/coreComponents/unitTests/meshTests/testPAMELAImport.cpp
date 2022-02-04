@@ -97,7 +97,7 @@ void TestMeshImport( string const & inputStringMesh,
 
 TEST( PAMELAImport, testGMSH )
 {
-  std::string const gmshFilePath = testMeshDir + "/toy_model.msh";
+  string const gmshFilePath = testMeshDir + "/toy_model.msh";
 
   conduit::Node node;
   Group root( "root", node );
@@ -129,7 +129,7 @@ TEST( PAMELAImport, testGMSH )
 
 TEST( PAMELAImport, testECLIPSE )
 {
-  std::string const eclipseFilePath = testMeshDir + "/toy_model.GRDECL";
+  string const eclipseFilePath = testMeshDir + "/toy_model.GRDECL";
 
   conduit::Node node;
   Group root( "root", node );

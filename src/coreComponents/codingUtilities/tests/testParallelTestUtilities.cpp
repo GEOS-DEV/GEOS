@@ -50,7 +50,7 @@ TEST( UnitTestUtilities, expected )
   using namespace geosx;
   using namespace geosx::testing;
 
-  if( geosx::MpiWrapper::commSize() == 1 )
+  if( MpiWrapper::commSize() == 1 )
   {
     ASSERT_EQ( 1, expected( 1, {} ) );
     ASSERT_EQ( 1, expected( 1, { 2 } ) );
@@ -58,8 +58,7 @@ TEST( UnitTestUtilities, expected )
   }
   else
   {
-    int const mpiRank = MpiWrapper::commRank();
-    ASSERT_EQ( mpiRank == 0 ? 2 : 3, expected( 1, { 2, 3 } ) );
+    ASSERT_EQ( MpiWrapper::commRank() == 0 ? 2 : 3, expected( 1, { 2, 3 } ) );
   }
 }
 

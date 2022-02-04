@@ -114,9 +114,9 @@ string getCellName( VTKCellType vtkCellType )
     case VTK_TETRA:
       return "tetrahedra";
     case VTK_WEDGE:
-      return "wedges"; // TODO plural or singular
+      return "wedges";
     case VTK_PYRAMID:
-      return "pyramids"; // TODO plural or singular
+      return "pyramids";
     default:
       GEOSX_ERROR( "VTK cell type \"" << vtkCellType << "\" is not a recognized cell type" );
       // Dummy return for compilation error.
@@ -410,16 +410,15 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
   fillCellBlockNames( regionsWedges, ElementType::Prism );
   fillCellBlockNames( regionsPyramids, ElementType::Pyramid );
 
-  // Comunicate all the region names
+  // Communicate all the region names
   // TODO if in a mesh, there is for instance a region with tetra, and a region without tetra,
-  // they will both contain a cell block tetrahedron
+  //      they will both contain a cell block tetrahedron
   std::vector< int > allCellBlockRegionIndex = gatherData( cellBlockRegionIndex );
   std::vector< ElementType > allCellBlockElementType = gatherData( cellBlockElementType );
-  for( unsigned int i = 0; i < allCellBlockRegionIndex.size(); i++ )
+  for( std::size_t i = 0; i < allCellBlockRegionIndex.size(); i++ )
   {
-    for( unsigned int j = 0; j < allCellBlockElementType.size(); j++ )
+    for( std::size_t j = 0; j < allCellBlockElementType.size(); j++ )
     {
-      string name = allCellBlockRegionIndex[i] != -1 ? std::to_string( allCellBlockRegionIndex[i] ) + "_" : "";
       switch( allCellBlockElementType[j] )
       {
         case ElementType::Tetrahedron:
@@ -449,7 +448,7 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
   {
     surfaces.push_back( s2c.first );
   }
-  //
+
   for( auto const & s: gatherData( surfaces ) )
   {
     surfacesIdsToCellsIds[s];

@@ -123,7 +123,10 @@ private:
   Group * createChild( string const & childKey, string const & childName ) override;
 
 private:
-  // The VTK mesh to be imported into GEOSX.
+  /**
+   * @brief The VTK mesh to be imported into GEOSX.
+   * @note We keep this smart pointer as an attribute because @p importFields uses raw pointers linked to @p m_vtkMesh.
+   */
   vtkSmartPointer< vtkUnstructuredGrid > m_vtkMesh;
 
   /// Path to the mesh file

@@ -32,8 +32,6 @@ using namespace geosx;
 using namespace geosx::testing;
 using namespace geosx::dataRepository;
 
-// TODO move in the functions?
-
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
 {
