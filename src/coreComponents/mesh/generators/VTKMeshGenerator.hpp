@@ -26,6 +26,8 @@
 #include "MeshGeneratorBase.hpp"
 
 #include <vtkDataArray.h>
+#include <vtkSmartPointer.h>
+#include <vtkUnstructuredGrid.h>
 
 #include <map>
 
@@ -121,6 +123,8 @@ private:
   Group * createChild( string const & childKey, string const & childName ) override;
 
 private:
+  // The VTK mesh to be imported into GEOSX.
+  vtkSmartPointer< vtkUnstructuredGrid > m_vtkMesh;
 
   /// Path to the mesh file
   Path m_filePath;

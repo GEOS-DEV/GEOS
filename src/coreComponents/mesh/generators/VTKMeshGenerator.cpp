@@ -730,6 +730,7 @@ void importFieldOnCellElementSubRegion( int regionId,
     {
       // Writing properties
       std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
+
       for( vtkDataArray * vtkArray: importableArrays )
       {
         if( materialWrapperNames.count( vtkArray->GetName() ) == 0 )
@@ -754,6 +755,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
 {
   // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
+
   auto importFieldsForElementType = [&]( VTKCellType vtkCellType,
                                          std::map< int, std::vector< vtkIdType > > const & cellBlocks )
   {
@@ -772,7 +774,6 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   for( vtkDataArray * vtkArray: m_importableArrays )
   {
     fieldNames["elems"].emplace_back( vtkArray->GetName() );
-    std::cout << " VTK ARRAY field name " << vtkArray->GetName() << std::endl ;
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
@@ -865,8 +866,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = loadVTKMesh( m_filePath );
 
   std::vector<vtkBoundingBox> cuts;
-  // The VTK mesh to be imported into GEOSX.
-  vtkSmartPointer< vtkUnstructuredGrid > vtkMesh = redistributeMesh( *loadedMesh, cuts );
+  m_vtkMesh = redistributeMesh( *loadedMesh, cuts );
 
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
@@ -874,20 +874,21 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
 
-  double const globalLength = writeMeshNodes( cellBlockManager, vtkMesh );
+  double const globalLength = writeMeshNodes( cellBlockManager, m_vtkMesh );
   meshBody.setGlobalLengthScale( globalLength );
 
   // TODO Check that the neighbor information set is bulletproof
   domain.getMetisNeighborList() = computeMPINeighborRanks( cuts );
 
-  std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = countCellsAndFaces( vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
+  std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = countCellsAndFaces( m_vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
 
-  m_importableArrays = findImportableArrays( vtkMesh );
+  m_importableArrays = findImportableArrays( m_vtkMesh );
 
-  buildCellBlocks( vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, cellBlockManager );
+  buildCellBlocks( m_vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, cellBlockManager );
 
-  buildSurfaces( vtkMesh, surfacesIdsToCellsIds, cellBlockManager );
+  buildSurfaces( m_vtkMesh, surfacesIdsToCellsIds, cellBlockManager );
 
+  // TODO Check the memory usage that seems prohibitive - Do we need to build all connections? 
   cellBlockManager.buildMaps();
 }
 
