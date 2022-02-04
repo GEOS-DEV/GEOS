@@ -20,11 +20,9 @@
 #include "AcousticWaveEquationSEM.hpp"
 #include "AcousticWaveEquationSEMKernel.hpp"
 
-#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "mesh/CellBlock.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 

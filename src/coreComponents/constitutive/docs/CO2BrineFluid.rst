@@ -182,22 +182,23 @@ During the simulation, the brine viscosity is updated as a function of temperatu
 where the coefficients :math:`a` and :math:`b` are defined as:
 
 .. math::
-   a &= 0.00089 \times 0.000629 (1.0 - \exp( -0.7 m ) ) \\
-   b &= 0.00089 (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
+   a &= \mu_{w}(T) \times 0.000629 (1.0 - \exp( -0.7 m ) ) \\
+   b &= \mu_{w}(T) (1.0 + 0.0816 m + 0.0122 m^2 + 0.000128 m^3) 
    
-where :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
+where :math:`\mu_{w}` is the pure water viscosity computed as a function of temperature,
+and :math:`m` is the user-defined salinity (in moles of NaCl per kg of brine).
 
 
-Brine density and viscosity using Ezrokhi correllation
+Brine density and viscosity using Ezrokhi correlation
 -------------------------------------------------------
 
-Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi corellation presented in Zaytsev and Aseyev (1993):
+Brine density :math:`\rho_l` is computed from pure water density :math:`\rho_w` at specified pressure and temperature corrected by Ezrokhi correlation presented in Zaytsev and Aseyev (1993):
 
 .. math::
    log_{10}(\rho_l) &= log_{10}(\rho_w(P, T)) + A(T) x_{CO2,\ell} \\
    A(T) &= a_0 + a_1T +  a_2T^2,
 
-where :math:`a_0, a_1, a_2` are corellation coefficients defined by user:
+where :math:`a_0, a_1, a_2` are correlation coefficients defined by user:
 
 +------------+----------------------+-------------+-------------+-------------+
 | DensityFun | EzrokhiBrineDensity  | :math:`a_0` | :math:`a_1` | :math:`a_2` |
@@ -222,7 +223,7 @@ Brine viscosity :math:`\mu_{\ell}` is computed from pure water viscosity :math:`
    log_{10}(\mu_l) &= log_{10}(\mu_w(P, T)) + B(T) x_{CO2,\ell} \\
    B(T) &= b_0 + b_1T +  b_2T^2,
 
-where :math:`b_0, b_1, b_2` are corellation coefficients defined by user:
+where :math:`b_0, b_1, b_2` are correlation coefficients defined by user:
 
 +--------------+------------------------+-------------+-------------+-------------+
 | ViscosityFun | EzrokhiBrineViscosity  | :math:`b_0` | :math:`b_1` | :math:`b_2` |
@@ -293,7 +294,7 @@ Example
 
 In the XML code listed above, "co2flash.txt" parameterizes the CO2 solubility table constructed in Step 1.
 The file "pvtgas.txt" parameterizes the CO2 phase density and viscosity tables constructed in Step 2, 
-the file "pvtliquid.txt" parameterizes the brine density and viscosity tables according to Phillips or Ezrokhi corellation, depending on chosen fluid model.
+the file "pvtliquid.txt" parameterizes the brine density and viscosity tables according to Phillips or Ezrokhi correlation, depending on chosen fluid model.
     
 References
 ==========

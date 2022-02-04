@@ -203,6 +203,8 @@ public:
     constexpr static char const * polylineNodeCoordsString() { return "polylineNodeCoords"; }
     constexpr static char const * polylineSegmentConnString() { return "polylineSegmentConn"; }
     constexpr static char const * numElementsPerSegmentString() { return "numElementsPerSegment"; }
+    constexpr static char const * minSegmentLengthString() { return "minSegmentLength"; }
+    constexpr static char const * minElementLengthString() { return "minElementLength"; }
     constexpr static char const * radiusString() { return "radius"; }
     constexpr static char const * wellRegionNameString() { return "wellRegionName"; }
     constexpr static char const * wellControlsNameString() { return "wellControlsName"; }
@@ -279,6 +281,12 @@ private:
 
   /// Number of well elements per polyline interval
   int m_numElemsPerSegment;
+
+  /// Min segment length
+  real64 m_minSegmentLength;
+
+  /// Min well element length
+  real64 m_minElemLength;
 
   /// Radius area of the well (assumed to be valid for the entire well)
   real64 m_radius;
