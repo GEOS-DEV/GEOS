@@ -220,7 +220,9 @@ public:
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
-    static constexpr char const * allowLocalOBLChoppingString() { return "allowLocalOBLChoppingString"; }
+    static constexpr char const * allowLocalOBLChoppingString() { return "allowLocalOBLChopping"; }
+
+    static constexpr char const * useDARTSL2NormString() { return "useDARTSL2Norm"; }
   };
 
   /**
@@ -324,6 +326,9 @@ protected:
 
   /// flag indicating whether local (cell-wise) chopping of negative compositions is allowed
   integer m_allowOBLChopping;
+
+  /// flag indicating whether DARTS L2 norm is used for Newton convergence criterion
+  integer m_useDARTSL2Norm;
 };
 
 

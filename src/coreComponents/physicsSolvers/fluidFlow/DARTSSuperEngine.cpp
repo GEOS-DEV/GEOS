@@ -103,6 +103,11 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Allow keeping solution within OBL limits" );
 
+  this->registerWrapper( viewKeyStruct::useDARTSL2NormString(), &m_useDARTSL2Norm ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use L2 norm calculation similar to one used DARTS" );
+
   this->registerWrapper( viewKeyStruct::componentNamesString(), &m_componentNames ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of component names" );
@@ -306,27 +311,44 @@ real64 DARTSSuperEngine::calculateResidualNorm( DomainPartition const & domain,
   {
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLValsOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
     arrayView1d< real64 const > const & refPoreVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
 
-
-
     real64 subRegionResidualNorm = 0.0;
-    ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                parallelDeviceReduce >( localRhs,
-                                                        rankOffset,
-                                                        m_numDofPerCell,
-                                                        dofNumber,
-                                                        elemGhostRank,
-                                                        refPoreVolume,
-                                                        OBLValsOld,
-                                                        subRegionResidualNorm );
-    localResidualNorm += subRegionResidualNorm;
 
+    if( m_useDARTSL2Norm )
+    {
+      arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLVals = subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+
+      ResidualDARTSL2NormKernel::launch< parallelDevicePolicy<>,
+                                         parallelDeviceReduce >( localRhs,
+                                                                 rankOffset,
+                                                                 m_numDofPerCell,
+                                                                 dofNumber,
+                                                                 elemGhostRank,
+                                                                 refPoreVolume,
+                                                                 OBLVals,
+                                                                 subRegionResidualNorm );
+      if( localResidualNorm < subRegionResidualNorm )
+        localResidualNorm = subRegionResidualNorm;
+    }
+    else
+    {
+      arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLValsOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
+
+      ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                  parallelDeviceReduce >( localRhs,
+                                                          rankOffset,
+                                                          m_numDofPerCell,
+                                                          dofNumber,
+                                                          elemGhostRank,
+                                                          refPoreVolume,
+                                                          OBLValsOld,
+                                                          subRegionResidualNorm );
+      localResidualNorm += subRegionResidualNorm;
+    }
   } );
 
-  // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
+  real64 const residual = m_useDARTSL2Norm ? MpiWrapper::max( localResidualNorm ) : std::sqrt( MpiWrapper::sum( localResidualNorm ) );
 
   if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
@@ -335,6 +357,7 @@ real64 DARTSSuperEngine::calculateResidualNorm( DomainPartition const & domain,
 
   return residual;
 }
+
 
 real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
                                                    DofManager const & dofManager,
@@ -848,7 +871,7 @@ void DARTSSuperEngine::applySourceFluxBC( real64 const time,
       // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
       if( fluidComponentId < numFluidComponents - 1 )
       {
-        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1; // component mass bal equations are shifted
+        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1;   // component mass bal equations are shifted
         localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
       }
     } );
@@ -866,7 +889,7 @@ bool validateDirichletBC( DomainPartition & domain,
   constexpr integer MAX_NC = MultiFluidBase::MAX_NUM_COMPONENTS;
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap; // map to check consistent application of BC
+  map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;   // map to check consistent application of BC
   bool bcConsistent = true;
 
   // 1. Check pressure Dirichlet BCs
@@ -919,7 +942,7 @@ bool validateDirichletBC( DomainPartition & domain,
     {
       bcConsistent = false;
       GEOSX_WARNING( GEOSX_FMT( "Invalid component index [{}] in composition boundary condition {}", comp, fs.getName() ) );
-      return; // can't check next part with invalid component id
+      return;     // can't check next part with invalid component id
     }
 
     ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];

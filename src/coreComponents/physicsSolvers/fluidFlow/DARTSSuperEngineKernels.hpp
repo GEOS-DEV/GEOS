@@ -222,11 +222,9 @@ public:
 
     m_OBLOperatorsTable.compute( state, OBLVals, OBLDers );
 
-    // perform pressure unit conversion back
-    for( integer i = 0; i < numOps; i++ )
-    {
-      OBLDers[i][0] *= pascalToBarMult;
-    }
+    // we do not perform derivatives unit conversion here:
+    // instead we postpone it till all the derivatives are fully formed
+    // scaling the whole system might be even better solution (every pressure column needs to be multiplied by pascalToBarMult)
 
     // if( ei == 2 )
     // {
@@ -363,6 +361,8 @@ public:
   static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
 
   static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
+  static constexpr real64 pascalToBarMult = 1.0 / 1e5;
+
 
   /**
    * @brief Constructor
@@ -515,11 +515,11 @@ public:
   {
     using namespace CompositionalMultiphaseUtilities;
 
-    // add contribution to residual and jacobian into:
-    // - the component mass balance equations
-    // - the volume balance equations
+    // add contribution to residual and jacobian into component mass balance equations
+    // apply pressure derivative unit conversion
     for( integer i = 0; i < numDofs; ++i )
     {
+      stack.localJacobian[i][0] *= pascalToBarMult;
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
       m_localMatrix.addToRow< serialAtomic >( stack.localRow + i,
                                               stack.dofIndices,
@@ -1082,8 +1082,8 @@ public:
 
             if( v == 0 )
             {
-              stack.localFluxJacobian[c][numDofs + v] -= c_flux * pascalToBarMult;
-              stack.localFluxJacobian[c][v] += c_flux * pascalToBarMult;
+              stack.localFluxJacobian[c][numDofs + v] -= c_flux;
+              stack.localFluxJacobian[c][v] += c_flux;
             }
             // if( eiI == 2 && v == 0 )
             //   printf( "OUTFlux diag contrib3 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
@@ -1110,8 +1110,8 @@ public:
             stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
             if( v == 0 )
             {
-              stack.localFluxJacobian[c][v] += c_flux * pascalToBarMult;     //-= Jac[jac_idx + c * numDofs];
-              stack.localFluxJacobian[c][numDofs + v] -= c_flux * pascalToBarMult;      // -trans * m_dt * op_vals[NC + c];
+              stack.localFluxJacobian[c][v] += c_flux;     //-= Jac[jac_idx + c * numDofs];
+              stack.localFluxJacobian[c][numDofs + v] -= c_flux;      // -trans * m_dt * op_vals[NC + c];
             }
             // if( eiI == 2 && v == 0 )
             //   printf( "INFlux diag contrib2 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
@@ -1230,12 +1230,21 @@ public:
     // Add to residual/jacobian
     for( integer i = 0; i < maxNumElems; ++i )
     {
-      // during first loop iteration, we fill the equations for element i as is.
-      if( i == 1 )
+      // during first loop iteration (i == 0), we fill the equations for element i as is,
+      // only scaling the pressure derivative to account for unit conversion
+      if( i == 0 )
       {
-        // during second (and the last) loop iteration, we fill now the equations for element j.
-        // here, we need to multiply all values by -1
-        for( integer ic = 0; ic < numComps; ++ic )
+        for( integer ic = 0; ic < numDofs; ++ic )
+        {
+          stack.localFluxJacobian[ic][0] *= pascalToBarMult;
+          stack.localFluxJacobian[ic][numDofs] *= pascalToBarMult;
+        }
+      }
+      // during second (and the last) loop iteration (i ==1), we fill now the equations for element j.
+      // here, we need to multiply all values by -1, since the flow direction changes w.r.t element mass balance space
+      else
+      {
+        for( integer ic = 0; ic < numDofs; ++ic )
         {
           stack.localFlux[ic] *= -1;
           for( integer v = 0; v < 2 * numDofs; ++v )
@@ -1371,7 +1380,7 @@ public:
 };
 
 
-/******************************** ResidualNormKernel ********************************/
+/******************************** ResidualNormKernels ********************************/
 
 struct ResidualNormKernel
 {
@@ -1402,6 +1411,41 @@ struct ResidualNormKernel
       }
     } );
     localResidualNorm += localSum.get();
+  }
+};
+
+struct ResidualDARTSL2NormKernel
+{
+
+  template< typename POLICY, typename REDUCE_POLICY >
+  static void launch( arrayView1d< real64 const > const & localResidual,
+                      globalIndex const rankOffset,
+                      integer const numDofs,
+                      arrayView1d< globalIndex const > const & dofNumber,
+                      arrayView1d< integer const > const & ghostRank,
+                      arrayView1d< real64 const > const & refPoreVolume,
+                      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLOperatorValues,
+                      real64 & localResidualNorm )
+  {
+    for( integer idof = 0; idof < numDofs; ++idof )
+    {
+      RAJA::ReduceSum< REDUCE_POLICY, real64 > localResSum( 0.0 ), localNormSum( 0.0 );
+
+      forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+      {
+        if( ghostRank[ei] < 0 )
+        {
+          localIndex const localRow = dofNumber[ei] - rankOffset;
+
+          localResSum += localResidual[localRow + idof] * localResidual[localRow + idof];
+          localNormSum +=  OBLOperatorValues[ei][idof] * OBLOperatorValues[ei][idof] * refPoreVolume[ei] * refPoreVolume[ei];
+        }
+      } );
+
+      real64 const norm = sqrt( localResSum.get() / localNormSum.get());
+      if( localResidualNorm < norm )
+        localResidualNorm = norm;
+    }
   }
 };
 
