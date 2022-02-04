@@ -187,7 +187,7 @@ TEST( VTKImport, medley )
     std::vector< string > const elementNames{ "pyramids", "hexahedra", "wedges", "tetrahedra" };
     for( std::size_t prefix: { 0, 1, 2, 3 } )
     {
-      for( std::size_t i; i < 4; ++i )
+      for( std::size_t i = 0; i < 4; ++i )
       {
         string const name = std::to_string( prefix ) + "_" + elementNames[i];
         CellBlockABC const & zone = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( name );
