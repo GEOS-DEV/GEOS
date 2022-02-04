@@ -62,7 +62,7 @@ char const * xmlInput =
   "  </Mesh>\n"
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
-  "      <TwoPointFluxApproximation name=\"fluidTPFA\">\n"
+  "      <TwoPointFluxApproximation name=\"fluidTPFA\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"

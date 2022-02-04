@@ -109,9 +109,7 @@ char const * xmlInput =
   "  </Mesh>\n"
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
-  "      <TwoPointFluxApproximation name=\"singlePhaseTPFA\"\n"
-  "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"/>\n"
+  "      <TwoPointFluxApproximation name=\"singlePhaseTPFA\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
@@ -279,8 +277,8 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
                                                            arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames,
-                                                                         [&]( localIndex const,
-                                                                              WellElementSubRegion & subRegion )
+                                                                        [&]( localIndex const,
+                                                                             WellElementSubRegion & subRegion )
     {
 
       // get the degrees of freedom and ghosting information
