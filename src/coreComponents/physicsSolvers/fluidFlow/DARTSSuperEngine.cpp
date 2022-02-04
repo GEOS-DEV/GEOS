@@ -72,7 +72,13 @@ using namespace DARTSSuperEngineKernels;
 DARTSSuperEngine::DARTSSuperEngine( const string & name,
                                     Group * const parent )
   :
-  FlowSolverBase( name, parent )
+  FlowSolverBase( name, parent ),
+  m_numPhases( 0 ),
+  m_numComponents( 0 ),
+  m_computeCFLNumbers( 0 ),
+  m_maxCompFracChange( 1.0 ),
+  m_minScalingFactor( 0.01 ),
+  m_allowOBLChopping( 1 )
 {
   this->getWrapper< array1d< string > >( viewKeyStruct::fluidNamesString() ).
     setInputFlag( InputFlags::FALSE );
@@ -256,7 +262,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< OBLOperatorValues >( getName() ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
       subRegion.registerExtrinsicData< OBLOperatorValuesOld >( getName() ).
-        reference().resizeDimension< 1 >( m_numDofPerCell );
+        reference().resizeDimension< 1 >( m_numOBLOperators );
       subRegion.registerExtrinsicData< OBLOperatorDerivatives >( getName() ).
         reference().resizeDimension< 1, 2 >( m_numOBLOperators, m_numDofPerCell );
 
@@ -636,17 +642,7 @@ void DARTSSuperEngine::backupFields( MeshLevel & mesh ) const
     arrayView2d< real64, compflow::USD_OBL_VAL > const OBLOperatorValuesOld =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
 
-    forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] >= 0 )
-        return;
-
-      // we need to back up first m_numDofPerCell operators - they are accumulative
-      for( localIndex dof = 0; dof < m_numDofPerCell; ++dof )
-      {
-        OBLOperatorValuesOld[ei][dof] = OBLOperatorValues[ei][dof];
-      }
-    } );
+    OBLOperatorValuesOld.setValues< parallelDevicePolicy<> >( OBLOperatorValues );
   } );
 }
 
