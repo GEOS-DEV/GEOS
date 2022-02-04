@@ -99,7 +99,23 @@ std::vector< localIndex >
 gatherNbElementsInRegion( ElementRegionBase const & region,
                           MPI_Comm const & comm = MPI_COMM_GEOSX )
 {
-  localIndex const nbElems = region.getNumberOfElements();
+  localIndex nbElems = 0;
+  if(region.getName() == "ParticleRegion1")
+  {
+    std::cout << "EEP!" << std::endl;
+  }
+  if(region.hasGroup("elementSubRegions")) // Obviously directly using this string is not good practice, but idk how to do it properly... SJP
+  {
+    nbElems += region.getNumberOfElements();
+    std::cout << "HERP" << std::endl;
+  }
+  if(region.hasGroup("particleSubRegions"))
+  {
+    nbElems += region.getNumberOfParticles();
+    std::cout << "DERP" << std::endl;
+  }
+  std::cout << "Number of elements+particles: " << nbElems << std::endl;
+  //localIndex const nbElems = region.getNumberOfElements();
   std::vector< localIndex > nbElemsInRegion( MpiWrapper::commSize( comm ) );
   MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, comm );
   return nbElemsInRegion;
