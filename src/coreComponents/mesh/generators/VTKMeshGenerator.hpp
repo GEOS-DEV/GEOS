@@ -24,10 +24,8 @@
 #include "codingUtilities/StringUtilities.hpp"
 
 #include "MeshGeneratorBase.hpp"
-#include "mesh/CellBlockManager.hpp"
 
-#include <vtkSmartPointer.h>
-#include <vtkUnstructuredGrid.h>
+#include <vtkDataArray.h>
 
 #include <map>
 
@@ -78,35 +76,30 @@ private:
    * @param[in] domain the DomainPartition to be written
    * @details This method leverages the VTK library to load the meshes.
    * The supported formats are the official VTK ones dedicated to
-   * unstructured grids (.vtu, .pvtu and .vtk).
+   * unstructured grids (.vtu, .pvtu and .vtk).\n\n
    *
    * Please note that this mesh generator works only with a number of MPI processes than
-   * can be decomposed into a power of 2.
+   * can be decomposed into a power of 2.\n\n
    *
    * - If a .vtu of .vtk file is used, the root MPI process will load it.
    *   The mesh will be then redistribute among all the available MPI processes
    * - If a .pvtu file is used, it means that the mesh is pre-partionned in the file system.
    *   The available MPI processes will load the pre-partionned mesh. The mesh will be then
-   *   redistributed among ALL the available MPI processes.
+   *   redistributed among ALL the available MPI processes.\n\n
    *
-   * The properties on the mesh will be also and redistributed. 
-   * The only compatible types are double and float.
-   * The properties can be multi-dimensional.
-   * The name of the properties has to have the right name in order to be used by GEOSX.
-   * For instance, the property that stored the input porosity in GEOSX is named
-   * "referencePorosity", so the mesh has to have a property named "referencePorosity".
+   * The properties on the mesh will be also and redistributed. The only compatible types are double and float.
+   * The properties can be multi-dimensional.\n
+   * The name of the properties has to have the right name in order to be used by GEOSX. For instance,
+   * the property that stored the input porosity in GEOSX is named "referencePorosity", so the mesh has to have
+   * a property names "referencePorosity".\n\n
    *
-   * The regions are defined using a property called "attribute" that can be defined 
-   * in the input mesh. This property will be held by each volume elements. 
-   * This method will created several CellBlocks, named using the combination
-   * of the attribute index and the type of the element.
-   * For instance, the cells of a mesh with two regions will hold the attribute 
-   * "1", or "2".
-   * The CellBlocks will be instantiated according to the attribute and
-   * the type of the cells. If the region "1" has wedges, tetrahedron
-   * and hexahedron, three CellBlocks will be created names 1_tetrahedron, 1_wedges
-   * 1_hexahedron. 
-   * The ElementRegions have to be be defined in the XML file.
+   * The regions are defined using a property called "attribute" that can be defined in the input mesh. This property
+   * will be held by each volume elements. This method will created several CellBlocks, named using the combination
+   * of the attribute index and the type of the element.\n
+   * For instance, the cells of a mesh with two regions will hold the attribute "1", or "2". The CellBlocks will
+   * be instantiated according to the attribute and the type of the cells. If the region "1" has wedges, tetrahedron
+   * and hexahedron, three CellBlocks will be created names 1_tetrahedron, 1_wedges and 1_hexahedron.
+   * The ElementRegions have to be be defined in the XML file.\n\n
    *
    * The pointsets of surface are defined in the same way, using the same 
    * property names "attribute" defined in the input mesh. The pointsets will 
@@ -117,7 +110,7 @@ private:
    */
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  virtual void importFields( DomainPartition & domain ) const override;
+  virtual void importFields( DomainPartition & elementName ) const override;
 
   /**
    * @brief Create a new geometric object (box, plane, etc) as a child of this group.
@@ -129,9 +122,6 @@ private:
 
 private:
 
-  /// Smart Pointer to the Mesh in the data structure of VTK.
-  vtkSmartPointer< vtkUnstructuredGrid >  m_vtkMesh;
-
   /// Path to the mesh file
   Path m_filePath;
 
@@ -140,7 +130,7 @@ private:
   std::map< int, std::vector< vtkIdType > > m_regionsWedges;
   std::map< int, std::vector< vtkIdType > > m_regionsPyramids;
 
-  std::vector< vtkDataArray * > m_arraysToBeImported;
+  std::vector< vtkDataArray * > m_importableArrays;
 };
 }
 #endif /* GEOSX_MESHUTILITIES_VTKMESHGENERATOR_HPP */

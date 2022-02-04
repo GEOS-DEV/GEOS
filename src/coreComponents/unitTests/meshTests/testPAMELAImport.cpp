@@ -16,8 +16,9 @@
 // Source includes
 #include "mainInterface/initialization.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-#include "tests/meshFileNames.hpp"
+#include "tests/meshDirName.hpp"
 #include "mesh/MeshManager.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -48,7 +49,7 @@ void TestMeshImport( string const & inputStringMesh,
 
   MeshBody & meshBody = domain->getMeshBody( 0 );
   MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-  NodeManager const & nodeManager = meshLevel.getNodeManager();
+  NodeManager & nodeManager = meshLevel.getNodeManager();
   FaceManager const & faceManager = meshLevel.getFaceManager();
   ElementRegionManager & elemManager = meshLevel.getElemManager();
 
@@ -59,7 +60,8 @@ void TestMeshImport( string const & inputStringMesh,
   elemManager.processInputFileRecursive( xmlRegionNode );
   elemManager.postProcessInputRecursive();
 
-  Group & cellBlockManager = domain->getGroup( keys::cellManager );
+  CellBlockManager & cellBlockManager = domain->getGroup< CellBlockManager >( keys::cellManager );
+  nodeManager.setGeometricalRelations( cellBlockManager );
 
   elemManager.generateMesh( cellBlockManager );
 
@@ -95,6 +97,8 @@ void TestMeshImport( string const & inputStringMesh,
 
 TEST( PAMELAImport, testGMSH )
 {
+  std::string const gmshFilePath = testMeshDir + "/toy_model.msh";
+
   conduit::Node node;
   Group root( "root", node );
   MeshManager meshManager( "mesh", &root );
@@ -125,6 +129,8 @@ TEST( PAMELAImport, testGMSH )
 
 TEST( PAMELAImport, testECLIPSE )
 {
+  std::string const eclipseFilePath = testMeshDir + "/toy_model.GRDECL";
+
   conduit::Node node;
   Group root( "root", node );
   MeshManager meshManager( "mesh", &root );

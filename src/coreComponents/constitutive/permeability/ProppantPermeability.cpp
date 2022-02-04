@@ -48,7 +48,7 @@ ProppantPermeability::ProppantPermeability( string const & name, Group * const p
 
   registerWrapper( viewKeyStruct::proppantPackPermeabilityString(), &m_proppantPackPermeability );
 
-  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dAperture{}, &m_dPerm_dAperture );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
   registerExtrinsicData( extrinsicMeshData::permeability::permeabilityMultiplier{}, &m_permeabilityMultiplier );
 
 }
@@ -72,7 +72,7 @@ void ProppantPermeability::allocateConstitutiveData( dataRepository::Group & par
                                                      localIndex const numConstitutivePointsPerParentIndex )
 {
   // NOTE: enforcing 1 quadrature point
-  m_dPerm_dAperture.resize( 0, 1, 3 );
+  m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
   m_permeabilityMultiplier.resize( 0, 1, 3 );
   PermeabilityBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
