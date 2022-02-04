@@ -43,7 +43,7 @@ namespace DARTSSuperEngineKernels
 
 using namespace constitutive;
 
-static constexpr real64 minDensForDivision = 1e-10;
+static constexpr real64 minValueForDivision = 1e-10;
 
 
 // The number of operators in use depends on:
@@ -70,80 +70,9 @@ constexpr integer COMPUTE_NUM_OPS ( integer const NP, integer const NC, bool ENE
 }
 
 
-
-/******************************** PropertyKernelBase ********************************/
-
-/**
- * @brief Internal struct to provide no-op defaults used in the inclusion
- *   of lambda functions into kernel component functions.
- * @struct NoOpFunc
- */
-struct NoOpFunc
-{
-  template< typename ... Ts >
-  GEOSX_HOST_DEVICE
-  constexpr void
-  operator()( Ts && ... ) const {}
-};
-
-/**
- * @class PropertyKernelBase
- * @tparam NUM_COMP number of fluid components
- * @brief Define the base interface for the property update kernels
- */
-template< integer NUM_COMP >
-class PropertyKernelBase
-{
-public:
-
-  /// Compile time value for the number of components
-  static constexpr integer numComps = NUM_COMP;
-
-  /**
-   * @brief Performs the kernel launch
-   * @tparam POLICY the policy used in the RAJA kernels
-   * @tparam KERNEL_TYPE the kernel type
-   * @param[in] numElems the number of elements
-   * @param[inout] kernelComponent the kernel component providing access to the compute function
-   */
-  template< typename POLICY, typename KERNEL_TYPE >
-  static void
-  launch( localIndex const numElems,
-          KERNEL_TYPE const & kernelComponent )
-  {
-    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      kernelComponent.compute( ei );
-    } );
-  }
-
-  /**
-   * @brief Performs the kernel launch on a sorted array
-   * @tparam POLICY the policy used in the RAJA kernels
-   * @tparam KERNEL_TYPE the kernel type
-   * @param[in] targetSet the indices of the elements in which we compute the property
-   * @param[inout] kernelComponent the kernel component providing access to the compute function
-   */
-  template< typename POLICY, typename KERNEL_TYPE >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          KERNEL_TYPE const & kernelComponent )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex const ei = targetSet[ i ];
-      kernelComponent.compute( ei );
-    } );
-  }
-
-};
-
 /******************************** Kernel launch machinery ********************************/
 namespace internal
 {
-
-// template< integer NUM_COMP, typename LAMBDA >
-// void kernelLaunchSelectorOpSwitch( T value, LAMBDA && lambda )
 
 template< bool ENABLE_ENERGY, integer NUM_PHASES, typename T, typename LAMBDA >
 void kernelLaunchSelectorCompSwitch( T numComps, LAMBDA && lambda )
@@ -224,7 +153,7 @@ public:
   static constexpr integer numOps = COMPUTE_NUM_OPS( NUM_PHASES, NUM_COMPS, ENABLE_ENERGY );
 
   static constexpr real64 barToPascalMult = 1e5;
-  static constexpr real64 pascalToBarMult = 1 / 1e5;
+  static constexpr real64 pascalToBarMult = 1.0 / 1e5;
 
   /**
    * @brief Performs the kernel launch
@@ -296,22 +225,22 @@ public:
     // perform pressure unit conversion back
     for( integer i = 0; i < numOps; i++ )
     {
-      OBLDers[i][0] *= barToPascalMult;
+      OBLDers[i][0] *= pascalToBarMult;
     }
 
-    if( ei == 0 )
-    {
-      printf ( "\n Ops after:\n" );
-      for( integer i = 0; i < numOps; i++ )
-      {
-        printf ( "%lf [", OBLVals[i] );
-        for( integer j = 0; j < numDofs; j++ )
-        {
-          printf ( " %lf,", OBLDers[i][j] );
-        }
-        printf ( "]\n" );
-      }
-    }
+    // if( ei == 2 )
+    // {
+    //   printf ( "\n Ops after:\n" );
+    //   for( integer i = 0; i < numOps; i++ )
+    //   {
+    //     printf ( "%e [", OBLVals[i] );
+    //     for( integer j = 0; j < numDofs; j++ )
+    //     {
+    //       printf ( " %e,", OBLDers[i][j] );
+    //     }
+    //     printf ( "]\n" );
+    //   }
+    // }
 
     printf ( "element %ld: [", ei );
     for( integer i = 0; i < numDofs; i++ )
@@ -433,6 +362,8 @@ public:
   static constexpr integer PC_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + numPhases;
   static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
 
+  static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
+
   /**
    * @brief Constructor
    * @param[in] numPhases the number of fluid phases
@@ -452,7 +383,7 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     :
-    m_dt( dt ),
+    m_dt( dt * secondsToDaysMult ),
     m_rankOffset( rankOffset ),
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
@@ -552,6 +483,9 @@ public:
       for( integer v = 0; v < numDofs; v++ )
       {
         stack.localJacobian[c][v] = m_referencePoreVolume[ei] * OBLDers[ACC_OP + c][v];   // der of accumulation term
+
+        // if( ei == 2 )
+        //   printf( "Set diag %ld %ld to %e \n", ei * numDofs + c, ei * numDofs + v, stack.localJacobian[c][v] );
 
         // Include derivatives for reaction term if part of reservoir cells:
         stack.localJacobian[c][v] += (m_referencePoreVolume[ei] + m_referenceRockVolume[ei]) * m_dt * OBLDers[KIN_OP + c][v] * m_rockKineticRateFactor[ei];     // derivative
@@ -728,6 +662,12 @@ class FaceBasedAssemblyKernelBase
 {
 public:
 
+  static constexpr real64 pascalToBarMult = 1.0 / 1e5;
+
+  static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
+
+  static constexpr real64 transUnitMult = 8639693349945.239;
+
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
    *
@@ -779,8 +719,8 @@ public:
                                real64 const & transMultExp,
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
-    :     m_rankOffset( rankOffset ),
-    m_dt( dt ),
+    : m_rankOffset( rankOffset ),
+    m_dt( dt * secondsToDaysMult ),
     m_transMultExp (),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
     m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
@@ -1061,7 +1001,7 @@ public:
 
     // single gravity coefficient and transimissibility values correspond to the current connection
     real64 const gravCoef = m_gravCoef[erI][esrI][eiI] - m_gravCoef[erJ][esrJ][eiJ];
-    real64 const trans = stack.transmissibility[0][0];
+    real64 const trans = stack.transmissibility[0][0] * transUnitMult;
     real64 const transD = stack.diffusiveTransmissibility[0][0];
 
 
@@ -1092,7 +1032,7 @@ public:
       }
     }
 
-    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ]) - (m_pres[erI][esrI][eiI] + m_dPres[erI][esrI][eiI]);
+    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI] - m_dPres[erI][esrI][eiI]) * pascalToBarMult;
 
 
     // [2] fill offdiagonal part + contribute to diagonal, only fluid part is considered in energy equation
@@ -1124,18 +1064,29 @@ public:
           real64 c_flux = transMult * trans * m_dt * OBLValsI[FLUX_OP + p * numDofs + c];
 
           stack.localFlux[c] -= phase_p_diff * c_flux;     // flux operators only
+          // if( phase_p_diff < 10 )
+          //   printf( "OUTFlux comp %d is %e subtracted %e trans %e m_dt %e\n", c, stack.localFlux[c], phase_p_diff * c_flux, trans, m_dt
+          // );
           for( integer v = 0; v < numDofs; v++ )
           {
+            // if( eiI == 2 && v == 0 )
+            //   printf( "OUTFlux diag contrib0 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
             stack.localFluxJacobian[c][v] -= (phase_gamma_p_diff * OBLDersI[FLUX_OP + p * numDofs + c][v] +
                                               trans * m_dt * phase_p_diff * transMultDerI[v] * OBLValsI[FLUX_OP + p * numDofs + c]);
+            // if( eiI == 2 && v == 0 )
+            //   printf( "OUTFlux diag contrib1 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
             stack.localFluxJacobian[c][v] += c_flux * gravPcDerI[v];
+            // if( eiI == 2 && v == 0 )
+            //   printf( "OUTFlux diag contrib2 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
             stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
 
             if( v == 0 )
             {
-              stack.localFluxJacobian[c][numDofs + v] -= c_flux;
-              stack.localFluxJacobian[c][v] += c_flux;
+              stack.localFluxJacobian[c][numDofs + v] -= c_flux * pascalToBarMult;
+              stack.localFluxJacobian[c][v] += c_flux * pascalToBarMult;
             }
+            // if( eiI == 2 && v == 0 )
+            //   printf( "OUTFlux diag contrib3 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
           }
         }
       }
@@ -1149,15 +1100,21 @@ public:
           stack.localFlux[c] -= phase_p_diff * c_flux;     // flux operators only
           for( integer v = 0; v < numDofs; v++ )
           {
+            // if( eiI == 2 && v == 0 )
+            //   printf( "INFlux diag contrib0 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
             stack.localFluxJacobian[c][numDofs + v] -= (phase_gamma_p_diff * OBLDersJ[FLUX_OP + p * numDofs + c][v] +
                                                         trans * m_dt * phase_p_diff * transMultDerJ[v] * OBLValsJ[FLUX_OP + p * numDofs + c]);
             stack.localFluxJacobian[c][v] += c_flux * gravPcDerI[v];
+            // if( eiI == 2 && v == 0 )
+            //   printf( "INFlux diag contrib1 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
             stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
             if( v == 0 )
             {
-              stack.localFluxJacobian[c][v] += c_flux;     //-= Jac[jac_idx + c * numDofs];
-              stack.localFluxJacobian[c][numDofs + v] -= c_flux;      // -trans * m_dt * op_vals[NC + c];
+              stack.localFluxJacobian[c][v] += c_flux * pascalToBarMult;     //-= Jac[jac_idx + c * numDofs];
+              stack.localFluxJacobian[c][numDofs + v] -= c_flux * pascalToBarMult;      // -trans * m_dt * op_vals[NC + c];
             }
+            // if( eiI == 2 && v == 0 )
+            //   printf( "INFlux diag contrib2 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
           }
         }
       }
@@ -1470,7 +1427,7 @@ struct SolutionCheckKernel
           integer const allowOBLChopping,
           real64 const scalingFactor )
   {
-    real64 constexpr eps = minDensForDivision;
+    real64 constexpr eps = minValueForDivision;
 
     RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
 

@@ -159,20 +159,28 @@ void DARTSSuperEngine::implicitStepComplete( real64 const & time,
   {
     arrayView1d< real64 const > const dPres =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-    arrayView2d< real64 const, compflow::USD_COMP > const dCompDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+    arrayView2d< real64 const, compflow::USD_COMP > const dCompFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
+    arrayView1d< real64 const > const dTemp =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
 
     arrayView1d< real64 > const pres =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    arrayView2d< real64, compflow::USD_COMP > const compDens =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+    arrayView2d< real64, compflow::USD_COMP > const compFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+    arrayView1d< real64 > const temp =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       pres[ei] += dPres[ei];
       for( localIndex ic = 0; ic < numComp; ++ic )
       {
-        compDens[ei][ic] += dCompDens[ei][ic];
+        compFrac[ei][ic] += dCompFrac[ei][ic];
+      }
+      if( m_enableEnergyBalance )
+      {
+        temp[ei] += dTemp[ei];
       }
     } );
 
@@ -648,11 +656,11 @@ void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n )
                                              localMatrix,
                                              localRhs );
 
-  // assembleFluxTerms( dt,
-  //                    domain,
-  //                    dofManager,
-  //                    localMatrix,
-  //                    localRhs );
+  assembleFluxTerms( dt,
+                     domain,
+                     dofManager,
+                     localMatrix,
+                     localRhs );
 
 
 }
@@ -1047,9 +1055,9 @@ void DARTSSuperEngine::chopNegativeDensities( DomainPartition & domain )
         for( localIndex ic = 0; ic < numComp; ++ic )
         {
           real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
-          if( newDens < minDensForDivision )
+          if( newDens < minValueForDivision )
           {
-            dCompDens[ei][ic] = -compDens[ei][ic] + minDensForDivision;
+            dCompDens[ei][ic] = -compDens[ei][ic] + minValueForDivision;
           }
         }
       }
