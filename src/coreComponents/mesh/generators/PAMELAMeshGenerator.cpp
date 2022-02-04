@@ -315,6 +315,7 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
   //TODO for the moment we only consider on mesh level "Level0"
+  meshBody.getMeshLevels().registerGroup< MeshLevel >( "Level0" );
 
   CellBlockManager & cellBlockManager = meshBody.getGroup< CellBlockManager >( keys::cellManager );
 
