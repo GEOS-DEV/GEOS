@@ -298,45 +298,6 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
-// void CompositionalMultiphaseWell::validateConstitutiveModels( MeshLevel const & meshLevel, ConstitutiveManager const & cm ) const
-// {
-//   CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-
-//   arrayView1d< string const > const & flowTargetRegionNames = flowSolver.targetRegionNames();
-//   arrayView1d< string const > const & flowFluidModels = flowSolver.fluidModelNames();
-//   arrayView1d< string const > const & flowRelPermModels = flowSolver.relPermModelNames();
-
-//   forTargetSubRegions< WellElementSubRegion >( meshLevel, [&]( localIndex const targetIndex,
-//                                                                WellElementSubRegion const & subRegion )
-//   {
-//     // Make a set of unique reservoir region indices the well is connected to
-//     PerforationData const & perforationData = *subRegion.getPerforationData();
-//     arrayView1d< localIndex const > const & resElementRegion = perforationData.getMeshElements().m_toElementRegion;
-//     std::set< string > reservoirRegionNames;
-//     for( localIndex const ei : resElementRegion )
-//     {
-//       reservoirRegionNames.insert( meshLevel.getElemManager().getRegion( ei ).getName() );
-//     }
-
-//     // Check that each well model is compatible with all models in perforated reservoir regions
-//     MultiFluidBase const & wellFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_fluidModelNames[targetIndex] );
-//     RelativePermeabilityBase const & wellRelPerm = cm.getConstitutiveRelation< RelativePermeabilityBase >(
-// m_relPermModelNames[targetIndex] );
-//     for( localIndex resTargetIndex = 0; resTargetIndex < flowTargetRegionNames.size(); ++resTargetIndex )
-//     {
-//       if( reservoirRegionNames.count( flowTargetRegionNames[resTargetIndex] ) > 0 )
-//       {
-//         MultiFluidBase const & resFluid = cm.getConstitutiveRelation< MultiFluidBase >( flowFluidModels[resTargetIndex] );
-//         compareMultiphaseModels( wellFluid, resFluid );
-//         compareMulticomponentModels( wellFluid, resFluid );
-
-//         RelativePermeabilityBase const & resRelPerm = cm.getConstitutiveRelation< RelativePermeabilityBase >(
-// flowRelPermModels[resTargetIndex] );
-//         compareMultiphaseModels( wellRelPerm, resRelPerm );
-//       }
-//     }
-//   } );
-// }
 
 void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion const & subRegion ) const
 {
@@ -435,8 +396,6 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-
-    // validateConstitutiveModels( mesh, cm );
 
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
