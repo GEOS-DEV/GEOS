@@ -327,11 +327,11 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            Location const location,
                            integer const components,
-                           map< string, array1d< string > > const & bodyRegions )
+                           map< string, array1d< string > > const & regions )
 {
   // Convert input into internal format
   std::vector< Regions > support;
-  for( auto const & p : bodyRegions )
+  for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first );
     MeshLevel const & mesh = meshBody.getMeshLevel( 0 ); // TODO by name?
@@ -493,12 +493,12 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< string, array1d< string > > const & bodyRegions,
+                              map< string, array1d< string > > const & regions,
                               bool symmetric )
 {
   // Convert input into internal format
   std::vector< Regions > support;
-  for( auto const & p : bodyRegions )
+  for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first );
     MeshLevel const & mesh = meshBody.getMeshLevel( 0 ); // TODO by name?

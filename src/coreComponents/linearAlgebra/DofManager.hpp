@@ -64,8 +64,11 @@ public:
    */
   struct Regions
   {
+    /// name of the mesh body
     string meshBodyName;
+    /// name of the mesh level
     string meshLevelName;
+    /// list of the region names
     std::vector< string > regionNames;
   };
 
@@ -132,10 +135,10 @@ public:
   void clear();
 
   /**
-   * @brief Assign a mesh.
-   * @param mesh the target mesh (non-const access required for allocating index arrays)
+   * @brief Assign a domain.
+   * @param domain the target domain (non-const access required for allocating index arrays)
    * @note Calling this function unconditionally removes all previously defined fields and couplings.
-   *       The user should only call this when they actually want to replace the mesh with a new one,
+   *       The user should only call this when they actually want to replace the domain with a new one,
    *       or they think the mesh topology might have changed and so the DOFs need to be re-numbered.
    *       They must then re-add all fields and couplings, and call reorderByRank() again.
    */
@@ -155,14 +158,14 @@ public:
                  std::vector< Regions > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, Location, integer, std::vector< string > const &)
+   * @copydoc addField(string const &, Location, integer, std::vector< Regions > const &)
    *
-   * Overload for arrayView1d<string> bodyRegions used by physics solvers.
+   * Overload for  map< string, array1d< string > > bodyRegions used by physics solvers.
    */
   void addField( string const & fieldName,
                  Location location,
                  integer components,
-                 map< string, array1d< string > > const & bodyRegions );
+                 map< string, array1d< string > > const & regions );
 
   /**
    * @brief Add coupling between two fields.
@@ -192,11 +195,13 @@ public:
                     Connector connectivity,
                     std::vector< Regions > const & regions = {},
                     bool symmetric = true );
-
+  /**
+   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< Regions > const & , bool  );
+   */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    map< string, array1d< string > > const & bodyRegions,
+                    map< string, array1d< string > > const & regions,
                     bool symmetric = true );
 
   /**
