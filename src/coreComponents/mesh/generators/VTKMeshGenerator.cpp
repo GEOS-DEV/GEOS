@@ -35,26 +35,28 @@
 #include <vtkPointData.h>
 #include <vtkRedistributeDataSetFilter.h>
 #include <vtkGenerateGlobalIds.h>
+#include <vtkBoundingBox.h>
+
 #ifdef GEOSX_USE_MPI
-#include <vtkMPIController.h>
-#include <vtkMPI.h>
+  #include <vtkMPIController.h>
+  #include <vtkMPI.h>
 #else
-#include <vtkDummyController.h>
+  #include <vtkDummyController.h>
 #endif
 
 #include <numeric>
 #include <unordered_set>
+
+
 namespace geosx
 {
 using namespace dataRepository;
 
-
-
 VTKMeshGenerator::VTKMeshGenerator( string const & name, Group * const parent ):
   MeshGeneratorBase( name, parent )
 {
-
-  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
+    registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
+    
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "path to the mesh file" );
@@ -63,7 +65,8 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name, Group * const parent ):
 void VTKMeshGenerator::postProcessInput()
 {}
 
-Group * VTKMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
+Group * VTKMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), 
+                                       string const & GEOSX_UNUSED_PARAM( childName ) )
 {
   return nullptr;
 }
@@ -79,19 +82,9 @@ template< typename VTK_ARRAY >
 VTK_ARRAY const & getDataArray( vtkFieldData & source, char const * name )
 {
   VTK_ARRAY const * const array = getDataArrayOptional< VTK_ARRAY >( source, name );
-  GEOSX_ERROR_IF( array == nullptr, "VTK array '" << name << "' not found or has unexpected data type" );
+  GEOSX_ERROR_IF( array == nullptr, 
+                  "VTK array '" << name << "' not found or has unexpected data type" );
   return *array;
-}
-
-/**
- * @brief Check if two boxes are intersected
- * @param[in] box1 the first box [xMin xMax yMin yMax zMin zMax]
- * @param[in] box2 the second box [xMin xMax yMin yMax zMin zMax]
- * @return true if the boxes are intersecting, false otherwise
- */
-bool checkIntersection( double box1[6], double box2[6] )
-{
-  return box1[0] < box2[1] && box1[1]> box2[0] && box1[2] < box2[3] && box1[3]> box2[2] && box1[4] < box2[5] && box1[5]> box2[4];
 }
 
 /**
@@ -100,14 +93,15 @@ bool checkIntersection( double box1[6], double box2[6] )
 vtkSmartPointer< vtkMultiProcessController > getVTKController()
 {
   #ifdef GEOSX_USE_MPI
-  vtkNew< vtkMPIController > controller;
-  vtkMPICommunicatorOpaqueComm vtkGeosxComm( &MPI_COMM_GEOSX );
-  vtkNew< vtkMPICommunicator > communicator;
-  communicator->InitializeExternal( &vtkGeosxComm );
-  controller->SetCommunicator( communicator );
+    vtkNew< vtkMPIController > controller;
+    vtkMPICommunicatorOpaqueComm vtkGeosxComm( &MPI_COMM_GEOSX );
+    vtkNew< vtkMPICommunicator > communicator;
+    communicator->InitializeExternal( &vtkGeosxComm );
+    controller->SetCommunicator( communicator );
   #else
-  vtkNew< vtkDummyController > controller;
+    vtkNew< vtkDummyController > controller;
   #endif
+
   return controller;
 }
 
@@ -117,7 +111,10 @@ vtkSmartPointer< vtkMultiProcessController > getVTKController()
  */
 vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
 {
-  string_array filePathTokenized = stringutilities::tokenize( filePath, "." ); //TODO maybe code a method in Path to get the file extension?
+  string_array filePathTokenized = stringutilities::tokenize( filePath, "." ); 
+  //TODO maybe code a method in Path to get the file extension?
+  // vtk should have something to get it -- no ? 
+
   string extension = filePathTokenized[filePathTokenized.size() - 1];
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtkSmartPointer< vtkUnstructuredGrid >::New();
 
@@ -172,8 +169,9 @@ vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
  * @brief Redistribute the mesh among the available MPI ranks
  * @details this method will also generate global ids for points and cells in the VTK Mesh
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
- */
-vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & loadedMesh )
+ * @param[in] cuts the bounding boxes used by the VTK partitioner needed to compute neighboring ranks
+  */
+vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & loadedMesh, std::vector<vtkBoundingBox> & cuts )
 {
   // Redistribute data all over the available ranks
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
@@ -181,6 +179,8 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
   rdsf->SetNumberOfPartitions( MpiWrapper::commSize() );
   rdsf->GenerateGlobalCellIdsOn();
   rdsf->Update();
+
+  cuts = rdsf->GetCuts();
 
   // Generate global IDs for vertices and cells
   vtkNew< vtkGenerateGlobalIds > generator;
@@ -192,7 +192,7 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
 
 /**
  * @brief Copy the VTK mesh nodes into the nodeManager of GEOSX
- * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
+ * @param[in] nodeManager the NodeManager of the domain in which the points will be copied.
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  * @return the global length of the mesh (diagonal of the bounding box)
  */
@@ -230,56 +230,47 @@ double writeMeshNodes( NodeManager & nodeManager, vtkUnstructuredGrid & mesh )
 
 /**
  * @brief Compute the potential rank neighbor list
- * @param[in] rankBounds the boundary of the mesh in this rank
- * @param[in] globalLength the globalLength of the model
- * @details Compute the metisNeighbor. This method computes the bounding box
- * of each domains. If these boundings boxes are crossing, it is possible that the corresponsing
- * domains are neighbors.
+ * @param[in] cuts the bounding boxes used by the VTK partitioner for all ranks
+ * @details Compute the rank neighbors. The asssumption is that 2 ranks are neighbors if
+ * the corresponding bounding boxes intersect.
  */
-std::set< int > computePotentialNeighborLists( double const rankBounds[], double const globalLength )
+std::set< int > computeMPINeighborRanks( const std::vector<vtkBoundingBox> & cuts)
 {
-  double haloSize = globalLength/1000.;
-  double rankBoundsHalo[6];
-  /// compute the halo
-  for( unsigned int i = 0; i < 6; i++ )
-  {
-    rankBoundsHalo[i] = rankBounds[i];
-    rankBoundsHalo[i] += i%2?-haloSize:haloSize;
-  }
-
-  std::vector< double > allBounds( 6 * MpiWrapper::commSize());
-  MpiWrapper::allgather< double, double >( rankBounds, 6, allBounds.data(), 6, MPI_COMM_GEOSX );
-
-  //Checking the intersection
+  unsigned int nbRanks = MpiWrapper::commSize();
+  GEOSX_ERROR_IF(cuts.size() != nbRanks, "The number of VTK cuts does not match the number of ranks");
+  
   std::set< int > rankNeighbor;
-  for( int i = 0; i < MpiWrapper::commSize(); i++ )
+  unsigned int currentRank = MpiWrapper::commRank();
+  vtkBoundingBox currentBox = cuts[currentRank];
+
+  for( unsigned int i = 0; i < cuts.size(); i++ )
   {
-    if( i == MpiWrapper::commRank())
+    if( i != currentRank && currentBox.Intersects(cuts[i]))
     {
-      continue;
-    }
-    std::vector< double >::const_iterator first = allBounds.begin() + 6*i;
-    std::vector< double >::const_iterator last = allBounds.begin() + 6*(i+1);
-    std::vector< double > curBound( first, last );
-    if( checkIntersection( rankBoundsHalo, curBound.data()))
-    {
-      rankNeighbor.insert( i );
+      rankNeighbor.insert( i );      
     }
   }
+
   return rankNeighbor;
 }
+
 
 template< typename TYPE >
 std::vector< TYPE > communicateAttributes( std::vector< TYPE > const & attributeVector )
 {
   std::vector< TYPE > allAttributes;
   array1d< int > attributeSizes( MpiWrapper::commSize());
-  MpiWrapper::allGather( LvArray::integerConversion< int >( attributeVector.size()), attributeSizes, MPI_COMM_GEOSX );
+  MpiWrapper::allGather( LvArray::integerConversion< int >( attributeVector.size()),
+                         attributeSizes, MPI_COMM_GEOSX );
+
   int const totalNbAttributeId = std::accumulate( attributeSizes.begin(), attributeSizes.end(), 0 );
   allAttributes.resize( totalNbAttributeId );
   std::vector< int > displacements( MpiWrapper::commSize(), 0 );
   std::partial_sum( attributeSizes.begin(), attributeSizes.end() - 1, displacements.begin() + 1 );
-  MpiWrapper::allgatherv( attributeVector.data(), attributeVector.size(), allAttributes.data(), attributeSizes.data(), displacements.data(), MPI_COMM_GEOSX );
+  
+  MpiWrapper::allgatherv( attributeVector.data(), attributeVector.size(),
+                          allAttributes.data(), attributeSizes.data(),
+                          displacements.data(), MPI_COMM_GEOSX );
 
   std::sort( allAttributes.begin(), allAttributes.end());
   auto last = std::unique( allAttributes.begin(), allAttributes.end());
@@ -299,15 +290,22 @@ std::vector< TYPE > communicateAttributes( std::vector< TYPE > const & attribute
  * @param[out] allSurfaces a vector containing all the surfaces among all the MPI rank
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex, std::map< int, std::vector< vtkIdType > > & regionsTetra,
-                         std::map< int, std::vector< vtkIdType > > & regionsWedges, std::map< int, std::vector< vtkIdType > > & regionsPyramids,
-                         std::map< int, std::vector< vtkIdType > > & surfaces, std::vector< int > & allSurfaces,
+void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex, 
+                         std::map< int, std::vector< vtkIdType > > & regionsTetra,
+                         std::map< int, std::vector< vtkIdType > > & regionsWedges, 
+                         std::map< int, std::vector< vtkIdType > > & regionsPyramids,
+                         std::map< int, std::vector< vtkIdType > > & surfaces, 
+                         std::vector< int > & allSurfaces,
                          vtkUnstructuredGrid & mesh )
 {
-  vtkIntArray const * const attributeDataArray = getDataArrayOptional< vtkIntArray >( *mesh.GetCellData(), "attribute" );
+  // What happens if "attribute" is not an Int attribute ? 
+  vtkIntArray const * const attributeDataArray =
+    getDataArrayOptional< vtkIntArray >( *mesh.GetCellData(), "attribute" );
 
-  auto countCell = [&]( localIndex c, std::map< int, std::vector< vtkIdType > > & regionsElem ) { // auto can be multiple types in the same
-                                                                                                  // function
+  
+  // TODO Allocate the needed space before push_backs 
+  auto countCell = [&]( localIndex c, std::map< int, std::vector< vtkIdType > > & regionsElem ) 
+  {
     if( attributeDataArray != nullptr )
     {
       int region = attributeDataArray->GetValue( c );
@@ -348,22 +346,27 @@ void countCellsAndFaces( std::map< int, std::vector< vtkIdType > > & regionsHex,
     }
   }
 
+  // TODO Output logger information on the loaded external mesh similarly to PAMELA
+  
   // Communicate all the cells blocks
-  std::vector< int > cellBlockRegionIndex( regionsHex.size() + regionsTetra.size() +
-                                           regionsPyramids.size() + regionsWedges.size() );
+  unsigned int nbCellBlocks = regionsHex.size() + regionsTetra.size() +
+                              regionsPyramids.size() + regionsWedges.size();
+  
+  std::vector< int > cellBlockRegionIndex( nbCellBlocks );
+  std::vector< ElementType > cellBlockElementType( nbCellBlocks );
 
-  std::vector< ElementType > cellBlockElementType( regionsHex.size() + regionsTetra.size() +
-                                                   regionsPyramids.size() + regionsWedges.size() );
+  unsigned int count = 0;
 
-
-  unsigned int count =0;
-  auto fillCellBlockNames = [&]( std::map< int, std::vector< vtkIdType > > & regionsElem, ElementType type ) {
+  auto fillCellBlockNames = [&]( std::map< int, 
+                                 std::vector< vtkIdType > > & regionsElem,               ElementType type ) 
+  {
     for( auto const & region : regionsElem )
     {
       cellBlockRegionIndex[count] = region.first;
       cellBlockElementType[count++] = type;
     }
   };
+
   fillCellBlockNames( regionsHex, ElementType::Hexahedron );
   fillCellBlockNames( regionsTetra, ElementType::Tetrahedron );
   fillCellBlockNames( regionsWedges, ElementType::Prism );
@@ -418,6 +421,10 @@ std::vector< vtkDataArray * > findArrayToBeImported( vtkUnstructuredGrid & mesh 
 {
   std::vector< vtkDataArray * > arrayToBeImported;
   vtkCellData * cellData = mesh.GetCellData();
+
+  std::cout << " ----  Number of Arrays " << cellData->GetNumberOfArrays() 
+  << std::endl << std::endl;
+
   for( int i = 0; i < cellData->GetNumberOfArrays(); i++ )
   {
     vtkAbstractArray * curArray = cellData->GetAbstractArray( i );
@@ -430,6 +437,7 @@ std::vector< vtkDataArray * > findArrayToBeImported( vtkUnstructuredGrid & mesh 
     }
     if( dataType != VTK_FLOAT && dataType != VTK_DOUBLE )
     {
+        // TODO Do not show a message for GlobalIds
       GEOSX_LOG_RANK_0( "Underlying data Type " << curArray->GetDataTypeAsString() << " for array "
                                                 << curArray->GetName() << " is not supported by GEOSX and will be ignored "
                                                 << "(Only double and float are supported)" );
@@ -505,14 +513,19 @@ ElementType getElementType( int cellType )
  * @param[in,out] localToGLobal the local index to global index map
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void writeHexahedronVertices( CellBlock::NodeMapType & cellToVertex, std::vector< vtkIdType > const & cellIds,
-                              arrayView1d< globalIndex > const & localToGlobal, vtkUnstructuredGrid & mesh )
+void writeHexahedronVertices( CellBlock::NodeMapType & cellToVertex, 
+                              std::vector< vtkIdType > const & cellIds,
+                              arrayView1d< globalIndex > const & localToGlobal, 
+                              vtkUnstructuredGrid & mesh )
 {
   localIndex cellCount = 0;
-  vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( *mesh.GetCellData(), "GlobalCellIds" );
+  vtkIdTypeArray const & globalCellIdsDataArray = 
+    getDataArray< vtkIdTypeArray >( *mesh.GetCellData(), "GlobalCellIds" );
+
   for( vtkIdType c : cellIds )
   {
     vtkCell * currentCell = mesh.GetCell( c );
+    
     cellToVertex[cellCount][0] = currentCell->GetPointId( 0 );
     cellToVertex[cellCount][1] = currentCell->GetPointId( 1 );
     cellToVertex[cellCount][2] = currentCell->GetPointId( 3 );
@@ -521,6 +534,7 @@ void writeHexahedronVertices( CellBlock::NodeMapType & cellToVertex, std::vector
     cellToVertex[cellCount][5] = currentCell->GetPointId( 5 );
     cellToVertex[cellCount][6] = currentCell->GetPointId( 7 );
     cellToVertex[cellCount][7] = currentCell->GetPointId( 6 );
+
     localToGlobal[cellCount] = globalCellIdsDataArray.GetValue( c );
     cellCount++;
   }
@@ -534,11 +548,14 @@ void writeHexahedronVertices( CellBlock::NodeMapType & cellToVertex, std::vector
  * @param[in,out] localToGLobal the local index to global index map
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex, std::vector< vtkIdType > const & cellIds,
-                         arrayView1d< globalIndex > const & localToGlobal, vtkUnstructuredGrid & mesh )
+void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex,
+                         std::vector< vtkIdType > const & cellIds,
+                         arrayView1d< globalIndex > const & localToGlobal, 
+                         vtkUnstructuredGrid & mesh )
 {
   localIndex cellCount = 0;
-  vtkIdTypeArray const & globalCellIdsDataArray = getDataArray< vtkIdTypeArray >( *mesh.GetCellData(), "GlobalCellIds" );
+  vtkIdTypeArray const & globalCellIdsDataArray = 
+    getDataArray< vtkIdTypeArray >( *mesh.GetCellData(), "GlobalCellIds" );
   for( vtkIdType c : cellIds )
   {
     vtkCell * currentCell = mesh.GetCell( c );
@@ -548,6 +565,7 @@ void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex, std::vector< vtk
     cellToVertex[cellCount][3] = currentCell->GetPointId( 4 );
     cellToVertex[cellCount][4] = currentCell->GetPointId( 2 );
     cellToVertex[cellCount][4] = currentCell->GetPointId( 5 );
+
     localToGlobal[cellCount] = globalCellIdsDataArray.GetValue( c );
     cellCount++;
   }
@@ -563,13 +581,17 @@ void writeWedgeVertices( CellBlock::NodeMapType & cellToVertex, std::vector< vtk
  * @param[in] arraysTobeImported the list of arrays to be imported
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  */
-void writeCellBlock( string const & name, std::vector< vtkIdType > const & cellIds, int region_id, int cellType,
+void writeCellBlock( string const & name,
+                     std::vector< vtkIdType > const & cellIds, 
+                     int region_id, 
+                     int cellType,
                      CellBlockManager & cellBlockManager,
                      vtkUnstructuredGrid & mesh )
 {
-
+ 
   localIndex numCells = cellIds.size();
   assert( region_id >= -1 );
+  // TODO Function to create the names and clarify their role
   string const cellBlockName = region_id != -1  ? std::to_string( region_id ) + "_" + name : name;
 
   CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).getGroup< CellBlock >( cellBlockName );
@@ -717,6 +739,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   for( vtkDataArray * vtkArray : m_arraysToBeImported )
   {
     fieldNames["elems"].emplace_back( vtkArray->GetName() );
+    std::cout << " VTK ARRAY field name " << vtkArray->GetName() << std::endl ;
   }
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
@@ -776,7 +799,7 @@ void writeCellBlocks( DomainPartition & domain,
 }
 
 /**
- * @param[in] nodeManager the NodeManager of the domain in which the poiints will be copied.
+ * @param[in] nodeManager the NodeManager of the domain in which the points will be copied.
  * @param[in] allSurfaces the surfaces id to be imported
  * @param[in] surfaces map from the surfaces index to the list of cells in this surface in this rank
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
@@ -803,16 +826,20 @@ void writeSurfaces( NodeManager & nodeManager, std::vector< int > const & allSur
     }
   }
 }
+
 void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 {
   int mpiSize = MpiWrapper::commSize();
-  GEOSX_ERROR_IF( (mpiSize & (mpiSize - 1)) != 0, "MPI size is not a power of 2. Can't be used with the VTKMeshGenerator" );
+  GEOSX_ERROR_IF( (mpiSize & (mpiSize - 1)) != 0, 
+                  "When using the VTKMeshGenerator the number of MPI processes must be a power of 2." );
+  
   vtkSmartPointer< vtkMultiProcessController > controller = getVTKController();
   vtkMultiProcessController::SetGlobalController( controller );
 
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = loadVTKMesh( m_filePath );
 
-  m_vtkMesh =redistributeMesh( *loadedMesh );
+  std::vector<vtkBoundingBox> cuts;
+  m_vtkMesh = redistributeMesh( *loadedMesh, cuts );
 
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
@@ -823,20 +850,23 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   double globalLength = writeMeshNodes( nodeManager, *m_vtkMesh );
   meshBody.setGlobalLengthScale( globalLength );
 
-  domain.getMetisNeighborList() = computePotentialNeighborLists( m_vtkMesh->GetBounds(), globalLength );
+  // TODO Check that the neighbor information set is bulletproof
+  domain.getMetisNeighborList() = computeMPINeighborRanks( cuts );
 
-  std::map< int, std::vector< vtkIdType > > surfaces; //local to this rank
+  std::map< int, std::vector< vtkIdType > > surfaces; // local to this rank
   std::vector< int > allSurfaces; // global to the whole mesh
   std::vector< string > allCellBlockNames;
 
   countCellsAndFaces( m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, surfaces, allSurfaces, *m_vtkMesh );
 
   m_arraysToBeImported = findArrayToBeImported( *m_vtkMesh );
+  // TODO Logger information on the imported arrays
 
   writeCellBlocks( domain, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids, *m_vtkMesh );
 
   writeSurfaces( nodeManager, allSurfaces, surfaces, *m_vtkMesh );
+}
 
-}
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, VTKMeshGenerator, string const &, Group * const )
-}
+
+} // namespace geosx
