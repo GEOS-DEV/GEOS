@@ -82,15 +82,15 @@ Group * VTKMeshGenerator::createChild( string const &
 
 template< typename VTK_ARRAY >
 VTK_ARRAY const * getDataArrayOptional( vtkFieldData * source,
-                                        char const * name )
+                                        string const & name )
 {
   // returns nullptr if either lookup or cast fail
-  return VTK_ARRAY::FastDownCast( source->GetAbstractArray( name ) );
+  return VTK_ARRAY::FastDownCast( source->GetAbstractArray( name.c_str() ) );
 }
 
 template< typename VTK_ARRAY >
 VTK_ARRAY const & getDataArray( vtkFieldData * source,
-                                char const * name )
+                                string const & name )
 {
   VTK_ARRAY const * const array = getDataArrayOptional< VTK_ARRAY >( source, name );
   GEOSX_ERROR_IF( array == nullptr, "VTK array '" << name << "' not found or has unexpected data type" );
@@ -312,22 +312,37 @@ std::set< int > computePotentialNeighborLists( double const rankBounds[],
   return rankNeighbor;
 }
 
-template< typename TYPE >
-std::vector< TYPE > communicateAttributes( std::vector< TYPE > const & attributeVector )
+/**
+ * @brief Gathers all the data from all ranks, merge them, sort them, and remove duplicates.
+ * @tparam T Type of the exchanged data.
+ * @param data The data to be exchanged.
+ * @return The merged data.
+ * @note This function makes MPI calls.
+ */
+template< typename T >
+std::vector< T > gatherData( std::vector< T > const & data )
 {
-  std::vector< TYPE > allAttributes;
-  array1d< int > attributeSizes( MpiWrapper::commSize() );
-  MpiWrapper::allGather( LvArray::integerConversion< int >( attributeVector.size() ), attributeSizes, MPI_COMM_GEOSX );
-  int const totalNbAttributeId = std::accumulate( attributeSizes.begin(), attributeSizes.end(), 0 );
-  allAttributes.resize( totalNbAttributeId );
-  std::vector< int > displacements( MpiWrapper::commSize(), 0 );
-  std::partial_sum( attributeSizes.begin(), attributeSizes.end() - 1, displacements.begin() + 1 );
-  MpiWrapper::allgatherv( attributeVector.data(), attributeVector.size(), allAttributes.data(), attributeSizes.data(), displacements.data(), MPI_COMM_GEOSX );
+  // Exchange the sizes of the data across all ranks.
+  array1d< int > dataSizes( MpiWrapper::commSize() );
+  MpiWrapper::allGather( LvArray::integerConversion< int >( data.size() ), dataSizes, MPI_COMM_GEOSX );
+  // `totalDataSize` contains the total data size across all the MPI ranks.
+  int const totalDataSize = std::accumulate( dataSizes.begin(), dataSizes.end(), 0 );
 
-  std::sort( allAttributes.begin(), allAttributes.end() );
-  auto last = std::unique( allAttributes.begin(), allAttributes.end() );
-  allAttributes.erase( last, allAttributes.end() );
-  return allAttributes;
+  // Once the MPI exchange is done, `allData` will contain all the data of all the MPI ranks.
+  // We want all ranks to get all the data. But each rank may have a different size of information.
+  // Therefore, we use `allgatherv` that does not impose the same size across ranks like `allgather` does.
+  std::vector< T > allData( totalDataSize );
+  // `displacements` is the offset (relative to the receive buffer) to store the data for each rank.
+  std::vector< int > displacements( MpiWrapper::commSize(), 0 );
+  std::partial_sum( dataSizes.begin(), dataSizes.end() - 1, displacements.begin() + 1 );
+  MpiWrapper::allgatherv( data.data(), data.size(), allData.data(), dataSizes.data(), displacements.data(), MPI_COMM_GEOSX );
+
+  // Finalizing by sorting, removing duplicates and trimming the result vector at the proper size.
+  std::sort( allData.begin(), allData.end() );
+  auto newEnd = std::unique( allData.begin(), allData.end() );
+  allData.erase( newEnd, allData.end() );
+
+  return allData;
 }
 
 /**
@@ -399,7 +414,7 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
   std::vector< int > cellBlockRegionIndex( numRegions );
   std::vector< ElementType > cellBlockElementType( numRegions );
 
-  unsigned int count = 0;
+  std::size_t count = 0;
   auto fillCellBlockNames = [&]( std::map< int, std::vector< vtkIdType > > & regionsElem,
                                  ElementType type ) -> void
   {
@@ -418,8 +433,8 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
   // Comunicate all the region names
   // TODO if in a mesh, there is for instance a region with tetra, and a region without tetra,
   // they will both contain a cell block tetrahedron
-  std::vector< int > allCellBlockRegionIndex = communicateAttributes( cellBlockRegionIndex );
-  std::vector< ElementType > allCellBlockElementType = communicateAttributes( cellBlockElementType );
+  std::vector< int > allCellBlockRegionIndex = gatherData( cellBlockRegionIndex );
+  std::vector< ElementType > allCellBlockElementType = gatherData( cellBlockElementType );
   for( unsigned int i = 0; i < allCellBlockRegionIndex.size(); i++ )
   {
     for( unsigned int j = 0; j < allCellBlockElementType.size(); j++ )
@@ -445,15 +460,17 @@ std::map< int, std::vector< vtkIdType > > countCellsAndFaces( vtkSmartPointer< v
     }
   }
 
-  // Communicate all the surfaces attributes to the ranks
-  std::vector< int > surfaceVector;
-  surfaceVector.reserve( surfacesIdsToCellsIds.size() );
-  for( auto & surface: surfacesIdsToCellsIds )
+  // We want to know the surface attributes from all MPI ranks.
+  // Then we'll be able to allocate an entry in the `surfacesIdsToCellsIds` table.
+  // The `cellsIds` can possibly be empty (if the rank does not hold any cells for the surface).
+  std::vector< int > surfaces;
+  surfaces.reserve( surfacesIdsToCellsIds.size() );
+  for( auto const & s2c: surfacesIdsToCellsIds )
   {
-    surfaceVector.push_back( surface.first );
+    surfaces.push_back( s2c.first );
   }
-  std::vector< int > const allSurfaces = communicateAttributes( surfaceVector );
-  for( auto const & s: allSurfaces )
+  //
+  for( auto const & s: gatherData( surfaces ) )
   {
     surfacesIdsToCellsIds[s];
   }
@@ -819,12 +836,14 @@ void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
   fct( VTK_PYRAMID, regionsPyramids );
 }
 
- /**
-  * @brief
-  * @param[in] mesh the vtkUnstructuredGrid that is loaded
-  * @param[in] surfacesIdsToCellsIds map from the surfaces index to the list of cells in this surface in this rank
-  * @param[out] cellBlockManager The instance that stores the node sets.
-  */
+/**
+ * @brief Build the "surface" node sets from the surface information.
+ * @param[in] mesh The vtkUnstructuredGrid that is loaded
+ * @param[in] surfacesIdsToCellsIds Map from the surfaces index to the list of cells in this surface in this rank.
+ * @param[out] cellBlockManager The instance that stores the node sets.
+ * @note @p surfacesIdsToCellsIds will contain all the surface ids across all the MPI ranks, but only its cell ids.
+ * If the current MPI rank has no cell id for a given surface, then an empty set will be created.
+ */
 void buildSurfaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                     std::map< int, std::vector< vtkIdType > > const & surfacesIdsToCellsIds,
                     CellBlockManager & cellBlockManager )
