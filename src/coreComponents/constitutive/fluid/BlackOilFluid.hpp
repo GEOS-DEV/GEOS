@@ -111,9 +111,9 @@ private:
                                       PhaseProp::SliceType const & phaseDens,
                                       PhaseProp::SliceType const & phaseMassDens,
                                       PhaseProp::SliceType const & phaseVisc,
-                                      real64 phaseMW[NP_BO],
-                                      real64 dphaseMW_dPres[],
-                                      real64 dphaseMW_dGlobalCompFrac[] ) const;
+                                      real64 phaseMolecularWeight[NP_BO],
+                                      real64 dPhaseMolecularWeight_dPres[NP_BO],
+                                      real64 dPhaseMolecularWeight_dGlobalCompFrac[NP_BO][NC_BO] ) const;
 
     GEOSX_HOST_DEVICE
     void computeEquilibrium( real64 const pressure,
@@ -121,22 +121,6 @@ private:
                              real64 const composition[],
                              PhaseProp::SliceType const & phaseFraction,
                              PhaseComp::SliceType const & phaseCompFraction ) const;
-
-    // TODO: move this function elsewhere so we can use it in other models
-    GEOSX_HOST_DEVICE
-    void convertToMolar( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                         real64 compMoleFrac[],
-                         real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO] ) const;
-
-    GEOSX_HOST_DEVICE
-    void convertToMass( real64 const dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO],
-                        real64 const phaseMW[NP_BO],
-                        real64 const dPhaseMW_dPressure[NP_BO],
-                        real64 const dPhaseMW_dGlobalCompFraction[NP_BO *NC_BO],
-                        PhaseProp::SliceType const & phaseFrac,
-                        PhaseComp::SliceType const & phaseCompFrac,
-                        arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dGlobalCompFrac,
-                        arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dGlobalCompFrac ) const;
 
     GEOSX_HOST_DEVICE
     void computeRs( real64 const presBub,
@@ -294,15 +278,20 @@ BlackOilFluid::KernelWrapper::
 
   real64 compMoleFrac[NC_BO]{};
   real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO]{};
-  real64 phaseMW[NP_BO]{};
-  real64 dPhaseMW_dPressure[NP_BO]{};
-  real64 dPhaseMW_dGlobalCompFraction[NP_BO*NC_BO]{};
+
+  real64 phaseMolecularWeight[NP_BO]{};
+  real64 dPhaseMolecularWeight_dPressure[NP_BO]{};
+  real64 dPhaseMolecularWeight_dTemperature[NP_BO]{};
+  real64 dPhaseMolecularWeight_dGlobalCompFraction[NP_BO][NC_BO]{};
 
   // 1. Convert to mass if necessary
 
   if( m_useMass )
   {
-    convertToMolar( composition, compMoleFrac, dCompMoleFrac_dCompMassFrac );
+    convertToMoleFractions( composition,
+                            m_componentMolarWeight,
+                            compMoleFrac,
+                            dCompMoleFrac_dCompMassFrac );
   }
   else
   {
@@ -329,55 +318,31 @@ BlackOilFluid::KernelWrapper::
                                phaseDensity,
                                phaseMassDensity,
                                phaseViscosity,
-                               phaseMW,
-                               dPhaseMW_dPressure,
-                               dPhaseMW_dGlobalCompFraction );
+                               phaseMolecularWeight,
+                               dPhaseMolecularWeight_dPressure,
+                               dPhaseMolecularWeight_dGlobalCompFraction );
 
   // 4. If mass variables used instead of molar, perform the conversion
+
   if( m_useMass )
   {
-    convertToMass( dCompMoleFrac_dCompMassFrac,
-                   phaseMW,
-                   dPhaseMW_dPressure,
-                   dPhaseMW_dGlobalCompFraction,
-                   phaseFraction,
-                   phaseCompFraction,
-                   phaseDensity.dComp,
-                   phaseViscosity.dComp );
+    convertToMassFractions< NC_BO, NP_BO >( dCompMoleFrac_dCompMassFrac,
+                                            phaseMolecularWeight,
+                                            dPhaseMolecularWeight_dPressure,
+                                            dPhaseMolecularWeight_dTemperature,
+                                            dPhaseMolecularWeight_dGlobalCompFraction,
+                                            phaseFraction,
+                                            phaseCompFraction,
+                                            phaseDensity.dComp,
+                                            phaseViscosity.dComp );
   }
 
   // 5. Compute total fluid mass/molar density and derivatives
-  totalDensity.value = 0.0;
-  totalDensity.dPres = 0.0;
-  for( integer ic = 0; ic < NC_BO; ++ic )
-  {
-    totalDensity.dComp[ic] = 0.0;
-  }
 
-  for( integer ip = 0; ip < NP_BO; ++ip )
-  {
-    if( phaseFraction.value[ip] <= 0. )
-    {
-      continue;
-    }
-    real64 const densInv = 1.0 / phaseDensity.value[ip];
-    real64 const value = phaseFraction.value[ip] * densInv;
+  computeTotalDensity( phaseFraction,
+                       phaseDensity,
+                       totalDensity );
 
-    totalDensity.value += value;
-    totalDensity.dPres += ( phaseFraction.dPres[ip] - value * phaseDensity.dPres[ip] ) * densInv;
-    for( integer ic = 0; ic < NC_BO; ++ic )
-    {
-      totalDensity.dComp[ic] += ( phaseFraction.dComp[ip][ic] - value * phaseDensity.dComp[ip][ic] ) * densInv;
-    }
-  }
-
-  totalDensity.value = 1.0 / totalDensity.value;
-  real64 const minusDens2 = -totalDensity.value * totalDensity.value;
-  totalDensity.dPres *= minusDens2;
-  for( integer ic = 0; ic < NC_BO; ++ic )
-  {
-    totalDensity.dComp[ic] *= minusDens2;
-  }
 }
 
 GEOSX_HOST_DEVICE
@@ -555,9 +520,9 @@ BlackOilFluid::KernelWrapper::
                                PhaseProp::SliceType const & phaseDens,
                                PhaseProp::SliceType const & phaseMassDens,
                                PhaseProp::SliceType const & phaseVisc,
-                               real64 phaseMW[NP_BO],
-                               real64 dPhaseMW_dPres[],
-                               real64 dPhaseMW_dGlobalCompFrac[] ) const
+                               real64 phaseMolecularWeight[NP_BO],
+                               real64 dPhaseMolecularWeight_dPres[NP_BO],
+                               real64 dPhaseMolecularWeight_dGlobalCompFrac[NP_BO][NC_BO] ) const
 {
   using PT = BlackOilFluid::PhaseType;
 
@@ -602,18 +567,18 @@ BlackOilFluid::KernelWrapper::
     phaseMassDens.value[ipGas] = m_surfacePhaseMassDensity[ipGas] * fvfInv;
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ipGas];
     phaseDens.value[ipGas] = phaseMassDens.value[ipGas] * mult;
-    phaseMW[ipGas] = m_componentMolarWeight[ipGas];
+    phaseMolecularWeight[ipGas] = m_componentMolarWeight[ipGas];
 
     if( needDerivs )
     {
       phaseMassDens.dPres[ipGas] = -derivative * phaseMassDens.value[ipGas] * fvfInv;
       phaseDens.dPres[ipGas] = phaseMassDens.dPres[ipGas] * mult;
-      dPhaseMW_dPres[ipGas] = 0.;
+      dPhaseMolecularWeight_dPres[ipGas] = 0.;
       for( integer ic = 0; ic < NC_BO; ic++ )
       {
         phaseMassDens.dComp[ipGas][ic] = 0.;
         phaseDens.dComp[ipGas][ic]     = 0.;
-        dPhaseMW_dGlobalCompFrac[ipGas*NC_BO+ic]  = 0.;
+        dPhaseMolecularWeight_dGlobalCompFrac[ipGas][ic]  = 0.;
       }
     }
 
@@ -634,18 +599,18 @@ BlackOilFluid::KernelWrapper::
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ipWater];
     phaseDens.value[ipWater] = phaseMassDens.value[ipWater] * mult;
     phaseVisc.value[ipWater] = m_waterParams.viscosity;
-    phaseMW[ipWater] = m_componentMolarWeight[ipWater];
+    phaseMolecularWeight[ipWater] = m_componentMolarWeight[ipWater];
 
     if( needDerivs )
     {
       phaseMassDens.dPres[ipWater] = -dDenom_dPres * phaseMassDens.value[ipWater] * denomInv;
       phaseDens.dPres[ipWater] = phaseMassDens.dPres[ipWater] * mult;
-      dPhaseMW_dPres[ipWater] = 0.;
+      dPhaseMolecularWeight_dPres[ipWater] = 0.;
       for( integer ic = 0; ic < NC_BO; ic++ )
       {
         phaseMassDens.dComp[ipWater][ic] = 0.;
         phaseDens.dComp[ipWater][ic] = 0.0;
-        dPhaseMW_dGlobalCompFrac[ipWater*NC_BO+ic] = 0.;
+        dPhaseMolecularWeight_dGlobalCompFrac[ipWater][ic] = 0.;
       }
     }
 
@@ -702,13 +667,13 @@ BlackOilFluid::KernelWrapper::
                             phaseDens.value[ipOil], phaseDens.dPres[ipOil],
                             phaseDens.dComp[ipOil] );
 
-    phaseMW[ipOil] = phaseMassDens.value[ipOil] / phaseDens.value[ipOil];
+    phaseMolecularWeight[ipOil] = phaseMassDens.value[ipOil] / phaseDens.value[ipOil];
     real64 const tmp = 1. / ( phaseDens.value[ipOil] * phaseDens.value[ipOil] );
-    dPhaseMW_dPres[ipOil] = ( phaseMassDens.dPres[ipOil] * phaseDens.value[ipOil] - phaseDens.dPres[ipOil] * phaseMassDens.value[ipOil] ) * tmp;
+    dPhaseMolecularWeight_dPres[ipOil] = ( phaseMassDens.dPres[ipOil] * phaseDens.value[ipOil] - phaseDens.dPres[ipOil] * phaseMassDens.value[ipOil] ) * tmp;
     for( integer ic = 0; ic < NC_BO; ++ic )
     {
-      dPhaseMW_dGlobalCompFrac[ipOil*NC_BO+ic] = ( phaseMassDens.dComp[ipOil][ic] * phaseDens.value[ipOil]
-                                                   - phaseDens.dComp[ipOil][ic] * phaseMassDens.value[ipOil] ) * tmp;
+      dPhaseMolecularWeight_dGlobalCompFrac[ipOil][ic] =
+        ( phaseMassDens.dComp[ipOil][ic] * phaseDens.value[ipOil] - phaseDens.dComp[ipOil][ic] * phaseMassDens.value[ipOil] ) * tmp;
     }
 
     if( m_useMass )
@@ -734,156 +699,6 @@ BlackOilFluid::KernelWrapper::
       {
         phaseVisc.dComp[ipOil][i] = dVisc_dC[i];
       }
-    }
-  }
-}
-
-GEOSX_HOST_DEVICE
-inline void
-BlackOilFluid::KernelWrapper::
-  convertToMolar( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-                  real64 compMoleFrac[],
-                  real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO] ) const
-{
-  for( integer ic = 0; ic < NC_BO; ++ic )
-  {
-    for( integer jc = 0; jc < NC_BO; ++jc )
-    {
-      dCompMoleFrac_dCompMassFrac[ic][jc] = 0.0;
-    }
-  }
-
-  real64 totalMolality = 0.0;
-  for( integer ic = 0; ic < NC_BO; ++ic )
-  {
-    real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
-    compMoleFrac[ic] = composition[ic] * mwInv;
-    dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;
-    totalMolality += compMoleFrac[ic];
-  }
-
-  real64 const totalMolalityInv = 1.0 / totalMolality;
-  for( integer ic = 0; ic < NC_BO; ++ic )
-  {
-    compMoleFrac[ic] *= totalMolalityInv;
-
-    for( integer jc = 0; jc < NC_BO; ++jc )
-    {
-      dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
-      dCompMoleFrac_dCompMassFrac[ic][jc] *= totalMolalityInv;
-    }
-  }
-
-}
-
-
-GEOSX_HOST_DEVICE
-inline void
-BlackOilFluid::KernelWrapper::
-  convertToMass( real64 const dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO],
-                 real64 const phaseMW[NP_BO],
-                 real64 const dPhaseMW_dPres[NP_BO],
-                 real64 const dPhaseMW_dGlobalCompFrac[NP_BO * NC_BO],
-                 PhaseProp::SliceType const & phaseFrac,
-                 PhaseComp::SliceType const & phaseCompFrac,
-                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens_dGlobalCompFrac,
-                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const & dPhaseVisc_dGlobalCompFrac ) const
-{
-  // 1. Convert phase fractions (requires two passes)
-
-  real64 totalMass{};
-  real64 dTotalMass_dP{};
-  real64 dTotalMass_dC[NC_BO]{};
-
-  // 1.1. Compute mass of each phase and total mass (on a 1-mole basis)
-
-  for( integer ip = 0; ip < NP_BO; ++ip )
-  {
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
-    real64 const nu = phaseFrac.value[ip];
-
-    phaseFrac.value[ip] *= phaseMW[ip];
-    phaseFrac.dPres[ip] = phaseFrac.dPres[ip] * phaseMW[ip] + nu * dPhaseMW_dPres[ip];
-    totalMass += phaseFrac.value[ip];
-    dTotalMass_dP += phaseFrac.dPres[ip];
-
-    for( integer jc = 0; jc < NC_BO; ++jc )
-    {
-      phaseFrac.dComp[ip][jc] = phaseFrac.dComp[ip][jc] * phaseMW[ip] + nu * dPhaseMW_dGlobalCompFrac[jc + ip*NC_BO];
-      dTotalMass_dC[jc] += phaseFrac.dComp[ip][jc];
-    }
-  }
-
-  // 1.2. Normalize to get mass fractions
-
-  real64 const totalMassInv = 1.0 / totalMass;
-  for( integer ip = 0; ip < NC_BO; ++ip )
-  {
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
-    phaseFrac.value[ip] *= totalMassInv;
-    phaseFrac.dPres[ip] = ( phaseFrac.dPres[ip] - phaseFrac.value[ip] * dTotalMass_dP ) * totalMassInv;
-
-    for( integer jc = 0; jc < NC_BO; ++jc )
-    {
-      phaseFrac.dComp[ip][jc] = ( phaseFrac.dComp[ip][jc] - phaseFrac.value[ip] * dTotalMass_dC[jc] ) * totalMassInv;
-    }
-  }
-
-  // 2. Convert phase compositions
-
-  for( integer ip = 0; ip < NC_BO; ++ip )
-  {
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
-    real64 const phaseMWInv = 1.0 / phaseMW[ip];
-
-    for( integer ic = 0; ic < NC_BO; ++ic )
-    {
-
-      real64 const compMW = m_componentMolarWeight[ic];
-
-      phaseCompFrac.value[ip][ic] = phaseCompFrac.value[ip][ic] * compMW * phaseMWInv;
-      phaseCompFrac.dPres[ip][ic] = ( phaseCompFrac.dPres[ip][ic] * compMW - phaseCompFrac.value[ip][ic] * dPhaseMW_dPres[ip] ) * phaseMWInv;
-
-      for( integer jc = 0; jc < NC_BO; ++jc )
-      {
-        phaseCompFrac.dComp[ip][ic][jc] =
-          ( phaseCompFrac.dComp[ip][ic][jc] * compMW - phaseCompFrac.value[ip][ic] * dPhaseMW_dGlobalCompFrac[jc + ip*NC_BO] ) * phaseMWInv;
-      }
-    }
-  }
-
-  // 3. Update derivatives w.r.t. mole fractions to derivatives w.r.t mass fractions
-
-  real64 work[NC_BO];
-  for( integer ip = 0; ip < NC_BO; ++ip )
-  {
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
-    applyChainRuleInPlace( NC_BO, dCompMoleFrac_dCompMassFrac, phaseFrac.dComp[ip], work );
-    applyChainRuleInPlace( NC_BO, dCompMoleFrac_dCompMassFrac, dPhaseDens_dGlobalCompFrac[ip], work );
-    applyChainRuleInPlace( NC_BO, dCompMoleFrac_dCompMassFrac, dPhaseVisc_dGlobalCompFrac[ip], work );
-    for( integer ic = 0; ic < NC_BO; ++ic )
-    {
-      applyChainRuleInPlace( NC_BO, dCompMoleFrac_dCompMassFrac, phaseCompFrac.dComp[ip][ic], work );
     }
   }
 }

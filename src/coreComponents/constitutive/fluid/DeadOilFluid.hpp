@@ -308,15 +308,10 @@ DeadOilFluid::KernelWrapper::
   }
 
   // 4. Compute total fluid mass/molar density
-  totalDens = 0.0;
+  computeTotalDensity( phaseFraction,
+                       phaseDensity,
+                       totalDens );
 
-  // 4.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-  for( integer ip = 0; ip < nPhases; ++ip )
-  {
-    totalDens += phaseFraction[ip] / phaseDensity[ip];
-  }
-  // 4.2. Invert the previous quantity to get actual density
-  totalDens = 1.0 / totalDens;
 }
 
 GEOSX_HOST_DEVICE
@@ -374,32 +369,10 @@ DeadOilFluid::KernelWrapper::
   }
 
   // 4. Compute total fluid mass/molar density and derivatives
-  totalDensity.value = 0.0;
-  totalDensity.dPres = 0.0;
-  LvArray::forValuesInSlice( totalDensity.dComp, []( real64 & val ){ val = 0.0; } );
+  computeTotalDensity( phaseFraction,
+                       phaseDensity,
+                       totalDensity );
 
-  // 4.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-  for( integer ip = 0; ip < nPhases; ++ip )
-  {
-    real64 const densInv = 1.0 / phaseDensity.value[ip];
-    real64 const value = phaseFraction.value[ip] * densInv;
-
-    totalDensity.value += value;
-    totalDensity.dPres += ( phaseFraction.dPres[ip] - value * phaseDensity.dPres[ip] ) * densInv;
-    for( integer ic = 0; ic < nComps; ++ic )
-    {
-      totalDensity.dComp[ic] += ( phaseFraction.dComp[ip][ic] - value * phaseDensity.dComp[ip][ic] ) * densInv;
-    }
-  }
-
-  // 4.2. Invert the previous quantity to get actual density
-  totalDensity.value = 1.0 / totalDensity.value;
-  real64 const minusDens2 = -totalDensity.value * totalDensity.value;
-  totalDensity.dPres *= minusDens2;
-  for( integer ic = 0; ic < nComps; ++ic )
-  {
-    totalDensity.dComp[ic] *= minusDens2;
-  }
 }
 
 GEOSX_HOST_DEVICE
