@@ -179,15 +179,16 @@ void DofManager::createIndexArray( FieldDescription const & field )
 {
   LocationSwitch( field.location, [&]( auto const loc )
   {
-    Location constexpr LOC = decltype(loc)::value;
-    using helper = ArrayHelper< globalIndex, LOC >;
-
-    std::map< string, string_array > fieldNames;
-    fieldNames[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
     localIndex index = 0;
 
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
+      Location constexpr LOC = decltype(loc)::value;
+      using helper = ArrayHelper< globalIndex, LOC >;
+
+      std::map< string, string_array > fieldNames;
+      fieldNames[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
+
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
       typename helper::Accessor indexArray = helper::get( mesh, field.key );
@@ -208,9 +209,9 @@ void DofManager::removeIndexArray( FieldDescription const & field )
 {
   LocationSwitch( field.location, [&]( auto const loc )
   {
-    Location constexpr LOC = decltype(loc)::value;
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
+      Location constexpr LOC = decltype(loc)::value;
       ArrayHelper< globalIndex, LOC >::template remove<>( mesh, field.key, regions );
     } );
   } );
