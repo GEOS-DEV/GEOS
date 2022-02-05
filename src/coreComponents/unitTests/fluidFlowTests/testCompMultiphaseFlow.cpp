@@ -564,8 +564,8 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
           {
             ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
             elementRegionManager2.forElementSubRegions( regionNames2,
-                                                       [&]( localIndex const,
-                                                            ElementSubRegionBase & subRegion2 )
+                                                        [&]( localIndex const,
+                                                             ElementSubRegionBase & subRegion2 )
             {
               solver.updateFluidState( subRegion2 );
             } );
