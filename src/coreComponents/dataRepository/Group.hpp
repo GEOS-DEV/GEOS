@@ -1012,7 +1012,6 @@ public:
   template< typename KEY >
   WrapperBase const & getWrapperBase( KEY const & key ) const
   {
-//    printf( "%s \n", key.c_str() );
     WrapperBase const * const wrapper = m_wrappers[ key ];
     GEOSX_THROW_IF( wrapper == nullptr, "Group " << getPath() << " doesn't have a child " << key, std::domain_error );
     return *wrapper;
