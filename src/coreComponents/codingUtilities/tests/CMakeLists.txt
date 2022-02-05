@@ -11,11 +11,17 @@ set( testParallelSources
      testParallelTestUtilities.cpp
      )
 
-set( dependencyList
-     codingUtilities
-     gtest
-     mainInterface
-     )
+set( dependencyList gtest codingUtilities linearAlgebra lvarray )
+
+if( GEOSX_BUILD_SHARED_LIBS )
+  set( dependencyList ${dependencyList} geosx_core )
+else()
+  set( dependencyList ${dependencyList} ${geosx_core_libs} )
+endif()
+
+if( ENABLE_CUDA )
+  set( dependencyList ${dependencyList} cuda )
+endif()
 
 #
 # Add gtest C++ based tests
