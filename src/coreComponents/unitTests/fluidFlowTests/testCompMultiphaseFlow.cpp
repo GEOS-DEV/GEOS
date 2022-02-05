@@ -559,11 +559,11 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
 
           solver.forMeshTargets( domain.getMeshBodies(),
                                  [&]( string const,
-                                      MeshLevel & mesh,
-                                      arrayView1d< string const > const & regionNames )
+                                      MeshLevel & mesh2,
+                                      arrayView1d< string const > const & regionNames2 )
           {
-            ElementRegionManager & elementRegionManager = mesh.getElemManager();
-            elementRegionManager.forElementSubRegions( regionNames,
+            ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
+            elementRegionManager2.forElementSubRegions( regionNames2,
                                                        [&]( localIndex const,
                                                             ElementSubRegionBase & subRegion2 )
             {
@@ -592,11 +592,11 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
 
           solver.forMeshTargets( domain.getMeshBodies(),
                                  [&]( string const,
-                                      MeshLevel & mesh,
-                                      arrayView1d< string const > const & regionNames )
+                                      MeshLevel & mesh2,
+                                      arrayView1d< string const > const & regionNames2 )
           {
-            ElementRegionManager & elementRegionManager = mesh.getElemManager();
-            elementRegionManager.forElementSubRegions( regionNames,
+            ElementRegionManager & elementRegionManager2 = mesh.getElemManager();
+            elementRegionManager.forElementSubRegions( regionNames2,
                                                        [&]( localIndex const,
                                                             ElementSubRegionBase & subRegion2 )
             {
