@@ -63,8 +63,7 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
                                     Group * const parent )
   : MeshGeneratorBase( name, parent )
 {
-    registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
-    
+  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "path to the mesh file" );
@@ -94,7 +93,7 @@ VTK_ARRAY const & getDataArray( vtkFieldData * source,
                                 string const & name )
 {
   VTK_ARRAY const * const array = getDataArrayOptional< VTK_ARRAY >( source, name );
-  GEOSX_ERROR_IF( array == nullptr, 
+  GEOSX_ERROR_IF( array == nullptr,
                   "VTK array '" << name << "' not found or has unexpected data type" );
   return *array;
 }
@@ -203,9 +202,10 @@ vtkSmartPointer< vtkUnstructuredGrid > loadVTKMesh( Path const & filePath )
  * @brief Redistribute the mesh among the available MPI ranks
  * @details this method will also generate global ids for points and cells in the VTK Mesh
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
- * @param[in] cuts the bounding boxes used by the VTK partitioner needed to compute neighboring ranks
-  */
-vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & loadedMesh, std::vector<vtkBoundingBox> & cuts )
+ * @param[out] cuts the bounding boxes used by the VTK partitioner needed to compute neighboring ranks
+ */
+vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & loadedMesh,
+                                                         std::vector< vtkBoundingBox > & cuts )
 {
   // Redistribute data all over the available ranks
   vtkNew< vtkRedistributeDataSetFilter > rdsf;
@@ -269,20 +269,20 @@ double writeMeshNodes( CellBlockManager & cellBlockManager,
  * @details Compute the rank neighbors. The asssumption is that 2 ranks are neighbors if
  * the corresponding bounding boxes intersect.
  */
-std::set< int > computeMPINeighborRanks( const std::vector<vtkBoundingBox> & cuts)
+std::set< int > computeMPINeighborRanks( const std::vector< vtkBoundingBox > & cuts )
 {
   unsigned int nbRanks = MpiWrapper::commSize();
-  GEOSX_ERROR_IF(cuts.size() != nbRanks, "The number of VTK cuts does not match the number of ranks");
-  
+  GEOSX_ERROR_IF( cuts.size() != nbRanks, "The number of VTK cuts does not match the number of ranks" );
+
   std::set< int > rankNeighbor;
   unsigned int currentRank = MpiWrapper::commRank();
   vtkBoundingBox currentBox = cuts[currentRank];
 
   for( unsigned int i = 0; i < cuts.size(); i++ )
   {
-    if( i != currentRank && currentBox.Intersects(cuts[i]))
+    if( i != currentRank && currentBox.Intersects( cuts[i] ) )
     {
-      rankNeighbor.insert( i );      
+      rankNeighbor.insert( i );
     }
   }
 
@@ -323,7 +323,8 @@ std::vector< T > gatherData( std::vector< T > const & data )
 }
 
 /**
- * @brief This method is used to preprocess the VTK mesh and count the number of cells, facets, regions and surfaces over the current MPI rank
+ * @brief This method is used to preprocess the VTK mesh and count the number of cells, facets, regions and
+ * surfaces over the current MPI rank
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  * @param[out] regionsHex map from region index to the hexahedron indexes
  * @param[out] regionsTetra map from region index to the tetra indexes
@@ -387,7 +388,7 @@ std::map< int, std::vector< vtkIdType > > buildRegionToCellsAndFaces( vtkSmartPo
   }
 
   // TODO Output logger information on the loaded external mesh similarly to PAMELA
-  
+
   // Communicate all the cells blocks
   std::size_t const numRegions = regionsHex.size() + regionsTetra.size() + regionsPyramids.size() + regionsWedges.size();
   std::vector< int > cellBlockRegionIndex( numRegions );
@@ -778,15 +779,15 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
   CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
 }
 
- /**
-  * @brief Build all the cell blocks.
-  * @param[in] mesh the vtkUnstructuredGrid that is loaded
-  * @param[in] regionsHex map from region index to the hexahedron indexes in this region
-  * @param[in] regionsTetra map from region index to the tetra indexes in this region
-  * @param[in] regionsWedges map from region index to the wedges indexes in this region
-  * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
-  * @param[out] cellBlockManager The instance that stores the cell blocks.
-  */
+/**
+ * @brief Build all the cell blocks.
+ * @param[in] mesh the vtkUnstructuredGrid that is loaded
+ * @param[in] regionsHex map from region index to the hexahedron indexes in this region
+ * @param[in] regionsTetra map from region index to the tetra indexes in this region
+ * @param[in] regionsWedges map from region index to the wedges indexes in this region
+ * @param[in] regionsPyramids map from region index to the pyramids indexes in this region
+ * @param[out] cellBlockManager The instance that stores the cell blocks.
+ */
 void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                       std::map< int, std::vector< vtkIdType > > const & regionsHex,
                       std::map< int, std::vector< vtkIdType > > const & regionsTetra,
@@ -864,7 +865,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = loadVTKMesh( m_filePath );
 
-  std::vector<vtkBoundingBox> cuts;
+  std::vector< vtkBoundingBox > cuts;
   m_vtkMesh = redistributeMesh( *loadedMesh, cuts );
 
   Group & meshBodies = domain.getMeshBodies();
@@ -887,7 +888,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   buildSurfaces( m_vtkMesh, surfacesIdsToCellsIds, cellBlockManager );
 
-  // TODO Check the memory usage that seems prohibitive - Do we need to build all connections? 
+  // TODO Check the memory usage that seems prohibitive - Do we need to build all connections?
   cellBlockManager.buildMaps();
 }
 

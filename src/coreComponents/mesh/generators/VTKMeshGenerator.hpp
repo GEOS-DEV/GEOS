@@ -103,10 +103,10 @@ private:
    * and hexahedron, three CellBlocks will be created names 1_tetrahedron, 1_wedges and 1_hexahedron.
    * The ElementRegions have to be be defined in the XML file.\n\n
    *
-   * The pointsets of surface are defined in the same way, using the same 
-   * property names "attribute" defined in the input mesh. The pointsets will 
+   * The pointsets of surface are defined in the same way, using the same
+   * property names "attribute" defined in the input mesh. The pointsets will
    * hold a name that is just the attribute index. For instance, if a mesh has three
-   * surfaces of interest, with triangles and/or quads holding an attribute value 
+   * surfaces of interest, with triangles and/or quads holding an attribute value
    * of 1, 2 or 3, three pointsets named
    * "1", "2" and "3" will be instantiated by this method
    */

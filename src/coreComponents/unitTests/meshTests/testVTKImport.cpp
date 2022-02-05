@@ -129,9 +129,10 @@ TEST( VTKImport, cube )
       ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
     }
 
-    std::pair< CellBlockABC const *, localIndex > const p{ &hexs, expected( 1, { 1, 0 } ) },
-      p3{ &hexs3, expected( 25, { 17, 8 } ) },
-      p9{ &hexs9, expected( 1, { 0, 1 } ) };
+    std::pair< CellBlockABC const *, localIndex > const
+    p{ &hexs, expected( 1, { 1, 0 } ) },
+    p3{ &hexs3, expected( 25, { 17, 8 } ) },
+    p9{ &hexs9, expected( 1, { 0, 1 } ) };
     for( auto const & hs: { p, p3, p9 } )
     {
       CellBlockABC const * h = hs.first;
@@ -145,8 +146,8 @@ TEST( VTKImport, cube )
   };
 
   std::string const cubeVTK = testMeshDir + "/cube.vtk";
-  std::string const cubeVTU = testMeshDir + +"/cube.vtu";
-//  std::string const cubePVTU = testMeshDir + +"/cube.pvtu";
+  std::string const cubeVTU = testMeshDir + "/cube.vtu";
+//  std::string const cubePVTU = testMeshDir + "/cube.pvtu";
 
   TestMeshImport( cubeVTK, validate );
   TestMeshImport( cubeVTU, validate );
@@ -222,7 +223,7 @@ TEST( VTKImport, medley )
     }
   };
 
-  std::string const medleyVTK = testMeshDir + + "/medley.vtk";
+  std::string const medleyVTK = testMeshDir + "/medley.vtk";
 
   TestMeshImport( medleyVTK, validate );
 }

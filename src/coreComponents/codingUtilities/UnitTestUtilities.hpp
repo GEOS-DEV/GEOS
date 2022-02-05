@@ -25,13 +25,13 @@
 
 #include <gtest/gtest.h>
 
-#define SKIP_TEST_IF( COND, REASON ) \
-  do                                 \
-  {                                  \
-    if( COND )                       \
-    {                                \
-      GTEST_SKIP_(": " REASON );     \
-    }                                \
+#define SKIP_TEST_IF( COND, REASON )  \
+  do                                  \
+  {                                   \
+    if( COND )                        \
+    {                                 \
+      GTEST_SKIP_( ": " REASON );     \
+    }                                 \
   } while( false )
 
 #define SKIP_TEST_IN_SERIAL( REASON ) \
