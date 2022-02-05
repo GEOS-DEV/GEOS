@@ -676,10 +676,10 @@ void HydrofractureSolver::assembleSystem( real64 const time,
                                  localMatrix,
                                  localRhs );
 
-  m_flowSolver->assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
-                                                                     dofManager,
-                                                                     localMatrix,
-                                                                     localRhs );
+  m_flowSolver->assembleAccumulationTerms( domain,
+                                           dofManager,
+                                           localMatrix,
+                                           localRhs );
   m_flowSolver->assembleHydrofracFluxTerms( time,
                                             dt,
                                             domain,

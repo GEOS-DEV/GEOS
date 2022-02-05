@@ -596,10 +596,10 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
-                                                       dofManager,
-                                                       localMatrix,
-                                                       localRhs );
+  assembleAccumulationTerms( domain,
+                             dofManager,
+                             localMatrix,
+                             localRhs );
 
   assembleFluxTerms( time_n,
                      dt,
@@ -610,7 +610,6 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
 }
 
-template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -637,23 +636,22 @@ void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
-  AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                 rankOffset,
-                                                 dofNumber,
-                                                 ghostRank,
-                                                 volume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 densityOld,
-                                                 density,
-                                                 dDens_dPres,
-                                                 localMatrix,
-                                                 localRhs );
+  AccumulationKernel::template launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 volume,
+                                                                 porosityOld,
+                                                                 porosity,
+                                                                 dPoro_dPres,
+                                                                 densityOld,
+                                                                 density,
+                                                                 dDens_dPres,
+                                                                 localMatrix,
+                                                                 localRhs );
 
 }
 
-template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -690,27 +688,26 @@ void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subReg
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
-  AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                 rankOffset,
-                                                 dofNumber,
-                                                 ghostRank,
-                                                 volume,
-                                                 deltaVolume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 densityOld,
-                                                 density,
-                                                 dDens_dPres,
+  AccumulationKernel::template launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 volume,
+                                                                 deltaVolume,
+                                                                 porosityOld,
+                                                                 porosity,
+                                                                 dPoro_dPres,
+                                                                 densityOld,
+                                                                 density,
+                                                                 dDens_dPres,
 #if ALLOW_CREATION_MASS
-                                                 creationMass,
+                                                                 creationMass,
 #endif
-                                                 localMatrix,
-                                                 localRhs );
+                                                                 localMatrix,
+                                                                 localRhs );
 
 }
 
-template< typename POLICY >
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -728,7 +725,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                                 auto & subRegion )
     {
 
-      accumulationLaunch< POLICY >( subRegion, dofManager, localMatrix, localRhs );
+      accumulationLaunch( subRegion, dofManager, localMatrix, localRhs );
     } );
   } );
 }
