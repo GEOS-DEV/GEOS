@@ -179,12 +179,10 @@ void DofManager::createIndexArray( FieldDescription const & field )
 {
   LocationSwitch( field.location, [&]( auto const loc )
   {
-
     localIndex index = 0;
 
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
-
       Location constexpr LOC = decltype(loc)::value;
       using helper = ArrayHelper< globalIndex, LOC >;
 
