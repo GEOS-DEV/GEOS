@@ -179,9 +179,6 @@ SurfaceGenerator::SurfaceGenerator( const string & name,
 {
   this->registerWrapper( viewKeyStruct::failCriterionString(), &this->m_failCriterion );
 
-//  registerWrapper( viewKeyStruct::solidMaterialNameString(), &m_solidMaterialNames ).
-//    setInputFlag( InputFlags::REQUIRED ).
-//    setDescription( "Name of the solid material used in solid mechanic solver" );
 
   registerWrapper( viewKeyStruct::rockToughnessString(), &m_rockToughness ).
     setInputFlag( InputFlags::REQUIRED ).
