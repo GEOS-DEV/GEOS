@@ -255,7 +255,6 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
-//  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -295,11 +294,7 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-//  array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-//  SortedArray< localIndex > m_sendOrReceiveNodes;
-//  SortedArray< localIndex > m_nonSendOrReceiveNodes;
-//  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Rigid body modes
