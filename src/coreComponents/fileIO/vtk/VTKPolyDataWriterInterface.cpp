@@ -115,6 +115,7 @@ gatherNbElementsInRegion( ElementRegionBase const & region,
     std::cout << "DERP" << std::endl;
   }
   std::cout << "Number of elements+particles: " << nbElems << std::endl;
+
   //localIndex const nbElems = region.getNumberOfElements();
   std::vector< localIndex > nbElemsInRegion( MpiWrapper::commSize( comm ) );
   MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, comm );
