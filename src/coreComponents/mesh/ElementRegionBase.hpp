@@ -16,7 +16,6 @@
 #define GEOSX_MESH_ELEMENTREGIONBASE_HPP
 
 #include "CellElementSubRegion.hpp"
-#include "ParticleSubRegion.hpp"
 #include "FaceElementSubRegion.hpp"
 #include "WellElementSubRegion.hpp"
 #include "mesh/ObjectManagerBase.hpp"
@@ -166,28 +165,6 @@ public:
   }
 
   /**
-   * @brief Get the number of particles in the region
-   *        for specific subregion types provided as template arguments.
-   * @tparam SUBREGIONTYPE  the first type that will be used in the attempted casting of the subregion
-   * @tparam SUBREGIONTYPES a variadic list of types that will be used in the attempted casting of the subregion
-   * @return the number of elements contained in the element region
-   * @note This function requires that the subRegion types specified
-   *       in the variadic template argument can be casted to ElementSubRegionBase
-   */
-  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES >
-  localIndex getNumberOfParticles() const
-  {
-    localIndex numParticle = 0;
-    std::cout << "SHERP" << std::endl;
-    this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & particleBlock ) -> void
-    {
-      std::cout << "MERP: " << particleBlock.getName() << std::endl;
-      numParticle += particleBlock.size();
-    } );
-    return numParticle;
-  }
-
-  /**
    * @copydoc getMaterialList() const
    */
   string_array & getMaterialList() {return m_materialList;}
@@ -313,52 +290,6 @@ public:
 
   ///@}
 
-  /**
-     * @name Functor-based loops over particle subregions
-     */
-    ///@{
-
-
-  /**
-   * @brief Apply a lambda to all particle subregions.
-   * @param lambda the functor to be applied
-   */
-    template< typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda ) const
-    {
-      forParticleSubRegions< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
-    }
-
-  /**
-   * @copydoc forParticleSubRegions( LAMBDA && lambda ) const
-   */
-    template< typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda )
-    {
-      forParticleSubRegions< ParticleSubRegion  >( std::forward< LAMBDA >( lambda ) );
-    }
-
-  /**
-   * @brief Apply LAMBDA to the subregions with the specific subregion types
-   *        listed in the template.
-   * @param lambda the functor to be applied
-   */
-    template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda ) const
-    {
-      this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
-    }
-
-  /**
-   * @copydoc forParticleSubRegions( LAMBDA && lambda ) const
-   */
-    template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda )
-    {
-      this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
-    }
-
-    ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -372,8 +303,6 @@ public:
     static constexpr char const * meshBodyString() { return "meshBody"; }
     /// @return String key for the element subregions
     static constexpr char const * elementSubRegions() { return "elementSubRegions"; }
-    /// @return String key for the particle subregions
-    static constexpr char const * particleSubRegions() { return "particleSubRegions"; }
   };
 
 private:

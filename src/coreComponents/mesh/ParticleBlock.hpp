@@ -19,7 +19,7 @@
 #ifndef GEOSX_MESH_PARTICLEBLOCK_HPP_
 #define GEOSX_MESH_PARTICLEBLOCK_HPP_
 
-#include "ElementSubRegionBase.hpp"
+#include "ParticleSubRegionBase.hpp"
 #include "FaceManager.hpp"
 #include "utilities/ComputationalGeometry.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -29,12 +29,12 @@ namespace geosx
 
 /**
  * @class ParticleBlock
- * Class deriving from ElementSubRegionBase specializing the particle subregion
+ * Class deriving from ParticleSubRegionBase specializing the particle subregion
  * for a particle. In particular, this class adds connectivity maps (namely,
  * element-to-node map, element-to-face map, and element-to-edge map) and
  * and methods to compute the geometry of an element (cell center and volume)
  */
-class ParticleBlock : public ElementSubRegionBase
+class ParticleBlock : public ParticleSubRegionBase
 {
 public:
 

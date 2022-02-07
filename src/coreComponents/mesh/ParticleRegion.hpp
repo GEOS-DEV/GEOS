@@ -20,7 +20,7 @@
 #ifndef GEOSX_MESH_PARTICLEREGION_HPP_
 #define GEOSX_MESH_PARTICLEREGION_HPP_
 
-#include "ElementRegionBase.hpp"
+#include "ParticleRegionBase.hpp"
 
 namespace geosx
 {
@@ -32,7 +32,7 @@ namespace geosx
  *
  *
  */
-class ParticleRegion : public ElementRegionBase
+class ParticleRegion : public ParticleRegionBase
 {
 public:
 
