@@ -2,20 +2,20 @@
 # Specify list of tests
 #
 
-set(testSources
-    testGeosxTraits.cpp
-    )
+set( testSources
+     testGeosxTraits.cpp
+     )
 
-set(dependencyList gtest codingUtilities )
+set( dependencyList gtest codingUtilities )
 
-if ( ENABLE_CUDA )
+if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
 #
 # Add gtest C++ based tests
 #
-foreach(test ${testSources})
+foreach( test ${testSources} )
   get_filename_component( test_name ${test} NAME_WE )
   blt_add_executable( NAME ${test_name}
                       SOURCES ${test}

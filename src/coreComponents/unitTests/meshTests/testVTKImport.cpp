@@ -86,6 +86,9 @@ TEST( VTKImport, cube )
     // ASSIGN_TO_ALL_INTERSECTING_REGIONS, ASSIGN_TO_ONE_REGION or SPLIT_BOUNDARY_CELLS.
     localIndex const expectedNumNodes = expected( 64, { 48, 32 } );
     ASSERT_EQ( cellBlockManager.numNodes(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.numEdges(), expected( 144, { 104, 64 } ) );
+    ASSERT_EQ( cellBlockManager.numFaces(), expected( 108, { 75, 42 } ) );
+
     // The information in the tables is not filled yet. We can check the consistency of the sizes.
     ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
     ASSERT_EQ( cellBlockManager.getNodeToElements().size(), expectedNumNodes );
@@ -145,9 +148,9 @@ TEST( VTKImport, cube )
     }
   };
 
-  std::string const cubeVTK = testMeshDir + "/cube.vtk";
-  std::string const cubeVTU = testMeshDir + "/cube.vtu";
-//  std::string const cubePVTU = testMeshDir + "/cube.pvtu";
+  string const cubeVTK = testMeshDir + "/cube.vtk";
+  string const cubeVTU = testMeshDir + "/cube.vtu";
+//  string const cubePVTU = testMeshDir + "/cube.pvtu";
 
   TestMeshImport( cubeVTK, validate );
   TestMeshImport( cubeVTU, validate );
@@ -166,10 +169,11 @@ TEST( VTKImport, medley )
     // - Element 2 is a wedge, in region 2.
     // - Element 3 is a tetrahedron, in region 3.
     // All the elements belong to a region. Therefore, there is no "-1" region.
-    // It contains 12 nodes.
+    // It contains 12 nodes, 24 edges, 17 faces.
 
-    localIndex const numNodes = cellBlockManager.numNodes();
-    ASSERT_EQ( numNodes, 12 );
+    ASSERT_EQ( cellBlockManager.numNodes(), 12 );
+    ASSERT_EQ( cellBlockManager.numEdges(), 24 );
+    ASSERT_EQ( cellBlockManager.numFaces(), 17 );
 
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), 12 );
@@ -223,7 +227,7 @@ TEST( VTKImport, medley )
     }
   };
 
-  std::string const medleyVTK = testMeshDir + "/medley.vtk";
+  string const medleyVTK = testMeshDir + "/medley.vtk";
 
   TestMeshImport( medleyVTK, validate );
 }
