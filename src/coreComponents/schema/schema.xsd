@@ -2633,12 +2633,12 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="componentNames" type="string_array" default="{}" />
 		<!--compressibility => Fluid compressibility-->
 		<xsd:attribute name="compressibility" type="real64" default="0" />
+		<!--defaultComponentDensity => Default value for the component density.-->
+		<xsd:attribute name="defaultComponentDensity" type="real64_array" default="{0}" />
+		<!--defaultComponentViscosity => Default value for the component viscosity.-->
+		<xsd:attribute name="defaultComponentViscosity" type="real64_array" default="{0}" />
 		<!--defaultCompressibility => Default value for the component compressibility.-->
 		<xsd:attribute name="defaultCompressibility" type="real64_array" default="{0}" />
-		<!--defaultDensity => Default value for the component density.-->
-		<xsd:attribute name="defaultDensity" type="real64_array" default="{0}" />
-		<!--defaultViscosity => Default value for the component viscosity.-->
-		<xsd:attribute name="defaultViscosity" type="real64_array" default="{0}" />
 		<!--flowBehaviorIndex => Flow behavior index-->
 		<xsd:attribute name="flowBehaviorIndex" type="real64_array" default="{0}" />
 		<!--flowConsistencyIndex => Flow consistency index-->

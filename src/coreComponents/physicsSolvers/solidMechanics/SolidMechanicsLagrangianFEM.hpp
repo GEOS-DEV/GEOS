@@ -240,7 +240,7 @@ public:
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
 
-    static constexpr char const * sendOrRecieveNodesString() { return "sendOrReceiveNodes";}
+    static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
 

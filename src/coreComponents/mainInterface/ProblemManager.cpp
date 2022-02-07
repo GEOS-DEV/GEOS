@@ -434,13 +434,11 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
 
         if( regionMeshBodyName==meshBodyName )
         {
-          std::cout<<regionName<<" "<<cellBlocks<<std::endl;
           Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
           newRegion->processInputFileRecursive( regionNode );
         }
 
       }
-//      elementManager.processInputFileRecursive( elementRegionsNode );
     } );
   }
 }
@@ -660,7 +658,6 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
     if( solver != nullptr )
     {
       string const discretizationName = solver->getDiscretizationName();
-//      arrayView1d< string const > const & targetRegions = solver->targetRegionNames();
 
       FiniteElementDiscretizationManager const &
       feDiscretizationManager = numericalMethodManager.getFiniteElementDiscretizationManager();

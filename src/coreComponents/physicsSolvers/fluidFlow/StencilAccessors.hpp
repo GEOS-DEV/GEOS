@@ -63,27 +63,28 @@ public:
    * @param[in] solverName the name of the solver creating the view accessors
    */
   StencilAccessors( ElementRegionManager const & elemManager,
-                    string const & solverName,
-                    bool const fill = true )
+                    string const & solverName )
   {
-    if( fill )
-    {
-      forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
-      {
-        GEOSX_UNUSED_VAR( t );
-        using TRAIT = TYPEOFREF( t );
+    forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
+                       {
+      GEOSX_UNUSED_VAR( t );
+      using TRAIT = TYPEOFREF( t );
 
-        auto & acc = std::get< idx() >( m_accessors );
-        acc = elemManager.constructExtrinsicAccessor< TRAIT >();
-        acc.setName( solverName + "/accessors/" + TRAIT::key() );
-      } );
-    }
+      auto & acc = std::get< idx() >( m_accessors );
+      acc = elemManager.constructExtrinsicAccessor< TRAIT >();
+      acc.setName( solverName + "/accessors/" + TRAIT::key() );
+                       } );
   }
 
 protected:
 
   /// the tuple storing all the accessors
   std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > m_accessors;
+
+  /**
+    * @brief Constructor for the struct
+    */
+   StencilAccessors() = default;
 };
 
 /**
@@ -104,9 +105,8 @@ public:
    * @param[in] solverName the name of the solver creating the view accessors
    */
   StencilMaterialAccessors( ElementRegionManager const & elemManager,
-                            string const & solverName,
-                            bool const fill = false ):
-    StencilAccessors< TRAITS ... >( elemManager, solverName, fill )
+                            string const & solverName ):
+    StencilAccessors< TRAITS ... >()
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {

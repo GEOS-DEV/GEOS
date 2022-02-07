@@ -334,22 +334,13 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
-void CompositionalMultiphaseBase::initializeAquiferBC( Group const & meshBodies, ConstitutiveManager const & cm ) const
+void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const & cm ) const
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition & bc )
   {
-
-    auto const target = m_meshTargets.begin();
-    string const meshBodyName = target->first;
-    arrayView1d< string const > const & regionNames = target->second.toViewConst();
-    MeshBody const & meshBody = meshBodies.template getGroup< MeshBody >( meshBodyName );
-    MeshLevel const & mesh = meshBody.getMeshLevel( 0 );
-
-    ElementSubRegionBase const & subRegion = mesh.getElemManager().getRegion( regionNames[0] ).getSubRegion( 0 );
-    string const fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( fluidName );
+    MultiFluidBase const & fluid0 = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
     // set the gravity vector (needed later for the potential diff calculations)
     bc.setGravityVector( gravityVector() );
@@ -403,7 +394,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   } );
 
   // 3. Initialize and validate the aquifer boundary condition
-  initializeAquiferBC( domain.getMeshBodies(), cm );
+  initializeAquiferBC( cm );
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
