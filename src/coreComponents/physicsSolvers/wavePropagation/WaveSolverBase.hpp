@@ -47,6 +47,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * sourceCoordinatesString() { return "sourceCoordinates"; }
+    static constexpr char const * sourceValueString() { return "sourceValue"; }
 
     static constexpr char const * timeSourceFrequencyString() { return "timeSourceFrequency"; }
 
@@ -54,10 +55,25 @@ public:
 
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
+    static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
+    static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
+
 
   };
 
+  /**
+   * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
+   */
+  void reinit() override final;
+
 protected:
+
+  /**
+   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * corresponding elements nodes.
+   * @param mesh mesh of the computational domain
+   */
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) = 0;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -77,25 +93,18 @@ protected:
   real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
   /**
-   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
-   * corresponding elements nodes.
-   * @param mesh mesh of the computational domain
-   */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) = 0;
-
-  /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param time_n the time of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) = 0;
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) = 0;
 
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step
    * @param iseismo index number of the seismo trace
    * @param val_np1 the array to save the value at the receiver position
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) = 0;
+  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) = 0;
 
   /**
    * @brief Save the sismo trace in file
@@ -106,6 +115,8 @@ protected:
   /// Coordinates of the sources in the mesh
   array2d< real64 > m_sourceCoordinates;
 
+  array2d< real64 > m_sourceValue;
+
   /// Central frequency for the Ricker time source
   real64 m_timeSourceFrequency;
 
@@ -115,8 +126,14 @@ protected:
   /// Flag that indicates the order of the Ricker to be used, order 2 by default
   localIndex m_rickerOrder;
 
-  /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
+  /// Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise
   localIndex m_outputSeismoTrace;
+
+  real64 m_dtSeismoTrace;
+
+  localIndex m_indexSeismoTrace;
+
+  localIndex m_nsamplesSeismoTrace;
 
 
 
