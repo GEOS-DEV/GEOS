@@ -194,7 +194,6 @@ void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRe
     setSizedFromParent( 0 );
 
   string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
-//      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
   contactRelationName = this->m_contactRelationName;
   GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
 }
