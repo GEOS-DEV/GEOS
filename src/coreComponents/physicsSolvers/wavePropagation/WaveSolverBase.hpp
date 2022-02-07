@@ -61,10 +61,6 @@ public:
 
   };
 
-  /**
-   * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
-   */
-  void reinit() override final;
 
 protected:
 
