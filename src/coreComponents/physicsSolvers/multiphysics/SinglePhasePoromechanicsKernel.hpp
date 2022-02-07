@@ -309,7 +309,7 @@ public:
                                                        bodyForce,
                                                        dBodyForce_dVolStrainIncrement,
                                                        dBodyForce_dPressure,
-													   fluidMassContentIncrement,
+                                                       fluidMassContentIncrement,
                                                        dFluidMassContent_dPressure,
                                                        dFluidMassContent_dVolStrainIncrement,
                                                        stiffness );
@@ -383,7 +383,7 @@ public:
     (
       stack.localResidualMass,
       Np,
-	  fluidMassContentIncrement,
+      fluidMassContentIncrement,
       detJxW );
 
     // Compute local mass balance residual derivatives with respect to displacement
