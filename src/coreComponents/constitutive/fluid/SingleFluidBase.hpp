@@ -182,8 +182,8 @@ public:
   arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
   arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
 
-  virtual real64 defaultDensity() const { return 1.0; }
-  virtual real64 defaultViscosity() const { return 1.0; }
+  virtual real64 defaultDensity() const = 0; // { return 1.0; }
+  virtual real64 defaultViscosity() const = 0; // { return 1.0; }
 
 protected:
 

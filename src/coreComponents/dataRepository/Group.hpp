@@ -516,7 +516,7 @@ public:
   }
 
   /**
-   * @copydoc forSubGroups(LAMBDA &&)
+   * @copydoc forSubGroupsIndex(LAMBDA &&)
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroupsIndex( LAMBDA && lambda ) const

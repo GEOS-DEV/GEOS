@@ -42,9 +42,9 @@ public:
    * @param referenceDensity
    * @param referenceViscosity
    * @param maxProppantConcentration
-   * @param defaultDensity
+   * @param defaultComponentDensity
    * @param defaultCompressibility
-   * @param defaultViscosity
+   * @param defaultComponentViscosity
    * @param nIndices
    * @param Ks
    * @param isNewtonianFluid
@@ -72,9 +72,9 @@ public:
                              real64 const referenceDensity,
                              real64 const referenceViscosity,
                              real64 const maxProppantConcentration,
-                             arrayView1d< real64 const > const & defaultDensity,
+                             arrayView1d< real64 const > const & defaultComponentDensity,
                              arrayView1d< real64 const > const & defaultCompressibility,
-                             arrayView1d< real64 const > const & defaultViscosity,
+                             arrayView1d< real64 const > const & defaultComponentViscosity,
                              arrayView1d< real64 const > const & nIndices,
                              arrayView1d< real64 const > const & Ks,
                              bool const isNewtonianFluid,
@@ -95,9 +95,9 @@ public:
                              arrayView2d< real64 > const & dVisc_dPres,
                              arrayView2d< real64 > const & dVisc_dProppantConc,
                              arrayView3d< real64 > const & dVisc_dCompConc )
-    : SlurryFluidBaseUpdate( defaultDensity,
+    : SlurryFluidBaseUpdate( defaultComponentDensity,
                              defaultCompressibility,
-                             defaultViscosity,
+                             defaultComponentViscosity,
                              nIndices,
                              Ks,
                              isNewtonianFluid,
@@ -316,6 +316,21 @@ public:
     static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
     static constexpr char const * referenceViscosityString() { return "referenceViscosity"; }
   };
+
+  /**
+   * @brief get the default value for the density. For the proppant, we employ the reference value 
+   * as default.
+   * 
+   * @return the default density value; 
+   */
+  real64 defaultDensity() const override final {return m_referenceDensity; };
+  /**
+   * @brief get the default value for the density. For the proppant, we employ the reference value 
+   * as default.
+   * 
+   * @return the default viscosity value; 
+   */
+  real64 defaultViscosity() const override final {return m_referenceViscosity; };
 
 protected:
 

@@ -338,9 +338,9 @@ private:
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
 
-    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultComponentDensityString() { return "defaultComponentDensity"; }
     static constexpr char const * defaultCompressibilityString() { return "defaultCompressibility"; }
-    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
+    static constexpr char const * defaultComponentViscosityString() { return "defaultComponentViscosity"; }
 
     static constexpr char const * flowBehaviorIndexString() { return "flowBehaviorIndex"; }
     static constexpr char const * flowConsistencyIndexString() { return "flowConsistencyIndex"; }
