@@ -66,14 +66,14 @@ public:
                     string const & solverName )
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
-                       {
+    {
       GEOSX_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
       auto & acc = std::get< idx() >( m_accessors );
       acc = elemManager.constructExtrinsicAccessor< TRAIT >();
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
-                       } );
+    } );
   }
 
 protected:
@@ -82,9 +82,9 @@ protected:
   std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > m_accessors;
 
   /**
-    * @brief Constructor for the struct
-    */
-   StencilAccessors() = default;
+   * @brief Constructor for the struct
+   */
+  StencilAccessors() = default;
 };
 
 /**
