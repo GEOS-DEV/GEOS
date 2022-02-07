@@ -314,7 +314,7 @@ protected:
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    * @param[in] cm reference to the global constitutive model manager
    */
-  void initializeAquiferBC( Group const & meshBodies, constitutive::ConstitutiveManager const & cm ) const;
+  void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
 
   /// the max number of fluid phases

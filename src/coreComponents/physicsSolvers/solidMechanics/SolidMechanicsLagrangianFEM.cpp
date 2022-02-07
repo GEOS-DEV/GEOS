@@ -204,7 +204,7 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
       reference().resizeDimension< 1 >( 3 );
 
     Group & nodeSets = nodes.sets();
-    nodeSets.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::sendOrRecieveNodesString() ).
+    nodeSets.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::sendOrReceiveNodesString() ).
       setPlotLevel( PlotLevel::NOPLOT ).
       setRestartFlags( RestartFlags::NO_WRITE );
 
@@ -353,7 +353,7 @@ void SolidMechanicsLagrangianFEM::initializePostInitialConditionsPreSubGroups()
     std::set< localIndex > tmpSendOrReceiveNodes;
     std::set< localIndex > tmpNonSendOrReceiveNodes;
 
-    SortedArray< localIndex > & m_sendOrReceiveNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::sendOrRecieveNodesString() );
+    SortedArray< localIndex > & m_sendOrReceiveNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::sendOrReceiveNodesString() );
     SortedArray< localIndex > & m_nonSendOrReceiveNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::nonSendOrReceiveNodesString() );
     SortedArray< localIndex > & m_targetNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::targetNodesString() );
 
@@ -536,7 +536,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     Group const & nodeSets = nodes.sets();
 
     SortedArrayView< localIndex const > const &
-    m_sendOrReceiveNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::sendOrRecieveNodesString() ).toViewConst();
+    m_sendOrReceiveNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::sendOrReceiveNodesString() ).toViewConst();
 
     SortedArrayView< localIndex const > const &
     m_nonSendOrReceiveNodes = nodeSets.getReference< SortedArray< localIndex > >( viewKeyStruct::nonSendOrReceiveNodesString() ).toViewConst();
