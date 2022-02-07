@@ -318,17 +318,17 @@ public:
   };
 
   /**
-   * @brief get the default value for the density. For the proppant, we employ the reference value 
+   * @brief get the default value for the density. For the proppant, we employ the reference value
    * as default.
-   * 
-   * @return the default density value; 
+   *
+   * @return the default density value;
    */
   real64 defaultDensity() const override final {return m_referenceDensity; };
   /**
-   * @brief get the default value for the density. For the proppant, we employ the reference value 
+   * @brief get the default value for the density. For the proppant, we employ the reference value
    * as default.
-   * 
-   * @return the default viscosity value; 
+   *
+   * @return the default viscosity value;
    */
   real64 defaultViscosity() const override final {return m_referenceViscosity; };
 
