@@ -623,8 +623,15 @@ protected:
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
+  /**
+   * @brief Get the Constitutive Name object
+   * 
+   * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
+   * @param subregion the element subregion on which the constitutive model is registered
+   * @return the name name of the constitutive model of type @p CONSTITUTIVE_BASE_TYPE registered on the @p subregion.
+   */
   template< typename CONSTITUTIVE_BASE_TYPE >
-  static string getConstitutiveName( ElementSubRegionBase const & );
+  static string getConstitutiveName( ElementSubRegionBase const & subRegion);
 
   /**
    * @brief This function sets constitutive name fields on an

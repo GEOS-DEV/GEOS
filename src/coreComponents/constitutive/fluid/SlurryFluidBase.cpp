@@ -38,7 +38,7 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setSizedFromParent( 0 ).
     setDescription( "List of fluid component names" );
 
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultComponentDensity ).
+  registerWrapper( viewKeyStruct::defaultComponentDensityString(), &m_defaultComponentDensity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setSizedFromParent( 0 ).
     setDescription( "Default value for the component density." );
@@ -48,7 +48,7 @@ SlurryFluidBase::SlurryFluidBase( string const & name, Group * const parent ):
     setSizedFromParent( 0 ).
     setDescription( "Default value for the component compressibility." );
 
-  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultComponentViscosity ).
+  registerWrapper( viewKeyStruct::defaultComponentViscosityString(), &m_defaultComponentViscosity ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Default value for the component viscosity." );
 
