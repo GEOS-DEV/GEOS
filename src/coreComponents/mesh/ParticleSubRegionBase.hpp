@@ -13,20 +13,19 @@
  */
 
 /**
- * @file ElementSubRegionBase.hpp
+ * @file ParticleSubRegionBase.hpp
  */
 
-#ifndef GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
-#define GEOSX_MESH_ELEMENTSUBREGIONBASE_HPP_
+#ifndef GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_
+#define GEOSX_MESH_PARTICLESUBREGIONBASE_HPP_
 
-#include "mesh/ElementType.hpp"
+#include "mesh/ParticleType.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 
 namespace geosx
 {
 
-class NodeManager;
-class FaceManager;
+class ParticleManager;
 class MeshLevel;
 
 namespace constitutive
@@ -35,13 +34,11 @@ class ConstitutiveBase;
 }
 
 /**
- * @class ElementSubRegionBase
- * Abstract class for a collection of mesh elements that
- * will be derived and specialized for cell elements,
- * face (fracture) elements, embedded surface (fracture)
- * elements, well elements, etc
+ * @class ParticleSubRegionBase
+ * Abstract class for a collection of mesh particles that
+ * will be derived and specialized for particles
  */
-class ElementSubRegionBase : public ObjectManagerBase
+class ParticleSubRegionBase : public ObjectManagerBase
 {
 public:
 
@@ -55,12 +52,12 @@ public:
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
-  ElementSubRegionBase( string const & name, dataRepository::Group * const parent );
+  ParticleSubRegionBase( string const & name, dataRepository::Group * const parent );
 
   /**
    * @brief Destructor.
    */
-  ~ElementSubRegionBase();
+  ~ParticleSubRegionBase();
 
   ///@}
 
@@ -70,27 +67,8 @@ public:
   ///@{
 
   /**
-   * @brief Calculate the geometric quantities for each element in the subregion.
-   * @param[in] nodeManager the nodeManager (for geometrical info and connectivity involving nodes)
-   * @param[in] faceManager the faceManager (for geometrical info and connectivity involving faces)
-   *
-   */
-  virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & faceManager ) = 0;
-
-  /**
-   * @brief Link the connectivity maps of the subregion to the managers storing the mesh information.
-   * @param[in] mesh the meshLevel object (single level only)
-   *
-   * In the derived classes, this function is used to passe a pointer to the nodeManager,
-   * faceManager, and (if needed) edgeManager to, respectively, the node list, face list, and
-   * edge list of the subregion.
-   */
-  virtual void setupRelatedObjectsInRelations( MeshLevel const & mesh ) = 0;
-
-  /**
    * @brief Call ObjectManagerBase::fixUpDownMaps for the connectivity maps needed by
-   *        the derived class (i.e., element-to-node map, element-to-face map, etc)
+   *        the derived class
    * @param[in] clearIfUnmapped clearIfUnmapped
    */
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
@@ -103,93 +81,37 @@ public:
   ///@{
 
   /**
-   * @brief Get the number of nodes per element.
-   * @return number of nodes per element
+   * @brief Get whether particle has r-vectors.
    */
-  localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
+  bool getHasRVectors() const
+  { return m_hasRVectors; }
 
   /**
-   * @brief Get the number of nodes per element.
-   * @param[in] k cell index (not used)
-   * @return number of nodes per element
+   * @brief Set whether particle has r-vectors.
+   * @param[in] Boolean indicating whether particle has r-vectors.
    */
-  virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
-
-  /**
-   * @brief Set the number of nodes per element.
-   * @param[in] numNodes the number of nodes per element
-   */
-  void setNumNodesPerElement( localIndex numNodes )
-  {
-    m_numNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Get the number of independent nodes per element.
-   * @return numNodes the number of independent nodes per element
-   *
-   * Currently, the number of independent nodes per element is always
-   * equal to the number of nodes per element, except for the case
-   * of a triangular prism
-   */
-  localIndex const & numIndependentNodesPerElement() const { return m_numIndependentNodesPerElement; }
-
-  /**
-   * @brief Set the number of independent nodes per element.
-   * @param[in] numNodes the number of independent nodes per element
-   */
-  void setNumIndependentNodesPerElement( localIndex const numNodes )
-  {
-    m_numIndependentNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Get the number of edges per element.
-   * @return the number of edges per element
-   */
-  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
-
-  /**
-   * @brief Set the number of edges per element.
-   * @param[in] numEdges the number of edges per element
-   */
-  void setNumEdgesPerElement( localIndex const numEdges )
-  {
-    m_numEdgesPerElement = numEdges;
-  }
-
-  /**
-   * @brief Get the number of faces per element.
-   * @return number of faces per element
-   */
-  localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
-
-  /**
-   * @brief Set the number of faces per element.
-   * @param[in] numFaces the number of faces per element
-   */
-  void setNumFacesPerElement( localIndex const numFaces )
-  { m_numFacesPerElement = numFaces; }
+  void setHasRVectors( bool hasRVectors )
+  { m_hasRVectors = hasRVectors; }
 
   /**
    * @brief Get the center of each element in this subregion.
    * @return an arrayView1d of const element centers
    */
-  arrayView2d< real64 const > getElementCenter() const
-  { return m_elementCenter; }
+  arrayView2d< real64 const > getParticleCenter() const
+  { return m_particleCenter; }
 
   /**
-   * @copydoc getElementCenter() const
+   * @copydoc getParticleCenter() const
    */
-  arrayView2d< real64 > getElementCenter()
-  { return m_elementCenter; }
+  arrayView2d< real64 > getParticleCenter()
+  { return m_particleCenter; }
 
   /**
    * @brief Get the volume of each element in this subregion.
    * @return an arrayView1d of const element volumes
    */
-  arrayView1d< real64 const > getElementVolume() const
-  { return m_elementVolume; }
+  arrayView1d< real64 const > getParticleVolume() const
+  { return m_particleVolume; }
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -223,18 +145,18 @@ public:
 
 
   /**
-   * @brief Get the type of element in this subregion.
-   * @return the type of element in this subregion
+   * @brief Get the type of particle in this subregion.
+   * @return the type of particle in this subregion
    */
-  ElementType getElementType() const
-  { return m_elementType; }
+  ParticleType getParticleType() const
+  { return m_particleType; }
 
   /**
-   * @brief Set the type of element in this subregion.
-   * @param[in] elementType the element type
+   * @brief Set the type of particle in this subregion.
+   * @param[in] particleType the particle type
    */
-  virtual void setElementType( ElementType const elementType )
-  { m_elementType = elementType; }
+  virtual void setParticleType( ParticleType const particleType )
+  { m_particleType = particleType; }
 
   ///@}
 
@@ -244,22 +166,10 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
-    /// @return String key for the number of nodes per element in this subregion.
-    static constexpr char const * numNodesPerElementString() { return "numNodesPerElement"; }
-    /// @return String key for the element-to-node relation
-    static constexpr char const * nodeListString() { return "nodeList"; }
-    /// @return String key for the number of edges per element in this subregion.
-    static constexpr char const * numEdgesPerElementString() { return "numEdgesPerElement"; }
-    /// @return String key for the element-to-edge relation
-    static constexpr char const * edgeListString() { return "edgeList"; }
-    /// @return String key for the number of faces per element in this subregion.
-    static constexpr char const * numFacesPerElementString() { return "numFacesPerElement"; }
-    /// @return String key for the element-to-face relation
-    static constexpr char const * faceListString() { return "faceList"; }
-    /// @return String key for the member level field for the element center.
-    static constexpr char const * elementCenterString() { return "elementCenter"; }
-    /// @return String key for the member level field for the element volume.
-    static constexpr char const * elementVolumeString() { return "elementVolume"; }
+    /// @return String key for the member level field for the particle center.
+    static constexpr char const * particleCenterString() { return "particleCenter"; }
+    /// @return String key for the member level field for the particle volume.
+    static constexpr char const * particleVolumeString() { return "particleVolume"; }
   };
 
   /**
@@ -277,26 +187,17 @@ private:
   dataRepository::Group m_constitutiveModels;
 
 protected:
-  /// Number of nodes per element in this subregion.
-  localIndex m_numNodesPerElement;
+  /// Boolean indicating whether the particle has r-vectors defining its domain extent.
+  bool m_hasRVectors;
 
-  /// Number of independent nodes per element in this subregion.
-  localIndex m_numIndependentNodesPerElement;
+  /// Member level field for the particle center.
+  array2d< real64 > m_particleCenter;
 
-  /// Number of edges per element in this subregion.
-  localIndex m_numEdgesPerElement;
+  /// Member level field for the particle volume.
+  array1d< real64 > m_particleVolume;
 
-  /// Number of faces per element in this subregion.
-  localIndex m_numFacesPerElement;
-
-  /// Member level field for the element center.
-  array2d< real64 > m_elementCenter;
-
-  /// Member level field for the element volume.
-  array1d< real64 > m_elementVolume;
-
-  /// Type of element in this subregion.
-  ElementType m_elementType;
+  /// Type of particle in this subregion.
+  ParticleType m_particleType;
 };
 
 
