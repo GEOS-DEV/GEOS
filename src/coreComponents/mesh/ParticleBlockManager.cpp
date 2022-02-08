@@ -36,13 +36,13 @@ ParticleBlockManager::~ParticleBlockManager()
   // TODO Auto-generated destructor stub
 }
 
-void ParticleBlockManager::resize( integer_array const & numElements,
+void ParticleBlockManager::resize( integer_array const & numParticles,
                                string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<numRegions; ++reg )
   {
-    this->getRegion( regionNames[reg] ).resize( numElements[reg] );
+    this->getRegion( regionNames[reg] ).resize( numParticles[reg] );
   }
 }
 

@@ -28,7 +28,7 @@ namespace geosx
  * @class ParticleRegion
  *
  * The ParticleRegion class contains the functionality to support the concept of a ParticleRegion in the element
- * hierarchy. ParticleRegion derives from ElementRegionBase and has an entry in the ObjectManagerBase catalog.
+ * hierarchy. ParticleRegion derives from ParticleRegionBase and has an entry in the ObjectManagerBase catalog.
  *
  *
  */
@@ -102,7 +102,7 @@ public:
    * @brief A struct to serve as a container for variable strings and keys.
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : public ElementRegionBase::viewKeyStruct
+  struct viewKeyStruct : public ParticleRegionBase::viewKeyStruct
   {
     /// @return String key for the cell block names
     static constexpr char const * sourceParticleBlockNamesString() {return "particleBlocks"; }

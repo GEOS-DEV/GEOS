@@ -75,11 +75,11 @@ public:
 
   /**
    * @brief Generate mesh.
-   * @param cellBlocks cell blocks where the mesh is generated
+   * @param particleBlocks particle blocks where the mesh is generated
    */
-  virtual void generateMesh( Group & cellBlocks )
+  virtual void generateMesh( Group & particleBlocks )
   {
-    GEOSX_UNUSED_VAR( cellBlocks );
+    GEOSX_UNUSED_VAR( particleBlocks );
     GEOSX_ERROR( "ParticleRegionBase::GenerateMesh() should be overriden if called." );
   }
 
@@ -183,51 +183,108 @@ public:
 
 
   /**
-     * @name Functor-based loops over particle subregions
-     */
-    ///@{
+   * @name Functor-based loops over particle subregions
+   */
+  ///@{
 
 
   /**
    * @brief Apply a lambda to all particle subregions.
    * @param lambda the functor to be applied
    */
-    template< typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda ) const
-    {
-      forParticleSubRegions< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
-    }
+  template< typename LAMBDA >
+  void forParticleSubRegions( LAMBDA && lambda ) const
+  {
+    forParticleSubRegions< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
    * @copydoc forParticleSubRegions( LAMBDA && lambda ) const
    */
-    template< typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda )
-    {
-      forParticleSubRegions< ParticleSubRegion  >( std::forward< LAMBDA >( lambda ) );
-    }
+  template< typename LAMBDA >
+  void forParticleSubRegions( LAMBDA && lambda )
+  {
+    forParticleSubRegions< ParticleSubRegion  >( std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
    * @brief Apply LAMBDA to the subregions with the specific subregion types
    *        listed in the template.
    * @param lambda the functor to be applied
    */
-    template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda ) const
-    {
-      this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
-    }
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forParticleSubRegions( LAMBDA && lambda ) const
+  {
+    this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+  }
 
   /**
    * @copydoc forParticleSubRegions( LAMBDA && lambda ) const
    */
-    template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
-    void forParticleSubRegions( LAMBDA && lambda )
-    {
-      this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
-    }
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forParticleSubRegions( LAMBDA && lambda )
+  {
+    this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
+  }
 
-    ///@}
+  /**
+   * @brief Apply LAMBDA to the subregions, loop using subregion indices.
+   * @tparam LAMBDA type of functor to call
+   * @param lambda the functor to be applied to all subregions
+   */
+  template< typename LAMBDA >
+  void forParticleSubRegionsIndex( LAMBDA && lambda ) const
+  {
+    forParticleSubRegionsIndex< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @copydoc forParticleSubRegionsIndex( LAMBDA && lambda ) const
+   */
+  template< typename LAMBDA >
+  void forParticleSubRegionsIndex( LAMBDA && lambda )
+  {
+    forParticleSubRegionsIndex< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
+  }
+
+  /**
+   * @brief Apply LAMBDA to the subregions with the specific subregion types
+   *        listed in the template, loop using subregion indices.
+   * @tparam SUBREGIONTYPE the first subregion type
+   * @tparam SUBREGIONTYPES a variadic list of subregion types
+   * @tparam LAMBDA type of functor to call
+   * @param lambda the functor to be applied
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forParticleSubRegionsIndex( LAMBDA && lambda ) const
+  {
+    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    {
+      ParticleSubRegionBase const & subRegion = this->getSubRegion( esr );
+      applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+      {
+        lambda( esr, castedSubRegion );
+      } );
+    }
+  }
+
+  /**
+   * @copydoc forParticleSubRegionsIndex( LAMBDA && lambda ) const
+   */
+  template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
+  void forParticleSubRegionsIndex( LAMBDA && lambda )
+  {
+    for( localIndex esr=0; esr<this->numSubRegions(); ++esr )
+    {
+      ParticleSubRegionBase & subRegion = this->getSubRegion( esr );
+      applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+      {
+        lambda( esr, castedSubRegion );
+      } );
+    }
+  }
+
+  ///@}
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.
@@ -243,7 +300,7 @@ public:
     static constexpr char const * particleSubRegions() { return "particleSubRegions"; }
   };
 
-private:
+  private:
 
   ParticleRegionBase & operator=( const ParticleRegionBase & rhs );
 
