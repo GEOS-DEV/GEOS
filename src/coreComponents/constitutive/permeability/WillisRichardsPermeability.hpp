@@ -61,13 +61,13 @@ public:
                                                        real64 const & newHydraulicAperture,
                                                        real64 const & pressure,
                                                        real64 const ( &dispJump )[3],
-                                                       real64 const ( &fractureTraction )[3] ) const override
+                                                       real64 const ( &traction )[3] ) const override final
   {
     GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture );
 
     compute( pressure,
              dispJump,
-             fractureTraction,
+             traction,
              m_permeability[k][0],
              m_dPerm_dDispJump[k][0],
              m_dPerm_dTraction[k][0] );
@@ -139,10 +139,10 @@ public:
 private:
 
   /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
-  arrayView4d< real64 > m_dPerm_dDispJump;
+  array4d< real64 > m_dPerm_dDispJump;
 
   /// Derivative of fracture permeability to traction acting on fracture surfaces
-  arrayView4d< real64 > m_dPerm_dTraction;
+  array4d< real64 > m_dPerm_dTraction;
 
   /// Maximum fracture aperture at zero contact stress
   real64 m_maxFracAperture;
