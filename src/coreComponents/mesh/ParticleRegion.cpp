@@ -25,7 +25,7 @@ namespace geosx
 using namespace dataRepository;
 
 ParticleRegion::ParticleRegion( string const & name, Group * const parent ):
-  ElementRegionBase( name, parent )
+  ParticleRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::sourceParticleBlockNamesString(), &m_particleBlockNames ).
     setInputFlag( InputFlags::OPTIONAL );

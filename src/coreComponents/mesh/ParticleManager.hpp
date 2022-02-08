@@ -129,11 +129,11 @@ public:
    * @brief Get the number of elements in all ParticleSubRegions of type T.
    * @return number of elements
    */
-  template< typename T = ElementSubRegionBase >
+  template< typename T = ParticleSubRegionBase >
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forParticleSubRegions< T >( [&]( ElementSubRegionBase const & particleBlock )
+    this->forParticleSubRegions< T >( [&]( ParticleSubRegionBase const & particleBlock )
     {
       numElem += particleBlock.size();
     } );
@@ -149,24 +149,11 @@ public:
   void generateMesh( Group & particleBlockManager );
 
   /**
-   * @brief Generate the cell-to-edge map
-   * @param [in] faceManager pointer to the FaceManager
-   */
-  void generateCellToEdgeMaps( FaceManager const & faceManager );
-
-  /**
    * @brief Generate the aggregates.
    * @param [in] faceManager pointer to the FaceManager
    * @param [in] nodeManager pointer to the NodeManager
    */
-  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
-
-  /**
-   * @brief Generate the wells.
-   * @param [in] meshManager pointer to meshManager
-   * @param [in] meshLevel pointer to meshLevel
-   */
-  void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+//  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
 
   /**
    * @brief Create a new ParticleRegion object as a child of this group.
@@ -196,13 +183,13 @@ public:
 
   /**
    * @brief Set the number of elements for a set of element regions.
-   * @param numElements list of the new element numbers
+   * @param numParticles list of the new element numbers
    * @param regionNames list of the element region names
-   * @param elementTypes list of the element types
+   * @param particleTypes list of the element types
    */
-  void resize( integer_array const & numElements,
+  void resize( integer_array const & numParticles,
                string_array const & regionNames,
-               string_array const & elementTypes );
+               string_array const & particleTypes );
 
   /**
    * @brief Set the maximum local and global index.
@@ -232,7 +219,7 @@ public:
    * @param key The key of element region, either name or number.
    * @return Reference to const T.
    */
-  template< typename T=ElementRegionBase, typename KEY_TYPE=void >
+  template< typename T=ParticleRegionBase, typename KEY_TYPE=void >
   T const & getRegion( KEY_TYPE const & key ) const
   {
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).getGroup< T >( key );
@@ -243,13 +230,13 @@ public:
    * @param key The key of the element region, either name or number.
    * @return Reference to T.
    */
-  template< typename T=ElementRegionBase, typename KEY_TYPE=void >
+  template< typename T=ParticleRegionBase, typename KEY_TYPE=void >
   T & getRegion( KEY_TYPE const & key )
   {
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).getGroup< T >( key );
   }
 
-  template< typename T=ElementRegionBase >
+  template< typename T=ParticleRegionBase >
   bool hasRegion( string const & name ) const
   {
     return this->getGroup( groupKeyStruct::particleRegionsGroup() ).hasGroup< T >( name );
@@ -272,11 +259,11 @@ public:
 
   /**
    * @brief This function is used to launch kernel function over all the particle regions with region type =
-   * ElementRegionBase.
+   * ParticleRegionBase.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+  template< typename REGIONTYPE = ParticleRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forParticleRegions( LAMBDA && lambda )
   {
     this->getGroup( groupKeyStruct::particleRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
@@ -284,11 +271,11 @@ public:
 
   /**
    * @brief This const function is used to launch kernel function over all the particle regions with region type =
-   * ElementRegionBase.
+   * ParticleRegionBase.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
+  template< typename REGIONTYPE = ParticleRegionBase, typename ... REGIONTYPES, typename LAMBDA >
   void forParticleRegions( LAMBDA && lambda ) const
   {
     this->getGroup( groupKeyStruct::particleRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
@@ -296,13 +283,13 @@ public:
 
   /**
    * @brief This function is used to launch kernel function over the target element regions with region type =
-   * ElementRegionBase.
+   * ParticleRegionBase.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
    * @param targetRegions target element region names or indices
    * @param lambda kernel function
    */
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  template< typename REGIONTYPE = ParticleRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
     this->getGroup( groupKeyStruct::particleRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
@@ -310,13 +297,13 @@ public:
 
   /**
    * @brief This const function is used to launch kernel function over the target element regions with region type =
-   * ElementRegionBase.
+   * ParticleRegionBase.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
    * @param targetRegions target element region names or indices
    * @param lambda kernel function
    */
-  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
+  template< typename REGIONTYPE = ParticleRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
     this->getGroup( groupKeyStruct::particleRegionsGroup() ).forSubGroups< REGIONTYPE, REGIONTYPES... >( targetRegions, std::forward< LAMBDA >( lambda ) );
@@ -355,7 +342,7 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase & particleRegion = this->getRegion( er );
+      ParticleRegionBase & particleRegion = this->getRegion( er );
 
       Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( particleRegion, [&]( auto & castedRegion )
       {
@@ -375,7 +362,7 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase const & particleRegion = this->getRegion( er );
+      ParticleRegionBase const & particleRegion = this->getRegion( er );
 
       Group::applyLambdaToContainer< REGIONTYPE, REGIONTYPES... >( particleRegion, [&]( auto const & castedRegion )
       {
@@ -479,8 +466,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    forParticleSubRegions< ParticleSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
-                          WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegions< ParticleSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
   /**
@@ -493,8 +479,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleSubRegions( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
-    forParticleSubRegions< ParticleSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
-                          WellElementSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegions< ParticleSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
   /**
@@ -509,7 +494,7 @@ public:
     forParticleSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >(
       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const,
                                                    localIndex const,
-                                                   ElementRegionBase &,
+                                                   ParticleRegionBase &,
                                                    auto & subRegion )
     {
       lambda( subRegion );
@@ -529,7 +514,7 @@ public:
     forParticleSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >(
       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const,
                                                    localIndex const,
-                                                   ElementRegionBase const &,
+                                                   ParticleRegionBase const &,
                                                    auto const & subRegion )
     {
       lambda( subRegion );
@@ -551,7 +536,7 @@ public:
                                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
                                                                                                                    localIndex const,
                                                                                                                    localIndex const,
-                                                                                                                   ElementRegionBase &,
+                                                                                                                   ParticleRegionBase &,
                                                                                                                    auto & subRegion )
     {
       lambda( targetIndex, subRegion );
@@ -573,7 +558,7 @@ public:
                                                                       [lambda = std::forward< LAMBDA >( lambda )]( localIndex const targetIndex,
                                                                                                                    localIndex const,
                                                                                                                    localIndex const,
-                                                                                                                   ElementRegionBase const &,
+                                                                                                                   ParticleRegionBase const &,
                                                                                                                    auto const & subRegion )
     {
       lambda( targetIndex, subRegion );
@@ -588,8 +573,7 @@ public:
   template< typename LAMBDA >
   void forParticleSubRegionsComplete( LAMBDA && lambda ) const
   {
-    forParticleSubRegionsComplete< ParticleSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
-                                  WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegionsComplete< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
   /**
@@ -600,8 +584,7 @@ public:
   template< typename LAMBDA >
   void forParticleSubRegionsComplete( LAMBDA && lambda )
   {
-    forParticleSubRegionsComplete< ParticleSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion,
-                                  WellElementSubRegion >( std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegionsComplete< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
   /**
@@ -614,8 +597,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    forParticleSubRegionsComplete< ParticleSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
-                                                                                                                                std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegionsComplete< ParticleSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
   /**
@@ -628,8 +610,7 @@ public:
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
-    forParticleSubRegionsComplete< ParticleSubRegion, FaceElementSubRegion, EmbeddedSurfaceSubRegion, WellElementSubRegion >( targetRegions,
-                                                                                                                                std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegionsComplete< ParticleSubRegion >( targetRegions, std::forward< LAMBDA >( lambda ) );
   }
 
   /**
@@ -643,11 +624,11 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase & particleRegion = this->getRegion( er );
+      ParticleRegionBase & particleRegion = this->getRegion( er );
 
       for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
       {
-        ElementSubRegionBase & subRegion = particleRegion.getSubRegion( esr );
+        ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( esr );
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
         {
@@ -668,11 +649,11 @@ public:
   {
     for( localIndex er=0; er<this->numRegions(); ++er )
     {
-      ElementRegionBase const & particleRegion = this->getRegion( er );
+      ParticleRegionBase const & particleRegion = this->getRegion( er );
 
       for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
       {
-        ElementSubRegionBase const & subRegion = particleRegion.getSubRegion( esr );
+        ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( esr );
 
         Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
         {
@@ -693,7 +674,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda )
   {
-    forParticleRegions( targetRegions, [&] ( localIndex const targetIndex, ElementRegionBase & particleRegion )
+    forParticleRegions( targetRegions, [&] ( localIndex const targetIndex, ParticleRegionBase & particleRegion )
     {
       localIndex const er = particleRegion.getIndexInParent();
 
@@ -701,7 +682,7 @@ public:
       {
         for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
         {
-          ElementSubRegionBase & subRegion = particleRegion.getSubRegion( esr );
+          ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( esr );
 
           Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
           {
@@ -723,7 +704,7 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
   void forParticleSubRegionsComplete( LOOKUP_CONTAINER const & targetRegions, LAMBDA && lambda ) const
   {
-    forParticleRegions( targetRegions, [&] ( localIndex const targetIndex, ElementRegionBase const & particleRegion )
+    forParticleRegions( targetRegions, [&] ( localIndex const targetIndex, ParticleRegionBase const & particleRegion )
     {
       localIndex const er = particleRegion.getIndexInParent();
 
@@ -731,7 +712,7 @@ public:
       {
         for( localIndex esr=0; esr<particleRegion.numSubRegions(); ++esr )
         {
-          ElementSubRegionBase const & subRegion = particleRegion.getSubRegion( esr );
+          ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( esr );
 
           Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
           {
@@ -1084,37 +1065,6 @@ public:
                         bool const overwriteMap );
 
   /**
-   * @brief Get the buffer size needed to pack the set of fractured elements and the map toEmbSurfaces.
-   * @param packList list of indices to pack
-   * @param fractureRegionName name of the fracture region
-   * @return the buffer size needed to pack the data
-   */
-  int packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                 string const fractureRegionName ) const;
-
-  /**
-   * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
-   * @param buffer pointer to the buffer to be packed
-   * @param packList list of indices to pack
-   * @param fractureRegionName name of the fracture region
-   * @return the size of the data packed
-   */
-  int packFracturedElements( buffer_unit_type * & buffer,
-                             ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                             string const fractureRegionName ) const;
-
-  /**
-   * @brief Unpack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
-   * @param buffer pointer to the buffer to be packed
-   * @param packList list of indices to pack
-   * @param fractureRegionName name of the fracture region
-   * @return the size of the data unpacked
-   */
-  int unpackFracturedElements( buffer_unit_type const * & buffer,
-                               ElementReferenceAccessor< localIndex_array > & packList,
-                               string const fractureRegionName );
-
-  /**
    * @name viewKeyStruct/groupKeyStruct
    */
   ///@{
@@ -1195,19 +1145,6 @@ private:
                      T & packList );
 
   /**
-   * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
-   * @param buffer pointer to the buffer to be packed
-   * @param packList list of indices to pack
-   * @param fractureRegionName name of the fracture region
-   * @return the size of the data packed
-   */
-  template< bool DOPACK >
-  int
-  packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                string const fractureRegionName ) const;
-
-  /**
    * @brief Copy constructor.
    */
   ParticleManager( const ParticleManager & );
@@ -1234,12 +1171,12 @@ ParticleManager::constructViewAccessor( string const & viewName, string const & 
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
-      Group const * group = &elemRegion.getSubRegion( kSubReg );
+      Group const * group = &particleRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1266,12 +1203,12 @@ ParticleManager::
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase & elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase & particleRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg = 0; kSubReg < elemRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg = 0; kSubReg < particleRegion.numSubRegions(); ++kSubReg )
     {
-      Group * group = &elemRegion.getSubRegion( kSubReg );
+      Group * group = &particleRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1317,12 +1254,12 @@ ParticleManager::
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
     {
-      Group const * group = &elemRegion.getSubRegion( kSubReg );
+      Group const * group = &particleRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1347,12 +1284,12 @@ ParticleManager::
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase & elemRegion = getRegion( kReg );
-    viewAccessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase & particleRegion = getRegion( kReg );
+    viewAccessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( typename dataRepository::indexType kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( typename dataRepository::indexType kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
     {
-      Group * group = &elemRegion.getSubRegion( kSubReg );
+      Group * group = &particleRegion.getSubRegion( kSubReg );
 
       if( !neighborName.empty() )
       {
@@ -1378,12 +1315,12 @@ ParticleManager::
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
+    accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
+      ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
@@ -1416,12 +1353,12 @@ ParticleManager::
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase & elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase & particleRegion = getRegion( kReg );
+    accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
+      ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
 
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
@@ -1469,10 +1406,10 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
     if( er >=0 )
     {
       GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-      ElementRegionBase const & region = getRegion( er );
+      ParticleRegionBase const & region = getRegion( er );
 
-      region.forElementSubRegionsIndex( [&]( localIndex const esr,
-                                             ElementSubRegionBase const & subRegion )
+      region.forParticleSubRegionsIndex( [&]( localIndex const esr,
+                                             ParticleSubRegionBase const & subRegion )
       {
         string const & materialName = subRegion.getReference<string>( materialKeyName );
         dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
@@ -1517,9 +1454,9 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
     if( er >=0 )
     {
       GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-      ElementRegionBase & region = getRegion( er );
+      ParticleRegionBase & region = getRegion( er );
 
-      region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+      region.forParticleSubRegionsIndex( [&]( localIndex const esr, ParticleSubRegionBase & subRegion )
       {
         string const & materialName = subRegion.getReference<string>( materialKeyName );
         dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
@@ -1593,10 +1530,10 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName ) const
   // Loop only over regions named and populate according to given material names
   for( localIndex er = 0; er < numRegions(); ++er )
   {
-    ElementRegionBase const & region = getRegion( er );
+    ParticleRegionBase const & region = getRegion( er );
 
-    region.forElementSubRegionsIndex( [&]( localIndex const esr,
-                                           ElementSubRegionBase const & subRegion )
+    region.forParticleSubRegionsIndex( [&]( localIndex const esr,
+                                           ParticleSubRegionBase const & subRegion )
     {
       dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
 
@@ -1629,12 +1566,12 @@ ParticleManager::constructFullConstitutiveAccessor( constitutive::ConstitutiveMa
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
+    accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase const & subRegion = elemRegion.getSubRegion( kSubReg );
+      ParticleSubRegionBase const & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 
@@ -1662,12 +1599,12 @@ ParticleManager::constructFullConstitutiveAccessor( constitutive::ConstitutiveMa
   accessor.resize( numRegions() );
   for( localIndex kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase & elemRegion = getRegion( kReg );
-    accessor[kReg].resize( elemRegion.numSubRegions() );
+    ParticleRegionBase & particleRegion = getRegion( kReg );
+    accessor[kReg].resize( particleRegion.numSubRegions() );
 
-    for( localIndex kSubReg=0; kSubReg<elemRegion.numSubRegions(); ++kSubReg )
+    for( localIndex kSubReg=0; kSubReg<particleRegion.numSubRegions(); ++kSubReg )
     {
-      ElementSubRegionBase & subRegion = elemRegion.getSubRegion( kSubReg );
+      ParticleSubRegionBase & subRegion = particleRegion.getSubRegion( kSubReg );
       dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
       accessor[kReg][kSubReg].resize( cm.numSubGroups() );
 

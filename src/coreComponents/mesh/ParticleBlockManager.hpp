@@ -71,17 +71,17 @@ public:
   using Group::resize;
 
   /**
-   * @brief Set the number of elements for a set of element regions.
-   * @param numElements list of the new element numbers
-   * @param regionNames list of the element region names
+   * @brief Set the number of particles for a set of particle regions.
+   * @param numParticles list of the new particle numbers
+   * @param regionNames list of the particle region names
    */
-  void resize( integer_array const & numElements,
+  void resize( integer_array const & numParticles,
                string_array const & regionNames );
 
   /**
-   * @brief Get element sub-region.
-   * @param regionName name of the element sub-region
-   * @return pointer to the element sub-region
+   * @brief Get particle sub-region.
+   * @param regionName name of the particle sub-region
+   * @return pointer to the particle sub-region
    */
   ParticleBlock & getRegion( string const & regionName )
   {
@@ -95,7 +95,7 @@ public:
    * @param lambda kernel function
    */
   template< typename LAMBDA >
-  void forElementSubRegions( LAMBDA lambda )
+  void forParticleSubRegions( LAMBDA lambda )
   {
     this->getGroup( dataRepository::keys::particleBlocks ).forSubGroups< ParticleBlock >( lambda );
   }

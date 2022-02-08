@@ -20,7 +20,6 @@
 #include "ParticleBlock.hpp"
 #include "MeshLevel.hpp"
 
-#include "NodeManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -28,7 +27,7 @@ namespace geosx
 using namespace dataRepository;
 
 ParticleBlock::ParticleBlock( string const & name, Group * const parent ):
-  ElementSubRegionBase( name, parent ),
+  ParticleSubRegionBase( name, parent ),
   m_externalPropertyNames()
 {
 
