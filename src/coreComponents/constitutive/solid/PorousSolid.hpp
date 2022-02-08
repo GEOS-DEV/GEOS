@@ -54,49 +54,6 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void smallStrainUpdate( localIndex const k,
-                          localIndex const q,
-                          real64 const & initialPressure,
-                          real64 const & pressure,
-                          real64 const & deltaPressure,
-                          real64 const ( &strainIncrement )[6],
-                          real64 ( & totalStress )[6],
-                          real64 & dPorosity_dPressure,
-                          real64 & dPorosity_dVolStrain,
-                          real64 ( & dTotalStress_dPressure )[6],
-                          DiscretizationOps & stiffness ) const
-  {
-    // Compute effective stress and store in totalStress
-    m_solidUpdate.smallStrainUpdate( k, q, strainIncrement, totalStress, stiffness );
-
-    updateBiotCoefficient( k );
-
-    // Compute  total stress
-    real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( pressure + deltaPressure - initialPressure ) );
-
-    dTotalStress_dPressure[0] = -biotCoefficient;
-    dTotalStress_dPressure[1] = -biotCoefficient;
-    dTotalStress_dPressure[2] = -biotCoefficient;
-    dTotalStress_dPressure[3] = 0;
-    dTotalStress_dPressure[4] = 0;
-    dTotalStress_dPressure[5] = 0;
-
-    m_porosityUpdate.updateFromPressureAndStrain( k,
-                                                  q,
-                                                  deltaPressure,
-                                                  strainIncrement,
-                                                  dPorosity_dPressure,
-                                                  dPorosity_dVolStrain );
-
-// TODO uncomment once we start using permeability model in flow.
-//    m_permUpdate.updateFromPressureStrain( k,
-//                                           q,
-//                                           pressure,
-//                                           volStrain );
-  }
-
-  GEOSX_HOST_DEVICE
   void smallStrainUpdateSinglePhase( localIndex const k,
                                      localIndex const q,
                                      real64 const & initialFluidPressure,
@@ -179,6 +136,8 @@ public:
     dFluidMassContent_dVolStrainIncrement = dPorosity_dVolStrain * fluidDensity;
     dFluidMassContent_dPressure = dPorosity_dPressure * fluidDensity + porosity * dFluidDensity_dPressure;
 
+    //
+
 // TODO uncomment once we start using permeability model in flow.
 //    m_permUpdate.updateFromPressureStrain( k,
 //                                           q,
@@ -199,27 +158,21 @@ public:
                                     real64 const & gravityAcceleration,
                                     real64 const ( &gravityVector )[3],
                                     real64 const & solidDensity,
-                                    real64 const & initialFluidTotalMassDensity, //
-                                    ////////////////////////////////////////////////
+                                    real64 const & initialFluidTotalMassDensity,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseDensity,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseDensityOld,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & dFluidPhaseDensity_dPressure,
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseDensity_dGlobalCompFraction,
-
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const & fluidPhaseCompFrac,
                                     arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & fluidPhaseCompFracOld,
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const & dFluidPhaseCompFrac_dPressure,
                                     arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const & dFluidPhaseCompFraction_dGlobalCompFraction,
-
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseMassDensity,
-
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturationOld,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dFluidPhaseSaturation_dPressure,
                                     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dFluidPhaseSaturation_dGlobalCompDensity,
-
                                     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dGlobalCompFraction_dGlobalCompDensity,
-                                    /////////////////////////////////////////////////////////
                                     real64 ( & totalStress )[6],
                                     real64 ( & dTotalStress_dPressure )[6],
                                     real64 ( & bodyForceIncrement )[3],
@@ -230,8 +183,9 @@ public:
                                     real64 ( & dComponentMassContent_dPressure )[NUM_MAX_COMPONENTS],
                                     real64 ( & dComponentMassContent_dComponents )[NUM_MAX_COMPONENTS][NUM_MAX_COMPONENTS],
                                     DiscretizationOps & stiffness,
-                                    real64 & porosity,
-                                    real64 & dPorosity_dPressure ) const
+                                    real64 & poreVolumeConstraint,
+                                    real64 (&dPoreVolumeConstraint_dPressure ),
+                                    real64 (& dPoreVolumeConstraint_dComponents )[NUM_MAX_COMPONENTS] ) const
   {
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
@@ -253,7 +207,7 @@ public:
     dTotalStress_dPressure[4] = 0;
     dTotalStress_dPressure[5] = 0;
 
-    //real64 dPorosity_dPressure;
+    real64 dPorosity_dPressure;
     real64 dPorosity_dVolStrain;
     m_porosityUpdate.updateFromPressureAndStrain( k,
                                                   q,
@@ -263,7 +217,7 @@ public:
                                                   dPorosity_dVolStrain );
 
     //real64 const
-    porosity = m_porosityUpdate.getPorosity( k, q );
+    real64 porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const porosityOld = m_porosityUpdate.getOldPorosity( k, q );
     real64 const porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
 
@@ -288,6 +242,9 @@ public:
 
       real64 const mixtureDensityIncrement = mixtureDensityNew - mixtureDensityInit;
       LvArray::tensorOps::scaledCopy< 3 >( bodyForceIncrement, gravityVector, mixtureDensityIncrement );
+
+      GEOSX_UNUSED_VAR( dBodyForce_dVolStrainIncrement );
+      GEOSX_UNUSED_VAR( dBodyForce_dPressure );
     }
 
     // Compute component mass contents and derivatives w.r.t. to
@@ -297,10 +254,10 @@ public:
     real64 dPhaseAmount_dC[NUM_MAX_COMPONENTS];
     real64 dPhaseCompFrac_dC[NUM_MAX_COMPONENTS];
 
-    LvArray::tensorOps::scale< NUM_MAX_COMPONENTS >( componentMassContentIncrement, 0.0 );
-    LvArray::tensorOps::scale< NUM_MAX_COMPONENTS >( dComponentMassContent_dVolStrainIncrement, 0.0 );
-    LvArray::tensorOps::scale< NUM_MAX_COMPONENTS >( dComponentMassContent_dPressure, 0.0 );
-    LvArray::tensorOps::scale< NUM_MAX_COMPONENTS, NUM_MAX_COMPONENTS >( dComponentMassContent_dComponents, 0.0 );
+    LvArray::tensorOps::fill< NUM_MAX_COMPONENTS >( componentMassContentIncrement, 0.0 );
+    LvArray::tensorOps::fill< NUM_MAX_COMPONENTS >( dComponentMassContent_dVolStrainIncrement, 0.0 );
+    LvArray::tensorOps::fill< NUM_MAX_COMPONENTS >( dComponentMassContent_dPressure, 0.0 );
+    LvArray::tensorOps::fill< NUM_MAX_COMPONENTS, NUM_MAX_COMPONENTS >( dComponentMassContent_dComponents, 0.0 );
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -326,7 +283,6 @@ public:
 
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
-      real64 const fluidPhaseDensityTimesFluidPhaseSaturation = fluidPhaseDensity( ip ) * fluidPhaseSaturation( ip );
       for( localIndex ic = 0; ic < NC; ++ic )
       {
         componentMassContentIncrement[ic] = componentMassContentIncrement[ic]
@@ -354,6 +310,25 @@ public:
         }
       }
     }
+
+    // --- Volume balance equation
+    poreVolumeConstraint = 1.0;
+    dPoreVolumeConstraint_dPressure = 0.0;
+    LvArray::tensorOps::fill< NUM_MAX_COMPONENTS >( dPoreVolumeConstraint_dComponents, 0.0 );
+    for( localIndex ip = 0; ip < NP; ++ip )
+    {
+      poreVolumeConstraint = poreVolumeConstraint - fluidPhaseSaturation( ip );
+      dPoreVolumeConstraint_dPressure = dPoreVolumeConstraint_dPressure
+                                        - dFluidPhaseSaturation_dPressure( ip ) * porosity
+                                        - dPorosity_dPressure * fluidPhaseSaturation( ip );
+
+      for( localIndex jc = 0; jc < NC; ++jc )
+      {
+        dPoreVolumeConstraint_dComponents[jc] = dPoreVolumeConstraint_dComponents[jc]
+                                                - dFluidPhaseSaturation_dGlobalCompDensity( ip, jc )  * porosity;
+      }
+    }
+    poreVolumeConstraint = poreVolumeConstraint * porosity;
 
 // TODO uncomment once we start using permeability model in flow.
 //    m_permUpdate.updateFromPressureStrain( k,

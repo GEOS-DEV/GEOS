@@ -192,9 +192,9 @@ public:
       dLocalResidualMass_dDisplacement{ {0.0} },
       dLocalResidualMass_dPressure{ {0.0} },
       dLocalResidualMass_dComponents{ {0.0} },
-      localResidualPoreVolumeBalance{ 0.0 },
-      dLocalResidualPoreVolumeBalance_dPressure{ {0.0} },
-      dLocalResidualPoreVolumeBalance_dComponents{ {0.0} },
+      localPoreVolumeConstraint{ 0.0 },
+      dLocalPoreVolumeConstraint_dPressure{ {0.0} },
+      dLocalPoreVolumeConstraint_dComponents{ {0.0} },
       localPressureDofIndex{ 0 },
       localComponentDofIndices{ 0 }
     {}
@@ -222,9 +222,9 @@ public:
     real64 dLocalResidualMass_dPressure[numMaxComponents][1];
     real64 dLocalResidualMass_dComponents[numMaxComponents][numMaxComponents];
 
-    real64 localResidualPoreVolumeBalance[1];
-    real64 dLocalResidualPoreVolumeBalance_dPressure[1][1];
-    real64 dLocalResidualPoreVolumeBalance_dComponents[1][numMaxComponents];
+    real64 localPoreVolumeConstraint[1];
+    real64 dLocalPoreVolumeConstraint_dPressure[1][1];
+    real64 dLocalPoreVolumeConstraint_dComponents[1][numMaxComponents];
 
     /// C-array storage for the element local row degrees of freedom.
     globalIndex localPressureDofIndex[1];
@@ -293,12 +293,13 @@ public:
     real64 bodyForce[3]{};
     real64 dBodyForce_dVolStrainIncrement[3]{};
     real64 dBodyForce_dPressure[3]{};
-    real64 componentMassContentIncrement[numMaxComponents];
-    real64 dComponentMassContent_dVolStrainIncrement[numMaxComponents];
-    real64 dComponentMassContent_dPressure[numMaxComponents];
-    real64 dComponentMassContent_dComponents[numMaxComponents][numMaxComponents];
-    real64 porosity;
-    real64 dPorosity_dPressure;
+    real64 componentMassContentIncrement[numMaxComponents]{};
+    real64 dComponentMassContent_dVolStrainIncrement[numMaxComponents]{};
+    real64 dComponentMassContent_dPressure[numMaxComponents]{};
+    real64 dComponentMassContent_dComponents[numMaxComponents][numMaxComponents]{};
+    real64 poreVolumeConstraint;
+    real64 dPoreVolumeConstraint_dPressure;
+    real64 dPoreVolumeConstraint_dComponents[numMaxComponents]{};
 
     // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
@@ -323,26 +324,20 @@ public:
                                                       m_gravityVector,
                                                       m_solidDensity( k, q ),
                                                       m_initialFluidTotalMassDensity( k, q ),
-                                                      //////////////////////
                                                       m_fluidPhaseDensity[k][q],
                                                       m_fluidPhaseDensityOld[k],
                                                       m_dFluidPhaseDensity_dPressure[k][q],
                                                       m_dFluidPhaseDensity_dGlobalCompFraction[k][q],
-
                                                       m_fluidPhaseCompFrac[k][q],
                                                       m_fluidPhaseCompFracOld[k],
                                                       m_dFluidPhaseCompFrac_dPressure[k][q],
                                                       m_dFluidPhaseCompFraction_dGlobalCompFraction[k][q],
-
                                                       m_fluidPhaseMassDensity[k][q],
-
                                                       m_fluidPhaseSaturation[k],
                                                       m_fluidPhaseSaturationOld[k],
                                                       m_dFluidPhaseSaturation_dPressure[k],
                                                       m_dFluidPhaseSaturation_dGlobalCompDensity[k],
-
                                                       m_dGlobalCompFraction_dGlobalCompDensity[k],
-                                                      //////////////////
                                                       totalStress,
                                                       dTotalStress_dPressure,
                                                       bodyForce,
@@ -353,8 +348,9 @@ public:
                                                       dComponentMassContent_dPressure,
                                                       dComponentMassContent_dComponents,
                                                       stiffness,
-                                                      porosity,
-                                                      dPorosity_dPressure );
+                                                      poreVolumeConstraint,
+                                                      dPoreVolumeConstraint_dPressure,
+                                                      dPoreVolumeConstraint_dComponents );
 
     // Compute local linear momentum balance residual
     LinearFormUtilities::compute< displacementTestSpace,
@@ -445,21 +441,14 @@ public:
 
     // --- Volume balance equation
     // sum contributions to component accumulation from each phase
-    stack.localResidualPoreVolumeBalance[0] = stack.localResidualPoreVolumeBalance[0]
-                                              + porosity * detJxW;
-    for( localIndex ip = 0; ip < NP; ++ip )
+    stack.localPoreVolumeConstraint[0] = stack.localPoreVolumeConstraint[0]
+                                         + poreVolumeConstraint * detJxW;
+    stack.dLocalPoreVolumeConstraint_dPressure[0][0] = stack.dLocalPoreVolumeConstraint_dPressure[0][0]
+                                                       + dPoreVolumeConstraint_dPressure * detJxW;
+    for( localIndex jc = 0; jc < NC; ++jc )
     {
-      stack.localResidualPoreVolumeBalance[0] = stack.localResidualPoreVolumeBalance[0]
-                                                - m_fluidPhaseSaturation( k, ip ) * porosity * detJxW;
-      stack.dLocalResidualPoreVolumeBalance_dPressure[0][0] = stack.dLocalResidualPoreVolumeBalance_dPressure[0][0]
-                                                              - m_dFluidPhaseSaturation_dPressure( k, ip ) * porosity * detJxW
-                                                              - dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) * detJxW;
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        stack.dLocalResidualPoreVolumeBalance_dComponents[0][jc] = stack.dLocalResidualPoreVolumeBalance_dComponents[0][jc]
-                                                                   - m_dFluidPhaseSaturation_dGlobalCompDensity( k, ip, jc )  * porosity * detJxW;
-      }
+      stack.dLocalPoreVolumeConstraint_dComponents[0][jc] = stack.dLocalPoreVolumeConstraint_dComponents[0][jc]
+                                                            + dPoreVolumeConstraint_dComponents[jc] * detJxW;
     }
   }
 
@@ -538,15 +527,15 @@ public:
 
       m_matrix.template addToRow< serialAtomic >( dof,
                                                   stack.localPressureDofIndex,
-                                                  stack.dLocalResidualPoreVolumeBalance_dPressure[0],
+                                                  stack.dLocalPoreVolumeConstraint_dPressure[0],
                                                   1 );
 
       m_matrix.template addToRow< serialAtomic >( dof,
                                                   stack.localComponentDofIndices,
-                                                  stack.dLocalResidualPoreVolumeBalance_dComponents[0],
+                                                  stack.dLocalPoreVolumeConstraint_dComponents[0],
                                                   m_numComponents );
 
-      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localResidualPoreVolumeBalance[0] );
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localPoreVolumeConstraint[0] );
     }
 
     return maxForce;
