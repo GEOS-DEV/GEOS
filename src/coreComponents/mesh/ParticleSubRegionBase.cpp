@@ -13,42 +13,33 @@
  */
 
 /**
- * @file CellBase.cpp
+ * @file ParticleSubRegionBase.cpp
  */
 
-#include "ElementSubRegionBase.hpp"
+#include "ParticleSubRegionBase.hpp"
 
 namespace geosx
 {
 using namespace dataRepository;
 
-ElementSubRegionBase::ElementSubRegionBase( string const & name, Group * const parent ):
+ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
-  m_numNodesPerElement(),
-  m_numEdgesPerElement(),
-  m_numFacesPerElement(),
-  m_elementCenter(),
-  m_elementVolume()
+  m_particleCenter(),
+  m_particleVolume()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
 
-  registerWrapper( viewKeyStruct::numNodesPerElementString(), &m_numNodesPerElement );
-
-  registerWrapper( viewKeyStruct::numEdgesPerElementString(), &m_numEdgesPerElement );
-
-  registerWrapper( viewKeyStruct::numFacesPerElementString(), &m_numFacesPerElement );
-
-  registerWrapper( viewKeyStruct::elementCenterString(), &m_elementCenter ).
+  registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
-  registerWrapper( viewKeyStruct::elementVolumeString(), &m_elementVolume ).
+  registerWrapper( viewKeyStruct::particleVolumeString(), &m_particleVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 }
 
-ElementSubRegionBase::~ElementSubRegionBase()
+ParticleSubRegionBase::~ParticleSubRegionBase()
 {}
 
 } /* namespace geosx */
