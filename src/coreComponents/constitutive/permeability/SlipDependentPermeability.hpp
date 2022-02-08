@@ -117,14 +117,6 @@ public:
                           m_initialPermeability );
   }
 
-  struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {
-    static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
-    static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
-    static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
-    static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
-  };
-
 private:
 
   /// Derivative of fracture permeability w.r.t. displacement jump
@@ -138,6 +130,13 @@ private:
 
   /// Initial permeability tensor
   R1Tensor m_initialPermeability;
+
+  struct viewKeyStruct 
+  {
+    static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
+    static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
+    static constexpr char const * initialPermeabilityString() { return "initialPermeability"; }
+  };
 
 };
 

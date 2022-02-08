@@ -18,6 +18,7 @@
 
 #include "WillisRichardsPermeability.hpp"
 #include "LvArray/src/tensorOps.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -43,12 +44,8 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Effective normal stress causes 90% reduction in aperture." );
 
-  registerWrapper( viewKeyStruct::dPerm_dDispJumpString(), &m_dPerm_dDispJump ).
-    setDescription( "Derivative of the permeability w.r.t. the displacement jump." );
-
-  registerWrapper( viewKeyStruct::dPerm_dTractionString(), &m_dPerm_dTraction ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Derivative of the permeability w.r.t. the fracture traction." );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dDispJump{}, &m_dPerm_dDispJump );
+  registerExtrinsicData( extrinsicMeshData::permeability::dPerm_dTraction{}, &m_dPerm_dTraction );
 }
 
 std::unique_ptr< ConstitutiveBase >

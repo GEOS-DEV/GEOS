@@ -127,15 +127,6 @@ public:
                           m_refClosureStress );
   }
 
-  struct viewKeyStruct : public PermeabilityBase::viewKeyStruct
-  {
-    static constexpr char const * dPerm_dDispJumpString() { return "dPerm_dDispJump"; }
-    static constexpr char const * dPerm_dTractionString() { return "dPerm_dTraction"; }
-    static constexpr char const * maxFracApertureString() { return "maxFracAperture"; }
-    static constexpr char const * dilationCoefficientString() { return "dilationCoefficient"; }
-    static constexpr char const * refClosureStressString() { return "refClosureStress"; }
-  };
-
 private:
 
   /// Derivative of fracture permeability to shear displacement jump between fracture surfaces
@@ -152,6 +143,13 @@ private:
 
   /// Effective normal stress causes 90% reduction in aperture
   real64 m_refClosureStress;
+
+  struct viewKeyStruct
+  {
+    static constexpr char const * maxFracApertureString() { return "maxFracAperture"; }
+    static constexpr char const * dilationCoefficientString() { return "dilationCoefficient"; }
+    static constexpr char const * refClosureStressString() { return "refClosureStress"; }
+  };
 
 };
 
