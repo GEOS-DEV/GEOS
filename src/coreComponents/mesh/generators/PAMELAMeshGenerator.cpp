@@ -22,6 +22,7 @@
 #include "common/TypeDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "CellBlockManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 // PAMELA includes
@@ -192,14 +193,15 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
 /// @return mesh length scale
 real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
                     real64 const scaleFactor[3],
-                    NodeManager & nodeManager )
+                    CellBlockManager & cellBlockManager )
 {
-  nodeManager.resize( LvArray::integerConversion< localIndex >( srcMesh.get_PointCollection()->size_all() ) );
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  cellBlockManager.setNumNodes( srcMesh.get_PointCollection()->size_all() );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodesPositions();
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
-  SortedArray< localIndex > & allNodes = nodeManager.sets().registerWrapper< SortedArray< localIndex > >( "all" ).reference();
+  auto & nodeSets = cellBlockManager.getNodeSets();
+  SortedArray< localIndex > & allNodes = nodeSets["all"];
 
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
@@ -235,7 +237,7 @@ void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockP
 {
   GEOSX_ASSERT( cellBlockPtr != nullptr );
 
-  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+  CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
   cellBlock.setElementType( toGeosxElementType( cellBlockPtr->ElementType ) );
 
   localIndex const nbCells = LvArray::integerConversion< localIndex >( cellBlockPtr->SubCollection.size_owned() );
@@ -243,7 +245,7 @@ void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockP
 
   std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType,
                                                            isZReverse );
-  arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.nodeList().toView();
+  arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.getElemToNode().toView();
   arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
 
   // Iterate on cells
@@ -267,11 +269,11 @@ void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockP
 }
 
 void importSurface( PAMELA::Part< PAMELA::Polygon * > * const surfacePtr,
-                    NodeManager & nodeManager )
+                    CellBlockManager & cellBlockManager )
 {
   GEOSX_ASSERT( surfacePtr != nullptr );
   string const surfaceName = retrieveSurfaceOrRegionName( surfacePtr->Label );
-  SortedArray< localIndex > & curNodeSet = nodeManager.sets().registerWrapper< SortedArray< localIndex > >( surfaceName ).reference();
+  SortedArray< localIndex > & curNodeSet = cellBlockManager.getNodeSets()[ surfaceName ];
 
   for( auto const & subPart : surfacePtr->SubParts )
   {
@@ -312,14 +314,14 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   domain.getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( "Level0" );
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  meshBody.registerGroup< MeshLevel >( "Level0" );
 
+  CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
+
+  // Dealing with nodes
   real64 const scaleFactor[3] = { m_scale, m_scale, m_scale * ( m_isZReverse ? -1 : 1 ) };
-  real64 const lengthScale = importNodes( *m_pamelaMesh, scaleFactor, nodeManager );
+  real64 const lengthScale = importNodes( *m_pamelaMesh, scaleFactor, cellBlockManager );
   meshBody.setGlobalLengthScale( lengthScale );
 
   // Use the PartMap of PAMELA to get the mesh
@@ -351,9 +353,10 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   for( auto const & polygonPart : polygonPartMap )
   {
     PAMELA::Part< PAMELA::Polygon * > * const surfacePtr = polygonPart.second;
-    importSurface( surfacePtr, nodeManager );
+    importSurface( surfacePtr, cellBlockManager );
   }
 
+  cellBlockManager.buildMaps();
 }
 
 void PAMELAMeshGenerator::freeResources()

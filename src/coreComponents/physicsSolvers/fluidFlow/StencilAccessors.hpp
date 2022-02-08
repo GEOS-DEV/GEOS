@@ -45,14 +45,17 @@ public:
   template< typename TRAIT >
   auto get( TRAIT ) const
   {
-    return std::get< traits::type_list_index< TRAIT, std::tuple< TRAITS ... > > >( m_accessors ).toNestedViewConst();
+    constexpr std::size_t idx = traits::type_list_index< TRAIT, std::tuple< TRAITS ... > >;
+    static_assert( idx != std::tuple_size< std::tuple< TRAITS... > >::value, "input trait/stencil does not match the available traits/stencils." );
+    return std::get< idx >( m_accessors ).toNestedViewConst();
   }
 
   template< typename TRAIT >
   auto get() const
   {
-    return std::get< traits::type_list_index< TRAIT, std::tuple< TRAITS ... > > >( m_accessors ).toNestedViewConst();
+    return get( TRAIT{} );
   }
+
   /**
    * @brief Constructor for the struct
    * @param[in] elemManager a reference to the elemRegionManager
