@@ -81,7 +81,7 @@ struct ControlEquationHelper
 
   GEOSX_HOST_DEVICE
   static void
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  localIndex const phasePhaseIndex,
                  real64 const & targetBHP,
@@ -691,7 +691,7 @@ struct ResidualNormKernel
   {
     using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
 
-    WellControls::Type const wellType = wellControls.getType();
+    bool const isProducer = wellControls.isProducer();
     WellControls::Control const currentControl = wellControls.getControl();
     real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
     real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
@@ -740,7 +740,7 @@ struct ResidualNormKernel
 
           else if( idof >= ROFFSET::MASSBAL && idof < ROFFSET::MASSBAL + numComponents )
           {
-            if( wellType == WellControls::Type::PRODUCER ) // only PHASEVOLRATE is supported for now
+            if( isProducer ) // only PHASEVOLRATE is supported for now
             {
               normalizer = dt * absTargetPhaseRate * wellElemPhaseDensOld[iwelem][targetPhaseIndex];
             }
@@ -756,7 +756,7 @@ struct ResidualNormKernel
 
           else
           {
-            if( wellType == WellControls::Type::PRODUCER ) // only PHASEVOLRATE is supported for now
+            if( isProducer ) // only PHASEVOLRATE is supported for now
             {
               normalizer = dt * absTargetPhaseRate;
             }

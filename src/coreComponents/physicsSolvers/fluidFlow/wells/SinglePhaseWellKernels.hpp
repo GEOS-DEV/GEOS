@@ -75,7 +75,7 @@ struct ControlEquationHelper
 
   GEOSX_HOST_DEVICE
   static void
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,

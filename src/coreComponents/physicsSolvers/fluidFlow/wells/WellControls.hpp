@@ -117,12 +117,6 @@ public:
   ///@{
 
   /**
-   * @brief Get the well type (injector or producer).
-   * @return a well Type enum
-   */
-  Type getType() const { return m_type; }
-
-  /**
    * @brief Set the control type to BHP and set a numerical value for the control.
    * @param[in] val value for the BHP control
    */
@@ -227,17 +221,29 @@ public:
   const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
 
   /**
+   * @brief Getter for the well type
+   * @return true if the well is an injector, false otherwise
+   */
+  bool isInjector() const { return ( m_type == Type::INJECTOR ); }
+
+  /**
+   * @brief Getter for the well type
+   * @return true if the well is a producer, false otherwise
+   */
+  bool isProducer() const { return ( m_type == Type::PRODUCER ); }
+
+  /**
    * @brief Getter for the status of the well (open or shut)
    * @param[in] currentTime the current time
    * @return a flag equal to true if the well is open, and false otherwise
    */
-  bool wellIsOpen( real64 const & currentTime ) const;
+  bool isWellOpen( real64 const & currentTime ) const;
 
   /**
    * @brief Getter for the flag to disable crossflow in injectors
    * @return the flag deciding whether crossflow is allowed or not
    */
-  bool disableInjectorCrossflow() const { return m_disableInjectorCrossflow; }
+  bool isCrossflowDisabled() const { return m_isCrossflowDisabled; }
 
   ///@}
 
@@ -278,7 +284,7 @@ public:
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for the crossflow flag
-    static constexpr char const * disableInjectorCrossflowString() { return "disableInjectorCrossflow"; }
+    static constexpr char const * disableCrossflowString() { return "disableInjectorCrossflow"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -338,7 +344,7 @@ private:
   string m_targetBHPTableName;
 
   /// Flag to disable crossflow for injector
-  integer m_disableInjectorCrossflow;
+  integer m_isCrossflowDisabled;
 
   /// Total rate table
   TableFunction * m_targetTotalRateTable;

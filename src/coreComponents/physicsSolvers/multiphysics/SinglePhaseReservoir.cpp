@@ -168,7 +168,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
     // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
     // therefore, we do not want to compute perforation rates and we simply assume they are zero
     WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
-    if( !wellControls.wellIsOpen( time_n + dt ) )
+    if( !wellControls.isWellOpen( time_n + dt ) )
     {
       return;
     }

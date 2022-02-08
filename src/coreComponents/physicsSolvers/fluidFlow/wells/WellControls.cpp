@@ -37,7 +37,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_useSurfaceConditions( 0 ),
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
-  m_disableInjectorCrossflow( 0 ),
+  m_isCrossflowDisabled( 0 ),
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr )
@@ -55,12 +55,12 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
     setDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Target bottom-hole pressure" );
+    setDescription( "Target bottom-hole pressure [Pa]" );
 
   registerWrapper( viewKeyStruct::targetTotalRateString(), &m_targetTotalRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Target total volumetric rate" );
+    setDescription( "Target total volumetric rate [sm^3/s]" );
 
   registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
     setDefaultValue( 0.0 ).
@@ -75,18 +75,18 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::refElevString(), &m_refElevation ).
     setDefaultValue( -1 ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Reference elevation where BHP control is enforced" );
+    setDescription( "Reference elevation where BHP control is enforced [m]" );
 
   registerWrapper( viewKeyStruct::injectionStreamString(), &m_injectionStream ).
     setDefaultValue( -1 ).
     setSizedFromParent( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Global component densities of the injection stream" );
+    setDescription( "Global component densities of the injection stream [moles/m^3 or kg/m^3]" );
 
   registerWrapper( viewKeyStruct::injectionTemperatureString(), &m_injectionTemperature ).
     setDefaultValue( -1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Temperature of the injection stream" );
+    setDescription( "Temperature of the injection stream [K]" );
 
   registerWrapper( viewKeyStruct::useSurfaceConditionsString(), &m_useSurfaceConditions ).
     setDefaultValue( 0 ).
@@ -97,14 +97,14 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::surfacePressureString(), &m_surfacePres ).
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used" );
+    setDescription( "Surface pressure used to compute volumetric rates when surface conditions are used [Pa]" );
 
   registerWrapper( viewKeyStruct::surfaceTemperatureString(), &m_surfaceTemp ).
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used" );
+    setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
 
-  registerWrapper( viewKeyStruct::disableInjectorCrossflowString(), &m_disableInjectorCrossflow ).
+  registerWrapper( viewKeyStruct::disableCrossflowString(), &m_isCrossflowDisabled ).
     setDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Flag to disable crossflow in injecting wells: \n"
@@ -161,7 +161,7 @@ TableFunction * createWellTable( string const & tableName,
   constantValueArray.emplace_back( constantValue );
 
   FunctionManager & functionManager = FunctionManager::getInstance();
-  TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( "TableFunction", tableName ));
+  TableFunction * table = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ));
   table->setTableCoordinates( timeCoord );
   table->setTableValues( constantValueArray );
   table->setInterpolationMethod( TableFunction::InterpolationType::Lower );
@@ -245,8 +245,8 @@ void WellControls::postProcessInput()
                   InputError );
 
   //  9) Make sure that the flag disabling crossflow is not used for producers
-  GEOSX_THROW_IF( getType() == Type::PRODUCER && m_disableInjectorCrossflow != 0,
-                  "WellControls '" << getName() << "': The option '" << viewKeyStruct::disableInjectorCrossflowString() << "' is not available for producers",
+  GEOSX_THROW_IF( isProducer() && m_isCrossflowDisabled != 0,
+                  "WellControls '" << getName() << "': The option '" << viewKeyStruct::disableCrossflowString() << "' is not available for producers",
                   InputError );
 
   //  10) Create time-dependent BHP table
@@ -299,7 +299,7 @@ void WellControls::postProcessInput()
 
   // For producer, the user has specified a positive rate
   // Therefore, we multiply it by -1 before the simulation starts to have the correct sign in the equations
-  if( getType() == Type::PRODUCER )
+  if( isProducer() )
   {
     array1d< real64 > & phaseRatetableValues = m_targetPhaseRateTable->getValues();
     for( localIndex i = 0; i < phaseRatetableValues.size(); ++i )
@@ -315,7 +315,7 @@ void WellControls::postProcessInput()
   }
 }
 
-bool WellControls::wellIsOpen( real64 const & currentTime ) const
+bool WellControls::isWellOpen( real64 const & currentTime ) const
 {
   bool isOpen = true;
   if( ( m_currentControl == Control::TOTALVOLRATE && isZero( getTargetTotalRate( currentTime ) ) ) ||

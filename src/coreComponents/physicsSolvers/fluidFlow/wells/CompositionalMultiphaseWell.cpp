@@ -233,7 +233,7 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
                          GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
-  for( localIndex ip = 0; ip < lhs.numFluidPhases(); ++ip )
+  for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOSX_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                            GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
@@ -248,7 +248,7 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
                          GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
-  for( localIndex ic = 0; ic < lhs.numFluidComponents(); ++ic )
+  for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOSX_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                            GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
@@ -304,11 +304,11 @@ void CompositionalMultiphaseWell::validateInjectionStreams( MeshLevel const & me
     WellControls const & wellControls = getWellControls( subRegion );
 
     // check well injection stream for injectors
-    if( wellControls.getType() == WellControls::Type::INJECTOR )
+    if( wellControls.isInjector() )
     {
       arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
       real64 compFracSum = 0;
-      for( localIndex ic = 0; ic < m_numComponents; ++ic )
+      for( integer ic = 0; ic < m_numComponents; ++ic )
       {
         real64 const compFrac = injection[ic];
         GEOSX_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
@@ -333,37 +333,36 @@ void CompositionalMultiphaseWell::validateWellConstraints( MeshLevel const & mes
                                                                WellElementSubRegion const & subRegion )
   {
     WellControls const & wellControls = getWellControls( subRegion );
-    WellControls::Type const wellType = wellControls.getType();
     WellControls::Control const currentControl = wellControls.getControl();
     real64 const & targetTotalRate = wellControls.getTargetTotalRate( m_currentTime + m_currentDt );
     real64 const & targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime + m_currentDt );
     integer const useSurfaceConditions = wellControls.useSurfaceConditions();
     real64 const & surfaceTemp = wellControls.getSurfaceTemperature();
 
-    GEOSX_THROW_IF( wellType == WellControls::Type::INJECTOR && currentControl == WellControls::Control::PHASEVOLRATE,
+    GEOSX_THROW_IF( wellControls.isInjector() && currentControl == WellControls::Control::PHASEVOLRATE,
                     "WellControls named " << wellControls.getName() <<
                     ": Phase rate control is not available for injectors",
                     InputError );
-    GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && currentControl == WellControls::Control::TOTALVOLRATE,
+    GEOSX_THROW_IF( wellControls.isProducer() && currentControl == WellControls::Control::TOTALVOLRATE,
                     "WellControls named " << wellControls.getName() <<
                     ": Phase rate control is not available for producers",
                     InputError );
 
-    GEOSX_THROW_IF( wellType == WellControls::Type::INJECTOR && targetTotalRate < 0.0,
+    GEOSX_THROW_IF( wellControls.isInjector() && targetTotalRate < 0.0,
                     "WellControls named " << wellControls.getName() <<
                     ": Target total rate cannot be negative for injectors",
                     InputError );
-    GEOSX_THROW_IF( wellType == WellControls::Type::INJECTOR && !isZero( targetPhaseRate ),
+    GEOSX_THROW_IF( wellControls.isInjector() && !isZero( targetPhaseRate ),
                     "WellControls named " << wellControls.getName() <<
                     ": Target phase rate cannot be used for injectors",
                     InputError );
 
     // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
-    GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && targetPhaseRate > 0.0,
+    GEOSX_THROW_IF( wellControls.isProducer() && targetPhaseRate > 0.0,
                     "WellControls named " << wellControls.getName() <<
                     ": Target phase rate cannot be negative for producers",
                     InputError );
-    GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && !isZero( targetTotalRate ),
+    GEOSX_THROW_IF( wellControls.isProducer() && !isZero( targetTotalRate ),
                     "WellControls named " << wellControls.getName() <<
                     ": Target total rate cannot be used for producers",
                     InputError );
@@ -374,14 +373,14 @@ void CompositionalMultiphaseWell::validateWellConstraints( MeshLevel const & mes
                     InputError );
 
     // Find target phase index for phase rate constraint
-    for( localIndex ip = 0; ip < fluid.numFluidPhases(); ++ip )
+    for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
     {
       if( fluid.phaseNames()[ip] == wellControls.getTargetPhaseName() )
       {
         m_targetPhaseIndex = ip;
       }
     }
-    GEOSX_THROW_IF( wellType == WellControls::Type::PRODUCER && m_targetPhaseIndex == -1,
+    GEOSX_THROW_IF( wellControls.isProducer() && m_targetPhaseIndex == -1,
                     "WellControls named " << wellControls.getName() <<
                     ": Phase " << wellControls.getTargetPhaseName() << " not found for well control " << wellControls.getName(),
                     InputError );
@@ -501,7 +500,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
     real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
     currentBHP = pres[iwelemRef] + dPres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
     dCurrentBHP_dPres = 1 + dTotalMassDens_dPres[iwelemRef] * diffGravCoef;
-    for( localIndex ic = 0; ic < numComp; ++ic )
+    for( integer ic = 0; ic < numComp; ++ic )
     {
       dCurrentBHP_dCompDens[ic] = dTotalMassDens_dCompDens[iwelemRef][ic] * diffGravCoef;
     }
@@ -650,7 +649,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
       real64 const dTotalDensInv_dPres = -dTotalDens_dPres[iwelemRef][0] * totalDensInv * totalDensInv;
       stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         dTotalDensInv_dCompDens[ic] = -dTotalDens_dComp[iwelemRef][0][ic] * totalDensInv * totalDensInv;
       }
@@ -660,13 +659,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       currentTotalVolRate = currentTotalRate * totalDensInv;
       dCurrentTotalVolRate_dPres = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
       dCurrentTotalVolRate_dRate = totalDensInv;
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         dCurrentTotalVolRate_dCompDens[ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
       }
 
       // Step 3: update the phase volume rate
-      for( localIndex ip = 0; ip < numPhase; ++ip )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
 
         // Step 3.1: compute the inverse of the (phase density * phase fraction) and derivatives
@@ -688,7 +687,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
         currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
         dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
         dCurrentPhaseVolRate_dRate[ip] = phaseFracTimesPhaseDensInv;
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens_dComp[iwelemRef][0][ip][ic] * phaseDensInv;
           dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac_dComp[iwelemRef][0][ip][ic] * phaseDensInv;
@@ -1237,10 +1236,8 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & mes
   // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
   // therefore, we do not want to compute perforation rates and we simply assume they are zero
   WellControls const & wellControls = getWellControls( subRegion );
-  WellControls::Type const wellType = wellControls.getType();
-  bool const disableReservoirToWellFlow =
-    ( wellType == WellControls::Type::INJECTOR ) && wellControls.disableInjectorCrossflow();
-  if( !wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
+  bool const disableReservoirToWellFlow = wellControls.isInjector() and wellControls.isCrossflowDisabled();
+  if( !wellControls.isWellOpen( m_currentTime + m_currentDt ) )
   {
     return;
   }
@@ -1410,7 +1407,7 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
     {
       if( wellElemGhostRank[iwelem] < 0 )
       {
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           // get the latest component density (i.e., after the update of dWellElemCompDens)
           real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
@@ -1448,7 +1445,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
       // extract solution and apply to dP
       dWellElemPressure[iwelem] = 0;
       dConnRate[iwelem] = 0;
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         dWellElemGlobalCompDensity[iwelem][ic] = 0;
       }
@@ -1498,12 +1495,12 @@ void CompositionalMultiphaseWell::backupFields( MeshLevel & mesh ) const
 
       wellElemTotalDensOld[ei] = wellElemTotalDens[ei][0];
 
-      for( localIndex ip = 0; ip < numPhase; ++ip )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
         wellElemPhaseDensOld[ei][ip] = wellElemPhaseDens[ei][0][ip];
         wellElemPhaseVolFracOld[ei][ip] = wellElemPhaseVolFrac[ei][ip];
 
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           wellElemPhaseCompFracOld[ei][ip][ic] = wellElemPhaseCompFrac[ei][0][ip][ic];
         }
@@ -1583,8 +1580,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
 
       if( wellControls.getControl() == WellControls::Control::BHP )
       {
-        WellControls::Type const wellType = wellControls.getType();
-        if( wellType == WellControls::Type::PRODUCER )
+        if( wellControls.isProducer() )
         {
           wellControls.switchToPhaseRateControl( wellControls.getTargetPhaseRate( timeAtEndOfStep ) );
           GEOSX_LOG_LEVEL_RANK_0( 1, "Control switch for well " << subRegion.getName()
@@ -1649,7 +1645,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & GEOSX_UNU
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
       wellElemPressure[iwelem] += dWellElemPressure[iwelem];
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         wellElemGlobalCompDensity[iwelem][ic] += dWellElemGlobalCompDensity[iwelem][ic];
       }

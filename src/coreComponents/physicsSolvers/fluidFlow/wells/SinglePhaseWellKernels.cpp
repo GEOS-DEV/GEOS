@@ -32,7 +32,7 @@ namespace SinglePhaseWellKernels
 GEOSX_HOST_DEVICE
 void
 ControlEquationHelper::
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
@@ -56,7 +56,7 @@ ControlEquationHelper::
   else // rate control
   {
     // the control is viable if the reference pressure is below/above the max/min pressure
-    if( wellType == WellControls::Type::PRODUCER )
+    if( isProducer )
     {
       // targetBHP specifies a min pressure here
       controlIsViable = ( currentBHP >= targetBHP - EPS );
@@ -253,7 +253,7 @@ PressureRelationKernel::
           arrayView1d< real64 > const & localRhs )
 {
   // static well control data
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
   real64 const targetRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
@@ -282,7 +282,7 @@ PressureRelationKernel::
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
       WellControls::Control newControl = currentControl;
-      ControlEquationHelper::switchControl( wellType,
+      ControlEquationHelper::switchControl( isProducer,
                                             currentControl,
                                             targetBHP,
                                             targetRate,
@@ -573,7 +573,7 @@ PresInitializationKernel::
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   WellControls::Control const currentControl = wellControls.getControl();
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
 
   // loop over all perforations to compute an average density
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
@@ -591,7 +591,7 @@ PresInitializationKernel::
     minResPressure.min( resPressure[er][esr][ei] );
     maxResPressure.max( resPressure[er][esr][ei] );
   } );
-  real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
+  real64 const pres = ( isProducer )
                     ? MpiWrapper::min( minResPressure.get() )
                     : MpiWrapper::max( maxResPressure.get() );
   real64 const avgDensity = MpiWrapper::sum( sumDensity.get() ) / numPerforations;
@@ -611,7 +611,7 @@ PresInitializationKernel::
     // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
     //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
     //       be used for initialization
-    pressureControl = ( wellType == WellControls::Type::PRODUCER )
+    pressureControl = ( isProducer )
                     ? 0.5 * pres
                     : 2.0 * pres;
   }
@@ -638,7 +638,7 @@ RateInitializationKernel::
 {
   real64 const targetRate = wellControls.getTargetTotalRate( currentTime );
   WellControls::Control const control = wellControls.getControl();
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
 
   // Estimate the connection rates
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
@@ -647,7 +647,7 @@ RateInitializationKernel::
     {
       // if BHP constraint set rate below the absolute max rate
       // with the appropriate sign (negative for prod, positive for inj)
-      if( wellType == WellControls::Type::PRODUCER )
+      if( isProducer )
       {
         connRate[iwelem] = LvArray::math::max( 0.1 * targetRate * wellElemDens[iwelem][0], -1e3 );
       }
