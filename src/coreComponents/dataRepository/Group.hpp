@@ -550,14 +550,11 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      if( hasGroup( subgroup ) )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
       {
-        applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
-        {
-          lambda( counter, castedSubGroup );
-        } );
-        ++counter;
-      }
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
     }
   }
 
