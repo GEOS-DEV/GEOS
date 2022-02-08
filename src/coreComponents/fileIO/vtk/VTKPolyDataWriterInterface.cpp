@@ -99,27 +99,26 @@ std::vector< localIndex >
 gatherNbElementsInRegion( ElementRegionBase const & region,
                           MPI_Comm const & comm = MPI_COMM_GEOSX )
 {
-  localIndex nbElems = 0;
-  if(region.getName() == "ParticleRegion1")
-  {
-    std::cout << "EEP!" << std::endl;
-  }
-  if(region.hasGroup("elementSubRegions")) // Obviously directly using this string is not good practice, but idk how to do it properly... SJP
-  {
-    nbElems += region.getNumberOfElements();
-    std::cout << "HERP" << std::endl;
-  }
-  if(region.hasGroup("particleSubRegions"))
-  {
-    nbElems += region.getNumberOfParticles();
-    std::cout << "DERP" << std::endl;
-  }
-  std::cout << "Number of elements+particles: " << nbElems << std::endl;
-
-  //localIndex const nbElems = region.getNumberOfElements();
+  localIndex const nbElems = region.getNumberOfElements();
   std::vector< localIndex > nbElemsInRegion( MpiWrapper::commSize( comm ) );
   MpiWrapper::gather( &nbElems, 1, nbElemsInRegion.data(), 1, 0, comm );
   return nbElemsInRegion;
+}
+
+/**
+ * @brief Ask rank @p rank for the number of particles in its ParticleRegionBase @p er.
+ * @param[in] region the particle region for which we want to know the number of particles
+ * @param[out] nbElemsInRegion output array
+ * @return the number of elements in the region for the asked rank
+ */
+std::vector< localIndex >
+gatherNbParticlesInRegion( ParticleRegionBase const & region,
+                           MPI_Comm const & comm = MPI_COMM_GEOSX )
+{
+  localIndex const nbParticles = region.getNumberOfParticles();
+  std::vector< localIndex > nbParticlesInRegion( MpiWrapper::commSize( comm ) );
+  MpiWrapper::gather( &nbParticles, 1, nbParticlesInRegion.data(), 1, 0, comm );
+  return nbParticlesInRegion;
 }
 
 /**
@@ -735,13 +734,26 @@ void writeVtmFile( real64 const time,
 {
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  auto writeSubBlocks = [&]( ElementRegionBase const & region )
+  auto writeElementSubBlocks = [&]( ElementRegionBase const & region )
   {
     std::vector< localIndex > const nbElemsInRegion = gatherNbElementsInRegion( region, MPI_COMM_GEOSX );
     vtmWriter.addSubSubBlock( meshBodyName, region.getCatalogName(), region.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
       if( mpiRank == 0 && nbElemsInRegion[i] > 0 )
+      {
+        string const dataSetFile = std::to_string( time ) + "/" + paddedRank( MPI_COMM_GEOSX, i ) + "_" + region.getName() + ".vtu";
+        vtmWriter.addDataToSubSubBlock( meshBodyName, region.getCatalogName(), region.getName(), dataSetFile, i );
+      }
+    }
+  };
+  auto writeParticleSubBlocks = [&]( ParticleRegionBase const & region )
+  {
+    std::vector< localIndex > const nbParticlesInRegion = gatherNbParticlesInRegion( region, MPI_COMM_GEOSX );
+    vtmWriter.addSubSubBlock( meshBodyName, region.getCatalogName(), region.getName() );
+    for( int i = 0; i < mpiSize; i++ )
+    {
+      if( mpiRank == 0 && nbParticlesInRegion[i] > 0 )
       {
         string const dataSetFile = std::to_string( time ) + "/" + paddedRank( MPI_COMM_GEOSX, i ) + "_" + region.getName() + ".vtu";
         vtmWriter.addDataToSubSubBlock( meshBodyName, region.getCatalogName(), region.getName(), dataSetFile, i );
@@ -757,10 +769,10 @@ void writeVtmFile( real64 const time,
     vtmWriter.addSubBlock( meshBodyName, ParticleRegion::catalogName() );
   }
 
-  elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
-  elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
-  elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
-  particleManager.forParticleRegions< ParticleRegion >( writeSubBlocks );
+  elemManager.forElementRegions< CellElementRegion >( writeElementSubBlocks );
+  elemManager.forElementRegions< WellElementRegion >( writeElementSubBlocks );
+  elemManager.forElementRegions< SurfaceElementRegion >( writeElementSubBlocks );
+  particleManager.forParticleRegions< ParticleRegion >( writeParticleSubBlocks );
 
   if( mpiRank == 0 )
   {

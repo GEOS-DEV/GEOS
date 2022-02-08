@@ -52,27 +52,27 @@ ParticleManager::~ParticleManager()
 localIndex ParticleManager::numParticleBlocks() const
 {
   localIndex numParticleBlocks = 0;
-  this->forParticleSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & )
+  this->forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase const & )
   {
     numParticleBlocks += 1;
   } );
   return numParticleBlocks;
 }
 
-void ParticleManager::resize( integer_array const & numElements,
+void ParticleManager::resize( integer_array const & numParticles,
                                    string_array const & regionNames,
-                                   string_array const & GEOSX_UNUSED_PARAM( elementTypes ) )
+                                   string_array const & GEOSX_UNUSED_PARAM( particleTypes ) )
 {
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
   {
-    this->getRegion( reg ).resize( numElements[reg] );
+    this->getRegion( reg ).resize( numParticles[reg] );
   }
 }
 
 void ParticleManager::setMaxGlobalIndex()
 {
-  forParticleSubRegions< ElementSubRegionBase >( [this] ( ElementSubRegionBase const & subRegion )
+  forParticleSubRegions< ParticleSubRegionBase >( [this] ( ParticleSubRegionBase const & subRegion )
   {
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
@@ -127,7 +127,7 @@ void ParticleManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
   }
 
   std::set< string > names;
-  this->forParticleRegions( [&]( ElementRegionBase & particleRegion )
+  this->forParticleRegions( [&]( ParticleRegionBase & particleRegion )
   {
     names.insert( particleRegion.getName() );
   } );
@@ -140,60 +140,9 @@ void ParticleManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
 void ParticleManager::generateMesh( Group & particleBlockManager )
 {
-  this->forParticleRegions< ParticleRegion, SurfaceElementRegion >( [&]( auto & particleRegion )
+  this->forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
     particleRegion.generateMesh( particleBlockManager.getGroup( keys::particleBlocks ) );
-  } );
-}
-
-void ParticleManager::generateCellToEdgeMaps( FaceManager const & faceManager )
-{
-  /*
-   * Create cell to edges map
-   * I use the existing maps from cells to faces and from faces to edges.
-   */
-  localIndex faceIndex, edgeIndex;
-  int count = 0;
-  bool isUnique = true;
-
-  this->forParticleSubRegions< ParticleSubRegion >( [&]( ParticleSubRegion & subRegion )
-  {
-    FixedOneToManyRelation & cellToEdges = subRegion.edgeList();
-    FixedOneToManyRelation const & cellToFaces = subRegion.faceList();
-    InterObjectRelation< ArrayOfArrays< localIndex > > const & faceToEdges = faceManager.edgeList();
-
-    //loop over the cells
-    for( localIndex kc = 0; kc < subRegion.size(); kc++ )
-    {
-      count = 0;
-      for( localIndex kf = 0; kf < subRegion.numFacesPerElement(); kf++ )
-      {
-        // loop over edges of each face
-        faceIndex = cellToFaces[kc][kf];
-        for( localIndex ke = 0; ke < faceToEdges.sizeOfArray( faceIndex ); ke++ )
-        {
-          isUnique = true;
-          edgeIndex = faceToEdges[faceIndex][ke];
-
-          //loop over edges that have already been added to the element.
-          for( localIndex kec = 0; kec < count+1; kec++ )
-          {
-            // make sure that the edge has not been counted yet
-            if( cellToEdges( kc, kec ) == edgeIndex )
-            {
-              isUnique = false;
-              break;
-            }
-          }
-          if( isUnique )
-          {
-            cellToEdges( kc, count ) = edgeIndex;
-            count++;
-          }
-
-        } // end edge loop
-      } // end face loop
-    } // end cell loop
   } );
 }
 
@@ -204,54 +153,6 @@ void ParticleManager::generateCellToEdgeMaps( FaceManager const & faceManager )
 //    particleRegion.generateAggregates( faceManager, nodeManager );
 //  } );
 //}
-
-void ParticleManager::generateWells( MeshManager & meshManager,
-                                          MeshLevel & meshLevel )
-{
-  NodeManager & nodeManager = meshLevel.getNodeManager();
-
-  // get the offsets to construct local-to-global maps for well nodes and elements
-  nodeManager.setMaxGlobalIndex();
-  globalIndex const nodeOffsetGlobal = nodeManager.maxGlobalIndex() + 1;
-  localIndex const elemOffsetLocal  = this->getNumberOfElements();
-  globalIndex const elemOffsetGlobal = MpiWrapper::sum( elemOffsetLocal );
-
-  globalIndex wellElemCount = 0;
-  globalIndex wellNodeCount = 0;
-
-  // construct the wells one by one
-  forParticleRegions< WellElementRegion >( [&]( WellElementRegion & wellRegion )
-  {
-
-    // get the global well geometry from the well generator
-    string const generatorName = wellRegion.getWellGeneratorName();
-    InternalWellGenerator const & wellGeometry =
-      meshManager.getGroup< InternalWellGenerator >( generatorName );
-
-    // generate the local data (well elements, nodes, perforations) on this well
-    // note: each MPI rank knows the global info on the entire well (constructed earlier in InternalWellGenerator)
-    // so we only need node and element offsets to construct the local-to-global maps in each wellElemSubRegion
-    wellRegion.generateWell( meshLevel, wellGeometry, nodeOffsetGlobal + wellNodeCount, elemOffsetGlobal + wellElemCount );
-
-    // increment counters with global number of nodes and elements
-    wellElemCount += wellGeometry.getNumElements();
-    wellNodeCount += wellGeometry.getNumNodes();
-
-    string const & subRegionName = wellRegion.getSubRegionName();
-    WellElementSubRegion &
-    subRegion = wellRegion.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() )
-                  .getGroup< WellElementSubRegion >( subRegionName );
-
-    globalIndex const numWellElemsGlobal = MpiWrapper::sum( subRegion.size() );
-
-    GEOSX_ERROR_IF( numWellElemsGlobal != wellGeometry.getNumElements(),
-                    "Invalid partitioning in well " << subRegionName );
-
-  } );
-
-  // communicate to rebuild global node info since we modified global ordering
-  nodeManager.setMaxGlobalIndex();
-}
 
 int ParticleManager::PackSize( string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
@@ -283,24 +184,24 @@ ParticleManager::PackPrivate( buffer_unit_type * & buffer,
   parallelDeviceEvents events;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & particleRegion = getRegion( kReg );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
 
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.numSubRegions() );
 
-    particleRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-      [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
+      [&]( localIndex const esr, ParticleSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const particleList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
+        packedSize += subRegion.pack( buffer, wrapperNames, particleList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
+        packedSize += subRegion.packSize( wrapperNames, particleList, 0, false, events );
       }
     } );
   }
@@ -342,20 +243,20 @@ int ParticleManager::unpackPrivate( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase & particleRegion = getRegion( regionName );
+    ParticleRegionBase & particleRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    particleRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-      [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
+      [&]( localIndex const esr, ParticleSubRegionBase & subRegion )
     {
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
 
       /// THIS IS WRONG??
-      arrayView1d< localIndex > & elemList = packList[kReg][esr];
+      arrayView1d< localIndex > & particleList = packList[kReg][esr];
 
-      unpackedSize += subRegion.unpack( buffer, elemList, 0, false, events );
+      unpackedSize += subRegion.unpack( buffer, particleList, 0, false, events );
     } );
   }
 
@@ -385,23 +286,23 @@ ParticleManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & particleRegion = getRegion( kReg );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
 
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.numSubRegions() );
-    particleRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-      [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
+      [&]( localIndex const esr, ParticleSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
+      arrayView1d< localIndex const > const particleList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.packGlobalMaps( buffer, elemList, 0 );
+        packedSize += subRegion.packGlobalMaps( buffer, particleList, 0 );
       }
       else
       {
-        packedSize += subRegion.packGlobalMapsSize( elemList, 0 );
+        packedSize += subRegion.packGlobalMapsSize( particleList, 0 );
       }
     } );
   }
@@ -425,21 +326,21 @@ ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase & particleRegion = getRegion( regionName );
+    ParticleRegionBase & particleRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
     packList[kReg].resize( numSubRegionsRead );
-    particleRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-      [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
+      [&]( localIndex const esr, ParticleSubRegionBase & subRegion )
     {
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
 
       /// THIS IS WRONG
-      localIndex_array & elemList = packList[kReg][esr].get();
+      localIndex_array & particleList = packList[kReg][esr].get();
 
-      unpackedSize += subRegion.unpackGlobalMaps( buffer, elemList, 0 );
+      unpackedSize += subRegion.unpackGlobalMaps( buffer, particleList, 0 );
     } );
   }
 
@@ -481,23 +382,23 @@ ParticleManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
-    ElementRegionBase const & particleRegion = getRegion( kReg );
+    ParticleRegionBase const & particleRegion = getRegion( kReg );
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
 
     packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.numSubRegions() );
-    particleRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-      [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
+    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
+      [&]( localIndex const esr, ParticleSubRegionBase const & subRegion )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
 
-      arrayView1d< localIndex > const elemList = packList[kReg][esr];
+      arrayView1d< localIndex > const particleList = packList[kReg][esr];
       if( DOPACK )
       {
-        packedSize += subRegion.packUpDownMaps( buffer, elemList );
+        packedSize += subRegion.packUpDownMaps( buffer, particleList );
       }
       else
       {
-        packedSize += subRegion.packUpDownMapsSize( elemList );
+        packedSize += subRegion.packUpDownMapsSize( particleList );
       }
     } );
   }
@@ -529,123 +430,26 @@ ParticleManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
     string regionName;
     unpackedSize += bufferOps::Unpack( buffer, regionName );
 
-    ElementRegionBase & particleRegion = getRegion( regionName );
+    ParticleRegionBase & particleRegion = getRegion( regionName );
 
     localIndex numSubRegionsRead;
     unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    particleRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
-      [&]( localIndex const kSubReg, ElementSubRegionBase & subRegion )
+    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
+      [&]( localIndex const kSubReg, ParticleSubRegionBase & subRegion )
     {
       string subRegionName;
       unpackedSize += bufferOps::Unpack( buffer, subRegionName );
 
       /// THIS IS WRONG
-      localIndex_array & elemList = packList[kReg][kSubReg];
-      unpackedSize += subRegion.unpackUpDownMaps( buffer, elemList, false, overwriteMap );
+      localIndex_array & particleList = packList[kReg][kSubReg];
+      unpackedSize += subRegion.unpackUpDownMaps( buffer, particleList, false, overwriteMap );
     } );
   }
 
   return unpackedSize;
 }
 
-int ParticleManager::packFracturedElementsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                                     string const fractureRegionName ) const
-{
-  buffer_unit_type * junk = nullptr;
-  return packFracturedElementsPrivate< false >( junk, packList, fractureRegionName );
-}
 
-int ParticleManager::packFracturedElements( buffer_unit_type * & buffer,
-                                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                                 string const fractureRegionName ) const
-{
-  return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
-}
-template< bool DOPACK >
-int
-ParticleManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                                    string const fractureRegionName ) const
-{
-  int packedSize = 0;
-
-  SurfaceElementRegion const & embeddedSurfaceRegion =
-    this->getRegion< SurfaceElementRegion >( fractureRegionName );
-  EmbeddedSurfaceSubRegion const & embeddedSurfaceSubRegion =
-    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-
-  arrayView1d< globalIndex const > const embeddedSurfacesLocalToGlobal =
-    embeddedSurfaceSubRegion.localToGlobalMap();
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
-
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
-  {
-    ElementRegionBase const & particleRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
-
-    packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.numSubRegions() );
-    particleRegion.forElementSubRegionsIndex< ParticleSubRegion >(
-      [&]( localIndex const esr, ParticleSubRegion const & subRegion )
-    {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
-
-      arrayView1d< localIndex const > const elemList = packList[kReg][esr];
-      if( DOPACK )
-      {
-        packedSize += subRegion.packFracturedElements( buffer, elemList, embeddedSurfacesLocalToGlobal );
-      }
-      else
-      {
-        packedSize += subRegion.packFracturedElementsSize( elemList, embeddedSurfacesLocalToGlobal );
-      }
-    } );
-  }
-
-  return packedSize;
-}
-
-int
-ParticleManager::unpackFracturedElements( buffer_unit_type const * & buffer,
-                                               ElementReferenceAccessor< localIndex_array > & packList,
-                                               string const fractureRegionName )
-{
-  int unpackedSize = 0;
-
-  SurfaceElementRegion & embeddedSurfaceRegion =
-    this->getRegion< SurfaceElementRegion >( fractureRegionName );
-  EmbeddedSurfaceSubRegion & embeddedSurfaceSubRegion =
-    embeddedSurfaceRegion.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
-
-  unordered_map< globalIndex, localIndex > embeddedSurfacesGlobalToLocal =
-    embeddedSurfaceSubRegion.globalToLocalMap();
-
-  localIndex numRegionsRead;
-  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
-
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
-  {
-    string regionName;
-    unpackedSize += bufferOps::Unpack( buffer, regionName );
-
-    ElementRegionBase & particleRegion = getRegion( regionName );
-
-    localIndex numSubRegionsRead;
-    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    particleRegion.forElementSubRegionsIndex< ParticleSubRegion >(
-      [&]( localIndex const kSubReg, ParticleSubRegion & subRegion )
-    {
-      string subRegionName;
-      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
-
-      /// THIS IS WRONG
-      localIndex_array & elemList = packList[kReg][kSubReg];
-      unpackedSize += subRegion.unpackFracturedElements( buffer, elemList, embeddedSurfacesGlobalToLocal );
-    } );
-  }
-
-  return unpackedSize;
-}
 
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleManager, string const &, Group * const )
