@@ -3,8 +3,10 @@
 set(CONFIG_NAME "pangea3-gcc8.3-smpi-10.3.0.1" CACHE PATH "") 
 
 # Set up the tpls
-if (NOT DEFINED GEOSX_TPL_DIR})
-  message(FATAL_ERROR "You must set GEOSX_TPL_DIR, via config-build.py ... -DGEOSX_TPL_DIR=")
+if (DEFINED ENV{GEOSX_TPL_DIR})
+  set(GEOSX_TPL_DIR $ENV{GEOSX_TPL_DIR})
+else ()
+  message(FATAL_ERROR "You must set GEOSX_TPL_DIR environment variable")
 endif ()
 
 if ((DEFINED ENV{CC}) AND (DEFINED ENV{CXX}) AND (DEFINED ENV{FC}))
