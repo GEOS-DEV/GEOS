@@ -146,7 +146,14 @@ void AcousticWaveEquationSEM::postProcessInput()
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
 
-  m_nsamplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
+  if( m_dtSeismoTrace > 0 )
+  {
+    m_nsamplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
+  }
+  else
+  {
+    m_nsamplesSeismoTrace = 0;
+  }
 
   localIndex const numNodesPerElem = 8;
 
@@ -272,21 +279,24 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
 
   arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
-  forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+  if( m_nsamplesSeismoTrace > 0 )
   {
-    if( receiverIsLocal[ircv] == 1 )
+    forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
     {
-      p_rcvs[iSeismo][ircv] = 0.0;
-      real64 ptmp_np1 = 0.0;
-      real64 ptmp_n = 0.0;
-      for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+      if( receiverIsLocal[ircv] == 1 )
       {
-        ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-        ptmp_n += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+	p_rcvs[iSeismo][ircv] = 0.0;
+	real64 ptmp_np1 = 0.0;
+	real64 ptmp_n = 0.0;
+	for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+        {
+	  ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+	  ptmp_n += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+        }
+	p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
       }
-      p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
-    }
-  } );
+    } );
+  }
 
   if( iSeismo == m_nsamplesSeismoTrace - 1 )
   {
