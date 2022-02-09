@@ -84,7 +84,6 @@ static PyObject * collect( PyHistoryCollection * self, PyObject * args )
     return nullptr;
   }
 
-  integer cycleNumber = int(time/dt);
   geosx::GeosxState * g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 

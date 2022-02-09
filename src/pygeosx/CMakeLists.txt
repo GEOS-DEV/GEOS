@@ -1,7 +1,19 @@
 set( python_headers pygeosx.hpp
+                    ${CMAKE_SOURCE_DIR}/coreComponents/dataRepository/python/PyGroup.hpp
+                    ${CMAKE_SOURCE_DIR}/coreComponents/dataRepository/python/PyGroupType.hpp
+                    ${CMAKE_SOURCE_DIR}/coreComponents/dataRepository/python/PyWrapper.hpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/python/PyHistoryCollectionType.hpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/python/PyHistoryOutputType.hpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/python/PySolverType.hpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/python/PySolver.hpp
 		    )
 
 set( python_sources pygeosx.cpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/dataRepository/python/PyGroup.cpp
+                    ${CMAKE_SOURCE_DIR}/coreComponents/dataRepository/python/PyWrapper.cpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/python/PyHistoryCollection.cpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/fileIO/python/PyHistoryOutput.cpp
+		    ${CMAKE_SOURCE_DIR}/coreComponents/physicsSolvers/python/PySolver.cpp
 		    )
 
 set( dependencyList ${extraComponentsLinkList} ${externalComponentsLinkList} Python3::Python )
