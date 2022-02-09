@@ -671,8 +671,8 @@ void DofManager::setSparsityPatternFromStencil( SparsityPatternView< globalIndex
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const dofNumber =
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( field.key );
 
-    array1d< globalIndex > rowDofIndices( numComp );
-    array1d< globalIndex > colDofIndices( numComp );
+    array1d< globalIndex > rowDofIndices;
+    array1d< globalIndex > colDofIndices;
 
     // 1. Assemble diagonal and off-diagonal blocks for elements in stencil
     coupling.stencils->forAllStencils( mesh, [&]( auto const & stencil )
