@@ -54,7 +54,7 @@ set( linearAlgebra_sources
      solvers/SeparateComponentPreconditioner.cpp
    )
 
-set( dependencyList mesh blas lapack )
+set( dependencyList ${commonDeps} mesh blas lapack )
 
 
 list( APPEND linearAlgebra_headers
@@ -128,7 +128,7 @@ if( ENABLE_HYPRE )
           interfaces/hypre/HypreVector.cpp
         )
 
-    list( APPEND dependencyList hypre )
+    list( APPEND dependencyList hypre rocrand )
 
 endif()
 
@@ -155,10 +155,6 @@ if( ENABLE_PETSC )
 
     list( APPEND dependencyList petsc )
 
-endif()
-
-if ( ENABLE_CUDA )
-    list( APPEND dependencyList cuda )
 endif()
 
 blt_add_library( NAME       linearAlgebra

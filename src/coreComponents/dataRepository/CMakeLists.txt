@@ -35,11 +35,7 @@ set( dataRepository_sources
      xmlWrapper.cpp
    )
 
-set( dependencyList codingUtilities )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} codingUtilities )
 
 if( ENABLE_PYGEOSX )
   set( dependencyList ${dependencyList} pylvarray )

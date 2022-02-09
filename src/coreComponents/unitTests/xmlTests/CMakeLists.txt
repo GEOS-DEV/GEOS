@@ -25,16 +25,12 @@ set( multi_files
 #
 # Add gtest C++ based tests
 #
-set( dependencyList gtest optionparser )
+set( dependencyList ${commonDeps} gtest optionparser )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core)
 else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
 endif()
 
 # create test executables

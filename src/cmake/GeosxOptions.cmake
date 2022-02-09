@@ -60,11 +60,13 @@ if( NOT ( GEOSX_LA_INTERFACE IN_LIST supported_LAI ) )
   message( FATAL_ERROR "GEOSX_LA_INTERFACE must be one of: ${supported_LAI}" )
 endif()
 
-### MPI/OMP/CUDA SETUP ###
+### MPI/OMP/CUDA/HIP SETUP ###
 
 option( ENABLE_MPI "" ON )
 
-option( CUDA_ENABLED "" OFF )
+option( ENABLE_CUDA "" OFF )
+
+option( ENABLE_HIP "" OFF )
 
 if( CMAKE_HOST_APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
   option( ENABLE_OPENMP "Enables OpenMP compiler support" OFF )
@@ -129,7 +131,7 @@ endif()
 if( CMAKE_HOST_APPLE )
 #    set(GEOSX_LINK_PREPEND_FLAG "-Wl,-force_load" CACHE STRING "")
 #    set(GEOSX_LINK_POSTPEND_FLAG "" CACHE STRING "")
-elseif( CUDA_ENABLED )
+elseif( ENABLE_CUDA )
     set( GEOSX_LINK_PREPEND_FLAG  "-Xcompiler \\\\\"-Wl,--whole-archive\\\\\""    CACHE STRING "" )
     set( GEOSX_LINK_POSTPEND_FLAG "-Xcompiler \\\\\"-Wl,--no-whole-archive\\\\\"" CACHE STRING "" )
 else()
@@ -137,7 +139,7 @@ else()
     set( GEOSX_LINK_POSTPEND_FLAG "-Wl,--no-whole-archive" CACHE STRING "" )
 endif()
 
-if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
+if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA OR ENABLE_HYPRE AND ENABLE_ROCM ) #rocm for rocblas/rocsolver
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
 else()

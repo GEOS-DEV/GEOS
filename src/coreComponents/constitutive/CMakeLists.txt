@@ -193,7 +193,7 @@ set( constitutive_sources
      thermalConductivity/VolumeWeightedThermalConductivity.cpp     
    )
 
-set( dependencyList events dataRepository functions )
+set( dependencyList ${commonDeps} events dataRepository functions )
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers
@@ -209,10 +209,6 @@ if( ENABLE_PVTPackage )
     add_subdirectory( PVTPackage )
 
     set( dependencyList ${dependencyList} PVTPackage )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
 endif()
 
 blt_add_library( NAME       constitutive

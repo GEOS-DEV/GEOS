@@ -7,11 +7,7 @@ set(gtest_geosx_tests
     testTypeDispatch.cpp
    )
 
-set( dependencyList common hdf5 gtest )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} common hdf5 gtest )
 
 #
 # Add gtest C++ based tests

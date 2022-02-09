@@ -12,11 +12,7 @@ set( schema_headers
 set( schema_sources
      schemaUtilities.cpp )
 
-set( dependencyList dataRepository )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} dataRepository )
 
 blt_add_library( NAME       schema
                  SOURCES    ${schema_sources}

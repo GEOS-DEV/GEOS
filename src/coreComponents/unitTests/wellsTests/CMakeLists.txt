@@ -9,13 +9,9 @@ set( gtest_geosx_tests
 set( dependencyList gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core )
+  set (dependencyList ${dependencyList} geosx_core ${commonDeps} )
 else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
+  set (dependencyList ${dependencyList} ${geosx_core_libs} ${commonDeps} )
 endif()
 
 if( ENABLE_PVTPackage )

@@ -312,7 +312,7 @@ template< typename T >
 std::enable_if_t< !bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   // Get the number of bytes in the array and a pointer to the array.
   localIndex const byteSize = valuesNode.dtype().number_of_elements();
@@ -366,7 +366,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< typename traits::Pointer< T > > >
 pullDataFromConduitNode( T & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -381,7 +381,7 @@ template< typename T >
 std::enable_if_t< bufferOps::can_memcpy< T > >
 pullDataFromConduitNode( SortedArray< T > & var, conduit::Node const & node )
 {
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
 
   localIndex const byteSize = LvArray::integerConversion< localIndex >( valuesNode.dtype().strided_bytes() );
   localIndex const numElements = numElementsFromByteSize< T >( byteSize );
@@ -453,7 +453,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   constexpr int totalNumDimensions = NDIM + hasImplicitDimension;
 
   // Check that the permutations match.
-  conduit::Node const & permutationNode = node.fetch_child( "__permutation__" );
+  conduit::Node const & permutationNode = node.fetch_existing( "__permutation__" );
   GEOSX_ERROR_IF_NE( permutationNode.dtype().number_of_elements(), totalNumDimensions );
 
   constexpr std::array< camp::idx_t, NDIM > const perm = RAJA::as_array< PERMUTATION >::get();
@@ -471,7 +471,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   }
 
   // Now pull out the dimensions and resize the array.
-  conduit::Node const & dimensionNode = node.fetch_child( "__dimensions__" );
+  conduit::Node const & dimensionNode = node.fetch_existing( "__dimensions__" );
   GEOSX_ERROR_IF_NE( dimensionNode.dtype().number_of_elements(), totalNumDimensions );
   camp::idx_t const * const dims = dimensionNode.value();
 
@@ -483,7 +483,7 @@ pullDataFromConduitNode( Array< T, NDIM, PERMUTATION > & var,
   var.resize( NDIM, dims );
 
   // Finally memcpy
-  conduit::Node const & valuesNode = node.fetch_child( "__values__" );
+  conduit::Node const & valuesNode = node.fetch_existing( "__values__" );
   localIndex numBytesFromArray =  var.size() * sizeof( T );
   GEOSX_ERROR_IF_NE( numBytesFromArray, valuesNode.dtype().strided_bytes() );
   std::memcpy( var.data(), valuesNode.data_ptr(), numBytesFromArray );

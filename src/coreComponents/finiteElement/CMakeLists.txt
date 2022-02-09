@@ -28,11 +28,7 @@ set( finiteElement_sources
      FiniteElementDiscretizationManager.cpp
    )
 
-set( dependencyList dataRepository )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} dataRepository )
 
 blt_add_library( NAME       finiteElement
                  SOURCES    ${finiteElement_sources}

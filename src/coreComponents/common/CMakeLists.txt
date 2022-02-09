@@ -33,22 +33,10 @@ set( common_sources
      initializeEnvironment.cpp
    )
 
-set( dependencyList lvarray pugixml RAJA chai conduit::conduit fmt::fmt )
+set( dependencyList ${commonDeps} lvarray pugixml::pugixml RAJA chai conduit::conduit fmt::fmt )
 
 if ( ENABLE_MKL )
   set( dependencyList ${dependencyList} mkl )
-endif()
-
-if( ENABLE_OPENMP )
-  set( dependencyList ${dependencyList} openmp )
-endif( )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif( )
-
-if( ENABLE_MPI )
-  set( dependencyList ${dependencyList} mpi )
 endif()
 
 if( ENABLE_CALIPER )

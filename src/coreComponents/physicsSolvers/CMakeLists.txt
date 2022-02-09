@@ -132,11 +132,7 @@ set( physicsSolvers_sources
      wavePropagation/AcousticWaveEquationSEM.cpp
    )
 
-set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} constitutive mesh linearAlgebra discretizationMethods events )
 
 blt_add_library( NAME       physicsSolvers
                  SOURCES    ${physicsSolvers_sources}

@@ -16,11 +16,7 @@ set( mainInterface_sources
      initialization.cpp
    )
 
-set( dependencyList physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} physicsSolvers discretizationMethods fieldSpecification linearAlgebra events fileIO optionparser )
 
 blt_add_library( NAME       mainInterface
                  SOURCES    ${mainInterface_sources}

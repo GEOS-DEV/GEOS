@@ -1,3 +1,4 @@
+
 if( ENABLE_MKL )
     if ( NOT DEFINED MKL_INCLUDE_DIRS )
         message( FATAL_ERROR "MKL is enabled but MKL_INCLUDE_DIRS is not defined." )
@@ -8,7 +9,7 @@ if( ENABLE_MKL )
     message( STATUS "MKL found" )
 
     set( BLAS_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "" FORCE )
-    set( LAPACK_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "" FORCE) 
+    set( LAPACK_LIBRARIES "${MKL_LIBRARIES}" CACHE STRING "" FORCE)
 
 elseif( ENABLE_ESSL )
     if ( NOT DEFINED ESSL_INCLUDE_DIRS )
@@ -19,7 +20,17 @@ elseif( ENABLE_ESSL )
 
     set( BLAS_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
     set( LAPACK_LIBRARIES "${ESSL_LIBRARIES}" CACHE STRING "" FORCE )
+
+elseif( ENABLE_ROCM )
+#    find_package( rocblas REQUIRED )
+#    find_package( rocsolver REQUIRED )
+
+    message( STATUS "rocBLAS / rocSOLVER (lapack equiv) found" )
+
+#    set( BLAS_LIBRARIES "${ROCBLAS_LIBRARIES}" CACHE STRING "" FORCE )
+#    set( LAPACK_LIBRARIES "${ROCSOLVER_LIBRARIES}" CACHE STRING "" FORCE )
 endif()
+
 
 if( NOT DEFINED BLAS_LIBRARIES )
     find_package( BLAS REQUIRED )

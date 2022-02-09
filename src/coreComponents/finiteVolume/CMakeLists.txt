@@ -41,11 +41,7 @@ set( finiteVolume_sources
      HybridMimeticDiscretization.cpp
    )
 
-set( dependencyList mesh codingUtilities fieldSpecification )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} mesh codingUtilities fieldSpecification )
 
 blt_add_library( NAME       finiteVolume
                  SOURCES    ${finiteVolume_sources}

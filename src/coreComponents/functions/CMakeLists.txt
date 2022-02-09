@@ -27,14 +27,10 @@ if( ENABLE_MATHPRESSO )
 endif()
 
 
-set( dependencyList dataRepository )
+set( dependencyList ${commonDeps} dataRepository )
 
 if( ENABLE_MATHPRESSO )
    set( dependencyList ${dependencyList} mathpresso )
-endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
 endif()
 
 blt_add_library( NAME       functions

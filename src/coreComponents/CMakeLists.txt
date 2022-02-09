@@ -48,23 +48,27 @@ if( NOT GEOSX_BUILD_SHARED_LIBS )
   set ( geosx_core_libs "${geosx_core_list}" CACHE INTERNAL "" )
 endif()
 
-foreach( lib ${subdirs} )
-    add_subdirectory( ${lib} )
-endforeach()
-
-set( extraComponentsLinkList "" )
+set( commonDeps "" )
 
 if ( ENABLE_OPENMP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} openmp )
+  set( commonDeps ${commonDeps} openmp )
 endif()
 
 if ( ENABLE_CUDA )
-  set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
+  set( commonDeps ${commonDeps} cuda )
+endif()
+
+if( ENABLE_HIP )
+  set( commonDeps ${commonDeps} hip hip_runtime )
 endif()
 
 if( ENABLE_MPI )
-  set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
+  set( commonDeps ${commonDeps} mpi )
 endif()
+
+foreach( lib ${subdirs} )
+    add_subdirectory( ${lib} )
+endforeach()
 
 if( GEOSX_BUILD_SHARED_LIBS )
   set( GEOSX_BUILD_SHARED_BOOL TRUE CACHE BOOL "" )
@@ -98,7 +102,11 @@ if( ENABLE_HYPRE_CUDA )
 endif()
 
 # To install the library with the runtime path used during the building
-set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+set_target_properties( geosx_core PROPERTIES INSTALL_RPATH_USE_LINK_PATH ON )
+#set_target_properties( geosx_core PROPERTIES BUILD_WITH_INSTALL_RPATH FALSE
+#		       	     	  	     SKIP_BUILD_RPATH FALSE
+#					     INSTALL_RPATH_USE_LINK_PATH TRUE )
+
 
 # To install the shared library
 install( TARGETS geosx_core LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib )
@@ -117,3 +125,8 @@ if( ENABLE_UNCRUSTIFY )
 endif()
 
 add_subdirectory( unitTests )
+
+
+foreach( LIB ${coreLibs} )
+  blt_print_target_properties(TARGET ${LIB})
+endforeach()

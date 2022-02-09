@@ -25,7 +25,7 @@ set( gtest_pvt_xmls
      testPVT.xml
    )
 
-set( dependencyList gtest )
+set( dependencyList ${commonDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
@@ -40,11 +40,6 @@ if( ENABLE_PVTPackage )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
 
 #
 # Add gtest C++ based tests

@@ -24,11 +24,7 @@ set( fieldSpecification_sources
      AquiferBoundaryCondition.cpp
    )
 
-set( dependencyList functions linearAlgebra )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} functions linearAlgebra )
 
 blt_add_library( NAME       fieldSpecification
                  SOURCES    ${fieldSpecification_sources}

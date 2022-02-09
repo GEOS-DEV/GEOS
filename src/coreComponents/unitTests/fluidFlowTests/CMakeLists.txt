@@ -8,18 +8,13 @@ set( gtest_geosx_tests
      testSinglePhaseHybridFVMKernels.cpp
    )
 
-set( dependencyList gtest )
+set( dependencyList ${commonDeps} gtest )
 
 if ( GEOSX_BUILD_SHARED_LIBS )
   set (dependencyList ${dependencyList} geosx_core )
 else()
   set (dependencyList ${dependencyList} ${geosx_core_libs} )
 endif()
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
-
 
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests

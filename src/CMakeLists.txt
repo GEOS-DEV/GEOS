@@ -4,6 +4,10 @@ cmake_minimum_required( VERSION 3.9 )
 if(${CMAKE_VERSION} VERSION_GREATER "3.18.0") 
   cmake_policy(SET CMP0104 OLD)
 endif()
+cmake_policy(SET CMP0074 NEW)
+#cmake_policy(SET CMP0066 NEW)
+#cmake_policy(SET CMP0056 NEW)
+
 
 ################################
 # GEOSX
@@ -19,6 +23,25 @@ set( CMAKE_ENABLE_EXPORTS ON )
 option( ENABLE_BENCHMARKS "Enables benchmarks" ON )
 include( cmake/blt/SetupBLT.cmake )
 set( BLT_SOURCE_DIR ${PROJECT_SOURCE_DIR}/cmake/blt/ )
+
+# use, i.e. don't skip the full RPATH for the build tree
+set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# the RPATH to be used when installing, but only if it's not a system directory
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif()
 
 # Removes -pthread from BLT CUDA libraries lists
 if( ENABLE_CUDA )
@@ -97,6 +120,10 @@ if( ENABLE_CUDA )
   set( extraComponentsLinkList ${extraComponentsLinkList} cuda )
 endif()
 
+if( ENABLE_HIP )
+  set( extraComponentsLinkList ${extraComponentsLinkList} hip hip_runtime )
+endif()
+
 if ( GEOSX_BUILD_SHARED_LIBS )
   set( extraComponentsLinkList ${extraComponentsLinkList} geosx_core )
 else()
@@ -121,12 +148,15 @@ endif()
 target_include_directories( geosx PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 # To change the runtime path during installation
-set_target_properties( geosx PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE )
+#set_target_properties( geosx PROPERTIES INSTALL_RPATH_USE_LINK_PATH ON )
+#BUILD_WITH_INSTALL_RPATH FALSE
+#		       	     		SKIP_BUILD_RPATH FALSE
+#                                        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+#                                        INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 install(TARGETS geosx RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
-if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA )
+if( ENABLE_XML_UPDATES AND ENABLE_MPI AND UNIX AND NOT CMAKE_HOST_APPLE AND NOT ENABLE_CUDA AND NOT ENABLE_HIP )
 
   set(SCHEMA_DIR ${CMAKE_SOURCE_DIR}/coreComponents/schema)
   set(SCRIPT_DIR ${CMAKE_SOURCE_DIR}/../scripts)
@@ -160,7 +190,6 @@ if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
 endif()
 
-
 install( DIRECTORY ../examples/ 
          DESTINATION examples )
 
@@ -170,3 +199,13 @@ install( DIRECTORY ../scripts/
 if( ENABLE_PYGEOSX )
   add_subdirectory( pygeosx )
 endif()
+
+blt_print_target_properties( TARGET hip )
+blt_print_target_properties( TARGET hip_runtime )
+
+blt_print_target_properties( TARGET blt::hip )
+blt_print_target_properties( TARGET blt::hip_runtime )
+
+blt_print_target_properties( TARGET geosx )
+#blt_print_target_properties( TARGET geosx_core )
+

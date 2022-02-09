@@ -103,11 +103,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive metis )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} schema dataRepository constitutive metis )
 
 if( ENABLE_PAMELA )
     message( STATUS "Adding PAMELAMeshGenerator sources and headers" )

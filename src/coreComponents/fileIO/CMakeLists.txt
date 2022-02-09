@@ -32,7 +32,7 @@ set( fileIO_sources
      timeHistory/TimeHistHDF.cpp
    ) 
 
-set( dependencyList mesh constitutive silo hdf5 )
+set( dependencyList ${commonDeps} mesh constitutive silo hdf5 )
 
 
 if( ENABLE_MPI )
@@ -68,10 +68,6 @@ if( ENABLE_VTK )
                VTK::lzma
                VTK::zlib
                VTK::loguru )
-endif()
-
-if ( ENABLE_CUDA )
-  list( APPEND dependencyList  cuda )
 endif()
 
 blt_add_library( NAME       fileIO

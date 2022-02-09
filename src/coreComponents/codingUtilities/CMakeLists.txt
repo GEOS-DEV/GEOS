@@ -16,11 +16,7 @@ set( codingUtilities_headers
 set( codingUtilities_sources
      StringUtilities.cpp )
 
-set( dependencyList common )
-
-if( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set( dependencyList ${commonDeps} common )
 
 blt_add_library( NAME       codingUtilities
                  SOURCES    ${codingUtilities_sources}

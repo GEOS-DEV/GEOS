@@ -6,11 +6,7 @@ set(testSources
     testGeosxTraits.cpp
    )
 
-set(dependencyList gtest codingUtilities )
-
-if ( ENABLE_CUDA )
-  set( dependencyList ${dependencyList} cuda )
-endif()
+set(dependencyList gtest codingUtilities ${commonDeps} )
 
 #
 # Add gtest C++ based tests

@@ -65,17 +65,16 @@ set(thirdPartyLibs "")
 ################################
 # BLAS/LAPACK
 ################################
-
 include(cmake/thirdparty/FindMathLibraries.cmake)
 
 blt_import_library(NAME blas
-                     TREAT_INCLUDES_AS_SYSTEM ON
-                     LIBRARIES ${BLAS_LIBRARIES})
+                   TREAT_INCLUDES_AS_SYSTEM ON
+                   LIBRARIES ${BLAS_LIBRARIES})
 
 blt_import_library(NAME lapack
-                     DEPENDS_ON blas
-                     TREAT_INCLUDES_AS_SYSTEM ON
-                     LIBRARIES ${LAPACK_LIBRARIES})
+                   DEPENDS_ON blas
+                   TREAT_INCLUDES_AS_SYSTEM ON
+                   LIBRARIES ${LAPACK_LIBRARIES})
 
 ################################
 # Intel MKL
@@ -110,37 +109,12 @@ else()
 endif()
 
 ################################
-# HDF5
-################################
-if(DEFINED HDF5_DIR)
-    message(STATUS "HDF5_DIR = ${HDF5_DIR}")
-
-    set(HDF5_ROOT ${HDF5_DIR})
-    set(HDF5_USE_STATIC_LIBRARIES FALSE)
-    set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
-    include(FindHDF5)
-
-    # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
-    # When this happens you can get really opaque include errors. 
-    list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
-
-    blt_import_library(NAME hdf5
-                       INCLUDES ${HDF5_INCLUDE_DIRS}
-                       LIBRARIES ${HDF5_LIBRARIES}
-                       TREAT_INCLUDES_AS_SYSTEM ON)
-
-    set(ENABLE_HDF5 ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} hdf5)
-else()
-    message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
-endif()
-
-################################
 # Conduit
 ################################
 if(DEFINED CONDUIT_DIR)
     message(STATUS "CONDUIT_DIR = ${CONDUIT_DIR}")
 
+    set( Conduit_FIND_QUIETLY FALSE )
     find_package(Conduit REQUIRED
                  PATHS ${CONDUIT_DIR}/lib/cmake
                  NO_DEFAULT_PATH)
@@ -157,17 +131,46 @@ if(DEFINED CONDUIT_DIR)
     endforeach()
 
     # Conduit uses our HDF5 and we need to propagate the above fix.
-    get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
-    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
-    set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
+    #get_target_property(CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES conduit_relay INTERFACE_INCLUDE_DIRECTORIES)
+    #list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES /usr/include)
+    #set_target_properties(conduit_relay PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_INCLUDE_DIRECTORIES})
 
-    get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
-    list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
-    set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
+    #get_target_property(CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES conduit_relay INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+    #list(REMOVE_ITEM CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES /usr/include)
+    #set_target_properties(conduit_relay PROPERTIES INTERFACE_SYSTEM_INCLUDE_DIRECTORIES ${CONDUIT_RELAY_INTERFACE_SYSTEM_INCLUDE_DIRECTORIES})
 
     set(thirdPartyLibs ${thirdPartyLibs} conduit::conduit)
 else()
     message(FATAL_ERROR "GEOSX requires conduit, set CONDUIT_DIR to the conduit installation directory.")
+endif()
+
+################################
+# HDF5
+################################
+if(DEFINED HDF5_DIR)
+    message(STATUS "HDF5_DIR = ${HDF5_DIR}")
+
+    set(HDF5_ROOT ${HDF5_DIR})
+    set(HDF5_USE_STATIC_LIBRARIES FALSE)
+    set(HDF5_NO_FIND_PACKAGE_CONFIG_FILE ON)
+    find_package(HDF5 REQUIRED
+                 NAMES hdf5
+		 PATHS ${HDF5_DIR}/share/cmake
+		 COMPONENTS C)
+
+    # On some platforms (Summit) HDF5 lists /usr/include in it's list of include directories.
+    # When this happens you can get really opaque include errors. 
+    # list(REMOVE_ITEM HDF5_INCLUDE_DIRS /usr/include)
+
+    blt_import_library(NAME hdf5
+                       INCLUDES ${HDF5_INCLUDE_DIRS}
+                       LIBRARIES ${HDF5_LIBRARIES}
+                       TREAT_INCLUDES_AS_SYSTEM ON)
+
+    set(ENABLE_HDF5 ON CACHE BOOL "")
+    set(thirdPartyLibs ${thirdPartyLibs} hdf5)
+else()
+    message(FATAL_ERROR "GEOSX requires hdf5, set HDF5_DIR to the hdf5 installation directory.")
 endif()
 
 ################################
@@ -200,7 +203,7 @@ if(DEFINED PUGIXML_DIR)
                  NO_DEFAULT_PATH)
 
     set(ENABLE_PUGIXML ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} pugixml)
+    set(thirdPartyLibs ${thirdPartyLibs} pugixml::pugixml )
 else()
     message(FATAL_ERROR "GEOSX requires pugixml, set PUGIXML_DIR to the pugixml installation directory.")
 endif()
@@ -444,6 +447,13 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
 
     if( ENABLE_HYPRE_CUDA )
         set( EXTRA_LIBS ${CUDA_cusparse_LIBRARY} ${CUDA_curand_LIBRARY} )
+    elseif( ENABLE_HYPRE_ROCM )
+        find_and_register( NAME rocrand
+			   INCLUDE_DIRECTORIES ${ROCM_ROOT}/rocrand/include
+			   LIBRARY_DIRECTORIES ${ROCM_ROOT}/rocrand/lib
+			   HEADER rocrand.h
+			   LIBRARIES rocrand )
+	set( EXTRA_DEPS rocrand )
     endif()
 
     find_and_register(NAME hypre
@@ -452,7 +462,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
                       HEADER HYPRE.h
                       LIBRARIES HYPRE
                       EXTRA_LIBRARIES ${EXTRA_LIBS}
-                      DEPENDS blas lapack superlu_dist)
+                      DEPENDS blas lapack superlu_dist ${EXTRA_DEPS} )
 
     # if( ENABLE_CUDA AND ( NOT ENABLE_HYPRE_CUDA ) )
     #   set(ENABLE_HYPRE OFF CACHE BOOL "" FORCE)
@@ -464,7 +474,7 @@ if(DEFINED HYPRE_DIR AND ENABLE_HYPRE)
     # endif()
     
     set(ENABLE_HYPRE ON CACHE BOOL "")
-    set(thirdPartyLibs ${thirdPartyLibs} hypre)
+    set(thirdPartyLibs ${thirdPartyLibs} hypre ${EXTRA_DEPS} )
 else()
     if(ENABLE_HYPRE)
         message(WARNING "ENABLE_HYPRE is ON but HYPRE_DIR isn't defined.")
@@ -639,3 +649,11 @@ endif()
 option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" ON)
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
+
+
+foreach( TPL ${thirdPartyLibs} )
+  blt_print_target_properties(TARGET ${TPL})
+endforeach()
+
+
+
