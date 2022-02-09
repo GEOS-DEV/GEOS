@@ -41,7 +41,8 @@
                                  lineSearchMaxCuts="2"/>
 
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
+        directParallel="0"
         preconditionerType="mgr"
         logLevel="1"
         krylovAdaptiveTol="1"/>
@@ -52,7 +53,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2, void, Fracture}"
+      targetRegions="{Domain, void, Fracture}"
       solidMaterialNames="{rock}"
       contactRelationName="fractureContact"/>
 
@@ -70,7 +71,7 @@
       name="SurfaceGen"
       logLevel="0"
       fractureRegion="Fracture"
-      targetRegions="{Region2, void}"
+      targetRegions="{Domain, void}"
       nodeBasedSIF="1"
       solidMaterialNames="{rock}"
       rockToughness="3.0e6">

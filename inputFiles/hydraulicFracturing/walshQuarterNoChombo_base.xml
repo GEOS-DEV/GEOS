@@ -27,7 +27,7 @@
   </Geometry>
 
   <ElementRegions>
-    <CellElementRegion name="Region2"
+    <CellElementRegion name="Domain"
                    cellBlocks="{cb1}"
                    materialList="{water, rock}"/>
 
@@ -83,8 +83,8 @@
   </Constitutive>
 
   <Outputs>
-      <Silo name="siloOutput"
-            plotFileRoot="zeroViscosity"
+      <VTK name="siloOutput"
+            plotFileRoot="walshQuarter"
             plotLevel="3"
             parallelThreads="48"/>
       <Restart name="sidreRestart"/>

@@ -19,8 +19,7 @@
   </Mesh>
 
   <Solvers 
-    gravityVector="{0.0,0.0,-0.0}"
-    >
+    gravityVector="{0.0,0.0,-0.0}">
 
     <Hydrofracture
       name="hydrofracture"
@@ -34,19 +33,18 @@
       targetRegions="{Fracture}"
       contactRelationName="fractureContact"
       maxNumResolves="5"
-      initialDt="0.1"
-      >
+      initialDt="0.1">
 
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="50"
                                  lineSearchMaxCuts="2"/>
 
       <LinearSolverParameters
-        solverType="gmres"
+        solverType="direct"
+        directParallel="0"
         preconditionerType="mgr"
         logLevel="1"
-        krylovAdaptiveTol="1"
-        />
+        krylovAdaptiveTol="1"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -54,19 +52,9 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="0"
       discretization="FE1"
-      targetRegions="{Region2, void, Fracture}"
+      targetRegions="{Domain, void, Fracture}"
       solidMaterialNames="{rock}"
-      contactRelationName="fractureContact"
-      >
-
-      <NonlinearSolverParameters newtonTol="1.0e-6"
-                                 newtonMaxIter="5"/>
-
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"
-        logLevel="0"
-        />
+      contactRelationName="fractureContact">
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
@@ -77,24 +65,14 @@
       fluidNames="{water}"
       solidNames="{ fractureFilling }"
       permeabilityNames="{ fracturePerm }"
-      inputFluxEstimate="1.0"
-      >
-
-      <NonlinearSolverParameters newtonTol="1.0e-5"
-                                 newtonMaxIter="10"/>
-
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"
-        logLevel="0"
-        />
+      inputFluxEstimate="1.0">
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       logLevel="0"
       fractureRegion="Fracture"
-      targetRegions="{Region2, void}"
+      targetRegions="{Domain, void}"
       nodeBasedSIF="1"
       solidMaterialNames="{rock}"
       rockToughness="3.0e6">
