@@ -73,7 +73,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const
   {
-    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump, traction );
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump, traction, pressure );
   }
 
   GEOSX_HOST_DEVICE
