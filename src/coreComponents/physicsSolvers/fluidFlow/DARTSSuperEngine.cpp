@@ -163,6 +163,7 @@ void DARTSSuperEngine::implicitStepComplete( real64 const & time,
   GEOSX_UNUSED_VAR( time );
   GEOSX_UNUSED_VAR( dt );
   integer const numComp = m_numComponents;
+  integer const enableEnergyBalance = m_enableEnergyBalance;
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
@@ -189,7 +190,7 @@ void DARTSSuperEngine::implicitStepComplete( real64 const & time,
       {
         compFrac[ei][ic] += dCompFrac[ei][ic];
       }
-      if( m_enableEnergyBalance )
+      if( enableEnergyBalance )
       {
         temp[ei] += dTemp[ei];
       }
