@@ -218,8 +218,8 @@ public:
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
     GEOSX_HOST_DEVICE
-    void computeTwoPhase( localIndex const ipWetting,
-                          localIndex const ipNonWetting,
+    void computeTwoPhase( integer const ipWetting,
+                          integer const ipNonWetting,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
@@ -240,9 +240,9 @@ public:
      *         using computeDrainageRelPerm (in drainage) or using one of the imbibition update functions implementing Killough's method
      */
     GEOSX_HOST_DEVICE
-    void computeThreePhase( localIndex const ipWetting,
-                            localIndex const ipInter,
-                            localIndex const ipNonWetting,
+    void computeThreePhase( integer const ipWetting,
+                            integer const ipInter,
+                            integer const ipNonWetting,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
@@ -399,18 +399,6 @@ private:
                                               real64 & phaseMinVolFrac,
                                               real64 & phaseMaxVolFrac,
                                               real64 & phaseRelPermEndPoint ) const;
-
-  /**
-   * @brief Validate the relative permeability table provided in input (increasing phase vol frac and rel perm, etc)
-   * @param[in] relPermTable the relative permeability table (kr vs s) for a given phase)
-   * @param[out] phaseMinVolFrac the phase minimum volume fraction read from the table
-   * @param[out] phaseMaxVolFrac the phase maximum volume fraction read from the table
-   * @param[out] phaseRelPermEndPoint the end-point relative permeability
-   */
-  void validateRelPermTable( TableFunction const & relPermTable,
-                             real64 & phaseMinVolFrac,
-                             real64 & phaseMaxVolFrac,
-                             real64 & phaseRelPermEndPoint ) const;
 
   /**
    * @brief Compute the Land coefficient for the wetting and non-wetting phases
@@ -661,8 +649,8 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 GEOSX_HOST_DEVICE
 inline void
 TableRelativePermeabilityHysteresis::KernelWrapper::
-  computeTwoPhase( localIndex const ipWetting,
-                   localIndex const ipNonWetting,
+  computeTwoPhase( integer const ipWetting,
+                   integer const ipNonWetting,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,
@@ -729,9 +717,9 @@ TableRelativePermeabilityHysteresis::KernelWrapper::
 GEOSX_HOST_DEVICE
 inline void
 TableRelativePermeabilityHysteresis::KernelWrapper::
-  computeThreePhase( localIndex const ipWetting,
-                     localIndex const ipInter,
-                     localIndex const ipNonWetting,
+  computeThreePhase( integer const ipWetting,
+                     integer const ipInter,
+                     integer const ipNonWetting,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMaxHistoricalVolFraction,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseMinHistoricalVolFraction,

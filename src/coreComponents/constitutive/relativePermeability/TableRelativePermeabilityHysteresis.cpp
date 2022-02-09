@@ -19,6 +19,7 @@
 #include "TableRelativePermeabilityHysteresis.hpp"
 
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "constitutive/relativePermeability/TableRelativePermeabilityHelpers.hpp"
 #include "functions/FunctionManager.hpp"
 
 namespace geosx
@@ -434,61 +435,12 @@ void TableRelativePermeabilityHysteresis::checkExistenceAndValidateRelPermTable(
   TableFunction const & relPermTable = functionManager.getGroup< TableFunction >( relPermTableName );
 
   // read the table, check monotonicity, and return the min/max saturation and the endpoint
-  validateRelPermTable( relPermTable, // input
-                        phaseMinVolFrac, // output
-                        phaseMaxVolFrac,
-                        phaseRelPermEndPoint );
-}
-
-void TableRelativePermeabilityHysteresis::validateRelPermTable( TableFunction const & relPermTable,
-                                                                real64 & phaseMinVolFrac,
-                                                                real64 & phaseMaxVolFrac,
-                                                                real64 & phaseRelPermEndPoint ) const
-{
-  // TODO: merge this function with TableRelativePermeability::validateRelPermTable
-
-  ArrayOfArraysView< real64 const > coords = relPermTable.getCoordinates();
-
-  GEOSX_THROW_IF_NE_MSG( relPermTable.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
-                         GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), relPermTable.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_NE_MSG( relPermTable.numDimensions(), 1,
-                         GEOSX_FMT( "{}: table '{}' must have a single independent coordinate", getFullName(), relPermTable.getName() ),
-                         InputError );
-  GEOSX_THROW_IF_LT_MSG( coords.sizeOfArray( 0 ), 2,
-                         GEOSX_FMT( "{}: table `{}` must contain at least two values", getFullName(), relPermTable.getName() ),
-                         InputError );
-
-  arraySlice1d< real64 const > phaseVolFrac = coords[0];
-  arrayView1d< real64 const > const relPerm = relPermTable.getValues();
-  phaseMinVolFrac = phaseVolFrac[0];
-  phaseMaxVolFrac = phaseVolFrac[phaseVolFrac.size()-1];
-  phaseRelPermEndPoint = relPerm[relPerm.size()-1];
-
-  // note that the TableFunction class has already checked that coords.sizeOfArray( 0 ) == relPerm.size()
-  GEOSX_THROW_IF( !isZero( relPerm[0] ),
-                  GEOSX_FMT( "{}: in table '{}' the first value must be equal to 0", getFullName(), relPermTable.getName() ),
-                  InputError );
-  for( localIndex i = 1; i < coords.sizeOfArray( 0 ); ++i )
-  {
-    // check phase volume fraction
-    GEOSX_THROW_IF( phaseVolFrac[i] < 0 || phaseVolFrac[i] > 1,
-                    GEOSX_FMT( "{}: in table '{}' values must be between 0 and 1", getFullName(), relPermTable.getName() ),
-                    InputError );
-
-    // note that the TableFunction class has already checked that the coordinates are monotone
-
-    // check phase relative permeability
-    GEOSX_THROW_IF( !isZero( relPerm[i] ) && (relPerm[i] - relPerm[i-1]) < 1e-10,
-                    GEOSX_FMT( "{}: in table '{}' values must be strictly increasing", getFullName(), relPermTable.getName() ),
-                    InputError );
-
-    if( isZero( relPerm[i-1] ) && !isZero( relPerm[i] ) )
-    {
-      phaseMinVolFrac = phaseVolFrac[i-1];
-    }
-  }
-
+  string const fullName = getFullName();
+  TableRelativePermeabilityHelpers::validateRelativePermeabilityTable( relPermTable, // input
+                                                                       fullName,
+                                                                       phaseMinVolFrac, // output
+                                                                       phaseMaxVolFrac,
+                                                                       phaseRelPermEndPoint );
 }
 
 void TableRelativePermeabilityHysteresis::computeLandCoefficient()
@@ -668,7 +620,7 @@ void TableRelativePermeabilityHysteresis::initializePhaseVolFractionState( array
   arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
 
   localIndex const numElems = initialPhaseVolFraction.size( 0 );
-  localIndex const numPhases = numFluidPhases();
+  integer const numPhases = numFluidPhases();
 
   forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {
@@ -686,7 +638,7 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
   arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
 
   localIndex const numElems = phaseVolFraction.size( 0 );
-  localIndex const numPhases = numFluidPhases();
+  integer const numPhases = numFluidPhases();
 
   forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
   {

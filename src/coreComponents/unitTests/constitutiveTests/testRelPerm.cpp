@@ -13,6 +13,7 @@
  */
 
 // Source includes
+#include "common/DataLayouts.hpp"
 #include "constitutiveTestHelpers.hpp"
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "mainInterface/GeosxState.hpp"
@@ -917,7 +918,6 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermThreePhase )
 TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
 {
   initialize( makeTableRelPermHysteresisTwoPhase( "relPerm", m_parent ) );
-
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
@@ -938,10 +938,10 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
 
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
   auto & phaseMinHistoricalVolFraction =
-    m_model->getReference< array2d< real64 > >( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction::key() );
+    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( extrinsicMeshData::relperm::phaseMinHistoricalVolFraction::key() );
   phaseMinHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
   auto & phaseMaxHistoricalVolFraction =
-    m_model->getReference< array2d< real64 > >( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction::key() );
+    m_model->getReference< array2d< real64, compflow::LAYOUT_PHASE > >( extrinsicMeshData::relperm::phaseMaxHistoricalVolFraction::key() );
   phaseMaxHistoricalVolFraction.move( LvArray::MemorySpace::host, false );
 
   while( sat[0] <= endSat )
