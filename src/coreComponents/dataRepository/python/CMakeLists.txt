@@ -1,11 +1,18 @@
 set( pygroup_headers PyGroup.hpp
                      PyGroupType.hpp
                      PyWrapper.hpp
-		    )
+		     ../../fileIO/python/PyHistoryCollectionType.hpp
+		     ../../fileIO/python/PyHistoryOutputType.hpp
+		     ../../physicsSolvers/python/PySolverType.hpp
+		     ../../physicsSolvers/python/PySolver.hpp
+		     )
 
 set( pygroup_sources PyGroup.cpp
                      PyWrapper.cpp
-  )
+		     ../../fileIO/python/PyHistoryCollection.cpp
+		     ../../fileIO/python/PyHistoryOutput.cpp
+		     ../../physicsSolvers/python/PySolver.cpp
+		     )
 
 
 blt_add_library( NAME             pygroup

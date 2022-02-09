@@ -86,6 +86,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
   geosx::GeosxState * g_state = &getGlobalState();
   geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
 
+  int cycleNumber = int(time/dt);
   try
   {
     self->group->cleanup( time, cycleNumber, 0, 0, domain );
