@@ -84,14 +84,6 @@ public:
   void initializationOrder( string_array & order ) override final;
 
   /**
-   * @brief Build all the sets of the DomainPartition.
-   *
-   * A domain contain sets of nodes or elements (that can be used to defined boundary conditions, etc.).
-   * This member functions build those sets.
-   */
-  void generateSets();
-
-  /**
    * @name MPI functionality
    */
   ///@{

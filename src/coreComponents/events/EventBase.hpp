@@ -261,19 +261,11 @@ public:
   bool isIdle() const
   { return m_eventForecast > 1; }
 
-  /**
-   * @brief Get the target of this event.
-   * @return The target of this event.
-   */
-  ExecutableGroup * getEventTarget() const
-  { return m_target; }
 
-  /**
-   * @brief Get the name of this event target.
-   * @return The name of the target of this event.
-   */
-  string getTargetName() const
-  { return m_eventTarget; }
+  string getEventName() const
+  {
+    return m_eventTarget;
+  }
 
 protected:
 
@@ -305,6 +297,13 @@ protected:
    */
   void setForecast( integer forecast )
   { m_eventForecast = forecast; }
+
+  /**
+   * @brief Get the target of this event.
+   * @return The target of this event.
+   */
+  ExecutableGroup * getEventTarget() const
+  { return m_target; }
 
   /**
    * @brief Is the event active?

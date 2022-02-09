@@ -129,10 +129,13 @@ protected:
   /// Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise
   localIndex m_outputSeismoTrace;
 
+  /// Time step for seismoTrace output
   real64 m_dtSeismoTrace;
 
+  /// Cycle number for output SeismoTrace
   localIndex m_indexSeismoTrace;
 
+  /// Amount of seismoTrace that will be recorded for each receiver
   localIndex m_nsamplesSeismoTrace;
 
 
