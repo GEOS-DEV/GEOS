@@ -24,7 +24,6 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
