@@ -146,7 +146,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
   real64 dt = 0;
-  for(localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
     if( subEvent->getEventName() == "/Solvers/acousticSolver" )
@@ -267,11 +267,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
           receiverCoordinates,
           receiverIsLocal,
           receiverNodeIds,
-	  receiverConstants,
-	  sourceValue,
-	  dt,
-	  timeSourceFrequency,
-	  rickerOrder);
+          receiverConstants,
+          sourceValue,
+          dt,
+          timeSourceFrequency,
+          rickerOrder );
 
       } );
     } );
