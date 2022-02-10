@@ -836,6 +836,12 @@ MultiFluidBase::KernelWrapper::
   // 1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
   for( integer ip = 0; ip < numPhase; ++ip )
   {
+    bool const phaseExists = (phaseFraction.value[ip] > 0);
+    if( !phaseExists )
+    {
+      continue;
+    }
+
     real64 const densInv = 1.0 / phaseDensity.value[ip];
     real64 const value = phaseFraction.value[ip] * densInv;
 
