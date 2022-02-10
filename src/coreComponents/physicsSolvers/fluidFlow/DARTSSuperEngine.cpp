@@ -99,6 +99,11 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "File containing OBL operator values" );
 
+  this->registerWrapper( viewKeyStruct::maxCompFracChangeString(), &m_maxCompFracChange ).
+    setApplyDefaultValue( 1.0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Maximum (absolute) change in a component fraction between two Newton iterations" );
+
   this->registerWrapper( viewKeyStruct::transMultExpString(), &m_transMultExp ).
     setApplyDefaultValue( 1.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -379,72 +384,64 @@ real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domai
     return 1.0;
   }
 
-  // real64 constexpr eps = CompositionalMultiphaseBaseKernels::minDensForDivision;
-  // real64 const maxCompFracChange = m_maxCompFracChange;
+  real64 constexpr eps = DARTSSuperEngineKernels::minValueForDivision;
+  real64 const maxCompFracChange = m_maxCompFracChange;
 
-  // localIndex const NC = m_numComponents;
+  localIndex const NC = m_numComponents;
 
-  // MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  // globalIndex const rankOffset = dofManager.rankOffset();
-  // string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-  // real64 scalingFactor = 1.0;
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+  real64 scalingFactor = 1.0;
 
-  // forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
-  // {
-  //   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-  //   arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+  forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+  {
+    arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
-  //   arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-  //   arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+    arrayView2d< real64 const, compflow::USD_COMP > const & dCompFrac =
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
 
-  //   RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
-  //   forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-  //   {
-  //     if( elemGhostRank[ei] < 0 )
-  //     {
-  //       real64 prevTotalDens = 0;
-  //       for( localIndex ic = 0; ic < NC; ++ic )
-  //       {
-  //         prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
-  //       }
+    forAll< parallelDevicePolicy<> >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    {
+      if( elemGhostRank[ei] < 0 )
+      {
+        real64 lastCompFracChange = 0.0;
+        // process NC-1 components first (they have explicit solution)
+        for( localIndex ic = 0; ic < NC - 1; ++ic )
+        {
+          localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
 
-  //       // compute the change in component densities and component fractions
-  //       for( localIndex ic = 0; ic < NC; ++ic )
-  //       {
-  //         localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
+          // compute scaling factor based on relative change in component densities
+          real64 const CompFracChange = LvArray::math::abs( localSolution[lid] );
+          lastCompFracChange -= localSolution[lid];
+          if( CompFracChange > maxCompFracChange && CompFracChange > eps )
+          {
+            minVal.min( maxCompFracChange / CompFracChange );
+          }
+        }
+        lastCompFracChange = LvArray::math::abs(lastCompFracChange);
+        // now deal with the last component
+        if( lastCompFracChange > maxCompFracChange && lastCompFracChange > eps )
+        {
+          minVal.min( maxCompFracChange / lastCompFracChange );
+        }
 
-  //         // compute scaling factor based on relative change in component densities
-  //         real64 const absCompDensChange = LvArray::math::abs( localSolution[lid] );
-  //         real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
+      }
+    } );
 
-  //         // This actually checks the change in component fraction, using a lagged total density
-  //         // Indeed we can rewrite the following check as:
-  //         //    | prevCompDens / prevTotalDens - newCompDens / prevTotalDens | > maxCompFracChange
-  //         // Note that the total density in the second term is lagged (i.e, we use prevTotalDens)
-  //         // because I found it more robust than using directly newTotalDens (which can vary also
-  //         // wildly when the compDens change is large)
-  //         if( absCompDensChange > maxAbsCompDensChange && absCompDensChange > eps )
-  //         {
-  //           minVal.min( maxAbsCompDensChange / absCompDensChange );
-  //         }
-  //       }
-  //     }
-  //   } );
+    if( minVal.get() < scalingFactor )
+    {
+      scalingFactor = minVal.get();
+    }
+  } );
 
-  //   if( minVal.get() < scalingFactor )
-  //   {
-  //     scalingFactor = minVal.get();
-  //   }
-  // } );
-
-  //return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
-
-  // dummy return
-  return 1;
+  return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
 bool DARTSSuperEngine::checkSystemSolution( DomainPartition const & domain,

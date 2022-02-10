@@ -239,14 +239,16 @@ public:
     //     printf ( "]\n" );
     //   }
     // }
-
-    printf ( "element %ld: [", ei );
-    for( integer i = 0; i < numDofs; i++ )
+    if( ei < 10 )
     {
-      printf ( "%lf, ", state[i] );
-    }
+      printf ( "element %ld: [", ei );
+      for( integer i = 0; i < numDofs; i++ )
+      {
+        printf ( "%lf, ", state[i] );
+      }
 
-    printf ( "]\n" );
+      printf ( "]\n" );
+    }
   }
 
 protected:
@@ -1032,7 +1034,7 @@ public:
       }
     }
 
-    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI] - m_dPres[erI][esrI][eiI]) * pascalToBarMult;
+    real64 const pDiff = m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI] - m_dPres[erI][esrI][eiI];
 
 
     // [2] fill offdiagonal part + contribute to diagonal, only fluid part is considered in energy equation
@@ -1043,7 +1045,7 @@ public:
       real64 const avg_density = (OBLValsI[GRAV_OP + p] + OBLValsJ[GRAV_OP + p]) / 2;
 
       // p = 1 means oil phase, it's reference phase. pw=po-pcow, pg=po-(-pcog).
-      real64 const phase_p_diff = pDiff + avg_density * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p];
+      real64 const phase_p_diff = (pDiff + avg_density * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p]) * pascalToBarMult;
 
       // calculate partial derivatives for gravity and capillary terms
       real64 gravPcDerI[numDofs];
@@ -1234,22 +1236,22 @@ public:
       // only scaling the pressure derivative to account for unit conversion
       if( i == 0 )
       {
-        for( integer ic = 0; ic < numDofs; ++ic )
+        for( integer id = 0; id < numDofs; ++id )
         {
-          stack.localFluxJacobian[ic][0] *= pascalToBarMult;
-          stack.localFluxJacobian[ic][numDofs] *= pascalToBarMult;
+          stack.localFluxJacobian[id][0] *= pascalToBarMult;
+          stack.localFluxJacobian[id][numDofs] *= pascalToBarMult;
         }
       }
       // during second (and the last) loop iteration (i ==1), we fill now the equations for element j.
       // here, we need to multiply all values by -1, since the flow direction changes w.r.t element mass balance space
       else
       {
-        for( integer ic = 0; ic < numDofs; ++ic )
+        for( integer id = 0; id < numDofs; ++id )
         {
-          stack.localFlux[ic] *= -1;
+          stack.localFlux[id] *= -1;
           for( integer v = 0; v < 2 * numDofs; ++v )
           {
-            stack.localFluxJacobian[ic][v] *= -1;
+            stack.localFluxJacobian[id][v] *= -1;
           }
         }
       }
@@ -1261,13 +1263,13 @@ public:
         GEOSX_ASSERT_GE( localRow, 0 );
         GEOSX_ASSERT_GE( m_localMatrix.numRows(), localRow + numEqns );
 
-        for( integer ic = 0; ic < numComps; ++ic )
+        for( integer id = 0; id < numDofs; ++id )
         {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[ic] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + id], stack.localFlux[id] );
           m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
-            ( localRow + ic,
+            ( localRow + id,
             stack.dofColIndices.data(),
-            stack.localFluxJacobian[ic].dataIfContiguous(),
+            stack.localFluxJacobian[id].dataIfContiguous(),
             maxNumElems * numDofs );
         }
       }
@@ -1489,18 +1491,18 @@ struct SolutionCheckKernel
         // will be chopped (i.e., set to minimum OBL limit) in ApplySystemSolution)
         if( !allowOBLChopping )
         {
-          for( integer ic = 0; ic < numComps; ++ic )
+          for( integer ic = 0; ic < numComps - 1; ++ic )
           {
-            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic];
+            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             check.min( newCompFrac >= 0.0 );
           }
         }
         else
         {
           real64 fracSum = 0.0;
-          for( integer ic = 0; ic < numComps; ++ic )
+          for( integer ic = 0; ic < numComps - 1; ++ic )
           {
-            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic];
+            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             fracSum += (newCompFrac > 0.0) ? newCompFrac : 0.0;
           }
           check.min( fracSum >= eps );
