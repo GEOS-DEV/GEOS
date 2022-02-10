@@ -164,6 +164,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
 
+  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
   integer const numPhase = numPhases();
@@ -174,9 +175,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
   if( m_useMass )
   {
-    convertToMoleFractions( composition,
-                            m_componentMolarWeight,
-                            compMoleFrac );
+    convertToMoleFractions< maxNumComp >( composition,
+                                          compMoleFrac );
   }
   else
   {
@@ -229,38 +229,19 @@ CompositionalMultiphaseFluid::KernelWrapper::
     }
 
     // convert mole fractions to mass fractions
-    convertToMassFractions< maxNumPhase >( phaseMolecularWeight,
-                                           phaseFrac,
-                                           phaseCompFrac );
+    convertToMassFractions< maxNumComp >( phaseMolecularWeight,
+                                          phaseFrac,
+                                          phaseCompFrac );
+
   }
 
   // 5. Compute total fluid mass/molar density
 
-  computeTotalDensity( phaseFrac,
-                       phaseDens,
-                       totalDens );
+  computeTotalDensity< maxNumComp, maxNumPhase >( phaseFrac,
+                                                  phaseDens,
+                                                  totalDens );
 
 #endif
-}
-
-GEOSX_HOST_DEVICE
-inline void
-CompositionalMultiphaseFluid::KernelWrapper::
-  update( localIndex const k,
-          localIndex const q,
-          real64 const pressure,
-          real64 const temperature,
-          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
-{
-  compute( pressure,
-           temperature,
-           composition,
-           m_phaseFraction( k, q ),
-           m_phaseDensity( k, q ),
-           m_phaseMassDensity( k, q ),
-           m_phaseViscosity( k, q ),
-           m_phaseCompFraction( k, q ),
-           m_totalDensity( k, q ) );
 }
 
 GEOSX_HOST_DEVICE
@@ -294,7 +275,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
   {
     // convert mass fractions to mole fractions
     convertToMoleFractions( composition,
-                            m_componentMolarWeight,
                             compMoleFrac,
                             dCompMoleFrac_dCompMassFrac );
   }
@@ -382,15 +362,15 @@ CompositionalMultiphaseFluid::KernelWrapper::
       }
     }
 
-    convertToMassFractions< maxNumComp, maxNumPhase >( dCompMoleFrac_dCompMassFrac,
-                                                       phaseMolecularWeight,
-                                                       dPhaseMolecularWeight_dPres,
-                                                       dPhaseMolecularWeight_dTemp,
-                                                       dPhaseMolecularWeight_dComp,
-                                                       phaseFraction,
-                                                       phaseCompFraction,
-                                                       phaseDensity.dComp,
-                                                       phaseViscosity.dComp );
+    convertToMassFractions( dCompMoleFrac_dCompMassFrac,
+                            phaseMolecularWeight,
+                            dPhaseMolecularWeight_dPres,
+                            dPhaseMolecularWeight_dTemp,
+                            dPhaseMolecularWeight_dComp,
+                            phaseFraction,
+                            phaseCompFraction,
+                            phaseDensity.dComp,
+                            phaseViscosity.dComp );
   }
 
   // 5. Compute total fluid mass/molar density and derivatives
@@ -400,6 +380,26 @@ CompositionalMultiphaseFluid::KernelWrapper::
                        totalDensity );
 
 #endif
+}
+
+GEOSX_HOST_DEVICE
+inline void
+CompositionalMultiphaseFluid::KernelWrapper::
+  update( localIndex const k,
+          localIndex const q,
+          real64 const pressure,
+          real64 const temperature,
+          arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
+{
+  compute( pressure,
+           temperature,
+           composition,
+           m_phaseFraction( k, q ),
+           m_phaseDensity( k, q ),
+           m_phaseMassDensity( k, q ),
+           m_phaseViscosity( k, q ),
+           m_phaseCompFraction( k, q ),
+           m_totalDensity( k, q ) );
 }
 
 } /* namespace constitutive */

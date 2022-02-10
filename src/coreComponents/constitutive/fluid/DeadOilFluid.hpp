@@ -78,6 +78,24 @@ private:
 
     friend class DeadOilFluid;
 
+    /**
+     * @brief Constructor for the class doing in-kernel Dead-Oil fluid updates
+     * @param[in] phaseTypes type of phases
+     * @param[in] phaseOrder order of phases
+     * @param[in] hydrocarbonPhaseOrder order of the hydrocarbon phases in the model
+     * @param[in] surfacePhaseMassDensity surface phase mass densities provided by the user
+     * @param[in] formationVolFractionTables hydrocarbon formation volume tables
+     * @param[in] viscosityTables hydrocarbon viscosity tables
+     * @param[in] waterParams parameters (Bo, visc) for the water phase
+     * @param[in] componentMolarWeight component molecular weights
+     * @param[in] useMass flag to decide whether we return mass or molar densities
+     * @param[in] phaseFraction phase fractions (+ derivatives) in the cell
+     * @param[in] phaseDensity phase mass/molar densities (+ derivatives) in the cell
+     * @param[in] phaseMassDensity phase mass densities (+ derivatives) in the cell
+     * @param[in] phaseViscosity phase viscosities (+ derivatives) in the cell
+     * @param[in] phaseCompFraction phase component fractions (+ derivatives) in the cell
+     * @param[in] totalDensity total density in the cell
+     */
     KernelWrapper( arrayView1d< integer const > phaseTypes,
                    arrayView1d< integer const > phaseOrder,
                    arrayView1d< integer const > hydrocarbonPhaseOrder,
@@ -94,18 +112,38 @@ private:
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity );
 
+    /**
+     * @brief Utility function to compute mass densities as a function of pressure (no derivatives)
+     * @param[in] pressure pressure in the cell
+     * @param[out] phaseMassDens the phase mass densities in the cell
+     */
     GEOSX_HOST_DEVICE
     void computeDensities( real64 const pressure,
                            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDens ) const;
 
+    /**
+     * @brief Utility function to compute mass densities as a function of pressure (keeping derivatives)
+     * @param[in] pressure pressure in the cell
+     * @param[out] phaseMassDens the phase mass densities in the cell (+ derivatives)
+     */
     GEOSX_HOST_DEVICE
     void computeDensities( real64 const pressure,
                            PhaseProp::SliceType const & phaseMassDens ) const;
 
+    /**
+     * @brief Utility function to compute viscosities as a function of pressure (no derivatives)
+     * @param[in] pressure pressure in the cell
+     * @param[out] phaseVisc the phase viscosities in the cell
+     */
     GEOSX_HOST_DEVICE
     void computeViscosities( real64 const pressure,
                              arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseVisc ) const;
 
+    /**
+     * @brief Utility function to compute viscosities as a function of pressure (keeping derivatives)
+     * @param[in] pressure pressure in the cell
+     * @param[out] phaseVisc the phase viscosities in the cell (+ derivatives)
+     */
     GEOSX_HOST_DEVICE
     void computeViscosities( real64 const pressure,
                              PhaseProp::SliceType const & phaseVisc ) const;
@@ -280,9 +318,12 @@ DeadOilFluid::KernelWrapper::
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
-           real64 & totalDens ) const
+           real64 & totalDensity ) const
 {
   GEOSX_UNUSED_VAR( temperature );
+
+  integer constexpr maxNumComp = 3;
+  integer constexpr maxNumPhase = 3;
   integer const nComps = numComponents();
   integer const nPhases = numPhases();
 
@@ -308,9 +349,9 @@ DeadOilFluid::KernelWrapper::
   }
 
   // 4. Compute total fluid mass/molar density
-  computeTotalDensity( phaseFraction,
-                       phaseDensity,
-                       totalDens );
+  computeTotalDensity< maxNumComp, maxNumPhase >( phaseFraction,
+                                                  phaseDensity,
+                                                  totalDensity );
 
 }
 

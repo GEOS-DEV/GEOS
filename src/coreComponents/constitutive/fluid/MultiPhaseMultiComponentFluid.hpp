@@ -222,9 +222,8 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
   if( m_useMass )
   {
     // convert mass fractions to mole fractions
-    convertToMoleFractions( composition,
-                            m_componentMolarWeight,
-                            compMoleFrac );
+    convertToMoleFractions< numComp >( composition,
+                                       compMoleFrac );
   }
   else
   {
@@ -298,9 +297,9 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
     }
 
     // convert mole fractions to mass fractions
-    convertToMassFractions< numPhase >( phaseMolecularWeight,
-                                        phaseFraction,
-                                        phaseCompFraction );
+    convertToMassFractions< numComp >( phaseMolecularWeight,
+                                       phaseFraction,
+                                       phaseCompFraction );
   }
   else
   {
@@ -319,9 +318,9 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
 
   // 5. Compute total fluid mass/molar density and derivatives
 
-  computeTotalDensity( phaseFraction,
-                       phaseDensity,
-                       totalDensity );
+  computeTotalDensity< numComp, numPhase >( phaseFraction,
+                                            phaseDensity,
+                                            totalDensity );
 
 }
 
@@ -352,7 +351,6 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
   if( m_useMass )
   {
     convertToMoleFractions( composition,
-                            m_componentMolarWeight,
                             compMoleFrac,
                             dCompMoleFrac_dCompMassFrac );
   }
@@ -455,15 +453,15 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
     }
 
     // 4.2 Convert the mole fractions to mass fractions
-    convertToMassFractions< numComp, numPhase >( dCompMoleFrac_dCompMassFrac,
-                                                 phaseMolecularWeight,
-                                                 dPhaseMolecularWeight_dPres,
-                                                 dPhaseMolecularWeight_dTemp,
-                                                 dPhaseMolecularWeight_dComp,
-                                                 phaseFraction,
-                                                 phaseCompFraction,
-                                                 phaseDensity.dComp,
-                                                 phaseViscosity.dComp );
+    convertToMassFractions( dCompMoleFrac_dCompMassFrac,
+                            phaseMolecularWeight,
+                            dPhaseMolecularWeight_dPres,
+                            dPhaseMolecularWeight_dTemp,
+                            dPhaseMolecularWeight_dComp,
+                            phaseFraction,
+                            phaseCompFraction,
+                            phaseDensity.dComp,
+                            phaseViscosity.dComp );
 
 
     // 4.3 Copy the phase densities into the phase mass densities

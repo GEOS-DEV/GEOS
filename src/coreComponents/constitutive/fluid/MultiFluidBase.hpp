@@ -267,43 +267,42 @@ protected:
 
     /**
      * @brief Utility function to convert mass fractions to mole fractions
+     * @tparam maxNumComp the max number of components
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
-     * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects an std::vector
+     * @detail The template is needed because PVTPackage expects a std::vector
      */
-    template< typename OUT_ARRAY >
+    template< integer maxNumComp, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
     void convertToMoleFractions( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition,
-                                 arrayView1d< real64 const > const componentMolarWeight,
                                  OUT_ARRAY && compMoleFrac ) const;
 
     /**
      * @brief Utility function to convert mass fractions to mole fractions and keep derivatives
-     * @tparam maxNumPhase the max number of phases
+     * @tparam maxNumComp the max number of components
      * @tparam OUT_ARRAY the type of array storing the component mole fractions
      * @param[in] composition the component mass fractions
      * @param[in] componentMolarWeight the component molar weight
      * @param[out] compMoleFrac the newly converted component mole fractions
      * @param[out] dCompMoleFrac_dCompMassFrac the derivatives of the newly converted component mole fractions
-     * @detail The template is needed because PVTPackage expects an std::vector
+     * @detail The template is needed because PVTPackage expects a std::vector
      */
     template< integer maxNumComp, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
     void convertToMoleFractions( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition,
-                                 arrayView1d< real64 const > const componentMolarWeight,
                                  OUT_ARRAY && compMoleFrac,
                                  real64 ( &dCompMoleFrac_dCompMassFrac )[maxNumComp][maxNumComp] ) const;
 
     /**
      * @brief Utility function to convert mole fractions to mass fractions
+     * @tparam maxNumComp the max number of components
      * @tparam maxNumPhase the max number of phases
      * @param[in] phaseMolecularWeight the phase molecular weight computed by the constitutive model
      * @param[inout] phaseFrac the phase fractions in moles that will be converted to mass
      * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
      */
-    template< integer maxNumPhase >
+    template< integer maxNumComp, integer maxNumPhase >
     GEOSX_HOST_DEVICE
     void convertToMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
                                  arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
@@ -322,6 +321,10 @@ protected:
      * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
      * @param[inout] dPhaseDens_dGlobalCompFrac the derivatives of phase densities wrt comp fractions
      * @param[inout] dPhaseVisc_dGlobalCompFrac the derivatives of phase viscosities wrt comp fractions
+     * @detail This function performs three conversions
+     *    1) Conversion of phase mass fractions into phase mole fractions
+     *    2) Conversion of phase component mass fractions into phase component mole fractions
+     *    3) Conversion of derivatives wrt mass fractions into derivatives wrt mole fractions
      */
     template< integer maxNumComp, integer maxNumPhase >
     GEOSX_HOST_DEVICE
@@ -337,10 +340,13 @@ protected:
 
     /**
      * @brief Utility function to convert mole fractions to mass fractions
+     * @tparam maxNumComp the max number of components
+     * @tparam maxNumPhase the max number of phases
      * @param[in] phaseFrac the phase fractions properly converted
      * @param[in] phaseFrac the phase densities in mass or moles
      * @param[out] totalDens the total density
      */
+    template< integer maxNumComp, integer maxNumPhase >
     GEOSX_HOST_DEVICE
     void computeTotalDensity( arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
                               arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseDens,
@@ -373,6 +379,62 @@ protected:
     FluidProp::ViewType m_totalDensity;
 
 private:
+
+    /**
+     * @brief Utility function to convert phase mole fractions to phase mass fractions and keep derivatives
+     * @tparam maxNumComp the max number of components
+     * @tparam maxNumPhase the max number of phases
+     * @param[in] phaseMolecularWeight the phase molecular weight computed by the constitutive model
+     * @param[in] dPhaseMolecularWeight_dPres the derivatives of phase molecular weights wrt pressure
+     * @param[in] dPhaseMolecularWeight_dTemp the derivatives of phase molecular weights wrt temperature
+     * @param[in] dPhaseMolecularWeight_dGlobalCompFrac the derivatives of phase molecular weights wrt comp fractions
+     * @param[inout] phaseFrac the phase fractions in moles that will be converted to mass
+     */
+    template< integer maxNumComp, integer maxNumPhase >
+    GEOSX_HOST_DEVICE
+    void convertToPhaseMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
+                                      real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
+                                      real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
+                                      real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
+                                      PhaseProp::SliceType const phaseFrac ) const;
+
+    /**
+     * @brief Utility function to convert phase component mole fractions to phase component mass fractions and keep derivatives
+     * @tparam maxNumComp the max number of components
+     * @tparam maxNumPhase the max number of phases
+     * @param[in] phaseMolecularWeight the phase molecular weight computed by the constitutive model
+     * @param[in] dPhaseMolecularWeight_dPres the derivatives of phase molecular weights wrt pressure
+     * @param[in] dPhaseMolecularWeight_dTemp the derivatives of phase molecular weights wrt temperature
+     * @param[in] dPhaseMolecularWeight_dGlobalCompFrac the derivatives of phase molecular weights wrt comp fractions
+     * @param[inout] phaseFrac the phase fractions
+     * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
+     */
+    template< integer maxNumComp, integer maxNumPhase >
+    GEOSX_HOST_DEVICE
+    void convertToPhaseCompMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
+                                          real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
+                                          real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
+                                          real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
+                                          PhaseProp::SliceType const phaseFrac,
+                                          PhaseComp::SliceType const phaseCompFrac ) const;
+
+    /**
+     * @brief Utility function to convert derivatives wrt mole fractions into derivatives wrt mass fractions
+     * @tparam maxNumComp the max number of components
+     * @param[in] dCompMoleFrac_dCompMassFrac the derivatives of mole fractions wrt mass fractions
+     * @param[inout] phaseFrac the phase fractions
+     * @param[inout] phaseCompFrac the phase component fractions
+     * @param[inout] dPhaseDens_dGlobalCompFrac the derivatives of phase densities wrt comp fractions
+     * @param[inout] dPhaseVisc_dGlobalCompFrac the derivatives of phase viscosities wrt comp fractions
+     */
+    template< integer maxNumComp >
+    GEOSX_HOST_DEVICE
+    void computeDerivativesWrtMassFractions( real64 const (&dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp],
+                                             PhaseProp::SliceType const phaseFrac,
+                                             PhaseComp::SliceType const phaseCompFrac,
+                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens_dGlobalCompFrac,
+                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc_dGlobalCompFrac ) const;
+
 
     /**
      * @brief Main compute function to update properties in a cell without returning derivatives (used at initialization)
@@ -478,28 +540,18 @@ protected:
 
 };
 
-template< typename OUT_ARRAY >
+template< integer maxNumComp, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
 void
 MultiFluidBase::KernelWrapper::
   convertToMoleFractions( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition,
-                          arrayView1d< real64 const > const componentMolarWeight,
                           OUT_ARRAY && compMoleFrac ) const
 {
-  integer const numComps = numComponents();
+  real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
 
-  real64 totalMolality = 0.0;
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    compMoleFrac[ic] = composition[ic] / componentMolarWeight[ic]; // this is molality (units of mole/mass)
-    totalMolality += compMoleFrac[ic];
-  }
-
-  real64 const totalMolalityInv = 1.0 / totalMolality;
-  for( integer ic = 0; ic < numComps; ++ic )
-  {
-    compMoleFrac[ic] *= totalMolalityInv;
-  }
+  convertToMoleFractions( composition,
+                          compMoleFrac,
+                          dCompMoleFrac_dCompMassFrac );
 }
 
 template< integer maxNumComp, typename OUT_ARRAY >
@@ -507,7 +559,6 @@ GEOSX_HOST_DEVICE
 void
 MultiFluidBase::KernelWrapper::
   convertToMoleFractions( arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition,
-                          arrayView1d< real64 const > const componentMolarWeight,
                           OUT_ARRAY && compMoleFrac,
                           real64 (& dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp] ) const
 {
@@ -516,7 +567,7 @@ MultiFluidBase::KernelWrapper::
   real64 totalMolality = 0.0;
   for( integer ic = 0; ic < numComps; ++ic )
   {
-    real64 const mwInv = 1.0 / componentMolarWeight[ic];
+    real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
     compMoleFrac[ic] = composition[ic] * mwInv; // this is molality (units of mole/mass)
     dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;
     totalMolality += compMoleFrac[ic];
@@ -529,13 +580,13 @@ MultiFluidBase::KernelWrapper::
 
     for( integer jc = 0; jc < numComps; ++jc )
     {
-      dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / componentMolarWeight[jc];
+      dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
       dCompMoleFrac_dCompMassFrac[ic][jc] *= totalMolalityInv;
     }
   }
 }
 
-template< integer maxNumPhase >
+template< integer maxNumComp, integer maxNumPhase >
 GEOSX_HOST_DEVICE
 void
 MultiFluidBase::KernelWrapper::
@@ -543,57 +594,40 @@ MultiFluidBase::KernelWrapper::
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const phaseCompFrac ) const
 {
+  using namespace multifluid;
+
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
 
-  // 1. Convert phase fractions (requires two passes)
-  real64 totalMass{};
+  real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
+  real64 dPhaseMolecularWeight_dPres[maxNumPhase]{};
+  real64 dPhaseMolecularWeight_dTemp[maxNumPhase]{};
+  real64 dPhaseMolecularWeight_dComp[maxNumPhase][maxNumComp]{};
 
-  // 1.1. Compute mass of each phase and total mass (on a 1-mole basis)
-  for( integer ip = 0; ip < numPhase; ++ip )
-  {
+  StackArray< real64, 3, maxNumPhase, LAYOUT_PHASE > dPhaseFrac_dPres( 1, 1, numPhase );
+  StackArray< real64, 3, maxNumPhase, LAYOUT_PHASE > dPhaseFrac_dTemp( 1, 1, numPhase );
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac_dComp( 1, 1, numPhase, numComp );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseFracAndDeriv { phaseFrac, dPhaseFrac_dPres[0][0], dPhaseFrac_dTemp[0][0], dPhaseFrac_dComp[0][0] };
 
-    bool const phaseExists = (phaseFrac[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_COMP > dPhaseCompFrac_dPres( 1, 1, numPhase, numComp );
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_COMP > dPhaseCompFrac_dTemp( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, maxNumComp *maxNumComp *maxNumPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac_dComp( 1, 1, numPhase, numComp, numComp );
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
+  phaseCompFracAndDeriv { phaseCompFrac, dPhaseCompFrac_dPres[0][0], dPhaseCompFrac_dTemp[0][0], dPhaseCompFrac_dComp[0][0] };
 
-    phaseFrac[ip] *= phaseMolecularWeight[ip];
-    totalMass += phaseFrac[ip];
-  }
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens_dComp( 1, 1, numPhase, numComp );
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseVisc_dComp( 1, 1, numPhase, numComp );
 
-  // 1.2. Normalize to get mass fractions
-  real64 const totalMassInv = 1.0 / totalMass;
-  for( integer ip = 0; ip < numPhase; ++ip )
-  {
-
-    bool const phaseExists = (phaseFrac[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
-    phaseFrac[ip] *= totalMassInv;
-  }
-
-  // 2. Convert phase compositions
-  for( integer ip = 0; ip < numPhase; ++ip )
-  {
-
-    bool const phaseExists = (phaseFrac[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
-    real64 const phaseMolecularWeightInv = 1.0 / phaseMolecularWeight[ip];
-
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      phaseCompFrac[ip][ic] = phaseCompFrac[ip][ic] * m_componentMolarWeight[ic] * phaseMolecularWeightInv;
-    }
-  }
+  convertToMassFractions( dCompMoleFrac_dCompMassFrac,
+                          phaseMolecularWeight,
+                          dPhaseMolecularWeight_dPres,
+                          dPhaseMolecularWeight_dTemp,
+                          dPhaseMolecularWeight_dComp,
+                          phaseFracAndDeriv,
+                          phaseCompFracAndDeriv,
+                          dPhaseDens_dComp[0][0],
+                          dPhaseVisc_dComp[0][0] );
 }
 
 template< integer maxNumComp, integer maxNumPhase >
@@ -610,25 +644,47 @@ MultiFluidBase::KernelWrapper::
                           arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens_dGlobalCompFrac,
                           arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc_dGlobalCompFrac ) const
 {
+  convertToPhaseMassFractions( phaseMolecularWeight,
+                               dPhaseMolecularWeight_dPres,
+                               dPhaseMolecularWeight_dTemp,
+                               dPhaseMolecularWeight_dGlobalCompFrac,
+                               phaseFrac );
+
+  convertToPhaseCompMassFractions( phaseMolecularWeight,
+                                   dPhaseMolecularWeight_dPres,
+                                   dPhaseMolecularWeight_dTemp,
+                                   dPhaseMolecularWeight_dGlobalCompFrac,
+                                   phaseFrac,
+                                   phaseCompFrac );
+
+  computeDerivativesWrtMassFractions( dCompMoleFrac_dCompMassFrac,
+                                      phaseFrac,
+                                      phaseCompFrac,
+                                      dPhaseDens_dGlobalCompFrac,
+                                      dPhaseVisc_dGlobalCompFrac );
+}
+
+template< integer maxNumComp, integer maxNumPhase >
+GEOSX_HOST_DEVICE
+void
+MultiFluidBase::KernelWrapper::
+  convertToPhaseMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
+                               real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
+                               real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
+                               real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
+                               PhaseProp::SliceType const phaseFrac ) const
+{
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
-
-  // 1. Convert phase fractions (requires two passes)
 
   real64 totalMass{};
   real64 dTotalMass_dP{};
   real64 dTotalMass_dT{};
   real64 dTotalMass_dC[maxNumComp]{};
 
-  // 1.1. Compute mass of each phase and total mass (on a 1-mole basis)
+  // 1. Compute mass of each phase and total mass (on a 1-mole basis)
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
 
     real64 const nu = phaseFrac.value[ip];
 
@@ -648,17 +704,10 @@ MultiFluidBase::KernelWrapper::
     }
   }
 
-  // 1.2. Normalize to get mass fractions
+  // 2. Normalize to get mass fractions
   real64 const totalMassInv = 1.0 / totalMass;
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
     phaseFrac.value[ip] *= totalMassInv;
     phaseFrac.dPres[ip] = ( phaseFrac.dPres[ip] - phaseFrac.value[ip] * dTotalMass_dP ) * totalMassInv;
     phaseFrac.dTemp[ip] = ( phaseFrac.dTemp[ip] - phaseFrac.value[ip] * dTotalMass_dT ) * totalMassInv;
@@ -668,17 +717,24 @@ MultiFluidBase::KernelWrapper::
       phaseFrac.dComp[ip][jc] = ( phaseFrac.dComp[ip][jc] - phaseFrac.value[ip] * dTotalMass_dC[jc] ) * totalMassInv;
     }
   }
+}
 
-  // 2. Convert phase compositions
+template< integer maxNumComp, integer maxNumPhase >
+GEOSX_HOST_DEVICE
+void
+MultiFluidBase::KernelWrapper::
+  convertToPhaseCompMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
+                                   real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
+                                   real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
+                                   real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
+                                   PhaseProp::SliceType const phaseFrac,
+                                   PhaseComp::SliceType const phaseCompFrac ) const
+{
+  integer const numPhase = numPhases();
+  integer const numComp = numComponents();
+
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
     real64 const phaseMolecularWeightInv = 1.0 / phaseMolecularWeight[ip];
 
     for( integer ic = 0; ic < numComp; ++ic )
@@ -699,18 +755,24 @@ MultiFluidBase::KernelWrapper::
       }
     }
   }
+}
 
-  // 3. Update derivatives w.r.t. mole fractions to derivatives w.r.t mass fractions
+template< integer maxNumComp >
+GEOSX_HOST_DEVICE
+void
+MultiFluidBase::KernelWrapper::
+  computeDerivativesWrtMassFractions( real64 const (&dCompMoleFrac_dCompMassFrac)[maxNumComp][maxNumComp],
+                                      PhaseProp::SliceType const phaseFrac,
+                                      PhaseComp::SliceType const phaseCompFrac,
+                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens_dGlobalCompFrac,
+                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc_dGlobalCompFrac ) const
+{
+  integer const numPhase = numPhases();
+  integer const numComp = numComponents();
+
   real64 work[maxNumComp]{};
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-
-    bool const phaseExists = (phaseFrac.value[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
-
     applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, phaseFrac.dComp[ip], work );
     applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, dPhaseDens_dGlobalCompFrac[ip], work );
     applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, dPhaseVisc_dGlobalCompFrac[ip], work );
@@ -721,6 +783,7 @@ MultiFluidBase::KernelWrapper::
   }
 }
 
+template< integer maxNumComp, integer maxNumPhase >
 GEOSX_HOST_DEVICE
 inline void
 MultiFluidBase::KernelWrapper::
@@ -728,25 +791,32 @@ MultiFluidBase::KernelWrapper::
                        arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseDens,
                        real64 & totalDens ) const
 {
+  using namespace multifluid;
+
   integer const numPhase = numPhases();
+  integer const numComp = numComponents();
 
-  totalDens = 0.0;
+  StackArray< real64, 2, 1, LAYOUT_FLUID > dTotalDens_dPres( 1, 1 );
+  StackArray< real64, 2, 1, LAYOUT_FLUID > dTotalDens_dTemp( 1, 1 );
+  StackArray< real64, 3, maxNumComp, LAYOUT_FLUID_DC > dTotalDens_dComp( 1, 1, numComp );
+  MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 >
+  totalDensAndDeriv { totalDens, dTotalDens_dPres[0][0], dTotalDens_dTemp[0][0], dTotalDens_dComp[0][0] };
 
-  // Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-  for( integer ip = 0; ip < numPhase; ++ip )
-  {
+  StackArray< real64, 3, maxNumPhase, LAYOUT_PHASE > dPhaseFrac_dPres( 1, 1, numPhase );
+  StackArray< real64, 3, maxNumPhase, LAYOUT_PHASE > dPhaseFrac_dTemp( 1, 1, numPhase );
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac_dComp( 1, 1, numPhase, numComp );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseFracAndDeriv { phaseFrac, dPhaseFrac_dPres[0][0], dPhaseFrac_dTemp[0][0], dPhaseFrac_dComp[0][0] };
 
-    bool const phaseExists = (phaseFrac[ip] > 0);
-    if( !phaseExists )
-    {
-      continue;
-    }
+  StackArray< real64, 3, maxNumPhase, LAYOUT_PHASE > dPhaseDens_dPres( 1, 1, numPhase );
+  StackArray< real64, 3, maxNumPhase, LAYOUT_PHASE > dPhaseDens_dTemp( 1, 1, numPhase );
+  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens_dComp( 1, 1, numPhase, numComp );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseDensAndDeriv { phaseDens, dPhaseDens_dPres[0][0], dPhaseDens_dTemp[0][0], dPhaseDens_dComp[0][0] };
 
-    totalDens += phaseFrac[ip] / phaseDens[ip];
-  }
-
-  // Invert the previous quantity to get actual density
-  totalDens = 1.0 / totalDens;
+  computeTotalDensity( phaseFracAndDeriv,
+                       phaseDensAndDeriv,
+                       totalDensAndDeriv );
 }
 
 GEOSX_HOST_DEVICE
@@ -763,15 +833,9 @@ MultiFluidBase::KernelWrapper::
   totalDensity.dPres = 0.0;
   LvArray::forValuesInSlice( totalDensity.dComp, []( real64 & val ){ val = 0.0; } );
 
-  // Sum mass/molar fraction/density ratio over all phases to get the inverse of density
+  // 1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
   for( integer ip = 0; ip < numPhase; ++ip )
   {
-
-    if( phaseFraction.value[ip] <= 0.0 )
-    {
-      continue;
-    }
-
     real64 const densInv = 1.0 / phaseDensity.value[ip];
     real64 const value = phaseFraction.value[ip] * densInv;
 
@@ -783,7 +847,7 @@ MultiFluidBase::KernelWrapper::
     }
   }
 
-  // Invert the previous quantity to get actual density
+  // 2. Invert the previous quantity to get actual density
   totalDensity.value = 1.0 / totalDensity.value;
   real64 const minusDens2 = -totalDensity.value * totalDensity.value;
   totalDensity.dPres *= minusDens2;
