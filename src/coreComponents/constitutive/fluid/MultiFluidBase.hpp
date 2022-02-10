@@ -406,7 +406,6 @@ private:
      * @param[in] dPhaseMolecularWeight_dPres the derivatives of phase molecular weights wrt pressure
      * @param[in] dPhaseMolecularWeight_dTemp the derivatives of phase molecular weights wrt temperature
      * @param[in] dPhaseMolecularWeight_dGlobalCompFrac the derivatives of phase molecular weights wrt comp fractions
-     * @param[inout] phaseFrac the phase fractions
      * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
      */
     template< integer maxNumComp, integer maxNumPhase >
@@ -415,15 +414,14 @@ private:
                                           real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
                                           real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
                                           real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
-                                          PhaseProp::SliceType const phaseFrac,
                                           PhaseComp::SliceType const phaseCompFrac ) const;
 
     /**
      * @brief Utility function to convert derivatives wrt mole fractions into derivatives wrt mass fractions
      * @tparam maxNumComp the max number of components
      * @param[in] dCompMoleFrac_dCompMassFrac the derivatives of mole fractions wrt mass fractions
-     * @param[inout] phaseFrac the phase fractions
-     * @param[inout] phaseCompFrac the phase component fractions
+     * @param[inout] phaseFrac the phase fractions in the cell
+     * @param[inout] phaseCompFrac the phase component fractions in the cell
      * @param[inout] dPhaseDens_dGlobalCompFrac the derivatives of phase densities wrt comp fractions
      * @param[inout] dPhaseVisc_dGlobalCompFrac the derivatives of phase viscosities wrt comp fractions
      */
@@ -654,7 +652,6 @@ MultiFluidBase::KernelWrapper::
                                    dPhaseMolecularWeight_dPres,
                                    dPhaseMolecularWeight_dTemp,
                                    dPhaseMolecularWeight_dGlobalCompFrac,
-                                   phaseFrac,
                                    phaseCompFrac );
 
   computeDerivativesWrtMassFractions( dCompMoleFrac_dCompMassFrac,
@@ -727,7 +724,6 @@ MultiFluidBase::KernelWrapper::
                                    real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
                                    real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
                                    real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
-                                   PhaseProp::SliceType const phaseFrac,
                                    PhaseComp::SliceType const phaseCompFrac ) const
 {
   integer const numPhase = numPhases();
