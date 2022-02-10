@@ -49,6 +49,14 @@ EXTRINSIC_MESH_DATA_TRAIT( deltaGlobalCompFraction,
                            NO_WRITE,
                            "Accumulated global component fraction updates" );
 
+EXTRINSIC_MESH_DATA_TRAIT( bcGlobalCompFraction,
+                           "bcGlobalCompFraction",
+                           array2dLayoutComp,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary condition global component fraction" );
+
 EXTRINSIC_MESH_DATA_TRAIT( initialTemperature,
                            "initialTemperature",
                            array1d< real64 >,
@@ -56,6 +64,14 @@ EXTRINSIC_MESH_DATA_TRAIT( initialTemperature,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Initial temperature" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
+                           "bcTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary condition temperature" );
 
 EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
                            "deltaTemperature",

@@ -264,6 +264,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< bcPressure >( getName() );
 
       subRegion.registerExtrinsicData< temperature >( getName() );
+      subRegion.registerExtrinsicData< bcTemperature >( getName() );
 
       subRegion.registerExtrinsicData< OBLOperatorValues >( getName() ).
         reference().resizeDimension< 1 >( m_numOBLOperators );
@@ -280,6 +281,9 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
       // to make sure that the dimensions are properly set before the timeHistoryOutput starts its initialization.
       subRegion.registerExtrinsicData< globalCompFraction >( getName() ).
         setDimLabels( 1, m_componentNames ).
+        reference().resizeDimension< 1 >( m_numComponents );
+
+      subRegion.registerExtrinsicData< bcGlobalCompFraction >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
 
       // we need to register this fiels in any case (if there is a single component or not)
@@ -425,7 +429,7 @@ real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domai
             minVal.min( maxCompFracChange / CompFracChange );
           }
         }
-        lastCompFracChange = LvArray::math::abs(lastCompFracChange);
+        lastCompFracChange = LvArray::math::abs( lastCompFracChange );
         // now deal with the last component
         if( lastCompFracChange > maxCompFracChange && lastCompFracChange > eps )
         {
@@ -1018,7 +1022,7 @@ void DARTSSuperEngine::applyDirichletBC( real64 const time,
                                                                            extrinsicMeshData::flow::bcPressure::key() );
   } );
 
-  // 2. Apply composition BC (global component fraction) and store them for constitutive call
+  // 2. Apply composition BC (global component fraction), store in a separate field
   fsManager.apply( time + dt,
                    domain,
                    "ElementRegions",
@@ -1032,7 +1036,128 @@ void DARTSSuperEngine::applyDirichletBC( real64 const time,
     fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
                                                                            time + dt,
                                                                            subRegion,
-                                                                           extrinsicMeshData::flow::globalCompFraction::key() );
+                                                                           extrinsicMeshData::flow::bcGlobalCompFraction::key() );
+  } );
+
+  // 3. Apply temperature Dirichlet BCs, store in a separate field
+  fsManager.apply( time + dt,
+                   domain,
+                   "ElementRegions",
+                   extrinsicMeshData::flow::temperature::key(),
+                   [&]( FieldSpecificationBase const & fs,
+                        string const & setName,
+                        SortedArrayView< localIndex const > const & targetSet,
+                        Group & subRegion,
+                        string const & )
+  {
+    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    {
+      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                   getName(), time+dt, FieldSpecificationBase::catalogName(),
+                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+    }
+
+    fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
+                                                                           time + dt,
+                                                                           subRegion,
+                                                                           extrinsicMeshData::flow::bcTemperature::key() );
+  } );
+
+  globalIndex const rankOffset = dofManager.rankOffset();
+  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+
+
+  // 3. Apply to the system
+  fsManager.apply( time + dt,
+                   domain,
+                   "ElementRegions",
+                   extrinsicMeshData::flow::pressure::key(),
+                   [&] ( FieldSpecificationBase const &,
+                         string const &,
+                         SortedArrayView< localIndex const > const & targetSet,
+                         Group & subRegion,
+                         string const & )
+  {
+    // TODO: hack! Find a better way to get the fluid
+    Group const & region = subRegion.getParent().getParent();
+
+    arrayView1d< real64 const > const bcPres =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
+    arrayView2d< real64 const, compflow::USD_COMP > const bcCompFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::bcGlobalCompFraction::key() );
+    arrayView1d< real64 const > const bcTemp =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
+
+    arrayView1d< real64 const > const pres =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+    arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
+    arrayView1d< real64 const > const temp =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+
+
+
+    arrayView1d< real64 const > const dPres =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
+    arrayView2d< real64 const, compflow::USD_COMP > const dCompFrac =
+      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::deltaGlobalCompFraction::key() );
+    arrayView1d< real64 const > const dTemp =
+      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaTemperature::key() );
+
+    arrayView1d< integer const > const ghostRank =
+      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+    arrayView1d< globalIndex const > const dofNumber =
+      subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+    integer const numComp = m_numComponents;
+    integer const enableEnergyBalance = m_enableEnergyBalance;
+
+    forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      localIndex const ei = targetSet[a];
+      if( ghostRank[ei] >= 0 )
+      {
+        return;
+      }
+
+      globalIndex const dofIndex = dofNumber[ei];
+      localIndex const localRow = dofIndex - rankOffset;
+      real64 rhsValue;
+
+      // 3.1. Apply pressure value to the matrix/rhs
+      FieldSpecificationEqual::SpecifyFieldValue( dofIndex,
+                                                  rankOffset,
+                                                  localMatrix,
+                                                  rhsValue,
+                                                  bcPres[ei],
+                                                  pres[ei] + dPres[ei] );
+      localRhs[localRow] = rhsValue;
+
+      // 3.2. For each component (but the last), apply target global component fraction value
+      for( localIndex ic = 0; ic < numComp - 1; ++ic )
+      {
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    bcCompFrac[ei][ic],
+                                                    compFrac[ei][ic] + dCompFrac[ei][ic] );
+        localRhs[localRow + ic + 1] = rhsValue;
+      }
+
+      if( enableEnergyBalance )
+      {
+        // 3.3. If energy balance is enabled, apply BC temperature to the last equation
+        FieldSpecificationEqual::SpecifyFieldValue( dofIndex + numComp,
+                                                    rankOffset,
+                                                    localMatrix,
+                                                    rhsValue,
+                                                    bcTemp[ei],
+                                                    temp[ei] + dTemp[ei] );
+        localRhs[localRow + numComp] = rhsValue;
+      }
+    } );
   } );
 }
 
