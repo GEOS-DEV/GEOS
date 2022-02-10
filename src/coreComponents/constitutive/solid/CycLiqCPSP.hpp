@@ -266,6 +266,7 @@ void CycLiqCPSPUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
 	}
 	else
 	{
+		/*
 	     real64 p = 1e3;
 	     real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat )*1000.0;
 	     real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat )*1000.0;
@@ -280,6 +281,685 @@ void CycLiqCPSPUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
 	     stress[3] = G * totalStrain[3];
 	     stress[4] = G * totalStrain[4];
 	     stress[5] = G * totalStrain[5];
+	     */
+		real64 Mfc = m_M[k];
+		real64 Mdc = m_M[k];
+		real64 sinphi = 3.0 * Mfc / (Mfc + 6.0);
+		real64 tanphi = sinphi / sqrt(1.0 - sinphi * sinphi);
+		real64 Mfo = 2 * sqrt(3.0) * tanphi / sqrt(3.0 + 4.0 * tanphi * tanphi);
+		real64 epsvir_n = m_epsvir[k][q];
+		real64 epsvre_n = m_epsvre[k][q];
+		real64 epsvc_n = m_epsvc[k][q];
+
+		real64 dev_strain[6] = {0};
+		real64 dev_strain_n[6] = {0};
+	    real64 ddev_strain_p[6] = {0};
+	    real64 dev_stress[6] = {0};
+	    real64 dev_stress_n[6] = {0};
+	    real64 normal[6] = {0};
+	    real64 pass[6] = {0};
+	    real64 alpha_ns[6] = {0};
+	    real64 rbar[6] = {0};
+	    real64 rbar0[6] = {0};
+	    real64 rbar1[6] = {0};
+	    real64 r1[6] = {0};
+	    real64 rd[6] = {0};
+
+	    real64 stress_n[6] = {0};
+	    LvArray::tensorOps::copy< 6 >( stress_n, m_oldStress[k][q] );
+	    LvArray::tensorOps::scale< 6 >(stress_n, 1.0 / 1000);
+	    real64 strain_n[6] = {0};
+        LvArray::tensorOps::copy< 6 >( strain_n, m_strain[k][q] );
+        real64 strain_nplus1[6] = {0};
+        LvArray::tensorOps::copy< 6 >( strain_nplus1, strain_n );
+        LvArray::tensorOps::add< 6 >( strain_nplus1, totalStrain );
+        real64 alpha_n[6] = {0};
+        LvArray::tensorOps::copy< 6 >( alpha_n, m_alpha[k][q] );
+        real64 stress_pass[6] = {0};
+        real64 alpha_nplus1[6] = {0};
+        real64 r[6] = {0};
+        real64 r_nplus1[6] = {0};
+
+    	real64 phi = 0.0;
+    	real64 phi_n = 0.0;
+    	real64 trace = 0.0;
+    	real64 trace_n = 0.0;
+    	real64 dtracep = 0.0;
+    	real64 iconv = 0.0;
+    	real64 lambdamax = 0.0;
+    	real64 lambdamin = 0.0;
+    	real64 dlambda;
+    	real64 chi = 0.0;
+    	real64 epsvre_ns, epsvir_ns, epsvc_ns;
+    	real64 sin3theta, beta0, beta1, Fb0, Fb1, Fb = 0.0, gtheta;
+    	real64 intm;
+    	real64 beta;
+    	real64 ec, psi;
+    	int isub, sub1, sub2, sub;
+    	real64 N, H;
+    	real64 loadindex;
+    	real64 rou;
+    	real64 roubar;
+    	real64 eta_nplus1, Dre_n, Dir_n, D_;
+
+    	//compression as positive
+    	LvArray::tensorOps::scale< 6 >(stress_n, -1);
+    	LvArray::tensorOps::scale< 6 >(strain_n, -1);
+    	LvArray::tensorOps::scale< 6 >(strain_nplus1, -1);
+
+    	//compute the deviatoric stress of last step
+    	real64 p_n = LvArray::tensorOps::symTrace< 3 >( stress_n ) * one3;
+    	LvArray::tensorOps::copy< 6 >( dev_stress_n, stress_n );
+    	LvArray::tensorOps::symAddIdentity< 3 >( dev_stress_n, -p_n );
+    	if( p_n < pmin )
+    	{
+    		p_n = pmin;
+    	}
+
+    	//compute the deviatoric strains
+    	trace = LvArray::tensorOps::symTrace< 3 >( strain_nplus1 );
+    	trace_n = LvArray::tensorOps::symTrace< 3 >( strain_n );
+    	LvArray::tensorOps::copy< 6 >( dev_strain_n, strain_n );
+    	LvArray::tensorOps::symAddIdentity< 3 >( dev_strain_n, -trace_n * one3 );
+    	LvArray::tensorOps::copy< 6 >( dev_strain, strain_nplus1 );
+    	LvArray::tensorOps::symAddIdentity< 3 >( dev_strain, -trace * one3 );
+
+    	real64 en = (1 + m_ein[k]) * exp(-trace_n) - 1.0;//void ratio
+    	real64 temp[6] = {0};
+    	real64 p0;
+    	real64 epsvc0;
+
+    	// --------------(I)Initialize-------------------------------------
+    	LvArray::tensorOps::copy< 6 >( alpha_nplus1, alpha_n );
+    	real64 epsvir_nplus1 = epsvir_n;
+    	real64 epsvre_nplus1 = epsvre_n;
+    	real64 epsvc_nplus1 = epsvc_n + trace - trace_n;
+    	real64 etamplus1 = m_etam[k][q];
+    	real64 lambda = 0.0;
+        p0 = p_n;
+        epsvc0 = - 2 * m_kappa[k] / (1 + m_ein[k]) * ( sqrt( p0 / pat) - sqrt( pmin / pat ));
+        LvArray::tensorOps::copy< 6 >( r, dev_stress_n);
+        LvArray::tensorOps::scale< 6 >(r, 1.0 / p_n);
+    	ec = m_e0[k] - m_lamdac[k] * pow( p_n / pat , m_ksi[k]);
+    	psi = en - ec;
+
+    	// --------------Trial Before Substep-------------------------------------
+    	real64 p_nplus1;
+    	if (epsvc_nplus1 > epsvc0)
+    	{
+    		p_nplus1 = pat * pow( sqrt( p0 / pat ) + ( 1 + m_ein[k] ) / 2.0 / m_kappa[k] * epsvc_nplus1, 2);
+    	}
+    	else
+    	{
+    	  	p_nplus1 = pmin;
+    	}
+    	real64 K,G;
+    	K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( ( p_n + p_nplus1 ) / 2.0 / pat);
+    	G = m_G0[k] * pat * ( pow( 2.97 - m_ein[k] , 2 ) / ( 1 + m_ein[k]))
+    		* sqrt( ( p_n + p_nplus1 ) / 2.0 / pat);
+    	LvArray::tensorOps::copy< 6 >( dev_stress, dev_stress_n);
+    	LvArray::tensorOps::copy< 6 >( temp, dev_strain);
+    	LvArray::tensorOps::scale< 6 >(temp, 2.0 * G);
+    	LvArray::tensorOps::add< 6 >( dev_stress, temp );
+    	LvArray::tensorOps::copy< 6 >( temp, dev_strain_n);
+    	LvArray::tensorOps::scale< 6 >(temp, -2.0 * G);
+    	LvArray::tensorOps::add< 6 >( dev_stress, temp );
+    	LvArray::tensorOps::copy< 6 >( r_nplus1, dev_stress);
+    	LvArray::tensorOps::scale< 6 >(r_nplus1, 1.0 / p_nplus1);
+    	LvArray::tensorOps::copy< 6 >(temp, r_nplus1);
+    	LvArray::tensorOps::subtract< 6 >( temp, r );
+
+    	sub1=(int)( root32 * sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(temp, temp) ) / 0.05 ) + 1;
+    	LvArray::tensorOps::copy< 6 >(temp, dev_strain );
+    	LvArray::tensorOps::subtract< 6 >( temp, dev_strain_n );
+    	sub2 =(int)( sqrt( two3 *  LvArray::tensorOps::symDoubleContraction< 3 >(temp, temp) ) / 0.001 ) + 1;
+    	sub = sub1;
+    	if (sub2 > sub1)
+    	{
+    		sub = sub2;
+    	}
+    	if (sub > 100)
+    	{
+    	  	sub = 100;
+    	}
+    	LvArray::tensorOps::copy< 6 >( alpha_ns, alpha_n);
+    	epsvir_ns = epsvir_n;
+    	epsvre_ns = epsvre_n;
+    	epsvc_ns = epsvc_n;
+
+    	// --------------Trial Substep End-------------------------------------
+
+    	// --------------(II)Elastic Predict-------------------------------------
+    	real64 gammamonos = m_gammamono[k][q];
+    	real64 eta_n;
+    	for (isub = 0; isub < sub; isub++)
+    	{
+    		// --------------(I)Initialize-------------------------------------
+    		LvArray::tensorOps::copy< 6 >( alpha_nplus1, alpha_ns);
+    		epsvir_nplus1 = epsvir_ns;
+    		epsvre_nplus1 = epsvre_ns;
+    		epsvc_nplus1 = epsvc_ns + (trace - trace_n) / sub;
+    		LvArray::tensorOps::copy< 6 >( r, dev_stress_n);
+    		LvArray::tensorOps::scale< 6 >(r, 1.0 / p_n);
+
+    		for (int i = 0; i < 6; ++i)
+    		{
+    			ddev_strain_p[i] = 0.0;
+    		}
+    		dtracep = 0.0;
+    		lambda = 0.0;
+    		p0 = p_n;
+    		epsvc0 = - 2 * m_kappa[k] / ( 1 + m_ein[k] ) * ( sqrt( p0 / pat ) - sqrt( pmin / pat ));
+    		if (epsvc_nplus1 < epsvc0)
+    		{
+    			p_nplus1 = pmin;
+    		}
+    		else
+    		{
+    			p_nplus1 = pat * pow( sqrt( p0 / pat ) + ( 1 + m_ein[k] ) / 2.0 / m_kappa[k] * epsvc_nplus1, 2);
+    		}
+    		K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( ( p_n + p_nplus1 ) / 2.0 / pat);
+    		G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k]))
+    				* sqrt( ( p_n + p_nplus1 ) / 2.0 / pat);
+    		LvArray::tensorOps::copy< 6 >( dev_stress, dev_stress_n);
+    		LvArray::tensorOps::copy< 6 >(temp, dev_strain);
+    		LvArray::tensorOps::scale< 6 >( temp, 2.0 * G / sub );
+    		LvArray::tensorOps::add< 6 >( dev_stress, temp );
+    		LvArray::tensorOps::copy< 6 >(temp, dev_strain_n);
+    		LvArray::tensorOps::scale< 6 >( temp, -2.0 * G / sub );
+    		LvArray::tensorOps::add< 6 >( dev_stress, temp );
+    		LvArray::tensorOps::copy< 6 >(r_nplus1, dev_stress);
+    		LvArray::tensorOps::scale< 6 >( r_nplus1, 1.0 / p_nplus1 );
+
+    		eta_n = root32 * sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(r, r) );
+    		if ( LvArray::tensorOps::symDoubleContraction< 3 >(r, r) < tolerance )
+    		{
+    		  	r1[0] = -1.0 / sqrt(6.0);
+    		  	r1[1] = -1.0 / sqrt(6.0);
+    		  	r1[2] = 2.0 / sqrt(6.0);
+    		  	r1[3] = 0;
+    		  	r1[4] = 0;
+    		  	r1[5] = 0;
+    		}
+    		else
+    		{
+    			LvArray::tensorOps::copy< 6 >(r1, r);
+    			LvArray::tensorOps::scale< 6 >( r1, 1.0 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(r, r) ) );
+    		}
+    		LvArray::tensorOps::symAijBjk< 3 >( temp, r1, r1 );
+    		LvArray::tensorOps::symAijBjk< 3 >( pass, temp, r1 );
+    		sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+    		if ( sin3theta > 1.0 )
+    		{
+    			sin3theta = 1.0;
+    		}
+    	    else if ( sin3theta < -1.0 )
+    	    {
+    	    	sin3theta = -1.0;
+    	    }
+    		gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    				/ Mfo * ( 1 - sin3theta * sin3theta ) );
+    		if (eta_n / gtheta > etamplus1)
+    		{
+    			etamplus1 = eta_n / gtheta;
+    		}
+    		if (eta_n / gtheta > Mfc * exp( - m_np[k] * psi ) - tolerance)
+    		{
+    			etamplus1 = eta_n / gtheta;
+    		}
+    		beta0 = 0.0;
+    		beta1 = 1.0;
+    		LvArray::tensorOps::copy< 6 >( rbar0, alpha_ns );
+    		LvArray::tensorOps::copy< 6 >( temp, r );
+    		LvArray::tensorOps::scale< 6 >( temp, beta0 );
+    		LvArray::tensorOps::add< 6 >( rbar0, temp );
+    		LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    		LvArray::tensorOps::scale< 6 >( temp, -beta0 );
+    		LvArray::tensorOps::add< 6 >( rbar0, temp );
+
+    		LvArray::tensorOps::copy< 6 >( rbar1, alpha_ns );
+    		LvArray::tensorOps::copy< 6 >( temp, r );
+    		LvArray::tensorOps::scale< 6 >( temp, beta1 );
+    		LvArray::tensorOps::add< 6 >( rbar1, temp );
+    		LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    		LvArray::tensorOps::scale< 6 >( temp, -beta1 );
+    		LvArray::tensorOps::add< 6 >( rbar1, temp );
+
+    		LvArray::tensorOps::copy< 6 >( temp, r );
+    		LvArray::tensorOps::subtract< 6 >( temp, alpha_ns );
+
+    		if (LvArray::tensorOps::symDoubleContraction< 3 >(r, r) < tolerance &&
+    				LvArray::tensorOps::symDoubleContraction< 3 >(alpha_ns, alpha_ns) < tolerance)
+    		{
+    			normal[0] = 2.0 / sqrt(6.0);
+    			normal[1] = -1.0 / sqrt(6.0);
+    			normal[2] = -1.0 / sqrt(6.0);
+    			normal[3] = 0;
+    			normal[4] = 0;
+    			normal[5] = 0;
+    			LvArray::tensorOps::copy< 6 >( rbar, normal );
+    			LvArray::tensorOps::scale< 6 >( rbar, root23 * Mfc * exp( -m_np[k] * psi ) );
+    			beta = 1.0e20;
+    		}
+    		else if (sqrt(LvArray::tensorOps::symDoubleContraction< 3 >(temp, temp)) < tolerance)
+    		{
+    			LvArray::tensorOps::copy< 6 >( normal, r1 );
+    			LvArray::tensorOps::copy< 6 >( rbar, normal );
+    			LvArray::tensorOps::scale< 6 >( rbar, root23 * etamplus1 * sin3theta );
+    			beta = 1.0e20;
+    		}
+    		else
+    		{
+    			if ( LvArray::tensorOps::symDoubleContraction< 3 >(rbar0, rbar0) < tolerance )
+    			{
+    				beta0 = 0.01;
+    				LvArray::tensorOps::copy< 6 >( rbar0, alpha_ns );
+    				LvArray::tensorOps::copy< 6 >( temp, r );
+    				LvArray::tensorOps::scale< 6 >( temp, beta0 );
+    				LvArray::tensorOps::add< 6 >( rbar0, temp );
+    				LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    				LvArray::tensorOps::scale< 6 >( temp, -beta0 );
+    				LvArray::tensorOps::add< 6 >( rbar0, temp );
+    			}
+    			LvArray::tensorOps::copy< 6 >( normal, rbar0 );
+    			LvArray::tensorOps::scale< 6 >( normal, 1.0 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(rbar0, rbar0) ) );
+    			LvArray::tensorOps::symAijBjk< 3 >( temp, normal, normal );
+    			LvArray::tensorOps::symAijBjk< 3 >( pass, temp, normal );
+    			sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+    			if (sin3theta > 1.0)
+    				sin3theta = 1.0;
+    			else if (sin3theta < -1.0)
+    				sin3theta = -1.0;
+    			gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    					/ Mfo * ( 1 - sin3theta * sin3theta ) );
+    			LvArray::tensorOps::copy< 6 >( temp, normal );
+    			LvArray::tensorOps::scale< 6 >( temp, root23 * etamplus1 * gtheta );
+    			LvArray::tensorOps::subtract< 6 >( temp, rbar0 );
+    			Fb0 = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+    			LvArray::tensorOps::copy< 6 >( normal, rbar1);
+    			LvArray::tensorOps::scale< 6 >( normal, 1.0 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(rbar1, rbar1) ) );
+    			LvArray::tensorOps::symAijBjk< 3 >( temp, normal, normal );
+    			LvArray::tensorOps::symAijBjk< 3 >( pass, temp, normal );
+    			sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+    			if (sin3theta > 1.0)
+    				sin3theta = 1.0;
+    			else if (sin3theta < -1.0)
+    				sin3theta = -1.0;
+    			gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    					/ Mfo * ( 1 - sin3theta * sin3theta ) );
+
+    			LvArray::tensorOps::copy< 6 >( temp, normal );
+    			LvArray::tensorOps::scale< 6 >( temp, root23 * etamplus1 * gtheta );
+    			LvArray::tensorOps::subtract< 6 >( temp, rbar1 );
+    			Fb1 = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+    			if (fabs(Fb0) <= 1.0e-5)
+    			{
+    				LvArray::tensorOps::copy< 6 >( rbar, rbar0 );
+    				beta = beta0;
+    			}
+    			else if (fabs(Fb1) <= 1.0e-5)
+    			{
+    				LvArray::tensorOps::copy< 6 >( rbar, rbar1 );
+    				beta = beta1;
+    			}
+    			else
+    			{
+    				while (Fb0 * Fb1 > 0)
+    				{
+    					beta0 = beta1;
+    					beta1 = 2 * beta1;
+    					LvArray::tensorOps::copy< 6 >( rbar0, alpha_ns );
+    					LvArray::tensorOps::copy< 6 >( temp, r );
+    					LvArray::tensorOps::scale< 6 >( temp, beta0 );
+    					LvArray::tensorOps::add< 6 >( rbar0, temp );
+    					LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    					LvArray::tensorOps::scale< 6 >( temp, -beta0 );
+    					LvArray::tensorOps::add< 6 >( rbar0, temp );
+
+    					LvArray::tensorOps::copy< 6 >( rbar1, alpha_ns );
+    					LvArray::tensorOps::copy< 6 >( temp, r );
+    					LvArray::tensorOps::scale< 6 >( temp, beta1 );
+    					LvArray::tensorOps::add< 6 >( rbar1, temp );
+    					LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    					LvArray::tensorOps::scale< 6 >( temp, -beta1 );
+    					LvArray::tensorOps::add< 6 >( rbar1, temp );
+
+    					LvArray::tensorOps::copy< 6 >( normal, rbar0);
+    					LvArray::tensorOps::scale< 6 >( normal, 1.0 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(rbar0, rbar0) ) );
+
+    					LvArray::tensorOps::symAijBjk< 3 >( temp, normal, normal );
+    					LvArray::tensorOps::symAijBjk< 3 >( pass, temp, normal );
+    					sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+    					if (sin3theta > 1.0)
+    						sin3theta = 1.0;
+    					else if (sin3theta < -1.0)
+    						sin3theta = -1.0;
+    			        gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    			        		/ Mfo * ( 1 - sin3theta * sin3theta ) );
+    					LvArray::tensorOps::copy< 6 >( temp, normal );
+    					LvArray::tensorOps::scale< 6 >( temp, root23 * etamplus1 * gtheta );
+    					LvArray::tensorOps::subtract< 6 >( temp, rbar0 );
+    					Fb0 = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+    					if(LvArray::tensorOps::symDoubleContraction< 3 >(rbar1, rbar1) > 1.0e20)
+    					{
+    						std::cout<<beta0;
+    						std::cout<<"\n";
+    					}
+    					LvArray::tensorOps::copy< 6 >( normal, rbar1);
+    					LvArray::tensorOps::scale< 6 >( normal, 1.0 /sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(rbar1, rbar1)));
+
+    					LvArray::tensorOps::symAijBjk< 3 >( temp, normal, normal );
+    					LvArray::tensorOps::symAijBjk< 3 >( pass, temp, normal );
+    					sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+    					if (sin3theta > 1.0)
+    						sin3theta = 1.0;
+    					else if (sin3theta < -1.0)
+    						sin3theta = -1.0;
+    			        gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    			        		/ Mfo * ( 1 - sin3theta * sin3theta ) );
+
+    			        LvArray::tensorOps::copy< 6 >( temp, normal );
+    			        LvArray::tensorOps::scale< 6 >( temp, root23 * etamplus1 * gtheta );
+    			        LvArray::tensorOps::subtract< 6 >( temp, rbar1 );
+    			        Fb1 = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+
+    			   	}
+    				if (fabs(Fb0) <= 1.0e-5)
+    			    {
+    					LvArray::tensorOps::copy< 6 >( rbar, rbar0 );
+    			    	beta = beta0;
+    			    }
+    			    else if (fabs(Fb1) <= 1.0e-5)
+    			    {
+    			    	LvArray::tensorOps::copy< 6 >( rbar, rbar1 );
+    			    	beta = beta1;
+    			    }
+    				else
+    				{
+    				    beta = beta1 - Fb1 * ( beta1 - beta0 ) / ( Fb1 - Fb0 );
+    				    LvArray::tensorOps::copy< 6 >( rbar, alpha_ns );
+    					LvArray::tensorOps::copy< 6 >( temp, r );
+    					LvArray::tensorOps::scale< 6 >( temp, beta );
+    					LvArray::tensorOps::add< 6 >( rbar, temp );
+    					LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    					LvArray::tensorOps::scale< 6 >( temp, -beta );
+    					LvArray::tensorOps::add< 6 >( rbar, temp );
+    					LvArray::tensorOps::copy< 6 >( normal, rbar);
+    					LvArray::tensorOps::scale< 6 >( normal, 1.0 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(rbar, rbar) ) );
+
+    					LvArray::tensorOps::symAijBjk< 3 >( temp, normal, normal );
+    					LvArray::tensorOps::symAijBjk< 3 >( pass, temp, normal );
+    					sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+
+    					if (sin3theta > 1.0)
+    						sin3theta = 1.0;
+    					else if (sin3theta < -1.0)
+    						sin3theta = -1.0;
+    			        gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    			        		/ Mfo * ( 1 - sin3theta * sin3theta ) );
+
+    			        LvArray::tensorOps::copy< 6 >( temp, normal );
+    			        LvArray::tensorOps::scale< 6 >( temp, root23 * etamplus1 * gtheta );
+    			        LvArray::tensorOps::subtract< 6 >( temp, rbar );
+    			        Fb = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+    					intm = 1;
+    				    while (fabs(Fb) > 1.0e-6)
+    				    {
+    						if (Fb * Fb1 < 0)
+    						{
+    							beta0 = beta1;
+    							Fb0 = Fb1;
+    							beta1 = beta;
+    							Fb1 = Fb;
+    						}
+    						else
+    						{
+    							Fb0 = Fb1 * Fb0 / ( Fb1 + Fb );
+    							beta1 = beta;
+    							Fb1 = Fb;
+    						}
+    						beta = beta1 - Fb1 * ( beta1 - beta0 ) / ( Fb1 - Fb0 );
+    						LvArray::tensorOps::copy< 6 >( rbar, alpha_ns );
+    						LvArray::tensorOps::copy< 6 >( temp, r );
+    						LvArray::tensorOps::scale< 6 >( temp, beta );
+    						LvArray::tensorOps::add< 6 >( rbar, temp );
+    						LvArray::tensorOps::copy< 6 >( temp, alpha_ns );
+    						LvArray::tensorOps::scale< 6 >( temp, -beta );
+    						LvArray::tensorOps::add< 6 >( rbar, temp );
+    						LvArray::tensorOps::copy< 6 >( normal, rbar);
+    						LvArray::tensorOps::scale< 6 >( normal, 1.0 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(rbar, rbar) ) );
+
+    						LvArray::tensorOps::symAijBjk< 3 >( temp, normal, normal );
+    						LvArray::tensorOps::symAijBjk< 3 >( pass, temp, normal );
+    						sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+
+    						if (sin3theta > 1.0)
+    							sin3theta = 1.0;
+    						else if (sin3theta < -1.0)
+    							sin3theta = -1.0;
+    						gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    								/ Mfo * ( 1 - sin3theta * sin3theta ) );
+    				        LvArray::tensorOps::copy< 6 >( temp, normal );
+    				        LvArray::tensorOps::scale< 6 >( temp, root23 * etamplus1 * gtheta );
+    				        LvArray::tensorOps::subtract< 6 >( temp, rbar );
+    				        Fb = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+    						intm = intm + 1;
+    				    }
+    				}
+    			}
+    		}
+    		LvArray::tensorOps::scale< 6 >( normal, root32 );
+    		N = LvArray::tensorOps::symDoubleContraction< 3 >( r,normal );
+    		// --------------(III)Loading/Unloading-------------------------------------
+    		LvArray::tensorOps::copy< 6 >( temp, dev_stress );
+    		LvArray::tensorOps::subtract< 6 >( temp, dev_stress_n );
+    		phi = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal ) - ( p_nplus1 - p_n ) * N;
+
+    		LvArray::tensorOps::copy< 6 >( temp, r_nplus1 );
+    		LvArray::tensorOps::subtract< 6 >( temp, r );
+    		phi_n = LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+
+
+    		// --------------(IV)Unloading-------------------------------------
+    		if (phi < tolerance || phi_n < tolerance)
+    		{
+    			gammamonos = 0.0;
+    			LvArray::tensorOps::copy< 6 >( alpha_nplus1, r );
+    			//epsvirpr=epsvir_n;
+    		}
+    		// --------------(V)Loading-------------------------------------
+    		else if (phi > tolerance && phi_n > tolerance)
+    		{
+    			epsvc_nplus1 = epsvc_ns + ( trace - trace_n ) / sub - dtracep;
+    			loadindex = 0.0;
+    			lambda = 0.0;
+    			lambdamin = 0.0;
+    			lambdamax = 0.0;
+    			LvArray::tensorOps::copy< 6 >( temp, r );
+    			LvArray::tensorOps::subtract< 6 >( temp, alpha_ns );
+    			rou = root32 * sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(temp, temp) );
+
+    			LvArray::tensorOps::copy< 6 >( temp, rbar );
+    			LvArray::tensorOps::subtract< 6 >( temp, alpha_ns );
+    			roubar = root32 * sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(temp, temp) );
+
+    			if (roubar > tolerance)
+    			{
+    				H = two3 * m_h[k] * G * gtheta * exp( -m_np[k] * psi ) * ( Mfc * exp( -m_np[k] * psi )
+    				/ ( etamplus1 + tolerance ) * roubar / ( rou + tolerance ) - 1.0 );
+    				if (H < tolerance && H >= 0)
+    				{
+    					H = tolerance;
+    				}
+    				if (H > -tolerance && H < 0)
+    				{
+    					H = -tolerance;
+    				}
+    				eta_nplus1 = root32 * sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(r_nplus1, r_nplus1) );
+    				LvArray::tensorOps::copy< 6 >( rd, rbar );
+    				LvArray::tensorOps::scale< 6 >( rd,  Mdc * exp( m_nd[k] * psi ) / (etamplus1 + tolerance ) );
+    				LvArray::tensorOps::copy< 6 >( temp, rd );
+    				LvArray::tensorOps::subtract< 6 >( temp, r );
+    				Dre_n = m_dre1[k] * root23 * LvArray::tensorOps::symDoubleContraction< 3 >( temp, normal );
+    				if (epsvir_ns > tolerance)
+    					chi = - m_dir[k] * epsvre_ns / epsvir_ns;
+    				else
+    					chi = 0.0;
+    				if (chi > 1.0)
+    					chi = 1.0;
+    				if (Dre_n > 0.0)
+    				{
+    					Dre_n = pow( -m_dre2[k] * chi, 2) / p_n;
+    					if (-epsvre_ns < tolerance)
+    						Dre_n = 0.0;
+    				}
+    				if (Dre_n > 0.0)
+    				{
+    					if (psi >= 0)
+    					{
+    						LvArray::tensorOps::copy< 6 >( temp, rd );
+    						LvArray::tensorOps::subtract< 6 >( temp, r );
+    						Dir_n = m_dir[k] * exp( m_nd[k] * psi- m_eta[k] * epsvir_ns )
+    								* ( root23 * LvArray::tensorOps::symDoubleContraction< 3 >( temp , normal ) ) * exp(chi);
+    					}
+    					else
+    					{
+    						LvArray::tensorOps::copy< 6 >( temp, rd );
+    						LvArray::tensorOps::subtract< 6 >( temp, r );
+    						Dir_n = m_dir[k] * exp ( m_nd[k] * psi- m_eta[k] * epsvir_ns ) * ( root23 * LvArray::tensorOps::symDoubleContraction< 3 >( temp , normal )* exp(chi)
+    								+ pow( m_rdr[k] * ( 1 - exp( m_nd[k] * psi ) ) / ( m_rdr[k] * ( 1 - exp( m_nd[k] * psi ) ) + gammamonos ) , 2 ) );
+    					}
+    				}
+    				else
+    				{
+    					if (psi >= 0)
+    					{
+    						Dir_n = 0.0;
+    					}
+    					else
+    					{
+    						Dir_n = m_dir[k] * exp ( m_nd[k] * psi- m_eta[k] * epsvir_ns ) * ( pow( m_rdr[k] * ( 1
+    								- exp( m_nd[k] * psi ) ) / ( m_rdr[k] * ( 1 - exp( m_nd[k] * psi ) ) + gammamonos ) , 2 ) );
+    					}
+    				}
+    				D_ = Dir_n + Dre_n;
+                    //prem=p_n;
+    				int wr = 1;
+    				iconv = 0.0;
+    				do
+    				{
+    					if ( fabs(iconv) < tolerance )//original: iconv==0.0
+    					{
+    						dlambda = phi / fabs( H + 2 * G - K * D_ * N);
+    						lambda += dlambda;
+    					}
+    					else
+    					{
+    						lambda = 0.5 * ( lambdamax + lambdamin );
+    					}
+    					loadindex = H * lambda;
+    					dtracep = lambda * D_;
+    					LvArray::tensorOps::copy< 6 >( ddev_strain_p, normal );
+    					LvArray::tensorOps::scale< 6 >( ddev_strain_p, lambda );
+    					epsvc_nplus1 = epsvc_ns + ( trace - trace_n ) / sub - dtracep;
+    					if (epsvc_nplus1 < epsvc0)
+    					{
+    						p_nplus1 = pmin;
+    						epsvc_nplus1 = epsvc0;
+    					}
+    					else
+    					{
+    						p_nplus1 = pat * pow( sqrt( p0 / pat )+( 1 + m_ein[k] ) / 2.0
+    								/ m_kappa[k] * epsvc_nplus1 , 2);
+    					}
+    					G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ), 2 ) / ( 1 + m_ein[k] ) )
+    							* sqrt( ( p_n + p_nplus1 ) / 2.0 / pat );
+
+    					LvArray::tensorOps::copy< 6 >( dev_stress, dev_stress_n );
+    					LvArray::tensorOps::copy< 6 >( temp, dev_strain );
+    					LvArray::tensorOps::scale< 6 >( temp, 2 * G / sub );
+    					LvArray::tensorOps::add< 6 >( dev_stress, temp );
+    					LvArray::tensorOps::copy< 6 >( temp, dev_strain_n );
+    					LvArray::tensorOps::scale< 6 >( temp, -2 * G / sub );
+    					LvArray::tensorOps::add< 6 >( dev_stress, temp );
+    					LvArray::tensorOps::copy< 6 >( temp, ddev_strain_p );
+    					LvArray::tensorOps::scale< 6 >( temp, -2 * G );
+    					LvArray::tensorOps::add< 6 >( dev_stress, temp );
+
+    					LvArray::tensorOps::copy< 6 >( temp, dev_stress );
+    					LvArray::tensorOps::subtract< 6 >( temp, dev_stress_n );
+
+    					phi = LvArray::tensorOps::symDoubleContraction< 3 >( temp , normal ) - ( p_nplus1 - p_n ) * N - loadindex;
+    					//phi=doublecontraction(dev_stress-dev_stress_n,normal) / root32 -(p_nplus1-p_n)*N / root32-loadindex;
+    					if (phi < -tolerance)
+    					{
+    						iconv = 1.0;
+    						lambdamax = lambda;
+    					}
+    					if (phi > tolerance && fabs( iconv - 1.0 ) < tolerance)//original: iconv==1.0
+    						lambdamin = lambda;
+    					wr = wr + 1;
+    					epsvir_nplus1 = lambda * Dir_n + epsvir_ns;
+    					epsvre_nplus1 = lambda* Dre_n + epsvre_ns;
+    				}while (fabs(phi) > tolerance);
+    				gammamonos = gammamonos + lambda;
+    			}
+    		}
+    		LvArray::tensorOps::copy< 6 >( r_nplus1, dev_stress );
+    		LvArray::tensorOps::scale< 6 >( r_nplus1, 1.0 / p_nplus1 );
+
+    		eta_nplus1 = root32 * sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(r_nplus1, r_nplus1) );
+
+    		if (eta_nplus1 >= Mfc * exp( -m_np[k] * psi ) / ( 1.0 + Mfc / 3.0 ) - tolerance)
+    		{
+    			LvArray::tensorOps::copy< 6 >( r1, r_nplus1 );
+    			LvArray::tensorOps::scale< 6 >( r1, 1 / sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(r_nplus1, r_nplus1) ) );
+    			LvArray::tensorOps::symAijBjk< 3 >( temp, r1, r1 );
+    			LvArray::tensorOps::symAijBjk< 3 >( pass, temp, r1 );
+    			sin3theta = -sqrt(6.0) * LvArray::tensorOps::symTrace< 3 >( pass );
+
+    			if (sin3theta > 1.0)
+    				sin3theta = 1.0;
+    			else if (sin3theta < -1.0)
+    				sin3theta = -1.0;
+    			gtheta = 1 / ( 1 + Mfc / 6.0 * ( sin3theta + sin3theta * sin3theta ) + ( Mfc - Mfo )
+    					/ Mfo * ( 1 - sin3theta * sin3theta ) );
+    			LvArray::tensorOps::scale< 6 >( r1, root23 * Mfc * exp( -m_np[k] * psi ) * gtheta );
+
+    			if (LvArray::tensorOps::symDoubleContraction< 3 >(r1, r1) -LvArray::tensorOps::symDoubleContraction< 3 >(r_nplus1, r_nplus1) < tolerance)
+    			{
+    				intm = sqrt( LvArray::tensorOps::symDoubleContraction< 3 >(r_nplus1, r_nplus1) / LvArray::tensorOps::symDoubleContraction< 3 >(r1, r1) ) + tolerance;
+    				LvArray::tensorOps::scale< 6 >( dev_stress, 1.0 / intm );
+    			}
+    			LvArray::tensorOps::copy< 6 >( r_nplus1, dev_stress );
+    			LvArray::tensorOps::scale< 6 >( r_nplus1, 1.0 / p_nplus1 );
+    			eta_nplus1 = root32 * sqrt(LvArray::tensorOps::symDoubleContraction< 3 >(r_nplus1, r_nplus1));
+    		}
+    		LvArray::tensorOps::copy< 6 >( alpha_ns, alpha_nplus1 );
+    		epsvir_ns = epsvir_nplus1;
+    		epsvre_ns = epsvre_nplus1;
+            epsvc_ns = epsvc_ns - epsvc_nplus1 + ( trace - trace_n ) / sub - dtracep;
+    		epsvc_nplus1 = epsvc_ns;
+
+    		p_n = p_nplus1;
+    		LvArray::tensorOps::copy< 6 >( dev_stress_n, dev_stress );
+
+    	}
+    	LvArray::tensorOps::copy< 6 >( stress_pass, dev_stress );
+    	LvArray::tensorOps::symAddIdentity< 3 >( stress_pass, p_n );
+    	LvArray::tensorOps::copy< 6 >( temp, stress_pass );
+    	LvArray::tensorOps::scale< 6 >( temp, -1000 );
+    	LvArray::tensorOps::subtract< 6 >( temp, m_oldStress[k][q] );// from positive to negative
+    	LvArray::tensorOps::copy< 6 >( stress, temp );
+
+    	LvArray::tensorOps::copy< 6 >( m_strain[ k ][ q ], strain_nplus1 );
+    	LvArray::tensorOps::scale< 6 >( m_strain[ k ][ q ], -1 );
+    	m_epsvir[k][q] = epsvir_ns;
+    	m_epsvre[k][q] = epsvre_ns;
+    	m_gammamono[k][q] = gammamonos;
+    	m_epsvc[k][q] = epsvc_ns;
+    	m_etam[k][q] = etamplus1 ;
+    	LvArray::tensorOps::copy< 6 >( m_alpha[k][q], alpha_ns );
 	}
 }
 
