@@ -802,6 +802,7 @@
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="ConstantThermalConductivity" type="ConstantThermalConductivityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
+			<xsd:element name="CycLiqCPSP" type="CycLiqCPSPType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
@@ -1155,6 +1156,60 @@
 	<xsd:complexType name="CoulombType">
 		<!--elasticSlip => Elastic Slip-->
 		<xsd:attribute name="elasticSlip" type="real64_array2d" />
+	</xsd:complexType>
+	<xsd:complexType name="CycLiqCPSPType">
+		<!--G0 => CycLiqCPSP Model Parameter : G0-->
+		<xsd:attribute name="G0" type="real64_array" />
+		<!--M => CycLiqCPSP Model Parameter : M-->
+		<xsd:attribute name="M" type="real64_array" />
+		<!--alpha => alpha-->
+		<xsd:attribute name="alpha" type="real64_array3d" />
+		<!--density => Material Density-->
+		<xsd:attribute name="density" type="real64_array2d" />
+		<!--dir => CycLiqCPSP Model Parameter : dir-->
+		<xsd:attribute name="dir" type="real64_array" />
+		<!--dre1 => CycLiqCPSP Model Parameter : dre1-->
+		<xsd:attribute name="dre1" type="real64_array" />
+		<!--dre2 => CycLiqCPSP Model Parameter : dre2-->
+		<xsd:attribute name="dre2" type="real64_array" />
+		<!--e0 => CycLiqCPSP Model Parameter : e0-->
+		<xsd:attribute name="e0" type="real64_array" />
+		<!--ein => CycLiqCPSP Model Parameter : ein-->
+		<xsd:attribute name="ein" type="real64_array" />
+		<!--epsvc => epsvc-->
+		<xsd:attribute name="epsvc" type="real64_array2d" />
+		<!--epsvir => epsvir-->
+		<xsd:attribute name="epsvir" type="real64_array2d" />
+		<!--epsvre => epsvre-->
+		<xsd:attribute name="epsvre" type="real64_array2d" />
+		<!--eta => CycLiqCPSP Model Parameter : eta-->
+		<xsd:attribute name="eta" type="real64_array" />
+		<!--etam => etam-->
+		<xsd:attribute name="etam" type="real64_array2d" />
+		<!--gammamono => gammamono-->
+		<xsd:attribute name="gammamono" type="real64_array2d" />
+		<!--h => CycLiqCPSP Model Parameter : h-->
+		<xsd:attribute name="h" type="real64_array" />
+		<!--initialCycles => initialCycles-->
+		<xsd:attribute name="initialCycles" type="integer_array2d" />
+		<!--kappa => CycLiqCPSP Model Parameter : kappa-->
+		<xsd:attribute name="kappa" type="real64_array" />
+		<!--ksi => CycLiqCPSP Model Parameter : ksi-->
+		<xsd:attribute name="ksi" type="real64_array" />
+		<!--lamdac => CycLiqCPSP Model Parameter : lamdac-->
+		<xsd:attribute name="lamdac" type="real64_array" />
+		<!--nd => CycLiqCPSP Model Parameter : nd-->
+		<xsd:attribute name="nd" type="real64_array" />
+		<!--np => CycLiqCPSP Model Parameter : np-->
+		<xsd:attribute name="np" type="real64_array" />
+		<!--oldStress => Previous Material Stress-->
+		<xsd:attribute name="oldStress" type="real64_array3d" />
+		<!--rdr => CycLiqCPSP Model Parameter : rdr-->
+		<xsd:attribute name="rdr" type="real64_array" />
+		<!--strain => strain-->
+		<xsd:attribute name="strain" type="real64_array3d" />
+		<!--stress => Current Material Stress-->
+		<xsd:attribute name="stress" type="real64_array3d" />
 	</xsd:complexType>
 	<xsd:complexType name="DamageElasticIsotropicType">
 		<!--bulkModulus => Elastic Bulk Modulus Field-->

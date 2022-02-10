@@ -79,6 +79,7 @@ set( constitutive_headers
      solid/ProppantSolid.hpp
      solid/CoupledSolidBase.hpp
      solid/CoupledSolid.hpp
+     solid/CycLiqCPSP.hpp
      solid/Damage.hpp
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
@@ -168,6 +169,7 @@ set( constitutive_sources
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
+     solid/CycLiqCPSP.cpp
      solid/ProppantSolid.cpp
      solid/Damage.cpp
      solid/DamageSpectral.cpp

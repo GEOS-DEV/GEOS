@@ -2015,6 +2015,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ConstantPermeability" type="ConstantPermeabilityType" />
 			<xsd:element name="ConstantThermalConductivity" type="ConstantThermalConductivityType" />
 			<xsd:element name="Coulomb" type="CoulombType" />
+			<xsd:element name="CycLiqCPSP" type="CycLiqCPSPType" />
 			<xsd:element name="DamageElasticIsotropic" type="DamageElasticIsotropicType" />
 			<xsd:element name="DamageSpectralElasticIsotropic" type="DamageSpectralElasticIsotropicType" />
 			<xsd:element name="DamageVolDevElasticIsotropic" type="DamageVolDevElasticIsotropicType" />
@@ -2301,6 +2302,44 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
 		<xsd:attribute name="shearStiffness" type="real64" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="CycLiqCPSPType">
+		<!--defaultDensity => Default Material Density-->
+		<xsd:attribute name="defaultDensity" type="real64" use="required" />
+		<!--defaultDir => Default for CycLiqCPSP Model Parameter : dir-->
+		<xsd:attribute name="defaultDir" type="real64" use="required" />
+		<!--defaultDre1 => Default for CycLiqCPSP Model Parameter : dre1-->
+		<xsd:attribute name="defaultDre1" type="real64" use="required" />
+		<!--defaultDre2 => Default for CycLiqCPSP Model Parameter : dre2-->
+		<xsd:attribute name="defaultDre2" type="real64" use="required" />
+		<!--defaultE0 => Default for CycLiqCPSP Model Parameter : e0-->
+		<xsd:attribute name="defaultE0" type="real64" use="required" />
+		<!--defaultEin => Default for CycLiqCPSP Model Parameter : ein-->
+		<xsd:attribute name="defaultEin" type="real64" use="required" />
+		<!--defaultEta => Default for CycLiqCPSP Model Parameter : eta-->
+		<xsd:attribute name="defaultEta" type="real64" use="required" />
+		<!--defaultG0 => Default for CycLiqCPSP Model Parameter : G0-->
+		<xsd:attribute name="defaultG0" type="real64" use="required" />
+		<!--defaultH => Default for CycLiqCPSP Model Parameter : h-->
+		<xsd:attribute name="defaultH" type="real64" use="required" />
+		<!--defaultInitialCycles => Default for CycLiqCPSP Model Parameter : initial Cycles-->
+		<xsd:attribute name="defaultInitialCycles" type="integer" use="required" />
+		<!--defaultKappa => Default for CycLiqCPSP Model Parameter : kappa-->
+		<xsd:attribute name="defaultKappa" type="real64" use="required" />
+		<!--defaultKsi => Default for CycLiqCPSP Model Parameter : ksi-->
+		<xsd:attribute name="defaultKsi" type="real64" use="required" />
+		<!--defaultLamdac => Default for CycLiqCPSP Model Parameter : lamdac-->
+		<xsd:attribute name="defaultLamdac" type="real64" use="required" />
+		<!--defaultM => Default for CycLiqCPSP Model Parameter : M-->
+		<xsd:attribute name="defaultM" type="real64" use="required" />
+		<!--defaultNd => Default for CycLiqCPSP Model Parameter : nd-->
+		<xsd:attribute name="defaultNd" type="real64" use="required" />
+		<!--defaultNp => Default for CycLiqCPSP Model Parameter : np-->
+		<xsd:attribute name="defaultNp" type="real64" use="required" />
+		<!--defaultRdr => Default for CycLiqCPSP Model Parameter : rdr-->
+		<xsd:attribute name="defaultRdr" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

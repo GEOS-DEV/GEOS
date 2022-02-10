@@ -283,11 +283,16 @@ real64 SinglePhasePoromechanicsSolverDynamic::explicitStep( real64 const & time_
   }
   else if( m_couplingTypeOption == CouplingTypeOption::FEM_ImplicitTransient )
   {
-	  m_solidSolver->explicitStep( time_n, dt, cycleNumber, domain );
-
+	  // m_solidSolver->explicitStep( time_n, dt, cycleNumber, domain );
+	  m_solidSolver->explicitStepDisplacementUpdate( time_n, dt, cycleNumber, domain );
 	  //Apply deformation to flowsolver
 	  this->updateDeformationForCoupling( domain );
+
 	  m_flowSolver->solverStep( time_n, dt, cycleNumber, domain );
+
+	  // this->applyPressureToFacesInExplicitSolver( domain );
+
+	  m_solidSolver->explicitStepVelocityUpdate( time_n, dt, cycleNumber, domain );
   }
   return dt;
 }

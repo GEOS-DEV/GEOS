@@ -225,6 +225,13 @@ Element: Coulomb
 .. include:: ../../coreComponents/schema/docs/Coulomb.rst
 
 
+.. _XML_CycLiqCPSP:
+
+Element: CycLiqCPSP
+===================
+.. include:: ../../coreComponents/schema/docs/CycLiqCPSP.rst
+
+
 .. _XML_Cylinder:
 
 Element: Cylinder
@@ -1221,6 +1228,13 @@ Datastructure: ConstitutiveModels
 Datastructure: Coulomb
 ======================
 .. include:: ../../coreComponents/schema/docs/Coulomb_other.rst
+
+
+.. _DATASTRUCTURE_CycLiqCPSP:
+
+Datastructure: CycLiqCPSP
+=========================
+.. include:: ../../coreComponents/schema/docs/CycLiqCPSP_other.rst
 
 
 .. _DATASTRUCTURE_Cylinder:

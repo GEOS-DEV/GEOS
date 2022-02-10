@@ -20,6 +20,7 @@ CompressibleSolidSlipDependentPermeability  node         :ref:`XML_CompressibleS
 ConstantPermeability                        node         :ref:`XML_ConstantPermeability`                        
 ConstantThermalConductivity                 node         :ref:`XML_ConstantThermalConductivity`                 
 Coulomb                                     node         :ref:`XML_Coulomb`                                     
+CycLiqCPSP                                  node         :ref:`XML_CycLiqCPSP`                                  
 DamageElasticIsotropic                      node         :ref:`XML_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node         :ref:`XML_DamageSpectralElasticIsotropic`              
 DamageVolDevElasticIsotropic                node         :ref:`XML_DamageVolDevElasticIsotropic`                

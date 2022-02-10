@@ -20,6 +20,7 @@ CompressibleSolidSlipDependentPermeability  node :ref:`DATASTRUCTURE_Compressibl
 ConstantPermeability                        node :ref:`DATASTRUCTURE_ConstantPermeability`                        
 ConstantThermalConductivity                 node :ref:`DATASTRUCTURE_ConstantThermalConductivity`                 
 Coulomb                                     node :ref:`DATASTRUCTURE_Coulomb`                                     
+CycLiqCPSP                                  node :ref:`DATASTRUCTURE_CycLiqCPSP`                                  
 DamageElasticIsotropic                      node :ref:`DATASTRUCTURE_DamageElasticIsotropic`                      
 DamageSpectralElasticIsotropic              node :ref:`DATASTRUCTURE_DamageSpectralElasticIsotropic`              
 DamageVolDevElasticIsotropic                node :ref:`DATASTRUCTURE_DamageVolDevElasticIsotropic`                
