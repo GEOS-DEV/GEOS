@@ -295,7 +295,6 @@ FluxKernel::
   using namespace CompositionalMultiphaseUtilities;
 
   bool const isProducer = wellControls.isProducer();
-  bool const isInjector = wellControls.isInjector();
   arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
 
   // loop over the well elements to compute the fluxes between elements
@@ -323,7 +322,7 @@ FluxKernel::
     real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
     localIndex iwelemUp = -1;
 
-    if( iwelemNext < 0 && isInjector ) // exit connection, injector
+    if( iwelemNext < 0 && !isProducer ) // exit connection, injector
     {
       // we still need to define iwelemUp for Jacobian assembly
       iwelemUp = iwelem;
@@ -1682,9 +1681,7 @@ PresTempCompFracInitializationKernel::
     // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
     //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
     //       be used for initialization
-    pressureControl = ( isProducer )
-                      ? 0.5 * pres
-                      : 2.0 * pres;
+    pressureControl = ( isProducer ) ? 0.5 * pres : 2.0 * pres;
   }
 
   GEOSX_THROW_IF( pressureControl <= 0,

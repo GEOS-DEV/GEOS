@@ -204,7 +204,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
     // therefore, we do not want to compute perforation rates and we simply assume they are zero
     WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
     bool const detectCrossflow =
-      ( wellControls.isInjector() ) && !wellControls.isCrossflowDisabled() &&
+      ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
       getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
 
     if( !wellControls.isWellOpen( time_n + dt ) )
@@ -327,7 +327,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
         GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
                                               "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
                                               getName(), totalNumCrossflowPerforations, subRegion.getName(),
-                                              WellControls::viewKeyStruct::disableCrossflowString(), wellControls.getName() ) );
+                                              WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
       }
     }
   } );

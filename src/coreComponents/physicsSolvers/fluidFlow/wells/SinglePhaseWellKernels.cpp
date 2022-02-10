@@ -611,9 +611,7 @@ PresInitializationKernel::
     // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
     //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
     //       be used for initialization
-    pressureControl = ( isProducer )
-                    ? 0.5 * pres
-                    : 2.0 * pres;
+    pressureControl = ( isProducer ) ? 0.5 * pres : 2.0 * pres;
   }
 
   GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );

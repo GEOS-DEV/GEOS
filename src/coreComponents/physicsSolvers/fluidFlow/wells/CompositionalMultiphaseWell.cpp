@@ -1236,7 +1236,7 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & mes
   // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
   // therefore, we do not want to compute perforation rates and we simply assume they are zero
   WellControls const & wellControls = getWellControls( subRegion );
-  bool const disableReservoirToWellFlow = wellControls.isInjector() and wellControls.isCrossflowDisabled();
+  bool const disableReservoirToWellFlow = wellControls.isInjector() and !wellControls.isCrossflowEnabled();
   if( !wellControls.isWellOpen( m_currentTime + m_currentDt ) )
   {
     return;

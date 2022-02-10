@@ -37,7 +37,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   m_useSurfaceConditions( 0 ),
   m_surfacePres( 0.0 ),
   m_surfaceTemp( 0.0 ),
-  m_isCrossflowDisabled( 0 ),
+  m_isCrossflowEnabled( 1 ),
   m_targetTotalRateTable( nullptr ),
   m_targetPhaseRateTable( nullptr ),
   m_targetBHPTable( nullptr )
@@ -104,13 +104,12 @@ WellControls::WellControls( string const & name, Group * const parent )
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Surface temperature used to compute volumetric rates when surface conditions are used [K]" );
 
-  registerWrapper( viewKeyStruct::disableCrossflowString(), &m_isCrossflowDisabled ).
-    setDefaultValue( 0 ).
+  registerWrapper( viewKeyStruct::enableCrossflowString(), &m_isCrossflowEnabled ).
+    setDefaultValue( 1 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Flag to disable crossflow in injecting wells: \n"
-                    " - If the flag is set to 0, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. \n"
-                    " - If the flag is set to 1, we only allow well-to-reservoir flow at the perforations. \n"
-                    "This flag is only available for injectors." );
+    setDescription( "Flag to enable crossflow. Currently only supported for injectors: \n"
+                    " - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. \n"
+                    " - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations." );
 
   registerWrapper( viewKeyStruct::targetBHPTableNameString(), &m_targetBHPTableName ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -245,8 +244,8 @@ void WellControls::postProcessInput()
                   InputError );
 
   //  9) Make sure that the flag disabling crossflow is not used for producers
-  GEOSX_THROW_IF( isProducer() && m_isCrossflowDisabled != 0,
-                  "WellControls '" << getName() << "': The option '" << viewKeyStruct::disableCrossflowString() << "' is not available for producers",
+  GEOSX_THROW_IF( isProducer() && m_isCrossflowEnabled == 0,
+                  "WellControls '" << getName() << "': The option '" << viewKeyStruct::enableCrossflowString() << "' cannot be set to '0' for producers",
                   InputError );
 
   //  10) Create time-dependent BHP table

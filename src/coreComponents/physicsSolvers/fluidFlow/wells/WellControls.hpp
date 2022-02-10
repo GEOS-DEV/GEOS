@@ -221,29 +221,29 @@ public:
   const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
 
   /**
-   * @brief Getter for the well type
-   * @return true if the well is an injector, false otherwise
+   * @brief Is the well an injector?
+   * @return a boolean
    */
   bool isInjector() const { return ( m_type == Type::INJECTOR ); }
 
   /**
-   * @brief Getter for the well type
-   * @return true if the well is a producer, false otherwise
+   * @brief Is the well a producer?
+   * @return a boolean
    */
   bool isProducer() const { return ( m_type == Type::PRODUCER ); }
 
   /**
-   * @brief Getter for the status of the well (open or shut)
+   * @brief Is the well open (or shut) at @p currentTime?
    * @param[in] currentTime the current time
    * @return a flag equal to true if the well is open, and false otherwise
    */
   bool isWellOpen( real64 const & currentTime ) const;
 
   /**
-   * @brief Getter for the flag to disable crossflow in injectors
+   * @brief Getter for the flag to enable crossflow
    * @return the flag deciding whether crossflow is allowed or not
    */
-  bool isCrossflowDisabled() const { return m_isCrossflowDisabled; }
+  bool isCrossflowEnabled() const { return m_isCrossflowEnabled; }
 
   ///@}
 
@@ -284,7 +284,7 @@ public:
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
     /// string key for the crossflow flag
-    static constexpr char const * disableCrossflowString() { return "disableInjectorCrossflow"; }
+    static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -343,8 +343,8 @@ private:
   /// BHP table name
   string m_targetBHPTableName;
 
-  /// Flag to disable crossflow for injector
-  integer m_isCrossflowDisabled;
+  /// Flag to enable crossflow
+  integer m_isCrossflowEnabled;
 
   /// Total rate table
   TableFunction * m_targetTotalRateTable;

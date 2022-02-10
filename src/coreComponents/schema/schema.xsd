@@ -1240,11 +1240,10 @@ the relative residual norm satisfies:
 * phaseVolRate
 * totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
-		<!--disableInjectorCrossflow => Flag to disable crossflow in injecting wells: 
- - If the flag is set to 0, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
- - If the flag is set to 1, we only allow well-to-reservoir flow at the perforations. 
-This flag is only available for injectors.-->
-		<xsd:attribute name="disableInjectorCrossflow" type="integer" default="0" />
+		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
+ - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
+ - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
+		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
 		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
