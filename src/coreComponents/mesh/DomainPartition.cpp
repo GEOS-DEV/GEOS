@@ -178,8 +178,10 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-  faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-  faceManager.computeGeometry( nodeManager );
+  faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() ); // Why?
+  // The nodes are re-ordered to compute the area after being sorted by CellBlockManager
+  // TODO Optimize  
+  faceManager.computeGeometry( nodeManager ); // Why here?
 }
 
 void DomainPartition::addNeighbors( const unsigned int idim,

@@ -85,8 +85,9 @@ void CellBlock::resize( dataRepository::indexType const numElements )
 
 void CellBlock::getFaceNodes( localIndex iElement,
                               localIndex iFace,
-                              array1d< localIndex > & nodesInFaces ) const
+                              localIndex* nodesInFaces ) const
 {
+  // TODO Change name -- this is another function
   geosx::getFaceNodes( m_elementType, iElement, iFace, m_elementsToNodes, nodesInFaces );
 }
 

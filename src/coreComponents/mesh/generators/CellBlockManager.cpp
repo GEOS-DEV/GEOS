@@ -115,16 +115,28 @@ ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
  * Such a case often happen since the same surface is shared by two adjacent elements
  * in conformal meshes.
  */
+
+// TODO Evaluate the cost of this structure 
+// The number of nodes is either 3 or 4 - using array1d is likely an overkill 
 struct NodesAndElementOfFace
 {
-  NodesAndElementOfFace( array1d< localIndex > nodes_, localIndex element_, localIndex iCellBlock_, localIndex iFace_ ):
-    nodes( nodes_ ),
+  NodesAndElementOfFace( localIndex* nodes_, localIndex element_, localIndex iCellBlock_, localIndex iFace_ ):
+    nodes{ nodes_[0],nodes_[1],nodes_[2],nodes_[3] },
     element( element_ ),
     iCellBlock( iCellBlock_ ),
     iFace( iFace_ ),
-    sortedNodes( nodes_ )
+    sortedNodes { nodes_[0],nodes_[1],nodes_[2],nodes_[3] }
   {
-    std::sort( sortedNodes.begin(), sortedNodes.end() );
+    
+    if( sortedNodes[0] > sortedNodes[1] ) std::swap( sortedNodes[0], sortedNodes[1] );
+    if( sortedNodes[2] > sortedNodes[3] ) std::swap( sortedNodes[2], sortedNodes[3] );
+    if( sortedNodes[0] > sortedNodes[2] ) std::swap( sortedNodes[0], sortedNodes[2] );
+    if( sortedNodes[1] > sortedNodes[3] ) std::swap( sortedNodes[1], sortedNodes[3] );
+    if( sortedNodes[1] > sortedNodes[2] ) std::swap( sortedNodes[1], sortedNodes[2] );
+
+
+    // TODO Replace by tests - There are 3 or 4 values
+    //std::sort( sortedNodes.begin(), sortedNodes.end() );
   }
 
   /**
@@ -137,8 +149,15 @@ struct NodesAndElementOfFace
     // Using some standard comparison like vector::operator<.
     // Two subsequent NodesAndElementOfFace may still be equal
     // We are consistent with operator==, which is what we require.
-    return std::lexicographical_compare( sortedNodes.begin(), sortedNodes.end(),
-                                         rhs.sortedNodes.begin(), rhs.sortedNodes.end() );
+    
+    if(sortedNodes[0] != rhs.sortedNodes[0]) return sortedNodes[0] < rhs.sortedNodes[0];
+    if(sortedNodes[1] != rhs.sortedNodes[1]) return sortedNodes[1] < rhs.sortedNodes[1];
+    if(sortedNodes[2] != rhs.sortedNodes[2]) return sortedNodes[2] < rhs.sortedNodes[2];
+    if(sortedNodes[3] != rhs.sortedNodes[3]) return sortedNodes[3] < rhs.sortedNodes[3];
+    return false;
+    
+    //return std::lexicographical_compare( sortedNodes.begin(), sortedNodes.end(),
+                                        // rhs.sortedNodes.begin(), rhs.sortedNodes.end() );
   }
 
   /**
@@ -149,11 +168,18 @@ struct NodesAndElementOfFace
   bool operator==( NodesAndElementOfFace const & rhs ) const
   {
     // Comparing term by term like STL does.
-    return ( sortedNodes.size() == rhs.sortedNodes.size() && std::equal( sortedNodes.begin(), sortedNodes.end(), rhs.sortedNodes.begin() ) );
+
+   return (sortedNodes[0] == rhs.sortedNodes[0]) &&
+          (sortedNodes[1] == rhs.sortedNodes[1]) &&
+          (sortedNodes[2] == rhs.sortedNodes[2]) &&
+          (sortedNodes[3] == rhs.sortedNodes[3]);
+
+    //return ( sortedNodes.size() == rhs.sortedNodes.size() && std::equal( sortedNodes.begin(), sortedNodes.end(), rhs.sortedNodes.begin() ) );
   }
 
   /// The list of nodes describing the face.
-  array1d< localIndex > nodes;
+  localIndex nodes[4] = {-1, -1, -1, -1};
+  // array1d< localIndex > nodes;
 
   /**
    * @brief The element to which this face belongs.
@@ -181,7 +207,10 @@ struct NodesAndElementOfFace
 
 private:
   /// Sorted nodes describing the face; only for comparison/sorting reasons.
-  array1d< localIndex > sortedNodes;
+  
+  // TODO Think about storing the permutation of the input nodes 
+  localIndex sortedNodes[4]={ -1, -1, -1, -1 };
+  // array1d< localIndex > sortedNodes;
 };
 
 /**
@@ -234,7 +263,7 @@ void insertFaceToNodesEntry( localIndex const faceID,
                              NodesAndElementOfFace const & nodesAndElementOfFace,
                              ArrayOfArrays< localIndex > & faceToNodes )
 {
-  localIndex const numFaceNodes = nodesAndElementOfFace.nodes.size();
+  localIndex const numFaceNodes = 4; // nodesAndElementOfFace.nodes.size();
   // FIXME The size should be OK because it's been allocated previously.
   for( localIndex i = 0; i < numFaceNodes; ++i )
   {
@@ -323,7 +352,7 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
     for( localIndex j = 0, curFaceID = uniqueFaceOffsets[ nodeID ]; j < numFaces; ++j, ++curFaceID )
     {
       const NodesAndElementOfFace & f0 = lowestNodeToFaces( nodeID, j );
-      numNodesPerFace[curFaceID] = f0.nodes.size();
+      numNodesPerFace[curFaceID] = 4; // f0.nodes.size();
       totalFaceNodes += numNodesPerFace[curFaceID];
 
       if( ( j < numFaces - 1 ) and ( f0 == lowestNodeToFaces( nodeID, j + 1 ) ) )
@@ -377,6 +406,7 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
  */
 ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNodes, const Group & cellBlocks )
 {
+  // TODO - Use information on the mesh to avoid this overkill allocation
   ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces( numNodes, 2 * CellBlockManager::maxFacesPerNode() );
 
   // The function is a bit simplified and is not run in parallel anymore.
@@ -393,10 +423,12 @@ ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNo
       for( localIndex iFace = 0; iFace < numFacesPerElement; ++iFace )
       {
         // Get all the nodes of the face
-        array1d< localIndex > nodesInFace;
+        localIndex nodesInFace[4];
+        // For now suppose everything goes well - all cells having 4 nodes
         cb.getFaceNodes( iElement, iFace, nodesInFace );
-        // Fill the result with the collected data.
-        localIndex const & lowestNode = *std::min_element( nodesInFace.begin(), nodesInFace.end() );
+        // Fill the result with the collected data.       
+        // localIndex const & lowestNode = *std::min_element( nodesInFace.begin(), nodesInFace.end() );
+        localIndex lowestNode = std::min( std::min(nodesInFace[0],nodesInFace[1]), std::min(nodesInFace[2], nodesInFace[3]) );
         lowestNodeToFaces.emplaceBack( lowestNode, nodesInFace, iElement, iCellBlock, iFace );
       }
     }
@@ -511,6 +543,8 @@ void CellBlockManager::buildFaceMaps()
 
   array1d< localIndex > uniqueFaceOffsets( m_numNodes + 1 );
   m_numFaces = calculateTotalNumberOfFaces( lowestNodeToFaces.toViewConst(), uniqueFaceOffsets );
+
+  std::cout << " Number of faces  " << m_numFaces << std::endl;
 
   resizeFaceMaps( lowestNodeToFaces.toViewConst(),
                   uniqueFaceOffsets,

@@ -283,7 +283,12 @@ void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
                                          localIndex const localFaceIndex,
                                          array1d< localIndex > & nodeIndices ) const
 {
-  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+  localIndex toto[4];
+  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, toto );
+  nodeIndices[0] = toto[0];
+  nodeIndices[1] = toto[1];
+  nodeIndices[2] = toto[2];
+  nodeIndices[3] = toto[3];
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,

@@ -26,13 +26,14 @@ void getFaceNodes( ElementType const & elementType,
                    localIndex const iElement,
                    localIndex const iFace,
                    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elementToNodes,
-                   array1d< localIndex > & nodeIndices )
+                   //array1d< localIndex > & nodeIndices 
+                   localIndex* nodeIndices)
 {
   switch( elementType )
   {
     case ElementType::Hexahedron:
     {
-      nodeIndices.resize( 4 );
+      // nodeIndices.resize( 4 );
       switch( iFace )
       {
         case 0:
@@ -96,7 +97,7 @@ void getFaceNodes( ElementType const & elementType,
       {
         case 0:
         {
-          nodeIndices.resize( 4 );
+          //nodeIndices.resize( 4 );
           nodeIndices[0] = elementToNodes[iElement][0];
           nodeIndices[1] = elementToNodes[iElement][1];
           nodeIndices[2] = elementToNodes[iElement][5];
@@ -105,7 +106,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 1:
         {
-          nodeIndices.resize( 4 );
+          //nodeIndices.resize( 4 );
           nodeIndices[0] = elementToNodes[iElement][0];
           nodeIndices[1] = elementToNodes[iElement][2];
           nodeIndices[2] = elementToNodes[iElement][3];
@@ -114,7 +115,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 2:
         {
-          nodeIndices.resize( 3 );
+          //nodeIndices.resize( 3 );
           nodeIndices[0] = elementToNodes[iElement][0];
           nodeIndices[1] = elementToNodes[iElement][2];
           nodeIndices[2] = elementToNodes[iElement][4];
@@ -122,7 +123,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 3:
         {
-          nodeIndices.resize( 3 );
+          //nodeIndices.resize( 3 );
           nodeIndices[0] = elementToNodes[iElement][1];
           nodeIndices[1] = elementToNodes[iElement][3];
           nodeIndices[2] = elementToNodes[iElement][5];
@@ -130,7 +131,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 4:
         {
-          nodeIndices.resize( 4 );
+          //nodeIndices.resize( 4 );
           nodeIndices[0] = elementToNodes[iElement][2];
           nodeIndices[1] = elementToNodes[iElement][3];
           nodeIndices[2] = elementToNodes[iElement][5];
@@ -146,7 +147,7 @@ void getFaceNodes( ElementType const & elementType,
     }
     case ElementType::Tetrahedron:
     {
-      nodeIndices.resize( 3 );
+      //nodeIndices.resize( 3 );
       switch( iFace )
       {
         case 0:
@@ -190,7 +191,7 @@ void getFaceNodes( ElementType const & elementType,
       {
         case 0:
         {
-          nodeIndices.resize( 4 );
+          //nodeIndices.resize( 4 );
           nodeIndices[0] = elementToNodes[iElement][0];
           nodeIndices[1] = elementToNodes[iElement][1];
           nodeIndices[2] = elementToNodes[iElement][2];
@@ -199,7 +200,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 1:
         {
-          nodeIndices.resize( 3 );
+          //nodeIndices.resize( 3 );
           nodeIndices[0] = elementToNodes[iElement][0];
           nodeIndices[1] = elementToNodes[iElement][1];
           nodeIndices[2] = elementToNodes[iElement][4];
@@ -207,7 +208,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 2:
         {
-          nodeIndices.resize( 3 );
+          //nodeIndices.resize( 3 );
           nodeIndices[0] = elementToNodes[iElement][1];
           nodeIndices[1] = elementToNodes[iElement][2];
           nodeIndices[2] = elementToNodes[iElement][4];
@@ -215,7 +216,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 3:
         {
-          nodeIndices.resize( 3 );
+          //nodeIndices.resize( 3 );
           nodeIndices[0] = elementToNodes[iElement][2];
           nodeIndices[1] = elementToNodes[iElement][3];
           nodeIndices[2] = elementToNodes[iElement][4];
@@ -223,7 +224,7 @@ void getFaceNodes( ElementType const & elementType,
         }
         case 4:
         {
-          nodeIndices.resize( 3 );
+          //nodeIndices.resize( 3 );
           nodeIndices[0] = elementToNodes[iElement][3];
           nodeIndices[1] = elementToNodes[iElement][0];
           nodeIndices[2] = elementToNodes[iElement][4];

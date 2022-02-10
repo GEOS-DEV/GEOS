@@ -48,7 +48,7 @@ void getFaceNodes( ElementType const & elementType,
                    localIndex const iElement,
                    localIndex const iFace,
                    array2d< localIndex, cells::NODE_MAP_PERMUTATION > const & elementToNodes,
-                   array1d< localIndex > & nodeIndices );
+                   localIndex* nodeIndices );
 
 }
 

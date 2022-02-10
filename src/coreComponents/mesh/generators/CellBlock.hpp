@@ -104,7 +104,7 @@ public:
    */
   void getFaceNodes( localIndex iElement,
                      localIndex iFace,
-                     array1d< localIndex > & nodesInFaces ) const;
+                     localIndex* nodesInFaces ) const;
 
   /**
    * @brief Get the element to nodes mapping, non-const version.
