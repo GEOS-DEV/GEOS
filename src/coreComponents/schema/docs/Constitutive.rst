@@ -39,6 +39,7 @@ NullModel                                   node         :ref:`XML_NullModel`
 ParallelPlatesPermeability                  node         :ref:`XML_ParallelPlatesPermeability`                  
 ParticleFluid                               node         :ref:`XML_ParticleFluid`                               
 PermeabilityBase                            node         :ref:`XML_PermeabilityBase`                            
+PorousCycLiqCPSP                            node         :ref:`XML_PorousCycLiqCPSP`                            
 PorousDruckerPrager                         node         :ref:`XML_PorousDruckerPrager`                         
 PorousElasticIsotropic                      node         :ref:`XML_PorousElasticIsotropic`                      
 PorousElasticOrthotropic                    node         :ref:`XML_PorousElasticOrthotropic`                    

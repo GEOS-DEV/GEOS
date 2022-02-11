@@ -21,6 +21,7 @@
 #include "ElasticIsotropic.hpp"
 #include "ElasticTransverseIsotropic.hpp"
 #include "ElasticOrthotropic.hpp"
+#include "CycLiqCPSP.hpp"
 #include "DruckerPrager.hpp"
 #include "DruckerPragerExtended.hpp"
 #include "Damage.hpp"
@@ -47,6 +48,7 @@ PorousSolid< SOLID_TYPE >::~PorousSolid() = default;
 typedef PorousSolid< ElasticIsotropic > PorousElasticIsotropic;
 typedef PorousSolid< ElasticTransverseIsotropic > PorousElasticTransverseIsotropic;
 typedef PorousSolid< ElasticOrthotropic > PorousElasticOrthotropic;
+typedef PorousSolid< CycLiqCPSP > PorousCycLiqCPSP;
 typedef PorousSolid< DruckerPrager > PorousDruckerPrager;
 typedef PorousSolid< DruckerPragerExtended > PorousDruckerPragerExtended;
 typedef PorousSolid< Damage< ElasticIsotropic > > PorousDamageElasticIsotropic;
@@ -56,6 +58,7 @@ typedef PorousSolid< DamageVolDev< ElasticIsotropic > > PorousDamageVolDevElasti
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticTransverseIsotropic, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousElasticOrthotropic, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousCycLiqCPSP, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPrager, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDruckerPragerExtended, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, PorousDamageElasticIsotropic, string const &, Group * const )

@@ -32,6 +32,7 @@
 #include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
+#include "solid/CycLiqCPSP.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
 #include "solid/ProppantSolid.hpp"
@@ -88,7 +89,8 @@ struct ConstitutivePassThru< SolidBase >
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
                                  ElasticIsotropicPressureDependent,
-                                 ElasticOrthotropic >::execute( constitutiveRelation,
+                                 ElasticOrthotropic,
+								 CycLiqCPSP >::execute( constitutiveRelation,
                                                                 std::forward< LAMBDA >( lambda ) );
   }
 };
@@ -151,6 +153,7 @@ struct ConstitutivePassThru< PorousSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
+								 PorousSolid< CycLiqCPSP >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -232,6 +235,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
+								 PorousSolid< CycLiqCPSP >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,
@@ -253,6 +257,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
                                  PorousSolid< ElasticTransverseIsotropic >,
                                  PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
+								 PorousSolid< CycLiqCPSP >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
                                  PorousSolid< Damage< ElasticIsotropic > > >::execute( constitutiveRelation,

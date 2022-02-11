@@ -645,6 +645,13 @@ Element: PhaseFieldFracture
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture.rst
 
 
+.. _XML_PorousCycLiqCPSP:
+
+Element: PorousCycLiqCPSP
+=========================
+.. include:: ../../coreComponents/schema/docs/PorousCycLiqCPSP.rst
+
+
 .. _XML_PorousDruckerPrager:
 
 Element: PorousDruckerPrager
@@ -1669,6 +1676,13 @@ Datastructure: PhaseFieldDamageFEM
 Datastructure: PhaseFieldFracture
 =================================
 .. include:: ../../coreComponents/schema/docs/PhaseFieldFracture_other.rst
+
+
+.. _DATASTRUCTURE_PorousCycLiqCPSP:
+
+Datastructure: PorousCycLiqCPSP
+===============================
+.. include:: ../../coreComponents/schema/docs/PorousCycLiqCPSP_other.rst
 
 
 .. _DATASTRUCTURE_PorousDruckerPrager:
