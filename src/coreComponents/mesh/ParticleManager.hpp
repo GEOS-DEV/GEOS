@@ -20,6 +20,7 @@
 #define GEOSX_MESH_PARTICLEREGIONMANAGER_HPP
 
 #include "ParticleBlock.hpp"
+#include "ParticleBlockManager.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "ParticleRegion.hpp"
 #include "ParticleSubRegion.hpp"

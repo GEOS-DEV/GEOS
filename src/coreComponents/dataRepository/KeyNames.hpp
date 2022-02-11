@@ -64,6 +64,7 @@ static constexpr auto FE_Space    = "FE_Space";
 //static constexpr auto FEM_Faces    = "FEM_Faces";
 //static constexpr auto FEM_Elements = "FEM_Elements";
 static constexpr auto cellManager = "cellManager";
+static constexpr auto particleManager = "particleManager";
 static constexpr auto functionManager = "FunctionManager";
 
 /// @endcond

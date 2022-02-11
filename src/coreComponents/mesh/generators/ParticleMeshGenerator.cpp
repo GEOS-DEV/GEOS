@@ -69,6 +69,17 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
+//  ParticleBlockManager & elementManager = meshBody.getGroup< CellBlockManager >( keys::cellManager );
+//
+//  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+//
+//  int aa = 0;
+//  for( auto & cellBlockName : m_regionNames )
+//  {
+//    CellBlock & cellBlock = elementManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+//    cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
+//  }
+
   GEOSX_LOG_RANK_0( "MPM particle file path: " << m_filePath );
 
   int numParticles = 0;

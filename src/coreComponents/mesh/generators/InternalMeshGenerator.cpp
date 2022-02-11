@@ -585,6 +585,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   for( auto & cellBlockName : m_regionNames )
   {
     CellBlock & cellBlock = elementManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+    std::cout << "Thing-gummy: " << elementManager.getGroup( keys::cellBlocks).getName() << std::endl;
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 
