@@ -1993,11 +1993,11 @@ Datastructure: WellElementRegionuniqueSubRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
 
 
-.. _DATASTRUCTURE_cellBlocksKey:
+.. _DATASTRUCTURE_cellBlocks:
 
-Datastructure: cellBlocksKey
-============================
-.. include:: ../../coreComponents/schema/docs/cellBlocksKey_other.rst
+Datastructure: cellBlocks
+=========================
+.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
 
 
 .. _DATASTRUCTURE_cellManager:
@@ -2056,18 +2056,18 @@ Datastructure: embeddedSurfacesNodeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
 
 
-.. _DATASTRUCTURE_finiteVolumeStencils:
-
-Datastructure: finiteVolumeStencils
-===================================
-.. include:: ../../coreComponents/schema/docs/finiteVolumeStencils_other.rst
-
-
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen
 =====================
 .. include:: ../../coreComponents/schema/docs/lassen_other.rst
+
+
+.. _DATASTRUCTURE_meshLevels:
+
+Datastructure: meshLevels
+=========================
+.. include:: ../../coreComponents/schema/docs/meshLevels_other.rst
 
 
 .. _DATASTRUCTURE_neighborData:
