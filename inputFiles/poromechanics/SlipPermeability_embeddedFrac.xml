@@ -30,7 +30,7 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }""/>
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
