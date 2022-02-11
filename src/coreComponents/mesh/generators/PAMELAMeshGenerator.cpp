@@ -315,9 +315,9 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
   //TODO for the moment we only consider on mesh level "Level0"
-  meshBody.registerGroup< MeshLevel >( "Level0" );
+  meshBody.getMeshLevels().registerGroup< MeshLevel >( "Level0" );
 
-  CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
+  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
   // Dealing with nodes
   real64 const scaleFactor[3] = { m_scale, m_scale, m_scale * ( m_isZReverse ? -1 : 1 ) };
