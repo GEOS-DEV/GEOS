@@ -78,7 +78,9 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
         meshBodyFound = true;
       }
     } );
-    GEOSX_ERROR_IF( !meshBodyFound, "MeshBody was not found" );
+    GEOSX_ERROR_IF( !meshBodyFound,
+                    "There are multiple MeshBodies in this problem, but the "
+                    "specified MeshBody name "<<meshBodyName<<" was not found" );
   }
 
   return meshBodyName;

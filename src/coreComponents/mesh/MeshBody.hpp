@@ -155,7 +155,7 @@ private:
   real64 m_globalLengthScale { 0. };
 
 
-  string intToMeshLevelString( localIndex const meshLevel ) const;
+  static string intToMeshLevelString( localIndex const meshLevel );
 
 };
 

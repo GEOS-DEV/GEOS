@@ -31,7 +31,6 @@ namespace geosx
 /**
  * @brief A struct to automatically construct and store element view accessors
  * @struct StencilAccessors
- * @tparam MATERIAL_TYPE  type of the constitutive model
  * @tparam TRAITS the pack containing the types of the fields
  */
 template< typename ... TRAITS >
@@ -48,7 +47,7 @@ public:
   {
     constexpr std::size_t idx = traits::type_list_index< TRAIT, std::tuple< TRAITS ... > >;
     static_assert( idx != std::tuple_size< std::tuple< TRAITS... > >::value, "input trait/stencil does not match the available traits/stencils." );
-    return std::get< idx >( this->m_accessors ).toNestedViewConst();
+    return std::get< idx >( m_accessors ).toNestedViewConst();
   }
 
   template< typename TRAIT >
@@ -113,7 +112,7 @@ public:
       GEOSX_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
-      auto & acc = std::get< idx() >( this->m_accessors );
+      auto & acc = std::get< idx() >( m_accessors );
       bool const allowMissingViews = false;
       acc = elemManager.constructMaterialExtrinsicAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
