@@ -31,7 +31,7 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{ Region, Fracture }"
-      solidMaterialNames="{ rock }">
+      >
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="5"/>
@@ -45,7 +45,7 @@
       logLevel="0"
       fractureRegion="Fracture"
       targetRegions="{ Region }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -80,9 +80,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 
