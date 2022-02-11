@@ -300,13 +300,7 @@ inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
                                                              real64 ( & weight )[1][2],
                                                              real64 ( & dWeight_dVar )[1][2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
-
   real64 halfWeight = m_weights[iconn][0];
-
-  real64 faceConormal[3];
 
   halfWeight *= LvArray::tensorOps::AiBi< 3 >( m_cellToFaceVec[iconn], m_faceNormal[iconn] ) * m_transMultiplier[iconn];
 

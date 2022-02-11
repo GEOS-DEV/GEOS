@@ -239,16 +239,16 @@ public:
     //     printf ( "]\n" );
     //   }
     // }
-    if( ei < 10 )
-    {
-      printf ( "element %ld: [", ei );
-      for( integer i = 0; i < numDofs; i++ )
-      {
-        printf ( "%lf, ", state[i] );
-      }
+    // if( ei < 10 )
+    // {
+    //   printf ( "element %ld: [", ei );
+    //   for( integer i = 0; i < numDofs; i++ )
+    //   {
+    //     printf ( "%lf, ", state[i] );
+    //   }
 
-      printf ( "]\n" );
-    }
+    //   printf ( "]\n" );
+    // }
   }
 
 protected:
@@ -381,7 +381,6 @@ public:
                               globalIndex const rankOffset,
                               string const dofKey,
                               ElementSubRegionBase const & subRegion,
-                              CoupledSolidBase const & solid,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs )
     :
@@ -635,7 +634,6 @@ public:
     globalIndex const rankOffset,
     string const dofKey,
     ElementSubRegionBase const & subRegion,
-    CoupledSolidBase const & solid,
     CRSMatrixView< real64, globalIndex const > const & localMatrix,
     arrayView1d< real64 > const & localRhs )
   {
@@ -646,7 +644,7 @@ public:
       integer constexpr NUM_COMPS = NC();
 
       ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >
-      kernel( dt, rankOffset, dofKey, subRegion, solid, localMatrix, localRhs );
+      kernel( dt, rankOffset, dofKey, subRegion, localMatrix, localRhs );
       ElementBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY >::template launch< POLICY >( subRegion.size(), kernel );
     } );
 
@@ -723,7 +721,7 @@ public:
                                arrayView1d< real64 > const & localRhs )
     : m_rankOffset( rankOffset ),
     m_dt( dt * secondsToDaysMult ),
-    m_transMultExp (),
+    m_transMultExp ( transMultExp ),
     m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
     m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
     m_dPerm_dPres( permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure {} ) ),

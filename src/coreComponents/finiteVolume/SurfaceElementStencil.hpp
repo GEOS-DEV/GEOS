@@ -412,10 +412,6 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
-    localIndex const er  =  m_elementRegionIndices[iconn][k];
-    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
-    localIndex const ei  =  m_elementIndices[iconn][k];
-
     sumOfTrans += m_weights[iconn][k];
   }
 
@@ -425,14 +421,6 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
   {
     for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
     {
-      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
-      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
-      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
-
-      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
-      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
-      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
-
       real64 const t0 = m_weights[iconn][0];
       real64 const t1 = m_weights[iconn][1];
 

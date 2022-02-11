@@ -245,11 +245,6 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
 
   FlowSolverBase::registerDataOnMesh( meshBodies );
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  ConstitutiveManager const & cm = domain.getConstitutiveManager();
-
-
-
   // 2. Register and resize all fields as necessary
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
@@ -257,6 +252,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
 
     forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
     {
+      GEOSX_UNUSED_VAR( targetIndex );
 
       subRegion.registerExtrinsicData< pressure >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
@@ -325,6 +321,8 @@ real64 DARTSSuperEngine::calculateResidualNorm( DomainPartition const & domain,
 
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase const & subRegion )
   {
+    GEOSX_UNUSED_VAR( targetIndex );
+
     arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
     arrayView1d< real64 const > const & refPoreVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >();
@@ -403,11 +401,6 @@ real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domai
   {
     arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-
-    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
-    arrayView2d< real64 const, compflow::USD_COMP > const & dCompFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
@@ -631,11 +624,10 @@ void DARTSSuperEngine::backupFields( MeshLevel & mesh ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const numDofs = m_numDofPerCell;
-
   //backup some fields used in time derivative approximation
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
+    GEOSX_UNUSED_VAR ( targetIndex );
     arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
 
     arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLOperatorValues =
@@ -700,8 +692,8 @@ void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const d
                        [&]( localIndex const targetIndex,
                             ElementSubRegionBase const & subRegion )
   {
+    GEOSX_UNUSED_VAR ( targetIndex );
     string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-    CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, m_solidModelNames[targetIndex] );
 
     ElementBasedAssemblyKernelFactory::
       createAndLaunch< parallelDevicePolicy<> >( m_numPhases,
@@ -711,7 +703,6 @@ void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const d
                                                  dofManager.rankOffset(),
                                                  dofKey,
                                                  subRegion,
-                                                 solid,
                                                  localMatrix,
                                                  localRhs );
 
@@ -1079,9 +1070,6 @@ void DARTSSuperEngine::applyDirichletBC( real64 const time,
                          Group & subRegion,
                          string const & )
   {
-    // TODO: hack! Find a better way to get the fluid
-    Group const & region = subRegion.getParent().getParent();
-
     arrayView1d< real64 const > const bcPres =
       subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
     arrayView2d< real64 const, compflow::USD_COMP > const bcCompFrac =

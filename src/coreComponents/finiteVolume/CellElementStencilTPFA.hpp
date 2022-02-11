@@ -324,10 +324,6 @@ inline void CellElementStencilTPFAWrapper::computeWeights( localIndex iconn,
 
   for( localIndex i =0; i<2; i++ )
   {
-    localIndex const er  =  m_elementRegionIndices[iconn][i];
-    localIndex const esr =  m_elementSubRegionIndices[iconn][i];
-    localIndex const ei  =  m_elementIndices[iconn][i];
-
     halfWeight[i] = m_weights[iconn][i];
 
     // Proper computation

@@ -280,14 +280,6 @@ inline void EmbeddedSurfaceToCellStencilWrapper::computeWeights( localIndex icon
                                                                  real64 ( & weight )[1][2],
                                                                  real64 ( & dWeight_dVar )[1][2] ) const
 {
-  localIndex const er0  =  m_elementRegionIndices[iconn][0];
-  localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
-  localIndex const ei0  =  m_elementIndices[iconn][0];
-
-  localIndex const er1  =  m_elementRegionIndices[iconn][1];
-  localIndex const esr1 =  m_elementSubRegionIndices[iconn][1];
-  localIndex const ei1  =  m_elementIndices[iconn][1];
-
   real64 const t0 = m_weights[iconn][0];
   real64 const t1 = m_weights[iconn][1];
 
