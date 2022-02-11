@@ -276,8 +276,6 @@ using EFEMFactory = finiteElement::KernelFactory< EFEM,
                                                   CRSMatrixView< real64, globalIndex const > const,
                                                   arrayView1d< real64 > const,
                                                   real64 const (&) [3] >;
-
-
 /**
  * @brief A struct to update fracture traction
  */

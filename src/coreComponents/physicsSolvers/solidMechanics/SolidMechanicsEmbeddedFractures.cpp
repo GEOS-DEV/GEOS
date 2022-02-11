@@ -319,9 +319,9 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
-    EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
 
@@ -723,8 +723,8 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                   DomainPartition & domain )
 {
-  forMeshTarges( domain.getMeshBodies(), [&] ( string const &,
-                                               MeshLeve & mesh,
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                               MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
