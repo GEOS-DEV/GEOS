@@ -112,7 +112,7 @@ public:
 
     interpolatePoint( coordinates,
                       getHypercubeData( hypercubeIndex ),
-                      &axisLows[0], &axisMults[0],
+                      &axisLows[0],
                       &m_axisStepInvs[0],
                       values );
   }
@@ -240,7 +240,6 @@ protected:
   interpolatePoint( IN_ARRAY const & axisCoordinates,
                     real64 const * const hypercubeData,
                     real64 const * const axisLows,
-                    real64 const * const axisMults,
                     real64 const * const axisStepInvs,
                     OUT_ARRAY && values ) const
   {

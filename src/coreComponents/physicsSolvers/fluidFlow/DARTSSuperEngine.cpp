@@ -628,7 +628,6 @@ void DARTSSuperEngine::backupFields( MeshLevel & mesh ) const
   forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
   {
     GEOSX_UNUSED_VAR ( targetIndex );
-    arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
 
     arrayView2d< real64 const, compflow::USD_OBL_VAL > const OBLOperatorValues =
       subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
