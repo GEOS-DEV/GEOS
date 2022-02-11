@@ -1270,6 +1270,10 @@ void DofManager::reorderByRank()
     dofOffset += field.numLocalDof;
   }
 
+  // This is a map with a key that is the pair of strings specifying the
+  // ( MeshBody name, MeshLevel name), and a value that is another map with a
+  // key that indicates the name of the object that contains the field to be
+  // synced, and a value that contans the name of the field to be synced.
   std::map< std::pair< string, string >, std::map< string, string_array > > fieldsToSync;
 
   // adjust index arrays for owned locations
