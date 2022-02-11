@@ -404,80 +404,6 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
   // Extract the problem node and begin processing the user inputs
   xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str() );
   processInputFileRecursive( xmlProblemNode );
-  
-  // The objects in domain are handled separately for now
-  {
-    DomainPartition & domain = getDomainPartition();
-    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-    xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( constitutiveManager.getName().c_str());
-    constitutiveManager.processInputFileRecursive( topLevelNode );
-
-    // Open mesh levels
-    MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
-    meshManager.generateMeshLevels( domain );
-
-    domain.getMeshBodies().forSubGroups<MeshBody>([&]( MeshBody & meshBody )
-    {
-      string const meshBodyName = meshBody.getName();
-      GEOSX_LOG_RANK_0( "MeshBody " << meshBodyName );
-
-      // Import Element Regions
-      ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
-      xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
-      for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
-      {
-
-        string const regionName = regionNode.attribute( "name" ).value();
-        string const
-        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
-                                                                    regionNode.attribute( "meshBody" ).value() );
-
-        string const cellBlocks = regionNode.attribute( "cellBlocks" ).value();
-
-        if( regionMeshBodyName==meshBodyName )
-        {
-          std::cout<<regionNode.name()<<std::endl;
-          std::cout<<regionName<<" "<<cellBlocks<<std::endl;
-          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( regionNode );
-        }
-
-      }
-
-      // Import Particle Regions
-      ParticleManager & particleManager = meshBody.getMeshLevel( 0 ).getParticleManager();
-      xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( particleManager.getName().c_str());
-      for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
-      {
-
-        string const regionName = regionNode.attribute( "name" ).value();
-        string const
-        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
-                                                                    regionNode.attribute( "meshBody" ).value() );
-
-        string const particleBlocks = regionNode.attribute( "particleBlocks" ).value();
-
-        if( regionMeshBodyName==meshBodyName )
-        {
-          std::cout<<regionNode.name()<<std::endl;
-          std::cout<<regionName<<" "<<particleBlocks<<std::endl;
-          Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( regionNode );
-        }
-
-      }
-
-//      elementManager.processInputFileRecursive( elementRegionsNode );
-    });
-  }
-}
-
-/*
-void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocument )
-{
-  // Extract the problem node and begin processing the user inputs
-  xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( this->getName().c_str() );
-  processInputFileRecursive( xmlProblemNode );
 
   // The objects in domain are handled separately for now
   {
@@ -489,12 +415,10 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     // Open mesh levels
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
-
-
-
-
 
     Group & meshBodies = domain.getMeshBodies();
+
+    // Parse element regions
     xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString );
 
     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
@@ -512,9 +436,27 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
         newRegion->processInputFileRecursive( regionNode );
       } );
     }
+
+    // Parse particle regions
+    xmlWrapper::xmlNode particleRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::particleManagerString );
+
+    for( xmlWrapper::xmlNode regionNode : particleRegionsNode.children() )
+    {
+      string const regionName = regionNode.attribute( "name" ).value();
+      string const
+      regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                                  regionNode.attribute( "meshBody" ).value() );
+
+      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+      {
+        ParticleManager & particleManager = meshLevel.getParticleManager();
+        Group * newRegion = particleManager.createChild( regionNode.name(), regionName );
+        newRegion->processInputFileRecursive( regionNode );
+      } );
+    }
   }
 }
-*/
 
 
 void ProblemManager::postProcessInput()
