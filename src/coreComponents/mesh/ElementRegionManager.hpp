@@ -19,10 +19,10 @@
 #ifndef GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 #define GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 
-#include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -135,33 +135,18 @@ public:
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & cellBlock )
+    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & elementSubRegion )
     {
-      numElem += cellBlock.size();
+      numElem += elementSubRegion.size();
     } );
     return numElem;
   }
 
-//  void Initialize(  ){}
-
   /**
    * @brief Generate the mesh.
-   * @param [in] cellBlockManager pointer to the CellBlockManager
+   * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( Group & cellBlockManager );
-
-  /**
-   * @brief Generate the cell-to-edge map
-   * @param [in] faceManager pointer to the FaceManager
-   */
-  void generateCellToEdgeMaps( FaceManager const & faceManager );
-
-  /**
-   * @brief Generate the aggregates.
-   * @param [in] faceManager pointer to the FaceManager
-   * @param [in] nodeManager pointer to the NodeManager
-   */
-  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
+  void generateMesh( CellBlockManagerABC & cellBlockManager );
 
   /**
    * @brief Generate the wells.
@@ -169,6 +154,13 @@ public:
    * @param [in] meshLevel pointer to meshLevel
    */
   void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+
+  /**
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
+   * @note ElementRegionManager's sub-regions need to be properly defined.
+   */
+  void buildSets( NodeManager const & nodeManager );
 
   /**
    * @brief Create a new ElementRegion object as a child of this group.
@@ -251,6 +243,12 @@ public:
     return this->getGroup( groupKeyStruct::elementRegionsGroup() ).getGroup< T >( key );
   }
 
+  /**
+   * @brief Determines if an ElementRegion with the input name exists.
+   * @tparam T The type of ElementRegion. May be a specific derived type of ElementRegionBase.
+   * @param name The name/key of the ElementRegion
+   * @return true if the region exists, false if not.
+   */
   template< typename T=ElementRegionBase >
   bool hasRegion( string const & name ) const
   {
@@ -265,12 +263,6 @@ public:
   {
     return this->getRegions().size();
   }
-
-  /**
-   * @brief Get number of the cell blocks.
-   * @return number of the cell blocks
-   */
-  localIndex numCellBlocks() const;
 
   /**
    * @brief This function is used to launch kernel function over all the element regions with region type =
@@ -878,7 +870,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ElementViewAccessor that contains VIEWTYPE data
@@ -896,7 +888,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ElementViewAccessor that contains VIEWTYPE data
@@ -915,7 +907,7 @@ public:
    * @tparam PERM layout permutation sequence type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
    * @return MaterialViewAccessor that contains the data views
    */
@@ -1443,8 +1435,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
       region.forElementSubRegionsIndex( [&]( localIndex const esr,
                                              ElementSubRegionBase const & subRegion )
       {
-        string const & materialName = subRegion.getReference<string>( materialKeyName );
-        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
 
         dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1490,8 +1482,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
 
       region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
       {
-        string const & materialName = subRegion.getReference<string>( materialKeyName );
-        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel(materialName);
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
 
         dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
         if( wrapper )
@@ -1527,7 +1519,7 @@ ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT
 ElementRegionManager::
   constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
 {
-  GEOSX_UNUSED_VAR(allowMissingViews);
+  GEOSX_UNUSED_VAR( allowMissingViews );
   return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
                                         traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
 }
@@ -1573,7 +1565,8 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) c
       constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
         materialName = constitutiveRelation.getName();
-        if ( constitutiveRelation.template hasWrapper( viewName ) ) //NOTE (matteo): I have added this check to allow for the view to be missing. I am not sure this is the default behaviour we want though. 
+        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                    // missing. I am not sure this is the default behaviour we want though.
         {
           accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
         }

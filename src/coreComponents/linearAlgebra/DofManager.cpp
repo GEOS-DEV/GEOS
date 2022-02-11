@@ -179,15 +179,16 @@ void DofManager::createIndexArray( FieldDescription const & field )
 {
   LocationSwitch( field.location, [&]( auto const loc )
   {
-    Location constexpr LOC = decltype(loc)::value;
-    using helper = ArrayHelper< globalIndex, LOC >;
-
-    std::map< string, string_array > fieldNames;
-    fieldNames[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
     localIndex index = 0;
 
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
+      Location constexpr LOC = decltype(loc)::value;
+      using helper = ArrayHelper< globalIndex, LOC >;
+
+      std::map< string, string_array > fieldNames;
+      fieldNames[MeshHelper< LOC >::syncObjName].emplace_back( field.key );
+
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
       typename helper::Accessor indexArray = helper::get( mesh, field.key );
@@ -208,9 +209,9 @@ void DofManager::removeIndexArray( FieldDescription const & field )
 {
   LocationSwitch( field.location, [&]( auto const loc )
   {
-    Location constexpr LOC = decltype(loc)::value;
     forMeshSupport( field.support, *m_domain, [&]( MeshBody &, MeshLevel & mesh, auto const & regions )
     {
+      Location constexpr LOC = decltype(loc)::value;
       ArrayHelper< globalIndex, LOC >::template remove<>( mesh, field.key, regions );
     } );
   } );
@@ -327,11 +328,11 @@ void DofManager::addField( string const & fieldName,
 void DofManager::addField( string const & fieldName,
                            Location const location,
                            integer const components,
-                           map< string, array1d< string > > const & bodyRegions )
+                           map< string, array1d< string > > const & regions )
 {
   // Convert input into internal format
   std::vector< Regions > support;
-  for( auto const & p : bodyRegions )
+  for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first );
     MeshLevel const & mesh = meshBody.getMeshLevel( 0 ); // TODO by name?
@@ -388,7 +389,7 @@ struct RegionComp
 {
   bool operator()( DofManager::Regions const & l, DofManager::Regions const & r ) const
   {
-    return OP{}( std::tie( l.meshBodyName, l.meshLevelName ), std::tie( r.meshBodyName, r.meshLevelName ) );
+    return OP{} ( std::tie( l.meshBodyName, l.meshLevelName ), std::tie( r.meshBodyName, r.meshLevelName ) );
   }
 };
 
@@ -411,7 +412,7 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
     for( DofManager::Regions & r : regions )
     {
       // Find the body/level pair in the column field list (unsorted range)
-      auto const comp = [&r]( auto const & c ){ return RegionComp< std::equal_to<> >{}( r, c ); };
+      auto const comp = [&r]( auto const & c ){ return RegionComp< std::equal_to<> >{} ( r, c ); };
       DofManager::Regions const & colRegions = *std::find_if( colFieldRegions.begin(), colFieldRegions.end(), comp );
       // Intersect row field regions (already copied into result) with col field regions (found above)
       r.regionNames = processCouplingRegionList( {}, r.regionNames, rowFieldName, colRegions.regionNames, colFieldName );
@@ -424,7 +425,7 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
     {
       for( DofManager::Regions const & r : regions )
       {
-        auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{}( r, f ); };
+        auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{} ( r, f ); };
         auto const it = std::find_if( fieldRegions.begin(), fieldRegions.end(), comp );
         GEOSX_ERROR_IF( it == fieldRegions.end(),
                         GEOSX_FMT( "Mesh {}/{} not found in support of field {}", r.meshBodyName, r.meshLevelName, fieldName ) );
@@ -493,12 +494,12 @@ void DofManager::addCoupling( string const & fieldName,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               DofManager::Connector connectivity,
-                              map< string, array1d< string>> const & bodyRegions,
+                              map< string, array1d< string > > const & regions,
                               bool symmetric )
 {
   // Convert input into internal format
   std::vector< Regions > support;
-  for( auto const & p : bodyRegions )
+  for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first );
     MeshLevel const & mesh = meshBody.getMeshLevel( 0 ); // TODO by name?
@@ -670,8 +671,8 @@ void DofManager::setSparsityPatternFromStencil( SparsityPatternView< globalIndex
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const dofNumber =
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( field.key );
 
-    array1d< globalIndex > rowDofIndices( numComp );
-    array1d< globalIndex > colDofIndices( numComp );
+    array1d< globalIndex > rowDofIndices;
+    array1d< globalIndex > colDofIndices;
 
     // 1. Assemble diagonal and off-diagonal blocks for elements in stencil
     coupling.stencils->forAllStencils( mesh, [&]( auto const & stencil )
@@ -1269,6 +1270,10 @@ void DofManager::reorderByRank()
     dofOffset += field.numLocalDof;
   }
 
+  // This is a map with a key that is the pair of strings specifying the
+  // ( MeshBody name, MeshLevel name), and a value that is another map with a
+  // key that indicates the name of the object that contains the field to be
+  // synced, and a value that contans the name of the field to be synced.
   std::map< std::pair< string, string >, std::map< string, string_array > > fieldsToSync;
 
   // adjust index arrays for owned locations

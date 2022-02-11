@@ -22,18 +22,28 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geosx
 {
 
 namespace SinglePhaseFVMKernels
 {
+using namespace constitutive;
 
 using namespace FluxKernelsHelper;
 
@@ -50,6 +60,36 @@ struct FluxKernel
    */
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using SinglePhaseFlowAccessors =
+    StencilAccessors< extrinsicMeshData::ghostRank,
+                      extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::flow::mobility,
+                      extrinsicMeshData::flow::dMobility_dPressure >;
+
+  using SinglePhaseFluidAccessors =
+    StencilMaterialAccessors< SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+
+  using SlurryFluidAccessors =
+    StencilMaterialAccessors< SlurryFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+
+  using PermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure >;
+
+  using ProppantPermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure,
+                              extrinsicMeshData::permeability::dPerm_dDispJump,
+                              extrinsicMeshData::permeability::permeabilityMultiplier >;
 
 
   /**

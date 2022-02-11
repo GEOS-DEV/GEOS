@@ -21,7 +21,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
-      capPressureNames="{ cappres }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       useMass="1"/>

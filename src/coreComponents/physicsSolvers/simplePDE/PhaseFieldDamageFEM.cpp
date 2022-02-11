@@ -102,10 +102,10 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
       subRegion.registerWrapper< string >( viewKeyStruct::solidModelNamesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
+        setSizedFromParent( 0 );
 
-      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidModelNamesString() );
-      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+      string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidModelNamesString() );
+      solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
       GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 
     } );

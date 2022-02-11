@@ -1,11 +1,6 @@
-#
 # Specify all headers
-#
 set( mesh_headers
-     AggregateElementSubRegion.hpp
      BufferOps.hpp
-     CellBlock.hpp
-     CellBlockManager.hpp
      CellElementRegion.hpp
      CellElementSubRegion.hpp
      DomainPartition.hpp
@@ -41,6 +36,11 @@ set( mesh_headers
      ToElementRelation.hpp
      WellElementRegion.hpp
      WellElementSubRegion.hpp
+     generators/CellBlock.hpp
+     generators/CellBlockABC.hpp
+     generators/CellBlockManager.hpp
+     generators/CellBlockManagerABC.hpp
+     generators/CellBlockUtilities.hpp
      generators/InternalMeshGenerator.hpp
      generators/InternalWellGenerator.hpp
      generators/InternalWellboreGenerator.hpp
@@ -61,18 +61,12 @@ set( mesh_headers
      simpleGeometricObjects/ThickPlane.hpp
      utilities/ComputationalGeometry.hpp
      utilities/MeshMapUtilities.hpp
-     utilities/MeshUtilities.hpp
      utilities/StructuredGridUtilities.hpp
    )
 
-#
 # Specify all sources
-#
 set( mesh_sources
-     AggregateElementSubRegion.cpp
      BufferOps.cpp
-     CellBlock.cpp
-     CellBlockManager.cpp
      CellElementRegion.cpp
      CellElementSubRegion.cpp
      DomainPartition.cpp
@@ -103,6 +97,9 @@ set( mesh_sources
      ToElementRelation.cpp
      WellElementRegion.cpp
      WellElementSubRegion.cpp
+     generators/CellBlock.cpp
+     generators/CellBlockManager.cpp
+     generators/CellBlockUtilities.cpp
      generators/InternalMeshGenerator.cpp
      generators/InternalWellGenerator.cpp
      generators/InternalWellboreGenerator.cpp
@@ -110,7 +107,7 @@ set( mesh_sources
      generators/ParticleMeshGenerator.cpp
      mpiCommunications/CommID.cpp
      mpiCommunications/CommunicationTools.cpp
-     mpiCommunications/MPI_iCommData.cpp    
+     mpiCommunications/MPI_iCommData.cpp
      mpiCommunications/NeighborCommunicator.cpp
      mpiCommunications/PartitionBase.cpp
      mpiCommunications/SpatialPartition.cpp
@@ -121,8 +118,7 @@ set( mesh_sources
      simpleGeometricObjects/SimpleGeometricObjectBase.cpp
      simpleGeometricObjects/ThickPlane.cpp
      utilities/ComputationalGeometry.cpp
-     utilities/MeshUtilities.cpp
-   )
+     )
 
 set( dependencyList schema dataRepository constitutive metis )
 
@@ -147,5 +143,5 @@ blt_add_library( NAME       mesh
                
 target_include_directories( mesh PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
-geosx_add_code_checks( PREFIX mesh 
+geosx_add_code_checks( PREFIX mesh
                        EXCLUDES PAMELA )

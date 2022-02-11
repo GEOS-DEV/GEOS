@@ -313,10 +313,10 @@ private:
 
   /**
    * @brief Determine the number of quadrature points required for each
-   *   subregion.
+   *   MeshBody/Region/SubRegion.
    * @param meshBodies Reference to the mesh bodies object.
-   * @return A map containing the number of quadrature points for every
-   *   region/subregion key pair.
+   * @return A tuple containing the number of quadrature points for every
+   *   MeshBody/region/subregion combination.
    *
    * Checks all physics solvers for targetRegions and constitutive models to
    * determine the minimum number of quadrature points for each subregion.
@@ -328,7 +328,8 @@ private:
    *   number of quadrature point.
    * @param meshBodies Reference to the mesh bodies object.
    * @param constitutiveManager The constitutive manager object.
-   * @param regionQuadrature The map containing the number of quadrature points for every subregion.
+   * @param regionQuadrature The map containing the number of quadrature points for every
+   *  MeshBody/ElementRegion/ElementSubRegion.
    */
   void setRegionQuadrature( Group & meshBodies,
                             constitutive::ConstitutiveManager const & constitutiveManager,

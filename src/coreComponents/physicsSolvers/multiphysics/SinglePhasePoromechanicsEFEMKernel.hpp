@@ -88,14 +88,14 @@ public:
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-               arrayView1d< globalIndex const > const & dispDofNumber,
-               arrayView1d< globalIndex const > const & jumpDofNumber,
-               string const & inputFlowDofKey,
+               arrayView1d< globalIndex const > const dispDofNumber,
+               arrayView1d< globalIndex const > const jumpDofNumber,
+               string const inputFlowDofKey,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3],
-               string const & fluidModelKey ):
+               string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -115,9 +115,10 @@ public:
     m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey) ).density() ),
+    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
     m_fluidDensityOld( embeddedSurfSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
-    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
+    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                       fluidModelKey ) ).dDensity_dPressure() ),
     m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
@@ -575,14 +576,14 @@ protected:
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                EmbeddedSurfaceSubRegion const &,
-                                                               arrayView1d< globalIndex const > const &,
-                                                               arrayView1d< globalIndex const > const &,
-                                                               string const &,
+                                                               arrayView1d< globalIndex const > const,
+                                                               arrayView1d< globalIndex const > const,
+                                                               string const,
                                                                globalIndex const,
-                                                               CRSMatrixView< real64, globalIndex const > const &,
-                                                               arrayView1d< real64 > const &,
+                                                               CRSMatrixView< real64, globalIndex const > const,
+                                                               arrayView1d< real64 > const,
                                                                real64 const (&)[3],
-                                                               string const & >;
+                                                               string const >;
 
 /**
  * @brief A struct to perform volume, aperture and fracture traction updates
@@ -607,10 +608,11 @@ struct StateUpdateKernel
    * @param[out] fractureTraction the fracture traction
    * @param[out] dFractureTraction_dPressure the derivative of the fracture traction wrt pressure
    */
-  template< typename POLICY, typename CONTACT_WRAPPER >
+  template< typename POLICY, typename POROUS_WRAPPER >
   static void
   launch( localIndex const size,
-          CONTACT_WRAPPER const & contactWrapper,
+          ContactBase::KernelWrapper const & contactWrapper,
+          POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const > const & dispJump,
           arrayView1d< real64 const > const & pressure,
           arrayView1d< real64 const > const & deltaPressure,
@@ -618,6 +620,7 @@ struct StateUpdateKernel
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
           arrayView1d< real64 > const & aperture,
+          arrayView1d< real64 const > const & oldHydraulicAperture,
           arrayView1d< real64 > const & hydraulicAperture,
           arrayView2d< real64 > const & fractureTraction,
           arrayView1d< real64 > const & dFractureTraction_dPressure )
@@ -632,6 +635,10 @@ struct StateUpdateKernel
                                                                       dHydraulicAperture_dAperture );
 
       deltaVolume[k] = hydraulicAperture[k] * area[k] - volume[k];
+
+      real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
+
+      porousMaterialWrapper.updateStateFromPressureApertureAndJump( k, 0, pressure[k], deltaPressure[k], oldHydraulicAperture[k], hydraulicAperture[k], jump );
 
       // traction on the fracture to include the pressure contribution
       contactWrapper.addPressureToTraction( pressure[k] + deltaPressure[k],

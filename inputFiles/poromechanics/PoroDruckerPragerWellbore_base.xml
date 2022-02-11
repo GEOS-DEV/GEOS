@@ -155,7 +155,6 @@
   name="PoromechanicsSolver" 
   solidSolverName="mechanicsSolver"
   fluidSolverName="SinglePhaseFlowSolver"
-  porousMaterialNames="{porousRock}"
   logLevel="1"
   discretization="FE1"
   targetRegions="{Omega}">
@@ -221,6 +220,10 @@
     parallelThreads="1"
     plotFileRoot="plot"
   />
+
+  <Restart
+    name="restartOutput"
+  />  
 </Outputs>
 <!-- SPHINX_WELLBORE_OUTPUT_END -->
 

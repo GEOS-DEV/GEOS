@@ -126,13 +126,11 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-  template< typename POLICY >
   void accumulationLaunch( CellElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
-  template< typename POLICY >
   void accumulationLaunch( SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -150,7 +148,6 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  template< typename POLICY >
   void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -290,7 +287,6 @@ public:
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void resetViews( MeshLevel & mesh ) override;
 
   virtual void initializePreSubGroups() override;
 
@@ -323,6 +319,8 @@ protected:
   void
   initializeAquiferBC() const;
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -349,21 +347,9 @@ protected:
    */
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dMobility_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
 
 private:
-
-
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 

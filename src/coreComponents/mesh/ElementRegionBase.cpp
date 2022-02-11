@@ -40,7 +40,7 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
 
   registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue("").
+    setApplyDefaultValue( "" ).
     setDescription( "Mesh body that contains this region" );
 
 }
@@ -58,7 +58,7 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
 
   if( numberOfMeshBodies == 1 )
   {
-    string const & onlyMeshBodyName = meshBodies.getGroup(0).getName();
+    string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
 
     if( meshBodyName=="" )
     {
@@ -66,7 +66,7 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
     }
     GEOSX_ERROR_IF_NE_MSG( onlyMeshBodyName,
                            meshBodyName,
-                           "MeshBody specified does not match MeshBody in hierarchy.");
+                           "MeshBody specified does not match MeshBody in hierarchy." );
   }
   else
   {
@@ -77,11 +77,13 @@ string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
       {
         meshBodyFound = true;
       }
-    });
-    GEOSX_ERROR_IF( !meshBodyFound, "MeshBody was not found");
+    } );
+    GEOSX_ERROR_IF( !meshBodyFound,
+                    "There are multiple MeshBodies in this problem, but the "
+                    "specified MeshBody name "<<meshBodyName<<" was not found" );
   }
 
-return meshBodyName;
+  return meshBodyName;
 }
 
 

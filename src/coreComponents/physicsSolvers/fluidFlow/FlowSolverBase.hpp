@@ -84,11 +84,6 @@ public:
 
   virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   * @param[in] mesh the mesh level object
-   */
-  virtual void resetViews( MeshLevel & mesh );
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -118,14 +113,14 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
-protected:
-
   virtual void precomputeData( MeshLevel & mesh,
                                arrayView1d< string const > const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
@@ -138,24 +133,9 @@ protected:
 
   real64 m_fluxEstimate;
 
-  /// views into pressure fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
-
-  /// views into constant data fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
-
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;
-#endif
+private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 
 };

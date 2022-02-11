@@ -240,7 +240,7 @@ public:
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
 
-    static constexpr char const * sendOrRecieveNodesString() { return "sendOrReceiveNodes";}
+    static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
     static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
     static constexpr char const * targetNodesString() { return "targetNodes";}
 
@@ -255,7 +255,6 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
-//  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -284,6 +283,8 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;
@@ -293,17 +294,15 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-//  array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-//  SortedArray< localIndex > m_sendOrReceiveNodes;
-//  SortedArray< localIndex > m_nonSendOrReceiveNodes;
-//  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
 
 private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+
 };
 
 ENUM_STRINGS( SolidMechanicsLagrangianFEM::TimeIntegrationOption,
@@ -329,7 +328,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d<string const> const & regionNames )
+                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
 
@@ -353,7 +352,7 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                                          this->getDiscretizationName(),
                                                                          viewKeyStruct::solidMaterialNamesString(),
                                                                          kernelWrapper );
-  }) ;
+  } );
 
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );

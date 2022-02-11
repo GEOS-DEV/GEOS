@@ -22,6 +22,7 @@
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
 #include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/singleFluidSelector.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -81,11 +82,8 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
 
       subRegion.registerExtrinsicData< densityOld >( getName() );
 
-      string & fluidMaterialName = subRegion.getReference<string>( viewKeyStruct::fluidNamesString() );
-      fluidMaterialName = SolverBase::getConstitutiveName<SingleFluidBase>( subRegion );
-      GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
 
-    });
+    } );
 
     FaceManager & faceManager = mesh.getFaceManager();
     {
@@ -93,6 +91,19 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
     }
   } );
 }
+
+void SinglePhaseBase::setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const
+{
+  FlowSolverBase::setConstitutiveNamesCallSuper( subRegion );
+}
+
+void SinglePhaseBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName< SingleFluidBase >( subRegion );
+  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+}
+
 
 void SinglePhaseBase::initializeAquiferBC() const
 {
@@ -206,8 +217,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
   {
     CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), false );
 
-    resetViews( mesh );
-
     // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
     // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
@@ -251,7 +260,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
 
     // Save initial pressure field (needed by the poromechanics solvers to compute the deltaPressure needed by the total stress)
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
-                                                               ElementSubRegionBase & subRegion )
+                                                                  ElementSubRegionBase & subRegion )
     {
       arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       arrayView1d< real64 > const initPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
@@ -467,7 +476,6 @@ void SinglePhaseBase::setupSystem( DomainPartition & domain,
                                    bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  resetViews( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
 
   SolverBase::setupSystem( domain,
                            dofManager,
@@ -485,7 +493,6 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    resetViews( mesh );
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                                                    auto & subRegion )
     {
@@ -539,7 +546,7 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
       arrayView1d< real64 const > const dVol = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
 
       arrayView1d< real64 > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+      arrayView1d< real64 > const vol = subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
@@ -589,10 +596,10 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 {
   GEOSX_MARK_FUNCTION;
 
-  assembleAccumulationTerms< parallelDevicePolicy<> >( domain,
-                                                       dofManager,
-                                                       localMatrix,
-                                                       localRhs );
+  assembleAccumulationTerms( domain,
+                             dofManager,
+                             localMatrix,
+                             localRhs );
 
   assembleFluxTerms( time_n,
                      dt,
@@ -603,7 +610,6 @@ void SinglePhaseBase::assembleSystem( real64 const time_n,
 
 }
 
-template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -630,23 +636,22 @@ void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
-  AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                 rankOffset,
-                                                 dofNumber,
-                                                 ghostRank,
-                                                 volume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 densityOld,
-                                                 density,
-                                                 dDens_dPres,
-                                                 localMatrix,
-                                                 localRhs );
+  AccumulationKernel::template launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 volume,
+                                                                 porosityOld,
+                                                                 porosity,
+                                                                 dPoro_dPres,
+                                                                 densityOld,
+                                                                 density,
+                                                                 dDens_dPres,
+                                                                 localMatrix,
+                                                                 localRhs );
 
 }
 
-template< typename POLICY >
 void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subRegion,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -683,27 +688,26 @@ void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subReg
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
-  AccumulationKernel::template launch< POLICY >( subRegion.size(),
-                                                 rankOffset,
-                                                 dofNumber,
-                                                 ghostRank,
-                                                 volume,
-                                                 deltaVolume,
-                                                 porosityOld,
-                                                 porosity,
-                                                 dPoro_dPres,
-                                                 densityOld,
-                                                 density,
-                                                 dDens_dPres,
+  AccumulationKernel::template launch< parallelDevicePolicy<> >( subRegion.size(),
+                                                                 rankOffset,
+                                                                 dofNumber,
+                                                                 ghostRank,
+                                                                 volume,
+                                                                 deltaVolume,
+                                                                 porosityOld,
+                                                                 porosity,
+                                                                 dPoro_dPres,
+                                                                 densityOld,
+                                                                 density,
+                                                                 dDens_dPres,
 #if ALLOW_CREATION_MASS
-                                                 creationMass,
+                                                                 creationMass,
 #endif
-                                                 localMatrix,
-                                                 localRhs );
+                                                                 localMatrix,
+                                                                 localRhs );
 
 }
 
-template< typename POLICY >
 void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                  DofManager const & dofManager,
                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -721,7 +725,7 @@ void SinglePhaseBase::assembleAccumulationTerms( DomainPartition & domain,
                                                                                 auto & subRegion )
     {
 
-      accumulationLaunch< POLICY >( subRegion, dofManager, localMatrix, localRhs );
+      accumulationLaunch( subRegion, dofManager, localMatrix, localRhs );
     } );
   } );
 }
@@ -929,52 +933,6 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh,
       densOld[ei] = dens[ei][0];
     } );
   } );
-}
-
-void SinglePhaseBase::resetViews( MeshLevel & mesh )
-{
-  FlowSolverBase::resetViews( mesh );
-  ElementRegionManager const & elemManager = mesh.getElemManager();
-
-  using namespace extrinsicMeshData::flow;
-
-  m_volume.clear();
-  m_volume = elemManager.constructArrayViewAccessor< real64, 1 >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-  m_volume.setName( string( "accessors/" ) + ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
-
-  m_deltaVolume.clear();
-  m_deltaVolume = elemManager.constructArrayViewAccessor< real64, 1 >( deltaVolume::key() );
-  m_deltaVolume.setName( getName() + "/accessors/" + deltaVolume::key() );
-
-  m_mobility.clear();
-  m_mobility = elemManager.constructArrayViewAccessor< real64, 1 >( mobility::key() );
-  m_mobility.setName( getName() + "/accessors/" + mobility::key() );
-
-  m_dMobility_dPres.clear();
-  m_dMobility_dPres = elemManager.constructArrayViewAccessor< real64, 1 >( dMobility_dPressure::key() );
-  m_dMobility_dPres.setName( getName() + "/accessors/" + dMobility_dPressure::key() );
-
-  resetViewsPrivate( elemManager );
-}
-
-void SinglePhaseBase::resetViewsPrivate( ElementRegionManager const & elemManager )
-{
-  m_density.clear();
-  m_density = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::densityString() );
-  m_density.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::densityString() );
-
-  m_dDens_dPres.clear();
-  m_dDens_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::dDens_dPresString() );
-  m_dDens_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dDens_dPresString() );
-
-  m_viscosity.clear();
-  m_viscosity = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::viscosityString() );
-  m_viscosity.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::viscosityString() );
-
-  m_dVisc_dPres.clear();
-  m_dVisc_dPres = elemManager.constructMaterialArrayViewAccessor< SingleFluidBase, real64, 2 >( SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
-  m_dVisc_dPres.setName( getName() + "/accessors/" + SingleFluidBase::viewKeyStruct::dVisc_dPresString() );
-
 }
 
 } /* namespace geosx */

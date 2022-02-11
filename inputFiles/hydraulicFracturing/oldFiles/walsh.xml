@@ -131,7 +131,6 @@
       fractureRegion="Fracture"
       targetRegions="{Region2, void}"
       nodeBasedSIF="1"
-      solidMaterialNames="{rock}"
       rockToughness="3.0e6"
       >
     </SurfaceGenerator>
