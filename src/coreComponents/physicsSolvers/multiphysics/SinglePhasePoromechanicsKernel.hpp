@@ -349,7 +349,6 @@ public:
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute local linear momentum balance residual derivatives with respect to pressure
-    real64 Np[1] = { 1.0 };
 
     BilinearFormUtilities::compute< displacementTestSpace,
                                     pressureTrialSpace,
@@ -359,7 +358,7 @@ public:
       stack.dLocalResidualMomentum_dPressure,
       dNdX,
       dTotalStress_dPressure,
-      Np,
+      1.0,
       -detJxW );
 
     if( m_gravityAcceleration > 0.0 )
@@ -372,7 +371,7 @@ public:
         stack.dLocalResidualMomentum_dPressure,
         N,
         dBodyForce_dPressure,
-        Np,
+        1.0,
         detJxW );
     }
 
@@ -382,7 +381,7 @@ public:
                                   DifferentialOperator::Identity >
     (
       stack.localResidualMass,
-      Np,
+      1.0,
       fluidMassContentIncrement,
       detJxW );
 
@@ -393,7 +392,7 @@ public:
                                     DifferentialOperator::Divergence >
     (
       stack.dLocalResidualMass_dDisplacement,
-      Np,
+      1.0,
       dFluidMassContent_dVolStrainIncrement,
       dNdX,
       detJxW );
@@ -405,9 +404,9 @@ public:
                                     DifferentialOperator::Identity >
     (
       stack.dLocalResidualMass_dPressure,
-      Np,
+      1.0,
       dFluidMassContent_dPressure,
-      Np,
+      1.0,
       detJxW );
   }
 

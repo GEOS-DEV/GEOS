@@ -300,7 +300,7 @@ public:
     real64 dComponentMassContent_dComponents[numMaxComponents][numMaxComponents]{};
     real64 poreVolumeConstraint;
     real64 dPoreVolumeConstraint_dPressure;
-    real64 dPoreVolumeConstraint_dComponents[numMaxComponents]{};
+    real64 dPoreVolumeConstraint_dComponents[1][numMaxComponents]{};
 
     // Displacement finite element basis functions (N), basis function derivatives (dNdX), and
     // determinant of the Jacobian transformation matrix times the quadrature weight (detJxW)
@@ -388,8 +388,6 @@ public:
     // --- dBodyForce_dVoldStrain derivative neglected
 
     // Compute local linear momentum balance residual derivatives with respect to pressure
-    real64 Np[1] = { 1.0 };
-
     BilinearFormUtilities::compute< displacementTestSpace,
                                     pressureTrialSpace,
                                     DifferentialOperator::SymmetricGradient,
@@ -398,7 +396,7 @@ public:
       stack.dLocalResidualMomentum_dPressure,
       dNdX,
       dTotalStress_dPressure,
-      Np,
+      1.0,
       -detJxW );
 
     if( m_gravityAcceleration > 0.0 )
@@ -410,47 +408,84 @@ public:
     }
 
     // --- Mass balance equations
-    // --- --- loop over components
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      // Local component mass balance residual
-      stack.localResidualMass[ic] = stack.localResidualMass[ic]
-                                    + componentMassContentIncrement[ic] * detJxW;
+    // --- --- Local component mass balance residual
+    LinearFormUtilities::compute< FunctionSpace::P0,
+                                  DifferentialOperator::Identity >
+    (
+      stack.localResidualMass,
+      1.0,
+      componentMassContentIncrement,
+      detJxW );
 
-      // Compute local mass balance residual derivatives with respect to displacement
-      for( integer a = 0; a < numNodesPerElem; ++a )
-      {
-        stack.dLocalResidualMass_dDisplacement[ic][a*3+0] = stack.dLocalResidualMass_dDisplacement[ic][a*3+0]
-                                                            + dNdX[a][0] * dComponentMassContent_dVolStrainIncrement[ic] * detJxW;
-        stack.dLocalResidualMass_dDisplacement[ic][a*3+1] = stack.dLocalResidualMass_dDisplacement[ic][a*3+1]
-                                                            + dNdX[a][1] * dComponentMassContent_dVolStrainIncrement[ic] * detJxW;
-        stack.dLocalResidualMass_dDisplacement[ic][a*3+2] = stack.dLocalResidualMass_dDisplacement[ic][a*3+2]
-                                                            + dNdX[a][2] * dComponentMassContent_dVolStrainIncrement[ic] * detJxW;
-      }
+    // --- --- Compute local mass balance residual derivatives with respect to displacement
+    BilinearFormUtilities::compute< FunctionSpace::P0,
+                                    displacementTestSpace,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Divergence >
+    (
+      stack.dLocalResidualMass_dDisplacement,
+      1.0,
+      dComponentMassContent_dVolStrainIncrement,
+      dNdX,
+      detJxW );
 
-      // Compute local mass balance residual derivatives with respect to pressure
-      stack.dLocalResidualMass_dPressure[ic][0] = stack.dLocalResidualMass_dPressure[ic][0]
-                                                  + dComponentMassContent_dPressure[ic] * detJxW;
+    // --- --- Compute local mass balance residual derivatives with respect to pressure
+    BilinearFormUtilities::compute< FunctionSpace::P0,
+                                    FunctionSpace::P0,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
+    (
+      stack.dLocalResidualMass_dPressure,
+      1.0,
+      dComponentMassContent_dPressure,
+      1.0,
+      detJxW );
 
-      // Compute local mass balance residual derivatives with respect to components
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        stack.dLocalResidualMass_dComponents[ic][jc] = stack.dLocalResidualMass_dComponents[ic][jc]
-                                                       + dComponentMassContent_dComponents[ic][jc] * detJxW;
-      }
-    }
+    // --- --- Compute local mass balance residual derivatives with respect to components
+    BilinearFormUtilities::compute< FunctionSpace::P0,
+                                    FunctionSpace::P0,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
+    (
+      stack.dLocalResidualMass_dComponents,
+      1.0,
+      dComponentMassContent_dComponents,
+      1.0,
+      detJxW );
 
-    // --- Volume balance equation
-    // sum contributions to component accumulation from each phase
-    stack.localPoreVolumeConstraint[0] = stack.localPoreVolumeConstraint[0]
-                                         + poreVolumeConstraint * detJxW;
-    stack.dLocalPoreVolumeConstraint_dPressure[0][0] = stack.dLocalPoreVolumeConstraint_dPressure[0][0]
-                                                       + dPoreVolumeConstraint_dPressure * detJxW;
-    for( localIndex jc = 0; jc < NC; ++jc )
-    {
-      stack.dLocalPoreVolumeConstraint_dComponents[0][jc] = stack.dLocalPoreVolumeConstraint_dComponents[0][jc]
-                                                            + dPoreVolumeConstraint_dComponents[jc] * detJxW;
-    }
+    // --- Pore volume constraint equation
+    // --- --- Local pore volume contraint residual
+    LinearFormUtilities::compute< FunctionSpace::P0,
+                                  DifferentialOperator::Identity >
+    (
+      stack.localPoreVolumeConstraint,
+      1.0,
+      poreVolumeConstraint,
+      detJxW );
+
+    // --- --- Compute local pore volume contraint residual derivatives with respect to pressure
+    BilinearFormUtilities::compute< FunctionSpace::P0,
+                                    FunctionSpace::P0,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
+    (
+      stack.dLocalPoreVolumeConstraint_dPressure,
+      1.0,
+      dPoreVolumeConstraint_dPressure,
+      1.0,
+      detJxW );
+
+    // --- --- Compute local pore volume contraint residual derivatives with respect to components
+    BilinearFormUtilities::compute< FunctionSpace::P0,
+                                    FunctionSpace::P0,
+                                    DifferentialOperator::Identity,
+                                    DifferentialOperator::Identity >
+    (
+      stack.dLocalPoreVolumeConstraint_dComponents,
+      1.0,
+      dPoreVolumeConstraint_dComponents,
+      1.0,
+      detJxW );
   }
 
   /**

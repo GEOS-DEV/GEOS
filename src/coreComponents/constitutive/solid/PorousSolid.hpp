@@ -185,7 +185,7 @@ public:
                                     DiscretizationOps & stiffness,
                                     real64 & poreVolumeConstraint,
                                     real64 (&dPoreVolumeConstraint_dPressure ),
-                                    real64 (& dPoreVolumeConstraint_dComponents )[NUM_MAX_COMPONENTS] ) const
+                                    real64 (& dPoreVolumeConstraint_dComponents )[1][NUM_MAX_COMPONENTS] ) const
   {
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
@@ -311,10 +311,10 @@ public:
       }
     }
 
-    // --- Volume balance equation
+    // --- Pore volume constraint
     poreVolumeConstraint = 1.0;
     dPoreVolumeConstraint_dPressure = 0.0;
-    LvArray::tensorOps::fill< NUM_MAX_COMPONENTS >( dPoreVolumeConstraint_dComponents, 0.0 );
+    LvArray::tensorOps::fill< 1, NUM_MAX_COMPONENTS >( dPoreVolumeConstraint_dComponents, 0.0 );
     for( localIndex ip = 0; ip < NP; ++ip )
     {
       poreVolumeConstraint = poreVolumeConstraint - fluidPhaseSaturation( ip );
@@ -324,8 +324,8 @@ public:
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
-        dPoreVolumeConstraint_dComponents[jc] = dPoreVolumeConstraint_dComponents[jc]
-                                                - dFluidPhaseSaturation_dGlobalCompDensity( ip, jc )  * porosity;
+        dPoreVolumeConstraint_dComponents[0][jc] = dPoreVolumeConstraint_dComponents[0][jc]
+                                                   - dFluidPhaseSaturation_dGlobalCompDensity( ip, jc )  * porosity;
       }
     }
     poreVolumeConstraint = poreVolumeConstraint * porosity;

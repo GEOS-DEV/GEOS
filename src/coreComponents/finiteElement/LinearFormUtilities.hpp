@@ -39,13 +39,28 @@ struct Helper< PDEUtilities::FunctionSpace::P0,
   template< int numTestDOF >
   GEOSX_HOST_DEVICE
   void static compute( real64 (& vec)[numTestDOF],
-                       real64 const (&Nv)[numTestDOF],
+                       real64 const & Nv,
                        real64 const A,
                        real64 const weight )
   {
+    GEOSX_UNUSED_VAR( Nv );
     for( int a = 0; a < numTestDOF; ++a )
     {
-      vec[a] = vec[a] + Nv[a] * A * weight;
+      vec[a] = vec[a] + A * weight;
+    }
+  }
+
+  template< int numTestDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& vec)[numTestDOF],
+                       real64 const & Nv,
+                       real64 const A[numTestDOF],
+                       real64 const weight )
+  {
+    GEOSX_UNUSED_VAR( Nv );
+    for( int a = 0; a < numTestDOF; ++a )
+    {
+      vec[a] = vec[a] + A[a] * weight;
     }
   }
 };
