@@ -7,7 +7,7 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Temperature"
-      targetRegions="{ Region1 }">
+      targetRegions="{ mesh1/Region1 }">
       <LinearSolverParameters
         directParallel="0"/>
     </LaplaceFEM>

@@ -9,7 +9,6 @@ FaceManager                 node    :ref:`DATASTRUCTURE_FaceManager`
 edgeManager                 node    :ref:`DATASTRUCTURE_edgeManager`                 
 embeddedSurfacesEdgeManager node    :ref:`DATASTRUCTURE_embeddedSurfacesEdgeManager` 
 embeddedSurfacesNodeManager node    :ref:`DATASTRUCTURE_embeddedSurfacesNodeManager` 
-finiteVolumeStencils        node    :ref:`DATASTRUCTURE_finiteVolumeStencils`        
 nodeManager                 node    :ref:`DATASTRUCTURE_nodeManager`                 
 =========================== ======= ================================================ 
 

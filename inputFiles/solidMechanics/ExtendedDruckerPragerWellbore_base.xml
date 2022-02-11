@@ -118,7 +118,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Omega }"
-      solidMaterialNames="{ rock }">
+      >
       <LinearSolverParameters
         directParallel="0"/>
       <NonlinearSolverParameters

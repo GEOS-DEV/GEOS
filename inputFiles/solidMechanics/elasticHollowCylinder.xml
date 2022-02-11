@@ -10,8 +10,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region1 }"
-      solidMaterialNames="{ steel }">
+      targetRegions="{ Region1 }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"

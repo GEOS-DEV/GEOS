@@ -230,17 +230,14 @@ public:
    * @param subRegion the well subRegion containing the well elements and their associated fields
    * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion, localIndex const targetIndex ) = 0;
+  virtual void updateSubRegionState( MeshLevel const & meshLevel,
+                                     WellElementSubRegion & subRegion ) = 0;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh reference to the mesh
    */
-  virtual void backupFields( MeshLevel & mesh ) const = 0;
-
-  arrayView1d< string const > const fluidModelNames() const { return m_fluidModelNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
+  virtual void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const = 0;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -254,6 +251,9 @@ private:
    * @param domain the domain parition
    */
   void precomputeData( DomainPartition & domain );
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
 
 protected:
   virtual void postProcessInput() override;
@@ -276,9 +276,6 @@ protected:
 
   /// name of the flow solver
   string m_flowSolverName;
-
-  /// names of the fluid constitutive models
-  array1d< string > m_fluidModelNames;
 
   /// the number of Degrees of Freedom per well element
   integer m_numDofPerWellElement;

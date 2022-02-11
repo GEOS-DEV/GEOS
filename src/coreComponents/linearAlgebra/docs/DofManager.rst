@@ -48,16 +48,12 @@ Methods
 
 The main methods of ``DoF Manager`` are:
 
-* ``setMesh``: sets which portion of the mesh the DoF manager instance is
-  referring to.
-  ``domain`` identifies the global mesh, while ``meshLevelIndex`` and
-  ``meshBodyIndex`` determine the specific level and body, respectively.
+* ``setDomain``: sets the domain containing mesh bodies to operate on
+  ``domain`` identifies the global domain
 
  .. code-block:: c
 
-  void setMesh( DomainPartition * const domain,
-                localIndex const meshLevelIndex = 0,
-                localIndex const meshBodyIndex = 0 );
+  void setDomain( DomainPartition * const domain );
 
 * ``addField``: creates a new set of DoF, labeled ``field``, with specific
   ``location``.

@@ -529,10 +529,7 @@ private:
   /// choice of failure criterion
   integer m_failCriterion=1;
 
-  // solid solver name
-  array1d< string > m_solidMaterialNames;
-
-  localIndex m_solidMaterialFullIndex;
+  array1d< localIndex > m_solidMaterialFullIndex;
 
   int m_nodeBasedSIF;
 

@@ -97,8 +97,6 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{Region2, void, Fracture}"
-      solidMaterialNames="{rock}"
-      contactRelationName="fractureContact"
       >
       <NonlinearSolverParameters newtonTol="1.0e-6"
                                  newtonMaxIter="5"/>
@@ -115,9 +113,6 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0"
       >
       <NonlinearSolverParameters newtonTol="1.0e-5"
@@ -136,7 +131,6 @@
       fractureRegion="Fracture"
       targetRegions="{Region2, void}"
       nodeBasedSIF="1"
-      solidMaterialNames="{rock}"
       rockToughness="3.0e6"
       >
     </SurfaceGenerator>
@@ -264,9 +258,7 @@
     </FiniteElements>
 
     <FiniteVolume>
-      <TwoPointFluxApproximation name="singlePhaseTPFA"
-                                 fieldName="pressure"
-                                 coefficientName="permeability"/>
+      <TwoPointFluxApproximation name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

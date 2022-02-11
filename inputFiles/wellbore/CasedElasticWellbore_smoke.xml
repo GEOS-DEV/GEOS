@@ -35,8 +35,7 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       logLevel="0"
-      targetRegions="{ casing, cement, rock }"
-      solidMaterialNames="{ casing, cement, rock }">
+      targetRegions="{ casing, cement, rock }">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-9"

@@ -6,7 +6,6 @@
       name="PoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="SinglePhaseFlowSolver"
-      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -20,17 +19,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }"/>
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="SinglePhaseFlowSolver"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }"
-      fluidNames="{ fluid }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ skeletonPerm }"/>
+      targetRegions="{ Domain }"/>
   </Solvers>
 
   <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -46,10 +41,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ skeletonPerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
