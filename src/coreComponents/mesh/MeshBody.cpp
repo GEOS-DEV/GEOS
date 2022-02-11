@@ -30,6 +30,7 @@ MeshBody::MeshBody( string const & name,
   m_globalLengthScale( 0 )
 {
   registerGroup< CellBlockManager >( keys::cellManager );
+  registerGroup< ParticleBlockManager >( keys::particleManager );
 }
 
 MeshBody::~MeshBody()
