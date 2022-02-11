@@ -6,11 +6,6 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
-      capPressureNames="{ cappres }"
       temperature="368.15"
       useMass="1"
       computeCFLNumbers="1"
@@ -104,9 +99,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
