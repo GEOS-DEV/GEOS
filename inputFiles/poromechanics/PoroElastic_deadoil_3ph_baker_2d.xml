@@ -7,7 +7,6 @@
       name="MultiphasePoroelasticitySolver"
       solidSolverName="LinearElasticitySolver"
       fluidSolverName="TwoPhaseFlowSolver"
-      porousMaterialNames="{ porousRock }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -24,18 +23,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ skeleton }"/>
+      targetRegions="{ Domain }"/>
 
     <CompositionalMultiphaseFVM
       name="TwoPhaseFlowSolver"
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Domain }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ porousRock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"/>
   </Solvers>
 
@@ -103,9 +97,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

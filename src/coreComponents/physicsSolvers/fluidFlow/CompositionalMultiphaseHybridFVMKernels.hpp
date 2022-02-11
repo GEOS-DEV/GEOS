@@ -595,15 +595,16 @@ struct FluxKernel
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseMassDensity,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseCompFraction,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseMassDensity,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
 
   /**
