@@ -173,16 +173,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
         setRegisteringObjects( this->getName());
 
 
-      subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
-        setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
-
-      string & contactRelationName = subRegion.getReference<string>( viewKeyStruct::contactRelationNameString() );
-//      solidName = getConstitutiveName< CoupledSolidBase >( subRegion );
-      contactRelationName = this->m_contactRelationName;
-      GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
-
 
     } );
 
@@ -195,6 +185,19 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
   } );
 }
+
+void LagrangianContactSolver::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  subRegion.registerWrapper< string >( viewKeyStruct::contactRelationNameString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & contactRelationName = subRegion.getReference< string >( viewKeyStruct::contactRelationNameString() );
+  contactRelationName = this->m_contactRelationName;
+  GEOSX_ERROR_IF( contactRelationName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+}
+
 
 void LagrangianContactSolver::initializePreSubGroups()
 {
@@ -233,7 +236,7 @@ void LagrangianContactSolver::initializePreSubGroups()
                                                                                        localIndex const,
                                                                                        localIndex const,
                                                                                        ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const &  )
+                                                                                       ElementSubRegionBase const & )
       {
         coeffModelNames[region.getName()] = viewKeyStruct::contactRelationNameString();//permName;
         stencilTargetRegionsSet.insert( region.getName() );
@@ -377,12 +380,13 @@ void LagrangianContactSolver::computeTolerances( DomainPartition & domain ) cons
       elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::bulkModulusString() );
     // Shear modulus accessor
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const shearModulus =
-      elemManager.constructMaterialViewAccessor<ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
+      elemManager.constructMaterialViewAccessor< ElasticIsotropic, array1d< real64 >, arrayView1d< real64 const > >( ElasticIsotropic::viewKeyStruct::shearModulusString() );
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
-      elemManager.constructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+      elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
     ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
+
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -1837,7 +1841,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
 
     using NodeMapViewType = arrayView2d< localIndex const, cells::NODE_MAP_USD >;
     ElementRegionManager::ElementViewAccessor< NodeMapViewType > const elemToNode =
-      elemManager.constructViewAccessor< CellBlock::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+      elemManager.constructViewAccessor< CellElementSubRegion::NodeMapType, NodeMapViewType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
     ElementRegionManager::ElementViewConst< NodeMapViewType > const elemToNodeView = elemToNode.toNestedViewConst();
 
     arrayView1d< globalIndex const > const & tracDofNumber = fractureSubRegion.getReference< globalIndex_array >( tracDofKey );

@@ -19,13 +19,15 @@
 #ifndef GEOSX_MESH_FACEMANAGER_HPP_
 #define GEOSX_MESH_FACEMANAGER_HPP_
 
-#include "ToElementRelation.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "ToElementRelation.hpp"
 
 namespace geosx
 {
 
 class NodeManager;
+class EdgeManager;
 class ElementRegionManager;
 class CellElementSubRegion;
 
@@ -73,16 +75,20 @@ public:
   /**
    * @brief Get the default number of node per face in node list
    * @return the default number of node per face in node list
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  static localIndex nodeMapExtraSpacePerFace()
-  { return 4; }
+  static constexpr localIndex nodeMapExtraSpacePerFace()
+  { return CellBlockManagerABC::nodeMapExtraSpacePerFace(); }
 
   /**
    * @brief Get the default number of edge per face in edge list
    * @return the default number of edge per face in edge list
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  static localIndex edgeMapExtraSpacePerFace()
-  { return 4; }
+  static constexpr localIndex edgeMapExtraSpacePerFace()
+  { return CellBlockManagerABC::edgeMapExtraSpacePerFace(); }
 
   /**
    * @name Constructors/destructor
@@ -127,17 +133,51 @@ public:
   virtual void resize( localIndex const newsize ) override;
 
   /**
-   * @brief Build faces in filling face-to-node and face-to-element mappings.
-   * @param[in] nodeManager mesh node manager
-   * @param[in] elemManager element manager
+   * @brief Builds the faces to regions and faces to sub-regions mappings.
+   * @param [in] elementRegionManager the ElementRegionManager.
+   *
+   * @note Requires the sub-regions of the @p elementRegionManager to be fully defined.
+   * As well as the faces to elements mappings of the @p FaceManager.
    */
-  void buildFaces( NodeManager & nodeManager, ElementRegionManager & elemManager );
+  void buildRegionMaps( ElementRegionManager const & elementRegionManager );
+
+  /**
+   * @brief Copies the nodes positions and the faces to (nodes|edges|elements) mappings from @p cellBlockManager.
+   * Computes the faces center, area and normal too.
+   * @param[in] cellBlockManager Provides the mappings.
+   * @param[in] nodeManager Provides the nodes positions.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
+                                NodeManager const & nodeManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param[in] nodeManager The node manager instance.
+   * @param[in] edgeManager The edge manager instance.
+   * @param[in] elementRegionManager The element region manager instance.
+   */
+  void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                       EdgeManager const & edgeManager,
+                                       ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compute faces center, area and normal.
    * @param[in] nodeManager NodeManager associated with the current DomainPartition
    */
   void computeGeometry( NodeManager const & nodeManager );
+
+  /**
+   * @brief Builds the face-on-domain-boundary indicator.
+   * @note Based on the face to element region mapping that must be defined.
+   * @see ObjectManagerBase::getDomainBoundaryIndicator()
+   */
+  void setDomainBoundaryObjects();
+
+  /**
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
+   */
+  void buildSets( NodeManager const & nodeManager );
 
   /**
    * @brief Return the number of nodes of the faces with the greatest number of nodes.
@@ -164,12 +204,6 @@ public:
                       arraySlice1d< real64 const > const elementCenter,
                       localIndex * const faceNodes,
                       localIndex const numFaceNodes );
-
-  /**
-   * @brief Flag face and nodes'face with at least one element on the boundary.
-   * @param[in] nodeManager manager of mesh nodes
-   */
-  void setDomainBoundaryObjects( NodeManager & nodeManager );
 
   /**
    * @brief Flag faces on boundary or external to the DomainPartition.
@@ -302,12 +336,6 @@ public:
   ///@{
 
   /**
-   * @brief Get the constant upper limit for number of faces per Node.
-   * @return constant expression of the max number of faces per node
-   */
-  constexpr int maxFacesPerNode() const { return 200; }
-
-  /**
    * @brief Get a mutable accessor to a table containing all the face area.
    * @details this table is mutable so it can be used to compute
    * or modify the face area in this FaceManager
@@ -368,36 +396,54 @@ public:
   /**
    * @brief Get a mutable accessor to the faces-to-ElementRegion relation.
    * @return non-const reference to faces-to-ElementRegion relation
+   * @copydetails FaceManager::elementList()
    */
   array2d< localIndex > const & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementRegion relation.
    * @return const reference to nodes-to-ElementRegion relation
+   * @copydetails FaceManager::elementList()
    */
   arrayView2d< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-ElementSubRegion relation.
    * @return non-const reference to faces-to-ElementSubRegion relation
+   * @copydetails FaceManager::elementList()
    */
   array2d< localIndex > const & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get an immutable accessor to the faces-to-ElementSubRegion relation.
    * @return const reference to faces-to-ElementSubRegion relation
+   * @copydetails FaceManager::elementList()
    */
   arrayView2d< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Get a mutable accessor to the faces-to-element-index relation.
    * @return non-const reference to faces-to-element-index relation
+   * @details There is an implicit convention here.\n\n
+   * @p elementList binds a face index to two elements indices,
+   * like <tt>f -> (e0, e1)</tt>.
+   * @p elementRegionList and @p elementSubRegionList
+   * respectively bind face index to the regions/sub-regions:
+   * <tt>f -> (er0, er1)</tt> and <tt>f -> (esr0, esr1)</tt>.\n\n
+   * It is assumed in the code that triplets obtained at indices @p 0 and @p 1 of all these pairs,
+   * (respectively <tt>(e0, er0, esr0)</tt> and <tt>(e1, er1, esr1))</tt>,
+   * are consistent. @p e0 should belong to both @p er0 and @p esr0. @p e1 should belong to both @p er1 and @p esr1.\n\n
+   * In particular, any mismatch like @a (e.g.) <tt>f -> (e0, e1)</tt> and
+   * <tt>f -> (er1, er0)</tt> will probably result in a bug.
+   * @warning @p e, @p er or @p esr will equal -1 if undefined.
+   * @see geosx::NodeManager::elementList that shares the same kind of pattern.
    */
   array2d< localIndex > const & elementList() { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Get an imutable accessor to the faces-to-element-index relation.
    * @return const reference to faces-to-elements relation
+   * @copydetails FaceManager::elementList()
    */
   arrayView2d< localIndex const > elementList() const { return m_toElements.m_toElementIndex; }
 

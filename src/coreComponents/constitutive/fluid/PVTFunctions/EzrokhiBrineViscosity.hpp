@@ -136,7 +136,6 @@ private:
   /// Table with water viscosity tabulated as a function (T)
   TableFunction const * m_waterViscosityTable;
 
-
   /// Index of the CO2 phase
   integer m_CO2Index;
 

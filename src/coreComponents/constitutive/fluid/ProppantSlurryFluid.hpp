@@ -42,9 +42,9 @@ public:
    * @param referenceDensity
    * @param referenceViscosity
    * @param maxProppantConcentration
-   * @param defaultDensity
+   * @param defaultComponentDensity
    * @param defaultCompressibility
-   * @param defaultViscosity
+   * @param defaultComponentViscosity
    * @param nIndices
    * @param Ks
    * @param isNewtonianFluid
@@ -72,9 +72,9 @@ public:
                              real64 const referenceDensity,
                              real64 const referenceViscosity,
                              real64 const maxProppantConcentration,
-                             arrayView1d< real64 const > const & defaultDensity,
+                             arrayView1d< real64 const > const & defaultComponentDensity,
                              arrayView1d< real64 const > const & defaultCompressibility,
-                             arrayView1d< real64 const > const & defaultViscosity,
+                             arrayView1d< real64 const > const & defaultComponentViscosity,
                              arrayView1d< real64 const > const & nIndices,
                              arrayView1d< real64 const > const & Ks,
                              bool const isNewtonianFluid,
@@ -95,9 +95,9 @@ public:
                              arrayView2d< real64 > const & dVisc_dPres,
                              arrayView2d< real64 > const & dVisc_dProppantConc,
                              arrayView3d< real64 > const & dVisc_dCompConc )
-    : SlurryFluidBaseUpdate( defaultDensity,
+    : SlurryFluidBaseUpdate( defaultComponentDensity,
                              defaultCompressibility,
-                             defaultViscosity,
+                             defaultComponentViscosity,
                              nIndices,
                              Ks,
                              isNewtonianFluid,
@@ -163,13 +163,13 @@ public:
              m_dFluidVisc_dCompConc[k][q],
              isProppantBoundary,
              m_density[k][q],
-             m_dDens_dPres[k][q],
-             m_dDens_dProppantConc[k][q],
-             m_dDens_dCompConc[k][q],
+             m_dDensity_dPressure[k][q],
+             m_dDensity_dProppantConc[k][q],
+             m_dDensity_dCompConc[k][q],
              m_viscosity[k][q],
-             m_dVisc_dPres[k][q],
-             m_dVisc_dProppantConc[k][q],
-             m_dVisc_dCompConc[k][q] );
+             m_dViscosity_dPressure[k][q],
+             m_dViscosity_dProppantConc[k][q],
+             m_dViscosity_dCompConc[k][q] );
   }
 
   GEOSX_HOST_DEVICE
@@ -307,7 +307,7 @@ public:
 
   // *** Data repository keys
 
-  struct viewKeyStruct : public SlurryFluidBase::viewKeyStruct
+  struct viewKeyStruct
   {
     static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
@@ -316,6 +316,21 @@ public:
     static constexpr char const * maxProppantConcentrationString() { return "maxProppantConcentration"; }
     static constexpr char const * referenceViscosityString() { return "referenceViscosity"; }
   };
+
+  /**
+   * @brief get the default value for the density. For the proppant, we employ the reference value
+   * as default.
+   *
+   * @return the default density value;
+   */
+  real64 defaultDensity() const override final {return m_referenceDensity; };
+  /**
+   * @brief get the default value for the density. For the proppant, we employ the reference value
+   * as default.
+   *
+   * @return the default viscosity value;
+   */
+  real64 defaultViscosity() const override final {return m_referenceViscosity; };
 
 protected:
 
@@ -363,10 +378,10 @@ ProppantSlurryFluidUpdate::
 
   for( localIndex c = 0; c < NC; ++c )
   {
-    real64 const density = m_defaultDensity[c] * exp( m_defaultCompressibility[c] * (pressure - m_referencePressure));
+    real64 const density = m_defaultComponentDensity[c] * exp( m_defaultComponentCompressibility[c] * (pressure - m_referencePressure));
 
     componentDensity[c] = componentConcentration[c] * density;
-    dComponentDensity_dPressure[c] = m_defaultCompressibility[c] * componentDensity[c];
+    dComponentDensity_dPressure[c] = m_defaultComponentCompressibility[c] * componentDensity[c];
 
     for( localIndex i = 0; i < NC; ++i )
     {
@@ -399,10 +414,10 @@ ProppantSlurryFluidUpdate::
 
   for( localIndex c = 0; c < NC; ++c )
   {
-    real64 const density = m_defaultDensity[c] * exp( m_defaultCompressibility[c] * (pressure - m_referencePressure));
+    real64 const density = m_defaultComponentDensity[c] * exp( m_defaultComponentCompressibility[c] * (pressure - m_referencePressure));
 
     componentDensity[c] = componentConcentration[c] * density;
-    dComponentDensity_dPressure[c] = m_defaultCompressibility[c] * componentDensity[c];
+    dComponentDensity_dPressure[c] = m_defaultComponentCompressibility[c] * componentDensity[c];
 
     for( localIndex i = 0; i < NC; ++i )
     {
@@ -437,11 +452,11 @@ ProppantSlurryFluidUpdate::
 
   for( localIndex c1 = 0; c1 < NC; ++c1 )
   {
-    fluidViscosity += componentDensity[c1] / fluidDensity * (m_defaultViscosity[c1] - m_referenceViscosity);
+    fluidViscosity += componentDensity[c1] / fluidDensity * (m_defaultComponentViscosity[c1] - m_referenceViscosity);
 
     dFluidViscosity_dPressure +=
       (dComponentDensity_dPressure[c1] / fluidDensity - componentDensity[c1] / fluidDensity / fluidDensity * dFluidDensity_dPressure) *
-      (m_defaultViscosity[c1] - m_referenceViscosity);
+      (m_defaultComponentViscosity[c1] - m_referenceViscosity);
   }
 }
 

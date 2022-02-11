@@ -46,7 +46,6 @@ if read_the_docs_build:
                   "coreComponents/LvArray/src",
                   "coreComponents/mesh",
                   "coreComponents/managers",
-                  "coreComponents/meshUtilities",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/ExtrinsicMeshData.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",

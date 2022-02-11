@@ -19,8 +19,9 @@
 #ifndef GEOSX_MESH_EDGEMANAGER_HPP_
 #define GEOSX_MESH_EDGEMANAGER_HPP_
 
-#include "InterObjectRelation.hpp"
 #include "mesh/ObjectManagerBase.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
+#include "InterObjectRelation.hpp"
 #include "ToElementRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -29,8 +30,6 @@ namespace geosx
 {
 class FaceManager;
 class NodeManager;
-class CellBlockManager;
-
 
 /**
  * @class EdgeManager
@@ -73,9 +72,11 @@ public:
   /**
    * @brief Oversize the Face mapping by this amount for each edge (hardcoded)
    * @return extra space for each edge of the EdgetoFace map
+   *
+   * @note Value forwarding is due to refactoring.
    */
   static localIndex faceMapExtraSpacePerEdge()
-  { return 4; }
+  { return CellBlockManagerABC::faceMapExtraSpacePerEdge(); }
 
   /**
    * @name Constructors/destructors
@@ -107,9 +108,9 @@ public:
 
   /**
    * @brief Set the node of the domain boundary object.
-   * @param[in] referenceObject the reference of the face manager.
+   * @param[in] faceManager The reference of the face manager.
    */
-  void setDomainBoundaryObjects( FaceManager const & referenceObject );
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
 
   /**
    * @brief Set external edges.
@@ -119,11 +120,27 @@ public:
   void setIsExternal( FaceManager const & faceManager );
 
   /**
-   * @brief Build faces-to-edges and nodes-to-edges relation maps.
-   * @param[in] nodeManager manager of all nodes in the DomainPartition
-   * @param[in] faceManager manager of all faces in the DomainPartition
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
    */
-  void buildEdges( NodeManager & nodeManager, FaceManager & faceManager );
+  void buildSets( NodeManager const & nodeManager );
+
+  /**
+   * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
+   * @param[in] cellBlockManager Provides the mappings.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param[in] nodeManager The node manager instance.
+   * @param[in] faceManager The face manager instance.
+   *
+   * @note the @p EdgeManager do not hold any information related to the regions nor to the elements.
+   * This is why the element region manager is not provided.
+   */
+  void setupRelatedObjectsInRelations( NodeManager const & nodeManager,
+                                       FaceManager const & faceManager );
 
   /**
    * @brief Build faces-to-edges and nodes-to-edges relation maps.
@@ -289,8 +306,11 @@ public:
   /**
    * @brief Return the  maximum number of edges per node.
    * @return Maximum allowable number of edges connected to one node (hardcoded for now)
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  constexpr int maxEdgesPerNode() const { return 200; }
+  static constexpr int maxEdgesPerNode()
+  { return CellBlockManagerABC::maxEdgesPerNode(); }
 
   /**
    * @name Getters for stored value.

@@ -28,6 +28,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
 /**
@@ -94,10 +95,6 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
-  FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
-  HybridMimeticDiscretization const & hmDiscretization = fvManager.getHybridMimeticDiscretization( m_discretizationName );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -114,9 +111,8 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
     // check that multipliers are stricly larger than 0, which would work with SinglePhaseFVM, but not with SinglePhaseHybridFVM.
     // To deal with a 0 multiplier, we would just have to skip the corresponding face in the FluxKernel
-    string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
     arrayView1d< real64 const > const & transMultiplier =
-      faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
+      faceManager.getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString() );
 
     RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
     forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
@@ -192,7 +188,7 @@ void SinglePhaseHybridFVM::implicitStepComplete( real64 const & time_n,
   // increment the face fields
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const &  )
+                                                arrayView1d< string const > const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
@@ -291,9 +287,10 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
       faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
 
     // get the face-centered transMultiplier
-    string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString() );
+    //    string const & coeffName = hmDiscretization.getReference< string >( HybridMimeticDiscretization::viewKeyStruct::coeffNameString()
+    // );
     arrayView1d< real64 const > const & transMultiplier =
-      faceManager.getReference< array1d< real64 > >( coeffName + HybridMimeticDiscretization::viewKeyStruct::transMultiplierString() );
+      faceManager.getReference< array1d< real64 > >( viewKeyStruct::transMultiplierString() );
 
     // get the face-to-nodes connectivity for the transmissibility calculation
     ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
@@ -304,6 +301,10 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
 
     // tolerance for transmissibility calculation
     real64 const lengthTolerance = domain.getMeshBody( 0 ).getGlobalLengthScale() * m_areaRelTol;
+
+    StencilAccessors< extrinsicMeshData::flow::mobility,
+                      extrinsicMeshData::flow::dMobility_dPressure >
+    flowAccessors( mesh.getElemManager(), getName() );
 
     mesh.getElemManager().forElementSubRegionsComplete< CellElementSubRegion >( regionNames,
                                                                                 [&]( localIndex const,
@@ -344,8 +345,8 @@ void SinglePhaseHybridFVM::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( t
                                                      dFacePres,
                                                      faceGravCoef,
                                                      transMultiplier,
-                                                     m_mobility.toNestedViewConst(),
-                                                     m_dMobility_dPres.toNestedViewConst(),
+                                                     flowAccessors.get( extrinsicMeshData::flow::mobility{} ),
+                                                     flowAccessors.get( extrinsicMeshData::flow::dMobility_dPressure{} ),
                                                      elemDofNumber.toNestedViewConst(),
                                                      dofManager.rankOffset(),
                                                      lengthTolerance,
@@ -458,6 +459,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
+    StencilAccessors< extrinsicMeshData::elementVolume > flowAccessors( mesh.getElemManager(), getName() );
     FaceManager const & faceManager = mesh.getFaceManager();
 
     mesh.getElemManager().forElementSubRegions< ElementSubRegionBase >( regionNames, [&]( localIndex const,
@@ -512,10 +514,9 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                                                      elemRegionList.toNestedViewConst(),
                                                                                      elemSubRegionList.toNestedViewConst(),
                                                                                      elemList.toNestedViewConst(),
-                                                                                     m_volume.toNestedViewConst(),
+                                                                                     flowAccessors.get( extrinsicMeshData::elementVolume{} ),
                                                                                      defaultViscosity,
                                                                                      &localResidualNorm[3] );
-
 
 
   } );

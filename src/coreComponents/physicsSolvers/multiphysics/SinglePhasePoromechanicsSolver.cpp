@@ -60,10 +60,6 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poromechanics solver" );
 
-  registerWrapper( viewKeyStruct::porousMaterialNamesString(), &m_porousMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "The name of the material that should be used in the constitutive updates" );
-
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
@@ -242,7 +238,7 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
                                                                   localRhs,
-                                                                  gravityVectorData, 
+                                                                  gravityVectorData,
                                                                   FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
     // Cell-based contributions

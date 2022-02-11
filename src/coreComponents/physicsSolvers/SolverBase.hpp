@@ -52,7 +52,8 @@ public:
 
   static string catalogName() { return "SolverBase"; }
 
-//  virtual void Registration( dataRepository::WrapperCollection& domain );
+
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
 
   virtual void initialize_postMeshGeneration() override;
@@ -588,8 +589,8 @@ public:
     for( auto const & target: m_meshTargets )
     {
       string const meshBodyName = target.first;
-      arrayView1d<string const> const & regionNames = target.second.toViewConst();
-      MeshBody const & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
       meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
       {
         lambda( meshBodyName, meshLevel, regionNames );
@@ -603,70 +604,14 @@ public:
     for( auto const & target: m_meshTargets )
     {
       string const meshBodyName = target.first;
-      arrayView1d<string const> const & regionNames = target.second.toViewConst();
-      MeshBody & meshBody = meshBodies.getGroup<MeshBody>(meshBodyName);
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
         lambda( meshBodyName, meshLevel, regionNames );
       } );
     }
   }
-
-//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-//  void forTargetRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-//  void forTargetRegions( MeshLevel & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementRegions< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-//  void forTargetRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename REGIONTYPE = ElementRegionBase, typename ... REGIONTYPES, typename LAMBDA >
-//  void forTargetRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementRegionsComplete< REGIONTYPE, REGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-//  void forTargetSubRegions( MeshLevel const & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-//  void forTargetSubRegions( MeshLevel & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-//  void forTargetSubRegionsComplete( MeshLevel const & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
-//
-//  template< typename SUBREGIONTYPE = ElementSubRegionBase, typename ... SUBREGIONTYPES, typename LAMBDA >
-//  void forTargetSubRegionsComplete( MeshLevel & mesh, LAMBDA && lambda ) const
-//  {
-//    mesh.getElemManager().
-//      template forElementSubRegionsComplete< SUBREGIONTYPE, SUBREGIONTYPES... >( targetRegionNames(), std::forward< LAMBDA >( lambda ) );
-//  }
 
   string getDiscretizationName() const {return m_discretizationName;}
 
@@ -678,8 +623,23 @@ protected:
                                  real64 const oldNewtonNorm,
                                  real64 const weakestTol );
 
+  /**
+   * @brief Get the Constitutive Name object
+   *
+   * @tparam CONSTITUTIVE_BASE_TYPE the base type of the constitutive model.
+   * @param subregion the element subregion on which the constitutive model is registered
+   * @return the name name of the constitutive model of type @p CONSTITUTIVE_BASE_TYPE registered on the @p subregion.
+   */
   template< typename CONSTITUTIVE_BASE_TYPE >
-  static string getConstitutiveName( ElementSubRegionBase const & );
+  static string getConstitutiveName( ElementSubRegionBase const & subRegion );
+
+  /**
+   * @brief This function sets constitutive name fields on an
+   *  ElementSubRegionBase, and calls the base function it overrides.
+   * @param subRegion The ElementSubRegionBase that will have constitutive
+   *  names set.
+   */
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -719,9 +679,21 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
+  /// Map containing the array of target regions (value) for each MeshBody (key).
   map< string, array1d< string > > m_meshTargets;
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;
+
+private:
+
+  /**
+   * @brief This function sets constitutive name fields on an
+   *  ElementSubRegionBase, and DOES NOT call the base function it overrides.
+   * @param subRegion The ElementSubRegionBase that will have constitutive
+   *  names set.
+   */
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+
 
 };
 

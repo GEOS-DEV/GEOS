@@ -124,7 +124,7 @@ TableFunction const * makeCO2EnthalpyTable( string_array const & inputParams,
     array1d< real64 > enthalpies( tableCoords.nPressures() * tableCoords.nTemperatures() );
 
 
-    SpanWagnerCO2Density::calculateCO2Density( tolerance, tableCoords, densities );
+    SpanWagnerCO2Density::calculateCO2Density( functionName, tolerance, tableCoords, densities );
 
     CO2Enthalpy::calculateCO2Enthalpy( tableCoords, densities, enthalpies );
 

@@ -92,7 +92,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 /**
  * @brief Unpack expected indices into a FixedToManyElementRelation.
  * @param buffer A buffer containing packed data.
- * @param var A relationship to unpack inot, maps the indices in the
+ * @param var A relationship to unpack into, maps the indices in the
  *            packList to a list of element information (region, subregion,
  *            and index). Where each index is related to the same number
  *            of regions.

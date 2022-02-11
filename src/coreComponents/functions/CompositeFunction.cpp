@@ -81,7 +81,7 @@ void CompositeFunction::initializeFunction()
 void CompositeFunction::evaluate( dataRepository::Group const & group,
                                   real64 const time,
                                   SortedArrayView< localIndex const > const & set,
-                                  real64_array & result ) const
+                                  arrayView1d< real64 > const & result ) const
 {
   // Evaluate each of the subFunctions independently and place the results into
   // a temporary field
@@ -94,7 +94,7 @@ void CompositeFunction::evaluate( dataRepository::Group const & group,
   }
 
   // Evaluate the symbolic math
-  forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
+  forAll< serialPolicy >( set.size(), [&, result, set]( localIndex const i )
   {
     localIndex const ii = set[ i ];
     real64 functionResults[m_maxNumSubFunctions];

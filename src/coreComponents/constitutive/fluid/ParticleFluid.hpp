@@ -209,7 +209,7 @@ public:
 
   // *** Data repository keys
 
-  struct viewKeyStruct : public ParticleFluidBase::viewKeyStruct
+  struct viewKeyStruct
   {
     static constexpr char const * fluidViscosityString() { return "fluidViscosity"; }
     static constexpr char const * proppantDiameterString() { return "proppantDiameter"; }
