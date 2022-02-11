@@ -20,6 +20,7 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
 #include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/ElementRegionManager.hpp"
@@ -165,10 +166,11 @@ struct PerforationKernel
                       extrinsicMeshData::flow::deltaPressure >;
 
   using SingleFluidAccessors =
-    StencilAccessors< extrinsicMeshData::singlefluid::density,
-                      extrinsicMeshData::singlefluid::dDensity_dPressure,
-                      extrinsicMeshData::singlefluid::viscosity,
-                      extrinsicMeshData::singlefluid::dViscosity_dPressure >;
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure,
+                              extrinsicMeshData::singlefluid::viscosity,
+                              extrinsicMeshData::singlefluid::dViscosity_dPressure >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -257,7 +259,8 @@ struct PresInitializationKernel
     StencilAccessors< extrinsicMeshData::flow::pressure >;
 
   using SingleFluidAccessors =
-    StencilAccessors< extrinsicMeshData::singlefluid::density >;
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
