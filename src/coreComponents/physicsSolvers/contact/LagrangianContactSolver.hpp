@@ -129,6 +129,8 @@ public:
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
+    static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
+
   };
 
   string const & getContactRelationName() const { return m_contactRelationName; }
@@ -149,6 +151,8 @@ private:
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
+                                
 public:
 
   bool setSimplestConfigurationState( DomainPartition & domain ) const override final;
