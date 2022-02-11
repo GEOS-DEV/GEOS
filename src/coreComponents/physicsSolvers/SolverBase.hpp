@@ -679,6 +679,7 @@ protected:
 
   std::function< void( CRSMatrix< real64, globalIndex >, array1d< real64 > ) > m_assemblyCallback;
 
+  /// Map containing the array of target regions (value) for each MeshBody (key).
   map< string, array1d< string > > m_meshTargets;
   /// List of names of regions the solver will be applied to
   array1d< string > m_targetRegionNames;

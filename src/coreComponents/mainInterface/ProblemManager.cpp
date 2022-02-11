@@ -413,33 +413,55 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
     MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
-    domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+
+
+    //   domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+    //   {
+    //     string const meshBodyName = meshBody.getName();
+    //     GEOSX_LOG_RANK_0( "MeshBody "<<meshBodyName );
+    //     ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
+
+    //     xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
+    //     for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+    //     {
+
+    //       string const regionName = regionNode.attribute( "name" ).value();
+    //       string const
+    //       regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
+    //                                                                   regionNode.attribute( "meshBody" ).value() );
+
+
+
+    //       string const cellBlocks = regionNode.attribute( "cellBlocks" ).value();
+
+    //       if( regionMeshBodyName==meshBodyName )
+    //       {
+    //         Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+    //         newRegion->processInputFileRecursive( regionNode );
+    //       }
+
+    //     }
+    //   } );
+    // }
+
+    Group & meshBodies = domain.getMeshBodies();
+    xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( MeshLevel::groupStructKeys::elemManagerString );
+
+    for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
     {
-      string const meshBodyName = meshBody.getName();
-      GEOSX_LOG_RANK_0( "MeshBody "<<meshBodyName );
-      ElementRegionManager & elementManager = meshBody.getMeshLevel( 0 ).getElemManager();
+      string const regionName = regionNode.attribute( "name" ).value();
+      string const
+      regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( meshBodies,
+                                                                  regionNode.attribute( "meshBody" ).value() );
 
-      xmlWrapper::xmlNode elementRegionsNode = xmlProblemNode.child( elementManager.getName().c_str());
-      for( xmlWrapper::xmlNode regionNode : elementRegionsNode.children() )
+      MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
-
-        string const regionName = regionNode.attribute( "name" ).value();
-        string const
-        regionMeshBodyName = ElementRegionBase::verifyMeshBodyName( domain.getMeshBodies(),
-                                                                    regionNode.attribute( "meshBody" ).value() );
-
-
-
-        string const cellBlocks = regionNode.attribute( "cellBlocks" ).value();
-
-        if( regionMeshBodyName==meshBodyName )
-        {
-          Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
-          newRegion->processInputFileRecursive( regionNode );
-        }
-
-      }
-    } );
+        ElementRegionManager & elementManager = meshLevel.getElemManager();
+        Group * newRegion = elementManager.createChild( regionNode.name(), regionName );
+        newRegion->processInputFileRecursive( regionNode );
+      } );
+    }
   }
 }
 
@@ -535,10 +557,10 @@ void ProblemManager::generateMesh()
   for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
+    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
     Group & meshLevels = meshBody.getMeshLevels();
     for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
     {
-      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
       MeshLevel & meshLevel = meshBody.getMeshLevel( b );
 
       NodeManager & nodeManager = meshLevel.getNodeManager();
