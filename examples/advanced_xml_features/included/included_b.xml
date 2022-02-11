@@ -23,10 +23,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rocPerm }"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

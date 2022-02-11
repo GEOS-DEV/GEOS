@@ -7,10 +7,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="300"
       computeCFLNumbers="1">
       <NonlinearSolverParameters
@@ -69,10 +65,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        targetRegions="{ Channel }"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

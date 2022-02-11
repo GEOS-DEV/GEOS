@@ -7,8 +7,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }">
+      targetRegions="{ Region2 }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters

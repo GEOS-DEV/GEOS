@@ -5,9 +5,6 @@
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <SinglePhaseFVM
       name="SinglePhaseFlow"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
@@ -30,9 +27,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

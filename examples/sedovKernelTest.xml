@@ -11,8 +11,7 @@
       name="lagsolve"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }"/>
+      targetRegions="{ Region2 }"/>
   </Solvers>
 
   <Mesh>

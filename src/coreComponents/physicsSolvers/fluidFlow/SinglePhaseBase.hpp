@@ -126,16 +126,12 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-  template< typename POLICY >
-  void accumulationLaunch( localIndex const targetIndex,
-                           CellElementSubRegion const & subRegion,
+  void accumulationLaunch( CellElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
-  template< typename POLICY >
-  void accumulationLaunch( localIndex const targetIndex,
-                           SurfaceElementSubRegion const & subRegion,
+  void accumulationLaunch( SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
@@ -152,7 +148,6 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  template< typename POLICY >
   void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -272,7 +267,7 @@ public:
    * @param dataGroup group that contains the fields
    */
   void
-  updateFluidState( ObjectManagerBase & subRegion, localIndex const targetIndex ) const;
+  updateFluidState( ObjectManagerBase & subRegion ) const;
 
 
   /**
@@ -280,14 +275,14 @@ public:
    * @param dataGroup group that contains the fields
    */
   virtual void
-  updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
+  updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
   void
-  updateMobility( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const;
+  updateMobility( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
@@ -307,7 +302,7 @@ public:
    * @param mesh the mesh to operate on
    */
   void
-  backupFields( MeshLevel & mesh ) const;
+  backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
 protected:
 
@@ -316,13 +311,15 @@ protected:
    * @param[in] domain the domain partition
    */
   virtual void
-  validateFluidModels( DomainPartition const & domain ) const;
+  validateFluidModels( DomainPartition & domain ) const;
 
   /**
    * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
    */
   void
   initializeAquiferBC() const;
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
 
   /**
@@ -352,7 +349,7 @@ protected:
 
 
 private:
-
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 

@@ -21,11 +21,6 @@
       logLevel="1"
       discretization="fluidTPFA"
       targetRegions="{ Channel }"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
-      capPressureNames="{ cappres }"
       temperature="368.15"
       maxCompFractionChange="0.2"
       useMass="1"/>
@@ -34,8 +29,6 @@
       name="compositionalMultiphaseWell"
       logLevel="1"
       targetRegions="{ wellRegion1, wellRegion2 }"
-      fluidNames="{ fluid1 }"
-      relPermNames="{ relperm }"
       maxCompFractionChange="0.2"
       useMass="1">
       <WellControls
@@ -146,9 +139,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

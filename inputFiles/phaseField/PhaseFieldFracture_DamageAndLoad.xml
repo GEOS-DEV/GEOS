@@ -24,7 +24,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region1 }"
-      solidMaterialNames="{ shale }">
+      >
       <NonlinearSolverParameters
         newtonMaxIter="50"
         newtonTol="1.0e-6"/>
@@ -37,7 +37,7 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      solidMaterialNames="{ shale }"
+      
       localDissipation="Quadratic"
       logLevel="1"
       targetRegions="{ Region1 }">

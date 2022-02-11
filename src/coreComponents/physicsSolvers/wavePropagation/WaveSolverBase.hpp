@@ -81,7 +81,7 @@ protected:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) = 0;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side

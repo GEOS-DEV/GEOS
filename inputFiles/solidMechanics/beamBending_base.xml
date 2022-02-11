@@ -41,6 +41,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Region2"
+      meshBody="mesh1"
       cellBlocks="{ cb1 }"
       materialList="{ shale }"/>
   </ElementRegions>

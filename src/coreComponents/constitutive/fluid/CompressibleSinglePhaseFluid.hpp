@@ -135,6 +135,8 @@ public:
 
   struct viewKeyStruct
   {
+    static constexpr char const * defaultDensityString() { return "defaultDensity"; }
+    static constexpr char const * defaultViscosityString() { return "defaultViscosity"; }
     static constexpr char const * compressibilityString() { return "compressibility"; }
     static constexpr char const * viscosibilityString() { return "viscosibility"; }
     static constexpr char const * referencePressureString() { return "referencePressure"; }
@@ -144,11 +146,20 @@ public:
     static constexpr char const * viscosityModelTypeString() { return "viscosityModelType"; }
   };
 
+  real64 defaultDensity() const override final { return m_defaultDensity; }
+  real64 defaultViscosity() const override final { return m_defaultViscosity; }
+
 protected:
 
   virtual void postProcessInput() override;
 
 private:
+
+  /// default density value
+  real64 m_defaultDensity;
+
+  /// default viscosity value
+  real64 m_defaultViscosity;
 
   /// scalar fluid bulk modulus parameter
   real64 m_compressibility;

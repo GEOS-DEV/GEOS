@@ -6,9 +6,6 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       logLevel="1"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain }">
       <NonlinearSolverParameters
@@ -31,9 +28,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 

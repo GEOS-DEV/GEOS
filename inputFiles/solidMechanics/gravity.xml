@@ -23,7 +23,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region1 }"
-      solidMaterialNames="{ rock }">
+      >
       <NonlinearSolverParameters
         newtonTol="1.0e-8"/>
       <LinearSolverParameters
