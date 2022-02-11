@@ -91,15 +91,15 @@ public:
               SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
               CONSTITUTIVE_TYPE & inputConstitutiveType,
-              arrayView1d< globalIndex const > const & inputDispDofNumber,
-              string const & inputFlowDofKey,
+              arrayView1d< globalIndex const > const inputDispDofNumber,
+              string const inputFlowDofKey,
               globalIndex const rankOffset,
               real64 const (&inputGravityVector)[3],
               localIndex const numComponents,
               localIndex const numPhases,
-              arrayView1d< string const > const fluidModelNames,
-              CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-              arrayView1d< real64 > const & inputRhs ):
+              string const fluidModelKey,
+              CRSMatrixView< real64, globalIndex const > const inputMatrix,
+              arrayView1d< real64 > const inputRhs ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -127,8 +127,9 @@ public:
 
     // extract fluid constitutive data views
     {
+      string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
       constitutive::MultiFluidBase const & fluid =
-        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] );
+        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
       m_dFluidPhaseDensity_dPressure = fluid.dPhaseDensity_dPressure();
@@ -606,15 +607,15 @@ protected:
 };
 
 using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              string const &,
+                                                              arrayView1d< globalIndex const > const,
+                                                              string const,
                                                               globalIndex const,
                                                               real64 const (&)[3],
                                                               localIndex const,
                                                               localIndex const,
-                                                              arrayView1d< string const > const,
-                                                              CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const & >;
+                                                              string const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const >;
 
 } // namespace PoroelasticKernels
 
