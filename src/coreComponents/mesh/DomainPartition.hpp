@@ -194,6 +194,46 @@ public:
   MeshBody & getMeshBody( KEY_TYPE const & key )
   { return getMeshBodies().getGroup< MeshBody >( key ); }
 
+
+  /**
+   * @brief Apply the given functor to all meshBodies.
+   * @tparam FUNCTION the type of functor to call
+   * @param[in] function  the functor to call
+   */
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodiesIndex( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodiesIndex( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList
    * @return Container of global indices.
