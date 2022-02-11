@@ -104,7 +104,7 @@ AccumulationKernel::
   {
     if( elemGhostRank[ei] < 0 )
     {
-      localIndex constexpr MAX_NC = ProppantTransport::MAX_NUM_COMPONENTS;
+      localIndex constexpr MAX_NC = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
       stackArray1d< globalIndex, MAX_NC > localAccumDOF( nDofs );
       stackArray1d< real64, MAX_NC > localAccum( nDofs );
       stackArray2d< real64, MAX_NC * MAX_NC > localAccumJacobian( nDofs, nDofs );
@@ -201,7 +201,7 @@ FluxKernel::
 
   constexpr real64 TINY = 1e-10;
 
-  constexpr localIndex MAX_NUM_COMPONENTS = ProppantTransport::MAX_NUM_COMPONENTS;
+  constexpr localIndex MAX_NUM_COMPONENTS = constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
   localIndex const numComps = numDofPerCell - 1;
 

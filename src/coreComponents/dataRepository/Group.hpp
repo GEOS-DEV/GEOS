@@ -516,7 +516,7 @@ public:
   }
 
   /**
-   * @copydoc forSubGroups(LAMBDA &&)
+   * @copydoc forSubGroupsIndex(LAMBDA &&)
    */
   template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
   void forSubGroupsIndex( LAMBDA && lambda ) const
@@ -550,14 +550,11 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      if( hasGroup(subgroup) )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
       {
-        applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto & castedSubGroup )
-        {
-          lambda( counter, castedSubGroup );
-        } );
-        ++counter;
-      }
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
     }
   }
 
@@ -578,14 +575,11 @@ public:
     localIndex counter = 0;
     for( auto const & subgroup : subGroupKeys )
     {
-      if( hasGroup(subgroup) )
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto const & castedSubGroup )
       {
-        applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( getGroup( subgroup ), [&]( auto const & castedSubGroup )
-        {
-          lambda( counter, castedSubGroup );
-        } );
-        ++counter;
-      }
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
     }
   }
   ///@}
@@ -669,7 +663,9 @@ public:
    * @name Initialization and data registration
    */
   ///@{
-
+  /**
+   * @brief initialization post generation of the mesh.
+   */
   virtual void initialize_postMeshGeneration();
 
 

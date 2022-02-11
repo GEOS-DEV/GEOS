@@ -51,18 +51,24 @@ public:
   /**
    * @brief Create a new mesh level
    * @param [in] newLevel index of the new mesh level
-   * @return pointer to the created MeshLevel
+   * @return reference to the created MeshLevel
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
-
+  /**
+   * @brief Get the meshLevels group
+   * @return reference to the meshLevels group.
+   */
   Group & getMeshLevels() { return m_meshLevels; }
+  /**
+   * @copydoc getMeshLevels()
+   */
   Group const & getMeshLevels() const { return m_meshLevels; }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
-   * @return pointer to MeshLevel
+   * @return reference to MeshLevel
    */
   MeshLevel & getMeshLevel( string const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
@@ -70,7 +76,7 @@ public:
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
-   * @return pointer to const MeshLevel
+   * @return reference to const MeshLevel
    */
   MeshLevel const & getMeshLevel( string const & level ) const
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
@@ -81,7 +87,7 @@ public:
    * @return pointer to MeshLevel
    */
   MeshLevel & getMeshLevel( localIndex const level )
-  { return getMeshLevel( intToMeshLevelString(level) ); }
+  { return getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Get mesh level
@@ -89,19 +95,26 @@ public:
    * @return pointer to const MeshLevel
    */
   MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return getMeshLevel( intToMeshLevelString(level) ); }
+  { return getMeshLevel( intToMeshLevelString( level ) ); }
 
-
+  /**
+   * @brief Apply the given functor to all meshLevels on this meshBody.
+   * @tparam FUNCTION the type of functor to call
+   * @param[in] function  the functor to call
+   */
   template< typename FUNCTION >
   void forMeshLevels( FUNCTION && function ) const
   {
-    m_meshLevels.forSubGroups<MeshLevel>( std::forward<FUNCTION>(function) );
+    m_meshLevels.forSubGroups< MeshLevel >( std::forward< FUNCTION >( function ) );
   }
 
+  /**
+   * @copydoc forMeshLevels(FUNCTION &&) const
+   */
   template< typename FUNCTION >
   void forMeshLevels( FUNCTION && function )
   {
-    m_meshLevels.forSubGroups<MeshLevel>( std::forward<FUNCTION>(function) );
+    m_meshLevels.forSubGroups< MeshLevel >( std::forward< FUNCTION >( function ) );
   }
 
   /**
@@ -123,15 +136,15 @@ public:
    * @brief Data repository keys
    */
   struct viewKeysStruct
-  {
-  } viewKeys; ///< viewKeys
+  {} viewKeys; ///< viewKeys
 
   /**
    * @brief Group keys
    */
   struct groupStructKeys
   {
-    static constexpr char const * meshLevelsString() {return "meshLevels"; }
+    /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
+    static constexpr char const * meshLevelsString() { return "meshLevels"; }
   } groupKeys; ///< groupKeys
 
 private:
@@ -142,7 +155,7 @@ private:
   real64 m_globalLengthScale { 0. };
 
 
-  string intToMeshLevelString( localIndex const meshLevel ) const;
+  static string intToMeshLevelString( localIndex const meshLevel );
 
 };
 

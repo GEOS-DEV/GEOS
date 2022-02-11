@@ -63,9 +63,12 @@ FluxApproximationBase::getCatalog()
   return catalog;
 }
 
-void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
+void FluxApproximationBase::initializePreSubGroups()
 {
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  Group & meshBodies = domain.getMeshBodies();
+
   meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     meshBody.forMeshLevels( [&]( MeshLevel & mesh )
@@ -78,35 +81,6 @@ void FluxApproximationBase::registerDataOnMesh( Group & meshBodies )
       registerCellStencil( stencilGroup );
 
       registerFractureStencil( stencilGroup );
-
-      // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
-      // TODO: Apply() should take a MeshLevel directly
-      fsManager.apply( 0.0,
-                       dynamicCast< DomainPartition & >( meshBodies.getParent() ),
-                       "faceManager",
-                       m_fieldName,
-                       [&] ( FieldSpecificationBase const &,
-                             string const & setName,
-                             SortedArrayView< localIndex const > const &,
-                             Group const &,
-                             string const & )
-      {
-        registerBoundaryStencil( stencilGroup, setName );
-      } );
-
-      // For each aquifer boundary condition, create a boundary stencil
-      fsManager.apply< AquiferBoundaryCondition >( 0.0,
-                                                   dynamicCast< DomainPartition & >( meshBodies.getParent() ),
-                                                   "faceManager",
-                                                   AquiferBoundaryCondition::catalogName(),
-                                                   [&] ( AquiferBoundaryCondition const &,
-                                                         string const & setName,
-                                                         SortedArrayView< localIndex const > const &,
-                                                         Group const &,
-                                                         string const & )
-      {
-        registerAquiferStencil( stencilGroup, setName );
-      } );
     } );
   } );
 }
@@ -121,9 +95,41 @@ void FluxApproximationBase::initializePostInitialConditionsPreSubGroups()
   domain.getMeshBodies().forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
   {
     m_lengthScale = meshBody.getGlobalLengthScale();
-
-    meshBody.forSubGroups< MeshLevel >( [&]( MeshLevel & mesh )
+    meshBody.forMeshLevels( [&]( MeshLevel & mesh )
     {
+      // Group structure: mesh1/finiteVolumeStencils/myTPFA
+
+      Group & stencilParentGroup = mesh.registerGroup( groupKeyStruct::stencilMeshGroupString() );
+      Group & stencilGroup = stencilParentGroup.registerGroup( getName() );
+      // For each face-based Dirichlet boundary condition on target field, create a boundary stencil
+      // TODO: Apply() should take a MeshLevel directly
+      fsManager.apply( 0.0,
+                       domain,
+                       "faceManager",
+                       m_fieldName,
+                       [&] ( FieldSpecificationBase const &,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const &,
+                             Group const &,
+                             string const & )
+      {
+        registerBoundaryStencil( stencilGroup, setName );
+      } );
+
+      // For each aquifer boundary condition, create a boundary stencil
+      fsManager.apply< AquiferBoundaryCondition >( 0.0,
+                                                   domain,
+                                                   "faceManager",
+                                                   AquiferBoundaryCondition::catalogName(),
+                                                   [&] ( AquiferBoundaryCondition const &,
+                                                         string const & setName,
+                                                         SortedArrayView< localIndex const > const &,
+                                                         Group const &,
+                                                         string const & )
+      {
+        registerAquiferStencil( stencilGroup, setName );
+      } );
+
       // Compute the main cell-based stencil
       computeCellStencil( mesh );
 

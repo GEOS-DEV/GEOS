@@ -31,7 +31,6 @@ namespace geosx
 /**
  * @brief A struct to automatically construct and store element view accessors
  * @struct StencilAccessors
- * @tparam MATERIAL_TYPE  type of the constitutive model
  * @tparam TRAITS the pack containing the types of the fields
  */
 template< typename ... TRAITS >
@@ -46,7 +45,15 @@ public:
   template< typename TRAIT >
   auto get( TRAIT ) const
   {
-    return std::get< traits::type_list_index< TRAIT, std::tuple< TRAITS ... > > >( this->m_accessors ).toNestedViewConst();
+    constexpr std::size_t idx = traits::type_list_index< TRAIT, std::tuple< TRAITS ... > >;
+    static_assert( idx != std::tuple_size< std::tuple< TRAITS... > >::value, "input trait/stencil does not match the available traits/stencils." );
+    return std::get< idx >( m_accessors ).toNestedViewConst();
+  }
+
+  template< typename TRAIT >
+  auto get() const
+  {
+    return get( TRAIT{} );
   }
 
   /**
@@ -55,27 +62,28 @@ public:
    * @param[in] solverName the name of the solver creating the view accessors
    */
   StencilAccessors( ElementRegionManager const & elemManager,
-                    string const & solverName,
-                    bool const fill = true )
+                    string const & solverName )
   {
-    if( fill )
+    forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
-      forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
-      {
-        GEOSX_UNUSED_VAR( t );
-        using TRAIT = TYPEOFREF( t );
+      GEOSX_UNUSED_VAR( t );
+      using TRAIT = TYPEOFREF( t );
 
-        auto & acc = std::get< idx() >( m_accessors );
-        acc = elemManager.constructExtrinsicAccessor< TRAIT >();
-        acc.setName( solverName + "/accessors/" + TRAIT::key() );
-      } );
-    }
+      auto & acc = std::get< idx() >( m_accessors );
+      acc = elemManager.constructExtrinsicAccessor< TRAIT >();
+      acc.setName( solverName + "/accessors/" + TRAIT::key() );
+    } );
   }
 
 protected:
 
   /// the tuple storing all the accessors
   std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > m_accessors;
+
+  /**
+   * @brief Constructor for the struct
+   */
+  StencilAccessors() = default;
 };
 
 /**
@@ -89,6 +97,8 @@ class StencilMaterialAccessors : public StencilAccessors< TRAITS ... >
 {
 public:
 
+  using StencilAccessors< TRAITS ... >::m_accessors;
+
   /**
    * @brief Constructor for the struct
    * @tparam MATERIAL_TYPE  type of the constitutive model
@@ -96,16 +106,15 @@ public:
    * @param[in] solverName the name of the solver creating the view accessors
    */
   StencilMaterialAccessors( ElementRegionManager const & elemManager,
-                            string const & solverName,
-                            bool const fill = false ):
-    StencilAccessors<TRAITS ...>( elemManager, solverName, fill )
+                            string const & solverName ):
+    StencilAccessors< TRAITS ... >()
   {
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
       GEOSX_UNUSED_VAR( t );
       using TRAIT = TYPEOFREF( t );
 
-      auto & acc = std::get< idx() >( this->m_accessors );
+      auto & acc = std::get< idx() >( m_accessors );
       bool const allowMissingViews = false;
       acc = elemManager.constructMaterialExtrinsicAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
       acc.setName( solverName + "/accessors/" + TRAIT::key() );

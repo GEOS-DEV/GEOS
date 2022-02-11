@@ -23,7 +23,8 @@
 
     <SinglePhaseWell
       name="singlePhaseWell"
-      logLevel="1">
+      logLevel="1"
+      targetRegions="{ wellRegion1, wellRegion2, wellRegion3 }">
       <WellControls
         name="wellControls1"
         type="producer"

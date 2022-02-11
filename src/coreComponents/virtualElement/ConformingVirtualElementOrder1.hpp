@@ -21,6 +21,8 @@
 
 #include "finiteElement/elementFormulations/FiniteElementBase.hpp"
 
+#include "mesh/CellElementSubRegion.hpp"
+
 namespace geosx
 {
 namespace finiteElement

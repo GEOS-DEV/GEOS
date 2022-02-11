@@ -67,8 +67,11 @@ void WellElementRegion::generateWell( MeshLevel & mesh,
   GEOSX_THROW_IF( matchedPerforations != numPerforationsGlobal,
                   "Invalid mapping perforation-to-element in well " << wellGeometry.getName() << "." <<
                   " This happens when GEOSX cannot match a perforation with a reservoir element." <<
-                  " The most common reason for this error is that a perforation is on a section of " <<
-                  " the well polyline located outside the domain.",
+                  " There are two common reasons for this error:\n" <<
+                  " 1- The most common reason for this error is that a perforation is on a section of " <<
+                  " the well polyline located outside the domain.\n" <<
+                  " 2- This error can also happen if a perforation falls on a mesh face or a mesh vertex." <<
+                  " Please try to move the perforation slightly (to the interior of the perforated cell) to see if it fixes the problem.",
                   InputError );
 
 

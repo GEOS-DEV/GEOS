@@ -18,6 +18,7 @@
 
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
+#include "generators/CellBlockManager.hpp"
 
 namespace geosx
 {
@@ -28,10 +29,7 @@ MeshBody::MeshBody( string const & name,
   Group( name, parent ),
   m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
-{
-  registerGroup< CellBlockManager >( keys::cellManager );
-  registerGroup< ParticleBlockManager >( keys::particleManager );
-}
+{}
 
 MeshBody::~MeshBody()
 {
@@ -42,7 +40,7 @@ MeshBody::~MeshBody()
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
-  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString(newLevel) );
+  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
 }
 
 void MeshBody::setGlobalLengthScale( real64 scale )
@@ -50,7 +48,7 @@ void MeshBody::setGlobalLengthScale( real64 scale )
   m_globalLengthScale = scale;
 }
 
-string MeshBody::intToMeshLevelString( localIndex const meshLevel ) const
+string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
   char temp[100] = {0};
   sprintf( temp, "Level%.1ld", meshLevel );

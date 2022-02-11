@@ -225,9 +225,6 @@ void applyChainRuleInPlace( integer const N,
   copy( N, work, df_dxy );
 }
 
-template< typename T >
-struct typeTag {};
-
 } // namespace geosx
 
 #endif /* GEOSX_CODINGUTILITIES_UTILITIES_H_ */

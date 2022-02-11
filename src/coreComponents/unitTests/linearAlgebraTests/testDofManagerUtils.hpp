@@ -77,19 +77,20 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
  *
  * Mainly used to allow empty region lists to mean all regions.
  */
-string_array getRegions( MeshLevel const * const mesh, std::vector< string > const & input )
+std::vector< DofManager::Regions > getRegions( DomainPartition const & domain, std::vector< DofManager::Regions > const & input )
 {
-  string_array regions;
-  if( !input.empty() )
+  std::vector< DofManager::Regions > regions( input.begin(), input.end() );
+  for( DofManager::Regions & support : regions )
   {
-    regions.insert( 0, input.begin(), input.end() );
-  }
-  else
-  {
-    mesh->getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
+    if( support.regionNames.empty() )
     {
-      regions.emplace_back( region.getName() );
-    } );
+      MeshBody const & meshBody = domain.getMeshBody( support.meshBodyName );
+      MeshLevel const & meshLevel = meshBody.getMeshLevel( support.meshLevelName );
+      meshLevel.getElemManager().forElementRegions( [&]( ElementRegionBase const & region )
+      {
+        support.regionNames.emplace_back( region.getName() );
+      } );
+    }
   }
   return regions;
 }
@@ -145,18 +146,18 @@ template< DofManager::Location LOC >
 struct forLocalObjectsImpl
 {
   template< typename LAMBDA >
-  static void f( MeshLevel const * const mesh,
-                 string_array const & regions,
+  static void f( MeshLevel const & mesh,
+                 std::vector< string > const & regions,
                  LAMBDA lambda )
   {
     using helper = testMeshHelper< LOC >;
-    ObjectManagerBase const & manager = mesh->getGroup< ObjectManagerBase >( helper::managerKey() );
+    ObjectManagerBase const & manager = mesh.getGroup< ObjectManagerBase >( helper::managerKey() );
 
     arrayView1d< integer const > ghostRank = manager.ghostRank();
 
     array1d< bool > visited( ghostRank.size() );
 
-    mesh->getElemManager().forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+    mesh.getElemManager().forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
     {
       using MapType = typename helper::template ElemToObjMap< std::remove_reference_t< decltype( subRegion ) > >;
 
@@ -182,12 +183,12 @@ template<>
 struct forLocalObjectsImpl< DofManager::Location::Elem >
 {
   template< typename LAMBDA >
-  static void f( MeshLevel const * const mesh,
-                 string_array const & regions,
+  static void f( MeshLevel const & mesh,
+                 std::vector< string > const & regions,
                  LAMBDA lambda )
   {
     // make a list of regions
-    ElementRegionManager const & elemManager = mesh->getElemManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegionsComplete< ElementSubRegionBase >( regions,
                                                                       [&]( localIndex const,
@@ -220,8 +221,8 @@ struct forLocalObjectsImpl< DofManager::Location::Elem >
  * @param lambda  the lambda to apply
  */
 template< DofManager::Location LOC, typename LAMBDA >
-void forLocalObjects( MeshLevel const * const mesh,
-                      array1d< string > const & regions,
+void forLocalObjects( MeshLevel const & mesh,
+                      std::vector< string > const & regions,
                       LAMBDA && lambda )
 {
   internal::forLocalObjectsImpl< LOC >::template f( mesh, regions, std::forward< LAMBDA >( lambda ) );
@@ -235,10 +236,16 @@ void forLocalObjects( MeshLevel const * const mesh,
  * @return the number of locally owned objects (e.g. nodes)
  */
 template< DofManager::Location LOC >
-localIndex countLocalObjects( MeshLevel const * const mesh, array1d< string > const & regions )
+localIndex countLocalObjects( DomainPartition const & domain, std::vector< DofManager::Regions > const & support )
 {
   localIndex numLocal = 0;
-  forLocalObjects< LOC >( mesh, regions, [&]( auto const & ) { ++numLocal; } );
+  for( DofManager::Regions const & regions : support )
+  {
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
+
+    forLocalObjects< LOC >( meshLevel, regions.regionNames, [&]( auto const & ) { ++numLocal; } );
+  }
   return numLocal;
 }
 
@@ -250,68 +257,74 @@ localIndex countLocalObjects( MeshLevel const * const mesh, array1d< string > co
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated, must be properly sized.
  */
-void makeSparsityTPFA( MeshLevel const * const mesh,
+void makeSparsityTPFA( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       string_array const & regions,
+                       std::vector< DofManager::Regions > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  FaceManager const & faceManager = mesh->getFaceManager();
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
-    elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
-
-  // Make a set of target region indices to check face fluxes.
-  SortedArray< localIndex > regionSet;
-  elemManager.forElementRegions( regions, [&]( localIndex const, ElementRegionBase const & region )
+  for( DofManager::Regions const & regions : support )
   {
-    regionSet.insert( region.getIndexInParent() );
-  } );
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
 
-  // prepare data for assembly loop
-  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  localIndex const numElem = faceToElem.size( 1 );
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
 
-  array1d< globalIndex > localDofIndex( numElem * numComp );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
+      elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
 
-  array2d< real64 > localValues( numElem * numComp, numElem * numComp );
-  localValues.setValues< serialPolicy >( 1.0 );
-
-  // Loop over faces and assemble TPFA-style "flux" contributions
-  for( localIndex kf=0; kf<faceManager.size(); ++kf )
-  {
-    localIndex const er0 = faceToElem.m_toElementRegion[kf][0];
-    localIndex const er1 = faceToElem.m_toElementRegion[kf][1];
-
-    if( er0 >= 0 && er1 >= 0 && regionSet.contains( er0 ) && regionSet.contains( er1 ) )
+    // Make a set of target region indices to check face fluxes.
+    SortedArray< localIndex > regionSet;
+    elemManager.forElementRegions( regions.regionNames, [&]( localIndex const, ElementRegionBase const & region )
     {
-      localIndex count = 0;
-      for( localIndex ke = 0; ke < numElem; ++ke )
-      {
-        localIndex const er  = faceToElem.m_toElementRegion[kf][ke];
-        localIndex const esr = faceToElem.m_toElementSubRegion[kf][ke];
-        localIndex const ei  = faceToElem.m_toElementIndex[kf][ke];
+      regionSet.insert( region.getIndexInParent() );
+    } );
 
-        if( er>-1 && esr>-1 && ei>-1 )
+    // prepare data for assembly loop
+    FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+    localIndex const numElem = faceToElem.size( 1 );
+
+    array1d< globalIndex > localDofIndex( numElem * numComp );
+
+    array2d< real64 > localValues( numElem * numComp, numElem * numComp );
+    localValues.setValues< serialPolicy >( 1.0 );
+
+    // Loop over faces and assemble TPFA-style "flux" contributions
+    for( localIndex kf=0; kf<faceManager.size(); ++kf )
+    {
+      localIndex const er0 = faceToElem.m_toElementRegion[kf][0];
+      localIndex const er1 = faceToElem.m_toElementRegion[kf][1];
+
+      if( er0 >= 0 && er1 >= 0 && regionSet.contains( er0 ) && regionSet.contains( er1 ) )
+      {
+        localIndex count = 0;
+        for( localIndex ke = 0; ke < numElem; ++ke )
         {
-          for( localIndex c = 0; c < numComp; ++c )
+          localIndex const er  = faceToElem.m_toElementRegion[kf][ke];
+          localIndex const esr = faceToElem.m_toElementSubRegion[kf][ke];
+          localIndex const ei  = faceToElem.m_toElementIndex[kf][ke];
+
+          if( er>-1 && esr>-1 && ei>-1 )
           {
-            localDofIndex[count++] = elemDofIndex[er][esr][ei] + c;
+            for( localIndex c = 0; c < numComp; ++c )
+            {
+              localDofIndex[count++] = elemDofIndex[er][esr][ei] + c;
+            }
           }
         }
-      }
-      std::sort( localDofIndex.begin(), localDofIndex.end() );
-      for( localIndex row=0; row<count; ++row )
-      {
-        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
-        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
-          continue;
-        sparsity.insertNonZeros( localDofNumber,
-                                 localDofIndex.data(),
-                                 localValues.data(),
-                                 count );
+        std::sort( localDofIndex.begin(), localDofIndex.end() );
+        for( localIndex row=0; row<count; ++row )
+        {
+          localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+          if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+            continue;
+          sparsity.insertNonZeros( localDofNumber,
+                                   localDofIndex.data(),
+                                   localValues.data(),
+                                   count );
+        }
       }
     }
   }
@@ -325,52 +338,58 @@ void makeSparsityTPFA( MeshLevel const * const mesh,
  * @param numComp     number of components per node
  * @param sparsity    the matrix to be populated, must be properly sized.
  */
-void makeSparsityFEM( MeshLevel const * const mesh,
+void makeSparsityFEM( DomainPartition const & domain,
                       string const & dofIndexKey,
-                      string_array const & regions,
+                      std::vector< DofManager::Regions > const & support,
                       globalIndex const rankOffset,
                       localIndex const numComp,
                       CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  NodeManager const & nodeManager = mesh->getNodeManager();
-
-  arrayView1d< globalIndex const > nodeDofIndex = nodeManager.getReference< array1d< globalIndex > >( dofIndexKey );
-
-  // perform assembly loop over elements
-  elemManager.forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+  for( DofManager::Regions const & regions : support )
   {
-    using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
-    traits::ViewTypeConst< NodeMapType > const
-    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
 
-    localIndex const numNode = subRegion.numNodesPerElement();
-    array1d< globalIndex > localDofIndex( numNode * numComp );
-    array2d< real64 > localValues( numNode * numComp, numNode * numComp );
-    localValues.setValues< serialPolicy >( 1.0 );
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
 
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    arrayView1d< globalIndex const > nodeDofIndex = nodeManager.getReference< array1d< globalIndex > >( dofIndexKey );
+
+    // perform assembly loop over elements
+    elemManager.forElementSubRegions( regions.regionNames, [&]( localIndex const, auto const & subRegion )
     {
-      for( localIndex a = 0; a < numNode; ++a )
+      using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
+      traits::ViewTypeConst< NodeMapType > const
+      nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+
+      localIndex const numNode = subRegion.numNodesPerElement();
+      array1d< globalIndex > localDofIndex( numNode * numComp );
+      array2d< real64 > localValues( numNode * numComp, numNode * numComp );
+      localValues.setValues< serialPolicy >( 1.0 );
+
+      for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        for( localIndex c = 0; c < numComp; ++c )
+        for( localIndex a = 0; a < numNode; ++a )
         {
-          localDofIndex[a * numComp + c] = nodeDofIndex[nodeMap[k][a]] + c;
+          for( localIndex c = 0; c < numComp; ++c )
+          {
+            localDofIndex[a * numComp + c] = nodeDofIndex[nodeMap[k][a]] + c;
+          }
+        }
+        std::sort( localDofIndex.begin(), localDofIndex.end() );
+        for( localIndex row=0; row<(numNode * numComp); ++row )
+        {
+          localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+          if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+            continue;
+          sparsity.insertNonZeros( localDofNumber,
+                                   localDofIndex.data(),
+                                   localValues.data(),
+                                   (numNode * numComp) );
         }
       }
-      std::sort( localDofIndex.begin(), localDofIndex.end() );
-      for( localIndex row=0; row<(numNode * numComp); ++row )
-      {
-        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
-        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
-          continue;
-        sparsity.insertNonZeros( localDofNumber,
-                                 localDofIndex.data(),
-                                 localValues.data(),
-                                 (numNode * numComp) );
-      }
-    }
-  } );
+    } );
+  }
 }
 
 /**
@@ -383,81 +402,87 @@ void makeSparsityFEM( MeshLevel const * const mesh,
  * @param numCompElem     number of components per element
  * @param sparsity        the matrix to be populated, must be properly sized.
  */
-void makeSparsityFEM_FVM( MeshLevel const * const mesh,
+void makeSparsityFEM_FVM( DomainPartition const & domain,
                           string const & dofIndexKeyNode,
                           string const & dofIndexKeyElem,
-                          string_array const & regions,
+                          std::vector< DofManager::Regions > const & support,
                           globalIndex const rankOffset,
                           localIndex const numCompNode,
                           localIndex const numCompElem,
                           CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  NodeManager const & nodeManager = mesh->getNodeManager();
-
-  arrayView1d< globalIndex const > nodeDofIndex =
-    nodeManager.getReference< array1d< globalIndex > >( dofIndexKeyNode );
-
-  // perform assembly loop over elements
-  elemManager.forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+  for( DofManager::Regions const & regions : support )
   {
-    using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
-    traits::ViewTypeConst< NodeMapType > const
-    nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
 
-    arrayView1d< globalIndex const > elemDofIndex =
-      subRegion.template getReference< array1d< globalIndex > >( dofIndexKeyElem );
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    NodeManager const & nodeManager = mesh.getNodeManager();
 
-    localIndex const numNode = subRegion.numNodesPerElement();
+    arrayView1d< globalIndex const > nodeDofIndex =
+      nodeManager.getReference< array1d< globalIndex > >( dofIndexKeyNode );
 
-    array1d< globalIndex > localNodeDofIndex( numNode * numCompNode );
-    array1d< globalIndex > localElemDofIndex( numCompElem );
-    array2d< real64 > localValues1( numNode * numCompNode, numCompElem );
-    localValues1.setValues< serialPolicy >( 1.0 );
-    array2d< real64 > localValues2( numCompElem, numNode * numCompNode );
-    localValues2.setValues< serialPolicy >( 1.0 );
-
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    // perform assembly loop over elements
+    elemManager.forElementSubRegions( regions.regionNames, [&]( localIndex const, auto const & subRegion )
     {
-      for( localIndex c = 0; c < numCompElem; ++c )
+      using NodeMapType = typename TYPEOFREF( subRegion ) ::NodeMapType;
+      traits::ViewTypeConst< NodeMapType > const
+      nodeMap = subRegion.template getReference< NodeMapType >( ElementSubRegionBase::viewKeyStruct::nodeListString() );
+
+      arrayView1d< globalIndex const > elemDofIndex =
+        subRegion.template getReference< array1d< globalIndex > >( dofIndexKeyElem );
+
+      localIndex const numNode = subRegion.numNodesPerElement();
+
+      array1d< globalIndex > localNodeDofIndex( numNode * numCompNode );
+      array1d< globalIndex > localElemDofIndex( numCompElem );
+      array2d< real64 > localValues1( numNode * numCompNode, numCompElem );
+      localValues1.setValues< serialPolicy >( 1.0 );
+      array2d< real64 > localValues2( numCompElem, numNode * numCompNode );
+      localValues2.setValues< serialPolicy >( 1.0 );
+
+      for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        localElemDofIndex[c] = elemDofIndex[k] + c;
-      }
-      for( localIndex a = 0; a < numNode; ++a )
-      {
-        for( localIndex c = 0; c < numCompNode; ++c )
+        for( localIndex c = 0; c < numCompElem; ++c )
         {
-          localNodeDofIndex[a * numCompNode + c] = nodeDofIndex[nodeMap[k][a]] + c;
+          localElemDofIndex[c] = elemDofIndex[k] + c;
         }
+        for( localIndex a = 0; a < numNode; ++a )
+        {
+          for( localIndex c = 0; c < numCompNode; ++c )
+          {
+            localNodeDofIndex[a * numCompNode + c] = nodeDofIndex[nodeMap[k][a]] + c;
+          }
+        }
+
+        std::sort( localNodeDofIndex.begin(), localNodeDofIndex.end() );
+        std::sort( localElemDofIndex.begin(), localElemDofIndex.end() );
+
+        for( localIndex row=0; row<(numNode * numCompNode); ++row )
+        {
+          localIndex const localDofNumber = localNodeDofIndex[row] - rankOffset;
+          if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+            continue;
+          sparsity.insertNonZeros( localDofNumber,
+                                   localElemDofIndex.data(),
+                                   localValues1.data(),
+                                   numCompElem );
+        }
+
+        for( localIndex row=0; row<(numCompElem); ++row )
+        {
+          localIndex const localDofNumber = localElemDofIndex[row] - rankOffset;
+          if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+            continue;
+          sparsity.insertNonZeros( localDofNumber,
+                                   localNodeDofIndex.data(),
+                                   localValues2.data(),
+                                   (numNode * numCompNode) );
+        }
+
       }
-
-      std::sort( localNodeDofIndex.begin(), localNodeDofIndex.end() );
-      std::sort( localElemDofIndex.begin(), localElemDofIndex.end() );
-
-      for( localIndex row=0; row<(numNode * numCompNode); ++row )
-      {
-        localIndex const localDofNumber = localNodeDofIndex[row] - rankOffset;
-        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
-          continue;
-        sparsity.insertNonZeros( localDofNumber,
-                                 localElemDofIndex.data(),
-                                 localValues1.data(),
-                                 numCompElem );
-      }
-
-      for( localIndex row=0; row<(numCompElem); ++row )
-      {
-        localIndex const localDofNumber = localElemDofIndex[row] - rankOffset;
-        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
-          continue;
-        sparsity.insertNonZeros( localDofNumber,
-                                 localNodeDofIndex.data(),
-                                 localValues2.data(),
-                                 (numNode * numCompNode) );
-      }
-
-    }
-  } );
+    } );
+  }
 }
 
 /**
@@ -468,42 +493,49 @@ void makeSparsityFEM_FVM( MeshLevel const * const mesh,
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated
  */
-void makeSparsityMass( MeshLevel const * const mesh,
+void makeSparsityMass( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       string_array const & regions,
+                       std::vector< DofManager::Regions > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
-    elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
-
-  array1d< globalIndex > localDofIndex( numComp );
-  array2d< real64 > localValues( numComp, numComp );
-  localValues.setValues< serialPolicy >( 1.0 );
-
-  forLocalObjects< DofManager::Location::Elem >( mesh, regions, [&]( auto const & idx )
+  for( DofManager::Regions const & regions : support )
   {
-    for( localIndex c = 0; c < numComp; ++c )
-    {
-      localDofIndex[c] = elemDofIndex[idx[0]][idx[1]][idx[2]] + c;
-    }
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
 
-    std::sort( localDofIndex.begin(), localDofIndex.end() );
-    for( localIndex row=0; row<numComp; ++row )
-    {
-      localIndex const localDofNumber = localDofIndex[row] - rankOffset;
-      if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
-        continue;
-      sparsity.insertNonZeros( localDofNumber,
-                               localDofIndex.data(),
-                               localValues.data(),
-                               numComp );
-    }
+    ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  } );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofIndex =
+      elemManager.constructViewAccessor< array1d< globalIndex >, arrayView1d< globalIndex const > >( dofIndexKey );
+
+    array1d< globalIndex > localDofIndex( numComp );
+    array2d< real64 > localValues( numComp, numComp );
+    localValues.setValues< serialPolicy >( 1.0 );
+
+    forLocalObjects< DofManager::Location::Elem >( mesh, regions.regionNames, [&]( auto const & idx )
+    {
+      for( localIndex c = 0; c < numComp; ++c )
+      {
+        localDofIndex[c] = elemDofIndex[idx[0]][idx[1]][idx[2]] + c;
+      }
+
+      std::sort( localDofIndex.begin(), localDofIndex.end() );
+      for( localIndex row=0; row<numComp; ++row )
+      {
+        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+          continue;
+        sparsity.insertNonZeros( localDofNumber,
+                                 localDofIndex.data(),
+                                 localValues.data(),
+                                 numComp );
+      }
+
+    } );
+  }
 }
 
 /**
@@ -514,56 +546,61 @@ void makeSparsityMass( MeshLevel const * const mesh,
  * @param numComp     number of components per cell
  * @param sparsity    the matrix to be populated
  */
-void makeSparsityFlux( MeshLevel const * const mesh,
+void makeSparsityFlux( DomainPartition const & domain,
                        string const & dofIndexKey,
-                       string_array const & regions,
+                       std::vector< DofManager::Regions > const & support,
                        globalIndex const rankOffset,
                        localIndex const numComp,
                        CRSMatrix< real64 > & sparsity )
 {
-  ElementRegionManager const & elemManager = mesh->getElemManager();
-  FaceManager const & faceManager = mesh->getFaceManager();
-
-  arrayView1d< globalIndex const > faceDofIndex =
-    faceManager.getReference< array1d< globalIndex > >( dofIndexKey );
-
-  // perform assembly loop over elements
-  elemManager.forElementSubRegions( regions, [&]( localIndex const, auto const & subRegion )
+  for( DofManager::Regions const & regions : support )
   {
-    using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
-    traits::ViewTypeConst< FaceMapType > const
-    faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString() );
+    MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
+    MeshLevel const & mesh = meshBody.getMeshLevel( regions.meshLevelName );
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
 
-    localIndex const numFace = subRegion.numFacesPerElement();
-    array1d< globalIndex > localDofIndex( numFace * numComp );
-    array2d< real64 > localValues( numFace * numComp, numFace * numComp );
-    localValues.setValues< serialPolicy >( 1.0 );
+    arrayView1d< globalIndex const > faceDofIndex =
+      faceManager.getReference< array1d< globalIndex > >( dofIndexKey );
 
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    // perform assembly loop over elements
+    elemManager.forElementSubRegions( regions.regionNames, [&]( localIndex const, auto const & subRegion )
     {
-      for( localIndex a = 0; a < numFace; ++a )
+      using FaceMapType = typename TYPEOFREF( subRegion ) ::FaceMapType;
+      traits::ViewTypeConst< FaceMapType > const
+      faceMap = subRegion.template getReference< FaceMapType >( ElementSubRegionBase::viewKeyStruct::faceListString() );
+
+      localIndex const numFace = subRegion.numFacesPerElement();
+      array1d< globalIndex > localDofIndex( numFace * numComp );
+      array2d< real64 > localValues( numFace * numComp, numFace * numComp );
+      localValues.setValues< serialPolicy >( 1.0 );
+
+      for( localIndex k = 0; k < subRegion.size(); ++k )
       {
-        for( localIndex c = 0; c < numComp; ++c )
+        for( localIndex a = 0; a < numFace; ++a )
         {
-          localDofIndex[a * numComp + c] = faceDofIndex[faceMap[k][a]] + c;
+          for( localIndex c = 0; c < numComp; ++c )
+          {
+            localDofIndex[a * numComp + c] = faceDofIndex[faceMap[k][a]] + c;
+          }
         }
+
+        std::sort( localDofIndex.begin(), localDofIndex.end() );
+
+        for( localIndex row=0; row<(numFace*numComp); ++row )
+        {
+          localIndex const localDofNumber = localDofIndex[row] - rankOffset;
+          if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
+            continue;
+          sparsity.insertNonZeros( localDofNumber,
+                                   localDofIndex.data(),
+                                   localValues.data(),
+                                   (numFace*numComp) );
+        }
+
       }
-
-      std::sort( localDofIndex.begin(), localDofIndex.end() );
-
-      for( localIndex row=0; row<(numFace*numComp); ++row )
-      {
-        localIndex const localDofNumber = localDofIndex[row] - rankOffset;
-        if( localDofNumber < 0 || localDofNumber >= sparsity.numRows() )
-          continue;
-        sparsity.insertNonZeros( localDofNumber,
-                                 localDofIndex.data(),
-                                 localValues.data(),
-                                 (numFace*numComp) );
-      }
-
-    }
-  } );
+    } );
+  }
 }
 
 } // namespace testing

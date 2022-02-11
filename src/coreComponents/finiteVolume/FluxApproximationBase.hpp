@@ -158,23 +158,33 @@ public:
   };
 
   /**
-   * @copydoc targetRegions() const
+   * @brief get the list of the target regions on a given mesh body.
+   * @param[in] meshBodyName name of the meshBody
+   * @return a list of the target regions on the meshBody
    */
   array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
-   * @copydoc coefficientModelNames() const
+   * @brief get the list of the coefficient constitutive model names on a given mesh body.
+   * @param[in] meshBodyName name of the meshBody
+   * @return a list of the coefficient constitutive model names on a give meshBody.
    */
   array1d< string > & coefficientModelNames( string const & meshBodyName ) { return m_coefficientModelNames[meshBodyName]; }
 
+  /**
+   * @brief set the name of the field.
+   * @param name name of the field to be set.
+   */
   void setFieldName( string const & name );
-
+  /**
+   * @brief set the name of the coefficient.
+   * @param name name of the coefficient.
+   */
   void setCoeffName( string const & name );
 
 protected:
 
-  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
+  virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 

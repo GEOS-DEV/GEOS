@@ -13,7 +13,6 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       discretization="FE1"
       targetRegions="{ Fracture }"
@@ -23,7 +22,7 @@
         newtonMaxIter="50"
         lineSearchMaxCuts="10"/>
       <LinearSolverParameters
-        preconditionerType="amg"/>
+        directParallel="0"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE

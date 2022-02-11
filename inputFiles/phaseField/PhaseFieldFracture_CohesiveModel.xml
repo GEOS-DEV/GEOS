@@ -29,7 +29,7 @@
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        krylovTol="1.0e-10"/>
+        directParallel="0"/>
     </SolidMechanicsLagrangianSSLE>
 
     <PhaseFieldDamageFEM
@@ -44,7 +44,7 @@
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>
       <LinearSolverParameters
-        krylovTol="1.0e-10"/>
+        directParallel="0"/>
     </PhaseFieldDamageFEM>
   </Solvers>
 

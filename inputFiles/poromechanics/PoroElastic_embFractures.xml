@@ -10,7 +10,6 @@
       fracturesSolverName="fractureMechSolver"
       fluidSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
-      porousMaterialNames="{ porousRock, fractureFilling }"
       logLevel="1">
       <NonlinearSolverParameters
         maxTimeStepCuts="1"/>

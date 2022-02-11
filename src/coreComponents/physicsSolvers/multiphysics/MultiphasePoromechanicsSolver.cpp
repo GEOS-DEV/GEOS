@@ -267,12 +267,12 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
                                                               kernelFactory );
   } );
 
-   // Face-based contributions
-    m_flowSolver->assembleFluxTerms( dt,
-                                     domain,
-                                     dofManager,
-                                     localMatrix,
-                                     localRhs );
+  // Face-based contributions
+  m_flowSolver->assembleFluxTerms( dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
 }
 
 void MultiphasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,
