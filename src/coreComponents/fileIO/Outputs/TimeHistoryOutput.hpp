@@ -57,7 +57,11 @@ public:
    *   file and data spaces/sets and output any set index metatata for the time history.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void initializePostSubGroups() override;
+  virtual void initializePostInitialConditionsPostSubGroups() override;
+
+  virtual void reinit() override;
+
+  void setFileName( string const & root );
 
   /**
    * @brief Writes out a time history file.

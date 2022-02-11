@@ -111,19 +111,17 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::initializePostSubGroups()
+void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
 {
+  // check whether to truncate or append to the file up front so we don't have to bother during later accesses
+  string const outputDirectory = getOutputDirectory();
+  if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
-    // check whether to truncate or append to the file up front so we don't have to bother during later accesses
-    string const outputDirectory = getOutputDirectory();
-    if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
-    {
-      makeDirsForPath( outputDirectory );
-    }
-    MpiWrapper::barrier( MPI_COMM_GEOSX );
-    string const outputFile = joinPath( outputDirectory, m_filename );
-    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    makeDirsForPath( outputDirectory );
   }
+  MpiWrapper::barrier( MPI_COMM_GEOSX );
+  string const outputFile = joinPath( outputDirectory, m_filename );
+  HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   for( auto collectorPath : m_collectorPaths )
@@ -133,6 +131,19 @@ void TimeHistoryOutput::initializePostSubGroups()
     initCollectorParallel( domain, collector );
   }
 }
+
+void TimeHistoryOutput::setFileName( string const & root )
+{
+  m_filename = root;
+}
+
+void TimeHistoryOutput::reinit()
+{
+  m_recordCount = 0;
+  m_io.clear();
+  initializePostInitialConditionsPostSubGroups();
+}
+
 
 bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),

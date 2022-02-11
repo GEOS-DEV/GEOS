@@ -97,8 +97,56 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
   Py_RETURN_NONE;
 }
 
+static PyObject * setOutputName( PyHistoryOutput * self, PyObject * args )
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+
+  PyObject * unicodePath;
+  PyObject * defaultReturnValue = nullptr;
+  if( !PyArg_ParseTuple( args, "U|O", &unicodePath, &defaultReturnValue ) )
+  {
+    return nullptr;
+  }
+
+  LvArray::python::PyObjectRef<> asciiPath { PyUnicode_AsASCIIString( unicodePath ) };
+  if( asciiPath == nullptr )
+  {
+    return nullptr;
+  }
+
+  char const * const path = PyBytes_AsString( asciiPath );
+  if( path == nullptr )
+  {
+    return nullptr;
+  }
+
+  try
+  {
+    self->group->setFileName( path );
+  }
+  catch( std::out_of_range const & e )
+  {
+    std::cout<<"Target not found."<<std::endl;
+  }
+  Py_RETURN_NONE;
+}
+
+static PyObject * reinit( PyHistoryOutput * self, PyObject *args )
+{
+  VERIFY_NON_NULL_SELF( self );
+  VERIFY_INITIALIZED( self );
+  GEOSX_UNUSED_VAR( args );
+
+  self->group->reinit();
+
+  Py_RETURN_NONE;
+}
+
 static PyMethodDef PyHistoryOutput_methods[] = {
-  { "output", (PyCFunction) output, METH_VARARGS, "wrapper to routine TimeHistoryOutput::execute"},
+  { "output", (PyCFunction) output, METH_VARARGS, "wrapper to routine TimeHistoryOutput::execute()"},
+  { "setOutputName", (PyCFunction) setOutputName, METH_VARARGS, "wrapper to routine OutputBase::setFileNameRoot()"},
+  { "reinit", (PyCFunction) reinit, METH_VARARGS, "reinitialization function"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };
 

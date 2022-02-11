@@ -79,7 +79,7 @@ public:
    * @param time_n the time of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
-  virtual void addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs ) override;
+  virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
 
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step

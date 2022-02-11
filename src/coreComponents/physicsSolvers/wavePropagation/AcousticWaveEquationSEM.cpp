@@ -145,6 +145,15 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
   real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
+  real64 dt = 0;
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/acousticSolver" )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -154,6 +163,8 @@ void AcousticWaveEquationSEM::postProcessInput()
   {
     m_nsamplesSeismoTrace = 0;
   }
+
+  localIndex const nsamples = int(maxTime/dt) + 1;
 
   localIndex const numNodesPerElem = 8;
 
@@ -168,6 +179,7 @@ void AcousticWaveEquationSEM::postProcessInput()
   m_receiverIsLocal.resize( numReceiversGlobal );
 
   m_pressureNp1AtReceivers.resize( m_nsamplesSeismoTrace, numReceiversGlobal );
+  m_sourceValue.resize( nsamples, numSourcesGlobal );
 
 }
 
@@ -196,6 +208,20 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
   receiverNodeIds.setValues< EXEC_POLICY >( -1 );
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
+
+  real64 const timeSourceFrequency = this->m_timeSourceFrequency;
+  localIndex const rickerOrder = this->m_rickerOrder;
+  arrayView2d< real64 > const sourceValue = m_sourceValue.toView();
+  real64 dt = 0;
+  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
+  for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
+  {
+    EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
+    if( subEvent->getEventName() == "/Solvers/acousticSolver" )
+    {
+      dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
+    }
+  }
 
   forTargetRegionsComplete( mesh, [&]( localIndex const,
                                        localIndex const,
@@ -240,29 +266,34 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
           receiverCoordinates,
           receiverIsLocal,
           receiverNodeIds,
-          receiverConstants );
+          receiverConstants,
+          sourceValue,
+          dt,
+          timeSourceFrequency,
+          rickerOrder );
 
       } );
     } );
   } );
+
 }
 
 
-void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, arrayView1d< real64 > const rhs )
+void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
+  arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  real64 const fi = evaluateRicker( time_n, this->m_timeSourceFrequency, this->m_rickerOrder );
-
+  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compare to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
     {
       for( localIndex inode = 0; inode < sourceConstants.size( 1 ); ++inode )
       {
-        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * fi;
+        rhs[sourceNodeIds[isrc][inode]] = sourceConstants[isrc][inode] * sourceValue[cycleNumber][isrc];
       }
     }
   } );
@@ -271,8 +302,8 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( real64 const & time_n, a
 
 void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n )
 {
-  real64 const time_seismo = m_dtSeismoTrace*iSeismo;
-  real64 const time_np1 = time_n+dt;
+  real64 const timeSeismo = m_dtSeismoTrace*iSeismo;
+  real64 const timeNp1 = time_n+dt;
   arrayView2d< localIndex const > const receiverNodeIds = m_receiverNodeIds.toViewConst();
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
@@ -285,15 +316,15 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-	p_rcvs[iSeismo][ircv] = 0.0;
-	real64 ptmp_np1 = 0.0;
-	real64 ptmp_n = 0.0;
-	for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+        p_rcvs[iSeismo][ircv] = 0.0;
+        real64 ptmpNp1 = 0.0;
+        real64 ptmpN = 0.0;
+        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-	  ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-	  ptmp_n += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          ptmpNp1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          ptmpN += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
-	p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
+        p_rcvs[iSeismo][ircv] = ((timeNp1 - timeSeismo)*ptmpN+(timeSeismo - time_n)*ptmpNp1)/dt;
       }
     } );
   }
@@ -515,7 +546,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                           arrayView1d< string const >(),
                                                           kernelFactory );
 
-  addSourceToRightHandSide( time_n, rhs );
+  addSourceToRightHandSide( cycleNumber, rhs );
 
   /// calculate your time integrators
   real64 const dt2 = dt*dt;
@@ -552,9 +583,9 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs[a] = 0.0;
   } );
 
-  real64 checkSismo = m_dtSeismoTrace*m_indexSeismoTrace;
-  real64 epsilonLoc = 1e-12;
-  if( (time_n-epsilonLoc) <= checkSismo && checkSismo < (time_n + dt) )
+  real64 checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
+  real64 const epsilonLoc = 1e-12;
+  if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
   {
     computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
     m_indexSeismoTrace++;

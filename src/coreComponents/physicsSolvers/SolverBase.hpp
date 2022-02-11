@@ -648,12 +648,6 @@ public:
 
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
-
-  /**
-   * @brief Performs re-initialization of certain variable depending on the solver being used.
-   */
-  virtual void reinit() {}
-
   /**
    * @brief Return PySolver type.
    * @return Return PySolver type.
