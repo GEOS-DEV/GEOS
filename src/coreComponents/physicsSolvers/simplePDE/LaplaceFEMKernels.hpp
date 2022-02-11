@@ -190,7 +190,8 @@ public:
                               StackVariables & stack ) const
   {
     real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                           stack.feStack, dNdX );
     for( localIndex a = 0; a < stack.numRows; ++a )
     {
       for( localIndex b = 0; b < stack.numCols; ++b )

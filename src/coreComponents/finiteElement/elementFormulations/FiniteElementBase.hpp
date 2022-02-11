@@ -203,8 +203,8 @@ public:
   GEOSX_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   real64 const (&X)[LEAF::numNodes][3],
-                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
+                   real64 const (&X)[LEAF::maxSupportPoints][3],
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
   /**
    * @brief Get the shape function gradients.
@@ -222,9 +222,9 @@ public:
   GEOSX_HOST_DEVICE
   real64 getGradN( localIndex const k,
                    localIndex const q,
-                   real64 const (&X)[LEAF::numNodes][3],
+                   real64 const (&X)[LEAF::maxSupportPoints][3],
                    typename LEAF::StackVariables const & stack,
-                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
   /**
    * @brief Get the shape function gradients.
@@ -242,7 +242,26 @@ public:
   real64 getGradN( localIndex const k,
                    localIndex const q,
                    int const X,
-                   real64 ( &gradN )[LEAF::numNodes][3] ) const;
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
+  /**
+   * @brief Get the shape function gradients.
+   * @tparam LEAF Type of the derived finite element implementation.
+   * @param k The element index.
+   * @param q The quadrature point index.
+   * @param X dummy variable.
+   * @param stack Stack variables relative to the element @p k created by a call to @ref setup.
+   * @param gradN Return array of the shape function gradients.
+   * @return The determinant of the Jacobian transformation matrix.
+   *
+   * This function returns pre-calculated shape function gradients.
+   */
+  template< typename LEAF >
+  GEOSX_HOST_DEVICE
+  real64 getGradN( localIndex const k,
+                   localIndex const q,
+                   int const X,
+                   typename LEAF::StackVariables const & stack,
+                   real64 ( &gradN )[LEAF::maxSupportPoints][3] ) const;
 
   /**
    * @brief Add stabilization of grad-grad bilinear form to input matrix.
@@ -596,8 +615,8 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
-                                    real64 const (&X)[LEAF::numNodes][3],
-                                    real64 (& gradN)[LEAF::numNodes][3] ) const
+                                    real64 const (&X)[LEAF::maxSupportPoints][3],
+                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, gradN );
@@ -608,9 +627,9 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
-                                    real64 const (&X)[LEAF::numNodes][3],
+                                    real64 const (&X)[LEAF::maxSupportPoints][3],
                                     typename LEAF::StackVariables const & stack,
-                                    real64 ( & gradN )[LEAF::numNodes][3] ) const
+                                    real64 ( & gradN )[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( k );
   return LEAF::calcGradN( q, X, stack, gradN );
@@ -622,11 +641,27 @@ GEOSX_FORCE_INLINE
 real64 FiniteElementBase::getGradN( localIndex const k,
                                     localIndex const q,
                                     int const X,
-                                    real64 (& gradN)[LEAF::numNodes][3] ) const
+                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( X );
 
-  LvArray::tensorOps::copy< LEAF::numNodes, 3 >( gradN, m_viewGradN[ k ][ q ] );
+  LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
+
+  return m_viewDetJ( k, q );
+}
+
+template< typename LEAF >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 FiniteElementBase::getGradN( localIndex const k,
+                                    localIndex const q,
+                                    int const X,
+                                    typename LEAF::StackVariables const & stack,
+                                    real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
+{
+  GEOSX_UNUSED_VAR( X );
+
+  LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
 
   return m_viewDetJ( k, q );
 }
