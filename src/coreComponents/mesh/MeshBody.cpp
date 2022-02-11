@@ -29,9 +29,7 @@ MeshBody::MeshBody( string const & name,
   Group( name, parent ),
   m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
-{
-  registerGroup< CellBlockManager >( keys::cellManager );
-}
+{}
 
 MeshBody::~MeshBody()
 {
