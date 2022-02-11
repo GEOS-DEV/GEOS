@@ -97,6 +97,8 @@ class StencilMaterialAccessors : public StencilAccessors< TRAITS ... >
 {
 public:
 
+  using StencilAccessors< TRAITS ... >::m_accessors;
+
   /**
    * @brief Constructor for the struct
    * @tparam MATERIAL_TYPE  type of the constitutive model
