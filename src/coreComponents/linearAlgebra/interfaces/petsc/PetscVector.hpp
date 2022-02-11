@@ -148,7 +148,7 @@ public:
 
   virtual void scale( real64 const scalingFactor ) override;
 
-  virtual void PointwiseScale( PetscVector const & scalingVector ) override;
+  virtual void pointwiseScale( PetscVector const & scalingVector ) override;
 
   virtual void reciprocal() override;
 
