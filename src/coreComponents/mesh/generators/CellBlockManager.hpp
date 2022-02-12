@@ -153,6 +153,8 @@ public:
     return this->getGroup( viewKeyStruct::cellBlocks() ).getGroup< CellBlock >( name );
   }
 
+  const Group & getCellBlocks() const override;
+
   Group & getCellBlocks() override;
 
   /**
@@ -180,12 +182,6 @@ private:
     /// Cell blocks key
     static constexpr char const * cellBlocks() { return "cellBlocks"; }
   };
-
-  /**
-   * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return Reference to the Group instance.
-   */
-  const Group & getCellBlocks() const;
 
   /**
    * @brief Get cell block at index @p iCellBlock.
