@@ -2326,7 +2326,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--defaultH => Default for CycLiqCPSP Model Parameter : h-->
 		<xsd:attribute name="defaultH" type="real64" use="required" />
 		<!--defaultInitialCycles => Default for CycLiqCPSP Model Parameter : initial Cycles-->
-		<xsd:attribute name="defaultInitialCycles" type="integer" use="required" />
+		<xsd:attribute name="defaultInitialCycles" type="real64" use="required" />
 		<!--defaultKappa => Default for CycLiqCPSP Model Parameter : kappa-->
 		<xsd:attribute name="defaultKappa" type="real64" use="required" />
 		<!--defaultKsi => Default for CycLiqCPSP Model Parameter : ksi-->

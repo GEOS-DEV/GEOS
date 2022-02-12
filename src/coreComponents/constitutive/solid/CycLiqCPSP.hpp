@@ -23,6 +23,7 @@
 #include "constitutive/ExponentialRelation.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "SolidModelDiscretizationOpsIsotropic.hpp"
+#include <iostream>
 
 namespace geosx
 {
@@ -55,7 +56,7 @@ public:
             arrayView1d< real64 const > const & e0,
             arrayView1d< real64 const > const & ksi,
             arrayView1d< real64 const > const & ein,
-			arrayView2d< integer > const & initialCycles,
+			arrayView2d< real64 > const & initialCycles,
 			arrayView2d< real64 > const & epsvir,
 			arrayView2d< real64 > const & epsvre,
 			arrayView2d< real64 > const & gammamono,
@@ -181,7 +182,7 @@ protected:
   arrayView1d< real64 const > const m_e0;
   arrayView1d< real64 const > const m_ksi;
   arrayView1d< real64 const > const m_ein;
-  arrayView2d< integer > const m_initialCycles;
+  arrayView2d< real64 > const m_initialCycles;
   arrayView2d< real64 > const m_epsvir;
   arrayView2d< real64 > const m_epsvre;
   arrayView2d< real64 > const m_gammamono;
@@ -246,7 +247,7 @@ void CycLiqCPSPUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
                                                                      real64 const ( &totalStrain )[6],
                                                                      real64 ( & stress )[6] ) const
 {
-	++ m_initialCycles( k, q );
+	m_initialCycles( k, q ) = m_initialCycles( k, q ) + 1;
 	if(m_initialCycles( k, q ) < 0)
 	{
 	     real64 p = 1e3;
@@ -266,22 +267,14 @@ void CycLiqCPSPUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
 	}
 	else
 	{
-		/*
-	     real64 p = 1e3;
-	     real64 G = m_G0[k] * pat * ( pow( ( 2.97 - m_ein[k] ) , 2 ) / ( 1 + m_ein[k])) * sqrt( p / pat )*1000.0;
-	     real64 K = (1 + m_ein[k]) / m_kappa[k] * pat * sqrt( p / pat )*1000.0;
-	     G = 0.3835 * K;
-	     real64 const lambda = K - 2.0 / 3.0 * G;
-	     real64 const volStrain = totalStrain[0] + totalStrain[1] + totalStrain[2] ;
-	     real64 const twoG = 2.0 * G;
+		// Attention! The totalStrain here is engineering shear strain
+		// rather than tensor shear strain. by ron
+		real64 tensorStrain[6] = {0};
+		LvArray::tensorOps::copy< 6 >( tensorStrain, totalStrain );
+		tensorStrain[3] = 0.5 * totalStrain[3];
+		tensorStrain[4] = 0.5 * totalStrain[4];
+		tensorStrain[5] = 0.5 * totalStrain[5];
 
-	     stress[0] = lambda * volStrain + twoG * totalStrain[0];
-	     stress[1] = lambda * volStrain + twoG * totalStrain[1];
-	     stress[2] = lambda * volStrain + twoG * totalStrain[2];
-	     stress[3] = G * totalStrain[3];
-	     stress[4] = G * totalStrain[4];
-	     stress[5] = G * totalStrain[5];
-	     */
 		real64 Mfc = m_M[k];
 		real64 Mdc = m_M[k];
 		real64 sinphi = 3.0 * Mfc / (Mfc + 6.0);
@@ -312,7 +305,8 @@ void CycLiqCPSPUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
         LvArray::tensorOps::copy< 6 >( strain_n, m_strain[k][q] );
         real64 strain_nplus1[6] = {0};
         LvArray::tensorOps::copy< 6 >( strain_nplus1, strain_n );
-        LvArray::tensorOps::add< 6 >( strain_nplus1, totalStrain );
+        LvArray::tensorOps::add< 6 >( strain_nplus1, tensorStrain );
+
         real64 alpha_n[6] = {0};
         LvArray::tensorOps::copy< 6 >( alpha_n, m_alpha[k][q] );
         real64 stress_pass[6] = {0};
@@ -364,7 +358,7 @@ void CycLiqCPSPUpdates::smallStrainNoStateUpdate_StressOnly( localIndex const k,
     	LvArray::tensorOps::copy< 6 >( dev_strain, strain_nplus1 );
     	LvArray::tensorOps::symAddIdentity< 3 >( dev_strain, -trace * one3 );
 
-    	real64 en = (1 + m_ein[k]) * exp(-trace_n) - 1.0;//void ratio
+    	real64 en = (1 + m_ein[k]) * exp(-trace_n) - 1.0; //void ratio
     	real64 temp[6] = {0};
     	real64 p0;
     	real64 epsvc0;
@@ -1265,7 +1259,7 @@ public:
     real64 m_defaultEin;
 
     /// The default value of the Cycles of elastic stage for any new allocations.
-    integer m_defaultInitialCycles;
+    real64 m_defaultInitialCycles;
 
     /// The [CycLiqCPSP parameters] elastic shear modulus for each upper level dimension (i.e. cell) of *this
     array1d< real64 > m_G0;
@@ -1313,7 +1307,7 @@ public:
     array1d< real64 > m_ein;
 
     /// The the Cycles of elastic stage at a quadrature point.
-    array2d< integer > m_initialCycles;
+    array2d< real64 > m_initialCycles;
 
     /// The material stress at a quadrature point.
     array3d< real64, solid::STRESS_PERMUTATION > m_strain;

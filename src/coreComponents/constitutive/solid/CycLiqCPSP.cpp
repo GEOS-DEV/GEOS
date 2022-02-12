@@ -241,7 +241,7 @@ void CycLiqCPSP::postProcessInput()
 	this->getWrapper< array1d< real64 > >( viewKeyStruct::einString() ).
 	    setApplyDefaultValue( m_defaultEin );
 
-	this->getWrapper< array2d< integer > >( viewKeyStruct::initialCyclesString() ).
+	this->getWrapper< array2d< real64 > >( viewKeyStruct::initialCyclesString() ).
 	    setApplyDefaultValue( -m_defaultInitialCycles );
 
 }

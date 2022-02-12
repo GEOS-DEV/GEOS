@@ -1192,7 +1192,7 @@
 		<!--h => CycLiqCPSP Model Parameter : h-->
 		<xsd:attribute name="h" type="real64_array" />
 		<!--initialCycles => initialCycles-->
-		<xsd:attribute name="initialCycles" type="integer_array2d" />
+		<xsd:attribute name="initialCycles" type="real64_array2d" />
 		<!--kappa => CycLiqCPSP Model Parameter : kappa-->
 		<xsd:attribute name="kappa" type="real64_array" />
 		<!--ksi => CycLiqCPSP Model Parameter : ksi-->
