@@ -164,6 +164,7 @@ void SpatialPartition::setSizes( real64 const ( &min )[ 3 ],
     m_size = MpiWrapper::commSize( MPI_COMM_GEOSX );
 
     //check to make sure our dimensions agree
+    // TODO Do this beforehand and output a message to the user instead of crashing
     {
       int check = 1;
       for( int i = 0; i < nsdof; i++ )

@@ -220,6 +220,8 @@ private:
  *              faces with IDs ranging from uniqueFaceOffsets[ i ] to uniqueFaceOffsets[ i + 1 ] - 1.
  * @return return total number of faces
  */
+// TODO Why is this separated from createLowestNodeToFaces ? 
+// TODO Flag interior - boundary faces - compute areas - normals - could also be done 
 localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace const > const & lowestNodeToFaces,
                                         arrayView1d< localIndex > const & uniqueFaceOffsets )
 {
@@ -227,10 +229,11 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace
   GEOSX_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
   uniqueFaceOffsets.setValues< serialPolicy >( 0. );
 
-  // Loop over all the nodes.
+   // Loop over all the nodes.
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
+
     // Since lowestNodeToFaces[ nodeID ] is sorted we can compare subsequent entries
     // count up the unique entries. Since each face can appear at most twice if we find a match we
     // can skip the next entry as well.
@@ -247,6 +250,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace
       }
     }
   } );
+
   // At this point uniqueFaceOffsets[ i ] holds the number of unique face associated with node i - 1.
   // Perform an inplace prefix-sum to get the unique face offset.
   RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueFaceOffsets.begin(), uniqueFaceOffsets.end() );
@@ -264,6 +268,7 @@ void insertFaceToNodesEntry( localIndex const faceID,
                              ArrayOfArrays< localIndex > & faceToNodes )
 {
   localIndex const numFaceNodes = 4; // nodesAndElementOfFace.nodes.size();
+
   // FIXME The size should be OK because it's been allocated previously.
   for( localIndex i = 0; i < numFaceNodes; ++i )
   {
@@ -280,6 +285,8 @@ void insertFaceToNodesEntry( localIndex const faceID,
  * @param [inout] faceToElements the face to element map.
  * @param [inout] faceToNodes the face to node map.
  */
+// TODO  The faceToNode and nodeToFace maps should be the first filled and should have been 
+// before so that we do not carry around this annoying lowestNodeToFaces and uniqueFaceOffsets
 void populateFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lowestNodeToFaces,
                        arrayView1d< localIndex const > const & uniqueFaceOffsets,
                        ArrayOfArrays< localIndex > & faceToNodes,
@@ -289,6 +296,7 @@ void populateFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & 
 
   localIndex const numNodes = lowestNodeToFaces.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
+
   GEOSX_ERROR_IF_NE( numNodes, uniqueFaceOffsets.size() - 1 );
   GEOSX_ERROR_IF_NE( numUniqueFaces, faceToNodes.size() );
   GEOSX_ERROR_IF_NE( numUniqueFaces, faceToElements.size( 0 ) );
@@ -298,6 +306,7 @@ void populateFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & 
   forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
+
     // loop over all the `NodesAndElementOfFace` associated with the node.
     for( localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces; ++j, ++curFaceID )
     {
@@ -305,7 +314,14 @@ void populateFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & 
       // It must therefore be considered "twice".
       // Otherwise it's a boundary face, and "once" is enough.
       NodesAndElementOfFace const & f0 = lowestNodeToFaces( nodeID, j );
-      insertFaceToNodesEntry( curFaceID, f0, faceToNodes );
+      
+      //insertFaceToNodesEntry( curFaceID, f0, faceToNodes );
+
+      faceToNodes[curFaceID][0] = f0.nodes[0];
+      faceToNodes[curFaceID][1] = f0.nodes[1];
+      faceToNodes[curFaceID][2] = f0.nodes[2];
+      faceToNodes[curFaceID][3] = f0.nodes[3];  
+
       faceToElements( curFaceID, 0 ) = f0.element;
       faceToElements( curFaceID, 1 ) = -1; // TODO Make a constant
 
@@ -331,6 +347,7 @@ void populateFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & 
  * @param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
  * @param [out] faceToElemMap the map from faces to elements. This function resizes the array appropriately.
  */
+
 void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lowestNodeToFaces,
                      arrayView1d< localIndex const > const & uniqueFaceOffsets,
                      ArrayOfArrays< localIndex > & faceToNodeMap,
@@ -338,14 +355,22 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
                      array2d< localIndex > & faceToElemMap )
 {
   GEOSX_MARK_FUNCTION;
+  GEOSX_UNUSED_VAR( lowestNodeToFaces );
 
-  localIndex const numNodes = lowestNodeToFaces.size();
+  //localIndex const numNodes = lowestNodeToFaces.size();
   localIndex const numUniqueFaces = uniqueFaceOffsets.back();
-  array1d< localIndex > numNodesPerFace( numUniqueFaces );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalFaceNodes( 0.0 );
 
+  // TODO  The faceToNode and nodeToFace maps should be the first filled and should have been 
+  // before so that we do not carry around this annoying lowestNodeToFaces and uniqueFaceOffsets
+
+//  array1d< localIndex > numNodesPerFace( numUniqueFaces );
+//  RAJA::ReduceSum< parallelHostReduce, localIndex > totalFaceNodes( 0.0 );
+
+  // Compute the size needed to store the faceToNodeMap - hexahedron nbFaces x 4
+  
   // loop over all the nodes.
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
+  // TODO optimize
+/*  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
   {
     localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
     // loop over all the NodesAndElementOfFace associated with the node
@@ -361,34 +386,47 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
       }
     }
   } );
+*/
+
+  // TODO The same allocation should be done for faceToNode and faceToEdge
+
+
+  // There are 3 or 4 nodes per face
+  // A code that works for general polygons is not efficient for hexahedra
+  // TODO Optimize
 
   // Resize the face to node map.
-  faceToNodeMap.resize( 0 );
-
-  // Reserve space for the number of current faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numUniqueFaces; //TODO why this allocation factor
-  faceToNodeMap.reserve( entriesToReserve );
-
+  // faceToNodeMap.resize( numUniqueFaces, 4 ); // TODO How can we allocate what we need ? // This does not do it
+  
+    // Reserve space for the number of current faces plus some extra.
+//  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = numUniqueFaces; //TODO why this allocation factor
+  
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalFaceNodes.get() + numUniqueFaces * CellBlockManager::nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
-  faceToNodeMap.reserveValues( valuesToReserve );
-  faceToNodeMap.reserveValues( 2 * entriesToReserve ); //TODO I don"t undertand anythin about LVARRAY :@
+  localIndex const valuesToReserve = 4 * numUniqueFaces; // totalFaceNodes.get() + numUniqueFaces * CellBlockManager::nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
 
+
+  faceToNodeMap.reserve( entriesToReserve );
+  faceToNodeMap.reserveValues( valuesToReserve );
+  // faceToNodeMap.reserveValues( 2 * entriesToReserve ); //TODO I don"t undertand anythin about LVARRAY :@ 
+
+  // I do not understand why do we have to put it the arrays 
+  // Should be the same for Elem and Edges ? I do not get it ....
   // Append the individual arrays.
   for( localIndex faceID = 0; faceID < numUniqueFaces; ++faceID )
   {
-    faceToNodeMap.appendArray( numNodesPerFace[ faceID ] );
-    faceToNodeMap.setCapacityOfArray( faceToNodeMap.size() - 1,
-                                      numNodesPerFace[ faceID ] + CellBlockManager::nodeMapExtraSpacePerFace() );
-  }
+    faceToNodeMap.appendArray( 4 ); //  numNodesPerFace[ faceID ] );
+    //faceToNodeMap.setCapacityOfArray( faceToNodeMap.size() - 1, 4); 
+                                      //numNodesPerFace[ faceID ] + CellBlockManager::nodeMapExtraSpacePerFace() );
+  } 
 
   // Each face may belong to _maximum_ 2 elements.
   // If it belongs to only one, we put `-1` for the undefined value.
   faceToElemMap.resize( numUniqueFaces, 2 );
 
-  // TODO I'm really not sure.
-  faceToEdgesMap.resize( numUniqueFaces, 2 * CellBlockManager::edgeMapExtraSpacePerFace() );
+  // The number of edges per face is 3 or 4 - let's go with 4 
+  // TODO adequate strategy for triangles
+  faceToEdgesMap.resize( numUniqueFaces, 4 );
 }
 
 
@@ -407,7 +445,9 @@ void resizeFaceMaps( ArrayOfArraysView< NodesAndElementOfFace const > const & lo
 ArrayOfArrays< NodesAndElementOfFace > createLowestNodeToFaces( localIndex numNodes, const Group & cellBlocks )
 {
   // TODO - Use information on the mesh to avoid this overkill allocation
-  ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces( numNodes, 2 * CellBlockManager::maxFacesPerNode() );
+  // For meshes of the InternalMeshGenerator - regular cartesian - we are good with 6 faces per node - no big gain compared to 24 
+  ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces( numNodes, 6 );
+  //ArrayOfArrays< NodesAndElementOfFace > lowestNodeToFaces( numNodes, 2 * CellBlockManager::maxFacesPerNode() );
 
   // The function is a bit simplified and is not run in parallel anymore.
   // Can be improved.
@@ -489,6 +529,7 @@ void fillElementToFacesOfCellBlocks( ArrayOfArrays< NodesAndElementOfFace > cons
  * @param faceToEdges We need the face to edges mapping to get some edge index.
  * @param cellBlocks The cell blocks for which the mappings will be constructed.
  */
+// What is the usefulness of the CellBlock concept ?
 void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToEdges,
                                      Group & cellBlocks )
 {
@@ -503,10 +544,15 @@ void fillElementToEdgesOfCellBlocks( ArrayOfArrays< localIndex > const & faceToE
     // Another implementation (used in other contexts) would use some edge signature
     // to remove the duplicates.
 
+    // TODO Optimize the list of edges is known for the types of cells
+    // managed by the CellBlocks
+    // Access to the global edge index could be gotten through the node
+
     // Loop over the cells
     for( localIndex kc = 0; kc < cellBlock.numElements(); kc++ )
     {
       int count = 0;
+      // TODO Remove this loop 
       for( localIndex kf = 0; kf < cellBlock.numFacesPerElement(); kf++ )
       {
         // Loop over edges of each face
@@ -615,6 +661,11 @@ void CellBlockManager::buildMaps()
 
 ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
 {
+  std::cout << " This is a face " <<
+             m_faceToNodes[0][0] << "  " <<
+             m_faceToNodes[0][1] << "  " <<
+             m_faceToNodes[0][2] << "  " <<
+             m_faceToNodes[0][3] << "  " << std::endl;
   return m_faceToNodes;
 }
 

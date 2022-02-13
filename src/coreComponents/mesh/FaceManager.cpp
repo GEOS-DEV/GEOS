@@ -64,9 +64,12 @@ FaceManager::~FaceManager()
 
 void FaceManager::resize( localIndex const newSize )
 {
-  m_nodeList.resize( newSize, 2 * nodeMapExtraSpacePerFace() );
-  m_edgeList.resize( newSize, 2 * edgeMapExtraSpacePerFace() );
-  ObjectManagerBase::resize( newSize );
+  //TODO Why these sizes ? Where is this comming from ? 
+  // Why not use the size computed by the CellBlockManager? 
+  // m_nodeList.resize( newSize, 4 );  // 2 * nodeMapExtraSpacePerFace() );
+  // m_edgeList.resize( newSize, 4 );  // 2 * edgeMapExtraSpacePerFace() );
+  
+  ObjectManagerBase::resize( newSize ); // TODO - I do understand this - Needed to build the sets
 }
 
 /**
@@ -161,11 +164,13 @@ void FaceManager::buildRegionMaps( ElementRegionManager const & elementRegionMan
 void FaceManager::buildSets( NodeManager const & nodeManager )
 {
   // First create the sets
+  // TODO Are the sets needed always ?
   auto const & nodeSets = nodeManager.sets().wrappers();
   for( localIndex i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
     string const & setName = setWrapper->getName();
+    // std::cout  << " Name of the set " << setName << std::endl;
     createSet( setName );
   }
 
@@ -196,12 +201,16 @@ void FaceManager::setDomainBoundaryObjects()
 void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            NodeManager const & nodeManager )
 {
+  // TODO Is the resize really useful - since the Maps arrive all computed and ready delivered 
+  // by the CellBlockManager
   resize( cellBlockManager.numFaces() );
 
   m_nodeList.base() = cellBlockManager.getFaceToNodes();
   m_edgeList.base() = cellBlockManager.getFaceToEdges();
 
   m_toElements.m_toElementIndex = cellBlockManager.getFaceToElements();
+
+  std::cout << " Where are my nodes " << m_nodeList.size() << std::endl;
 
   computeGeometry( nodeManager );
 }
