@@ -609,7 +609,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStepVelocityUpdate( real64 const & t
     //Change velocityUpdate (add massDamping) by ron, 26 Jan 2022
     SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_sendOrReceiveNodes.toViewConst() );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
     parallelDeviceEvents packEvents;
     CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
@@ -628,8 +628,10 @@ real64 SolidMechanicsLagrangianFEM::explicitStepVelocityUpdate( real64 const & t
     // apply this over a set
     //Change velocityUpdate (add massDamping) by ron, 26 Jan 2022
     SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_massDamping, m_nonSendOrReceiveNodes.toViewConst() );
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n + dt, domain, "nodeManager", keys::Velocity );
 
+    //Add applyClearDisplacement by ron, 11 Feb 2022
+    applyClearDisplacement( time_n + dt, domain );
     // this includes  a device sync after launching all the unpacking kernels
     parallelDeviceEvents unpackEvents;
     CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
@@ -794,6 +796,33 @@ void SolidMechanicsLagrangianFEM::applyTractionBCExplicit( real64 const time,
 			    } );
 		  }
 	  }
+});
+}
+
+//Add applyClearDisplacement by ron, 11 Feb 2022
+void SolidMechanicsLagrangianFEM::applyClearDisplacement( real64 const time,
+                                                   DomainPartition & domain )
+{
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodeManager.totalDisplacement();
+
+  fsManager.apply( time,
+                   domain,
+                   "nodeManager",
+                   string( "ClearDisplacement" ),
+                   [&]( FieldSpecificationBase const & bc,
+                        string const &,
+                        SortedArrayView< localIndex const > const & targetSet,
+						Group &,
+						string const &  )
+{
+	  integer const component = bc.getComponent();
+	  forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const i )
+		{
+		    localIndex const a = targetSet[ i ];
+		    u( a, component ) = 0.0;
+		} );
 });
 }
 

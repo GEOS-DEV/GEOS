@@ -223,6 +223,10 @@ public:
   void applyTractionBCExplicit( real64 const time,
                         DomainPartition & domain );
 
+  //Add applyClearDisplacement by ron, 11 Feb 2022
+  void applyClearDisplacement( real64 const time,
+                        DomainPartition & domain );
+
   void applyChomboPressure( DofManager const & dofManager,
                             DomainPartition & domain,
                             arrayView1d< real64 > const & localRhs );
