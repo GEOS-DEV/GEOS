@@ -74,6 +74,12 @@ public:
    */
   static string catalogName() { return "DARTSSuperEngine"; }
 
+  /**
+   * @brief Getter for the fluid component names
+   * @return an array storing the component names
+   */
+  arrayView1d< string const > componentNames() const { return m_componentNames; }
+
   virtual void registerDataOnMesh( Group & meshBodies ) override;
 //END_SPHINX_INCLUDE_01
 
@@ -171,6 +177,12 @@ public:
    * @return the number of phases
    */
   localIndex numFluidPhases() const { return m_numPhases; }
+
+  /**
+   * @brief Get the number of fluid components (species)
+   * @return the number of components
+   */
+  localIndex numOBLOperators() const { return m_numOBLOperators; }
 
   /**
    * @brief assembles the accumulation and volume balance terms for all cells

@@ -24,7 +24,8 @@ endif()
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
-          testCompMultiphaseFlowHybrid.cpp )
+          testCompMultiphaseFlowHybrid.cpp
+          testDARTSSuperEngine.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()
