@@ -43,7 +43,6 @@ endif()
 
 if( ENABLE_PYGEOSX )
   set( dependencyList ${dependencyList} pylvarray )
-  #add_subdirectory( python )
 endif()
 
 

@@ -165,8 +165,6 @@ void AcousticWaveEquationSEM::postProcessInput()
     m_nsamplesSeismoTrace = 0;
   }
 
-  localIndex const nsamples = int(maxTime/dt) + 1;
-
   localIndex const numNodesPerElem = 8;
 
   localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
