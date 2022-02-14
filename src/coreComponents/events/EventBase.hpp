@@ -261,6 +261,10 @@ public:
   bool isIdle() const
   { return m_eventForecast > 1; }
 
+  /**
+   * @brief Get the string name of the target.
+   * @return @p string name of the target.
+   */
   string getEventName() const
   {
     return m_eventTarget;
