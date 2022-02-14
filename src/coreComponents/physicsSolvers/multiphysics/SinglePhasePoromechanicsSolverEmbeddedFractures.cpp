@@ -498,6 +498,32 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::implicitStepComplete( real
 {
   m_fracturesSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
+
+  // Laura print max pressure and displacement
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  // pressure
+  ElementRegionManager & elemManager = mesh.getElemManager();
+  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion & region )
+  {
+    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    {
+      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+      {
+        arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+        double * max_pres = std::max_element(pres.begin(), pres.end());
+        // std::cout << "max pres " << * max_pres << std::endl;
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "max pres      {:15.6e}", * max_pres ) );
+      }
+    } );
+  } );
+  // displacement
+  NodeManager & nodeManager = mesh.getNodeManager();
+  arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+  double * min_disp = std::min_element(disp.begin(), disp.end());
+  //std::cout << "min disp " << * min_disp << std::endl;
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "min disp      {:15.6e}", * min_disp ) );
+  // end Laura
+
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::resetStateToBeginningOfStep( DomainPartition & domain )
