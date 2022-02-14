@@ -15,8 +15,8 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if( ENABLE_PYGEOSX)
-  set( dependencyList ${dependencyList} pygroup )
+if ( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 #

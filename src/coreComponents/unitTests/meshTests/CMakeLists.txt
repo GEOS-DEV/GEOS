@@ -12,7 +12,7 @@ if(ENABLE_PAMELA)
     list( APPEND gtest_geosx_tests
           testPAMELAImport.cpp
         )
-    
+
     set( GMSH_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.msh )
     set( ECLIPSE_FILE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/toy_model.GRDECL )
     configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/meshFileNames.hpp.in ${CMAKE_BINARY_DIR}/include/tests/meshFileNames.hpp )
@@ -28,6 +28,10 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if ( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 #

@@ -45,6 +45,10 @@ if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if ( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
+endif()
+
 
 #
 # Add gtest C++ based tests
@@ -75,7 +79,7 @@ blt_add_executable( NAME testTriaxial
 
 foreach(test ${gtest_triaxial_xmls})
     get_filename_component( test_name ${test} NAME_WE )
-    blt_add_test( NAME ${test_name} 
+    blt_add_test( NAME ${test_name}
                   COMMAND testTriaxial -i ${CMAKE_CURRENT_LIST_DIR}/${test}
                   )
 endforeach()
@@ -92,7 +96,7 @@ blt_add_executable( NAME testPVT
 
 foreach(test ${gtest_pvt_xmls})
     get_filename_component( test_name ${test} NAME_WE )
-    blt_add_test( NAME ${test_name} 
+    blt_add_test( NAME ${test_name}
                   COMMAND testPVT -i ${CMAKE_CURRENT_LIST_DIR}/${test}
                   )
 endforeach()
