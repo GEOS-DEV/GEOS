@@ -285,15 +285,15 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
     {
       if( receiverIsLocal[ircv] == 1 )
       {
-	p_rcvs[iSeismo][ircv] = 0.0;
-	real64 ptmp_np1 = 0.0;
-	real64 ptmp_n = 0.0;
-	for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
+        p_rcvs[iSeismo][ircv] = 0.0;
+        real64 ptmp_np1 = 0.0;
+        real64 ptmp_n = 0.0;
+        for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
         {
-	  ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
-	  ptmp_n += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          ptmp_np1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
+          ptmp_n += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
-	p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
+        p_rcvs[iSeismo][ircv] = ((time_np1 - time_seismo)*ptmp_n+(time_seismo - time_n)*ptmp_np1)/dt;
       }
     } );
   }
