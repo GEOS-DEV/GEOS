@@ -369,10 +369,8 @@
 	</xsd:complexType>
 	<xsd:complexType name="VTKMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
+			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
-		<!--meshLevels => (no description available)-->
-		<xsd:attribute name="meshLevels" type="integer" />
 	</xsd:complexType>
 	<xsd:complexType name="NumericalMethodsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
