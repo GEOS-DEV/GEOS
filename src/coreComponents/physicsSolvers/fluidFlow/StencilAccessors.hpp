@@ -75,22 +75,40 @@ public:
     } );
   }
 
+protected:
+
+  /// the tuple storing all the accessors
+  std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > m_accessors;
+
   /**
    * @brief Constructor for the struct
+   */
+  StencilAccessors() = default;
+};
+
+/**
+ * @brief A struct to automatically construct and store element view accessors
+ * @struct StencilMaterialAccessors
+ * @tparam MATERIAL_TYPE the type of the material model
+ * @tparam TRAITS the pack containing the types of the fields
+ */
+template< typename MATERIAL_TYPE, typename ... TRAITS >
+class StencilMaterialAccessors : public StencilAccessors< TRAITS ... >
+{
+public:
+
+  using StencilAccessors< TRAITS ... >::m_accessors;
+
+  /**
+   * @brief Constructor for the struct
+   * @tparam MATERIAL_TYPE  type of the constitutive model
    * @param[in] elemManager a reference to the elemRegionManager
    * @param[in] solverName the name of the solver creating the view accessors
-   * @param[in] regionNames the name of the solver target regions
-   * @param[in] materialNames the name of the solver material names
    */
-  StencilAccessors( ElementRegionManager const & elemManager,
-                    string const & solverName,
-                    arrayView1d< string const > const & regionNames,
-                    arrayView1d< string const > const & materialNames )
+  StencilMaterialAccessors( ElementRegionManager const & elemManager,
+                            string const & solverName ):
+    StencilAccessors< TRAITS ... >()
   {
-    if( materialNames.empty() )
-    {
-      return; // if the material model does not exist (i.e., no capillary pressure), do not do anything
-    }
     forEachArgInTuple( std::tuple< TRAITS ... >{}, [&]( auto t, auto idx )
     {
       GEOSX_UNUSED_VAR( t );
@@ -98,18 +116,12 @@ public:
 
       auto & acc = std::get< idx() >( m_accessors );
       bool const allowMissingViews = false;
-      acc = elemManager.constructMaterialExtrinsicAccessor< TRAIT >( regionNames,
-                                                                     materialNames,
-                                                                     allowMissingViews );
+      acc = elemManager.constructMaterialExtrinsicAccessor< MATERIAL_TYPE, TRAIT >( allowMissingViews );
       acc.setName( solverName + "/accessors/" + TRAIT::key() );
     } );
   }
-
-private:
-
-  /// the tuple storing all the accessors
-  std::tuple< ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAITS::type > > ... > m_accessors;
 };
+
 
 }
 

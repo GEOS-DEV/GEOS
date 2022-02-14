@@ -21,10 +21,13 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/ParticleFluidBase.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "constitutive/fluid/ParticleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/SlurryFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/fluid/CellBasedFluxSlurryFluidAccessors.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityAccessors.hpp"
@@ -38,6 +41,7 @@ namespace geosx
 
 namespace ProppantTransportKernels
 {
+using namespace constitutive;
 
 /******************************** FluidUpdateKernel ********************************/
 
@@ -190,28 +194,30 @@ struct FluxKernel
   using CellBasedFluxFlowAccessors = CellBasedFluxFlowAccessorsImpl;
 
   using ParticleFluidAccessors =
-    StencilAccessors< extrinsicMeshData::particlefluid::settlingFactor,
-                      extrinsicMeshData::particlefluid::dSettlingFactor_dPressure,
-                      extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration,
-                      extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration,
-                      extrinsicMeshData::particlefluid::collisionFactor,
-                      extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration >;
+    StencilMaterialAccessors< ParticleFluidBase,
+                              extrinsicMeshData::particlefluid::settlingFactor,
+                              extrinsicMeshData::particlefluid::dSettlingFactor_dPressure,
+                              extrinsicMeshData::particlefluid::dSettlingFactor_dProppantConcentration,
+                              extrinsicMeshData::particlefluid::dSettlingFactor_dComponentConcentration,
+                              extrinsicMeshData::particlefluid::collisionFactor,
+                              extrinsicMeshData::particlefluid::dCollisionFactor_dProppantConcentration >;
 
   using SlurryFluidAccessors =
-    StencilAccessors< extrinsicMeshData::slurryfluid::density,
-                      extrinsicMeshData::slurryfluid::dDensity_dPressure,
-                      extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration,
-                      extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration,
-                      extrinsicMeshData::slurryfluid::viscosity,
-                      extrinsicMeshData::slurryfluid::dViscosity_dPressure,
-                      extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration,
-                      extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration,
-                      extrinsicMeshData::slurryfluid::componentDensity,
-                      extrinsicMeshData::slurryfluid::dComponentDensity_dPressure,
-                      extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration,
-                      extrinsicMeshData::slurryfluid::fluidDensity,
-                      extrinsicMeshData::slurryfluid::dFluidDensity_dPressure,
-                      extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration >;
+    StencilMaterialAccessors< SlurryFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure,
+                              extrinsicMeshData::slurryfluid::dDensity_dProppantConcentration,
+                              extrinsicMeshData::slurryfluid::dDensity_dComponentConcentration,
+                              extrinsicMeshData::singlefluid::viscosity,
+                              extrinsicMeshData::singlefluid::dViscosity_dPressure,
+                              extrinsicMeshData::slurryfluid::dViscosity_dProppantConcentration,
+                              extrinsicMeshData::slurryfluid::dViscosity_dComponentConcentration,
+                              extrinsicMeshData::slurryfluid::componentDensity,
+                              extrinsicMeshData::slurryfluid::dComponentDensity_dPressure,
+                              extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration,
+                              extrinsicMeshData::slurryfluid::fluidDensity,
+                              extrinsicMeshData::slurryfluid::dFluidDensity_dPressure,
+                              extrinsicMeshData::slurryfluid::dFluidDensity_dComponentConcentration >;
 
   using CellBasedFluxSlurryFluidAccessors = CellBasedFluxSlurryFluidAccessorsImpl;
 
@@ -359,12 +365,13 @@ struct ProppantPackVolumeKernel
                       extrinsicMeshData::proppant::isProppantBoundary >;
 
   using ParticleFluidAccessors =
-    StencilAccessors< extrinsicMeshData::particlefluid::settlingFactor >;
+    StencilMaterialAccessors< ParticleFluidBase, extrinsicMeshData::particlefluid::settlingFactor >;
 
   using SlurryFluidAccessors =
-    StencilAccessors< extrinsicMeshData::slurryfluid::density,
-                      extrinsicMeshData::slurryfluid::fluidDensity,
-                      extrinsicMeshData::slurryfluid::fluidViscosity >;
+    StencilMaterialAccessors< SlurryFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::slurryfluid::fluidDensity,
+                              extrinsicMeshData::slurryfluid::fluidViscosity >;
 
 
   template< typename VIEWTYPE >

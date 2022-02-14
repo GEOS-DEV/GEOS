@@ -22,8 +22,11 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SlurryFluidBase.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityAccessors.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -41,6 +44,7 @@ namespace geosx
 
 namespace SinglePhaseFVMKernels
 {
+using namespace constitutive;
 
 using namespace FluxKernelsHelper;
 
@@ -67,20 +71,23 @@ struct FluxKernel
                       extrinsicMeshData::flow::dMobility_dPressure >;
 
   using SinglePhaseFluidAccessors =
-    StencilAccessors< extrinsicMeshData::singlefluid::density,
-                      extrinsicMeshData::singlefluid::dDensity_dPressure >;
+    StencilMaterialAccessors< SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
 
   using SlurryFluidAccessors =
-    StencilAccessors< extrinsicMeshData::slurryfluid::density,
-                      extrinsicMeshData::slurryfluid::dDensity_dPressure >;
+    StencilMaterialAccessors< SlurryFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
 
   using PermeabilityAccessors = PermeabilityAccessorsImpl;
 
   using ProppantPermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure,
-                      extrinsicMeshData::permeability::dPerm_dDispJump,
-                      extrinsicMeshData::permeability::permeabilityMultiplier >;
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure,
+                              extrinsicMeshData::permeability::dPerm_dDispJump,
+                              extrinsicMeshData::permeability::permeabilityMultiplier >;
 
 
   /**
