@@ -131,7 +131,6 @@ public:
 
   struct viewKeyStruct : public SolverBase::viewKeyStruct
   {
-//    static constexpr auto coeffFieldName = "coeffFieldName";
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
@@ -150,11 +149,6 @@ public:
     return m_matrix.numGlobalRows();
   }
 
-//  void setSolidModelName( string const & name )
-//  {
-//    m_solidModelName = name;
-//  }
-
   string const & getFieldName() const
   {
     return m_fieldName;
@@ -168,10 +162,8 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
-  array1d< string > m_solidModelNames;
 
   array1d< real64 > m_coeff;
-  //  string m_coeffFieldName;
 
   PhaseFieldDamageFEM();
 };

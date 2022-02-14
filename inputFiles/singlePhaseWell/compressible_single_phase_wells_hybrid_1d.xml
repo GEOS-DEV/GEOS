@@ -19,16 +19,12 @@
       name="singlePhaseFlow"
       logLevel="1"
       discretization="singlePhaseHybridMimetic"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ Region1 }"/>
 
     <SinglePhaseWell
       name="singlePhaseWell"
       logLevel="1"
-      fluidNames="{ water }"
-      targetRegions="{ wellRegion1, wellRegion2 }">
+      targetRegions="{wellRegion1, wellRegion2}">
       <WellControls
         name="wellControls1"
         type="producer"
@@ -112,8 +108,7 @@
     <FiniteVolume>
       <HybridMimeticDiscretization
         name="singlePhaseHybridMimetic"
-        innerProductType="TPFA"
-        coefficientName="permeability"/>
+        innerProductType="TPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

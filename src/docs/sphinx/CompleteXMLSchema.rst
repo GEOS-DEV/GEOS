@@ -967,6 +967,13 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
+.. _XML_VTKMeshGenerator:
+
+Element: VTKMeshGenerator
+=========================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -2007,6 +2014,13 @@ Datastructure: VTK
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
 
 
+.. _DATASTRUCTURE_VTKMeshGenerator:
+
+Datastructure: VTKMeshGenerator
+===============================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
+
+
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
 
 Datastructure: VanGenuchtenBakerRelativePermeability
@@ -2047,6 +2061,20 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
+
+
+.. _DATASTRUCTURE_cellBlocks:
+
+Datastructure: cellBlocks
+=========================
+.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
+
+
+.. _DATASTRUCTURE_cellManager:
+
+Datastructure: cellManager
+==========================
+.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
@@ -2098,18 +2126,18 @@ Datastructure: embeddedSurfacesNodeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
 
 
-.. _DATASTRUCTURE_finiteVolumeStencils:
-
-Datastructure: finiteVolumeStencils
-===================================
-.. include:: ../../coreComponents/schema/docs/finiteVolumeStencils_other.rst
-
-
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen
 =====================
 .. include:: ../../coreComponents/schema/docs/lassen_other.rst
+
+
+.. _DATASTRUCTURE_meshLevels:
+
+Datastructure: meshLevels
+=========================
+.. include:: ../../coreComponents/schema/docs/meshLevels_other.rst
 
 
 .. _DATASTRUCTURE_neighborData:
