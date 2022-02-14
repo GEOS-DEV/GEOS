@@ -239,7 +239,7 @@ void WellControls::postProcessInput()
                   " The keywords " << viewKeyStruct::targetBHPString() << " and " << viewKeyStruct::targetBHPTableNameString() << " cannot be specified together",
                   InputError );
 
-  GEOSX_THROW_IF( ((m_targetBHP <= 0.0 && !m_targetBHPTableName.empty())),
+  GEOSX_THROW_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
                   "WellControls '" << getName() << "': You have to provide well BHP by specifying either " << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
                   InputError );
 

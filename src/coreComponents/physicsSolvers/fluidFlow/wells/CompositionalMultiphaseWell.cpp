@@ -989,6 +989,15 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                                    WellElementSubRegion const & subRegion )
     {
 
+      // for now, we do not want to model storage effects in the wells (unless the well is shut)
+      WellControls const & wellControls = getWellControls( subRegion );
+      bool const isWellOpen = wellControls.isWellOpen( m_currentTime + m_currentDt );
+      bool const enableReservoirToWellFlow = wellControls.isProducer() || wellControls.isCrossflowEnabled();
+      if( isWellOpen && enableReservoirToWellFlow )
+      {
+        return;
+      }
+
       // get the degrees of freedom and ghosting info
       arrayView1d< globalIndex const > const & wellElemDofNumber =
         subRegion.getReference< array1d< globalIndex > >( wellDofKey );

@@ -279,7 +279,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 
         if( detectCrossflow )
         {
-          if( compPerfRate[iperf][ic] > 0 )
+          if( compPerfRate[iperf][ic] > std::numeric_limits< real64 >::epsilon() )
           {
             numCrossflowPerforations += 1;
           }

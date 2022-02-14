@@ -235,7 +235,7 @@ public:
   /**
    * @brief Is the well open (or shut) at @p currentTime?
    * @param[in] currentTime the current time
-   * @return a flag equal to true if the well is open, and false otherwise
+   * @return a boolean
    */
   bool isWellOpen( real64 const & currentTime ) const;
 
