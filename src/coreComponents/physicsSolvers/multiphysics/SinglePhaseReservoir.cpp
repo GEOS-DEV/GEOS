@@ -150,9 +150,9 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  using TAG = SinglePhaseWellKernels::SubRegionTag;
-  using ROFFSET = SinglePhaseWellKernels::RowOffset;
-  using COFFSET = SinglePhaseWellKernels::ColOffset;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,

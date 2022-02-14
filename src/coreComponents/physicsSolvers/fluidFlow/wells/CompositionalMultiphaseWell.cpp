@@ -49,7 +49,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseWellKernels;
+using namespace compositionalMultiphaseWellKernels;
 
 CompositionalMultiphaseWell::CompositionalMultiphaseWell( const string & name,
                                                           Group * const parent )
@@ -444,7 +444,7 @@ void CompositionalMultiphaseWell::updateComponentFraction( WellElementSubRegion 
 {
   GEOSX_MARK_FUNCTION;
 
-  CompositionalMultiphaseBaseKernels::
+  compositionalMultiphaseBaseKernels::
     ComponentFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                subRegion );
@@ -730,7 +730,7 @@ void CompositionalMultiphaseWell::updateFluidModel( WellElementSubRegion & subRe
     using ExecPolicy = typename FluidType::exec_policy;
     typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-    CompositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< ExecPolicy >( subRegion.size(),
+    compositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< ExecPolicy >( subRegion.size(),
                                                                                  fluidWrapper,
                                                                                  pres,
                                                                                  dPres,
@@ -745,7 +745,7 @@ void CompositionalMultiphaseWell::updatePhaseVolumeFraction( WellElementSubRegio
 
   string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
-  CompositionalMultiphaseBaseKernels::
+  compositionalMultiphaseBaseKernels::
     PhaseVolumeFractionKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,
@@ -879,7 +879,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
       {
         typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
-        CompositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
+        compositionalMultiphaseBaseKernels::FluidUpdateKernel::launch< serialPolicy >( subRegion.size(),
                                                                                        fluidWrapper,
                                                                                        wellElemPressure,
                                                                                        wellElemTemp,
@@ -899,7 +899,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
 
       // 6) Estimate the well rates
       // TODO: initialize rates using perforation rates
-      CompositionalMultiphaseWellKernels::RateInitializationKernel::launch( subRegion.size(),
+      compositionalMultiphaseWellKernels::RateInitializationKernel::launch( subRegion.size(),
                                                                             m_targetPhaseIndex,
                                                                             wellControls,
                                                                             0.0, // initialization done at t = 0
@@ -951,7 +951,7 @@ void CompositionalMultiphaseWell::assembleFluxTerms( real64 const GEOSX_UNUSED_P
       arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens =
         subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >();
 
-      CompositionalMultiphaseBaseKernels::
+      compositionalMultiphaseBaseKernels::
         KernelLaunchSelector1< FluxKernel >( numFluidComponents(),
                                              subRegion.size(),
                                              dofManager.rankOffset(),
@@ -1030,7 +1030,7 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
       arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dWellElemPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
       arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
 
-      CompositionalMultiphaseBaseKernels::
+      compositionalMultiphaseBaseKernels::
         KernelLaunchSelector1< AccumulationKernel >( numFluidComponents(),
                                                      subRegion.size(),
                                                      numFluidPhases(),
@@ -1095,7 +1095,7 @@ void CompositionalMultiphaseWell::assembleVolumeBalanceTerms( DomainPartition co
       arrayView1d< real64 const > const & wellElemVolume =
         subRegion.getReference< array1d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementVolumeString() );
 
-      CompositionalMultiphaseBaseKernels::
+      compositionalMultiphaseBaseKernels::
         KernelLaunchSelector1< VolumeBalanceKernel >( numFluidComponents(),
                                                       subRegion.size(),
                                                       numFluidPhases(),
@@ -1373,7 +1373,7 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & mes
   PerforationKernel::MultiFluidAccessors resMultiFluidAccessors( meshLevel.getElemManager(), flowSolver.getName() );
   PerforationKernel::RelPermAccessors resRelPermAccessors( meshLevel.getElemManager(), flowSolver.getName() );
 
-  CompositionalMultiphaseBaseKernels::
+  compositionalMultiphaseBaseKernels::
     KernelLaunchSelector2< PerforationKernel >( numFluidComponents(),
                                                 numFluidPhases(),
                                                 perforationData->size(),
@@ -1648,7 +1648,7 @@ void CompositionalMultiphaseWell::assemblePressureRelations( DomainPartition con
 
 
       bool controlHasSwitched = false;
-      CompositionalMultiphaseBaseKernels::
+      compositionalMultiphaseBaseKernels::
         KernelLaunchSelector1< PressureRelationKernel >( numFluidComponents(),
                                                          subRegion.size(),
                                                          dofManager.rankOffset(),

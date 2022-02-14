@@ -30,7 +30,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseFVMKernels
+namespace compositionalMultiphaseFVMKernels
 {
 
 /******************************** FaceBasedAssemblyKernel ********************************/
@@ -590,7 +590,7 @@ AquiferBCKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
   using Order = BoundaryStencil::Order;
 
   BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
@@ -717,6 +717,6 @@ INST_AquiferBCKernel( 5 );
 #undef INST_AquiferBCKernel
 
 
-} // namespace CompositionalMultiphaseFVMKernels
+} // namespace compositionalMultiphaseFVMKernels
 
 } // namespace geosx

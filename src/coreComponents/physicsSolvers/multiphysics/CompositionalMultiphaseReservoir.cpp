@@ -175,11 +175,11 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
 
-  using TAG = CompositionalMultiphaseWellKernels::SubRegionTag;
-  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
