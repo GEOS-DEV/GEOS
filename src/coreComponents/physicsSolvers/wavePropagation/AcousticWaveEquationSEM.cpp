@@ -155,6 +155,8 @@ void AcousticWaveEquationSEM::postProcessInput()
     }
   }
 
+  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error  );
+
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -287,7 +289,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
   arrayView1d< localIndex const > const sourceIsLocal = m_sourceIsLocal.toViewConst();
   arrayView2d< real64 const > const sourceValue   = m_sourceValue.toViewConst();
 
-  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compare to array size", std::runtime_error );
+  GEOSX_THROW_IF( cycleNumber > sourceValue.size( 0 ), "Too many steps compared to array size", std::runtime_error );
   forAll< EXEC_POLICY >( sourceConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const isrc )
   {
     if( sourceIsLocal[isrc] == 1 )
@@ -521,6 +523,8 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
+  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error  );
+
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   NodeManager & nodeManager = mesh.getNodeManager();
@@ -585,7 +589,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
   } );
 
   real64 checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
-  real64 const epsilonLoc = 1e-12;
   if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
   {
     computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );

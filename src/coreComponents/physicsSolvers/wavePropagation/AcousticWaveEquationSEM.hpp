@@ -34,6 +34,8 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
+  static constexpr real64 epsilonLoc = 1e-12;
+
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
 
@@ -76,15 +78,18 @@ public:
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
-   * @param time_n the time of evaluation of the source
+   * @param cycleNumber the cycle number/step number of evaluation of the source
    * @param rhs the right hand side vector to be computed
    */
   virtual void addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs ) override;
 
   /**
    * @brief Compute the pressure at each receiver coordinate in one time step
+   * @param time_n the time of evaluation of the seismoTrace
+   * @param dt time step of simulation
    * @param iseismo the index number of of the seismo trace
    * @param pressure_np1 the array to save the pressure value at the receiver position
+   * @param pressure_n the array to save the pressure value at the receiver position
    */
   virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) override;
 
