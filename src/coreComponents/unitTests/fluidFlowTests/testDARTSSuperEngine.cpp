@@ -215,6 +215,7 @@ void testOperatorsNumericalDerivatives( DARTSSuperEngine & solver,
   solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
   {
+    GEOSX_UNUSED_VAR( targetIndex );
     SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
     arrayView1d< string const > const & components = solver.componentNames();
@@ -346,9 +347,10 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
 
   string const dofKey = dofManager.getKey( DARTSSuperEngine::viewKeyStruct::elemDofFieldString() );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const,
+  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
                                          ElementSubRegionBase & subRegion )
   {
+    GEOSX_UNUSED_VAR( targetIndex );
     arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
     arrayView1d< globalIndex const > const & dofNumber =
@@ -388,6 +390,7 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
+          GEOSX_UNUSED_VAR( targetIndex2 );
           solver.updateOBLOperators( subRegion2 );
         } );
 
@@ -412,6 +415,8 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
         {
+          GEOSX_UNUSED_VAR( targetIndex2 );
+
           solver.updateOBLOperators( subRegion2 );
         } );
 
@@ -492,7 +497,7 @@ TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_operators )
 TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
 {
   real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-2;   // 10% error margin
+  real64 const tol = 1e-2;   // 1% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -513,7 +518,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
 TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
 {
   real64 const perturb = sqrt( eps );
-  real64 const tol = 1e-2;   // 10% error margin
+  real64 const tol = 1e-2;   // 1% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
