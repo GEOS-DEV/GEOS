@@ -42,11 +42,11 @@
 namespace geosx
 {
 
-namespace SinglePhaseFVMKernels
+namespace singlePhaseFVMKernels
 {
 using namespace constitutive;
 
-using namespace FluxKernelsHelper;
+using namespace fluxKernelsHelper;
 
 /******************************** FluxKernel ********************************/
 
@@ -318,7 +318,7 @@ struct FaceDirichletBCKernel
     fluidWrapper.compute( presFace[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = mob[er][esr][ei];
-    SinglePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
+    singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
     dMobility_dP[Order::ELEM] = dMob_dPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
@@ -517,7 +517,7 @@ struct AquiferBCKernel
 };
 
 
-} // namespace SinglePhaseFVMKernels
+} // namespace singlePhaseFVMKernels
 
 } // namespace geosx
 

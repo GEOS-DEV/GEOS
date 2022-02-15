@@ -39,7 +39,7 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 using namespace constitutive;
 
@@ -457,7 +457,7 @@ struct ProppantPackVolumeKernel
                             arrayView1d< real64 > const & proppantPackVolFrac );
 };
 
-} // namespace ProppantTransportKernels
+} // namespace proppantTransportKernels
 
 } // namespace geosx
 

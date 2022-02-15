@@ -44,7 +44,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace ProppantTransportKernels;
+using namespace proppantTransportKernels;
 
 ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):
