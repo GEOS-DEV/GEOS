@@ -390,49 +390,9 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
 
   string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-<<<<<<< HEAD
-  string_array regionList;
-  string_array modelList;
-  if( fractureRegions.size() > 0 )
-  {
-    regionList = fractureRegions;
-    for( localIndex i = 0; i < m_permeabilityModelNames.size(); ++i )
-    {
-      for( localIndex j = 0; j < fractureRegions.size(); ++j )
-      {
-        if( targetRegionNames()[i] == fractureRegions[j] )
-        {
-          modelList.emplace_back( m_permeabilityModelNames[i] );
-        }
-      }
-    }
-  }
-  else
-  {
-    for( localIndex i = 0; i < targetRegionNames().size(); ++i )
-    {
-      regionList.emplace_back( targetRegionNames()[i] );
-    }
-    modelList = m_permeabilityModelNames;
-  }
-
-  std::cout << "regionList " << regionList << std::endl;
-  std::cout << "modelList " << modelList << std::endl;
-
-  ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
-    mesh.getElemManager().constructMaterialArrayViewAccessor< real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key(),
-                                                                           targetRegionNames(),
-                                                                           m_permeabilityModelNames,
-                                                                           true );
-
-  //fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
-  fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
-=======
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
->>>>>>> origin/develop
   {
     ElementRegionManager const & elemManager = mesh.getElemManager();
     ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
