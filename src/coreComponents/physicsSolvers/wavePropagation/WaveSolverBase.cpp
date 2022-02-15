@@ -87,10 +87,14 @@ WaveSolverBase::~WaveSolverBase()
 void WaveSolverBase::reinit()
 {
   DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   postProcessInput();
-  precomputeSourceAndReceiverTerm( mesh );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    precomputeSourceAndReceiverTerm( mesh, regionNames );
+  } );
 }
 
 void WaveSolverBase::initializePreSubGroups()
