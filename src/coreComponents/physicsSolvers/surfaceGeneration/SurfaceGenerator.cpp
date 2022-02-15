@@ -614,7 +614,7 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
 
     /// Nodes to edges in process node is not being set on rank 2. need to check that the new node->edge map is properly
     /// communicated
-    ParallelTopologyChange::synchronizeTopologyChange( &mesh,
+    parallelTopologyChange::synchronizeTopologyChange( &mesh,
                                                        neighbors,
                                                        modifiedObjects,
                                                        receivedObjects,
@@ -2927,7 +2927,7 @@ void SurfaceGenerator::calculateNodeAndFaceSif( DomainPartition const & domain,
                 real64 temp[ 3 ] = {0};
                 real64 xEle[ 3 ]  = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( elementCenter[ei] );
 
-                SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
+                solidMechanicsLagrangianFEMKernels::ExplicitKernel::
                   calculateSingleNodalForce( ei,
                                              n,
                                              numQuadraturePoints,
@@ -3751,7 +3751,7 @@ int SurfaceGenerator::calculateElementForcesOnEdge( DomainPartition const & doma
             // times for the same element.
 
             //wu40: the nodal force need to be weighted by Young's modulus and possion's ratio.
-            SolidMechanicsLagrangianFEMKernels::ExplicitKernel::
+            solidMechanicsLagrangianFEMKernels::ExplicitKernel::
               calculateSingleNodalForce( ei,
                                          n,
                                          numQuadraturePoints,

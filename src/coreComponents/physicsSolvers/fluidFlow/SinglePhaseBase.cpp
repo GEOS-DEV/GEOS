@@ -44,7 +44,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseBaseKernels;
+using namespace singlePhaseBaseKernels;
 
 SinglePhaseBase::SinglePhaseBase( const string & name,
                                   Group * const parent ):
@@ -191,7 +191,7 @@ void SinglePhaseBase::updateMobility( ObjectManagerBase & dataGroup ) const
     getConstitutiveModel< SingleFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
   FluidPropViews fluidProps = getFluidProperties( fluid );
 
-  SinglePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
+  singlePhaseBaseKernels::MobilityKernel::launch< parallelDevicePolicy<> >( dataGroup.size(),
                                                                             fluidProps.dens,
                                                                             fluidProps.dDens_dPres,
                                                                             fluidProps.visc,

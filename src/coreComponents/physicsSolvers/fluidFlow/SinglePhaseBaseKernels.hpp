@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseBaseKernels
+namespace singlePhaseBaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -509,7 +509,7 @@ struct HydrostaticPressureKernel
 };
 
 
-} // namespace SinglePhaseBaseKernels
+} // namespace singlePhaseBaseKernels
 
 } // namespace geosx
 

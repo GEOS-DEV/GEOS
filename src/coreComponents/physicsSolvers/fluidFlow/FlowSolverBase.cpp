@@ -447,7 +447,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes =
-      FluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
+      fluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
                                                      aquiferBCWrapper,
                                                      m_pressure.toNestedViewConst(),
                                                      m_deltaPressure.toNestedViewConst(),

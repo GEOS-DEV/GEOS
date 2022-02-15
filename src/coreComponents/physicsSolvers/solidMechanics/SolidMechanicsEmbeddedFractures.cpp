@@ -299,7 +299,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    SolidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
+    solidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
                                                                  dispDofNumber,
                                                                  jumpDofNumber,
                                                                  dofManager.rankOffset(),
@@ -673,7 +673,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        SolidMechanicsEFEMKernels::StateUpdateKernel::
+        solidMechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
                                             oldJump,

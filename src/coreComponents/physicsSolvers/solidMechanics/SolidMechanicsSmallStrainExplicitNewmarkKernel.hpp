@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /// Namespace to contain the solid mechanics kernels.
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
@@ -344,7 +344,7 @@ using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallSt
                                                                  real64,
                                                                  string const >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

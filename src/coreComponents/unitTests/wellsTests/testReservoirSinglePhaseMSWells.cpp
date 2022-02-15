@@ -320,7 +320,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + SinglePhaseWellKernels::ColOffset::DPRES,
+                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset::DPRES,
                                  dP,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -348,7 +348,7 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
           //      this is computing J_RW and J_WW
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + SinglePhaseWellKernels::ColOffset::DRATE,
+                                 wellElemDofNumber[iwelem] + singlePhaseWellKernels::ColOffset::DRATE,
                                  dRate,
                                  jacobianFD.toViewConstSizes() );
         }

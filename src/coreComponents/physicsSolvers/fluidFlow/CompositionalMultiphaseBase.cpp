@@ -49,7 +49,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseBaseKernels;
+using namespace compositionalMultiphaseBaseKernels;
 
 CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
                                                           Group * const parent )

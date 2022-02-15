@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace SinglePhasePoromechanicsFluxKernels
+namespace singlePhasePoromechanicsFluxKernels
 {
 /******************************** EmbeddedSurfaceFluxKernel ********************************/
 
@@ -241,7 +241,7 @@ struct FaceElementFluxKernel
 };
 
 
-} // namespace PoromechanicsFluxKernels
+} // namespace singlePhasePoromechanicsFluxKernels
 
 } // namespace geosx
 
