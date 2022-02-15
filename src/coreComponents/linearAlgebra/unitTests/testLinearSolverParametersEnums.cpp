@@ -50,7 +50,7 @@ TEST( LinearSolverParametersEnums, PreconditionerType )
   ASSERT_EQ( "chebyshev", toString( EnumType::chebyshev ) );
   ASSERT_EQ( "iluk", toString( EnumType::iluk ) );
   ASSERT_EQ( "ilut", toString( EnumType::ilut ) );
-  ASSERT_EQ( "ic", toString( EnumType::ic ) );
+  ASSERT_EQ( "icc", toString( EnumType::ic ) ); // Notice the discrepancy here
   ASSERT_EQ( "ict", toString( EnumType::ict ) );
   ASSERT_EQ( "amg", toString( EnumType::amg ) );
   ASSERT_EQ( "mgr", toString( EnumType::mgr ) );
