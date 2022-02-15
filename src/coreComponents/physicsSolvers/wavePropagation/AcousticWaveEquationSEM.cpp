@@ -263,7 +263,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         receiverCoordinates,
         receiverIsLocal,
         receiverNodeIds,
-        receiverConstants );
+	receiverConstants,
+	sourceValue,
+	dt,
+	timeSourceFrequency,
+	rickerOrder);
     } );
   } );
 
