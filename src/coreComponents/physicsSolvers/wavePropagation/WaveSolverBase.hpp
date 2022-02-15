@@ -89,6 +89,13 @@ protected:
   real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
 
   /**
+   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * corresponding elements nodes.
+   * @param mesh mesh of the computational domain
+   */
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
+
+  /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side
    * @param time_n the time of evaluation of the source
    * @param rhs the right hand side vector to be computed

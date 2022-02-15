@@ -26,7 +26,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      solidMaterialNames="{ rock }"
       contactRelationName="fractureContact">
       <LinearSolverParameters
         solverType="gmres"
@@ -37,9 +36,6 @@
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
       targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0">
       <LinearSolverParameters
         solverType="gmres"
@@ -50,7 +46,7 @@
       name="SurfaceGen"
       targetRegions="{ Domain }"
       nodeBasedSIF="1"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="0.01e6"/>
   </Solvers>
 
@@ -136,9 +132,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
