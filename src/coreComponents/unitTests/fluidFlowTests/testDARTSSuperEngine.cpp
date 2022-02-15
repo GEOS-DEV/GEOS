@@ -375,11 +375,6 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
         continue;
       }
 
-      real64 totalFraction = 0.0;
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        totalFraction += compFrac[ei][ic];
-      }
 
       {
         solver.resetStateToBeginningOfStep( domain );
@@ -407,13 +402,12 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
                                jacobianFD.toViewConstSizes() );
       }
 
-      for( localIndex jc = 0; jc < NC; ++jc )
+      for( localIndex jc = 0; jc < NC - 1; ++jc )
       {
         solver.resetStateToBeginningOfStep( domain );
 
-        real64 const dRho = perturbParameter * totalFraction;
         dCompFrac.move( LvArray::MemorySpace::host, true );
-        dCompFrac[ei][jc] = dRho;
+        dCompFrac[ei][jc] = perturbParameter;
 
         solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
                                                ElementSubRegionBase & subRegion2 )
@@ -428,7 +422,7 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
         fillNumericalJacobian( residual.toViewConst(),
                                residualOrig.toViewConst(),
                                dofNumber[ei] + jc + 1,
-                               dRho,
+                               perturbParameter,
                                jacobianFD.toViewConstSizes() );
       }
     }
@@ -440,7 +434,6 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
   residual.zero();
   jacobian.zero();
   assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
   compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 }
 
@@ -499,7 +492,7 @@ TEST_F( CompositionalMultiphaseFlowTest, derivativeNumericalCheck_operators )
 TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
 {
   real64 const perturb = std::sqrt( eps );
-  real64 const tol = 1e-1;   // 10% error margin
+  real64 const tol = 1e-2;   // 10% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -516,11 +509,11 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
  * happenning in the kernel for the particular set of initial conditions we're running.
  * The test should be re-enabled and fixed at some point.
  */
-#if 0
-TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulationVolumeBalance )
+#if 1
+TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
 {
   real64 const perturb = sqrt( eps );
-  real64 const tol = 1e-1;   // 10% error margin
+  real64 const tol = 1e-2;   // 10% error margin
 
   DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -528,7 +521,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulationVolu
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->assembleAccumulationAndVolumeBalanceTerms( domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleAccumulationAndVolumeBalanceTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 #endif
