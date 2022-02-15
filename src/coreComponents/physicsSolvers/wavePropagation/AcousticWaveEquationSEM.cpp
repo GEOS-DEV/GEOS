@@ -155,7 +155,7 @@ void AcousticWaveEquationSEM::postProcessInput()
     }
   }
 
-  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error  );
+  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error );
 
 
   if( m_dtSeismoTrace > 0 )
@@ -523,7 +523,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error  );
+  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error );
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
