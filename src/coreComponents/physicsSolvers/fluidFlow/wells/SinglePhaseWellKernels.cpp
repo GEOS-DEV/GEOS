@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseWellKernels
+namespace singlePhaseWellKernels
 {
 
 /******************************** ControlEquationHelper ********************************/
@@ -662,6 +662,6 @@ RateInitializationKernel::
 }
 
 
-} // end namespace SinglePhaseWellKernels
+} // end namespace singlePhaseWellKernels
 
 } // end namespace geosx

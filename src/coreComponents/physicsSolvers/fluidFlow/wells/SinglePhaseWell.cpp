@@ -41,7 +41,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseWellKernels;
+using namespace singlePhaseWellKernels;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
@@ -298,7 +298,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    SinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
   } );
 }
 
@@ -763,7 +763,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
 
       // here we can reuse the flow solver kernel checking that pressures are positive
       localIndex const subRegionSolutionCheck =
-        SinglePhaseWellKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+        singlePhaseWellKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                              parallelDeviceReduce >( localSolution,
                                                                                      dofManager.rankOffset(),
                                                                                      wellElemDofNumber,

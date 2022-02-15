@@ -312,10 +312,10 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
 
 }
 
-void EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel & mesh,
-                                                                       std::vector< NeighborCommunicator > & neighbors,
-                                                                       NewObjectLists & newObjects,
-                                                                       int const mpiCommOrder )
+void embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel & mesh,
+                                                                      std::vector< NeighborCommunicator > & neighbors,
+                                                                      NewObjectLists & newObjects,
+                                                                      int const mpiCommOrder )
 {
   //************************************************************************************************
   // We need to send over the new embedded surfaces and related objects for those whose parents are ghosts on neighbors.
@@ -378,9 +378,9 @@ void EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel
   }
 }
 
-void EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( MeshLevel & mesh,
-                                                                             std::vector< NeighborCommunicator > & neighbors,
-                                                                             string const fractureRegionName )
+void embeddedSurfacesParallelSynchronization::synchronizeFracturedElements( MeshLevel & mesh,
+                                                                            std::vector< NeighborCommunicator > & neighbors,
+                                                                            string const fractureRegionName )
 {
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size());

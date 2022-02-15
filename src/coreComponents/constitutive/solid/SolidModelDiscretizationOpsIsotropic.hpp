@@ -107,7 +107,7 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
   real64 const G = this->m_shearModulus * detJxW;
   real64 const K = this->m_bulkModulus * detJxW;
 
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
@@ -144,7 +144,7 @@ void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & grad
   real64 const G = this->m_shearModulus * detJxW;
   real64 const K = this->m_bulkModulus * detJxW;
 
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::diagBTDB< NUM_SUPPORT_POINTS >( gradN,
@@ -175,7 +175,7 @@ void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const 
   real64 const G = this->m_shearModulus * detJxW;
   real64 const K = this->m_bulkModulus * detJxW;
 
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::diagRowSumBTDB< NUM_SUPPORT_POINTS >( gradN,

@@ -34,7 +34,7 @@
 
 namespace geosx
 {
-namespace SinglePhaseHybridFVMKernels
+namespace singlePhaseHybridFVMKernels
 {
 
 /******************************** AssemblerKernelHelper ********************************/
@@ -599,7 +599,7 @@ struct FluxKernel
                                        transMatrix );
 
       // perform flux assembly in this element
-      SinglePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
+      singlePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
                                                                    regionFilter,
                                                                    elemRegionList,
                                                                    elemSubRegionList,
@@ -724,7 +724,7 @@ void KernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 }
 
 
-} // namespace SinglePhaseHybridFVMKernels
+} // namespace singlePhaseHybridFVMKernels
 
 } // namespace geosx
 

@@ -19,7 +19,7 @@
  * @file StructuredGridUtilities.hpp
  */
 
-namespace StructuredGrid
+namespace structuredGrid
 {
 
 /**
@@ -90,6 +90,6 @@ void map_index< 3 >( const int index,
 
 /// @endcond
 
-} /* namespace StructuredGrid */
+} /* namespace structuredGrid */
 
 #endif /* GEOSX_MESH_UTILITIES_STRUCTUREDGRIDUTILITIES_HPP */

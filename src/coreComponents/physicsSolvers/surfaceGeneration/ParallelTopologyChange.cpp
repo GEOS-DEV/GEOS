@@ -781,7 +781,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
 
 }
 
-void ParallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
+void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                                                         std::vector< NeighborCommunicator > & neighbors,
                                                         ModifiedObjectLists & modifiedObjects,
                                                         ModifiedObjectLists & receivedObjects,

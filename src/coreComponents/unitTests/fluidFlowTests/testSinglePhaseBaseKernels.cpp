@@ -20,7 +20,7 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseBaseKernels;
+using namespace geosx::singlePhaseBaseKernels;
 
 // Sphinx start after test mobility
 
