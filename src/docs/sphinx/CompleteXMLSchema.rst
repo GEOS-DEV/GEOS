@@ -946,6 +946,13 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
+.. _XML_VTKMeshGenerator:
+
+Element: VTKMeshGenerator
+=========================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -1963,6 +1970,13 @@ Datastructure: TwoPointFluxApproximation
 Datastructure: VTK
 ==================
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
+
+
+.. _DATASTRUCTURE_VTKMeshGenerator:
+
+Datastructure: VTKMeshGenerator
+===============================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:

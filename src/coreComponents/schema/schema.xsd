@@ -626,6 +626,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
+			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -746,6 +747,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="reverseZ" type="integer" default="0" />
 		<!--scale => Scale the coordinates of the vertices-->
 		<xsd:attribute name="scale" type="real64" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="VTKMeshGeneratorType">
+		<!--file => path to the mesh file-->
+		<xsd:attribute name="file" type="path" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1206,17 +1213,21 @@ the relative residual norm satisfies:
 * phaseVolRate
 * totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
-		<!--injectionStream => Global component densities of the injection stream-->
+		<!--enableCrossflow => Flag to enable crossflow. Currently only supported for injectors: 
+ - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
+ - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
+		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
+		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
-		<!--injectionTemperature => Temperature of the injection stream-->
+		<!--injectionTemperature => Temperature of the injection stream [K]-->
 		<xsd:attribute name="injectionTemperature" type="real64" default="-1" />
-		<!--referenceElevation => Reference elevation where BHP control is enforced-->
+		<!--referenceElevation => Reference elevation where BHP control is enforced [m]-->
 		<xsd:attribute name="referenceElevation" type="real64" use="required" />
-		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used-->
+		<!--surfacePressure => Surface pressure used to compute volumetric rates when surface conditions are used [Pa]-->
 		<xsd:attribute name="surfacePressure" type="real64" default="0" />
-		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used-->
+		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used [K]-->
 		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
-		<!--targetBHP => Target bottom-hole pressure-->
+		<!--targetBHP => Target bottom-hole pressure [Pa]-->
 		<xsd:attribute name="targetBHP" type="real64" default="-1" />
 		<!--targetBHPTableName => Name of the BHP table when the rate is a time dependent function-->
 		<xsd:attribute name="targetBHPTableName" type="string" default="" />
@@ -1226,7 +1237,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
 		<!--targetPhaseRateTableName => Name of the phase rate table when the rate is a time dependent function-->
 		<xsd:attribute name="targetPhaseRateTableName" type="string" default="" />
-		<!--targetTotalRate => Target total volumetric rate-->
+		<!--targetTotalRate => Target total volumetric rate [sm^3/s]-->
 		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
 		<!--targetTotalRateTableName => Name of the total rate table when the rate is a time dependent function-->
 		<xsd:attribute name="targetTotalRateTableName" type="string" default="" />
