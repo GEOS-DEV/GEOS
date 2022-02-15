@@ -273,7 +273,7 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
                          GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
-  for( localIndex ip = 0; ip < lhs.numFluidPhases(); ++ip )
+  for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOSX_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                            GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
@@ -288,7 +288,7 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
                          GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
-  for( localIndex ic = 0; ic < lhs.numFluidComponents(); ++ic )
+  for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOSX_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                            GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
@@ -308,7 +308,7 @@ void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion
   {
     arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
     real64 compFracSum = 0;
-    for( localIndex ic = 0; ic < m_numComponents; ++ic )
+    for( integer ic = 0; ic < m_numComponents; ++ic )
     {
       real64 const compFrac = injection[ic];
       GEOSX_THROW_IF( ( compFrac < 0.0 ) || ( compFrac > 1.0 ),
@@ -373,7 +373,7 @@ void CompositionalMultiphaseWell::validateWellConstraints( WellElementSubRegion 
                   InputError );
 
   // Find target phase index for phase rate constraint
-  for( localIndex ip = 0; ip < fluid.numFluidPhases(); ++ip )
+  for( integer ip = 0; ip < fluid.numFluidPhases(); ++ip )
   {
     if( fluid.phaseNames()[ip] == wellControls.getTargetPhaseName() )
     {
@@ -511,7 +511,7 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
     real64 const diffGravCoef = refGravCoef - wellElemGravCoef[iwelemRef];
     currentBHP = pres[iwelemRef] + dPres[iwelemRef] + totalMassDens[iwelemRef] * diffGravCoef;
     dCurrentBHP_dPres = 1 + dTotalMassDens_dPres[iwelemRef] * diffGravCoef;
-    for( localIndex ic = 0; ic < numComp; ++ic )
+    for( integer ic = 0; ic < numComp; ++ic )
     {
       dCurrentBHP_dCompDens[ic] = dTotalMassDens_dCompDens[iwelemRef][ic] * diffGravCoef;
     }
@@ -521,6 +521,8 @@ void CompositionalMultiphaseWell::updateBHPForConstraint( WellElementSubRegion &
 void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubRegion & subRegion )
 {
   GEOSX_MARK_FUNCTION;
+
+  using namespace multifluid;
 
   // the rank that owns the reference well element is responsible for the calculations below.
   if( !subRegion.isLocallyOwned() )
@@ -559,16 +561,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
   MultiFluidBase & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
 
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseFrac = fluid.phaseFraction();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseFrac_dPres = fluid.dPhaseFraction_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac_dComp = fluid.dPhaseFraction_dGlobalCompFraction();
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseFrac = fluid.dPhaseFraction();
 
   arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens = fluid.totalDensity();
-  arrayView2d< real64 const, multifluid::USD_FLUID > const & dTotalDens_dPres = fluid.dTotalDensity_dPressure();
-  arrayView3d< real64 const, multifluid::USD_FLUID_DC > const & dTotalDens_dComp = fluid.dTotalDensity_dGlobalCompFraction();
+  arrayView3d< real64 const, multifluid::USD_FLUID_DC > const & dTotalDens = fluid.dTotalDensity();
 
   arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-  arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens = fluid.dPhaseDensity();
 
   // control data
 
@@ -612,14 +611,11 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 connRate,
                                 dConnRate,
                                 totalDens,
-                                dTotalDens_dPres,
-                                dTotalDens_dComp,
+                                dTotalDens,
                                 phaseDens,
-                                dPhaseDens_dPres,
-                                dPhaseDens_dComp,
+                                dPhaseDens,
                                 phaseFrac,
-                                dPhaseFrac_dPres,
-                                dPhaseFrac_dComp,
+                                dPhaseFrac,
                                 &useSurfaceConditions,
                                 &surfacePres,
                                 &surfaceTemp,
@@ -658,11 +654,11 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       // Step 2.1: compute the inverse of the total density and derivatives
 
       real64 const totalDensInv = 1.0 / totalDens[iwelemRef][0];
-      real64 const dTotalDensInv_dPres = -dTotalDens_dPres[iwelemRef][0] * totalDensInv * totalDensInv;
+      real64 const dTotalDensInv_dPres = -dTotalDens[iwelemRef][0][Deriv::dP] * totalDensInv * totalDensInv;
       stackArray1d< real64, maxNumComp > dTotalDensInv_dCompDens( numComp );
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
-        dTotalDensInv_dCompDens[ic] = -dTotalDens_dComp[iwelemRef][0][ic] * totalDensInv * totalDensInv;
+        dTotalDensInv_dCompDens[ic] = -dTotalDens[iwelemRef][0][Deriv::dC+ic] * totalDensInv * totalDensInv;
       }
       applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dTotalDensInv_dCompDens, work.data() );
 
@@ -670,13 +666,13 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
       currentTotalVolRate = currentTotalRate * totalDensInv;
       dCurrentTotalVolRate_dPres = ( useSurfaceConditions ==  0 ) * currentTotalRate * dTotalDensInv_dPres;
       dCurrentTotalVolRate_dRate = totalDensInv;
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         dCurrentTotalVolRate_dCompDens[ic] = currentTotalRate * dTotalDensInv_dCompDens[ic];
       }
 
       // Step 3: update the phase volume rate
-      for( localIndex ip = 0; ip < numPhase; ++ip )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
 
         // Step 3.1: compute the inverse of the (phase density * phase fraction) and derivatives
@@ -690,18 +686,18 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
 
         real64 const phaseDensInv =  1.0 / phaseDens[iwelemRef][0][ip];
         real64 const phaseFracTimesPhaseDensInv = phaseFrac[iwelemRef][0][ip] * phaseDensInv;
-        real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac_dPres[iwelemRef][0][ip] * phaseDensInv
-                                                         - dPhaseDens_dPres[iwelemRef][0][ip] * phaseFracTimesPhaseDensInv * phaseDensInv;
+        real64 const dPhaseFracTimesPhaseDensInv_dPres = dPhaseFrac[iwelemRef][0][ip][Deriv::dP] * phaseDensInv
+                                                         - dPhaseDens[iwelemRef][0][ip][Deriv::dP] * phaseFracTimesPhaseDensInv * phaseDensInv;
 
 
         // Step 3.2: divide the total mass/molar rate by the (phase density * phase fraction) to get the phase volumetric rate
         currentPhaseVolRate[ip] = currentTotalRate * phaseFracTimesPhaseDensInv;
         dCurrentPhaseVolRate_dPres[ip] = ( useSurfaceConditions ==  0 ) * currentTotalRate * dPhaseFracTimesPhaseDensInv_dPres;
         dCurrentPhaseVolRate_dRate[ip] = phaseFracTimesPhaseDensInv;
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
-          dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens_dComp[iwelemRef][0][ip][ic] * phaseDensInv;
-          dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac_dComp[iwelemRef][0][ip][ic] * phaseDensInv;
+          dCurrentPhaseVolRate_dCompDens[ip][ic] = -phaseFracTimesPhaseDensInv * dPhaseDens[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
+          dCurrentPhaseVolRate_dCompDens[ip][ic] += dPhaseFrac[iwelemRef][0][ip][Deriv::dC+ic] * phaseDensInv;
           dCurrentPhaseVolRate_dCompDens[ip][ic] *= currentTotalRate;
         }
         applyChainRuleInPlace( numComp, dCompFrac_dCompDens[iwelemRef], dCurrentPhaseVolRate_dCompDens[ip], work.data() );
@@ -1024,11 +1020,9 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
       arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens = fluid.phaseDensity();
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & dWellElemPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens = fluid.dPhaseDensity();
       arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac = fluid.phaseCompFraction();
-      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dWellElemPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac = fluid.dPhaseCompFraction();
 
       CompositionalMultiphaseBaseKernels::
         KernelLaunchSelector1< AccumulationKernel >( numFluidComponents(),
@@ -1043,11 +1037,9 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                      dWellElemPhaseVolFrac_dComp,
                                                      dWellElemCompFrac_dCompDens,
                                                      wellElemPhaseDens,
-                                                     dWellElemPhaseDens_dPres,
-                                                     dWellElemPhaseDens_dComp,
+                                                     dWellElemPhaseDens,
                                                      wellElemPhaseCompFrac,
-                                                     dWellElemPhaseCompFrac_dPres,
-                                                     dWellElemPhaseCompFrac_dComp,
+                                                     dWellElemPhaseCompFrac,
                                                      wellElemPhaseVolFracOld,
                                                      wellElemPhaseDensOld,
                                                      wellElemPhaseCompFracOld,
@@ -1384,14 +1376,11 @@ void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & mes
                                                 resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
                                                 resCompFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                                 resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
                                                 resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity_dPressure{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity{} ),
                                                 resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
                                                 resRelPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
                                                 resRelPermAccessors.get( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{} ),
                                                 wellElemGravCoef,
@@ -1486,7 +1475,7 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
       {
         if( wellElemGhostRank[iwelem] < 0 )
         {
-          for( localIndex ic = 0; ic < numComp; ++ic )
+          for( integer ic = 0; ic < numComp; ++ic )
           {
             // get the latest component density (i.e., after the update of dWellElemCompDens)
             real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
@@ -1533,7 +1522,7 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
         // extract solution and apply to dP
         dWellElemPressure[iwelem] = 0;
         dConnRate[iwelem] = 0;
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           dWellElemGlobalCompDensity[iwelem][ic] = 0;
         }
@@ -1588,12 +1577,12 @@ void CompositionalMultiphaseWell::backupFields( MeshLevel & mesh, arrayView1d< s
 
       wellElemTotalDensOld[ei] = wellElemTotalDens[ei][0];
 
-      for( localIndex ip = 0; ip < numPhase; ++ip )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
         wellElemPhaseDensOld[ei][ip] = wellElemPhaseDens[ei][0][ip];
         wellElemPhaseVolFracOld[ei][ip] = wellElemPhaseVolFrac[ei][ip];
 
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           wellElemPhaseCompFracOld[ei][ip][ic] = wellElemPhaseCompFrac[ei][0][ip][ic];
         }
@@ -1764,7 +1753,7 @@ void CompositionalMultiphaseWell::implicitStepComplete( real64 const & GEOSX_UNU
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
       {
         wellElemPressure[iwelem] += dWellElemPressure[iwelem];
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           wellElemGlobalCompDensity[iwelem][ic] += dWellElemGlobalCompDensity[iwelem][ic];
         }

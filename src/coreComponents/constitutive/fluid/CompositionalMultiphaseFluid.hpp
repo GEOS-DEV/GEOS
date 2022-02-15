@@ -261,6 +261,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
 
+  using namespace multifluid;
+
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
@@ -307,36 +309,36 @@ CompositionalMultiphaseFluid::KernelWrapper::
     auto const & massDens = props.getMassDensity( phaseType );
 
     phaseFraction.value[ip] = frac.value;
-    phaseFraction.dPres[ip] = frac.dP;
-    phaseFraction.dTemp[ip] = frac.dT;
+    phaseFraction.derivs[ip][Deriv::dP] = frac.dP;
+    phaseFraction.derivs[ip][Deriv::dT] = frac.dT;
 
     phaseDensity.value[ip] = dens.value;
-    phaseDensity.dPres[ip] = dens.dP;
-    phaseDensity.dTemp[ip] = dens.dT;
+    phaseDensity.derivs[ip][Deriv::dP] = dens.dP;
+    phaseDensity.derivs[ip][Deriv::dT] = dens.dT;
 
     phaseMassDensity.value[ip] = massDens.value;
-    phaseMassDensity.dPres[ip] = massDens.dP;
-    phaseMassDensity.dTemp[ip] = massDens.dT;
+    phaseMassDensity.derivs[ip][Deriv::dP] = massDens.dP;
+    phaseMassDensity.derivs[ip][Deriv::dT] = massDens.dT;
 
     // TODO
     phaseViscosity.value[ip] = 0.001;
-    phaseViscosity.dPres[ip] = 0.0;
-    phaseViscosity.dTemp[ip] = 0.0;
+    phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
+    phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
 
     for( integer jc = 0; jc < numComp; ++jc )
     {
-      phaseFraction.dComp[ip][jc] = frac.dz[jc];
-      phaseDensity.dComp[ip][jc] = dens.dz[jc];
-      phaseMassDensity.dComp[ip][ip] = massDens.dz[jc];
-      phaseViscosity.dComp[ip][jc] = 0.0; // TODO
+      phaseFraction.derivs[ip][Deriv::dC+jc] = frac.dz[jc];
+      phaseDensity.derivs[ip][Deriv::dC+jc] = dens.dz[jc];
+      phaseMassDensity.derivs[ip][Deriv::dC+jc] = massDens.dz[jc];
+      phaseViscosity.derivs[ip][Deriv::dC+jc] = 0.0; // TODO
 
       phaseCompFraction.value[ip][jc] = comp.value[jc];
-      phaseCompFraction.dPres[ip][jc] = comp.dP[jc];
-      phaseCompFraction.dTemp[ip][jc] = comp.dT[jc];
+      phaseCompFraction.derivs[ip][jc][Deriv::dP] = comp.dP[jc];
+      phaseCompFraction.derivs[ip][jc][Deriv::dT] = comp.dT[jc];
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        phaseCompFraction.dComp[ip][ic][jc] = comp.dz[ic][jc];
+        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = comp.dz[ic][jc];
       }
     }
   }
@@ -347,30 +349,26 @@ CompositionalMultiphaseFluid::KernelWrapper::
 
     // unfortunately here, we have to copy the molecular weight coming from PVT package...
     real64 phaseMolecularWeight[maxNumPhase]{};
-    real64 dPhaseMolecularWeight_dPres[maxNumPhase]{};
-    real64 dPhaseMolecularWeight_dTemp[maxNumPhase]{};
-    real64 dPhaseMolecularWeight_dComp[maxNumPhase][maxNumComp]{};
+    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
 
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       phaseMolecularWeight[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).value;
-      dPhaseMolecularWeight_dPres[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).dP;
-      dPhaseMolecularWeight_dTemp[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).dT;
+      dPhaseMolecularWeight[ip][Deriv::dP] = props.getMolecularWeight( m_phaseTypes[ip] ).dP;
+      dPhaseMolecularWeight[ip][Deriv::dT] = props.getMolecularWeight( m_phaseTypes[ip] ).dT;
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        dPhaseMolecularWeight_dComp[ip][ic] = props.getMolecularWeight( m_phaseTypes[ip] ).dz[ic];
+        dPhaseMolecularWeight[ip][Deriv::dC+ic] = props.getMolecularWeight( m_phaseTypes[ip] ).dz[ic];
       }
     }
 
     convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                             phaseMolecularWeight,
-                            dPhaseMolecularWeight_dPres,
-                            dPhaseMolecularWeight_dTemp,
-                            dPhaseMolecularWeight_dComp,
+                            dPhaseMolecularWeight,
                             phaseFraction,
                             phaseCompFraction,
-                            phaseDensity.dComp,
-                            phaseViscosity.dComp );
+                            phaseDensity.derivs,
+                            phaseViscosity.derivs );
   }
 
   // 5. Compute total fluid mass/molar density and derivatives

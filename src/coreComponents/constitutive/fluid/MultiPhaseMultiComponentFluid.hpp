@@ -368,40 +368,30 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
   m_flash.compute( pressure,
                    temperatureInCelsius,
                    compMoleFrac.toSliceConst(),
-                   phaseFraction.value, phaseFraction.dPres, phaseFraction.dTemp, phaseFraction.dComp,
-                   phaseCompFraction.value, phaseCompFraction.dPres, phaseCompFraction.dTemp, phaseCompFraction.dComp );
+                   phaseFraction,
+                   phaseCompFraction );
 
   // 3. Compute phase densities and phase viscosities
 
-  // TODO: these compute functions should take PhaseProp::SliceType in input ...
-
   m_p1Density.compute( pressure,
                        temperatureInCelsius,
-                       phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                       phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                       phaseDensity.value[ip1], phaseDensity.dPres[ip1],
-                       phaseDensity.dTemp[ip1], phaseDensity.dComp[ip1],
+                       phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                       phaseDensity.value[ip1], phaseDensity.derivs[ip1],
                        m_useMass );
   m_p1Viscosity.compute( pressure,
                          temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseViscosity.value[ip1], phaseViscosity.dPres[ip1],
-                         phaseViscosity.dTemp[ip1], phaseViscosity.dComp[ip1],
+                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                         phaseViscosity.value[ip1], phaseViscosity.derivs[ip1],
                          m_useMass );
   m_p2Density.compute( pressure,
                        temperatureInCelsius,
-                       phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                       phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                       phaseDensity.value[ip2], phaseDensity.dPres[ip2],
-                       phaseDensity.dTemp[ip2], phaseDensity.dComp[ip2],
+                       phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                       phaseDensity.value[ip2], phaseDensity.derivs[ip2],
                        m_useMass );
   m_p2Viscosity.compute( pressure,
                          temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseViscosity.value[ip2], phaseViscosity.dPres[ip2],
-                         phaseViscosity.dTemp[ip2], phaseViscosity.dComp[ip2],
+                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                         phaseViscosity.value[ip2], phaseViscosity.derivs[ip2],
                          m_useMass );
 
   // 4. Depending on the m_useMass flag, convert to mass variables or simply compute mass density
@@ -413,66 +403,49 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
   {
 
     // 4.1 Compute the phase molecular weights (ultimately, get that from the PVT function)
+
     real64 phaseMolecularWeight[numPhase]{};
-    real64 dPhaseMolecularWeight_dPres[numPhase]{};
-    real64 dPhaseMolecularWeight_dTemp[numPhase]{};
-    real64 dPhaseMolecularWeight_dComp[numPhase][numComp]{};
+    real64 dPhaseMolecularWeight[numPhase][numComp+2]{};
 
     real64 phaseMolarDens{};
-    real64 dPhaseMolarDens_dPres{};
-    real64 dPhaseMolarDens_dTemp{};
-    stackArray1d< real64, numComp > dPhaseMolarDens_dComp( 2 );
+    stackArray1d< real64, numComp+2 > dPhaseMolarDens( numComp+2 );
     m_p2Density.compute( pressure,
                          temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseMolarDens, dPhaseMolarDens_dPres,
-                         dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp.toSlice(),
+                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                         phaseMolarDens, dPhaseMolarDens.toSlice(),
                          false );
-    phaseMolecularWeight[ip2] = phaseDensity.value[ip2] / phaseMolarDens;
-    dPhaseMolecularWeight_dPres[ip2] = phaseDensity.dPres[ip2] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens_dPres / phaseMolarDens;
-    dPhaseMolecularWeight_dTemp[ip2] = phaseDensity.dTemp[ip2] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens_dTemp / phaseMolarDens;
-    for( integer ic = 0; ic < numComp; ++ic )
-    {
-      dPhaseMolecularWeight_dComp[ip2][ic] = phaseDensity.dComp[ip2][ic] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens_dComp[ic] / phaseMolarDens;
-    }
 
     m_p1Density.compute( pressure,
                          temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseMolarDens, dPhaseMolarDens_dPres,
-                         dPhaseMolarDens_dTemp, dPhaseMolarDens_dComp.toSlice(),
+                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                         phaseMolarDens, dPhaseMolarDens.toSlice(),
                          false );
-    phaseMolecularWeight[ip1] = phaseDensity.value[ip1] / phaseMolarDens;
-    dPhaseMolecularWeight_dPres[ip1] = phaseDensity.dPres[ip1] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens_dPres / phaseMolarDens;
-    dPhaseMolecularWeight_dTemp[ip1] = phaseDensity.dTemp[ip1] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens_dTemp / phaseMolarDens;
-    for( integer ic = 0; ic < numComp; ++ic )
+    for( integer ip = 0; ip < numPhase; ++ip )
     {
-      dPhaseMolecularWeight_dComp[ip1][ic] = phaseDensity.dComp[ip1][ic] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens_dComp[ic] / phaseMolarDens;
+      phaseMolecularWeight[ip] = phaseDensity.value[ip] / phaseMolarDens;
+      for( integer idof = 0; idof < numComp+2; ++idof )
+      {
+        dPhaseMolecularWeight[ip][idof] = phaseDensity.derivs[ip][idof] / phaseMolarDens - phaseMolecularWeight[ip] * dPhaseMolarDens[idof] / phaseMolarDens;
+      }
     }
 
     // 4.2 Convert the mole fractions to mass fractions
     convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                             phaseMolecularWeight,
-                            dPhaseMolecularWeight_dPres,
-                            dPhaseMolecularWeight_dTemp,
-                            dPhaseMolecularWeight_dComp,
+                            dPhaseMolecularWeight,
                             phaseFraction,
                             phaseCompFraction,
-                            phaseDensity.dComp,
-                            phaseViscosity.dComp );
+                            phaseDensity.derivs,
+                            phaseViscosity.derivs );
 
 
     // 4.3 Copy the phase densities into the phase mass densities
     for( integer ip = 0; ip < numPhase; ++ip )
     {
       phaseMassDensity.value[ip] = phaseDensity.value[ip];
-      phaseMassDensity.dPres[ip] = phaseDensity.dPres[ip];
-      phaseMassDensity.dTemp[ip] = phaseDensity.dTemp[ip];
-      for( integer ic = 0; ic < numComp; ++ic )
+      for( integer idof = 0; idof < numComp+2; ++idof )
       {
-        phaseMassDensity.dComp[ip][ic] = phaseDensity.dComp[ip][ic];
+        phaseMassDensity.derivs[ip][idof] = phaseDensity.derivs[ip][idof];
       }
     }
   }
@@ -481,17 +454,13 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
     // for now, we have to compute the phase mass density here
     m_p1Density.compute( pressure,
                          temperatureInCelsius,
-                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.dPres[ip1].toSliceConst(),
-                         phaseCompFraction.dTemp[ip1].toSliceConst(), phaseCompFraction.dComp[ip1].toSliceConst(),
-                         phaseMassDensity.value[ip1], phaseMassDensity.dPres[ip1],
-                         phaseMassDensity.dTemp[ip1], phaseMassDensity.dComp[ip1],
+                         phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
+                         phaseMassDensity.value[ip1], phaseMassDensity.derivs[ip1],
                          true );
     m_p2Density.compute( pressure,
                          temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.dPres[ip2].toSliceConst(),
-                         phaseCompFraction.dTemp[ip2].toSliceConst(), phaseCompFraction.dComp[ip2].toSliceConst(),
-                         phaseMassDensity.value[ip2], phaseMassDensity.dPres[ip2],
-                         phaseMassDensity.dTemp[ip2], phaseMassDensity.dComp[ip2],
+                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                         phaseMassDensity.value[ip2], phaseMassDensity.derivs[ip2],
                          true );
   }
 

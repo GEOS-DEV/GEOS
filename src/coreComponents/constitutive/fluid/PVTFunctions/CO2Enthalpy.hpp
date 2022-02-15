@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -53,18 +54,14 @@ public:
                 real64 & value,
                 bool useMass ) const;
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition_dGlobalCompFraction,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
@@ -143,44 +140,36 @@ void CO2EnthalpyUpdate::compute( real64 const & pressure,
   }
 }
 
-template< int USD1, int USD2, int USD3, int USD4 >
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void CO2EnthalpyUpdate::compute( real64 const & pressure,
                                  real64 const & temperature,
                                  arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                 arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                 arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                 arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                 arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                  real64 & value,
-                                 real64 & dValue_dPressure,
-                                 real64 & dValue_dTemperature,
-                                 arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                 arraySlice1d< real64, USD3 > const & dValue,
                                  bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dPressure );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dTemperature );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dGlobalCompFraction );
+  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition );
 
+  using namespace multifluid;
 
   real64 const input[2] = { pressure, temperature };
-  real64 CO2EnthalpyDeriv[2];
+  real64 CO2EnthalpyDeriv[2]{};
 
-
-  dValue_dPressure = 0;
   value = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
-  dValue_dPressure = CO2EnthalpyDeriv[0];
-  dValue_dTemperature = CO2EnthalpyDeriv[1];
+
+  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  dValue[Deriv::dP] = CO2EnthalpyDeriv[0];
+  dValue[Deriv::dT] = CO2EnthalpyDeriv[1];
 
   if( !useMass )
   {
-    real64 const CO2MWInv = 1 / m_componentMolarWeight[m_CO2Index];
+    real64 const CO2MWInv = 1.0 / m_componentMolarWeight[m_CO2Index];
     value *= CO2MWInv;
-    dValue_dPressure *= CO2MWInv;
-    dValue_dTemperature *= CO2MWInv;
+    dValue[Deriv::dP] *= CO2MWInv;
+    dValue[Deriv::dT] *= CO2MWInv;
   }
-
-  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
 }
 
 } // end namespace PVTProps

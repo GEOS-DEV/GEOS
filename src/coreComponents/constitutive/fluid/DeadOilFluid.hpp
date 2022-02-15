@@ -209,7 +209,9 @@ DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     PhaseProp::SliceType const & phaseMassDens ) const
 {
-  LvArray::forValuesInSlice( phaseMassDens.dComp, []( real64 & val ){ val = 0.0; } );
+  using namespace multifluid;
+
+  LvArray::forValuesInSlice( phaseMassDens.derivs, []( real64 & val ){ val = 0.0; } );
 
   // 1. Hydrocarbon phases: look up in the formation vol factor tables
 
@@ -224,7 +226,7 @@ DeadOilFluid::KernelWrapper::
     // we are ready to update the densities
     real64 const fvfInv = 1.0 / fvf;
     phaseMassDens.value[ip] = m_surfacePhaseMassDensity[ip] * fvfInv;
-    phaseMassDens.dPres[ip] = -derivative * phaseMassDens.value[ip] * fvfInv;
+    phaseMassDens.derivs[ip][Deriv::dP] = -derivative * phaseMassDens.value[ip] * fvfInv;
   }
 
   // 2. Water phase: use the constant formation volume factor and compressibility provided by the user
@@ -242,7 +244,7 @@ DeadOilFluid::KernelWrapper::
     real64 const dDenom_dPres = m_waterParams.formationVolFactor * dExpCompDeltaPres_dPres;
     real64 const denomInv = 1.0 / denom;
     phaseMassDens.value[ipWater] = m_surfacePhaseMassDensity[ipWater] * denomInv;
-    phaseMassDens.dPres[ipWater] = -dDenom_dPres * phaseMassDens.value[ipWater] * denomInv;
+    phaseMassDens.derivs[ipWater][Deriv::dP] = -dDenom_dPres * phaseMassDens.value[ipWater] * denomInv;
   }
 }
 
@@ -281,7 +283,9 @@ DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       PhaseProp::SliceType const & phaseVisc ) const
 {
-  LvArray::forValuesInSlice( phaseVisc.dComp, []( real64 & val ){ val = 0.0; } );
+  using namespace multifluid;
+
+  LvArray::forValuesInSlice( phaseVisc.derivs, []( real64 & val ){ val = 0.0; } );
 
   // 1. Hydrocarbon phases: look up in the viscosity tables
 
@@ -290,7 +294,7 @@ DeadOilFluid::KernelWrapper::
     // get the phase index
     integer const ip = m_hydrocarbonPhaseOrder[iph];
     // interpolate in the table to get the phase viscosity and derivatives
-    phaseVisc.value[ip] = m_viscosityTables[iph].compute( &pressure, &(phaseVisc.dPres)[ip] );
+    phaseVisc.value[ip] = m_viscosityTables[iph].compute( &pressure, &(phaseVisc.derivs)[ip][Deriv::dP] );
   }
 
   // 2. Water phase: use the constant viscosity provided by the user
@@ -303,7 +307,7 @@ DeadOilFluid::KernelWrapper::
   {
     // just assign the viscosity value
     phaseVisc.value[ipWater] = m_waterParams.viscosity;
-    phaseVisc.dPres[ipWater] = 0.0;
+    phaseVisc.derivs[ipWater][Deriv::dP] = 0.0;
   }
 }
 
@@ -370,6 +374,8 @@ DeadOilFluid::KernelWrapper::
 {
   GEOSX_UNUSED_VAR( temperature );
 
+  using namespace multifluid;
+
   integer const nComps = numComponents();
   integer const nPhases = numPhases();
 
@@ -384,10 +390,10 @@ DeadOilFluid::KernelWrapper::
   {
     real64 const mult = m_useMass ? 1.0 : 1.0 / m_componentMolarWeight[ip];
     phaseDensity.value[ip] = phaseMassDensity.value[ip] * mult;
-    phaseDensity.dPres[ip] = phaseMassDensity.dPres[ip] * mult;
+    phaseDensity.derivs[ip][Deriv::dP] = phaseMassDensity.derivs[ip][Deriv::dP] * mult;
     for( integer ic = 0; ic < nComps; ++ic )
     {
-      phaseDensity.dComp[ip][ic] = 0.0;
+      phaseDensity.derivs[ip][Deriv::dC+ic] = 0.0;
     }
   }
 
@@ -395,16 +401,16 @@ DeadOilFluid::KernelWrapper::
   for( integer ip = 0; ip < nPhases; ++ip )
   {
     phaseFraction.value[ip] = composition[ip];
-    phaseFraction.dPres[ip] = 0.0;
+    phaseFraction.derivs[ip][Deriv::dP] = 0.0;
     for( integer ic = 0; ic < nComps; ++ic )
     {
-      phaseFraction.dComp[ip][ic] = (ip == ic) ? 1.0 : 0.0;
+      phaseFraction.derivs[ip][Deriv::dC+ic] = (ip == ic) ? 1.0 : 0.0;
 
       phaseCompFraction.value[ip][ic] = (ip == ic) ? 1.0 : 0.0;
-      phaseCompFraction.dPres[ip][ic] = 0.0;
+      phaseCompFraction.derivs[ip][ic][Deriv::dP] = 0.0;
       for( integer jc = 0; jc < nComps; ++jc )
       {
-        phaseCompFraction.dComp[ip][ic][jc] = 0.0;
+        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = 0.0;
       }
     }
   }

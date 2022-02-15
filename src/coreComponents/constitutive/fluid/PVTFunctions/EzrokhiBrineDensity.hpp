@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/layouts.hpp"
 #include "functions/TableFunction.hpp"
 
 namespace geosx
@@ -64,18 +65,14 @@ public:
                 real64 & value,
                 bool useMass ) const;
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
@@ -191,22 +188,20 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   }
 }
 
-template< int USD1, int USD2, int USD3, int USD4 >
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
                                          real64 const & temperature,
                                          arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                         arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                         arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                         arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                         arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                          real64 & value,
-                                         real64 & dValue_dPressure,
-                                         real64 & dValue_dTemperature,
-                                         arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                         arraySlice1d< real64, USD3 > const & dValue,
                                          bool useMass ) const
 {
-  real64 waterSatDensity_dTemperature;
-  real64 waterSatPressure_dTemperature;
+  using namespace multifluid;
+
+  real64 waterSatDensity_dTemperature = 0.0;
+  real64 waterSatPressure_dTemperature = 0.0;
   real64 const waterSatDensity = m_waterSatDensityTable.compute( &temperature, &waterSatDensity_dTemperature );
   real64 const waterSatPressure = m_waterSatPressureTable.compute( &temperature, &waterSatPressure_dTemperature );
 
@@ -228,8 +223,8 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
 
   real64 const exponent = coefPhaseComposition * massPhaseCompositionCO2;
 
-  real64 const exponent_dPressure = coefPhaseComposition * dPhaseComposition_dPressure[m_CO2Index];
-  real64 const exponent_dTemperature = coefPhaseComposition * dPhaseComposition_dTemperature[m_CO2Index] +
+  real64 const exponent_dPressure = coefPhaseComposition * dPhaseComposition[m_CO2Index][Deriv::dP];
+  real64 const exponent_dTemperature = coefPhaseComposition * dPhaseComposition[m_CO2Index][Deriv::dT] +
                                        ( m_coef1 + 2 * m_coef2 * temperature) * massPhaseCompositionCO2;
   // compute only common part of derivatives w.r.t. CO2 and water phase compositions
   // later to be multiplied by (phaseComposition[m_waterIndex]) and ( -phaseComposition[m_CO2Index] ) respectively
@@ -241,12 +236,12 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
   real64 const dValueCoef = LvArray::math::log( 10 ) * value;
 
   real64 const dValue_dPhaseComp = dValueCoef * exponent_dPhaseComp;
-  dValue_dPressure = dValueCoef * exponent_dPressure + waterDensity_dPressure * exponentPowered;
-  dValue_dTemperature = dValueCoef * exponent_dTemperature + waterDensity_dTemperature * exponentPowered;
+  dValue[Deriv::dP] = dValueCoef * exponent_dPressure + waterDensity_dPressure * exponentPowered;
+  dValue[Deriv::dT] = dValueCoef * exponent_dTemperature + waterDensity_dTemperature * exponentPowered;
 
   // here, we multiply common part of derivatives by specific coefficients
-  dValue_dGlobalCompFraction[m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition_dGlobalCompFraction[m_CO2Index][m_CO2Index];
-  dValue_dGlobalCompFraction[m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition_dGlobalCompFraction[m_waterIndex][m_waterIndex];
+  dValue[Deriv::dC+m_CO2Index] = dValue_dPhaseComp * phaseComposition[m_waterIndex] * dPhaseComposition[m_CO2Index][Deriv::dC+m_CO2Index];
+  dValue[Deriv::dC+m_waterIndex] = dValue_dPhaseComp * ( -phaseComposition[m_CO2Index] ) * dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex];
 
 }
 

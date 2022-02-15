@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -57,18 +58,14 @@ public:
                 real64 & value,
                 bool useMass ) const;
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
@@ -168,61 +165,59 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
   }
 }
 
-template< int USD1, int USD2, int USD3, int USD4 >
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void BrineEnthalpyUpdate::compute( real64 const & pressure,
                                    real64 const & temperature,
                                    arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                   arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                   arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                   arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                   arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                    real64 & value,
-                                   real64 & dValue_dPressure,
-                                   real64 & dValue_dTemperature,
-                                   arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                   arraySlice1d< real64, USD3 > const & dValue,
                                    bool useMass ) const
 {
+  using namespace multifluid;
+
   real64 const input[2] = { pressure, temperature };
-  real64 brineEnthalpy_dTemperature;
-  real64 dvalue_dC;
-  real64 CO2EnthalpyDeriv[2];
+  real64 brineEnthalpy_dTemperature = 0.0;
+  real64 dvalue_dC = 0.0;
+  real64 CO2EnthalpyDeriv[2]{};
 
   real64 const brineEnthalpy = m_brineEnthalpyTable.compute( &temperature, &brineEnthalpy_dTemperature );
   real64 const CO2Enthalpy = m_CO2EnthalpyTable.compute( input, CO2EnthalpyDeriv );
-
 
   //assume there are only CO2 and brine here.
 
   real64 const C = phaseComposition[m_waterIndex];
 
-
-
   if( useMass )
   {
-    value = (1.0 - C ) * CO2Enthalpy + C * brineEnthalpy;
+    value = (1.0 - C ) * CO2Enthalpy
+            + C * brineEnthalpy;
 
     dvalue_dC = brineEnthalpy - CO2Enthalpy;
-    dValue_dPressure = (1.0 - C ) * CO2EnthalpyDeriv[0] +
-                       dvalue_dC * dPhaseComposition_dPressure[m_waterIndex];
-    dValue_dTemperature = (1.0 - C ) * CO2EnthalpyDeriv[1] + C * brineEnthalpy_dTemperature +
-                          dvalue_dC * dPhaseComposition_dTemperature[m_waterIndex];;
+    dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0]
+                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
+    dValue[Deriv::dT] = (1.0 - C ) * CO2EnthalpyDeriv[1]
+                        + C * brineEnthalpy_dTemperature
+                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT];
   }
   else
   {
-    real64 const waterMWInv = 1 / m_componentMolarWeight[m_waterIndex];
-    real64 const CO2MWInv = 1 / m_componentMolarWeight[m_CO2Index];
+    real64 const waterMWInv = 1.0 / m_componentMolarWeight[m_waterIndex];
+    real64 const CO2MWInv   = 1.0 / m_componentMolarWeight[m_CO2Index];
 
     value = (1.0 - C ) * CO2Enthalpy * CO2MWInv + C * brineEnthalpy * waterMWInv;
 
     dvalue_dC = brineEnthalpy * waterMWInv - CO2Enthalpy * CO2MWInv;
-    dValue_dPressure = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv +
-                       dvalue_dC * dPhaseComposition_dPressure[m_waterIndex];
-    dValue_dTemperature = (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv + C * brineEnthalpy_dTemperature * waterMWInv +
-                          dvalue_dC * dPhaseComposition_dTemperature[m_waterIndex];
+    dValue[Deriv::dP] = (1.0 - C ) * CO2EnthalpyDeriv[0] * CO2MWInv
+                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dP];
+    dValue[Deriv::dT] = (1.0 - C ) * CO2EnthalpyDeriv[1] * CO2MWInv
+                        + C * brineEnthalpy_dTemperature * waterMWInv
+                        + dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dT];
   }
 
-  dValue_dGlobalCompFraction[m_CO2Index] = dvalue_dC * dPhaseComposition_dGlobalCompFraction[m_waterIndex][m_CO2Index];
-  dValue_dGlobalCompFraction[m_waterIndex] = dvalue_dC * dPhaseComposition_dGlobalCompFraction[m_waterIndex][m_waterIndex];
+  dValue[Deriv::dC+m_CO2Index]   = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC+m_CO2Index];
+  dValue[Deriv::dC+m_waterIndex] = dvalue_dC * dPhaseComposition[m_waterIndex][Deriv::dC+m_waterIndex];
 }
 
 } // end namespace PVTProps
