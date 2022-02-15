@@ -42,7 +42,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseFVMKernels
+namespace compositionalMultiphaseFVMKernels
 {
 
 using namespace constitutive;
@@ -56,11 +56,11 @@ using namespace constitutive;
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class PhaseMobilityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -99,10 +99,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = CompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
@@ -244,7 +244,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -253,7 +253,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -588,13 +588,13 @@ public:
    * @param[in] phaseFluxKernelOp the function used to customize the computation of the phase fluxes
    * @param[in] localFluxJacobianKernelOp the function used to customize the computation of the assembly into the local Jacobian
    */
-  template< typename FUNC1 = CompositionalMultiphaseBaseKernels::NoOpFunc,
-            typename FUNC2 = CompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC1 = compositionalMultiphaseBaseKernels::NoOpFunc,
+            typename FUNC2 = compositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void computeFlux( localIndex const iconn,
                     StackVariables & stack,
-                    FUNC1 && phaseFluxKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{},
-                    FUNC2 && localFluxJacobianKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                    FUNC1 && phaseFluxKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{},
+                    FUNC2 && localFluxJacobianKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,
@@ -862,7 +862,7 @@ public:
   void complete( localIndex const iconn,
                  StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
+    using namespace compositionalMultiphaseUtilities;
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
@@ -969,7 +969,7 @@ public:
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
+    compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
       integer constexpr NUM_DOF = NC()+1;
@@ -1221,7 +1221,7 @@ struct AquiferBCKernel
 
 };
 
-} // namespace CompositionalMultiphaseFVMKernels
+} // namespace compositionalMultiphaseFVMKernels
 
 } // namespace geosx
 

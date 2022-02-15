@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseFVMKernels;
+using namespace geosx::singlePhaseFVMKernels;
 
 
 template< localIndex stencilSize >
