@@ -22,7 +22,7 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 
 class CellBasedFluxSlurryFluidAccessorsImpl
@@ -49,7 +49,7 @@ private:
                             extrinsicMeshData::singlefluid::viscosity > m_impl;
 };
 
-} // end of namespace ProppantTransportKernels
+} // end of namespace proppantTransportKernels
 
 } // end of namespace geosx
 

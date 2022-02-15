@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 
 class PermeabilityAccessorsImpl
@@ -50,9 +50,9 @@ private:
                             extrinsicMeshData::permeability::permeabilityMultiplier > m_impl;
 };
 
-} // end of namespace ProppantTransportKernels
+} // end of namespace proppantTransportKernels
 
-namespace CompositionalMultiphaseFVMKernels
+namespace compositionalMultiphaseFVMKernels
 {
 
 class PermeabilityAccessorsImpl
@@ -89,14 +89,14 @@ private:
                             extrinsicMeshData::permeability::dPerm_dPressure > m_impl;
 };
 
-} // end of namespace CompositionalMultiphaseFVMKernels
+} // end of namespace compositionalMultiphaseFVMKernels
 
-namespace SinglePhaseFVMKernels
+namespace singlePhaseFVMKernels
 {
 
-using PermeabilityAccessorsImpl = CompositionalMultiphaseFVMKernels::PermeabilityAccessorsImpl;
+using PermeabilityAccessorsImpl = compositionalMultiphaseFVMKernels::PermeabilityAccessorsImpl;
 
-} // end of namespace SinglePhaseFVMKernels
+} // end of namespace singlePhaseFVMKernels
 
 } // end of namespace geosx
 

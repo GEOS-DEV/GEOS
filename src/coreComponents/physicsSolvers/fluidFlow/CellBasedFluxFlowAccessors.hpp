@@ -21,7 +21,7 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 
 class CellBasedFluxFlowAccessorsImpl
@@ -53,7 +53,7 @@ private:
                     extrinsicMeshData::elementAperture> m_impl;
 };
 
-} // end of namespace ProppantTransportKernels
+} // end of namespace proppantTransportKernels
 
 } // end of namespace geosx
 
