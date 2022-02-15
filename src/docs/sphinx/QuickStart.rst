@@ -285,6 +285,9 @@ A typical one may look like:
 
   # enable tests
   set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+  
+  # define some thrid party libraries information
+  include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
 
 The various ``set()`` commands are used to set environment variables that control the build.
 You will see in the above example that we set the C++ compiler to ``/user/bin/clang++`` and so forth.
