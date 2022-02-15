@@ -18,6 +18,7 @@
 #include "PermeabilityExtrinsicData.hpp"
 
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
 {
@@ -29,10 +30,8 @@ class PermeabilityAccessorsImpl
 {
 public:
   PermeabilityAccessorsImpl( ElementRegionManager const & elemManager,
-                             string const & solverName,
-                             arrayView1d< string const > const & regionNames,
-                             arrayView1d< string const > const & materialNames )
-    : m_impl( elemManager, solverName, regionNames, materialNames )
+                             string const & solverName )
+    : m_impl( elemManager, solverName )
   { }
 
   auto permeability()
@@ -46,8 +45,9 @@ public:
   }
 
 private:
-  StencilAccessors< extrinsicMeshData::permeability::permeability,
-                    extrinsicMeshData::permeability::permeabilityMultiplier> m_impl;
+  StencilMaterialAccessors< constitutive::PermeabilityBase,
+                            extrinsicMeshData::permeability::permeability,
+                            extrinsicMeshData::permeability::permeabilityMultiplier > m_impl;
 };
 
 } // end of namespace ProppantTransportKernels
@@ -59,10 +59,8 @@ class PermeabilityAccessorsImpl
 {
 public:
   PermeabilityAccessorsImpl( ElementRegionManager const & elemManager,
-                             string const & solverName,
-                             arrayView1d< string const > const & regionNames,
-                             arrayView1d< string const > const & materialNames )
-    : m_impl( elemManager, solverName, regionNames, materialNames )
+                             string const & solverName )
+    : m_impl( elemManager, solverName )
   { }
 
   auto permeability()
@@ -86,8 +84,9 @@ public:
   }
 
 private:
-  StencilAccessors< extrinsicMeshData::permeability::permeability,
-                    extrinsicMeshData::permeability::dPerm_dPressure > m_impl;
+  StencilMaterialAccessors< constitutive::PermeabilityBase,
+                            extrinsicMeshData::permeability::permeability,
+                            extrinsicMeshData::permeability::dPerm_dPressure > m_impl;
 };
 
 } // end of namespace CompositionalMultiphaseFVMKernels

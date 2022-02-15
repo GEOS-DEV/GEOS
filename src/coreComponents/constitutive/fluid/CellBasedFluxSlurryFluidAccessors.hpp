@@ -29,25 +29,24 @@ class CellBasedFluxSlurryFluidAccessorsImpl
 {
 public:
   CellBasedFluxSlurryFluidAccessorsImpl( ElementRegionManager const & elemManager,
-                                         string const & solverName,
-                                         arrayView1d< string const > const & regionNames,
-                                         arrayView1d< string const > const & materialNames )
-    : m_impl( elemManager, solverName, regionNames, materialNames )
+                                         string const & solverName )
+    : m_impl( elemManager, solverName )
   { }
 
   auto density()
   {
-    return m_impl.get< extrinsicMeshData::slurryfluid::density >();
+    return m_impl.get< extrinsicMeshData::singlefluid::density >();
   }
 
   auto viscosity()
   {
-    return m_impl.get< extrinsicMeshData::slurryfluid::viscosity >();
+    return m_impl.get< extrinsicMeshData::singlefluid::viscosity >();
   }
 
 private:
-  StencilAccessors< extrinsicMeshData::slurryfluid::density,
-                    extrinsicMeshData::slurryfluid::viscosity > m_impl;
+  StencilMaterialAccessors< constitutive::SlurryFluidBase,
+                            extrinsicMeshData::singlefluid::density,
+                            extrinsicMeshData::singlefluid::viscosity > m_impl;
 };
 
 } // end of namespace ProppantTransportKernels
