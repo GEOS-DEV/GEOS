@@ -93,6 +93,12 @@ public:
   virtual Group & getCellBlocks() = 0;
 
   /**
+   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @return Const reference to the Group instance.
+   */
+  virtual const Group & getCellBlocks() const = 0;
+
+  /**
    * @brief Total number of nodes across all the cell blocks.
    * @return The total number of nodes.
    *

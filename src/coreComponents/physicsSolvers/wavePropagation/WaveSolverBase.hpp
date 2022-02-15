@@ -69,13 +69,6 @@ public:
 protected:
 
   /**
-   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
-   * corresponding elements nodes.
-   * @param mesh mesh of the computational domain
-   */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) = 0;
-
-  /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
@@ -91,6 +84,13 @@ protected:
    */
   virtual
   real64 evaluateRicker( real64 const & time_n, real64 const & f0, localIndex order );
+
+  /**
+   * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
+   * corresponding elements nodes.
+   * @param mesh mesh of the computational domain
+   */
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) = 0;
 
   /**
    * @brief Multiply the precomputed term by the Ricker and add to the right-hand side

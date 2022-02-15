@@ -35,7 +35,7 @@
       discretization="FE1"
       logLevel="0"
       targetRegions="{ Omega }"
-      solidMaterialNames="{ shale }">
+      >
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
