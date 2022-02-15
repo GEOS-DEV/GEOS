@@ -263,11 +263,11 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
         receiverCoordinates,
         receiverIsLocal,
         receiverNodeIds,
-	receiverConstants,
-	sourceValue,
-	dt,
-	timeSourceFrequency,
-	rickerOrder);
+        receiverConstants,
+        sourceValue,
+        dt,
+        timeSourceFrequency,
+        rickerOrder );
     } );
   } );
 
@@ -543,7 +543,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                                             "",
                                                             kernelFactory );
 
-  addSourceToRightHandSide( cycleNumber, rhs );
+    addSourceToRightHandSide( cycleNumber, rhs );
 
     /// calculate your time integrators
     real64 const dt2 = dt*dt;
@@ -580,12 +580,12 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhs[a] = 0.0;
     } );
 
-  real64 checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
-  if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
-  {
-    computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
-    m_indexSeismoTrace++;
-  }
+    real64 checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
+    if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
+    {
+      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
+      m_indexSeismoTrace++;
+    }
 
   } );
   return dt;
