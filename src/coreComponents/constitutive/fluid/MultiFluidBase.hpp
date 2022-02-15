@@ -406,6 +406,7 @@ private:
      * @param[in] dPhaseMolecularWeight_dPres the derivatives of phase molecular weights wrt pressure
      * @param[in] dPhaseMolecularWeight_dTemp the derivatives of phase molecular weights wrt temperature
      * @param[in] dPhaseMolecularWeight_dGlobalCompFrac the derivatives of phase molecular weights wrt comp fractions
+     * @param[in] phaseFrac the phase fractions in moles that will be converted to mass
      * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
      */
     template< integer maxNumComp, integer maxNumPhase >
@@ -414,6 +415,7 @@ private:
                                           real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
                                           real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
                                           real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
+                                          PhaseProp::SliceType const phaseFrac,
                                           PhaseComp::SliceType const phaseCompFrac ) const;
 
     /**
@@ -647,13 +649,12 @@ MultiFluidBase::KernelWrapper::
                                dPhaseMolecularWeight_dTemp,
                                dPhaseMolecularWeight_dGlobalCompFrac,
                                phaseFrac );
-
   convertToPhaseCompMassFractions( phaseMolecularWeight,
                                    dPhaseMolecularWeight_dPres,
                                    dPhaseMolecularWeight_dTemp,
                                    dPhaseMolecularWeight_dGlobalCompFrac,
+                                   phaseFrac,
                                    phaseCompFrac );
-
   computeDerivativesWrtMassFractions( dCompMoleFrac_dCompMassFrac,
                                       phaseFrac,
                                       phaseCompFrac,
@@ -724,6 +725,7 @@ MultiFluidBase::KernelWrapper::
                                    real64 const (&dPhaseMolecularWeight_dPres)[maxNumPhase],
                                    real64 const (&dPhaseMolecularWeight_dTemp)[maxNumPhase],
                                    real64 const (&dPhaseMolecularWeight_dGlobalCompFrac)[maxNumPhase][maxNumComp],
+                                   PhaseProp::SliceType const phaseFrac,
                                    PhaseComp::SliceType const phaseCompFrac ) const
 {
   integer const numPhase = numPhases();
@@ -731,6 +733,15 @@ MultiFluidBase::KernelWrapper::
 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
+
+    // Note: for Black-Oil, phaseMolecularWeight can be zero for absent gas
+    // TODO: implement forExistingPhase lambda
+    bool const phaseExists = (phaseFrac.value[ip] > 0);
+    if( !phaseExists )
+    {
+      continue;
+    }
+
     real64 const phaseMolecularWeightInv = 1.0 / phaseMolecularWeight[ip];
 
     for( integer ic = 0; ic < numComp; ++ic )
