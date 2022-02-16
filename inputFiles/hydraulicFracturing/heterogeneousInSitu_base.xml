@@ -12,12 +12,13 @@
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">
+      targetRegions="{ Fracture }"
+      contactRelationName="fractureContact"
+      maxNumResolves="2">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="50"
-        lineSearchMaxCuts="10"/>
+        newtonTol="1.0e-6"
+        newtonMaxIter="40"
+        lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"/>
@@ -27,7 +28,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
+      targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
@@ -51,7 +52,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      
       rockToughness="$K_upscaled$"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
@@ -59,10 +59,8 @@
 
   <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
   <Outputs>
-    <Silo
-      name="siloOutput"
-      plotLevel="3"
-      parallelThreads="16"/>
+    <VTK
+      name="vtkOutput"/>
 
     <Restart
       name="restartOutput"/>
@@ -70,7 +68,8 @@
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   <Events
-    maxTime="$t_max$">
+    maxTime="$t_max$"
+    logLevel="1">
     <!-- Generate the initial fractures -->
     <SoloEvent
       name="preFracture"
@@ -79,34 +78,28 @@
     <!-- Primary outputs -->
     <PeriodicEvent
       name="outputs"
-      target="/Outputs/siloOutput"
-      timeFrequency="1 [min]"/>
+      timeFrequency="1 [min]"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
 
-    <!-- Apply the hydrofracture solver, limiting the timesteps during certain time intervals -->
+    <!-- Apply the hydrofracture solver -->
     <PeriodicEvent
-      name="solverApplications_a"
-      maxEventDt="$dt_max_a$"
-      endTime="$t_init_a$"
+      name="solverApplications"
+      maxEventDt="$dt_max$"
       target="/Solvers/hydrofracture"/>
 
+    <!-- Limit dt during the pump ramp-up -->
     <PeriodicEvent
-      name="solverApplications_b"
-      maxEventDt="$dt_max_b$"
-      beginTime="$t_init_a$"
-      endTime="$t_init_b$"
-      target="/Solvers/hydrofracture"/>
-
-    <PeriodicEvent
-      name="solverApplications_c"
-      maxEventDt="$dt_max_c$"
-      beginTime="$t_init_b$"
-      target="/Solvers/hydrofracture"/>
+      name="pumpStart"
+      beginTime="$pump_start$"
+      endTime="`$pump_start$+$pump_ramp$`"
+      maxEventDt="$pump_ramp_dt_limit$"/>
 
     <!-- Watch the wall-clock, write a restart, and exit gracefully if necessary -->
-    <!--HaltEvent
+    <!-- <HaltEvent
       name="restarts"
       maxRuntime="$t_allocation$"
-      target="/Outputs/restartOutput"/-->
+      target="/Outputs/restartOutput"/> -->
   </Events>
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
@@ -172,7 +165,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        meanPermCoefficient="0.8"/>
+        meanPermCoefficient="1.0"/>
     </FiniteVolume>
   </NumericalMethods>
 

@@ -172,17 +172,16 @@ Events
 ---------
 
 Rather than explicitly specify the desired timestep behavior, this example uses a flexible approach for timestepping.
-The hydrofracture solver is applied in three segments, where ``maxEventDt`` indicates the maximum allowable timestep:
+The hydrofracture solver is applied in two segments, where ``maxEventDt`` indicates the maximum allowable timestep:
 
-- solverApplications_a: this corresponds to the problem initialization, where we request ``$dt_max_a$=10``.
-- solverApplications_b: this corresponds to the period of initial fluid injection, where we request ``$dt_max_b$=2``.
-- solverApplications_c: this corresponds to rest of the problem where we request ``$dt_max_c$=4``.
+- solverApplications_a: this corresponds to the problem initialization, where we request ``$dt_init$=2``.
+- solverApplications_b: this corresponds to the period of initial fluid injection, where we request ``$dt_max$=30``.
 
 Depending upon how well the solution converges, the timestep may be smaller than the maximum requested value.
 Other key events in this problem include:
 
 - preFracture: this calls the surface generator at the beginning of the problem and helps to initialize the fracture.
-- outputs: this produces output silo files.
+- outputs: this produces output vtk files.
 - restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the specified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
 
 
@@ -255,7 +254,7 @@ When developing an xml with advanced features, we reccomend that you check this 
 Inspecting results
 ---------------------------------
 
-In the above example, we requested silo-format output files every minute.
+In the above example, we requested vtk-format output files every minute.
 We can therefore import these into VisIt or python and visualize the outcome.
 The following figure shows the extents of the generated fracture over time:
 

@@ -17,11 +17,11 @@
 
     <Parameter
       name="Nswarm"
-      value="8"/>
+      value="5"/>
 
     <Parameter
       name="mu_init"
-      value="0.005"/>
+      value="0.001"/>
 
     <Parameter
       name="K_init"
@@ -41,28 +41,24 @@
 
     <!-- Event timing -->
     <Parameter
-      name="t_init_a"
+      name="pump_start"
       value="1 [min]"/>
 
     <Parameter
-      name="dt_max_a"
+      name="pump_ramp"
       value="10 [s]"/>
 
     <Parameter
-      name="t_init_b"
-      value="2 [min]"/>
+      name="pump_ramp_dt_limit"
+      value="0.2 [s]"/>
 
     <Parameter
-      name="dt_max_b"
-      value="2 [s]"/>
+      name="dt_max"
+      value="30 [s]"/>
 
     <Parameter
       name="t_max"
-      value="20 [min]"/>
-
-    <Parameter
-      name="dt_max_c"
-      value="4 [s]"/>
+      value="50 [min]"/>
 
     <!-- Etc. -->
     <Parameter
