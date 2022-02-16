@@ -13,26 +13,40 @@
  */
 
 
-#ifndef GEOSX_MESH_PARTICLESUBREGION_HPP_
-#define GEOSX_MESH_PARTICLESUBREGION_HPP_
+#ifndef GEOSX_MESH_PARTICLEELEMENTSUBREGION_HPP_
+#define GEOSX_MESH_PARTICLEELEMENTSUBREGION_HPP_
 
+#include "mesh/generators/ParticleBlockABC.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
 #include "ParticleSubRegionBase.hpp"
+
 
 namespace geosx
 {
 
+class MeshLevel;
+
 /**
  * @class ParticleSubRegion
- * Class deriving from ParticleBlock further specializing the particle subregion
- * for a particle. This is the class used in the physics solvers to
- * represent a collection of particles of the same type.
+ * Class specializing the particle subregion for a cell particle.
+ * This is the class used in the physics solvers to represent a collection of mesh cell particles
  */
 class ParticleSubRegion : public ParticleSubRegionBase
 {
 public:
 
-  /// Type of map between cell blocks and embedded elements
-  using EmbSurfMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+  /**
+   * @brief Const getter for the catalog name.
+   * @return the name of this type in the catalog
+   */
+  static const string catalogName()
+  { return "ParticleSubRegion"; }
+
+  /**
+   * @copydoc catalogName()
+   */
+  virtual const string getCatalogName() const override final
+  { return ParticleSubRegion::catalogName(); }
 
   /**
    * @name Constructor / Destructor
@@ -60,9 +74,9 @@ public:
 
   /**
    * @brief Fill the ParticleSubRegion by copying those of the source ParticleBlock
-   * @param source the ParticleBlock whose properties (connectivity info) will be copied
+   * @param particleBlock the ParticleBlock which properties (connectivity info) will be copied.
    */
-  void copyFromParticleBlock( ParticleBlock & source );
+  void copyFromParticleBlock( ParticleBlockABC & particleBlock );
 
   ///@}
 
@@ -71,19 +85,17 @@ public:
    */
   ///@{
 
-//  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
-//  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
-//  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
-//                                     arrayView1d< localIndex const > const & packList ) const override;
+  virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const override;
 
-//  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
-//                                       array1d< localIndex > & packList,
-//                                       bool const overwriteUpMaps,
-//                                       bool const overwriteDownMaps ) override;
-
-//  virtual void fixUpDownMaps( bool const clearIfUnmapped ) final override;
+  virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                       array1d< localIndex > & packList,
+                                       bool const overwriteUpMaps,
+                                       bool const overwriteDownMaps ) override;
 
   ///@}
 
@@ -113,8 +125,10 @@ public:
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : public ParticleBlock::viewKeyStruct
+  struct viewKeyStruct : public ParticleSubRegionBase::viewKeyStruct
   {
+    /// @return String key for the constitutive point volume fraction
+    static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
     /// @return String key for the derivatives of the shape functions with respect to the reference configuration
     static constexpr char const * dNdXString() { return "dNdX"; }
     /// @return String key for the derivative of the jacobian.
@@ -136,6 +150,21 @@ public:
   virtual viewKeyStruct const & viewKeys() const override { return m_ParticleBlockSubRegionViewKeys; }
 
   /**
+   * @brief Get the local indices of the nodes in a face of the particle.
+   * @param[in] particleIndex The local index of the target particle.
+   * @param[in] localFaceIndex The local index of the target face in the particle (this will be [0, numFacesInParticle[)
+   * @param[out] nodeIndices A reference to the array of node indices of the face. Gets resized at the proper size.
+   * @deprecated This method will be removed soon.
+   */
+  void getFaceNodes( localIndex const particleIndex,
+                     localIndex const localFaceIndex,
+                     array1d< localIndex > & nodeIndices ) const;
+
+
+
+
+
+   /**
    * @brief @return The array of shape function derivatives.
    */
   array4d< real64 > & dNdX()
@@ -148,16 +177,18 @@ public:
   { return m_dNdX; }
 
   /**
-   * @brief @return The array of jacobian determinants.
+   * @brief @return The array of jacobian determinantes.
    */
   array2d< real64 > & detJ()
   { return m_detJ; }
 
   /**
-   * @brief @return The array of jacobian determinants.
+   * @brief @return The array of jacobian determinantes.
    */
   arrayView2d< real64 const > detJ() const
   { return m_detJ; }
+
+private:
 
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
@@ -165,16 +196,17 @@ public:
   /// Array of constitutive point volume fraction
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-private:
+  /// Name of the properties registered from an external mesh
+  string_array m_externalPropertyNames;
 
-  /// The array of shape function derivatives.
+  /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;
 
-  /// The array of Jacobian determinants.
+  /// The array of jacobian determinantes.
   array2d< real64 > m_detJ;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps
+   * @brief Pack particle-to-node and particle-to-face maps
    * @tparam the flag for the bufferOps::Pack function
    * @param buffer the buffer used in the bufferOps::Pack function
    * @param packList the packList used in the bufferOps::Pack function
@@ -188,4 +220,4 @@ private:
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_PARTICLESUBREGION_HPP_ */
+#endif /* GEOSX_MESH_CELLELEMENTSUBREGION_HPP_ */

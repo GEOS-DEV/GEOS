@@ -12,59 +12,31 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file ParticleBlock.hpp
- */
-
 #ifndef GEOSX_MESH_PARTICLEBLOCK_HPP_
 #define GEOSX_MESH_PARTICLEBLOCK_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "ParticleBlockABC.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "mesh/generators/ParticleBlockABC.hpp"
 #include "mesh/ParticleType.hpp"
 
 namespace geosx
 {
 
 /**
- * @class ParticleBlock
- * Class deriving from ParticleBlockABC specializing the particle subregion
- * for a particle.
+ * This implementation of ParticleBlockABC mainly use the cell patterns/shapes
+ * to build all the particle to nodes, faces and edges mappings.
  */
 class ParticleBlock : public ParticleBlockABC
 {
 public:
 
   /**
-   * @name Static factory catalog functions
-   */
-  ///@{
-
-  /**
-   * @brief Const getter for the catalog name.
-   * @return the name of this type in the catalog
-   */
-  static const string catalogName()
-  { return "ParticleBlock"; }
-
-  /**
-   * @copydoc catalogName()
-   */
-  virtual const string getCatalogName() const override final
-  { return ParticleBlock::catalogName(); }
-
-  ///@}
-
-  /**
    * @name Constructor / Destructor
    */
   ///@{
 
-  /**
-   * @brief Deleted default constructor.
-   */
   ParticleBlock() = delete;
 
   /**
@@ -81,18 +53,58 @@ public:
   ParticleBlock( const ParticleBlock & init ) = delete;
 
   /**
-   * @brief Destructor.
+   * @brief Default destructor.
    */
-  virtual ~ParticleBlock() override;
+  ~ParticleBlock();
 
   ///@}
 
+  /**
+   * @name Geometry computation / Connectivity
+   */
+  ///@{
+
+  ///@}
   /**
    * @name Getters / Setters
    */
   ///@{
 
-  virtual void setParticleType( ParticleType const particleType ) override;
+  /**
+   * @brief Defines the underlying particle type (hex, tet...)
+   * @param[in] particleType the particle type
+   *
+   * @note Allocates the values of the particle to nodes, edges, faces accordingly.
+   */
+  void setParticleType( ParticleType particleType );
+
+  ParticleType getParticleType() const override
+  { return m_particleType; }
+
+  bool hasRVectors() const
+  { return m_hasRVectors; }
+
+  localIndex numParticles() const override
+  { return size(); }
+
+  /**
+   * @brief Get local to global map, non-const version.
+   * @return The mapping relationship as a array.
+   *
+   * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute...
+   * Use a real setter instead.
+   */
+  arrayView1d< globalIndex > localToGlobalMap()
+  { return m_localToGlobalMap; }
+
+  array1d< globalIndex > localToGlobalMap() const override
+  { return m_localToGlobalMap; }
+
+  /**
+   * @brief Resize the cell block to hold @p numParticles
+   * @param numParticles The new number of particles.
+   */
+  void resize( dataRepository::indexType const numParticles ) override final;
 
   ///@}
 
@@ -101,43 +113,33 @@ public:
    */
   ///@{
 
-  /**
-   * @brief Add a property to the ParticleBlock.
-   * @tparam T type of the property
-   * @param[in] propertyName the name of the property
-   * @return a non-const reference to the property
-   */
-  template< typename T >
-  T & addProperty( string const & propertyName )
-  {
-    m_externalPropertyNames.emplace_back( propertyName );
-    return this->registerWrapper< T >( propertyName ).reference();
-  }
-
-  /**
-   * @brief Helper function to apply a lambda function over all the external properties of the subregion
-   * @tparam LAMBDA the type of the lambda function
-   * @param lambda lambda function that is applied to the wrappers of external properties
-   */
-  template< typename LAMBDA >
-  void forExternalProperties( LAMBDA && lambda )
-  {
-    for( auto & externalPropertyName : m_externalPropertyNames )
-    {
-      lambda( this->getWrapperBase( externalPropertyName ) );
-    }
-  }
-
   ///@}
 
-protected:
-
 private:
+
+  /// Contains the global index of each object.
+  array1d< globalIndex > m_localToGlobalMap;
+
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
 
+  /// Type of particle in this subregion.
+  ParticleType m_particleType;
+
+  /// Bool flag for whether particle has r-vectors defining its domain
+  bool m_hasRVectors;
+
+  std::list< dataRepository::WrapperBase * > getExternalProperties() override
+  {
+    std::list< dataRepository::WrapperBase * > result;
+    for( string const & externalPropertyName : m_externalPropertyNames )
+    {
+      result.push_back( &this->getWrapperBase( externalPropertyName ) );
+    }
+    return result;
+  }
 };
 
 }
 
-#endif /* GEOSX_MESH_PARTICLEBLOCK_HPP_ */
+#endif /* GEOSX_MESH_CELLBLOCK_HPP_ */

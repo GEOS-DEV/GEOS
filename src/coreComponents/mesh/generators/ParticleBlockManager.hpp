@@ -22,6 +22,7 @@
 #include "ParticleBlock.hpp"
 #include "mesh/ParticleType.hpp"
 #include "common/DataTypes.hpp"
+#include "dataRepository/Group.hpp"
 
 namespace geosx
 {
@@ -39,7 +40,7 @@ string const particleBlocks = "particleBlocks";
  * @class ParticleBlockManager
  * @brief The ParticleBlockManager class provides an interface to ObjectManagerBase in order to manage ParticleBlock data.
  */
-class ParticleBlockManager : public ObjectManagerBase
+class ParticleBlockManager : public dataRepository::Group
 {
 public:
 
@@ -52,7 +53,7 @@ public:
     return "ParticleBlockManager";
   }
 
-  virtual const string getCatalogName() const override final
+  virtual const string getCatalogName() const
   { return ParticleBlockManager::catalogName(); }
 
 
@@ -79,17 +80,6 @@ public:
    */
   void resize( integer_array const & numParticles,
                string_array const & regionNames );
-
-  /**
-   * @brief Get particle sub-region.
-   * @param regionName name of the particle sub-region
-   * @return pointer to the particle sub-region
-   */
-  ParticleBlock & getRegion( string const & regionName )
-  {
-    return this->getGroup( dataRepository::keys::particleBlocks ).getGroup< ParticleBlock >( regionName );
-  }
-
 
   /**
    * @brief Launch kernel function over all the sub-regions
@@ -135,6 +125,15 @@ private:
    * @return Reference to the Group instance.
    */
   const Group & getParticleBlocks() const;
+
+  /**
+   * @brief Get cell block at index @p iCellBlock.
+   * @param[in] iCellBlock The cell block index.
+   * @return Const reference to the instance.
+   *
+   * @note Mainly useful for iteration purposes.
+   */
+  const ParticleBlockABC & getParticleBlock( localIndex iParticleBlock ) const;
 
   /**
    * @brief Get particle block at index @p iParticleBlock.

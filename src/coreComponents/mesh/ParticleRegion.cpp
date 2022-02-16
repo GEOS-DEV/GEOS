@@ -41,7 +41,7 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
   for( string const & particleBlockName : this->m_particleBlockNames )
   {
     ParticleSubRegion & subRegion = particleSubRegions.registerGroup< ParticleSubRegion >( particleBlockName );
-    ParticleBlock & source = particleBlocks.getGroup< ParticleBlock >( subRegion.getName() );
+    ParticleBlockABC & source = particleBlocks.getGroup< ParticleBlockABC >( subRegion.getName() );
     subRegion.copyFromParticleBlock( source );
   }
 }

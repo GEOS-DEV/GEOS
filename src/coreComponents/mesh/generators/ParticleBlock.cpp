@@ -18,7 +18,6 @@
  */
 
 #include "ParticleBlock.hpp"
-#include "MeshLevel.hpp"
 
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -45,25 +44,25 @@ void ParticleBlock::setParticleType( ParticleType const particleType )
     case ParticleType::SinglePoint:
     {
       // Single Point
-      this->setHasRVectors( false );
+      m_hasRVectors = false;
       break;
     }
     case ParticleType::CPDI:
     {
       // CPDI
-      this->setHasRVectors( true );
+      m_hasRVectors = true;
       break;
     }
     case ParticleType::CPTI:
     {
       // CPTI
-      this->setHasRVectors( true );
+      m_hasRVectors = true;
       break;
     }
     case ParticleType::CPDI2:
     {
       // CPDI2
-      this->setHasRVectors( false );
+      m_hasRVectors = false;
       break;
     }
     default:
@@ -73,6 +72,5 @@ void ParticleBlock::setParticleType( ParticleType const particleType )
   }
 }
 
-REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleBlock, string const &, Group * const )
 
 }
