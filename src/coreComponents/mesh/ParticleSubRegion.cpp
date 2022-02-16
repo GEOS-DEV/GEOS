@@ -16,7 +16,7 @@
 #include "ParticleSubRegion.hpp"
 
 #include "common/TypeDispatch.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
+#include "mesh/MeshLevel.hpp"
 
 namespace geosx
 {
@@ -29,6 +29,8 @@ ParticleSubRegion::ParticleSubRegion( string const & name, Group * const parent 
   registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
 
+  registerWrapper( viewKeyStruct::constitutivePointVolumeFractionString(), &m_constitutivePointVolumeFraction );
+
   registerWrapper( viewKeyStruct::dNdXString(), &m_dNdX ).setSizedFromParent( 1 ).reference().resizeDimension< 3 >( 3 );
 
   registerWrapper( viewKeyStruct::detJString(), &m_detJ ).setSizedFromParent( 1 ).reference();
@@ -36,23 +38,24 @@ ParticleSubRegion::ParticleSubRegion( string const & name, Group * const parent 
 
 ParticleSubRegion::~ParticleSubRegion()
 {
-  // TODO Auto-generated destructor stub
+  // Left blank
 }
 
-void ParticleSubRegion::copyFromParticleSubRegionBase( ParticleSubRegionBase & source )
+void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock )
 {
-  this->setParticleType( source.getParticleType());
-  this->resize( source.size());
+  // Defines the (unique) particle type of this cell particle region,
+  // and its associated number of nodes, edges, faces.
+  m_particleType = particleBlock.getParticleType();
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source.localToGlobalMap();
-  this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
-  for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
-  {
-    this->m_localToGlobalMap[ i ] = sourceLocalToGlobal[ i ];
-  }
+  // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+  // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.
+  // Be careful when refactoring.
+  this->resize( particleBlock.numParticles() );
+
+  this->m_localToGlobalMap = particleBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  source.forExternalProperties( [&]( WrapperBase & wrapper )
+  particleBlock.forExternalProperties( [&]( WrapperBase & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
@@ -63,41 +66,43 @@ void ParticleSubRegion::copyFromParticleSubRegionBase( ParticleSubRegionBase & s
   } );
 }
 
-//void ParticleSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
-//{
-//  ObjectManagerBase::viewPackingExclusionList( exclusionList );
+void ParticleSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+{
+  ObjectManagerBase::viewPackingExclusionList( exclusionList );
 //  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString()  ));
 //  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString()  ));
 //  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString()  ));
 //  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::toEmbSurfString() ));
-//}
+}
 
 
-//localIndex ParticleSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
-//{
-//  buffer_unit_type * junk = nullptr;
-//  return packUpDownMapsPrivate< false >( junk, packList );
-//}
+localIndex ParticleSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packUpDownMapsPrivate< false >( junk, packList );
+}
 
 
-//localIndex ParticleSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
-//                                                 arrayView1d< localIndex const > const & packList ) const
-//{
-//  return packUpDownMapsPrivate< true >( buffer, packList );
-//}
+localIndex ParticleSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
+                                                 arrayView1d< localIndex const > const & packList ) const
+{
+  return packUpDownMapsPrivate< true >( buffer, packList );
+}
 
-//template< bool DOPACK >
-//localIndex ParticleSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-//                                                        arrayView1d< localIndex const > const & packList ) const
-//{
-//
+template< bool DOPACK >
+localIndex ParticleSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
+                                                        arrayView1d< localIndex const > const & packList ) const
+{
+
 //  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
 //  arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
 //  arrayView1d< globalIndex const > edgeLocalToGlobal = edgeList().relatedObjectLocalToGlobal();
 //  arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
-//
-//
-//  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer,
+
+
+  localIndex packedSize = 0;
+
+//  packedSize += bufferOps::Pack< DOPACK >( buffer,
 //                                                     nodeList().base().toViewConst(),
 //                                                     m_unmappedGlobalIndicesInNodelist,
 //                                                     packList,
@@ -118,16 +123,16 @@ void ParticleSubRegion::copyFromParticleSubRegionBase( ParticleSubRegionBase & s
 //                                           packList,
 //                                           localToGlobal,
 //                                           faceLocalToGlobal );
-//
-//  return packedSize;
-//}
 
-//localIndex ParticleSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
-//                                                   localIndex_array & packList,
-//                                                   bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
-//                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
-//{
-//  localIndex unPackedSize = 0;
+  return packedSize;
+}
+
+localIndex ParticleSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
+                                                   localIndex_array & packList,
+                                                   bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
+                                                   bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
+{
+  localIndex unPackedSize = 0;
 //  unPackedSize += bufferOps::Unpack( buffer,
 //                                     nodeList().base().toView(),
 //                                     packList,
@@ -148,25 +153,12 @@ void ParticleSubRegion::copyFromParticleSubRegionBase( ParticleSubRegionBase & s
 //                                     m_unmappedGlobalIndicesInFacelist,
 //                                     this->globalToLocalMap(),
 //                                     faceList().relatedObjectGlobalToLocal() );
-//
-//  return unPackedSize;
-//}
+
+  return unPackedSize;
+}
 
 
-//void ParticleSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
-//{
-//  ObjectManagerBase::fixUpDownMaps( nodeList(),
-//                                    m_unmappedGlobalIndicesInNodelist,
-//                                    clearIfUnmapped );
-//
-//  ObjectManagerBase::fixUpDownMaps( edgeList(),
-//                                    m_unmappedGlobalIndicesInEdgelist,
-//                                    clearIfUnmapped );
-//
-//  ObjectManagerBase::fixUpDownMaps( faceList(),
-//                                    m_unmappedGlobalIndicesInFacelist,
-//                                    clearIfUnmapped );
-//}
 
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleSubRegion, string const &, Group * const )
 
 } /* namespace geosx */
