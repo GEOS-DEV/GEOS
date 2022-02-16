@@ -97,7 +97,7 @@ public:
   void evaluate( dataRepository::Group const & group,
                  real64 const time,
                  SortedArrayView< localIndex const > const & set,
-                 real64_array & result ) const override final
+                 arrayView1d< real64 > const & result ) const override final
   {
     GEOSX_UNUSED_VAR( group );
     GEOSX_UNUSED_VAR( time );

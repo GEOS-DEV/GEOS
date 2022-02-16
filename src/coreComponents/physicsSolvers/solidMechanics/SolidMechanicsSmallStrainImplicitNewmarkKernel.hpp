@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -88,8 +88,8 @@ public:
                    CONSTITUTIVE_TYPE & inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
                    globalIndex const rankOffset,
-                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                   arrayView1d< real64 > const & inputRhs,
+                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                   arrayView1d< real64 > const inputRhs,
                    real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
@@ -295,8 +295,8 @@ protected:
 using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
                                                              arrayView1d< globalIndex const > const &,
                                                              globalIndex,
-                                                             CRSMatrixView< real64, globalIndex const > const &,
-                                                             arrayView1d< real64 > const &,
+                                                             CRSMatrixView< real64, globalIndex const > const,
+                                                             arrayView1d< real64 > const,
                                                              real64 const (&)[3],
                                                              real64,
                                                              real64,
@@ -304,7 +304,7 @@ using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
                                                              real64,
                                                              real64 >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

@@ -24,8 +24,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Region, Fracture }"
-      solidMaterialNames="{ rock }">
+      targetRegions="{ Region, Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
       <LinearSolverParameters
@@ -35,7 +34,7 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Region }"
-      solidMaterialNames="{ rock }"
+      
       rockToughness="1.0e6"
       mpiCommOrder="1"/>
   </Solvers>
@@ -51,9 +50,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="TPFAstabilization"
-        fieldName="traction"
-        coefficientName="custom"/>
+        name="TPFAstabilization"/>
     </FiniteVolume>
   </NumericalMethods>
 
