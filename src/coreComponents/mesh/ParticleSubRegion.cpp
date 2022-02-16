@@ -24,7 +24,7 @@ using namespace dataRepository;
 using namespace constitutive;
 
 ParticleSubRegion::ParticleSubRegion( string const & name, Group * const parent ):
-  ParticleBlock( name, parent )
+  ParticleSubRegionBase( name, parent )
 {
   registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
@@ -39,7 +39,7 @@ ParticleSubRegion::~ParticleSubRegion()
   // TODO Auto-generated destructor stub
 }
 
-void ParticleSubRegion::copyFromParticleBlock( ParticleBlock & source )
+void ParticleSubRegion::copyFromParticleSubRegionBase( ParticleSubRegionBase & source )
 {
   this->setParticleType( source.getParticleType());
   this->resize( source.size());

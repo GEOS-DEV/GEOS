@@ -202,6 +202,8 @@ public:
 protected:
   virtual void postProcessInput() override final;
 
+  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const override;
+
 //  virtual void initializePostInitialConditionsPreSubGroups() override final;
 
   real64 m_newmarkGamma;
@@ -222,6 +224,9 @@ protected:
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
+
+private:
+  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const override;
 
 };
 

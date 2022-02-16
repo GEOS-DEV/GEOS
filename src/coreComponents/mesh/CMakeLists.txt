@@ -21,13 +21,14 @@ set( mesh_headers
      MeshManager.hpp
      NodeManager.hpp
      ObjectManagerBase.hpp
-     ParticleBlock.hpp
-     ParticleBlockManager.hpp
+     generators/ParticleBlock.hpp
+     generators/ParticleBlockManager.hpp
      ParticleManager.hpp
      ParticleRegion.hpp
      ParticleRegionBase.hpp
      ParticleSubRegion.hpp
      ParticleSubRegionBase.hpp
+     generators/ParticleBlockABC.hpp
      ParticleType.hpp
      Perforation.hpp
      PerforationData.hpp
@@ -83,8 +84,8 @@ set( mesh_sources
      MeshManager.cpp
      NodeManager.cpp
      ObjectManagerBase.cpp
-     ParticleBlock.cpp
-     ParticleBlockManager.cpp
+     generators/ParticleBlock.cpp
+     generators/ParticleBlockManager.cpp
      ParticleManager.cpp
      ParticleRegion.cpp
      ParticleRegionBase.cpp

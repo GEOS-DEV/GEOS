@@ -152,10 +152,8 @@ public:
   localIndex getNumberOfParticles() const
   {
     localIndex numParticle = 0;
-    std::cout << "Check 1" << std::endl;
     this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & particleBlock ) -> void
     {
-      std::cout << "Particle block name: " << particleBlock.getName() << std::endl;
       numParticle += particleBlock.size();
     } );
     return numParticle;
@@ -197,7 +195,6 @@ public:
   template< typename LAMBDA >
   void forParticleSubRegions( LAMBDA && lambda ) const
   {
-    std::cout << "Check 2.1" << std::endl;
     forParticleSubRegions< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -207,7 +204,6 @@ public:
   template< typename LAMBDA >
   void forParticleSubRegions( LAMBDA && lambda )
   {
-    std::cout << "Check 2.2" << std::endl;
     forParticleSubRegions< ParticleSubRegion  >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -219,7 +215,6 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forParticleSubRegions( LAMBDA && lambda ) const
   {
-    std::cout << "Check 3.1" << std::endl;
     this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 
@@ -229,7 +224,6 @@ public:
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LAMBDA >
   void forParticleSubRegions( LAMBDA && lambda )
   {
-    std::cout << "Check 3.2" << std::endl;
     this->getGroup( viewKeyStruct::particleSubRegions() ).forSubGroups< SUBREGIONTYPE, SUBREGIONTYPES... >( std::forward< LAMBDA >( lambda ) );
   }
 

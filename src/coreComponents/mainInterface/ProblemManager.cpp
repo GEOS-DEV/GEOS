@@ -448,6 +448,7 @@ void ProblemManager::parseXMLDocument( xmlWrapper::xmlDocument const & xmlDocume
                                                                   regionNode.attribute( "meshBody" ).value() );
 
       MeshBody & meshBody = domain.getMeshBody( regionMeshBodyName );
+      meshBody.m_hasParticles = true;
       meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
       {
         ParticleManager & particleManager = meshLevel.getParticleManager();
@@ -547,71 +548,78 @@ void ProblemManager::generateMesh()
 
   Group & meshBodies = domain.getMeshBodies();
 
-  // THERE NEEDS TO BE SOME SORT OF CHECK TO SEE IF THE CURRENT MESHBODY IS A PARTICLE MESH OR NOT
-
   for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
     Group & meshLevels = meshBody.getMeshLevels();
-    for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
+
+    // Enter particle-specific loop
+    if(meshBody.m_hasParticles)
     {
-      MeshLevel & meshLevel = meshBody.getMeshLevel( b );
-
-      NodeManager & nodeManager = meshLevel.getNodeManager();
-      EdgeManager & edgeManager = meshLevel.getEdgeManager();
-      FaceManager & faceManager = meshLevel.getFaceManager();
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-      // The following lines in this for loop stack some operations to build (node|edge|face|elementRegion)Manager.
-      // Please be cautious, in case of refactoring, that the dependencies of the current version
-      // get properly managed.
-
-      elemManager.generateMesh( cellBlockManager );
-
-      nodeManager.setGeometricalRelations( cellBlockManager );
-      edgeManager.setGeometricalRelations( cellBlockManager );
-      faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
-
-      nodeManager.constructGlobalToLocalMap( cellBlockManager );
-
-      // Edge, face and element region managers rely on the sets provided by the node manager.
-      // This is why `nodeManager.buildSets` is called first.
-      nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
-      edgeManager.buildSets( nodeManager );
-      faceManager.buildSets( nodeManager );
-      elemManager.buildSets( nodeManager );
-
-      // The edge manager do not hold any information related to the regions nor the elements.
-      // This is why the element region manager is not provided.
-      nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
-      edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
-      faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
-
-      nodeManager.buildRegionMaps( elemManager );
-      faceManager.buildRegionMaps( elemManager );
-
-      // Node and edge managers rely on the boundary information provided by the face manager.
-      // This is why `faceManager.setDomainBoundaryObjects` is called first.
-      faceManager.setDomainBoundaryObjects();
-      nodeManager.setDomainBoundaryObjects( faceManager );
-      edgeManager.setDomainBoundaryObjects( faceManager );
-
-      elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
-      {
-        subRegion.setupRelatedObjectsInRelations( meshLevel );
-        subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-
-        subRegion.setMaxGlobalIndex();
-      } );
-
-      elemManager.setMaxGlobalIndex();
-
-      elemManager.generateWells( meshManager, meshLevel );
+      std::cout << "MeshBody " << meshBody.getName() << " has particles!" << std::endl;
     }
+    else
+    {
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+      for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
+      {
+        MeshLevel & meshLevel = meshBody.getMeshLevel( b );
 
-    // The cell block manager is not meant to be used anymore, let's free space.
-    meshBody.deregisterGroup( keys::cellManager );
+        NodeManager & nodeManager = meshLevel.getNodeManager();
+        EdgeManager & edgeManager = meshLevel.getEdgeManager();
+        FaceManager & faceManager = meshLevel.getFaceManager();
+        ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+        // The following lines in this for loop stack some operations to build (node|edge|face|elementRegion)Manager.
+        // Please be cautious, in case of refactoring, that the dependencies of the current version
+        // get properly managed.
+
+        elemManager.generateMesh( cellBlockManager );
+
+        nodeManager.setGeometricalRelations( cellBlockManager );
+        edgeManager.setGeometricalRelations( cellBlockManager );
+        faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
+
+        nodeManager.constructGlobalToLocalMap( cellBlockManager );
+
+        // Edge, face and element region managers rely on the sets provided by the node manager.
+        // This is why `nodeManager.buildSets` is called first.
+        nodeManager.buildSets( cellBlockManager, this->getGroup< GeometricObjectManager >( groupKeys.geometricObjectManager ) );
+        edgeManager.buildSets( nodeManager );
+        faceManager.buildSets( nodeManager );
+        elemManager.buildSets( nodeManager );
+
+        // The edge manager do not hold any information related to the regions nor the elements.
+        // This is why the element region manager is not provided.
+        nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
+        edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
+        faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
+
+        nodeManager.buildRegionMaps( elemManager );
+        faceManager.buildRegionMaps( elemManager );
+
+        // Node and edge managers rely on the boundary information provided by the face manager.
+        // This is why `faceManager.setDomainBoundaryObjects` is called first.
+        faceManager.setDomainBoundaryObjects();
+        nodeManager.setDomainBoundaryObjects( faceManager );
+        edgeManager.setDomainBoundaryObjects( faceManager );
+
+        elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+        {
+          subRegion.setupRelatedObjectsInRelations( meshLevel );
+          subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+
+          subRegion.setMaxGlobalIndex();
+        } );
+
+        elemManager.setMaxGlobalIndex();
+
+        elemManager.generateWells( meshManager, meshLevel );
+      }
+
+      // The cell block manager is not meant to be used anymore, let's free space.
+      meshBody.deregisterGroup( keys::cellManager );
+    }
   }
 
 
