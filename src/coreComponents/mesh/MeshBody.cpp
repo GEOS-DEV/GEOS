@@ -26,10 +26,9 @@ using namespace dataRepository;
 MeshBody::MeshBody( string const & name,
                     Group * const parent ):
   Group( name, parent ),
+  m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
-{
-  registerWrapper< integer >( viewKeys.meshLevels );
-}
+{}
 
 MeshBody::~MeshBody()
 {
@@ -40,33 +39,38 @@ MeshBody::~MeshBody()
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
-  string const name = "Level" + std::to_string(newLevel);
-  return this->registerGroup< MeshLevel >( name );
+  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
 }
 
-MeshLevel & MeshBody::createMeshLevel( string const & name  )
-{
-  return this->registerGroup< MeshLevel >( name );
-}
+ MeshLevel & MeshBody::createMeshLevel( string const & name  )
+ {
+   return this->registerGroup< MeshLevel >( name );
+ }
 
-MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
-                                       string const & newLevelName,
-                                       int const order,
-                                       arrayView1d<string const> const & regions )
-{
-  MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
-  return this->registerGroup( newLevelName,
-                              std::make_unique<MeshLevel>( newLevelName,
-                                                           this,
-                                                           sourceMeshLevel,
-                                                           order  ) );
-}
-
-
-
+ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
+                                        string const & newLevelName,
+                                        int const order,
+                                        arrayView1d<string const> const & regions )
+ {
+   MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
+   return this->registerGroup( newLevelName,
+                               std::make_unique<MeshLevel>( newLevelName,
+                                                            this,
+                                                            sourceMeshLevel,
+                                                            order  ) );
+ }
+ 
 void MeshBody::setGlobalLengthScale( real64 scale )
 {
   m_globalLengthScale = scale;
 }
+
+string MeshBody::intToMeshLevelString( localIndex const meshLevel )
+{
+  char temp[100] = {0};
+  sprintf( temp, "Level%.1ld", meshLevel );
+  return temp;
+}
+
 
 } /* namespace geosx */

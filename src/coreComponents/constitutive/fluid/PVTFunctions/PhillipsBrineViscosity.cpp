@@ -18,6 +18,9 @@
 
 #include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
 
+#include "constitutive/fluid/PVTFunctions/PureWaterProperties.hpp"
+#include "functions/FunctionManager.hpp"
+
 namespace geosx
 {
 
@@ -37,19 +40,12 @@ PhillipsBrineViscosity::PhillipsBrineViscosity( string const & name,
                    componentNames,
                    componentMolarWeight )
 {
+  m_waterViscosityTable = PureWaterProperties::makeSaturationViscosityTable( m_functionName, FunctionManager::getInstance() );
   makeCoefficients( inputPara );
 }
 
 void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
 {
-  // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
-  constexpr real64 a = 0.0816;
-  constexpr real64 b = 0.0122;
-  constexpr real64 c = 0.000128;
-  constexpr real64 d = 0.000629;
-  constexpr real64 k = -0.7;
-  constexpr real64 waterVisc = 8.9e-4; //at 25C
-
   GEOSX_THROW_IF_LT_MSG( inputPara.size(), 3,
                          GEOSX_FMT( "{}: insufficient number of model parameters", m_functionName ),
                          InputError );
@@ -64,14 +60,24 @@ void PhillipsBrineViscosity::makeCoefficients( string_array const & inputPara )
     GEOSX_THROW( GEOSX_FMT( "{}: invalid model parameter value '{}'", m_functionName, e.what() ), InputError );
   }
 
-  m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m) * waterVisc;
-  m_coef1 =  d * (1.0 - exp( k * m )) * waterVisc;
+  // these coefficients come from Phillips et al. (1981), equation (1), pages 5-6
+  constexpr real64 a = 0.0816;
+  constexpr real64 b = 0.0122;
+  constexpr real64 c = 0.000128;
+  constexpr real64 d = 0.000629;
+  constexpr real64 k = -0.7;
+
+  // precompute the model coefficients
+  // (excluding water viscosity, which will multiply them in the compute function)
+  m_coef0 = (1.0 + a * m + b * m * m + c * m * m * m);
+  m_coef1 =  d * (1.0 - exp( k * m ));
 }
 
 PhillipsBrineViscosity::KernelWrapper
 PhillipsBrineViscosity::createKernelWrapper() const
 {
   return KernelWrapper( m_componentMolarWeight,
+                        *m_waterViscosityTable,
                         m_coef0,
                         m_coef1 );
 }

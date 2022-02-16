@@ -216,9 +216,9 @@ private:
   virtual void evaluate( dataRepository::Group const & group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
-                         real64_array & result ) const override final
+                         arrayView1d< real64 > const & result ) const override final
   {
-    FunctionBase::evaluateT< TableFunction >( group, time, set, result );
+    FunctionBase::evaluateT< TableFunction, parallelHostPolicy >( group, time, set, result );
   }
 
   /**

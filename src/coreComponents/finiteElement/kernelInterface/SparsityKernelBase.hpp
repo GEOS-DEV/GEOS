@@ -293,7 +293,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                 REGION_TYPE >( mesh,
                                                targetRegions,
                                                discretizationName,
-                                               arrayView1d< string const >(),
+                                               string(),
                                                KernelFactory );
 
   return 0;

@@ -32,6 +32,7 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
@@ -59,14 +60,55 @@ SinglePhasePoromechanicsSolver::SinglePhasePoromechanicsSolver( const string & n
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poromechanics solver" );
 
-  registerWrapper( viewKeyStruct::porousMaterialNamesString(), &m_porousMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "The name of the material that should be used in the constitutive updates" );
-
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
   m_linearSolverParameters.get().mgr.displacementFieldName = keys::TotalDisplacement;
   m_linearSolverParameters.get().dofsPerNode = 3;
+}
+
+void SinglePhasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
+{
+  SolverBase::registerDataOnMesh( meshBodies );
+
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      subRegion.registerWrapper< string >( viewKeyStruct::porousMaterialNamesString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRestartFlags( RestartFlags::NO_WRITE ).
+        setSizedFromParent( 0 );
+    } );
+  } );
+}
+
+void SinglePhasePoromechanicsSolver::initializePreSubGroups()
+{
+  SolverBase::initializePreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                                       [&]( localIndex const,
+                                                                            ElementSubRegionBase & subRegion )
+    {
+      string & porousName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+      porousName = getConstitutiveName< CoupledSolidBase >( subRegion );
+      GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
+    } );
+  } );
 }
 
 void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
@@ -77,7 +119,7 @@ void SinglePhasePoromechanicsSolver::setupDofs( DomainPartition const & domain,
   m_flowSolver->setupDofs( domain, dofManager );
 
   dofManager.addCoupling( keys::TotalDisplacement,
-                          FlowSolverBase::viewKeyStruct::pressureString(),
+                          extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem );
 }
 
@@ -176,37 +218,41 @@ void SinglePhasePoromechanicsSolver::assembleSystem( real64 const time_n,
 {
 
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
 
-  NodeManager const & nodeManager = mesh.getNodeManager();
+    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  string const pDofKey = dofManager.getKey( FlowSolverBase::viewKeyStruct::pressureString() );
+    string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
 //  m_solidSolver->resetStressToBeginningOfStep( domain );
 
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                pDofKey,
-                                                                dofManager.rankOffset(),
-                                                                localMatrix,
-                                                                localRhs,
-                                                                gravityVectorData,
-                                                                m_flowSolver->fluidModelNames() );
+    PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+                                                                  pDofKey,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  gravityVectorData,
+                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
 
-  // Cell-based contributions
-  m_solidSolver->getMaxForce() =
-    finiteElement::
-      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                    constitutive::PorousSolidBase,
-                                    CellElementSubRegion >( mesh,
-                                                            targetRegionNames(),
-                                                            this->getDiscretizationName(),
-                                                            porousMaterialNames(),
-                                                            kernelFactory );
+    // Cell-based contributions
+    m_solidSolver->getMaxForce() =
+      finiteElement::
+        regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                      constitutive::PorousSolidBase,
+                                      CellElementSubRegion >( mesh,
+                                                              regionNames,
+                                                              this->getDiscretizationName(),
+                                                              viewKeyStruct::porousMaterialNamesString(),
+                                                              kernelFactory );
+
+  } );
 
   m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
                                               domain,
@@ -266,7 +312,7 @@ void SinglePhasePoromechanicsSolver::createPreconditioner()
 
     auto flowPrecond = LAInterface::createPreconditioner( m_flowSolver->getLinearSolverParameters() );
     precond->setupBlock( 1,
-                         { { SinglePhaseBase::viewKeyStruct::pressureString(), { 1, true } } },
+                         { { extrinsicMeshData::flow::pressure::key(), { 1, true } } },
                          std::move( flowPrecond ) );
 
     m_precond = std::move( precond );
@@ -300,12 +346,20 @@ void SinglePhasePoromechanicsSolver::applySystemSolution( DofManager const & dof
 
 void SinglePhasePoromechanicsSolver::updateState( DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                          auto & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    m_flowSolver->updateFluidState( subRegion, targetIndex );
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   CellElementSubRegion & subRegion )
+    {
+      m_flowSolver->updateFluidState( subRegion );
+
+    } );
   } );
 }
 

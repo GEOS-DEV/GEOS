@@ -18,9 +18,10 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_SINGLEPHASEPOROMECHANICSKERNEL_HPP_
-#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
+#include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -87,13 +88,13 @@ public:
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
-               arrayView1d< globalIndex const > const & inputDispDofNumber,
-               string const & inputFlowDofKey,
+               arrayView1d< globalIndex const > const inputDispDofNumber,
+               string const inputFlowDofKey,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3],
-               arrayView1d< string const > const fluidModelNames ):
+               string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -111,14 +112,14 @@ public:
     m_gravityVector{ inputGravityVector[0], inputGravityVector[1], inputGravityVector[2] },
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::densityOldString() ) ),
-    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).initialDensity() ),
-    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
+    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
+    m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).initialDensity() ),
+    m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
-    m_initialFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::initialPressureString() ) ),
-    m_fluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() ) ),
-    m_deltaFluidPressure( elementSubRegion.template getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() ) )
+    m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
+    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
+    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() )
   {}
 
   //*****************************************************************************
@@ -382,8 +383,6 @@ public:
     return maxForce;
   }
 
-
-
 protected:
   /// The array containing the nodal position array.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const m_X;
@@ -420,13 +419,13 @@ protected:
 };
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
-                                                               arrayView1d< globalIndex const > const &,
-                                                               string const &,
+                                                               arrayView1d< globalIndex const > const,
+                                                               string const,
                                                                globalIndex const,
-                                                               CRSMatrixView< real64, globalIndex const > const &,
-                                                               arrayView1d< real64 > const &,
+                                                               CRSMatrixView< real64, globalIndex const > const,
+                                                               arrayView1d< real64 > const,
                                                                real64 const (&)[3],
-                                                               arrayView1d< string const > const >;
+                                                               string const >;
 
 } // namespace PoroelasticKernels
 

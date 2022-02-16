@@ -57,23 +57,11 @@ public:
   /// deleted move operator
   FlowSolverBase & operator=( FlowSolverBase && ) = delete;
 
-  /**
-   * @brief default destructor
-   */
-  virtual ~FlowSolverBase() override;
-
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
   void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
 
   void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
-
-  arrayView1d< string const > fluidModelNames() const { return m_fluidModelNames; }
-
-  arrayView1d< string const > permeabilityModelNames() const { return m_permeabilityModelNames; }
-
-  virtual std::vector< string > getConstitutiveRelations( string const & regionName ) const override;
-
 
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
@@ -83,33 +71,19 @@ public:
     static constexpr char const * referencePorosityString() { return "referencePorosity"; }
     static constexpr char const * permeabilityString() { return "permeability"; }
 
-    // gravity term precomputed values
-    static constexpr char const * gravityCoefString() { return "gravityCoefficient"; }
-
     // misc inputs
     static constexpr char const * fluidNamesString() { return "fluidNames"; }
     static constexpr char const * solidNamesString() { return "solidNames"; }
     static constexpr char const * permeabilityNamesString() { return "permeabilityNames"; }
-    static constexpr char const * pressureString() { return "pressure"; }
-    static constexpr char const * deltaPressureString() { return "deltaPressure"; }
-    static constexpr char const * initialPressureString() { return "initialPressure"; }
-    static constexpr char const * deltaVolumeString() { return "deltaVolume"; }
-    static constexpr char const * aperture0String() { return "aperture_n"; }
-    static constexpr char const * hydraulicApertureString() { return "hydraulicAperture"; }
     static constexpr char const * inputFluxEstimateString() { return "inputFluxEstimate"; }
+    static constexpr char const * transMultiplierString() { return "permeabilityTransMultiplier"; }
+
   };
 
-  void updatePorosityAndPermeability( CellElementSubRegion & subRegion,
-                                      localIndex const targetIndex ) const;
+  void updatePorosityAndPermeability( CellElementSubRegion & subRegion ) const;
 
-  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                              localIndex const targetIndex ) const;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const;
 
-  /**
-   * @brief Setup stored views into domain data for the current step
-   * @param[in] mesh the mesh level object
-   */
-  virtual void resetViews( MeshLevel & mesh );
 
   /**
    * @brief For each equilibrium initial condition, loop over all the target cells and compute the min/max elevation
@@ -139,22 +113,14 @@ protected:
                                           real64 const & dt,
                                           DomainPartition & domain );
 
-  virtual void precomputeData( MeshLevel & mesh );
-
-  virtual void postProcessInput() override;
+  virtual void precomputeData( MeshLevel & mesh,
+                               arrayView1d< string const > const & regionNames );
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  /// name of the fluid constitutive model
-  array1d< string > m_fluidModelNames;
-
-  /// name of the solid constitutive model
-  array1d< string > m_solidModelNames;
-
-  /// name of the permeability constituive model
-  array1d< string > m_permeabilityModelNames;
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
 
   /// flag to determine whether or not coupled with solid solver
   integer m_poroElasticFlag;
@@ -167,24 +133,10 @@ protected:
 
   real64 m_fluxEstimate;
 
-  /// views into pressure fields
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
+private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  /// views into constant data fields
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > m_elemGhostRank;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_volume;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >  m_gravCoef;
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_permeability;
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > >  m_dPerm_dPressure;
-
-#ifdef GEOSX_USE_SEPARATION_COEFFICIENT
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_elementSeparationCoefficient;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > >  m_element_dSeparationCoefficient_dAperture;
-#endif
 
 };
 

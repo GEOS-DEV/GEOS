@@ -19,6 +19,8 @@
 #include "mainInterface/ProblemManager.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVM.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
@@ -36,10 +38,6 @@ char const * xmlInput =
   "                                 logLevel=\"0\"\n"
   "                                 discretization=\"fluidHM\"\n"
   "                                 targetRegions=\"{Region}\"\n"
-  "                                 fluidNames=\"{fluid1}\"\n"
-  "                                 solidNames=\"{rock}\"\n"
-  "                                 permeabilityNames=\"{rockPerm}\"\n"
-  "                                 relPermNames=\"{relperm}\"\n"
   "                                 temperature=\"297.15\"\n"
   "                                 useMass=\"1\">\n"
   "                                 \n"
@@ -63,8 +61,7 @@ char const * xmlInput =
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
   "      <HybridMimeticDiscretization name=\"fluidHM\"\n"
-  "                                   innerProductType=\"beiraoDaVeigaLipnikovManzini\"\n"
-  "                                   coefficientName=\"permeability\"/>\n"
+  "                                   innerProductType=\"beiraoDaVeigaLipnikovManzini\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
@@ -170,8 +167,6 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
 
@@ -191,141 +186,150 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
   string const elemDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::elemDofFieldString() );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                       MeshLevel & mesh,
+                                                       arrayView1d< string const > const & regionNames )
   {
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-    arrayView1d< globalIndex const > const & elemDofNumber =
-      subRegion.getReference< array1d< globalIndex > >( elemDofKey );
-
-    arrayView1d< real64 const > const & pres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::pressureString() );
-    pres.move( LvArray::MemorySpace::host, false );
-
-    arrayView1d< real64 > const & dPres =
-      subRegion.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaPressureString() );
-
-    arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::globalCompDensityString() );
-    compDens.move( LvArray::MemorySpace::host, false );
-
-    arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaGlobalCompDensityString() );
-
-    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
     {
-      if( elemGhostRank[ei] >= 0 )
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      arrayView1d< globalIndex const > const & elemDofNumber =
+        subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+
+      arrayView1d< real64 const > const & pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      pres.move( LvArray::MemorySpace::host, false );
+
+      arrayView1d< real64 > const & dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+
+      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      compDens.move( LvArray::MemorySpace::host, false );
+
+      arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      {
+        if( elemGhostRank[ei] >= 0 )
+        {
+          continue;
+        }
+
+        real64 totalDensity = 0.0;
+        for( localIndex ic = 0; ic < NC; ++ic )
+        {
+          totalDensity += compDens[ei][ic];
+        }
+
+        {
+          solver.resetStateToBeginningOfStep( domain );
+
+          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+          dPres.move( LvArray::MemorySpace::host, true );
+          dPres[ei] = dP;
+
+          mesh.getElemManager().forElementSubRegions( regionNames,
+                                                      [&]( localIndex const,
+                                                           ElementSubRegionBase & subRegion2 )
+          {
+            solver.updateFluidState( subRegion2 );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 elemDofNumber[ei],
+                                 dP,
+                                 jacobianFD.toViewConstSizes() );
+        }
+
+        for( localIndex jc = 0; jc < NC; ++jc )
+        {
+          solver.resetStateToBeginningOfStep( domain );
+
+          real64 const dRho = perturbParameter * totalDensity;
+          dCompDens.move( LvArray::MemorySpace::host, true );
+          dCompDens[ei][jc] = dRho;
+
+          mesh.getElemManager().forElementSubRegions( regionNames,
+                                                      [&]( localIndex const,
+                                                           ElementSubRegionBase & subRegion2 )
+          {
+            solver.updateFluidState( subRegion2 );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 elemDofNumber[ei] + jc + 1,
+                                 dRho,
+                                 jacobianFD.toViewConstSizes() );
+        }
+      }
+    } );
+
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    // get the face-based pressure
+    arrayView1d< real64 > const & facePres =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+    facePres.move( LvArray::MemorySpace::host, false );
+    arrayView1d< real64 > const & dFacePres =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
+
+    string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
+
+    arrayView1d< globalIndex const > const & faceDofNumber =
+      faceManager.getReference< array1d< globalIndex > >( faceDofKey );
+    faceDofNumber.move( LvArray::MemorySpace::host );
+
+    arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
+    faceGhostRank.move( LvArray::MemorySpace::host );
+
+    for( localIndex iface = 0; iface < faceManager.size(); ++iface )
+    {
+      if( faceGhostRank[iface] >= 0 )
       {
         continue;
       }
 
-      real64 totalDensity = 0.0;
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        totalDensity += compDens[ei][ic];
-      }
+      solver.resetStateToBeginningOfStep( domain );
 
-      {
-        solver.resetStateToBeginningOfStep( domain );
+      real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
+      dFacePres.move( LvArray::MemorySpace::host, true );
+      dFacePres[iface] = dFP;
 
-        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-        dPres.move( LvArray::MemorySpace::host, true );
-        dPres[ei] = dP;
+      residual.zero();
+      jacobian.zero();
+      assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
-        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
-                                               ElementSubRegionBase & subRegion2 )
-        {
-          solver.updateFluidState( subRegion2, targetIndex2 );
-        } );
-
-        residual.zero();
-        jacobian.zero();
-        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
-        fillNumericalJacobian( residual.toViewConst(),
-                               residualOrig.toViewConst(),
-                               elemDofNumber[ei],
-                               dP,
-                               jacobianFD.toViewConstSizes() );
-      }
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        solver.resetStateToBeginningOfStep( domain );
-
-        real64 const dRho = perturbParameter * totalDensity;
-        dCompDens.move( LvArray::MemorySpace::host, true );
-        dCompDens[ei][jc] = dRho;
-
-        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
-                                               ElementSubRegionBase & subRegion2 )
-        {
-          solver.updateFluidState( subRegion2, targetIndex2 );
-        } );
-
-        residual.zero();
-        jacobian.zero();
-        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
-        fillNumericalJacobian( residual.toViewConst(),
-                               residualOrig.toViewConst(),
-                               elemDofNumber[ei] + jc + 1,
-                               dRho,
-                               jacobianFD.toViewConstSizes() );
-      }
-    }
-  } );
-
-  FaceManager & faceManager = mesh.getFaceManager();
-
-  // get the face-based pressure
-  arrayView1d< real64 > const & facePres =
-    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::facePressureString() );
-  facePres.move( LvArray::MemorySpace::host, false );
-  arrayView1d< real64 > const & dFacePres =
-    faceManager.getReference< array1d< real64 > >( CompositionalMultiphaseHybridFVM::viewKeyStruct::deltaFacePressureString() );
-
-  string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
-
-  arrayView1d< globalIndex const > const & faceDofNumber =
-    faceManager.getReference< array1d< globalIndex > >( faceDofKey );
-  faceDofNumber.move( LvArray::MemorySpace::host );
-
-  arrayView1d< integer const > const & faceGhostRank = faceManager.ghostRank();
-  faceGhostRank.move( LvArray::MemorySpace::host );
-
-  for( localIndex iface = 0; iface < faceManager.size(); ++iface )
-  {
-    if( faceGhostRank[iface] >= 0 )
-    {
-      continue;
+      fillNumericalJacobian( residual.toViewConst(),
+                             residualOrig.toViewConst(),
+                             faceDofNumber[iface],
+                             dFP,
+                             jacobianFD.toViewConstSizes() );
     }
 
+    // assemble the analytical jacobian
     solver.resetStateToBeginningOfStep( domain );
-
-    real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
-    dFacePres.move( LvArray::MemorySpace::host, true );
-    dFacePres[iface] = dFP;
 
     residual.zero();
     jacobian.zero();
     assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
 
-    fillNumericalJacobian( residual.toViewConst(),
-                           residualOrig.toViewConst(),
-                           faceDofNumber[iface],
-                           dFP,
-                           jacobianFD.toViewConstSizes() );
-  }
+    compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
 
-  // assemble the analytical jacobian
-  solver.resetStateToBeginningOfStep( domain );
-
-  residual.zero();
-  jacobian.zero();
-  assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
-  compareLocalMatrices( jacobian.toViewConst(), jacobianFD.toViewConst(), relTol );
+  } );
 }
 
 class CompositionalMultiphaseHybridFlowTest : public ::testing::Test

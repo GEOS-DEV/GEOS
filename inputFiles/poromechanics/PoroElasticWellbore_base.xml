@@ -150,7 +150,6 @@
   name="PoromechanicsSolver" 
   solidSolverName="mechanicsSolver"
   fluidSolverName="SinglePhaseFlowSolver"
-  porousMaterialNames="{porousRock}"
   logLevel="1"
   discretization="FE1"
   targetRegions="{Omega}">
@@ -172,7 +171,7 @@
   logLevel="1"
   discretization="FE1"
   targetRegions="{ Omega }"
-  solidMaterialNames="{ rock }">
+  >
   <NonlinearSolverParameters
     newtonTol = "1.0e-5"
     newtonMaxIter = "15"
@@ -185,10 +184,7 @@
   name="SinglePhaseFlowSolver"
   logLevel="1"
   discretization="singlePhaseTPFA"
-  targetRegions="{Omega}"
-  fluidNames="{ water }"
-  solidNames="{ porousRock }"
-  permeabilityNames="{rockPerm}"> 
+  targetRegions="{Omega}"> 
   <NonlinearSolverParameters
     newtonTol = "1.0e-6"
     newtonMaxIter = "8"
@@ -207,9 +203,6 @@
   <FiniteVolume>
     <TwoPointFluxApproximation 
       name="singlePhaseTPFA"
-      fieldName="pressure"
-      coefficientName="permeability"
-      coefficientModelNames="{rockPerm}"
     />
   </FiniteVolume>
 </NumericalMethods>
@@ -222,6 +215,10 @@
     parallelThreads="1"
     plotFileRoot="plot"
   />
+
+  <Restart
+    name="restartOutput"
+  />  
 </Outputs>
 <!-- SPHINX_WELLBORE_OUTPUT_END -->
 

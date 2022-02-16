@@ -26,7 +26,8 @@ using namespace dataRepository;
 
 ElementRegionBase::ElementRegionBase( string const & name, Group * const parent ):
   ObjectManagerBase( name, parent ),
-  m_numericalMethod()
+  m_materialList(),
+  m_meshBody()
 {
 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
@@ -37,11 +38,53 @@ ElementRegionBase::ElementRegionBase( string const & name, Group * const parent 
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "List of materials present in this region" );
 
+  registerWrapper( viewKeyStruct::meshBodyString(), &m_meshBody ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( "" ).
+    setDescription( "Mesh body that contains this region" );
+
 }
 
 
 ElementRegionBase::~ElementRegionBase()
 {}
+
+
+string ElementRegionBase::verifyMeshBodyName( Group const & meshBodies,
+                                              string const & meshBodyBlockName )
+{
+  string meshBodyName = meshBodyBlockName;
+  localIndex const numberOfMeshBodies = meshBodies.numSubGroups();
+
+  if( numberOfMeshBodies == 1 )
+  {
+    string const & onlyMeshBodyName = meshBodies.getGroup( 0 ).getName();
+
+    if( meshBodyName=="" )
+    {
+      meshBodyName = onlyMeshBodyName;
+    }
+    GEOSX_ERROR_IF_NE_MSG( onlyMeshBodyName,
+                           meshBodyName,
+                           "MeshBody specified does not match MeshBody in hierarchy." );
+  }
+  else
+  {
+    bool meshBodyFound = false;
+    meshBodies.forSubGroups( [&] ( Group const & meshBody )
+    {
+      if( meshBody.getName()==meshBodyName )
+      {
+        meshBodyFound = true;
+      }
+    } );
+    GEOSX_ERROR_IF( !meshBodyFound,
+                    "There are multiple MeshBodies in this problem, but the "
+                    "specified MeshBody name "<<meshBodyName<<" was not found" );
+  }
+
+  return meshBodyName;
+}
 
 
 }

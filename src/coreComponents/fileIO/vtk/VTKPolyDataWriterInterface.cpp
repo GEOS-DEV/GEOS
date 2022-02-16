@@ -227,12 +227,12 @@ static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
 
 
       //vtkNodes = { 0, 1, 3, 2, 4, 5, 7, 6 };
-      localIndex counter = 0;
-      for (localIndex i = 0; i < vtkNodes.size(); i++)
-      { 
-        std::cout << counter << " "<< vtkNodes[i] << " " << std::endl;
-        counter++;
-      }
+      // localIndex counter = 0;
+      // for ( localIndex i = 0; i < vtkNodes.size(); ++i )
+      // { 
+      //   std::cout << counter << " "<< vtkNodes[i] << " " << std::endl;
+      //   counter++;
+      // }
       
       std::exit(2);
        return vtkNodes;

@@ -25,6 +25,8 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
@@ -42,6 +44,19 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const string
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
+
+void CompositionalMultiphaseReservoir::postProcessInput()
+{
+  ReservoirSolverBase::postProcessInput();
+
+  integer const & useMassFlow = m_flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+  integer const & useMassWell = m_wellSolver->getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  GEOSX_THROW_IF( useMassFlow != useMassWell,
+                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                             getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                             m_flowSolver->getName(), m_wellSolver->getName() ),
+                  InputError );
+}
 
 void CompositionalMultiphaseReservoir::initializePostInitialConditionsPreSubGroups()
 {
@@ -162,9 +177,9 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 {
   using namespace CompositionalMultiphaseUtilities;
 
-  using TAG = WellSolverBase::SubRegionTag;
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using TAG = CompositionalMultiphaseWellKernels::SubRegionTag;
+  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
@@ -202,11 +217,11 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
 
     // get well variables on perforations
     arrayView2d< real64 const > const & compPerfRate =
-      perforationData->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::compPerforationRateString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::compPerforationRate >();
     arrayView3d< real64 const > const & dCompPerfRate_dPres =
-      perforationData->getReference< array3d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dPresString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dPres >();
     arrayView4d< real64 const > const & dCompPerfRate_dComp =
-      perforationData->getReference< array4d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dCompString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
 
     arrayView1d< localIndex const > const & perfWellElemIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );

@@ -26,11 +26,6 @@ namespace geosx
 {
 
 class MeshLevel;
-class FiniteElementDiscretization;
-
-
-using DiscretizationContainer = map< std::pair< string, string >, FiniteElementDiscretization const & >;
-using DiscretizationEntry = DiscretizationContainer::value_type;
 
 /**
  * @class MeshBody
@@ -56,7 +51,7 @@ public:
   /**
    * @brief Create a new mesh level
    * @param [in] newLevel index of the new mesh level
-   * @return pointer to the created MeshLevel
+   * @return reference to the created MeshLevel
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
@@ -67,24 +62,62 @@ public:
                                int const order,
                                arrayView1d<string const> const & regions  );
 
+  /**
+   * @brief Get the meshLevels group
+   * @return reference to the meshLevels group.
+   */
+  Group & getMeshLevels() { return m_meshLevels; }
+  /**
+   * @copydoc getMeshLevels()
+   */
+  Group const & getMeshLevels() const { return m_meshLevels; }
+  /**
+   * @brief Get mesh level
+   * @param [in] level index of the mesh level
+   * @return reference to const MeshLevel
+   */
+  MeshLevel const & getMeshLevel( string const & level ) const
+  { return m_meshLevels.getGroup< MeshLevel >( level ); }
+
+  MeshLevel & getMeshLevel( string const & level )
+  { return m_meshLevels.getGroup< MeshLevel >( level ); }
+
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
-  template< typename KEY >
-  MeshLevel & getMeshLevel( KEY const & key )
-  { return this->getGroup< MeshLevel >( key ); }
+  MeshLevel & getMeshLevel( localIndex const level )
+  { return getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
    */
-  template< typename KEY >
-  MeshLevel const & getMeshLevel( KEY const & key ) const
-  { return this->getGroup< MeshLevel >( key ); }
+  MeshLevel const & getMeshLevel( localIndex const level ) const
+  { return getMeshLevel( intToMeshLevelString( level ) ); }
+
+  /**
+   * @brief Apply the given functor to all meshLevels on this meshBody.
+   * @tparam FUNCTION the type of functor to call
+   * @param[in] function  the functor to call
+   */
+  template< typename FUNCTION >
+  void forMeshLevels( FUNCTION && function ) const
+  {
+    m_meshLevels.forSubGroups< MeshLevel >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshLevels(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshLevels( FUNCTION && function )
+  {
+    m_meshLevels.forSubGroups< MeshLevel >( std::forward< FUNCTION >( function ) );
+  }
 
   /**
    * @brief Set mesh length scale used to define an absolute length tolerance
@@ -105,22 +138,26 @@ public:
    * @brief Data repository keys
    */
   struct viewKeysStruct
-  {
-    /// The key for MeshLevel
-    dataRepository::ViewKey meshLevels                = { "meshLevels" };
-  } viewKeys; ///< viewKeys
+  {} viewKeys; ///< viewKeys
 
   /**
    * @brief Group keys
    */
   struct groupStructKeys
-  {} groupKeys; ///< groupKeys
+  {
+    /// @return The key/string used to register/access the Group that contains the MeshLevel objects.
+    static constexpr char const * meshLevelsString() { return "meshLevels"; }
+  } groupKeys; ///< groupKeys
 
 private:
+  Group & m_meshLevels;
+
   /// Mesh length scale used to define an absolute length tolerance
   /// The default value can be set to another value
   real64 m_globalLengthScale { 0. };
 
+
+  static string intToMeshLevelString( localIndex const meshLevel );
 
 };
 

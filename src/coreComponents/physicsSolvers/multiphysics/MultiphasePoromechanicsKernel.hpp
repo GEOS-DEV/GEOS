@@ -18,8 +18,10 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
+
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
@@ -87,15 +89,15 @@ public:
               SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
               CONSTITUTIVE_TYPE & inputConstitutiveType,
-              arrayView1d< globalIndex const > const & inputDispDofNumber,
-              string const & inputFlowDofKey,
+              arrayView1d< globalIndex const > const inputDispDofNumber,
+              string const inputFlowDofKey,
               globalIndex const rankOffset,
               real64 const (&inputGravityVector)[3],
               localIndex const numComponents,
               localIndex const numPhases,
-              arrayView1d< string const > const fluidModelNames,
-              CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-              arrayView1d< real64 > const & inputRhs ):
+              string const fluidModelKey,
+              CRSMatrixView< real64, globalIndex const > const inputMatrix,
+              arrayView1d< real64 > const inputRhs ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -123,8 +125,9 @@ public:
 
     // extract fluid constitutive data views
     {
+      string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
       constitutive::MultiFluidBase const & fluid =
-        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] );
+        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
       m_dFluidPhaseDensity_dPressure = fluid.dPhaseDensity_dPressure();
@@ -139,35 +142,24 @@ public:
 
     }
 
-    // extract views into common flow solver data
+    // extract views into flow solver data
     {
-      using keys = FlowSolverBase::viewKeyStruct;
+      using namespace extrinsicMeshData::flow;
 
-      m_initialFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::initialPressureString() );
-      m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::pressureString() );
-      m_deltaFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::deltaPressureString() );
-    }
+      m_initialFluidPressure = elementSubRegion.template getExtrinsicData< initialPressure >();
+      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
+      m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< deltaPressure >();
 
-    // extract views into multiphase solver data
-    {
-      using keys = CompositionalMultiphaseBase::viewKeyStruct;
+      m_fluidPhaseDensityOld = elementSubRegion.template getExtrinsicData< phaseDensityOld >();
+      m_fluidPhaseCompFracOld = elementSubRegion.template getExtrinsicData< phaseComponentFractionOld >();
+      m_fluidPhaseSaturationOld = elementSubRegion.template getExtrinsicData< phaseVolumeFractionOld >();
 
-      m_fluidPhaseDensityOld =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseDensityOldString() );
-      m_fluidPhaseCompFracOld =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( keys::phaseComponentFractionOldString() );
-      m_fluidPhaseSaturationOld =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionOldString() );
-
-      m_fluidPhaseSaturation =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() );
-      m_dFluidPhaseSaturation_dPressure =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() );
-      m_dFluidPhaseSaturation_dGlobalCompDensity =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
+      m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
+      m_dFluidPhaseSaturation_dPressure = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dPressure >();
+      m_dFluidPhaseSaturation_dGlobalCompDensity = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dGlobalCompDensity >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
+        elementSubRegion.template getExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >();
     }
   }
 
@@ -606,15 +598,15 @@ protected:
 };
 
 using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              string const &,
+                                                              arrayView1d< globalIndex const > const,
+                                                              string const,
                                                               globalIndex const,
                                                               real64 const (&)[3],
                                                               localIndex const,
                                                               localIndex const,
-                                                              arrayView1d< string const > const,
-                                                              CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const & >;
+                                                              string const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const >;
 
 } // namespace PoroelasticKernels
 
