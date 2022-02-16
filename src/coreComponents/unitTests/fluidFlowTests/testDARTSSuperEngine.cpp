@@ -43,8 +43,6 @@ char const * xmlInput =
   "                      logLevel=\"1\"\n"
   "                      discretization=\"fluidTPFA\"\n"
   "                      targetRegions=\"{ region }\"\n"
-  "                      solidNames=\"{ rock }\"\n"
-  "                      permeabilityNames=\"{ rockPerm }\"\n"
   "                      componentNames=\"{N2, C10, C20}\"\n"
   "                      enableEnergyBalance=\"0\"\n"
   "                      maxCompFractionChange=\"1\"\n"
@@ -71,10 +69,7 @@ char const * xmlInput =
   "  </Mesh>\n"
   "  <NumericalMethods>\n"
   "    <FiniteVolume>\n"
-  "      <TwoPointFluxApproximation name=\"fluidTPFA\"\n"
-  "                                 fieldName=\"pressure\"\n"
-  "                                 coefficientName=\"permeability\"\n"
-  "                                 coefficientModelNames=\"{rockPerm}\"/>\n"
+  "      <TwoPointFluxApproximation name=\"fluidTPFA\"/>\n"
   "    </FiniteVolume>\n"
   "  </NumericalMethods>\n"
   "  <ElementRegions>\n"
@@ -210,106 +205,111 @@ void testOperatorsNumericalDerivatives( DARTSSuperEngine & solver,
     operators[op] = std::to_string( op );
   }
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d< string const > const & regionNames )
   {
-    GEOSX_UNUSED_VAR( targetIndex );
-    SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
-
-    arrayView1d< string const > const & components = solver.componentNames();
-
-    arrayView1d< real64 > & pres =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-
-    arrayView1d< real64 > & dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-
-    arrayView2d< real64, compflow::USD_COMP > & compFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
-
-    arrayView2d< real64, compflow::USD_COMP > & dCompFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
-
-    arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
-
-    arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLValsOld =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
-
-    arrayView3d< real64 const, compflow::USD_OBL_DER > const & OBLDers =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >();
-
-    // reset the solver state to zero out variable updates
-    solver.resetStateToBeginningOfStep( domain );
-
-    // update pressure and check derivatives
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
     {
-      // perturb pressure in each cell
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
-      {
-        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-        dPres[ei] = dP;
-      } );
+      SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
 
-      // recompute operators
-      solver.updateOBLOperators( subRegion );
+      arrayView1d< string const > const & components = solver.componentNames();
 
-      // check values in each cell
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
-      {
-        SCOPED_TRACE( "Element " + std::to_string( ei ) );
+      arrayView1d< real64 > & pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
-        // get all pressure derivatives of every operator for current element in a 1d array
-        auto dOp_dP = getPressureDerivative( OBLDers[ei].toSliceConst(), NOPS );
+      arrayView1d< real64 > & dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
-        checkDerivative( OBLVals[ei].toSliceConst(),
-                         OBLValsOld[ei].toSliceConst(),
-                         dOp_dP.toSliceConst(),
-                         dPres[ei],
-                         relTol,
-                         "operator",
-                         "Pres",
-                         operators );
-      } );
-    }
+      arrayView2d< real64, compflow::USD_COMP > & compFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
 
-    // update component fraction and check derivatives for all components except the last one (which  is not primary variable)
-    for( localIndex jc = 0; jc < NC - 1; ++jc )
-    {
-      // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+      arrayView2d< real64, compflow::USD_COMP > & dCompFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
+
+      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
+
+      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLValsOld =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
+
+      arrayView3d< real64 const, compflow::USD_OBL_DER > const & OBLDers =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >();
+
+      // reset the solver state to zero out variable updates
       solver.resetStateToBeginningOfStep( domain );
 
-      // perturb a single component fraction in each cell
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+      // update pressure and check derivatives
       {
-        real64 const dZ = perturbParameter * ( compFrac[ei][jc] + perturbParameter );
-        dCompFrac[ei][jc] = dZ;
-      } );
+        // perturb pressure in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+          dPres[ei] = dP;
+        } );
 
-      // recompute operators
-      solver.updateOBLOperators( subRegion );
+        // recompute operators
+        solver.updateOBLOperators( subRegion );
 
-      // check values in each cell
-      forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          // get all pressure derivatives of every operator for current element in a 1d array
+          auto dOp_dP = getPressureDerivative( OBLDers[ei].toSliceConst(), NOPS );
+
+          checkDerivative( OBLVals[ei].toSliceConst(),
+                           OBLValsOld[ei].toSliceConst(),
+                           dOp_dP.toSliceConst(),
+                           dPres[ei],
+                           relTol,
+                           "operator",
+                           "Pres",
+                           operators );
+        } );
+      }
+
+      // update component fraction and check derivatives for all components except the last one (which  is not primary variable)
+      for( localIndex jc = 0; jc < NC - 1; ++jc )
       {
-        SCOPED_TRACE( "Element " + std::to_string( ei ) );
+        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+        solver.resetStateToBeginningOfStep( domain );
 
-        // get NC-1 component fraction derivatives of every operator for current element in a 2d array (NC-1, NOPS)
-        auto dOp_dZ = getCompFracDerivative( OBLDers[ei].toSliceConst(), NOPS, NC );
-        string var = "compFrac[" + components[jc] + "]";
+        // perturb a single component fraction in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dZ = perturbParameter * ( compFrac[ei][jc] + perturbParameter );
+          dCompFrac[ei][jc] = dZ;
+        } );
 
-        checkDerivative( OBLVals[ei].toSliceConst(),
-                         OBLValsOld[ei].toSliceConst(),
-                         dOp_dZ[jc].toSliceConst(),
-                         dCompFrac[ei][jc],
-                         relTol,
-                         "operator",
-                         var,
-                         operators );
-      } );
-    }
+        // recompute operators
+        solver.updateOBLOperators( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          // get NC-1 component fraction derivatives of every operator for current element in a 2d array (NC-1, NOPS)
+          auto dOp_dZ = getCompFracDerivative( OBLDers[ei].toSliceConst(), NOPS, NC );
+          string var = "compFrac[" + components[jc] + "]";
+
+          checkDerivative( OBLVals[ei].toSliceConst(),
+                           OBLValsOld[ei].toSliceConst(),
+                           dOp_dZ[jc].toSliceConst(),
+                           dCompFrac[ei][jc],
+                           relTol,
+                           "operator",
+                           var,
+                           operators );
+        } );
+      }
+    } );
   } );
 }
 
@@ -325,8 +325,6 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
   DofManager const & dofManager = solver.getDofManager();
-
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   // assemble the analytical residual
   solver.resetStateToBeginningOfStep( domain );
@@ -347,90 +345,112 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
 
   string const dofKey = dofManager.getKey( DARTSSuperEngine::viewKeyStruct::elemDofFieldString() );
 
-  solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex,
-                                         ElementSubRegionBase & subRegion )
+  solver.forMeshTargets ( domain.getMeshBodies(),
+                          [&]( string const,
+                               MeshLevel & mesh,
+                               arrayView1d< string const > const & regionNames )
   {
-    GEOSX_UNUSED_VAR( targetIndex );
-    arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-
-    arrayView1d< globalIndex const > const & dofNumber =
-      subRegion.getReference< array1d< globalIndex > >( dofKey );
-
-    arrayView1d< real64 const > const & pres =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-    pres.move( LvArray::MemorySpace::host, false );
-
-    arrayView1d< real64 > const & dPres =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-
-    arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
-    compFrac.move( LvArray::MemorySpace::host, false );
-
-    arrayView2d< real64, compflow::USD_COMP > const & dCompFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
-
-    for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
     {
-      if( elemGhostRank[ei] >= 0 )
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+
+      arrayView1d< globalIndex const > const & dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+      arrayView1d< real64 const > const & pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      pres.move( LvArray::MemorySpace::host, false );
+
+      arrayView1d< real64 > const & dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+
+      arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+      compFrac.move( LvArray::MemorySpace::host, false );
+
+      arrayView2d< real64, compflow::USD_COMP > const & dCompFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
+
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
-        continue;
-      }
+        if( elemGhostRank[ei] >= 0 )
+        {
+          continue;
+        }
 
 
-      {
-        solver.resetStateToBeginningOfStep( domain );
+        {
+          solver.resetStateToBeginningOfStep( domain );
 
-        real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-        dPres.move( LvArray::MemorySpace::host, true );
-        dPres[ei] = dP;
+          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+          dPres.move( LvArray::MemorySpace::host, true );
+          dPres[ei] = dP;
 #if defined(GEOSX_USE_CUDA)
-        dPres.move( LvArray::MemorySpace::cuda, false );
+          dPres.move( LvArray::MemorySpace::cuda, false );
 #endif
-        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
-                                               ElementSubRegionBase & subRegion2 )
+
+
+          solver.forMeshTargets( domain.getMeshBodies(),
+                                 [&]( string const,
+                                      MeshLevel & mesh2,
+                                      arrayView1d< string const > const & regionNames2 )
+          {
+            ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
+            elementRegionManager2.forElementSubRegions( regionNames2,
+                                                        [&]( localIndex const,
+                                                             ElementSubRegionBase & subRegion2 )
+            {
+              solver.updateOBLOperators( subRegion2 );
+            } );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 dofNumber[ei],
+                                 dP,
+                                 jacobianFD.toViewConstSizes() );
+        }
+
+        for( localIndex jc = 0; jc < NC - 1; ++jc )
         {
-          GEOSX_UNUSED_VAR( targetIndex2 );
-          solver.updateOBLOperators( subRegion2 );
-        } );
+          solver.resetStateToBeginningOfStep( domain );
 
-        residual.zero();
-        jacobian.zero();
-        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+          dCompFrac.move( LvArray::MemorySpace::host, true );
+          dCompFrac[ei][jc] = perturbParameter;
 
-        fillNumericalJacobian( residual.toViewConst(),
-                               residualOrig.toViewConst(),
-                               dofNumber[ei],
-                               dP,
-                               jacobianFD.toViewConstSizes() );
+          solver.forMeshTargets( domain.getMeshBodies(),
+                                 [&]( string const,
+                                      MeshLevel & mesh2,
+                                      arrayView1d< string const > const & regionNames2 )
+          {
+            ElementRegionManager & elementRegionManager2 = mesh2.getElemManager();
+            elementRegionManager2.forElementSubRegions( regionNames2,
+                                                        [&]( localIndex const,
+                                                             ElementSubRegionBase & subRegion2 )
+            {
+              solver.updateOBLOperators( subRegion2 );
+            } );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 dofNumber[ei] + jc + 1,
+                                 perturbParameter,
+                                 jacobianFD.toViewConstSizes() );
+        }
       }
-
-      for( localIndex jc = 0; jc < NC - 1; ++jc )
-      {
-        solver.resetStateToBeginningOfStep( domain );
-
-        dCompFrac.move( LvArray::MemorySpace::host, true );
-        dCompFrac[ei][jc] = perturbParameter;
-
-        solver.forTargetSubRegions( mesh, [&]( localIndex const targetIndex2,
-                                               ElementSubRegionBase & subRegion2 )
-        {
-          GEOSX_UNUSED_VAR( targetIndex2 );
-
-          solver.updateOBLOperators( subRegion2 );
-        } );
-
-        residual.zero();
-        jacobian.zero();
-        assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
-
-        fillNumericalJacobian( residual.toViewConst(),
-                               residualOrig.toViewConst(),
-                               dofNumber[ei] + jc + 1,
-                               perturbParameter,
-                               jacobianFD.toViewConstSizes() );
-      }
-    }
+    } );
   } );
 
   // assemble the analytical jacobian

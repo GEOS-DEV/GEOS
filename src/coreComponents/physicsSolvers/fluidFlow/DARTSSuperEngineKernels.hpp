@@ -514,8 +514,6 @@ public:
   void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
-
     // add contribution to residual and jacobian into component mass balance equations
     // apply pressure derivative unit conversion
     for( integer i = 0; i < numDofs; ++i )
@@ -694,8 +692,9 @@ public:
                       extrinsicMeshData::flow::OBLOperatorDerivatives >;
 
   using PermeabilityAccessors =
-    StencilAccessors< extrinsicMeshData::permeability::permeability,
-                      extrinsicMeshData::permeability::dPerm_dPressure >;
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure >;
 
   /**
    * @brief Constructor for the kernel interface
@@ -1333,10 +1332,6 @@ public:
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] targetRegionNames names of the target regions
-   * @param[in] fluidModelNames names of the fluid models
-   * @param[in] capPresModelNames names of the capillary pressure models
-   * @param[in] permeabilityModelNames names of the permeability models
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -1352,8 +1347,6 @@ public:
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                   arrayView1d< string const > const & targetRegionNames,
-                   arrayView1d< string const > const & permeabilityModelNames,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
@@ -1370,7 +1363,7 @@ public:
 
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_PHASES, NUM_COMPS, ENABLE_ENERGY, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName, targetRegionNames, permeabilityModelNames );
+      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( rankOffset, stencilWrapper, dofNumberAccessor, compFlowAccessors, permeabilityAccessors,
                           dt, transMultExp, localMatrix, localRhs );
