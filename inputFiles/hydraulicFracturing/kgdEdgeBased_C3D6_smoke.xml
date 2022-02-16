@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./kgdEdgeBased_C3D6_base.xml"/>
+    <File
+      name="./kgdSmokeBase_C3D6.xml"/>    
+  </Included>
+</Problem>

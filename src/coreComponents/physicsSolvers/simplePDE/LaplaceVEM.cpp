@@ -90,12 +90,12 @@ LaplaceVEM::~LaplaceVEM()
 void LaplaceVEM::setupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
-                              array1d< real64 > & localRhs,
-                              array1d< real64 > & localSolution,
+                              ParallelVector & rhs,
+                              ParallelVector & solution,
                               bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
-  SolverBase::setupSystem( domain, dofManager, localMatrix, localRhs, localSolution, setSparsity );
+  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 }
 
 /*
@@ -121,35 +121,34 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                  arrayView1d< real64 > const & localRhs )
 {
-  using VEM = virtualElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
+  using VEM = finiteElement::ConformingVirtualElementOrder1< m_maxCellNodes, m_maxFaceNodes >;
 
-  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
-  NodeManager & nodeManager = mesh.getNodeManager();
-  FaceManager const & faceManager = mesh.getFaceManager();
-  EdgeManager const & edgeManager = mesh.getEdgeManager();
-
-  // Get geometric properties used to compute projectors.
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
-    nodeManager.referencePosition();
-  ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
-  ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
-  arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
-  arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
-  arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
-  string const dofKey = dofManager.getKey( m_fieldName );
-  arrayView1d< globalIndex const > const & dofIndex =
-    nodeManager.getReference< array1d< globalIndex > >( dofKey );
-
-  real64 const diffusion = 1.0;
-  globalIndex const rankOffset = dofManager.rankOffset();
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elementRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    elementRegion.forElementSubRegions< CellElementSubRegion >
-      ( [&]( CellElementSubRegion const & elemSubRegion )
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager const & faceManager = mesh.getFaceManager();
+    EdgeManager const & edgeManager = mesh.getEdgeManager();
+
+    // Get geometric properties used to compute projectors.
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
+      nodeManager.referencePosition();
+    ArrayOfArraysView< localIndex const > const faceToNodeMap = faceManager.nodeList().toViewConst();
+    ArrayOfArraysView< localIndex const > const faceToEdgeMap = faceManager.edgeList().toViewConst();
+    arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList().toViewConst();
+    arrayView2d< real64 const > const faceCenters = faceManager.faceCenter();
+    arrayView2d< real64 const > const faceNormals = faceManager.faceNormal();
+    arrayView1d< real64 const > const faceAreas = faceManager.faceArea();
+    string const dofKey = dofManager.getKey( m_fieldName );
+    arrayView1d< globalIndex const > const & dofIndex =
+      nodeManager.getReference< array1d< globalIndex > >( dofKey );
+
+    real64 const diffusion = 1.0;
+    globalIndex const rankOffset = dofManager.rankOffset();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion & elemSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > elemToNodeMap = elemSubRegion.nodeList().toViewConst();
       arrayView2d< localIndex const > const elementToFaceMap = elemSubRegion.faceList().toViewConst();
@@ -160,49 +159,49 @@ void LaplaceVEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
       forAll< parallelDevicePolicy< 32 > >( numCells, [=] GEOSX_HOST_DEVICE
                                               ( localIndex const cellIndex )
       {
-        VEM::BasisData basisData;
-
         if( elemGhostRank[cellIndex] < 0 )
         {
           real64 cellVolume = elemVolumes[cellIndex];
           real64 const cellCenter[3] { elemCenters( cellIndex, 0 ),
                                        elemCenters( cellIndex, 1 ),
                                        elemCenters( cellIndex, 2 ) };
-          VEM::computeProjectors( cellIndex,
-                                  nodesCoords,
-                                  elemToNodeMap,
-                                  elementToFaceMap,
-                                  faceToNodeMap,
-                                  faceToEdgeMap,
-                                  edgeToNodeMap,
-                                  faceCenters,
-                                  faceNormals,
-                                  faceAreas,
-                                  cellCenter,
-                                  cellVolume,
-                                  basisData );
+
+          VEM virtualElement;
+          virtualElement.processLocalGeometry( cellIndex,
+                                               nodesCoords,
+                                               elemToNodeMap,
+                                               elementToFaceMap,
+                                               faceToNodeMap,
+                                               faceToEdgeMap,
+                                               edgeToNodeMap,
+                                               faceCenters,
+                                               faceNormals,
+                                               faceAreas,
+                                               cellCenter,
+                                               cellVolume );
 
           real64 derivativesIntMean[VEM::maxSupportPoints][3] { { 0.0 } };
           globalIndex elemDofIndex[VEM::maxSupportPoints] { 0 };
           real64 element_matrix[VEM::maxSupportPoints][VEM::maxSupportPoints] { { 0.0 } };
-          localIndex const numSupportPoints = VEM::getNumSupportPoints( basisData );
+          localIndex const numSupportPoints = virtualElement.getNumSupportPoints();
           for( localIndex a = 0; a < numSupportPoints; ++a )
           {
             elemDofIndex[a] = dofIndex[ elemToNodeMap( cellIndex, a ) ];
             for( localIndex b = 0; b < numSupportPoints; ++b )
             {
-              element_matrix[a][b] = VEM::calcStabilizationValue( a, b, basisData );
+              element_matrix[a][b] = virtualElement.calcStabilizationValue( a, b );
             }
             localRhs[a] = 0.0;
           }
-          for( localIndex q = 0; q < VEM::numQuadraturePoints; ++q )
+          real64 const dummy[VEM::maxSupportPoints][3] { { 0.0 } };
+          for( localIndex q = 0; q < virtualElement.getNumQuadraturePoints(); ++q )
           {
-            VEM::calcGradN( q, basisData, derivativesIntMean );
+            virtualElement.calcGradN( q, dummy, derivativesIntMean );
             for( localIndex a = 0; a < numSupportPoints; ++a )
             {
               for( localIndex b = 0; b < numSupportPoints; ++b )
               {
-                element_matrix[a][b] += diffusion*VEM::transformedQuadratureWeight( q, basisData ) *
+                element_matrix[a][b] += diffusion*virtualElement.transformedQuadratureWeight( q, dummy ) *
                                         (derivativesIntMean[a][0] * derivativesIntMean[b][0] +
                                          derivativesIntMean[a][1] * derivativesIntMean[b][1] +
                                          derivativesIntMean[a][2] * derivativesIntMean[b][2] );

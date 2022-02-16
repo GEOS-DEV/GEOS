@@ -69,6 +69,10 @@ SolverBase::SolverBase( string const & name,
                     "solver may be applied to these regions. The decision about what regions this solver will be"
                     "applied to rests in the EventManager." );
 
+  registerWrapper( viewKeyStruct::meshTargetsString(), &m_meshTargets ).
+    setInputFlag( InputFlags::FALSE ).
+    setDescription( "MeshBody/Region combinations that the solver will be applied to." );
+
   registerWrapper( viewKeyStruct::initialDtString(), &m_nextDt ).
     setApplyDefaultValue( 1e99 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -79,11 +83,61 @@ SolverBase::SolverBase( string const & name,
   registerGroup( groupKeyStruct::nonlinearSolverParametersString(), &m_nonlinearSolverParameters );
 
   m_localMatrix.setName( this->getName() + "/localMatrix" );
-  m_localRhs.setName( this->getName() + "/localRhs" );
   m_matrix.setDofManager( &m_dofManager );
 }
 
 SolverBase::~SolverBase() = default;
+
+
+void SolverBase::initialize_postMeshGeneration()
+{
+  ExecutableGroup::initialize_postMeshGeneration();
+  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+  Group const & meshBodies = domain.getMeshBodies();
+  for( auto const & target : m_targetRegionNames )
+  {
+    auto const delimPos = target.find_first_of( '/' );
+    if( delimPos == string::npos )
+    {
+      GEOSX_ERROR_IF( meshBodies.numSubGroups() != 1,
+                      "No MeshBody information is specified in SolverBase::meshTargets, but there are multiple MeshBody objects" );
+      string const meshBodyName = meshBodies.getGroup( 0 ).getName();
+      string const regionName = target;
+      m_meshTargets[meshBodyName].emplace_back( regionName );
+    }
+    else
+    {
+      string const meshBodyName = target.substr( 0, delimPos );
+      GEOSX_ERROR_IF( !meshBodies.hasGroup( meshBodyName ),
+                      "MeshBody ("<<meshBodyName<<") is specified in targetRegions, but does not exist." );
+      string const regionName = target.substr( delimPos+1 );
+      m_meshTargets[meshBodyName].emplace_back( regionName );
+    }
+  }
+}
+
+void SolverBase::registerDataOnMesh( Group & meshBodies )
+{
+  ExecutableGroup::registerDataOnMesh( meshBodies );
+
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
+    {
+      setConstitutiveNamesCallSuper( subRegion );
+      setConstitutiveNames( subRegion );
+    } );
+
+  } );
+
+}
+
+
 
 Group * SolverBase::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
 {
@@ -96,32 +150,10 @@ SolverBase::CatalogInterface::CatalogType & SolverBase::getCatalog()
   return catalog;
 }
 
-bool SolverBase::checkModelNames( array1d< string > & modelNames,
-                                  string const & attribute,
-                                  bool const allowEmpty ) const
-{
-  if( allowEmpty && modelNames.empty() )
-  {
-    return false;
-  }
-
-  // We can disable this if we want to be more strict
-  if( modelNames.size() == 1 )
-  {
-    string const singleModelName = modelNames[0];
-    modelNames.resizeDefault( m_targetRegionNames.size(), singleModelName );
-  }
-
-  GEOSX_ERROR_IF_NE_MSG( modelNames.size(), m_targetRegionNames.size(),
-                         getName() << ": invalid number of values in " << attribute << " attribute "
-                                                                                       "(expected one model name per target region, or one value for all regions)" );
-  return true;
-}
-
 localIndex SolverBase::targetRegionIndex( string const & regionName ) const
 {
   auto const pos = std::find( m_targetRegionNames.begin(), m_targetRegionNames.end(), regionName );
-  GEOSX_ERROR_IF( pos == m_targetRegionNames.end(), "Region " << regionName << " is not a target of solver " << getName() );
+  GEOSX_ERROR_IF( pos == m_targetRegionNames.end(), GEOSX_FMT( "Region {} is not a target of solver {}", regionName, getName() ) );
   return std::distance( m_targetRegionNames.begin(), pos );
 }
 
@@ -156,9 +188,8 @@ bool SolverBase::execute( real64 const time_n,
   real64 nextDt = dt;
 
   integer const maxSubSteps = m_nonlinearSolverParameters.m_maxSubSteps;
-  integer subStep = 0;
 
-  for(; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
+  for( integer subStep = 0; subStep < maxSubSteps && dtRemaining > 0.0; ++subStep )
   {
     real64 const dtAccepted = solverStep( time_n + (dt - dtRemaining),
                                           nextDt,
@@ -179,9 +210,7 @@ bool SolverBase::execute( real64 const time_n,
 
     if( getLogLevel() >= 1 && dtRemaining > 0.0 )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": sub-step = " << subStep
-                                           << ", accepted dt = " << dtAccepted
-                                           << ", remaining dt = " << dtRemaining );
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: sub-step = {}, accepted dt = {}, remaining dt = {}", getName(), subStep, dtAccepted, dtRemaining ) );
     }
   }
 
@@ -203,20 +232,22 @@ void SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt,
                                              real64 & nextDt )
 {
   integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-  int const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
-  int const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
+  integer const iterCutLimit = m_nonlinearSolverParameters.dtCutIterLimit();
+  integer const iterIncLimit = m_nonlinearSolverParameters.dtIncIterLimit();
 
-  if( newtonIter <  iterIncLimit )
+  if( newtonIter < iterIncLimit )
   {
     // Easy convergence, let's double the time-step.
-    nextDt = 2*currentDt;
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Newton solver converged in less than " << iterIncLimit << " iterations, time-step required will be doubled." );
+    nextDt = currentDt * 2;
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in less than {} iterations, time-step required will be doubled.",
+                                          getName(), iterIncLimit ) );
   }
-  else if( newtonIter >  iterCutLimit )
+  else if( newtonIter > iterCutLimit )
   {
     // Tough convergence let us make the time-step smaller!
-    nextDt = currentDt/2;
-    GEOSX_LOG_LEVEL_RANK_0( 1, getName() << ": Newton solver converged in more than " << iterCutLimit << " iterations, time-step required will be halved." );
+    nextDt = currentDt / 2;
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "{}: Newton solver converged in more than {} iterations, time-step required will be halved.",
+                                          getName(), iterCutLimit ) );
   }
   else
   {
@@ -235,27 +266,36 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
 
   // zero out matrix/rhs before assembly
   m_localMatrix.zero();
-  m_localRhs.zero();
+  m_rhs.zero();
 
-  // call assemble to fill the matrix and the rhs
-  assembleSystem( time_n,
-                  dt,
-                  domain,
-                  m_dofManager,
-                  m_localMatrix.toViewConstSizes(),
-                  m_localRhs.toView() );
+  {
+    arrayView1d< real64 > const localRhs = m_rhs.open();
 
-  // apply boundary conditions to system
-  applyBoundaryConditions( time_n,
-                           dt,
-                           domain,
-                           m_dofManager,
-                           m_localMatrix.toViewConstSizes(),
-                           m_localRhs.toView() );
+    // call assemble to fill the matrix and the rhs
+    assembleSystem( time_n,
+                    dt,
+                    domain,
+                    m_dofManager,
+                    m_localMatrix.toViewConstSizes(),
+                    localRhs );
+
+    // apply boundary conditions to system
+    applyBoundaryConditions( time_n,
+                             dt,
+                             domain,
+                             m_dofManager,
+                             m_localMatrix.toViewConstSizes(),
+                             localRhs );
+
+    m_rhs.close();
+  }
 
   if( m_assemblyCallback )
   {
-    m_assemblyCallback( m_localMatrix, m_localRhs );
+    // Make a copy of LA objects and ship off to the callback
+    array1d< real64 > localRhsCopy( m_rhs.localSize() );
+    localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+    m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
   }
 
   // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
@@ -264,10 +304,8 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
     m_precond->clear();
   }
 
-  // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-  m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-  m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-  m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
+  // Compose parallel LA matrix out of local matrix
+  m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
   // Output the linear system matrix/rhs for debugging purposes
   debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
@@ -278,12 +316,8 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
 
-  // Copy solution from parallel vector back to local
-  // TODO: This step will not be needed when we teach LA vectors to wrap our pointers
-  m_solution.extract( m_localSolution );
-
   // apply the system solution to the fields/variables
-  applySystemSolution( m_dofManager, m_localSolution, 1.0, domain );
+  applySystemSolution( m_dofManager, m_solution.values(), 1.0, domain );
 
   // update non-primary variables (constitutive models)
   updateState( domain );
@@ -302,8 +336,8 @@ bool SolverBase::lineSearch( real64 const & time_n,
                              DomainPartition & domain,
                              DofManager const & dofManager,
                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                             arrayView1d< real64 > const & localRhs,
-                             arrayView1d< real64 const > const & localSolution,
+                             ParallelVector & rhs,
+                             ParallelVector & solution,
                              real64 const scaleFactor,
                              real64 & lastResidual )
 {
@@ -329,38 +363,39 @@ bool SolverBase::lineSearch( real64 const & time_n,
     localScaleFactor *= lineSearchCutFactor;
     cumulativeScale += localScaleFactor;
 
-    if( !checkSystemSolution( domain, dofManager, localSolution, localScaleFactor ) )
+    if( !checkSystemSolution( domain, dofManager, solution.values(), localScaleFactor ) )
     {
-      GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search " << lineSearchIteration << ", solution check failed" );
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "        Line search {}, solution check failed", lineSearchIteration ) );
       continue;
     }
 
-    applySystemSolution( dofManager, localSolution, localScaleFactor, domain );
+    applySystemSolution( dofManager, solution.values(), localScaleFactor, domain );
 
     // update non-primary variables (constitutive models)
     updateState( domain );
 
     // re-assemble system
     localMatrix.zero();
-    localRhs.zero();
-    assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    rhs.zero();
 
-    // apply boundary conditions to system
-    applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+    {
+      arrayView1d< real64 > const localRhs = rhs.open();
+      assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+      applyBoundaryConditions( time_n, dt, domain, dofManager, localMatrix, localRhs );
+      rhs.close();
+    }
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      char output[100];
-      sprintf( output, "        Line search @ %0.3f:      ", cumulativeScale );
-      std::cout<<output;
+      std::cout << GEOSX_FMT( "        Line search @ {:0.3f}:      ", cumulativeScale );
     }
 
     // get residual norm
-    residualNorm = calculateResidualNorm( domain, dofManager, localRhs );
+    residualNorm = calculateResidualNorm( domain, dofManager, rhs.values() );
 
     if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      std::cout<<std::endl;
+      std::cout << std::endl;
     }
 
     // if the residual norm is less than the last residual, we can proceed to the
@@ -465,63 +500,55 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     // main Newton loop
     for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
     {
-      if( getLogLevel() >= 1 && logger::internal::rank==0 )
-      {
-        char output[100] = {0};
-        sprintf( output, "    Attempt: %2d, NewtonIter: %2d", dtAttempt, newtonIter );
-        std::cout << output << std::endl;
-      }
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, NewtonIter: {:2}", dtAttempt, newtonIter ) );
 
       // zero out matrix/rhs before assembly
       m_localMatrix.zero();
-      m_localRhs.zero();
+      m_rhs.zero();
 
-      // call assemble to fill the matrix and the rhs
-      assembleSystem( time_n,
-                      stepDt,
-                      domain,
-                      m_dofManager,
-                      m_localMatrix.toViewConstSizes(),
-                      m_localRhs.toView() );
+      {
+        arrayView1d< real64 > const localRhs = m_rhs.open();
 
-      // apply boundary conditions to system
-      applyBoundaryConditions( time_n,
-                               stepDt,
-                               domain,
-                               m_dofManager,
-                               m_localMatrix.toViewConstSizes(),
-                               m_localRhs.toView() );
+        // call assemble to fill the matrix and the rhs
+        assembleSystem( time_n,
+                        stepDt,
+                        domain,
+                        m_dofManager,
+                        m_localMatrix.toViewConstSizes(),
+                        localRhs );
+
+        // apply boundary conditions to system
+        applyBoundaryConditions( time_n,
+                                 stepDt,
+                                 domain,
+                                 m_dofManager,
+                                 m_localMatrix.toViewConstSizes(),
+                                 localRhs );
+
+        m_rhs.close();
+      }
 
       if( m_assemblyCallback )
       {
-        m_assemblyCallback( m_localMatrix, m_localRhs );
+        // Make a copy of LA objects and ship off to the callback
+        array1d< real64 > localRhsCopy( m_rhs.localSize() );
+        localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+        m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
       }
 
       // TODO: maybe add scale function here?
       // Scale()
 
       // get residual norm
-      real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_localRhs.toViewConst() );
+      real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
 
-      if( getLogLevel() >= 1 && logger::internal::rank==0 )
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+      if( newtonIter > 0 )
       {
-        {
-          char output[100] = { 0 };
-          sprintf( output, "    ( R ) = ( %4.2e ) ; ", residualNorm );
-          std::cout << output << std::endl;
-        }
-
-        if( newtonIter > 0 )
-        {
-          char output[100] = { 0 };
-          sprintf( output,
-                   "    Last LinSolve(iter,res) = ( %3d, %4.2e ) ; ",
-                   m_linearSolverResult.numIterations,
-                   m_linearSolverResult.residualReduction );
-          std::cout << output << std::endl;
-        }
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+                                              m_linearSolverResult.numIterations,
+                                              m_linearSolverResult.residualReduction ) );
       }
-
 
       // if the residual norm is less than the Newton tolerance we denote that we have
       // converged and break from the Newton loop immediately.
@@ -543,8 +570,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
                                              domain,
                                              m_dofManager,
                                              m_localMatrix.toViewConstSizes(),
-                                             m_localRhs.toView(),
-                                             m_localSolution.toViewConst(),
+                                             m_rhs,
+                                             m_solution,
                                              scaleFactor,
                                              residualNorm );
 
@@ -577,9 +604,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
 
       // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-      m_matrix.create( m_localMatrix.toViewConst(), MPI_COMM_GEOSX );
-      m_rhs.create( m_localRhs.toViewConst(), MPI_COMM_GEOSX );
-      m_solution.createWithLocalSize( m_matrix.numLocalCols(), MPI_COMM_GEOSX );
+      m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
       // Output the linear system matrix/rhs for debugging purposes
       debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
@@ -590,13 +615,9 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       // Output the linear system solution for debugging purposes
       debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
 
-      // Copy solution from parallel vector back to local
-      // TODO: This step will not be needed when we teach LA vectors to wrap our pointers
-      m_solution.extract( m_localSolution );
+      scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
 
-      scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_localSolution );
-
-      if( !checkSystemSolution( domain, m_dofManager, m_localSolution, scaleFactor ) )
+      if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
       {
         // TODO try chopping (similar to line search)
         GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
@@ -604,7 +625,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       }
 
       // apply the system solution to the fields/variables
-      applySystemSolution( m_dofManager, m_localSolution, scaleFactor, domain );
+      applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
 
       // update non-primary variables (constitutive models)
       updateState( domain );
@@ -620,7 +641,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     {
       // cut timestep, go back to beginning of step and restart the Newton loop
       stepDt *= dtCutFactor;
-      GEOSX_LOG_LEVEL_RANK_0 ( 1, "New dt = " <<  stepDt );
+      GEOSX_LOG_LEVEL_RANK_0 ( 1, GEOSX_FMT( "New dt = {}", stepDt ) );
     }
   }
 
@@ -667,32 +688,30 @@ void SolverBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain )
 void SolverBase::setupSystem( DomainPartition & domain,
                               DofManager & dofManager,
                               CRSMatrix< real64, globalIndex > & localMatrix,
-                              array1d< real64 > & localRhs,
-                              array1d< real64 > & localSolution,
+                              ParallelVector & rhs,
+                              ParallelVector & solution,
                               bool const setSparsity )
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
+  dofManager.setDomain( domain );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
 
-  localIndex const numLocalRows = dofManager.numLocalDofs();
-
-  SparsityPattern< globalIndex > pattern;
   if( setSparsity )
   {
+    SparsityPattern< globalIndex > pattern;
     dofManager.setSparsityPattern( pattern );
     localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   }
+  localMatrix.setName( this->getName() + "/matrix" );
 
-  localRhs.resize( numLocalRows );
-  localSolution.resize( numLocalRows );
+  rhs.setName( this->getName() + "/rhs" );
+  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
-  localMatrix.setName( this->getName() + "/localMatrix" );
-  localRhs.setName( this->getName() + "/localRhs" );
-  localSolution.setName( this->getName() + "/localSolution" );
+  solution.setName( this->getName() + "/solution" );
+  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SolverBase::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time ),
@@ -748,8 +767,7 @@ void debugOutputLAObject( T const & obj,
 
   if( toFile )
   {
-    char filename[200] = { 0 };
-    snprintf( filename, 200, "%s_%06d_%02d.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
+    string const filename = GEOSX_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
     GEOSX_LOG_RANK_0( screenName << " written to " << filename );
   }

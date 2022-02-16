@@ -131,14 +131,13 @@ T_VALUE softMapLookup( mapBase< T_KEY, T_VALUE, SORTED > const & theMap,
 template< typename KEY, typename VAL, typename SORTED >
 VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
                 KEY const & option,
-                string const & optionName = {},
-                string const & contextName = {} )
+                string const & optionName,
+                string const & contextName )
 {
   auto const iter = map.find( option );
   GEOSX_THROW_IF( iter == map.end(),
-                  ( contextName.empty() ? "" : contextName + ":\n" ) <<
-                  "Unsupported option" << ( optionName.empty() ? "" : " for " + optionName ) << ": " << option << ".\n" <<
-                  "Supported options are: " << stringutilities::join( mapKeys( map ), ", " ) << ".",
+                  GEOSX_FMT( "{}: unsupported option '{}' for {}.\nSupported options are: {}",
+                             contextName, option, optionName, stringutilities::join( mapKeys( map ), ", " ) ),
                   InputError );
   return iter->second;
 }
@@ -159,14 +158,39 @@ std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
   return keys;
 }
 
+namespace internal
+{
+template< class F, class ... Ts, std::size_t ... Is >
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::index_sequence< Is ... > )
+{
+  using expander = int[];
+  (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
+}
+}
+
+/**
+ * @brief Visit every element in a tuple applying a function.
+ * @tparam F type of function
+ * @tparam Ts types of tuple elements
+ * @param tuple the target tuple
+ * @param func the function to apply
+ *
+ * The function will be called with a reference to the tuple element and
+ * a compile-time (std::integral_constant) index of the tuple element.
+ */
+template< class F, class ... Ts >
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
+{
+  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+}
+
 // The code below should work with any subscriptable vector/matrix types
 
 template< typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void copy( localIndex const N, VEC1 const & v1, VEC2 const & v2 )
+void copy( integer const N, VEC1 const & v1, VEC2 const & v2 )
 {
-  for( localIndex i = 0; i < N; ++i )
+  for( integer i = 0; i < N; ++i )
   {
     v2[i] = v1[i];
   }
@@ -174,17 +198,16 @@ void copy( localIndex const N, VEC1 const & v1, VEC2 const & v2 )
 
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void applyChainRule( localIndex const N,
+void applyChainRule( integer const N,
                      MATRIX const & dy_dx,
                      VEC1 const & df_dy,
                      VEC2 && df_dx )
 {
   // this could use some dense linear algebra
-  for( localIndex i = 0; i < N; ++i )
+  for( integer i = 0; i < N; ++i )
   {
     df_dx[i] = 0.0;
-    for( localIndex j = 0; j < N; ++j )
+    for( integer j = 0; j < N; ++j )
     {
       df_dx[i] += df_dy[j] * dy_dx[j][i];
     }
@@ -193,8 +216,7 @@ void applyChainRule( localIndex const N,
 
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
-void applyChainRuleInPlace( localIndex const N,
+void applyChainRuleInPlace( integer const N,
                             MATRIX const & dy_dx,
                             VEC1 && df_dxy,
                             VEC2 && work )
@@ -202,7 +224,6 @@ void applyChainRuleInPlace( localIndex const N,
   applyChainRule( N, dy_dx, df_dxy, work );
   copy( N, work, df_dxy );
 }
-
 
 } // namespace geosx
 

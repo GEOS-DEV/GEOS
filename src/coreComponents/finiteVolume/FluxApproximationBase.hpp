@@ -158,30 +158,33 @@ public:
   };
 
   /**
-   * @brief Returns the target region name.
-   * @return the target region name
+   * @brief get the list of the target regions on a given mesh body.
+   * @param[in] meshBodyName name of the meshBody
+   * @return a list of the target regions on the meshBody
    */
-  string_array const & targetRegions() const { return m_targetRegions; }
-  /**
-   * @copydoc targetRegions() const
-   */
-  string_array & targetRegions()       { return m_targetRegions; }
+  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
-   * @brief Returns the coeff model name.
-   * @return the coeff model name
+   * @brief get the list of the coefficient constitutive model names on a given mesh body.
+   * @param[in] meshBodyName name of the meshBody
+   * @return a list of the coefficient constitutive model names on a give meshBody.
    */
-  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
-  /**
-   * @copydoc coefficientModelNames() const
-   */
-  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+  array1d< string > & coefficientModelNames( string const & meshBodyName ) { return m_coefficientModelNames[meshBodyName]; }
 
+  /**
+   * @brief set the name of the field.
+   * @param name name of the field to be set.
+   */
+  void setFieldName( string const & name );
+  /**
+   * @brief set the name of the coefficient.
+   * @param name name of the coefficient.
+   */
+  void setCoeffName( string const & name );
 
 protected:
 
-  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
+  virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -212,7 +215,7 @@ protected:
                                         string const & setName ) const = 0;
 
   /**
-   * @brief Allocate and populate a stencil to be used in boundary condition application
+   * @brief Allocate and populate a stencil to be used in dirichlet boundary condition application
    * @param mesh the target mesh level
    * @param setName name of the face set, to be used as wrapper name for the produced stencil
    * @param faceSet set of face indices to use
@@ -221,6 +224,23 @@ protected:
                                        string const & setName,
                                        SortedArrayView< localIndex const > const & faceSet ) const = 0;
 
+  /**
+   * @brief Register the wrapper for aquifer stencil on a mesh.
+   * @param stencilGroup the group holding the stencil objects
+   * @param setName the face set name (used as the wrapper name)
+   */
+  virtual void registerAquiferStencil( Group & stencilGroup,
+                                       string const & setName ) const = 0;
+
+  /**
+   * @brief Allocate and populate a stencil to be used in aquifer boundary condition application
+   * @param domain the domain partion
+   * @param mesh the target mesh level
+   */
+  virtual void computeAquiferStencil( DomainPartition & domain,
+                                      MeshLevel & mesh ) const = 0;
+
+
   /// name of the primary solution field
   string m_fieldName;
 
@@ -228,10 +248,10 @@ protected:
   string m_coeffName;
 
   /// names of coefficient models to build the stencil for
-  string_array m_coefficientModelNames;
+  map< string, array1d< string > > m_coefficientModelNames; // TODO: remove
 
   /// names of target regions to build the stencil for
-  string_array m_targetRegions;
+  map< string, array1d< string > > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;

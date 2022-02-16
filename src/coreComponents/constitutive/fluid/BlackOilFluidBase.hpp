@@ -119,6 +119,8 @@ protected:
     WaterParams m_waterParams;
   };
 
+  virtual integer getWaterPhaseIndex() const override final;
+
   virtual void postProcessInput() override;
 
   virtual void initializePostSubGroups() override;
@@ -155,8 +157,12 @@ protected:
   /**
    * @brief Check that the table values make sense
    * @param[in] table the values in the oil or gas table
+   * @param[in] warningIfDecreasing flag to issue a warning if values are decreasing (otherwise, issue a warning if increasing)
+   * @detail This function throws an error if the table is invalid
    */
-  void validateTable( TableFunction const & table ) const;
+  virtual void validateTable( TableFunction const & table,
+                              bool warningIfDecreasing ) const;
+
 
   /**
    * @brief Check water parameters for correctness.

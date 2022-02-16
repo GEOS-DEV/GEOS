@@ -44,13 +44,13 @@ real64 ArnoldiLargestEigenvalue( LinearOperator< VECTOR > const & op, localIndex
   array1d< VECTOR > V( mInternal + 1 );
 
   // Initial unitary vector
-  V[0].createWithLocalSize( numLocalRows, op.getComm() );
+  V[0].create( numLocalRows, op.comm() );
   V[0].set( 1.0 / sqrt( static_cast< real64 >( numGlobalRows ) ) );
 
   for( localIndex j = 0; j < mInternal; ++j )
   {
     // Apply operator
-    V[j+1].createWithLocalSize( numLocalRows, op.getComm() );
+    V[j+1].create( numLocalRows, op.comm() );
     op.apply( V[j], V[j+1] );
     // Arnoldi process
     for( localIndex i = 0; i <= j; ++i )

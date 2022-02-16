@@ -57,8 +57,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = true ) override;
 
   virtual void
@@ -137,8 +137,8 @@ public:
               DomainPartition & domain,
               DofManager const & dofManager,
               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-              arrayView1d< real64 > const & localRhs,
-              arrayView1d< real64 const > const & localSolution,
+              ParallelVector & rhs,
+              ParallelVector & solution,
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
@@ -172,13 +172,15 @@ public:
     constexpr static char const * deltaTractionString() { return "deltaTraction"; }
     constexpr static char const * fractureStateString() { return "fractureState"; }
     constexpr static char const * previousFractureStateString() { return "previousFractureState"; }
-    constexpr static char const * localJumpString() { return "localJump"; }
-    constexpr static char const * previousLocalJumpString() { return "previousLocalJump"; }
+    constexpr static char const * dispJumpString() { return "displacementJump"; }
+    constexpr static char const * previousDispJumpString() { return "previousLocalJump"; }
 
     constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
     constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
     constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
     constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
+
+    static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
 
   };
 
@@ -254,6 +256,8 @@ private:
   }
 
   void createPreconditioner( DomainPartition const & domain );
+
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 public:
 

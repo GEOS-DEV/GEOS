@@ -19,6 +19,9 @@
 #include "TwoPointFluxApproximation.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "common/MpiWrapper.hpp"
+#include "fieldSpecification/FieldSpecificationManager.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/CellElementStencilTPFA.hpp"
 #include "finiteVolume/SurfaceElementStencil.hpp"
@@ -27,7 +30,6 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "finiteVolume/ProjectionEDFMHelper.hpp"
-#include "mainInterface/GeosxState.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
 #if defined( __INTEL_COMPILER )
@@ -91,7 +93,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
@@ -103,7 +105,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
@@ -135,7 +137,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     }
 
     real64 faceCenter[ 3 ], faceNormal[ 3 ], cellToFaceVec[2][ 3 ];
-    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], X, faceCenter, faceNormal, areaTolerance );
 
     if( faceArea < areaTolerance )
     {
@@ -208,15 +210,15 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager & elemManager = mesh.getElemManager();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
-    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
-                                                                 m_targetRegions,
-                                                                 m_coefficientModelNames );
+  // TODO: can we look this up better?
+  string const & meshBodyName = mesh.getParent().getParent().getName();
+  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
+
 
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
@@ -577,7 +579,6 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                               elemCenter,
                               faceNormal,
                               faceArea,
-                              coefficient,
                               transMultiplier,
                               fractureRegionIndex ] ( localIndex const k )
     {
@@ -855,21 +856,26 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
-    elemManager.constructArrayViewAccessor< real64, 2 >( CellBlock::viewKeyStruct::elementCenterString() );
+    elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
+  // TODO: can we look this up better?
+  string const & meshBodyName = mesh.getParent().getParent().getName();
+  arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
+  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
+
   ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
     elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
-                                                                 m_targetRegions,
-                                                                 m_coefficientModelNames );
+                                                                 targetRegions,
+                                                                 coeffModelNames );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
-  for( string const & regionName : m_targetRegions )
+  for( string const & regionName : targetRegions )
   {
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
@@ -890,7 +896,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   for( localIndex kf : faceSet )
   {
     real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
-    real64 const faceArea = computationalGeometry::Centroid_3DPolygon( faceToNodes[kf], nodePosition, faceCenter, faceNormal, areaTolerance );
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], nodePosition, faceCenter, faceNormal, areaTolerance );
 
     for( localIndex ke = 0; ke < numPts; ++ke )
     {
@@ -957,6 +963,185 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
                    kf );
     }
   }
+}
+
+void TwoPointFluxApproximation::registerAquiferStencil( Group & stencilGroup, string const & setName ) const
+{
+  registerBoundaryStencil( stencilGroup, setName );
+}
+
+
+void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain, MeshLevel & mesh ) const
+{
+  // The computation of the aquifer stencil weights requires three passes:
+  //  - In the first pass, we count the number of individual aquifers
+  //  - In the second pass, we compute the sum of the face areas for each aquifer
+  //  - In the third pass, we compute the area fraction for each face
+
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
+    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+
+  arrayView1d< real64 const > const & faceArea              = faceManager.faceArea();
+  arrayView2d< localIndex const > const & elemRegionList    = faceManager.elementRegionList();
+  arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
+  arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
+
+  constexpr localIndex numPts = BoundaryStencil::NUM_POINT_IN_FLUX;
+
+  // make a list of region indices to be included
+  SortedArray< localIndex > regionFilter;
+  for( string const & regionName : m_targetRegions.at( mesh.getParent().getParent().getName() ) )
+  {
+    regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
+  }
+
+  // Step 1: count individual aquifers
+
+  std::map< string, localIndex > aquiferNameToAquiferId;
+  localIndex aquiferCounter = 0;
+
+  fsManager.forSubGroups< AquiferBoundaryCondition >( [&] ( AquiferBoundaryCondition const & bc )
+  {
+    aquiferNameToAquiferId[bc.getName()] = aquiferCounter;
+    aquiferCounter++;
+  } );
+
+  // Step 2: sum the face areas for each individual aquifer
+
+  array1d< real64 > globalSumFaceAreas( aquiferNameToAquiferId.size() );
+  array1d< real64 > localSumFaceAreas( aquiferNameToAquiferId.size() );
+  arrayView1d< real64 > const localSumFaceAreasView = localSumFaceAreas.toView();
+
+  fsManager.apply< AquiferBoundaryCondition >( 0.0,
+                                               domain,
+                                               "faceManager",
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const &,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     Group const &,
+                                                     string const & )
+  {
+    RAJA::ReduceSum< parallelHostReduce, real64 > targetSetSumFaceAreas( 0.0 );
+    forAll< parallelHostPolicy >( targetSet.size(), [=] ( localIndex const i )
+    {
+      localIndex const iface = targetSet[i];
+
+      bool isOwnedAquiferFaceInTarget = false;
+      for( localIndex ke = 0; ke < numPts; ++ke )
+      {
+        // Filter out elements not locally present
+        if( elemRegionList[iface][ke] < 0 )
+        {
+          continue;
+        }
+
+        // Filter out elements not in target regions
+        if( !regionFilter.contains( elemRegionList[iface][ke] ))
+        {
+          continue;
+        }
+
+        localIndex const er  = elemRegionList[iface][ke];
+        localIndex const esr = elemSubRegionList[iface][ke];
+        localIndex const ei  = elemList[iface][ke];
+
+        // Filter out ghosted elements
+        if( elemGhostRank[er][esr][ei] >= 0 )
+        {
+          continue;
+        }
+
+        isOwnedAquiferFaceInTarget = true;
+      }
+
+      if( isOwnedAquiferFaceInTarget )
+      {
+        targetSetSumFaceAreas += faceArea[iface];
+      }
+    } );
+    localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
+    localSumFaceAreasView[aquiferIndex] += targetSetSumFaceAreas.get();
+  } );
+
+  MpiWrapper::allReduce( localSumFaceAreas.data(),
+                         globalSumFaceAreas.data(),
+                         localSumFaceAreas.size(),
+                         MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                         MPI_COMM_GEOSX );
+
+  // Step 3: compute the face area fraction for each connection, and insert into boundary stencil
+
+  fsManager.apply< AquiferBoundaryCondition >( 0.0,
+                                               domain,
+                                               "faceManager",
+                                               AquiferBoundaryCondition::catalogName(),
+                                               [&] ( AquiferBoundaryCondition const & bc,
+                                                     string const & setName,
+                                                     SortedArrayView< localIndex const > const & targetSet,
+                                                     Group const &,
+                                                     string const & )
+  {
+    BoundaryStencil & stencil = getStencil< BoundaryStencil >( mesh, setName );
+
+    stackArray1d< localIndex, numPts > stencilRegionIndices( numPts );
+    stackArray1d< localIndex, numPts > stencilSubRegionIndices( numPts );
+    stackArray1d< localIndex, numPts > stencilElemOrFaceIndices( numPts );
+    stackArray1d< real64, numPts > stencilWeights( numPts );
+
+    localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
+
+    stencil.reserve( targetSet.size() );
+    for( localIndex iface : targetSet )
+    {
+
+      for( localIndex ke = 0; ke < numPts; ++ke )
+      {
+        // Filter out elements not locally present
+        if( elemRegionList[iface][ke] < 0 )
+        {
+          continue;
+        }
+
+        // Filter out elements not in target regions
+        if( !regionFilter.contains( elemRegionList[iface][ke] ))
+        {
+          continue;
+        }
+
+        localIndex const er  = elemRegionList[iface][ke];
+        localIndex const esr = elemSubRegionList[iface][ke];
+        localIndex const ei  = elemList[iface][ke];
+
+        // Filter out ghosted elements
+        if( elemGhostRank[er][esr][ei] >= 0 )
+        {
+          continue;
+        }
+
+        stencilRegionIndices[BoundaryStencil::Order::ELEM] = er;
+        stencilSubRegionIndices[BoundaryStencil::Order::ELEM] = esr;
+        stencilElemOrFaceIndices[BoundaryStencil::Order::ELEM] = ei;
+        stencilWeights[BoundaryStencil::Order::ELEM] = faceArea[iface] / globalSumFaceAreas[aquiferIndex];
+
+        stencilRegionIndices[BoundaryStencil::Order::FACE] = -1;
+        stencilSubRegionIndices[BoundaryStencil::Order::FACE] = -1;
+        stencilElemOrFaceIndices[BoundaryStencil::Order::FACE] = iface;
+        stencilWeights[BoundaryStencil::Order::FACE] = -faceArea[iface] / globalSumFaceAreas[aquiferIndex]; // likely unused for aquifers
+
+        stencil.add( stencilRegionIndices.size(),
+                     stencilRegionIndices.data(),
+                     stencilSubRegionIndices.data(),
+                     stencilElemOrFaceIndices.data(),
+                     stencilWeights.data(),
+                     iface );
+      }
+    }
+  } );
 }
 
 

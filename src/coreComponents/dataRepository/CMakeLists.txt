@@ -31,7 +31,6 @@ set( dataRepository_sources
      ConduitRestart.cpp
      ExecutableGroup.cpp
      Group.cpp
-     Wrapper.cpp
      WrapperBase.cpp
      xmlWrapper.cpp
    )

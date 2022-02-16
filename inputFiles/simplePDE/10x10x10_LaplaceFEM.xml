@@ -1,0 +1,118 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers>
+    <LaplaceFEM
+      name="laplace"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Temperature"
+      targetRegions="{ mesh1/Region1 }">
+      <LinearSolverParameters
+        directParallel="0"/>
+    </LaplaceFEM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 10 }"
+      nz="{ 10 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <Events
+    maxTime="2.0">
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/laplace"/>
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ nullModel }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <NullModel
+      name="nullModel"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="sourceTerm"
+      fieldName="Temperature"
+      objectPath="nodeManager"
+      functionName="DirichletTimeFunction"
+      scale="1.0"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkTerm"
+      fieldName="Temperature"
+      objectPath="nodeManager"
+      scale="0.0"
+      setNames="{ sink }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      parallelThreads="32"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ -0.01, -0.01, -0.01 }"
+      xMax="{ +0.01, +1.01, +1.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ +0.99, -0.01, -0.01 }"
+      xMax="{ +1.01, +1.01, +1.01 }"/>
+  </Geometry>
+
+  <Functions>
+    <TableFunction
+      name="DirichletTimeFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0, 2.0 }"
+      values="{ 0.0, 3.e2, 4.e3 }"/>
+  </Functions>
+</Problem>

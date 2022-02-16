@@ -24,12 +24,15 @@ At the end of this example you will know:
 **Input file**
 
 This example uses no external input files and everything required is
-contained within a single GEOSX input file.
-The xml input file for this test case is located at:
+contained within two GEOSX input files located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
+  inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
+
+.. code-block:: console
+
+  inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml
 
 
 ------------------------------------------------------------------
@@ -118,7 +121,7 @@ the discretization method (``FE1``, defined further in the input file),
 and the target regions (here, we only have one, ``Domain``).
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_SOLVER -->
   :end-before: <!-- SPHINX_POROELASTIC_SOLVER_END -->
@@ -140,7 +143,7 @@ please see the dedicated :ref:`FiniteElement` section.
 The finite volume method requires the specification of a discretization scheme.
 Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_POROELASTIC_NUMERICAL_METHODS_END -->
@@ -155,7 +158,7 @@ We use the internal mesh generator to create a beam-like mesh,
 with one single element along the Y and Z axes, and 21 elements along the X axis.
 All the elements are hexahedral elements (C3D8) of the same dimension (1x1x1 meters).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_MESH -->
   :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->
@@ -198,7 +201,7 @@ Running GEOSX
 
 To run the case, use the following command:
 
-``path/to/geosx -i src/coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml``
+``path/to/geosx -i inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml``
 
 Here, we see for instance the ``RSolid`` and ``RFluid`` at a representative timestep
 (residual values for solid and fluid mechanics solvers, respectively)
@@ -324,28 +327,29 @@ times with the numerical solution (markers).
    def main():
        # File path
        hdf5FilePath = "pressure_history.hdf5"
-       xmlFilePath = "../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/PoroElastic_Terzaghi_FIM.xml"
-
+       xmlBaseFilePath = "../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml"
+       xmlSmokeFilePath = "../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_smoke.xml"
+   
        # Read HDF5
        hf = h5py.File(hdf5FilePath, 'r')
        time = hf.get('pressure Time')
        pressure = hf.get('pressure')
        x = hf.get('pressure elementCenter')
-
+   
        # Extract info from XML
-       hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlFilePath)
-       appliedTraction = getAppliedTractionFromXML(xmlFilePath)
-
+       hydromechanicalParameters = getHydromechanicalParametersFromXML(xmlBaseFilePath)
+       appliedTraction = getAppliedTractionFromXML(xmlBaseFilePath)
+   
        # Get domain min/max coordinate in the x-direction
-       xMin, xMax =getDomainMaxMinXCoordFromXML(xmlFilePath)
-
+       xMin, xMax =getDomainMaxMinXCoordFromXML(xmlSmokeFilePath)
+   
        # Initialize Terzaghi's analytical solution
        terzaghiAnalyticalSolution = terzaghi(hydromechanicalParameters, xMin, xMax, appliedTraction)
-
+   
        # Plot analytical (continuous line) and numerical (markers) pressure solution
        x_analytical = np.linspace(xMin, xMax, 51, endpoint=True)
        pressure_analytical = np.empty(len(x_analytical))
-
+   
        cmap = plt.get_cmap("tab10")
        iplt = -1
        for k in range(0, len(time), 2):
@@ -358,16 +362,15 @@ times with the numerical solution (markers).
                i += 1
            plt.plot(x_analytical, pressure_analytical, color=cmap(iplt), label='t = ' + str(t) + ' s')
            plt.plot(x[k, :, 0], pressure[k, :], 'o', color=cmap(iplt))
-
+   
        plt.grid()
        plt.xlabel('$x$ [m]')
        plt.ylabel('pressure [Pa]')
        plt.legend(bbox_to_anchor=(0.1, 0.55), loc='lower left', borderaxespad=0.)
        plt.show()
-
+   
    if __name__ == "__main__":
        main()
-
 
 
 ------------------------------------------------------------------

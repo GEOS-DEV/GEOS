@@ -21,15 +21,13 @@
 
 #include "linearAlgebra/interfaces/VectorBase.hpp"
 
-class Epetra_FEVector;
+class Epetra_Vector;
 
 namespace geosx
 {
 
 /**
- * @brief This class creates and provides basic support for the Epetra_FEVector
- *        vector object type used in Trilinos.  We use the FE version because
- *        Epetra_Vector support for long globalIDs is haphazard.
+ * @brief Wrapper around Trilinos' Epetra_Vector object.
  */
 class EpetraVector final : private VectorBase< EpetraVector >
 {
@@ -84,55 +82,30 @@ public:
    */
   ///@{
 
+  using VectorBase::setName;
   using VectorBase::closed;
   using VectorBase::ready;
-  using VectorBase::extract;
+  using VectorBase::open;
+  using VectorBase::zero;
+  using VectorBase::values;
 
   /**
    * @copydoc VectorBase<EpetraVector>::created
    */
   virtual bool created() const override;
 
-  virtual void createWithLocalSize( localIndex const localSize,
-                                    MPI_Comm const & comm ) override;
-
-  virtual void createWithGlobalSize( globalIndex const globalSize,
-                                     MPI_Comm const & comm ) override;
-
-  virtual void create( arrayView1d< real64 const > const & localValues,
+  virtual void create( localIndex const localSize,
                        MPI_Comm const & comm ) override;
-
-  virtual void open() override;
 
   virtual void close() override;
 
+  virtual void touch() override;
+
   virtual void reset() override;
-
-  virtual void set( globalIndex const globalRowIndex,
-                    real64 const value ) override;
-
-  virtual void add( globalIndex const globalRowIndex,
-                    real64 const value ) override;
-
-  virtual void set( globalIndex const * globalRowIndices,
-                    real64 const * values,
-                    localIndex size ) override;
-
-  virtual void add( globalIndex const * globalRowIndices,
-                    real64 const * values,
-                    localIndex const size ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & globalRowIndices,
-                    arraySlice1d< real64 const > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & globalRowIndices,
-                    arraySlice1d< real64 const > const & values ) override;
 
   virtual void set( real64 const value ) override;
 
-  virtual void zero() override;
-
-  virtual void rand( unsigned const seed = 1984 ) override;
+  virtual void rand( unsigned const seed ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
 
@@ -189,29 +162,10 @@ public:
    */
   virtual globalIndex iupper() const override;
 
-  virtual real64 get( globalIndex globalRow ) const override;
-
-  virtual void get( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 > const & values ) const override;
-
-  virtual localIndex getLocalRowID( globalIndex const globalRow ) const override;
-
-  virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
-
   /**
-   * @copydoc VectorBase<EpetraVector>::extractLocalVector
+   * @copydoc VectorBase<EpetraVector>::comm
    */
-  virtual real64 const * extractLocalVector() const override;
-
-  /**
-   * @copydoc VectorBase<EpetraVector>::extractLocalVector
-   */
-  virtual real64 * extractLocalVector() override;
-
-  /**
-   * @copydoc VectorBase<EpetraVector>::getComm
-   */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 
@@ -224,18 +178,18 @@ public:
    * @brief Returns a const pointer to the underlying Epetra object.
    * @return const pointer to the underlying Epetra object
    */
-  Epetra_FEVector const & unwrapped() const;
+  Epetra_Vector const & unwrapped() const;
 
   /**
    * @brief Returns a non-const pointer to the underlying Epetra object.
    * @return non-const pointer to the underlying Epetra object
    */
-  Epetra_FEVector & unwrapped();
+  Epetra_Vector & unwrapped();
 
 private:
 
   /// Unique pointer to underlying Epetra_FEVector object.
-  std::unique_ptr< Epetra_FEVector > m_vector;
+  std::unique_ptr< Epetra_Vector > m_vec;
 };
 
 } // end geosx namespace

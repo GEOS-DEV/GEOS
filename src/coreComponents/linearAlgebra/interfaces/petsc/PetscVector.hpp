@@ -45,9 +45,6 @@ class PetscVector final : private VectorBase< PetscVector >
 {
 public:
 
-  /// Alias for PETSc vector struct pointer
-  using Vec = struct _p_Vec *;
-
   /**
    * @name Constructor/Destructor Methods
    */
@@ -96,55 +93,30 @@ public:
    */
   ///@{
 
+  using VectorBase::setName;
   using VectorBase::closed;
   using VectorBase::ready;
-  using VectorBase::extract;
+  using VectorBase::open;
+  using VectorBase::zero;
+  using VectorBase::values;
 
   /**
    * @copydoc VectorBase<PetscVector>::created
    */
   virtual bool created() const override;
 
-  virtual void createWithLocalSize( localIndex const localSize,
-                                    MPI_Comm const & comm ) override;
-
-  virtual void createWithGlobalSize( globalIndex const globalSize,
-                                     MPI_Comm const & comm ) override;
-
-  virtual void create( arrayView1d< real64 const > const & localValues,
+  virtual void create( localIndex const localSize,
                        MPI_Comm const & comm ) override;
-
-  virtual void open() override;
 
   virtual void close() override;
 
+  virtual void touch() override;
+
   virtual void reset() override;
-
-  virtual void set( globalIndex const globalRow,
-                    real64 const value ) override;
-
-  virtual void add( globalIndex const globalRow,
-                    real64 const value ) override;
-
-  virtual void set( globalIndex const * globalIndices,
-                    real64 const * values,
-                    localIndex size ) override;
-
-  virtual void add( globalIndex const * globalIndices,
-                    real64 const * values,
-                    localIndex size ) override;
-
-  virtual void set( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) override;
-
-  virtual void add( arraySlice1d< globalIndex const > const & globalIndices,
-                    arraySlice1d< real64 const > const & values ) override;
 
   virtual void set( real64 const value ) override;
 
-  virtual void zero() override;
-
-  virtual void rand( unsigned const seed = 1984 ) override;
+  virtual void rand( unsigned const seed ) override;
 
   virtual void scale( real64 const scalingFactor ) override;
 
@@ -201,36 +173,24 @@ public:
    */
   virtual globalIndex iupper() const override;
 
-  virtual real64 get( globalIndex const globalRow ) const override;
-
-  void get( arraySlice1d< globalIndex const > const & globalIndices,
-            arraySlice1d< real64 > const & values ) const override;
-
   virtual void print( std::ostream & os = std::cout ) const override;
 
   virtual void write( string const & filename,
                       LAIOutputFormat const format = LAIOutputFormat::MATRIX_MARKET ) const override;
 
-  virtual localIndex getLocalRowID( globalIndex const globalRow ) const override;
-
-  virtual globalIndex getGlobalRowID( localIndex const localRow ) const override;
-
   /**
-   * @copydoc VectorBase<PetscVector>::extractLocalVector
+   * @copydoc VectorBase<PetscVector>::comm
    */
-  virtual real64 const * extractLocalVector() const override;
-
-  /**
-   * @copydoc VectorBase<PetscVector>::extractLocalVector
-   */
-  virtual real64 * extractLocalVector() override;
-
-  /**
-   * @copydoc VectorBase<PetscVector>::getComm
-   */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   ///@}
+
+private:
+
+  /// Alias for PETSc vector struct pointer
+  using Vec = struct _p_Vec *;
+
+public:
 
   /**
    * @brief Returns a const pointer to the underlying Vec.
@@ -244,7 +204,7 @@ public:
    */
   Vec & unwrapped();
 
-protected:
+private:
 
   /**
    * Pointer to underlying PETSc Vec

@@ -21,6 +21,8 @@
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 
 namespace geosx
@@ -34,6 +36,8 @@ void constitutiveUpdatePassThru( CapillaryPressureBase const & capPres,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< BrooksCoreyCapillaryPressure,
+                               JFunctionCapillaryPressure,
+                               TableCapillaryPressure,
                                VanGenuchtenCapillaryPressure >::execute( capPres, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -42,6 +46,8 @@ void constitutiveUpdatePassThru( CapillaryPressureBase & capPres,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< BrooksCoreyCapillaryPressure,
+                               JFunctionCapillaryPressure,
+                               TableCapillaryPressure,
                                VanGenuchtenCapillaryPressure >::execute( capPres, std::forward< LAMBDA >( lambda ) );
 }
 

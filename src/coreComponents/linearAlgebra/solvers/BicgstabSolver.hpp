@@ -59,11 +59,6 @@ public:
                   LinearOperator< Vector > const & A,
                   LinearOperator< Vector > const & M );
 
-  /**
-   * @brief Virtual destructor.
-   */
-  virtual ~BicgstabSolver() override;
-
   ///@}
 
   /**
@@ -101,6 +96,6 @@ protected:
 
 };
 
-} // namespace GEOSX
+} // namespace geosx
 
 #endif /*GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_ */

@@ -55,6 +55,7 @@ public:
   GEOSX_HOST_DEVICE
   void smallStrainUpdate( localIndex const k,
                           localIndex const q,
+                          real64 const & initialPressure,
                           real64 const & pressure,
                           real64 const & deltaPressure,
                           real64 const ( &strainIncrement )[6],
@@ -71,7 +72,7 @@ public:
 
     // Compute  total stress
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( pressure + deltaPressure ) );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( pressure + deltaPressure - initialPressure ) );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
     dTotalStress_dPressure[1] = -biotCoefficient;
@@ -115,9 +116,9 @@ public:
    * @param stiffness the stiffness array
    */
   GEOSX_HOST_DEVICE
-  void getElasticStiffness( localIndex const k, real64 ( & stiffness )[6][6] ) const
+  void getElasticStiffness( localIndex const k, localIndex const q, real64 ( & stiffness )[6][6] ) const
   {
-    m_solidUpdate.getElasticStiffness( k, stiffness );
+    m_solidUpdate.getElasticStiffness( k, q, stiffness );
   }
 
 private:

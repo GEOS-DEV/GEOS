@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsEFEMKernels
+namespace solidMechanicsEFEMKernels
 {
 
 /**
@@ -42,13 +42,13 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class QuasiStatic :
-  public SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
+  public solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                           CONSTITUTIVE_TYPE,
                                                           FE_TYPE >
 {
 public:
   /// Alias for the base class;
-  using Base = SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
+  using Base = solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                                 CONSTITUTIVE_TYPE,
                                                                 FE_TYPE >;
 
@@ -84,11 +84,11 @@ public:
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-               arrayView1d< globalIndex const > const & uDofNumber,
-               arrayView1d< globalIndex const > const & wDofNumber,
+               arrayView1d< globalIndex const > const uDofNumber,
+               arrayView1d< globalIndex const > const wDofNumber,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -347,28 +347,28 @@ public:
     // TODO: asking for the stiffness here will only work for elastic models.  most other models
     //       need to know the strain increment to compute the current stiffness value.
 
-    m_constitutiveUpdate.getElasticStiffness( k, stack.constitutiveStiffness );
+    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
-    SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
+    solidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,
                                                                                   m_nVec[embSurfIndex],
                                                                                   m_surfaceCenter[embSurfIndex] );
 
 
-    SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
                                                                   m_nVec[embSurfIndex],
                                                                   m_tVec1[embSurfIndex],
                                                                   m_tVec2[embSurfIndex],
                                                                   stack.hInv );
 
-    SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
                                                                                        m_nVec[embSurfIndex],
                                                                                        m_tVec1[embSurfIndex],
                                                                                        m_tVec2[embSurfIndex],
                                                                                        Heaviside,
                                                                                        dNdX );
 
-    SolidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+    solidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
     // transp(B)D
     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, 6 >( matBD, strainMatrix, stack.constitutiveStiffness );
@@ -477,14 +477,49 @@ protected:
 /// The factory used to construct a QuasiStatic kernel.
 using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          EmbeddedSurfaceSubRegion const &,
-                                                         arrayView1d< globalIndex const > const &,
-                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const,
+                                                         arrayView1d< globalIndex const > const,
                                                          globalIndex const,
-                                                         CRSMatrixView< real64, globalIndex const > const &,
-                                                         arrayView1d< real64 > const &,
+                                                         CRSMatrixView< real64, globalIndex const > const,
+                                                         arrayView1d< real64 > const,
                                                          real64 const (&) [3] >;
 
-} // namespace SolidMechanicsEFEMKernels
+
+/**
+ * @brief A struct to update fracture traction
+ */
+struct StateUpdateKernel
+{
+
+  /**
+   * @brief Launch the kernel function doing fracture traction updates
+   * @tparam POLICY the type of policy used in the kernel launch
+   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
+   * @param[in] size the size of the subregion
+   * @param[in] contactWrapper the wrapper implementing the contact relationship
+   * @param[in] jump the displacement jump
+   * @param[out] fractureTraction the fracture traction
+   * @param[out] dFractureTraction_dJump the derivative of the fracture traction wrt displacement jump
+   */
+  template< typename POLICY, typename CONTACT_WRAPPER >
+  static void
+  launch( localIndex const size,
+          CONTACT_WRAPPER const & contactWrapper,
+          arrayView2d< real64 const > const & oldJump,
+          arrayView2d< real64 const > const & jump,
+          arrayView2d< real64 > const & fractureTraction,
+          arrayView3d< real64 > const & dFractureTraction_dJump )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      contactWrapper.computeTraction( k, oldJump[k], jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
+    } );
+  }
+
+};
+
+
+} // namespace solidMechanicsEFEMKernels
 
 } // namespace geosx
 
