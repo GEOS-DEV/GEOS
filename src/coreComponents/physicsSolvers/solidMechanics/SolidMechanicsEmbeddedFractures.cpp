@@ -143,7 +143,6 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     {
       LvArray::tensorOps::copy< 3 >( oldDispJump[k], dispJump[k] );
     } );
-  } );
 
       // Laura print
       arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
@@ -172,6 +171,7 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
       GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
       // end Laura
 
+  } );
 }
 
 real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,

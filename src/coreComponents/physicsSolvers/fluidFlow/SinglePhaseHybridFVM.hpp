@@ -147,8 +147,7 @@ public:
                               DofManager const & dofManager,
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs,
-                              CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                              string_array const & fractureRegions = {} ) override final;
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   virtual void
   applyAquiferBC( real64 const time,

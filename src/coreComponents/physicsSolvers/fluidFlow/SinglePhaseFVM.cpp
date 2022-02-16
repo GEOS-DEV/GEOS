@@ -375,8 +375,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
                                                          DofManager const & dofManager,
                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                          arrayView1d< real64 > const & localRhs,
-                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                         string_array const & fractureRegions )
+                                                         CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -585,19 +584,9 @@ real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const
   FaceManager & faceManager = mesh.getFaceManager();
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
-
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
-
-  // make a list of region indices to be included
-  map< localIndex, localIndex > regionFluidMap;
-  forTargetRegionsComplete( mesh, [&]( localIndex const targetIndex, localIndex const er, ElementRegionBase & )
-  {
-    localIndex const modelIndex = constitutiveManager.getSubGroups().getIndex( m_fluidModelNames[targetIndex] );
-    regionFluidMap.emplace( er, modelIndex );
-  } );
 
   arrayView1d< real64 const > const presFace =
     faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
@@ -648,7 +637,11 @@ real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const
     //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
     //       Can we just use cell properties for an approximate flux computation?
     //       Then we can forget about capturing the fluid model.
-    SingleFluidBase & fluidBase = constitutiveManager.getConstitutiveRelation< SingleFluidBase >( regionFluidMap[seri( 0, 0 )] );
+    ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( seri( 0, 0 ) ).getSubRegion( sesri( 0, 0 ) );
+
+    string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+
+    SingleFluidBase & fluidBase = subRegion.template getConstitutiveModel< SingleFluidBase >( fluidName );
 
     constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
     {
@@ -656,7 +649,7 @@ real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const
       typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-      typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName(), this->targetRegionNames(), this->fluidModelNames() );
+      typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
 
       FaceDirichletBCKernel::computeFlux( seri, sesri, sefi, trans,
                                           flowAccessors.get< extrinsicMeshData::flow::pressure >(),

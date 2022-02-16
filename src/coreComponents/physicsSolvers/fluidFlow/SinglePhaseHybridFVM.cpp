@@ -383,8 +383,7 @@ void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
                                                        DofManager const & dofManager,
                                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                        arrayView1d< real64 > const & localRhs,
-                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper,
-                                                       string_array const & fractureRegions )
+                                                       CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
   GEOSX_UNUSED_VAR ( time_n );
   GEOSX_UNUSED_VAR ( dt );
@@ -393,7 +392,6 @@ void SinglePhaseHybridFVM::assembleHydrofracFluxTerms( real64 const time_n,
   GEOSX_UNUSED_VAR ( localMatrix );
   GEOSX_UNUSED_VAR ( localRhs );
   GEOSX_UNUSED_VAR ( dR_dAper );
-  GEOSX_UNUSED_VAR ( fractureRegions );
 
   GEOSX_ERROR( "Poroelastic fluxes with conforming fractures not yet implemented." );
 }

@@ -84,35 +84,56 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   //m_contactFlowSolver->setupDofs( domain, dofManager );
   //m_flowSolver->setupDofs( domain, dofManager );
 
+  // TODO: stampare m_meshTargets
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
                        3,
-                       targetRegionNames() );
+		       m_meshTargets );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
                           DofManager::Connector::Elem );
 
   // restrict coupling to fracture regions only
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  string_array fractureRegions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
+  //
+  //ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  //string_array fractureRegions;
+  //elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
+  //{
+  //  fractureRegions.emplace_back( elementRegion.getName() );
+  //} );
+  //
+  map< string, array1d< string > > meshTargets;
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d< string const > const & regionNames )
   {
-    fractureRegions.emplace_back( elementRegion.getName() );
+    array1d< string > regions;
+    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                    [&]( localIndex const,
+                                                                         SurfaceElementRegion const & region )
+    {
+      regions.emplace_back( region.getName() );
+    } );
+    meshTargets[meshBodyName] = std::move( regions );
   } );
 
   dofManager.addField( LagrangianContactSolver::viewKeyStruct::tractionString(),
                        DofManager::Location::Elem,
                        3,
-                       fractureRegions );
+		       meshTargets );
+//                       fractureRegions );
   dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
                           LagrangianContactSolver::viewKeyStruct::tractionString(),
                           DofManager::Connector::Face,
-                          fractureRegions );
+			  meshTargets );
+//                          fractureRegions );
   dofManager.addCoupling( keys::TotalDisplacement,
                           LagrangianContactSolver::viewKeyStruct::tractionString(),
                           DofManager::Connector::Elem,
-                          fractureRegions );
+			  meshTargets );
+//                          fractureRegions );
 
   m_flowSolver->setupDofs( domain, dofManager );
 
@@ -179,41 +200,48 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
   m_contactSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  forTargetSubRegions( mesh, [&]( localIndex const targetIndex, ElementSubRegionBase & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+		                                arrayView1d< string const > const & regionNames )
   {
-    CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, porousMaterialNames()[targetIndex] );
-    porousMaterial.saveConvergedState();
-  } );
+    
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
-  // Laura print max pressure and displacement
-  //MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  // pressure
-  ElementRegionManager & elemManager = mesh.getElemManager();
-  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion & region )
-  {
-    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ElementSubRegionBase & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
-      {
-        arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-        double * max_pres = std::max_element(pres.begin(), pres.end());
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max pres {:15.6e}", * max_pres ) );
-        double * min_pres = std::min_element(pres.begin(), pres.end());
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min pres {:15.6e}", * min_pres ) );
-      }
+      string const porousMaterialName = subRegion.getReference< string >( viewKeyStruct::porousMaterialNamesString() );
+      ConstitutiveBase const & porousMaterial = subRegion.getConstitutiveModel< ConstitutiveBase >( porousMaterialName );
+      porousMaterial.saveConvergedState();
     } );
-  } );
-  // displacement
-  NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
-  double * min_disp = std::min_element(disp.begin(), disp.end());
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", * min_disp ) );
 
-  real64 const totalFlux = m_flowSolver->computeFluxFaceDirichlet( time_n, dt, domain );
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- total flux through Dirichlet faces {:15.6e}", totalFlux ) );
-  // end Laura
+    // Laura print max pressure and displacement
+    // pressure
+    elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion & region )
+    {
+      region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+      {
+        if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
+        {
+          arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+          double * max_pres = std::max_element(pres.begin(), pres.end());
+          GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max pres {:15.6e}", * max_pres ) );
+          double * min_pres = std::min_element(pres.begin(), pres.end());
+          GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min pres {:15.6e}", * min_pres ) );
+        }
+      } );
+    } );
+    // displacement
+    NodeManager & nodeManager = mesh.getNodeManager();
+    arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+    double * min_disp = std::min_element(disp.begin(), disp.end());
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", * min_disp ) );
+  
+    real64 const totalFlux = m_flowSolver->computeFluxFaceDirichlet( time_n, dt, domain );
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- total flux through Dirichlet faces {:15.6e}", totalFlux ) );
+    // end Laura
+  } );
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::postProcessInput()
@@ -673,69 +701,75 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   // Need to synchronize the two iteration counters
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-  MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
-
-  NodeManager const & nodeManager = mesh.getNodeManager();
-
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
-
-  string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
-
-  m_contactSolver->assembleForceResidualDerivativeWrtTraction( domain, dofManager, localMatrix, localRhs );
-  m_contactSolver->assembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, dofManager, localMatrix, localRhs );
-  m_contactSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
-
-  m_contactFlowSolver->updateOpeningForFlow( domain );
-
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  string_array fractureRegions;
-  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
+  // MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    fractureRegions.emplace_back( elementRegion.getName() );
-  } );
+    NodeManager const & nodeManager = mesh.getNodeManager();
 
-  m_flowSolver->assembleHydrofracFluxTerms( time_n,
-                                            dt,
-                                            domain,
-                                            dofManager,
-                                            localMatrix,
-                                            localRhs,
-                                            m_contactFlowSolver->getDerivativeFluxResidual_dAperture(),
-                                            fractureRegions );
+    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    arrayView1d< globalIndex const > const & dispDofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  m_contactFlowSolver->assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
-  m_contactFlowSolver->assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );
-  m_contactFlowSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
+    string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  m_contactFlowSolver->getRefDerivativeFluxResidual_dAperture()->zero();
+    m_contactSolver->assembleForceResidualDerivativeWrtTraction( domain, dofManager, localMatrix, localRhs );
+    m_contactSolver->assembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, dofManager, localMatrix, localRhs );
+    m_contactSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
 
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    m_contactFlowSolver->updateOpeningForFlow( domain );
 
-  PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+//  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+//  string_array fractureRegions;
+//  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
+//  {
+//    fractureRegions.emplace_back( elementRegion.getName() );
+//  } );
+  
+    m_flowSolver->assembleHydrofracFluxTerms( time_n,
+                                              dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs,
+                                              m_contactFlowSolver->getDerivativeFluxResidual_dAperture() );
+//                                            TODO: come indicare in che regioni assemblare in contributo?
+  
+    m_contactFlowSolver->assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
+    m_contactFlowSolver->assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );
+    m_contactFlowSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
+  
+    m_contactFlowSolver->getRefDerivativeFluxResidual_dAperture()->zero();
+  
+    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+  
+    PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
                                                                 pDofKey,
                                                                 dofManager.rankOffset(),
                                                                 localMatrix,
                                                                 localRhs,
                                                                 gravityVectorData,
-                                                                m_flowSolver->fluidModelNames() );
+      							        FlowSolverBase::viewKeyStruct::fluidNamesString() );
+  
+    // Cell-based contributions
+    finiteElement::
+      regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                    constitutive::PorousSolidBase,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames, //(),
+                                                            this->getDiscretizationName(),
+      						            viewKeyStruct::porousMaterialNamesString(),
+//                                                          porousMaterialNames(),
+                                                            kernelFactory );
+    
+    m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+                                                domain,
+                                                dofManager,
+                                                localMatrix,
+                                                localRhs,
+                                                dofManager.getKey( extrinsicMeshData::flow::pressure::key() ) );
 
-  // Cell-based contributions
-  finiteElement::
-    regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                  constitutive::PorousSolidBase,
-                                  CellElementSubRegion >( mesh,
-                                                          targetRegionNames(),
-                                                          this->getDiscretizationName(),
-                                                          porousMaterialNames(),
-                                                          kernelFactory );
-
-  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
-                                              domain,
-                                              dofManager,
-                                              localMatrix,
-                                              localRhs,
-                                              dofManager.getKey( extrinsicMeshData::flow::pressure::key() ) );
+  } );
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::applyBoundaryConditions( real64 const time_n,
@@ -861,12 +895,23 @@ void SinglePhasePoromechanicsLagrangianContactSolver::applySystemSolution( DofMa
 
 void SinglePhasePoromechanicsLagrangianContactSolver::updateState( DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+//  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+//  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
+//                                                                          auto & subRegion )
+//  {
+//    m_flowSolver->updateFluidState( subRegion, targetIndex );
+//  } );
 
-  this->template forTargetSubRegions< CellElementSubRegion >( mesh, [&] ( localIndex const targetIndex,
-                                                                          auto & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const &  )
   {
-    m_flowSolver->updateFluidState( subRegion, targetIndex );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    {
+      m_flowSolver->updateFluidState( subRegion );
+    } );
+
   } );
 }
 

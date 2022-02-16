@@ -318,9 +318,8 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
             deltaTraction[kfe][i] = 0.0;
             previousDispJump[kfe][i] = dispJump[kfe][i];
 	  }
-        }
-        previousFractureState[kfe] = fractureState[kfe];
-      } );
+          previousFractureState[kfe] = fractureState[kfe];
+        } );
 
       // Laura print
       arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
@@ -2419,6 +2418,12 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
 
               if( originalFractureState != fractureState[kfe] )
               {
+		    std::cout << "element " << kfe << " traction: " << traction[kfe]
+                                                     << " previous state <"
+                                                     << ( originalFractureState )
+                                                     << "> current state <"
+                                                     << ( fractureState[kfe] )
+                                                     << ">\n";
                 //            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
                 //                                                   << " previous state <"
                 //                                                   << FractureStateToString( originalFractureState )
@@ -2428,30 +2433,13 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
               }
               checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
             }
-
-            if( originalFractureState != fractureState[kfe] )
-            {
-		    std::cout << "element " << kfe << " traction: " << traction[kfe]
-                                                     << " previous state <"
-                                                     << ( originalFractureState )
-                                                     << "> current state <"
-                                                     << ( fractureState[kfe] )
-                                                     << ">\n";
-              //            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
-              //                                                   << " previous state <"
-              //                                                   << FractureStateToString( originalFractureState )
-              //                                                   << "> current state <"
-              //                                                   << FractureStateToString( fractureState[kfe] )
-              //                                                   << ">" );
-            }
-            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
-          }
+          } );
         } );
 
         checkActiveSet &= checkActiveSetSub.get();
-      }
+      };
     } );
-  } ;
+  } );
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
   synchronizeFractureState( domain );
 
