@@ -148,15 +148,6 @@ void PetscVector::scale( real64 const scalingFactor )
   }
 }
 
-void PetscVector::pointwiseScale( PetscVector const & scalingVector )
-{
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( scalingVector.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalSize(), scalingVector.globalSize() );
-
-  GEOSX_LAI_CHECK_ERROR( VecPointwiseMult( m_vec, scalingVector.m_vec, m_vec ) );
-}
-
 void PetscVector::reciprocal()
 {
   GEOSX_LAI_ASSERT( ready() );

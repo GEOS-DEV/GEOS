@@ -157,19 +157,6 @@ void HypreVector::scale( real64 const scalingFactor )
   }
 }
 
-void HypreVector::pointwiseScale( HypreVector const & scalingVector )
-{
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( scalingVector.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalSize(), scalingVector.globalSize() );
-  real64 * const values = extractLocalVector();
-  real64 const * const scalingVectorValues = scalingVector.extractLocalVector();
-  forAll< hypre::execPolicy >( localSize(), [=] GEOSX_HYPRE_HOST_DEVICE ( localIndex const i )
-  {
-    values[i] = scalingVectorValues[i] *  values[i];
-  } );
-}
-
 void HypreVector::reciprocal()
 {
   GEOSX_LAI_ASSERT( ready() );

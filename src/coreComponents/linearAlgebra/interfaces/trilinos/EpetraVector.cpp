@@ -134,15 +134,6 @@ void EpetraVector::scale( real64 const scalingFactor )
   }
 }
 
-void EpetraVector::pointwiseScale( EpetraVector const & scalingVector )
-{
-  GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( scalingVector.ready() );
-  GEOSX_LAI_ASSERT_EQ( globalSize(), scalingVector.globalSize() );
-
-  GEOSX_LAI_CHECK_ERROR( m_vector->Multiply( 1.0, scalingVector.unwrapped(), unwrapped(), 0.0 ) );
-}
-
 void EpetraVector::reciprocal()
 {
   GEOSX_LAI_ASSERT( ready() );

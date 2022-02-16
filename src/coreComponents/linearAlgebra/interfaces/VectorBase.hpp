@@ -202,12 +202,6 @@ protected:
   virtual void scale( real64 const factor ) = 0;
 
   /**
-   * @brief Multiply component-wise by scalingVector.
-   * @param scalingVector scaling vector
-   */
-  virtual void pointwiseScale( Vector const & scalingVector ) = 0;
-
-  /**
    * @brief Replace vector elements by their reciprocals
    * @note No guarding is done against division by zero.
    */

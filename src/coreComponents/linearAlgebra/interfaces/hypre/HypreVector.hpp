@@ -126,8 +126,6 @@ public:
 
   virtual void scale( real64 const scalingFactor ) override;
 
-  virtual void pointwiseScale( HypreVector const & scalingVector ) override;
-
   virtual void reciprocal() override;
 
   virtual real64 dot( HypreVector const & vec ) const override;

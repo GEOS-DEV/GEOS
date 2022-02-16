@@ -253,23 +253,17 @@ TYPED_TEST_P( VectorTest, scaleValues )
   compareVectors( x, y, true, ops::multiply{factor}, ops::identity );
 }
 
-TYPED_TEST_P( VectorTest, pointwiseScaleValues )
+TYPED_TEST_P( VectorTest, pointwiseProduct )
 {
   using Vector = typename TypeParam::ParallelVector;
 
-  localIndex const localSize = 3;
-  array1d< real64 > const valuesInitial = makeLocalValuesUniform( 3 );
-  array1d< real64 > const valuesCopy = valuesInitial;
-
   Vector x;
-  x.create( valuesInitial, MPI_COMM_GEOSX );
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
 
-  x.pointwiseScale( x );
+  Vector y( x );
+  y.pointwiseProduct( x, y );
 
-  array1d< real64 > const valuesExtracted( localSize );
-  x.extract( valuesExtracted );
-
-  compareValues( valuesExtracted, valuesCopy, true, ops::identity, ops::square );
+  compareValues( y.values(), x.values(), true, ops::identity, ops::square );
 }
 
 TYPED_TEST_P( VectorTest, reciprocal )
@@ -377,7 +371,7 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              setAllValues,
                              zeroAllValues,
                              scaleValues,
-                             pointwiseScaleValues,
+                             pointwiseProduct,
                              reciprocal,
                              dotProduct,
                              axpy,

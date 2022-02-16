@@ -831,6 +831,12 @@ void SolverBase::solveSystem( DofManager const & dofManager,
 {
   GEOSX_MARK_FUNCTION;
 
+  ////////////////////////
+  matrix.write("jacobian_pre.mtx");
+  rhs.write("rhs_pre.mtx");
+  GEOSX_ERROR("\n\n\n\n ****** PRINTING JACOBIAN ****** \n\n\n\n ");
+  ////////////////////////
+
   LinearSolverParameters const & params = m_linearSolverParameters.get();
   matrix.setDofManager( &dofManager );
 
