@@ -44,9 +44,9 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseBaseKernels;
-using namespace SinglePhaseFVMKernels;
-using namespace SinglePhasePoromechanicsFluxKernels;
+using namespace singlePhaseBaseKernels;
+using namespace singlePhaseFVMKernels;
+using namespace singlePhasePoromechanicsFluxKernels;
 
 template< typename BASE >
 SinglePhaseFVM< BASE >::SinglePhaseFVM( const string & name,
@@ -728,7 +728,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
       AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
       real64 const & aquiferDens = bc.getWaterPhaseDensity();
 
-      SinglePhaseFVMKernels::AquiferBCKernel::launch( stencil,
+      singlePhaseFVMKernels::AquiferBCKernel::launch( stencil,
                                                       dofManager.rankOffset(),
                                                       elemDofNumber.toNestedViewConst(),
                                                       flowAccessors.get< extrinsicMeshData::ghostRank >(),

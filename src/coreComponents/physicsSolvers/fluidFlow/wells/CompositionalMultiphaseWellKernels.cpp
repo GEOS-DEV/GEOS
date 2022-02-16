@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseWellKernels
+namespace compositionalMultiphaseWellKernels
 {
 
 /******************************** ControlEquationHelper ********************************/
@@ -292,7 +292,7 @@ FluxKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
 
   bool const isProducer = wellControls.isProducer();
   arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
@@ -1334,7 +1334,7 @@ AccumulationKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
 
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
@@ -1762,6 +1762,6 @@ RateInitializationKernel::
 }
 
 
-} // end namespace CompositionalMultiphaseWellKernels
+} // end namespace compositionalMultiphaseWellKernels
 
 } // end namespace geosx

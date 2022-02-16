@@ -23,10 +23,10 @@
 namespace geosx
 {
 
-namespace SinglePhasePoromechanicsFluxKernels
+namespace singlePhasePoromechanicsFluxKernels
 {
 
-using namespace FluxKernelsHelper;
+using namespace fluxKernelsHelper;
 
 /******************************** EmbeddedSurfaceFluxKernel ********************************/
 
@@ -54,7 +54,7 @@ void EmbeddedSurfaceFluxKernel::
   GEOSX_UNUSED_VAR( jumpDofNumber );
   GEOSX_UNUSED_VAR( dPerm_dDispJump );
 
-  SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
+  singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
                                              rankOffset,
                                              pressureDofNumber,
@@ -96,7 +96,7 @@ void EmbeddedSurfaceFluxKernel::
   GEOSX_UNUSED_VAR( jumpDofNumber );
   GEOSX_UNUSED_VAR( dPerm_dDispJump );
 
-  SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
+  singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
                                              rankOffset,
                                              pressureDofNumber,
@@ -319,7 +319,7 @@ void FaceElementFluxKernel::
   GEOSX_UNUSED_VAR( dPerm_dDispJump );
   GEOSX_UNUSED_VAR( dR_dAper );
 
-  SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
+  singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
                                              rankOffset,
                                              pressureDofNumber,
@@ -361,7 +361,7 @@ void FaceElementFluxKernel::
   GEOSX_UNUSED_VAR( dPerm_dDispJump );
   GEOSX_UNUSED_VAR( dR_dAper );
 
-  SinglePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
+  singlePhaseFVMKernels::FluxKernel::launch( stencilWrapper,
                                              dt,
                                              rankOffset,
                                              pressureDofNumber,
@@ -681,6 +681,6 @@ FaceElementFluxKernel::compute( localIndex const numFluxElems,
 }
 
 
-}// namespace SinglePhaseFVMKernels
+}// namespace singlePhaseFVMKernels
 
 } // namespace geosx

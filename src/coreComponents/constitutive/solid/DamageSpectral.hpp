@@ -138,7 +138,7 @@ public:
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
     real64 mu = m_shearModulus[k];
-    real64 lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
+    real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
     real64 damageFactor = getDegradationValue( k, q );
 
     // get eigenvalues and eigenvectors

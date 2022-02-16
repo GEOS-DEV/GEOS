@@ -39,7 +39,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseHybridFVMKernels;
+using namespace singlePhaseHybridFVMKernels;
 using namespace mimeticInnerProduct;
 
 SinglePhaseHybridFVM::SinglePhaseHybridFVM( const string & name,
@@ -489,7 +489,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
       {
         arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
 
-        SinglePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+        singlePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                             parallelDeviceReduce >( localRhs,
                                                                                     rankOffset,
                                                                                     elemDofNumber,
@@ -517,7 +517,7 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
     defaultViscosity /= subRegionCounter;
 
     // 2. Compute the residual for the face-based constraints
-    SinglePhaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+    singlePhaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                              parallelDeviceReduce >( localRhs,
                                                                                      rankOffset,
                                                                                      faceDofNumber.toNestedViewConst(),
@@ -583,7 +583,7 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
       localIndex const subRegionSolutionCheck =
-        SinglePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+        singlePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                              parallelDeviceReduce >( localSolution,
                                                                                      rankOffset,
                                                                                      elemDofNumber,
@@ -610,7 +610,7 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
 
 
     localIndex const faceSolutionCheck =
-      SinglePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+      singlePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                            parallelDeviceReduce >( localSolution,
                                                                                    rankOffset,
                                                                                    faceDofNumber,

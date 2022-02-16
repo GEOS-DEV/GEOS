@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -336,7 +336,7 @@ using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
                                                          arrayView1d< real64 > const,
                                                          real64 const (&)[3] >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 
