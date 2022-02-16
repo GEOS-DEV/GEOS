@@ -743,7 +743,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
   
-    PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
                                                                 pDofKey,
                                                                 dofManager.rankOffset(),
                                                                 localMatrix,
