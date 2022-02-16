@@ -26,7 +26,10 @@ using namespace geosx::constitutive;
 using namespace geosx::constitutive::relperm;
 using namespace geosx::dataRepository;
 
-// In this file, we verify that our implementation matches the expected relative permeability hysteresis values
+// The point of this unit test is to carefully trace drainage-imbibition cycles and
+// verify that hysteresis works well for relative permeability and ultimately, capillary pressure.
+
+// For now, we verify that relative permeability hysteresis implementation matches the expected relative permeability hysteresis values
 // by doing an imbibition cycles for the data provided "Reservoir simulation with history-dependent saturation functions",
 // Killough, J. E., Society of Petroleum Engineers Journal, 16(01), 37-48 (1976).
 
@@ -205,40 +208,6 @@ TableRelativePermeabilityHysteresis & makeTableRelPermHysteresisTwoPhase( string
   initializeTable( "imbibitionGas_swg",
                    coordinates_ig,
                    imbibitionValues_g );
-
-  /*
-     TableFunction & drainageTable_w = dynamicCast< TableFunction & >(
-   * functionManager.createChild( TableFunction::catalogName(), "drainageWater_swg" ) );
-     drainageTable_w.setTableCoordinates( coordinates_dw );
-     drainageTable_w.setTableValues( drainageValues_w );
-     drainageTable_w.reInitializeFunction();
-
-     drainageTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-     TableFunction & drainageTable_g = dynamicCast< TableFunction & >(
-   * functionManager.createChild( TableFunction::catalogName(), "drainageGas_swg" ) );
-     drainageTable_g.setTableCoordinates( coordinates_dg );
-     drainageTable_g.setTableValues( drainageValues_g );
-     drainageTable_g.reInitializeFunction();
-
-     drainageTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-     TableFunction & imbibitionTable_w = dynamicCast< TableFunction & >(
-   * functionManager.createChild( TableFunction::catalogName(), "imbibitionWater_swg" ) );
-     imbibitionTable_w.setTableCoordinates( coordinates_iw );
-     imbibitionTable_w.setTableValues( imbibitionValues_w );
-     imbibitionTable_w.reInitializeFunction();
-
-     imbibitionTable_w.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-
-     TableFunction & imbibitionTable_g = dynamicCast< TableFunction & >(
-   * functionManager.createChild( TableFunction::catalogName(), "imbibitionGas_swg" ) );
-     imbibitionTable_g.setTableCoordinates( coordinates_ig );
-     imbibitionTable_g.setTableValues( imbibitionValues_g );
-     imbibitionTable_g.reInitializeFunction();
-
-     imbibitionTable_g.setInterpolationMethod( TableFunction::InterpolationType::Linear );
-   */
 
   // 2) Then set up the constitutive model
 

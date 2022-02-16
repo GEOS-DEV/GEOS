@@ -563,6 +563,49 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   drainageValues_g[39] = 5.275887e-1;
   drainageValues_g[40] = 5.500000e-1;
 
+  real64_array imbibitionValues_w( Naxis );
+  imbibitionValues_w[0] = 0.000000e+00;
+  imbibitionValues_w[1] = 9.694414e-08;
+  imbibitionValues_w[2] = 1.389786e-06;
+  imbibitionValues_w[3] = 6.683601e-06;
+  imbibitionValues_w[4] = 2.056452e-05;
+  imbibitionValues_w[5] = 4.956378e-05;
+  imbibitionValues_w[6] = 1.024025e-04;
+  imbibitionValues_w[7] = 1.903088e-04;
+  imbibitionValues_w[8] = 3.274125e-04;
+  imbibitionValues_w[9] = 5.312305e-04;
+  imbibitionValues_w[10] = 8.232582e-04;
+  imbibitionValues_w[11] = 1.229689e-03;
+  imbibitionValues_w[12] = 1.782290e-03;
+  imbibitionValues_w[13] = 2.519464e-03;
+  imbibitionValues_w[14] = 3.487546e-03;
+  imbibitionValues_w[15] = 4.742375e-03;
+  imbibitionValues_w[16] = 6.351222e-03;
+  imbibitionValues_w[17] = 8.395131e-03;
+  imbibitionValues_w[18] = 1.097180e-02;
+  imbibitionValues_w[19] = 1.419912e-02;
+  imbibitionValues_w[20] = 1.821946e-02;
+  imbibitionValues_w[21] = 2.320510e-02;
+  imbibitionValues_w[22] = 2.936477e-02;
+  imbibitionValues_w[23] = 3.695197e-02;
+  imbibitionValues_w[24] = 4.627535e-02;
+  imbibitionValues_w[25] = 5.771200e-02;
+  imbibitionValues_w[26] = 7.172484e-02;
+  imbibitionValues_w[27] = 8.888631e-02;
+  imbibitionValues_w[28] = 1.099126e-01;
+  imbibitionValues_w[29] = 1.357180e-01;
+  imbibitionValues_w[30] = 1.675125e-01;
+  imbibitionValues_w[31] = 2.070136e-01;
+  imbibitionValues_w[32] = 2.570525e-01;
+  imbibitionValues_w[33] = 2.925846e-01;
+  imbibitionValues_w[34] = 3.388685e-01;
+  imbibitionValues_w[35] = 4.766042e-01;
+  imbibitionValues_w[36] = 6.143399e-01;
+  imbibitionValues_w[37] = 7.107549e-01;
+  imbibitionValues_w[38] = 8.071700e-01;
+  imbibitionValues_w[39] = 9.035850e-01;
+  imbibitionValues_w[40] = 1.000000e+00;
+
   real64_array imbibitionValues_g( Naxis );
   imbibitionValues_g[0] = 0.0;
   imbibitionValues_g[1] = 0.0;
@@ -609,6 +652,9 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   initializeTable( "drainageWater_swg",
                    coordinates_w,
                    drainageValues_w );
+  initializeTable( "imbibitionWater_swg",
+                   coordinates_w,
+                   imbibitionValues_w );
   initializeTable( "drainageGas_swg",
                    coordinates_g,
                    drainageValues_g );
@@ -631,7 +677,7 @@ RelativePermeabilityBase & makeTableRelPermHysteresisTwoPhase( string const & na
   drainageWaterGasTableNames[0] = "drainageWater_swg"; drainageWaterGasTableNames[1] = "drainageGas_swg";
 
   auto & imbibitionWaterTableName = relPerm.getReference< string >( keys::imbibitionWettingRelPermTableNameString() );
-  imbibitionWaterTableName = "drainageWater_swg"; // disable hysteresis for now
+  imbibitionWaterTableName = "imbibitionWater_swg";
 
   auto & imbibitionGasTableName = relPerm.getReference< string >( keys::imbibitionNonWettingRelPermTableNameString() );
   imbibitionGasTableName = "imbibitionGas_swg";
