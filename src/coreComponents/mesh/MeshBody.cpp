@@ -29,7 +29,9 @@ MeshBody::MeshBody( string const & name,
   Group( name, parent ),
   m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
-{}
+{
+  m_hasParticles = false; // By default we assume no particles in a mesh body... SJP
+}
 
 MeshBody::~MeshBody()
 {

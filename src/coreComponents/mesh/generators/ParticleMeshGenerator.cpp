@@ -18,13 +18,14 @@
 
 #include "ParticleMeshGenerator.hpp"
 
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/MeshBody.hpp"
+#include "ParticleBlockManager.hpp"
 
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 
 #include <cmath>
 
@@ -48,6 +49,11 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
     setDescription( "Names of each particle block" );
+
+  registerWrapper( viewKeyStruct::particleTypesString(), &m_particleType ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setSizedFromParent( 0 ).
+    setDescription( "Particle types of each mesh block" );
 }
 
 Group * ParticleMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
@@ -69,16 +75,17 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
-//  ParticleBlockManager & elementManager = meshBody.getGroup< CellBlockManager >( keys::cellManager );
-//
-//  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
-//
-//  int aa = 0;
-//  for( auto & cellBlockName : m_regionNames )
-//  {
-//    CellBlock & cellBlock = elementManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
-//    cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
-//  }
+  ParticleBlockManager & particleBlockManager = meshBody.getGroup< ParticleBlockManager >( keys::particleManager );
+
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+
+  // This should probably handled elsewhere:
+  int aa = 0;
+  for( auto & particleBlockName : m_regionNames )
+  {
+    ParticleBlock & particleBlock = particleBlockManager.registerParticleBlock( particleBlockName );
+    particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
+  }
 
   GEOSX_LOG_RANK_0( "MPM particle file path: " << m_filePath );
 

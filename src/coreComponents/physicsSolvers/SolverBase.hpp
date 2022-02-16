@@ -633,6 +633,9 @@ protected:
   template< typename CONSTITUTIVE_BASE_TYPE >
   static string getConstitutiveName( ElementSubRegionBase const & subRegion );
 
+  template< typename CONSTITUTIVE_BASE_TYPE >
+  static string getConstitutiveName( ParticleSubRegionBase const & subRegion ); // particle overload
+
   /**
    * @brief This function sets constitutive name fields on an
    *  ElementSubRegionBase, and calls the base function it overrides.
@@ -640,6 +643,7 @@ protected:
    *  names set.
    */
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); } // particle overload
 
   template< typename BASETYPE = constitutive::ConstitutiveBase, typename LOOKUP_TYPE >
   static BASETYPE const & getConstitutiveModel( dataRepository::Group const & dataGroup, LOOKUP_TYPE const & key );
@@ -693,12 +697,27 @@ private:
    *  names set.
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
+  virtual void setConstitutiveNames( ParticleSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); } // particle overload
 
 
 };
 
 template< typename CONSTITUTIVE_BASE_TYPE >
 string SolverBase::getConstitutiveName( ElementSubRegionBase const & subRegion )
+{
+  string validName;
+  dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();
+
+  constitutiveModels.forSubGroups< CONSTITUTIVE_BASE_TYPE >( [&]( dataRepository::Group const & model )
+  {
+    GEOSX_ERROR_IF( !validName.empty(), "A valid constitutive model was already found." );
+    validName = model.getName();
+  } );
+  return validName;
+}
+
+template< typename CONSTITUTIVE_BASE_TYPE >
+string SolverBase::getConstitutiveName( ParticleSubRegionBase const & subRegion ) // particle overload
 {
   string validName;
   dataRepository::Group const & constitutiveModels = subRegion.getConstitutiveModels();

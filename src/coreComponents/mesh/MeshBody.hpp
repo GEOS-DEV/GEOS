@@ -147,6 +147,11 @@ public:
     static constexpr char const * meshLevelsString() { return "meshLevels"; }
   } groupKeys; ///< groupKeys
 
+  /**
+   * @brief flag for whether MeshBody has particles
+   */
+  bool m_hasParticles;
+
 private:
   Group & m_meshLevels;
 

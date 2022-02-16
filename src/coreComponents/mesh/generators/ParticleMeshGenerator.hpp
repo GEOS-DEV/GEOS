@@ -77,6 +77,7 @@ protected:
   {
     constexpr static char const * filePathString() { return "file"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
+    constexpr static char const * particleTypesString() { return "particleTypes"; }
     constexpr static char const * positionToleranceString() { return "positionTolerance"; }
   };
   /// @endcond
@@ -102,6 +103,9 @@ private:
 
   /// String array of particle region names
   array1d< string > m_regionNames;
+
+  /// String array listing the particle types present
+  array1d< string > m_particleType;
 
 public:
 

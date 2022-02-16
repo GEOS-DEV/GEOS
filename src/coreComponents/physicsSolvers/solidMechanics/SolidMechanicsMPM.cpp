@@ -152,108 +152,129 @@ SolidMechanicsMPM::~SolidMechanicsMPM()
 }
 
 
-void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
+void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I wasted time on this and it's not actually called by anything... SJP
 {
-  SolverBase::registerDataOnMesh( meshBodies );
+  ExecutableGroup::registerDataOnMesh( meshBodies );
+
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & meshLevel,
+                                    arrayView1d< string const > const & regionNames )
+  {
+    ParticleManager & particleManager = meshLevel.getParticleManager();
+
+    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
+
+    // Set constitutive names on particles
+    if(meshBody.m_hasParticles)
+    {
+      particleManager.forParticleSubRegions< ParticleSubRegionBase >( regionNames,
+                                                                      [&]( localIndex const,
+                                                                          ParticleSubRegionBase & subRegion )
+      {
+        setConstitutiveNamesCallSuper( subRegion );
+        setConstitutiveNames( subRegion );
+      } );
+    }
+
+  } );
 
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & meshLevel,
                                     arrayView1d<string const> const & regionNames )
   {
-    NodeManager & nodes = meshLevel.getNodeManager();
+    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
 
-    nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the total displacements on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement ).
-      setPlotLevel( PlotLevel::LEVEL_3 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the incremental displacements for the current time step on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the current velocity on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
-      setPlotLevel( PlotLevel::LEVEL_1 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
-                      "to hold the summation of nodal forces resulting from the governing equations." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternalString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
-                      " conditions as well as coupling forces such as hydraulic forces." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array1d< real64 > >( keys::Mass ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the mass on the nodes." );
-
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the velocity predictors on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the incremental displacement predictors on the nodes." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString() ).
-      setPlotLevel( PlotLevel::LEVEL_0 ).
-      setRegisteringObjects( this->getName()).
-      setDescription( "An array that holds the contact force." ).
-      reference().resizeDimension< 1 >( 3 );
-
-    Group & nodeSets = nodes.sets();
-    nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE );
-
-    nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE );
-
-    nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).
-      setPlotLevel( PlotLevel::NOPLOT ).
-      setRestartFlags( RestartFlags::NO_WRITE );
-
-    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            CellElementSubRegion & subRegion )
+    if(!meshBody.m_hasParticles) // Background grid field registration
     {
-      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ).
+      NodeManager & nodes = meshLevel.getNodeManager();
+
+      nodes.registerWrapper< array2d< real64, nodes::TOTAL_DISPLACEMENT_PERM > >( keys::TotalDisplacement ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the total displacements on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64, nodes::INCR_DISPLACEMENT_PERM > >( keys::IncrementalDisplacement ).
+        setPlotLevel( PlotLevel::LEVEL_3 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the incremental displacements for the current time step on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64, nodes::VELOCITY_PERM > >( keys::Velocity ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the current velocity on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64, nodes::ACCELERATION_PERM > >( keys::Acceleration ).
+        setPlotLevel( PlotLevel::LEVEL_1 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the current acceleration on the nodes. This array also is used "
+                        "to hold the summation of nodal forces resulting from the governing equations." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::forceExternalString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the external forces on the nodes. This includes any boundary"
+                        " conditions as well as coupling forces such as hydraulic forces." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array1d< real64 > >( keys::Mass ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the mass on the nodes." );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::vTildeString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the velocity predictors on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::uhatTildeString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the incremental displacement predictors on the nodes." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      nodes.registerWrapper< array2d< real64 > >( viewKeyStruct::contactForceString() ).
+        setPlotLevel( PlotLevel::LEVEL_0 ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the contact force." ).
+        reference().resizeDimension< 1 >( 3 );
+
+      Group & nodeSets = nodes.sets();
+      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
+      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
-      subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
-        setRestartFlags( RestartFlags::NO_WRITE ).
-        setSizedFromParent(0);
+        setRestartFlags( RestartFlags::NO_WRITE );
 
-      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
-      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
-      GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+      ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                                         [&]( localIndex const,
+                                                                              CellElementSubRegion & subRegion )
+      {
+        subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE );
 
+        subRegion.registerWrapper< SortedArray< localIndex > >( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setRestartFlags( RestartFlags::NO_WRITE );
 
-    } );
+      } );
+    }
+    else // Particle field registration
+    {
+      std::cout << "Registering particle fields" << std::endl;
+    }
 
   } );
 }
@@ -266,26 +287,24 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & meshLevel,
                                                 arrayView1d<string const> const & regionNames )
   {
-    ElementRegionManager & elementRegionManager = meshLevel.getElemManager();
-    elementRegionManager.forElementSubRegions< CellElementSubRegion >( regionNames,
-                                                                       [&]( localIndex const,
-                                                                            CellElementSubRegion & subRegion )
+    MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
+
+    if(meshBody.m_hasParticles) // Only particle regions will hold actual materials. Background grid currently holds a null material so that the input file parser doesn't complain, but we don't need to actually do anything with it.
     {
-      string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
-      solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
-    });
+      ParticleManager & particleManager = meshLevel.getParticleManager();
+      particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames,
+                                                                         [&]( localIndex const,
+                                                                              ParticleSubRegion & subRegion )
+      {
+        string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
+        solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
+      });
+    }
   });
-  // Validate solid models in target regions
-//  domain.forMeshBodies( [&]( MeshBody const & meshBody )
-//  {
-//    MeshLevel const & meshLevel = meshBody.getMeshLevel( 0 );
-//    validateModelMapping< SolidBase >( meshLevel.getElemManager(), m_solidMaterialNames );
-//  } );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
 
@@ -370,9 +389,9 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
-                                                  real64 const & dt,
-                                                  const int GEOSX_UNUSED_PARAM( cycleNumber ),
-                                                  DomainPartition & domain )
+                                        real64 const & dt,
+                                        const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                        DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -382,148 +401,28 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
 
-
-
-//  This is the explicit step function for the Lagrangian FEM solver which I'm keeping here for reference.
-//  for( localIndex a = 0; a < meshBodies.numSubGroups(); ++a )
-//  {
-//    MeshLevel & mesh = domain.getMeshBody( a ).getMeshLevel( 0 );
-//    NodeManager & nodes = mesh.getNodeManager();
-//    Group const & nodeSets = nodes.sets();
-//
-//    SortedArrayView< localIndex const > const &
-//    m_sendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() ).toViewConst();
-//
-//    SortedArrayView< localIndex const > const &
-//    m_nonSendOrReceiveNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::nonSendOrReceiveNodesString() ).toViewConst();
-//
-//    SortedArrayView< localIndex const> const &
-//    m_targetNodes = nodeSets.getReference<SortedArray<localIndex>>( viewKeyStruct::targetNodesString() ).toViewConst();
-//
-//
-//    // save previous constitutive state data in preparation for next timestep
-//    forTargetSubRegions< CellElementSubRegion >( mesh, [&]( localIndex const targetIndex,
-//                                                            CellElementSubRegion & subRegion )
-//    {
-//      SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, m_solidMaterialNames[targetIndex] );
-//      constitutiveRelation.saveConvergedState();
-//    } );
-//
-//
-//
-//    // Print out nodal reference positions?
-//    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & x0 = nodes.referencePosition();
-//    if(time_n==0.0)
-//    {
-//      std::cout << "Printing... List size is: " << x0.size()/3 << std::endl; // The list type comes from a class that probably does fancy things when you print it naively like I'm doing here... it's stored as a 1D array in memory, hence having to divide by 3.
-//      for(localIndex i=0; i<x0.size()/3; i++)
-//      {
-//        std::cout << x0[i] << std::endl;
-//      }
-//    }
-//
-//
-//
-//
-//    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-//
-//    arrayView1d< real64 const > const & mass = nodes.getReference< array1d< real64 > >( keys::Mass );
-//    arrayView2d< real64, nodes::VELOCITY_USD > const & vel = nodes.velocity();
-//
-//    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const & u = nodes.totalDisplacement();
-//    arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
-//    arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
-//
-//    std::map< string, string_array > fieldNames;
-//    fieldNames["node"].emplace_back( keys::Velocity );
-//    fieldNames["node"].emplace_back( keys::Acceleration );
-//
-//    m_iComm.resize( domain.getNeighbors().size() );
-//    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
-//
-//    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
-//
-//    //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-//    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
-//
-//    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-//
-//    //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-//    SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
-//
-//    fsManager.applyFieldValue( time_n + dt,
-//                               domain, "nodeManager",
-//                               NodeManager::viewKeyStruct::totalDisplacementString(),
-//                               [&]( FieldSpecificationBase const & bc,
-//                                    SortedArrayView< localIndex const > const & targetSet )
-//    {
-//      integer const component = bc.getComponent();
-//      GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
-//
-//      forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
-//                                              [=] GEOSX_DEVICE ( localIndex const i )
-//      {
-//        localIndex const a = targetSet[ i ];
-//        vel( a, component ) = u( a, component );
-//      } );
-//    },
-//                               [&]( FieldSpecificationBase const & bc,
-//                                    SortedArrayView< localIndex const > const & targetSet )
-//    {
-//      integer const component = bc.getComponent();
-//      GEOSX_ERROR_IF_LT_MSG( component, 0, "Component index required for displacement BC " << bc.getName() );
-//
-//      forAll< parallelDevicePolicy< 1024 > >( targetSet.size(),
-//                                              [=] GEOSX_DEVICE ( localIndex const i )
-//      {
-//        localIndex const a = targetSet[ i ];
-//        uhat( a, component ) = u( a, component ) - vel( a, component );
-//        vel( a, component )  = uhat( a, component ) / dt;
-//      } );
-//    } );
-//
-//    //Step 5. Calculate deformation input to constitutive model and update state to
-//    // Q^{n+1}
-//    explicitKernelDispatch( mesh,
-//                            targetRegionNames(),
-//                            this->getDiscretizationName(),
-//                            m_solidMaterialNames,
-//                            dt,
-//                            string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
-//
-//    // apply this over a set
-//    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
-//
-//    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-//
-//    parallelDeviceEvents packEvents;
-//    CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
-//
-//    waitAllDeviceEvents( packEvents );
-//
-//    CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
-//
-//    explicitKernelDispatch( mesh,
-//                            targetRegionNames(),
-//                            this->getDiscretizationName(),
-//                            m_solidMaterialNames,
-//                            dt,
-//                            string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
-//
-//    // apply this over a set
-//    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
-//    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
-//
-//    // this includes  a device sync after launching all the unpacking kernels
-//    parallelDeviceEvents unpackEvents;
-//    CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents );
-//  }
-
-
-
   return dt;
 }
 
+void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
+{
+  SolverBase::setConstitutiveNamesCallSuper( subRegion );
+
+  subRegion.registerWrapper< string >( viewKeyStruct::solidMaterialNamesString() ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 );
+
+  string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+  std::cout << "Here's a material! " << solidMaterialName << std::endl;
+  solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
+  GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
+}
+
+void SolidMechanicsMPM::setConstitutiveNames( ParticleSubRegionBase & subRegion ) const
+{
+  GEOSX_UNUSED_VAR( subRegion );
+}
 
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsMPM, string const &, dataRepository::Group * const )

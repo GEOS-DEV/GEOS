@@ -120,7 +120,7 @@ static int getNumElemPerBox( ElementType const elementType )
   {
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
-    case ElementType::Tetrahedron:    return 6;
+    case ElementType::Tetrahedron:   return 6;
     case ElementType::Prism:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;

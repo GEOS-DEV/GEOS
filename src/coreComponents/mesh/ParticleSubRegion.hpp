@@ -16,7 +16,7 @@
 #ifndef GEOSX_MESH_PARTICLESUBREGION_HPP_
 #define GEOSX_MESH_PARTICLESUBREGION_HPP_
 
-#include "ParticleBlock.hpp"
+#include "ParticleSubRegionBase.hpp"
 
 namespace geosx
 {
@@ -27,7 +27,7 @@ namespace geosx
  * for a particle. This is the class used in the physics solvers to
  * represent a collection of particles of the same type.
  */
-class ParticleSubRegion : public ParticleBlock
+class ParticleSubRegion : public ParticleSubRegionBase
 {
 public:
 
