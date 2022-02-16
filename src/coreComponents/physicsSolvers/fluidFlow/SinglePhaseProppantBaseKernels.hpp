@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseProppantBaseKernels
+namespace singlePhaseProppantBaseKernels
 {
 
 /******************************** FluidUpdateKernel ********************************/
@@ -56,7 +56,7 @@ struct FluidUpdateKernel
   }
 };
 
-} //namespace SinglePhaseProppantBaseKernels
+} // namespace singlePhaseProppantBaseKernels
 
 } //namespace geosx
 

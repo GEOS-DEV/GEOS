@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-namespace PoromechanicsKernels
+namespace poromechanicsKernels
 {
 
 /**
@@ -427,7 +427,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                real64 const (&)[3],
                                                                string const >;
 
-} // namespace PoroelasticKernels
+} // namespace poromechanicsKernels
 
 } // namespace geosx
 

@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace ProppantTransportKernels
+namespace proppantTransportKernels
 {
 
 GEOSX_HOST_DEVICE
@@ -1320,6 +1320,6 @@ void ProppantPackVolumeKernel::
   } );
 }
 
-} // namespace ProppantTransportKernels
+} // namespace proppantTransportKernels
 
 } // namespace geosx

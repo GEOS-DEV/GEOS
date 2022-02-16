@@ -234,4 +234,4 @@ void MultivariableTableFunction::initializeFunction()
 
 REGISTER_CATALOG_ENTRY( FunctionBase, MultivariableTableFunction, string const &, Group * const )
 
-} /* namespace ANST */
+} // end of namespace geosx

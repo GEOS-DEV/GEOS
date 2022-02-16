@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
@@ -204,7 +204,7 @@ using ExplicitFiniteStrainFactory = finiteElement::KernelFactory< ExplicitFinite
                                                                   real64,
                                                                   string const >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

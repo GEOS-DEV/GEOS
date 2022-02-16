@@ -46,7 +46,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        targetRegions="{ Reservoir }"/>
+      />
     </FiniteVolume>
   </NumericalMethods>
 
