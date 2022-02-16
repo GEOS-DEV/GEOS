@@ -225,6 +225,13 @@ Element: Cylinder
 .. include:: ../../coreComponents/schema/docs/Cylinder.rst
 
 
+.. _XML_DARTSSuperEngine:
+
+Element: DARTSSuperEngine
+=========================
+.. include:: ../../coreComponents/schema/docs/DARTSSuperEngine.rst
+
+
 .. _XML_DamageElasticIsotropic:
 
 Element: DamageElasticIsotropic
@@ -1193,6 +1200,13 @@ Datastructure: Coulomb
 Datastructure: Cylinder
 =======================
 .. include:: ../../coreComponents/schema/docs/Cylinder_other.rst
+
+
+.. _DATASTRUCTURE_DARTSSuperEngine:
+
+Datastructure: DARTSSuperEngine
+===============================
+.. include:: ../../coreComponents/schema/docs/DARTSSuperEngine_other.rst
 
 
 .. _DATASTRUCTURE_DamageElasticIsotropic:

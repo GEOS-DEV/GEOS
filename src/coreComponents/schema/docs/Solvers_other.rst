@@ -8,6 +8,7 @@ CompositionalMultiphaseFVM                node :ref:`DATASTRUCTURE_Compositional
 CompositionalMultiphaseHybridFVM          node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`          
 CompositionalMultiphaseReservoir          node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseWell               node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`               
+DARTSSuperEngine                          node :ref:`DATASTRUCTURE_DARTSSuperEngine`                          
 EmbeddedSurfaceGenerator                  node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node :ref:`DATASTRUCTURE_FlowProppantTransport`                     
 Hydrofracture                             node :ref:`DATASTRUCTURE_Hydrofracture`                             
