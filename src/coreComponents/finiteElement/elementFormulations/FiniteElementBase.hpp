@@ -660,6 +660,7 @@ real64 FiniteElementBase::getGradN( localIndex const k,
                                     real64 (& gradN)[LEAF::maxSupportPoints][3] ) const
 {
   GEOSX_UNUSED_VAR( X );
+  GEOSX_UNUSED_VAR( stack );
 
   LvArray::tensorOps::copy< LEAF::maxSupportPoints, 3 >( gradN, m_viewGradN[ k ][ q ] );
 
