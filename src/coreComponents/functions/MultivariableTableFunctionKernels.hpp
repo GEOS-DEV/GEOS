@@ -64,9 +64,6 @@ public:
    * @param[in] axisStepInvs inversions of axis interval lengths (axes are discretized uniformly)
    * @param[in] axisHypercubeMults  hypercube index mult factors for each axis
    * @param[in] hypercubeData table data stored per hypercube
-   * @param[in] coordinates array of coordinates of points where interpolation is required
-   * @param[in] values array of interpolated operator values (all operators are interpolated at each point)
-   * @param[in] derivatives  array of derivatives of interpolated operators (all derivatives for all operators are computed at each point)
    */
   MultivariableTableFunctionStaticKernel( arrayView1d< real64 const > const & axisMinimums,
                                           arrayView1d< real64 const > const & axisMaximums,
@@ -89,7 +86,6 @@ public:
  *
  * @param[in] coordinates point coordinates
  * @param[out] values interpolated operator values
- * @param[out] derivatives derivatives of interpolated operators
  */
   template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
@@ -118,7 +114,7 @@ public:
   }
 
   /**
-   * @brief interpolate all operators and their derivatives at a given point
+   * @brief interpolate all operators and compute their derivatives at a given point
    *
    * @param[in] coordinates point coordinates
    * @param[out] values interpolated operator values
@@ -222,16 +218,14 @@ protected:
   }
 
   /**
-   * @brief interpolate all operator values and derivatives at a given point
+   * @brief interpolate all operators values at a given point
    * The algoritm is based on http://dx.doi.org/10.1090/S0025-5718-1988-0917826-0
    *
    * @param[in] axisCoordinates coordinates of a point
    * @param[in] hypercubeData data of target hypercube
    * @param[in] axisLows array of left coordinates of target axis intervals
-   * @param[in] axisMults array of weights of right coordinates of target axis intervals
    * @param[in] axisStepInvs array of inversions of axis steps
    * @param[out] values interpolated operator values
-   * @param[out] derivatives derivatives of interpolated operators
    */
   template< typename IN_ARRAY, typename OUT_ARRAY >
   GEOSX_HOST_DEVICE
@@ -276,7 +270,7 @@ protected:
 
 
   /**
-   * @brief interpolate all operator values and derivatives at a given point
+   * @brief interpolate all operators values and derivatives at a given point
    * The algoritm is based on http://dx.doi.org/10.1090/S0025-5718-1988-0917826-0
    *
    * @param[in] axisCoordinates coordinates of a point

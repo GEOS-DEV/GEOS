@@ -164,11 +164,17 @@ public:
    */
   arrayView1d< real64 const > getHypercubeData() const { return m_hypercubeData.toViewConst(); }
 
-
+  /**
+   * @brief Get the number of table dimensions
+   * @return the number of table dimensions
+   */
   integer  getNumDims() const {return m_numDims;};
 
-
-  integer  getNumOps()    const {return m_numOps;};
+  /**
+   * @brief Get the number of operators (functions to be interpolated)
+   * @return the number of operators (functions to be interpolated)
+   */
+  integer  getNumOps() const {return m_numOps;};
 
 private:
 
