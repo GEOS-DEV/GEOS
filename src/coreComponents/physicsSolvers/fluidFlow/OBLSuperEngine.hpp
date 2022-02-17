@@ -13,11 +13,11 @@
  */
 
 /**
- * @file DARTSSuperEngine.hpp
+ * @file OBLSuperEngine.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_DARTSSUPERENGINE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_DARTSSUPERENGINE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINE_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINE_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /**
- * @class DARTSSuperEngine
+ * @class OBLSuperEngine
  *
  * A compositional multiphase thermal reactive solver based on DARTS super engine
  * Takes into account diffusion, capillarity, kinetic and equilibrium reactions, precipitation/dissolution
@@ -34,7 +34,7 @@ namespace geosx
  * works with TPFA
  */
 //START_SPHINX_INCLUDE_00
-class DARTSSuperEngine : public FlowSolverBase
+class OBLSuperEngine : public FlowSolverBase
 {
 //END_SPHINX_INCLUDE_00
 public:
@@ -44,35 +44,35 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  DARTSSuperEngine( const string & name,
+  OBLSuperEngine( const string & name,
                     Group * const parent );
 
   /// deleted default constructor
-  DARTSSuperEngine() = delete;
+  OBLSuperEngine() = delete;
 
   /// deleted copy constructor
-  DARTSSuperEngine( DARTSSuperEngine const & ) = delete;
+  OBLSuperEngine( OBLSuperEngine const & ) = delete;
 
   /// default move constructor
-  DARTSSuperEngine( DARTSSuperEngine && ) = default;
+  OBLSuperEngine( OBLSuperEngine && ) = default;
 
   /// deleted assignment operator
-  DARTSSuperEngine & operator=( DARTSSuperEngine const & ) = delete;
+  OBLSuperEngine & operator=( OBLSuperEngine const & ) = delete;
 
   /// deleted move operator
-  DARTSSuperEngine & operator=( DARTSSuperEngine && ) = delete;
+  OBLSuperEngine & operator=( OBLSuperEngine && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~DARTSSuperEngine() override = default;
+  virtual ~OBLSuperEngine() override = default;
 
 //START_SPHINX_INCLUDE_01
   /**
    * @brief name of the solver in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
-  static string catalogName() { return "DARTSSuperEngine"; }
+  static string catalogName() { return "OBLSuperEngine"; }
 
   /**
    * @brief Getter for the fluid component names
@@ -349,4 +349,4 @@ protected:
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_DARTSSUPERENGINE_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINE_HPP_

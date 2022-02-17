@@ -13,10 +13,10 @@
  */
 
 /**
- * @file DARTSSuperEngine.cpp
+ * @file OBLSuperEngine.cpp
  */
 
-#include "DARTSSuperEngine.hpp"
+#include "OBLSuperEngine.hpp"
 
 #include "common/DataTypes.hpp"
 #include "common/MpiWrapper.hpp"
@@ -34,10 +34,10 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/DARTSSuperEngineExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/OBLSuperEngineExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/DARTSSuperEngineKernels.hpp"
+#include "physicsSolvers/fluidFlow/OBLSuperEngineKernels.hpp"
 
 
 namespace geosx
@@ -66,9 +66,9 @@ MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOper
 using namespace dataRepository;
 using namespace constitutive;
 //using namespace CompositionalMultiphaseFVMKernels;
-using namespace DARTSSuperEngineKernels;
+using namespace OBLSuperEngineKernels;
 
-DARTSSuperEngine::DARTSSuperEngine( const string & name,
+OBLSuperEngine::OBLSuperEngine( const string & name,
                                     Group * const parent )
   :
   FlowSolverBase( name, parent ),
@@ -128,7 +128,7 @@ DARTSSuperEngine::DARTSSuperEngine( const string & name,
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 }
 
-void DARTSSuperEngine::initializePreSubGroups()
+void OBLSuperEngine::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
@@ -137,12 +137,12 @@ void DARTSSuperEngine::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with DARTSSuperEngine" );
+    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with OBLSuperEngine" );
   }
 
 }
 
-void DARTSSuperEngine::setupDofs( DomainPartition const & domain,
+void OBLSuperEngine::setupDofs( DomainPartition const & domain,
                                   DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
@@ -157,7 +157,7 @@ void DARTSSuperEngine::setupDofs( DomainPartition const & domain,
 }
 
 
-void DARTSSuperEngine::implicitStepComplete( real64 const & time,
+void OBLSuperEngine::implicitStepComplete( real64 const & time,
                                              real64 const & dt,
                                              DomainPartition & domain )
 {
@@ -213,7 +213,7 @@ void DARTSSuperEngine::implicitStepComplete( real64 const & time,
   }
 }
 
-void DARTSSuperEngine::postProcessInput()
+void OBLSuperEngine::postProcessInput()
 {
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
@@ -239,7 +239,7 @@ void DARTSSuperEngine::postProcessInput()
 
 }
 
-void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
+void OBLSuperEngine::registerDataOnMesh( Group & meshBodies )
 {
   using namespace extrinsicMeshData::flow;
   // 1. Call base class method
@@ -306,7 +306,7 @@ void DARTSSuperEngine::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-real64 DARTSSuperEngine::calculateResidualNorm( DomainPartition const & domain,
+real64 OBLSuperEngine::calculateResidualNorm( DomainPartition const & domain,
                                                 DofManager const & dofManager,
                                                 arrayView1d< real64 const > const & localRhs )
 {
@@ -378,7 +378,7 @@ real64 DARTSSuperEngine::calculateResidualNorm( DomainPartition const & domain,
 }
 
 
-real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
+real64 OBLSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
                                                    DofManager const & dofManager,
                                                    arrayView1d< real64 const > const & localSolution )
 {
@@ -391,7 +391,7 @@ real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domai
     return 1.0;
   }
 
-  real64 constexpr eps = DARTSSuperEngineKernels::minValueForDivision;
+  real64 constexpr eps = OBLSuperEngineKernels::minValueForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
@@ -451,7 +451,7 @@ real64 DARTSSuperEngine::scalingForSystemSolution( DomainPartition const & domai
   return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
-bool DARTSSuperEngine::checkSystemSolution( DomainPartition const & domain,
+bool OBLSuperEngine::checkSystemSolution( DomainPartition const & domain,
                                             DofManager const & dofManager,
                                             arrayView1d< real64 const > const & localSolution,
                                             real64 const scalingFactor )
@@ -508,7 +508,7 @@ bool DARTSSuperEngine::checkSystemSolution( DomainPartition const & domain,
   return MpiWrapper::min( localCheck, MPI_COMM_GEOSX );
 }
 
-void DARTSSuperEngine::applySystemSolution( DofManager const & dofManager,
+void OBLSuperEngine::applySystemSolution( DofManager const & dofManager,
                                             arrayView1d< real64 const > const & localSolution,
                                             real64 const scalingFactor,
                                             DomainPartition & domain )
@@ -549,7 +549,7 @@ void DARTSSuperEngine::applySystemSolution( DofManager const & dofManager,
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
-void DARTSSuperEngine::initializePostInitialConditionsPreSubGroups()
+void OBLSuperEngine::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
@@ -596,7 +596,7 @@ void DARTSSuperEngine::initializePostInitialConditionsPreSubGroups()
 }
 
 
-real64 DARTSSuperEngine::solverStep( real64 const & time_n,
+real64 OBLSuperEngine::solverStep( real64 const & time_n,
                                      real64 const & dt,
                                      integer const cycleNumber,
                                      DomainPartition & domain )
@@ -623,7 +623,7 @@ real64 DARTSSuperEngine::solverStep( real64 const & time_n,
   return dt_return;
 }
 
-void DARTSSuperEngine::backupFields( MeshLevel & mesh,
+void OBLSuperEngine::backupFields( MeshLevel & mesh,
                                      arrayView1d< string const > const & regionNames ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -644,7 +644,7 @@ void DARTSSuperEngine::backupFields( MeshLevel & mesh,
 }
 
 void
-DARTSSuperEngine::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+OBLSuperEngine::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
                                      DomainPartition & domain )
 {
@@ -661,7 +661,7 @@ DARTSSuperEngine::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n )
   } );
 }
 
-void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void OBLSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                        real64 const dt,
                                        DomainPartition & domain,
                                        DofManager const & dofManager,
@@ -685,7 +685,7 @@ void DARTSSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n )
 
 }
 
-void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const dt,
+void OBLSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const dt,
                                                                   DomainPartition & domain,
                                                                   DofManager const & dofManager,
                                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -719,7 +719,7 @@ void DARTSSuperEngine::assembleAccumulationAndVolumeBalanceTerms( real64 const d
   } );
 }
 
-void DARTSSuperEngine::assembleFluxTerms( real64 const dt,
+void OBLSuperEngine::assembleFluxTerms( real64 const dt,
                                           DomainPartition const & domain,
                                           DofManager const & dofManager,
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -762,7 +762,7 @@ void DARTSSuperEngine::assembleFluxTerms( real64 const dt,
 }
 
 
-void DARTSSuperEngine::applyBoundaryConditions( real64 const time_n,
+void OBLSuperEngine::applyBoundaryConditions( real64 const time_n,
                                                 real64 const dt,
                                                 DomainPartition & domain,
                                                 DofManager const & dofManager,
@@ -780,14 +780,14 @@ void DARTSSuperEngine::applyBoundaryConditions( real64 const time_n,
 
 namespace internal
 {
-string const bcLogMessage = string( "DARTSSUperEngine {}: at time {}s, " )
+string const bcLogMessage = string( "OBLSuperEngine {}: at time {}s, " )
                             + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
                             + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
                             + string( "\nThe total number of target elements (including ghost elements) is {}. " )
                             + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
 }
 
-void DARTSSuperEngine::applySourceFluxBC( real64 const time,
+void OBLSuperEngine::applySourceFluxBC( real64 const time,
                                           real64 const dt,
                                           DofManager const & dofManager,
                                           DomainPartition & domain,
@@ -984,7 +984,7 @@ bool validateDirichletBC( DomainPartition & domain,
 }
 
 
-void DARTSSuperEngine::applyDirichletBC( real64 const time,
+void OBLSuperEngine::applyDirichletBC( real64 const time,
                                          real64 const dt,
                                          DofManager const & dofManager,
                                          DomainPartition & domain,
@@ -1163,7 +1163,7 @@ void DARTSSuperEngine::applyDirichletBC( real64 const time,
   } );
 }
 
-void DARTSSuperEngine::solveSystem( DofManager const & dofManager,
+void OBLSuperEngine::solveSystem( DofManager const & dofManager,
                                     ParallelMatrix & matrix,
                                     ParallelVector & rhs,
                                     ParallelVector & solution )
@@ -1177,7 +1177,7 @@ void DARTSSuperEngine::solveSystem( DofManager const & dofManager,
 }
 
 // to be changed into enforceOBLLimits - to chop all primary variables to be within OBL discretization space
-void DARTSSuperEngine::chopNegativeDensities( DomainPartition & domain )
+void OBLSuperEngine::chopNegativeDensities( DomainPartition & domain )
 {
   GEOSX_UNUSED_VAR( domain );
   // GEOSX_MARK_FUNCTION;
@@ -1211,7 +1211,7 @@ void DARTSSuperEngine::chopNegativeDensities( DomainPartition & domain )
   // } );
 }
 
-void DARTSSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
+void OBLSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1254,7 +1254,7 @@ void DARTSSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
   } );
 }
 
-void DARTSSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
+void OBLSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1268,7 +1268,7 @@ void DARTSSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 }
 
 
-void DARTSSuperEngine::updateState( DomainPartition & domain )
+void OBLSuperEngine::updateState( DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
@@ -1290,6 +1290,6 @@ void DARTSSuperEngine::updateState( DomainPartition & domain )
 
 
 //START_SPHINX_INCLUDE_01
-REGISTER_CATALOG_ENTRY( SolverBase, DARTSSuperEngine, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, OBLSuperEngine, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
 }// namespace geosx

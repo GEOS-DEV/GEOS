@@ -1047,7 +1047,7 @@ the relative residual norm satisfies:
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
-			<xsd:element name="DARTSSuperEngine" type="DARTSSuperEngineType" />
+			<xsd:element name="OBLSuperEngine" type="OBLSuperEngineType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -1262,7 +1262,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:pattern value=".*[\[\]`$].*|producer|injector" />
 		</xsd:restriction>
 	</xsd:simpleType>
-	<xsd:complexType name="DARTSSuperEngineType">
+	<xsd:complexType name="OBLSuperEngineType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

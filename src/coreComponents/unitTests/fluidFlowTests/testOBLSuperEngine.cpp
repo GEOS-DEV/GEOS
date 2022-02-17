@@ -18,10 +18,10 @@
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/fluidFlow/DARTSSuperEngineExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/OBLSuperEngineExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/DARTSSuperEngine.hpp"
+#include "physicsSolvers/fluidFlow/OBLSuperEngine.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 
@@ -38,7 +38,7 @@ CommandLineOptions g_commandLineOptions;
 char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
-  "    <DARTSSuperEngine\n"
+  "    <OBLSuperEngine\n"
   "                      name=\"compflow\"\n"
   "                      logLevel=\"1\"\n"
   "                      discretization=\"fluidTPFA\"\n"
@@ -54,7 +54,7 @@ char const * xmlInput =
   "                                 newtonMaxIter=\"2\"/>\n"
   "      <LinearSolverParameters solverType=\"gmres\"\n"
   "                              krylovTol=\"1.0e-10\"/>\n"
-  "    </DARTSSuperEngine>\n"
+  "    </OBLSuperEngine>\n"
   "  </Solvers>\n"
   "  <Mesh>\n"
   "    <InternalMesh name=\"mesh\"\n"
@@ -189,7 +189,7 @@ array2d< real64 > getCompFracDerivative( arraySlice2d< real64 const, USD > const
 
 // Sphinx end before input XML
 
-void testOperatorsNumericalDerivatives( DARTSSuperEngine & solver,
+void testOperatorsNumericalDerivatives( OBLSuperEngine & solver,
                                         DomainPartition & domain,
                                         real64 const perturbParameter,
                                         real64 const relTol )
@@ -314,7 +314,7 @@ void testOperatorsNumericalDerivatives( DARTSSuperEngine & solver,
 }
 
 template< typename LAMBDA >
-void testNumericalJacobian( DARTSSuperEngine & solver,
+void testNumericalJacobian( OBLSuperEngine & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
@@ -343,7 +343,7 @@ void testNumericalJacobian( DARTSSuperEngine & solver,
   CRSMatrix< real64, globalIndex > jacobianFD( jacobian );
   jacobianFD.zero();
 
-  string const dofKey = dofManager.getKey( DARTSSuperEngine::viewKeyStruct::elemDofFieldString() );
+  string const dofKey = dofManager.getKey( OBLSuperEngine::viewKeyStruct::elemDofFieldString() );
 
   solver.forMeshTargets ( domain.getMeshBodies(),
                           [&]( string const,
@@ -478,7 +478,7 @@ protected:
     setupProblemFromXML( state.getProblemManager(), xmlInput );
     removeFile( "obl_3comp_static.txt" );
 
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< DARTSSuperEngine >( "compflow" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< OBLSuperEngine >( "compflow" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -497,7 +497,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  DARTSSuperEngine * solver;
+  OBLSuperEngine * solver;
 };
 
 real64 constexpr CompositionalMultiphaseFlowTest::time;
