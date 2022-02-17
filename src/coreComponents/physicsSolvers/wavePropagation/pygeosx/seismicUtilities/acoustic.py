@@ -50,7 +50,7 @@ def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
 
 def resetWaveField(group):
     group.get_wrapper("Solvers/acousticSolver/indexSeismoTrace").value()[0] = 0
-    nodeManagerPath = "domain/MeshBodies/mesh/Level0/nodeManager/"
+    nodeManagerPath = "domain/MeshBodies/mesh/meshLevels/Level0/nodeManager/"
 
     pressure_nm1 = group.get_wrapper(nodeManagerPath + "pressure_nm1").value()
     pressure_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
@@ -97,9 +97,9 @@ def computeFullGradient(directory_in_str, acquisition):
             continue
 
     h5F = h5py.File("fullGradient.hdf5", "w")
-    h5F.create_dataset("fullGradient_np1", data = h5p[keys[0]], dtype='d', chunks=True, maxshape=(nfiles, None))
-    h5F.create_dataset("fullGradient_np1 ReferencePosition", data = h5p[keys[-2]], chunks=True, maxshape=(nfiles, None, 3))
-    h5F.create_dataset("fullGradient_np1 Time", data = h5p[keys[-1]])
+    h5F.create_dataset("fullGradient", data = h5p["partialGradient"], dtype='d', chunks=True, maxshape=(h5p["partialGradient"].shape[0], None))
+    h5F.create_dataset("ReferencePosition", data = h5p["ReferencePosition"], chunks=True, maxshape=(h5p["ReferencePosition"].shape[0], None, 3))
+    h5F.create_dataset("Time", data = h5p["Time"])
     keysF = list(h5F.keys())
 
     h5p.close()
@@ -119,12 +119,12 @@ def computeFullGradient(directory_in_str, acquisition):
                     if limited_aperture_flag:
                         indp = 0
                         ind = []
-                        for coordsp in h5p[keysp[-2]][0]:
+                        for coordsp in h5p["ReferencePosition"][0]:
                             indF = 0
                             flag = 0
-                            for coordsF in h5F[keysF[-2]][0]:
+                            for coordsF in h5F["ReferencePosition"][0]:
                                 if not any(coordsF - coordsp):
-                                    h5F[keysF[0]][:, indF] += h5p[keysp[0]][:,indp]
+                                    h5F["fullGradient"][:, indF] += h5p["partialGradient"][:,indp]
                                     flag = 1
                                     break
                                 indF += 1
@@ -133,14 +133,14 @@ def computeFullGradient(directory_in_str, acquisition):
                             indp += 1
 
                         if len(ind) > 0:
-                            h5F[keysF[0]].resize(h5F[keysF[0]].shape[1] + len(ind), axis=1)
-                            h5F[keysF[-2]].resize(h5F[keysF[-2]].shape[1] + len(ind), axis=1)
+                            h5F["fullGradient"].resize(h5F["fullGradient"].shape[1] + len(ind), axis=1)
+                            h5F["fullGradient"][:, -len(ind):] = h5p["partialGradient"][:, ind]
 
-                            h5F[keysF[0]][:, -len(ind):] = h5p[keysp[0]][:, ind]
-                            h5F[keysF[-2]][:, -len(ind):] = h5p[keysp[-2]][:, ind]
+                            h5F["ReferencePosition"].resize(h5F["ReferencePosition"].shape[1] + len(ind), axis=1)
+                            h5F["ReferencePosition"][:, -len(ind):] = h5p["ReferencePosition"][:, ind]
 
                     else:
-                        h5F[keysF[0]][:,:] += h5p[keysp[0]][:,:]
+                        h5F["fullGradient"][:,:] += h5p["partialGradient"][:,:]
 
                     h5p.close()
                     os.remove(os.path.join(directory_in_str,filename))
@@ -151,9 +151,9 @@ def computeFullGradient(directory_in_str, acquisition):
         else:
             continue
 
-    ind = np.lexsort((h5F[keysF[-2]][0][:,2], h5F[keysF[-2]][0][:,1], h5F[keysF[-2]][0][:,0]))
-    h5F[keysF[-2]][:,:] = h5F[keysF[-2]][:,ind]
-    h5F[keysF[0]][:,:] = h5F[keysF[0]][:,ind]
+    ind = np.lexsort((h5F["ReferencePosition"][0][:,2], h5F["ReferencePosition"][0][:,1], h5F["ReferencePosition"][0][:,0]))
+    h5F["ReferencePosition"][:,:] = h5F["ReferencePosition"][:,ind]
+    h5F["fullGradient"][:,:] = h5F["fullGradient"][:,ind]
 
     h5F.close()
     os.rmdir(directory_in_str)

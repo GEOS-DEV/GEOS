@@ -16,7 +16,7 @@
       timeSourceFrequency="5.0"
       receiverCoordinates="{ { 1105,1005, 1005 } }"
       outputSeismoTrace="0"
-      dtSeismoTrace="0.05"/>
+      dtSeismoTrace="0.1"/>
 
   </Solvers>
 
@@ -50,27 +50,39 @@
 
 
   <Events
-    maxTime="0.2">
+    maxTime="4">
     <!-- trigger the application of the solver -->
     <!-- control the timestepping here with forceDt -->
     <!-- (there are other ways to control the time step size) -->
 
     <PeriodicEvent
       name="solverApplications"
-      forceDt="0.05"
+      forceDt="0.5"
+      targetExactStartStop="0"
+      targetExactTimestep="0"
       target="/Solvers/acousticSolver"/>
-    <!-- generate an output that can be read from VTK -->
 
     <PeriodicEvent
-      name="waveFieldCollection"
-      timeFrequency="1.0"
+      name="waveFieldNp1Collection"
+      timeFrequency="0.5"
       targetExactTimestep="0"
-      target="/Tasks/waveFieldCollection" />
+      target="/Tasks/waveFieldNp1Collection" />
 
+    <PeriodicEvent
+      name="waveFieldNCollection"
+      timeFrequency="0.5"
+      targetExactTimestep="0"
+      target="/Tasks/waveFieldNCollection" />
+
+    <PeriodicEvent
+      name="waveFieldNm1Collection"
+      timeFrequency="0.5"
+      targetExactTimestep="0"
+      target="/Tasks/waveFieldNm1Collection" />
 
     <PeriodicEvent
       name="waveFieldOutput"
-      timeFrequency="1.0"
+      timeFrequency="0.5"
       targetExactTimestep="0"
       target="/Outputs/waveFieldOutput" />
 
@@ -145,16 +157,26 @@
 
   <Tasks>
     <PackCollection
-      name="waveFieldCollection"
+      name="waveFieldNp1Collection"
       objectPath="nodeManager"
       fieldName="pressure_np1"/>
+
+    <!--PackCollection
+      name="waveFieldNCollection"
+      objectPath="nodeManager"
+      fieldName="pressure_n"-->
+
+    <!--PackCollection
+      name="waveFieldNm1Collection"
+      objectPath="nodeManager"
+      fieldName="pressure_nm1"-->
 
   </Tasks>
 
   <Outputs>
     <TimeHistory
 	name="waveFieldOutput"
-	sources="{/Tasks/waveFieldCollection}"
+	sources="{/Tasks/waveFieldNp1Collection}"
 	filename="waveField" />
 
   </Outputs>
