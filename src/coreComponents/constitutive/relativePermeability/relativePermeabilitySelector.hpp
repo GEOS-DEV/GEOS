@@ -23,6 +23,7 @@
 #include "constitutive/relativePermeability/BrooksCoreyRelativePermeability.hpp"
 #include "constitutive/relativePermeability/BrooksCoreyBakerRelativePermeability.hpp"
 #include "constitutive/relativePermeability/TableRelativePermeability.hpp"
+#include "constitutive/relativePermeability/TableRelativePermeabilityHysteresis.hpp"
 #include "constitutive/relativePermeability/VanGenuchtenBakerRelativePermeability.hpp"
 
 namespace geosx
@@ -46,6 +47,7 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase const & relPerm,
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
                                TableRelativePermeability,
+                               TableRelativePermeabilityHysteresis,
                                VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -56,6 +58,7 @@ void constitutiveUpdatePassThru( RelativePermeabilityBase & relPerm,
   ConstitutivePassThruHandler< BrooksCoreyRelativePermeability,
                                BrooksCoreyBakerRelativePermeability,
                                TableRelativePermeability,
+                               TableRelativePermeabilityHysteresis,
                                VanGenuchtenBakerRelativePermeability >::execute( relPerm, std::forward< LAMBDA >( lambda ) );
 }
 
