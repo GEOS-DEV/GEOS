@@ -30,7 +30,6 @@
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/OBLSuperEngineExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
@@ -49,11 +48,11 @@ static constexpr real64 minValueForDivision = 1e-10;
 // The number of operators in use depends on:
 // 1. Number of phases
 // 2. Number of components
-// 3. Features required in simulation (now its only one - ENergy balance)
+// 3. Features required in simulation (now its only one - Energy balance)
 // This number needs to be used in solver and in kernels (as a template parameter)
 // IMHO, this number is too big ( order of 10-100) to be treated via a kernelLaunchSelectorSwitch construct
 // Hence, a way to define it once and for all is needed.
-// Could be constexpr member of solver, but passing constexpr lambdas require -std=c++17
+// Could be constexpr member of solver, but passing constexpr lambdas require -std=c++17 if I`m not mistaken
 
 constexpr integer COMPUTE_NUM_OPS ( integer const NP, integer const NC, bool ENERGY )
 {
@@ -134,9 +133,10 @@ void kernelLaunchSelectorEnergySwitch( T numPhases, T numComps, bool enableEnerg
 
 /**
  * @class OBLOperatorsKernel
- * @tparam NUM_DIMS number of degrees of freedom
- * @tparam NUM_OPS number of degrees of freedom
- * @brief Compute OBL Operators and derivatives for specified region
+ * @tparam NUM_PHASES number of phases
+ * @tparam NUM_COMPS number of components
+ * @tparam ENABLE_ENERGY flag if energy balance equation is assembled
+ * @brief Compute OBL Operators and derivatives
  */
 template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY >
 class OBLOperatorsKernel
@@ -176,7 +176,7 @@ public:
   /**
    * @brief Constructor
    * @param[in] subRegion the element subregion
-   * @param[in] fluid the fluid model
+   * @param[in] OBLOperatorsTable the OBL table function kernel
    */
   OBLOperatorsKernel( ObjectManagerBase & subRegion,
                       MultivariableTableFunctionStaticKernel< numDofs, numOps > OBLOperatorsTable )
@@ -193,10 +193,8 @@ public:
   {}
 
   /**
-   * @brief Compute the phase volume fractions in an element
-   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @brief Compute the operator values and derivatives for an element
    * @param[in] ei the element index
-   * @param[in] phaseVolFractionKernelOp the function used to customize the kernel
    */
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei ) const
@@ -225,30 +223,6 @@ public:
     // we do not perform derivatives unit conversion here:
     // instead we postpone it till all the derivatives are fully formed
     // scaling the whole system might be even better solution (every pressure column needs to be multiplied by pascalToBarMult)
-
-    // if( ei == 2 )
-    // {
-    //   printf ( "\n Ops after:\n" );
-    //   for( integer i = 0; i < numOps; i++ )
-    //   {
-    //     printf ( "%e [", OBLVals[i] );
-    //     for( integer j = 0; j < numDofs; j++ )
-    //     {
-    //       printf ( " %e,", OBLDers[i][j] );
-    //     }
-    //     printf ( "]\n" );
-    //   }
-    // }
-    // if( ei < 10 )
-    // {
-    //   printf ( "element %ld: [", ei );
-    //   for( integer i = 0; i < numDofs; i++ )
-    //   {
-    //     printf ( "%lf, ", state[i] );
-    //   }
-
-    //   printf ( "]\n" );
-    // }
   }
 
 protected:
@@ -267,15 +241,13 @@ protected:
 
   // outputs
 
-  // Views on component fraction
+  // Views on OBL operator values and derivatives
   arrayView2d< real64, compflow::USD_OBL_VAL > m_OBLOperatorValues;
   arrayView3d< real64, compflow::USD_OBL_DER > m_OBLOperatorDerivatives;
-
-
 };
 
 /**
- * @class ComponentFractionKernelFactory
+ * @class OBLOperatorsKernelFactory
  */
 class OBLOperatorsKernelFactory
 {
@@ -285,8 +257,10 @@ public:
    * @brief Create a new kernel and launch
    * @tparam POLICY the policy used in the RAJA kernel
    * @param[in] numPhases the number of phases
-   * @param[in] numDofs the number of degrees of freedom
+   * @param[in] numComponents the number of components
+   * @param[in] enableEnergyBalance flag if energy balance equation is assembled
    * @param[in] subRegion the element subregion
+   * @param[in] function the OBL table function
    */
   template< typename POLICY >
   static void
@@ -324,9 +298,10 @@ public:
 
 /**
  * @class ElementBasedAssemblyKernel
- * @tparam NUM_COMP number of fluid components
- * @tparam NUM_DOF number of degrees of freedom
- * @brief Define the interface for the assembly kernel in charge of accumulation and volume balance
+ * @tparam NUM_PHASES number of phases
+ * @tparam NUM_COMPS number of components
+ * @tparam ENABLE_ENERGY flag if energy balance equation is assembled
+ * @brief Compute accumulation term for an element
  */
 template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY >
 class ElementBasedAssemblyKernel
@@ -748,7 +723,7 @@ protected:
   /// Time step size
   real64 const m_dt;
 
-  /// trans multiplier
+  /// trans multiplier exponent
   real64 m_transMultExp;
 
   /// Views on dof numbers
@@ -794,13 +769,12 @@ protected:
 
 /**
  * @class FaceBasedAssemblyKernel
- * @tparam NUM_COMP number of fluid components
- * @tparam NUM_DOF number of degrees of freedom
- * @tparam STENCILWRAPPER the type of the stencil wrapper
- * @brief Define the interface for the assembly kernel in charge of flux terms
+ * @tparam NUM_PHASES number of phases
+ * @tparam NUM_COMPS number of components
+ * @tparam ENABLE_ENERGY flag if energy balance equation is assembled
+ * @tparam STENCILWRAPPER wrapper for element stencils
+ * @brief Compute flux term for an element
  */
-
-
 template< integer NUM_PHASES, integer NUM_COMPS, bool ENABLE_ENERGY, typename STENCILWRAPPER >
 class FaceBasedAssemblyKernel : public FaceBasedAssemblyKernelBase
 {
@@ -1326,9 +1300,10 @@ public:
    * @tparam STENCILWRAPPER the type of the stencil wrapper
    * @param[in] numComps the number of fluid components
    * @param[in] numPhases the number of fluid phases
+   * @param[in] enableEnergyBalance flag if energy balance equation is assembled
+   * @param[in] transMultExp the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper

@@ -118,8 +118,6 @@ OBLSuperEngine::OBLSuperEngine( const string & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "List of fluid phases" );
 
-
-
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 }
 
