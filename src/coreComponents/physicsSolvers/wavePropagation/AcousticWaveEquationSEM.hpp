@@ -86,7 +86,7 @@ public:
    * @param iseismo the index number of of the seismo trace
    * @param pressure_np1 the array to save the pressure value at the receiver position
    */
-  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) override;
+  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) override;
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
@@ -116,7 +116,7 @@ private:
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -152,7 +152,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array2d< real64 > m_pressureNp1AtReceivers;
+  array1d< real64 > m_pressureNp1AtReceivers;
 
 
 };

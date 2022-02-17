@@ -24,7 +24,6 @@
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "mainInterface/GeosxState.hpp"
 
 namespace geosx
 {
@@ -59,17 +58,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::outputSeismoTraceString(), &m_outputSeismoTrace ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise" );
-
-  registerWrapper( viewKeyStruct::dtSeismoTraceString(), &m_dtSeismoTrace ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Time step for output pressure at receivers" );
-
-  registerWrapper( viewKeyStruct::indexSeismoTraceString(), &m_indexSeismoTrace ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Count for output pressure at receivers" );
+    setDescription( "Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise" );
 
 }
 
@@ -78,15 +67,6 @@ WaveSolverBase::~WaveSolverBase()
   // TODO Auto-generated destructor stub
 }
 
-
-void WaveSolverBase::reinit()
-{
-  DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  postProcessInput();
-  precomputeSourceAndReceiverTerm( mesh );
-}
 
 void WaveSolverBase::initializePreSubGroups()
 {

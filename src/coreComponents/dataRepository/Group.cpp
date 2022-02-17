@@ -272,6 +272,18 @@ void Group::initializationOrder( string_array & order )
   }
 }
 
+void Group::initialize_postMeshGeneration()
+{
+  string_array initOrder;
+  initializationOrder( initOrder );
+
+  for( auto const & groupName : initOrder )
+  {
+    getGroup( groupName ).initialize_postMeshGeneration();
+  }
+}
+
+
 void Group::initialize()
 {
   initializePreSubGroups();
