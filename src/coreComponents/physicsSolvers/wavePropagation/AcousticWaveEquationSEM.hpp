@@ -34,7 +34,7 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  static constexpr real64 epsilonLoc = 1e-12;
+  static constexpr real64 epsilonLoc = 1e-16;
 
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
