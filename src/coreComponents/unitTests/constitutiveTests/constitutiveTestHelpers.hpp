@@ -19,6 +19,8 @@
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/capillaryPressure/capillaryPressureSelector.hpp"
+#include "functions/FunctionManager.hpp"
+#include "functions/TableFunction.hpp"
 #include "unitTests/fluidFlowTests/testCompFlowUtils.hpp"
 
 // TPL includes
@@ -29,6 +31,21 @@ namespace geosx
 {
 namespace testing
 {
+
+void initializeTable( string const & tableName,
+                      array1d< array1d< real64 > > const & coordinates,
+                      array1d< real64 > const & values )
+{
+  FunctionManager & functionManager = FunctionManager::getInstance();
+
+  TableFunction & table =
+    dynamicCast< TableFunction & >( *functionManager.createChild( TableFunction::catalogName(), tableName ) );
+  table.setTableCoordinates( coordinates );
+  table.setTableValues( values );
+  table.reInitializeFunction();
+
+  table.setInterpolationMethod( TableFunction::InterpolationType::Linear );
+}
 
 template< typename MODEL, typename VAR, typename D_VAR_D_SAT >
 void testNumericalDerivatives( dataRepository::Group & parent,
@@ -45,7 +62,7 @@ void testNumericalDerivatives( dataRepository::Group & parent,
 
   // Copy input values into an array with expected layout
   array2d< real64, compflow::LAYOUT_PHASE > saturationValues( 1, NP );
-  for( localIndex i = 0; i < NP; ++i )
+  for( integer i = 0; i < NP; ++i )
   {
     saturationValues[0][i] = saturationInput[i];
   }
@@ -74,10 +91,10 @@ void testNumericalDerivatives( dataRepository::Group & parent,
   auto dPhaseRelPerm_dS = testing::invertLayout( dPhaseRelPerm_dSat, NP, NP );
 
   array2d< real64, compflow::LAYOUT_PHASE > satNew( 1, NP );
-  for( localIndex jp = 0; jp < NP; ++jp )
+  for( integer jp = 0; jp < NP; ++jp )
   {
     real64 const dS = perturbParameter * (saturation[jp] + perturbParameter);
-    for( localIndex ip = 0; ip < NP; ++ip )
+    for( integer ip = 0; ip < NP; ++ip )
     {
       satNew[0][ip] = saturation[ip];
     }

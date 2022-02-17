@@ -76,11 +76,6 @@ protected:
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const = 0;
-
-  GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
@@ -134,6 +129,13 @@ public:
   arrayView3d< real64 const, relperm::USD_RELPERM > phaseRelPerm() const { return m_phaseRelPerm; }
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
+  /**
+   * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
+   * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
+   */
+  virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+  { GEOSX_UNUSED_VAR( phaseVolFraction ); }
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
@@ -144,18 +146,18 @@ public:
 private:
 
   /**
-   * @brief Function called internally to resize member arrays
-   * @param size primary dimension (e.g. number of cells)
-   * @param numPts secondary dimension (e.g. number of gauss points per cell)
-   */
-  void resizeFields( localIndex const size, localIndex const numPts );
-
-  /**
    * @brief Called internally to set array dim labels.
    */
   void setLabels();
 
 protected:
+
+  /**
+   * @brief Function called internally to resize member arrays
+   * @param size primary dimension (e.g. number of cells)
+   * @param numPts secondary dimension (e.g. number of gauss points per cell)
+   */
+  virtual void resizeFields( localIndex const size, localIndex const numPts );
 
   virtual void postProcessInput() override;
 
