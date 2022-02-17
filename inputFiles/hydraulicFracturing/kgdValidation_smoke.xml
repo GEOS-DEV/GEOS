@@ -1,0 +1,74 @@
+<?xml version="1.0" ?>
+
+<Problem>
+   <Included>
+    <File name="./kgdValidation_base.xml"/>
+   </Included>
+  
+   <Mesh>
+    <!-- SPHINX_MESH -->
+    <InternalMesh 
+      name="mesh1"
+      elementTypes="{C3D8}"
+      xCoords="{ 0, 0.1525 }"
+      yCoords="{ -0.048, -0.012, -0.006, 0.006, 0.012, 0.048 }"
+      zCoords="{ 0.037, 0.092 }"
+      nx="{ 10 }"
+      ny="{ 4, 2, 6, 2, 4 }"
+      nz="{ 10 }"	  
+      cellBlockNames="{cb1}"/>
+    <!-- SPHINX_MESH_END -->
+  </Mesh>
+
+  <Geometry>
+    <!-- SPHINX_INITIALFRAC -->
+    <Box
+      name="fracture"
+      xMin="{ -0.1, -0.001, 0.036 }"
+      xMax="{  0.016, 0.001, 0.093 }"/>
+    <!-- SPHINX_INITIALFRAC_END -->
+
+    <!-- SPHINX_INJSOURCE -->
+    <Box
+      name="source"
+      xMin="{ -0.1, -0.001, 0.036 }"
+      xMax="{  0.016, 0.001, 0.093 }"/>
+    <!-- SPHINX_INJSOURCE_END -->
+
+    <!-- SPHINX_FRACPLANE -->
+    <Box
+      name="core"
+      xMin="{ -0.1, -0.001, 0.036 }"
+      xMax="{  0.2, 0.001, 0.093 }"/>
+    <!-- SPHINX_FRACPLANE_END -->
+  </Geometry>
+
+  <Events
+    maxTime="1.0">
+
+    <SoloEvent 
+      name="preFracture"
+      target="/Solvers/SurfaceGen"
+      />
+
+    <PeriodicEvent 
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="1.0"
+      forceDt="1.0"
+      targetExactStartStop="1"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="outputs"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput" />
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+  
+</Problem>
