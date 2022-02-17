@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace PoromechanicsKernels
+namespace poromechanicsKernels
 {
 
 /**
@@ -464,7 +464,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
+    using namespace compositionalMultiphaseUtilities;
 
     GEOSX_UNUSED_VAR( k );
 
@@ -608,7 +608,7 @@ using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
                                                               CRSMatrixView< real64, globalIndex const > const,
                                                               arrayView1d< real64 > const >;
 
-} // namespace PoroelasticKernels
+} // namespace poromechanicsKernels
 
 } // namespace geosx
 

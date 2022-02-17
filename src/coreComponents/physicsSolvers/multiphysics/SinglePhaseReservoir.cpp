@@ -150,9 +150,9 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                   arrayView1d< real64 > const & localRhs )
 {
-  using TAG = SinglePhaseWellKernels::SubRegionTag;
-  using ROFFSET = SinglePhaseWellKernels::RowOffset;
-  using COFFSET = SinglePhaseWellKernels::ColOffset;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
@@ -175,7 +175,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
       // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
       // therefore, we do not want to compute perforation rates and we simply assume they are zero
       WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
-      if( !wellControls.wellIsOpen( time_n + dt ) )
+      if( !wellControls.isWellOpen( time_n + dt ) )
       {
         return;
       }

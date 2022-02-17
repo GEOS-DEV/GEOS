@@ -41,8 +41,8 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseBaseKernels;
-using namespace CompositionalMultiphaseHybridFVMKernels;
+using namespace compositionalMultiphaseBaseKernels;
+using namespace compositionalMultiphaseHybridFVMKernels;
 using namespace mimeticInnerProduct;
 
 CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::string & name,
@@ -219,7 +219,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayVi
     // scheme
     // This one-sided gravity term is currently always treated with TPFA, as in MRST.
     // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
-    SinglePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
+    singlePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
                                                        PrecomputeKernel >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),
                                                                            faceManager.size(),
@@ -513,7 +513,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     return 1.0;
   }
 
-  real64 constexpr eps = CompositionalMultiphaseBaseKernels::minDensForDivision;
+  real64 constexpr eps = compositionalMultiphaseBaseKernels::minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
   real64 const maxRelativePresChange = m_maxRelativePresChange;
 
@@ -675,7 +675,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
-        CompositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+        compositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                                          parallelDeviceReduce >( localSolution,
                                                                                                  dofManager.rankOffset(),
                                                                                                  numFluidComponents(),
@@ -703,7 +703,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
       faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
 
     localIndex const faceSolutionCheck =
-      CompositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+      compositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                                             parallelDeviceReduce >( localSolution,
                                                                                                     dofManager.rankOffset(),
                                                                                                     faceDofNumber,
@@ -806,7 +806,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
       arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
 
       real64 subRegionResidualNorm = 0.0;
-      CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+      compositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                       parallelDeviceReduce >( localRhs,
                                                                                               rankOffset,
                                                                                               numFluidComponents(),
@@ -829,7 +829,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
     // 2. Compute the residual for the face-based constraints
     real64 faceResidualNorm = 0.0;
-    CompositionalMultiphaseHybridFVMKernels::
+    compositionalMultiphaseHybridFVMKernels::
       ResidualNormKernel::launch< parallelDevicePolicy<>,
                                   parallelDeviceReduce >( localRhs,
                                                           rankOffset,
@@ -944,7 +944,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
     getConstitutiveModel< RelativePermeabilityBase >( dataGroup,
                                                       dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() ) );
 
-  CompositionalMultiphaseHybridFVMKernels::
+  compositionalMultiphaseHybridFVMKernels::
     PhaseMobilityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,

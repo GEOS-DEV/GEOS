@@ -2,7 +2,7 @@
 
 <Problem>
   <Included>
-    <File name="./Regions_base.xml" />
+    <File name="./FieldCaseTutorial3_base.xml" />
   </Included>
 
   <Mesh>

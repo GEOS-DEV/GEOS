@@ -133,7 +133,7 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) 
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    SinglePhaseProppantBaseKernels::FluidUpdateKernel::launch( fluidWrapper,
+    singlePhaseProppantBaseKernels::FluidUpdateKernel::launch( fluidWrapper,
                                                                pres,
                                                                dPres,
                                                                proppantConcentration,

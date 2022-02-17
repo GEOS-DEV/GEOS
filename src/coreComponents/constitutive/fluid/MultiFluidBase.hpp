@@ -360,12 +360,14 @@ private:
      * @tparam maxNumPhase the max number of phases
      * @param[in] phaseMolecularWeight the phase molecular weight computed by the constitutive model
      * @param[in] dPhaseMolecularWeight the derivatives of phase molecular weights wrt pressure, temperature, and comp fractions
+     * @param[in] phaseFrac the phase fractions in the cell
      * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
      */
     template< integer maxNumDof, integer maxNumPhase >
     GEOSX_HOST_DEVICE
     void convertToPhaseCompMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
                                           real64 const (&dPhaseMolecularWeight)[maxNumPhase][maxNumDof],
+                                          PhaseProp::SliceType const phaseFrac,
                                           PhaseComp::SliceType const phaseCompFrac ) const;
 
     /**
@@ -588,11 +590,10 @@ MultiFluidBase::KernelWrapper::
   convertToPhaseMassFractions( phaseMolecularWeight,
                                dPhaseMolecularWeight,
                                phaseFrac );
-
   convertToPhaseCompMassFractions( phaseMolecularWeight,
                                    dPhaseMolecularWeight,
+                                   phaseFrac,
                                    phaseCompFrac );
-
   computeDerivativesWrtMassFractions( dCompMoleFrac_dCompMassFrac,
                                       phaseFrac,
                                       phaseCompFrac,
@@ -659,6 +660,7 @@ void
 MultiFluidBase::KernelWrapper::
   convertToPhaseCompMassFractions( real64 const (&phaseMolecularWeight)[maxNumPhase],
                                    real64 const (&dPhaseMolecularWeight)[maxNumPhase][maxNumDof],
+                                   PhaseProp::SliceType const phaseFrac,
                                    PhaseComp::SliceType const phaseCompFrac ) const
 {
   using namespace multifluid;
@@ -668,6 +670,15 @@ MultiFluidBase::KernelWrapper::
 
   for( integer ip = 0; ip < numPhase; ++ip )
   {
+
+    // Note: for Black-Oil, phaseMolecularWeight can be zero for absent gas
+    // TODO: implement forExistingPhase lambda
+    bool const phaseExists = (phaseFrac.value[ip] > 0);
+    if( !phaseExists )
+    {
+      continue;
+    }
+
     real64 const phaseMolecularWeightInv = 1.0 / phaseMolecularWeight[ip];
 
     for( integer ic = 0; ic < numComp; ++ic )

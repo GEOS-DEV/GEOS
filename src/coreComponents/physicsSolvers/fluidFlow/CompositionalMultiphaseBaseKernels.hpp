@@ -33,7 +33,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseBaseKernels
+namespace compositionalMultiphaseBaseKernels
 {
 
 using namespace constitutive;
@@ -858,7 +858,7 @@ public:
   void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
+    using namespace compositionalMultiphaseUtilities;
 
     // apply equation/variable change transformation to the component mass balance equations
     real64 work[numDof]{};
@@ -1437,7 +1437,7 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
   }
 }
 
-} // namespace CompositionalMultiphaseBaseKernels
+} // namespace compositionalMultiphaseBaseKernels
 
 } // namespace geosx
 

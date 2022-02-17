@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseWellKernels
+namespace compositionalMultiphaseWellKernels
 {
 
 /******************************** ControlEquationHelper ********************************/
@@ -33,7 +33,7 @@ namespace CompositionalMultiphaseWellKernels
 GEOSX_HOST_DEVICE
 void
 ControlEquationHelper::
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
                  real64 const & targetBHP,
@@ -62,7 +62,7 @@ ControlEquationHelper::
   if( currentControl == WellControls::Control::BHP )
   {
     // the control is viable if the reference oil rate is below the max rate for producers
-    if( wellType == WellControls::Type::PRODUCER )
+    if( isProducer )
     {
       controlIsViable = ( LvArray::math::abs( currentPhaseVolRate[phasePhaseIndex] ) <= LvArray::math::abs( targetPhaseRate ) );
     }
@@ -75,7 +75,7 @@ ControlEquationHelper::
   else // rate control
   {
     // the control is viable if the reference pressure is below/above the max/min pressure
-    if( wellType == WellControls::Type::PRODUCER )
+    if( isProducer )
     {
       // targetBHP specifies a min pressure here
       controlIsViable = ( currentBHP >= targetBHP );
@@ -93,7 +93,7 @@ ControlEquationHelper::
   }
   else
   {
-    if( wellType == WellControls::Type::PRODUCER )
+    if( isProducer )
     {
       newControl = ( currentControl == WellControls::Control::BHP )
            ? WellControls::Control::PHASEVOLRATE
@@ -292,9 +292,9 @@ FluxKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
 
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
   arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
 
   // loop over the well elements to compute the fluxes between elements
@@ -322,7 +322,7 @@ FluxKernel::
     real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
     localIndex iwelemUp = -1;
 
-    if( iwelemNext < 0 && wellType == WellControls::Type::INJECTOR ) // exit connection, injector
+    if( iwelemNext < 0 && !isProducer ) // exit connection, injector
     {
       // we still need to define iwelemUp for Jacobian assembly
       iwelemUp = iwelem;
@@ -340,7 +340,7 @@ FluxKernel::
     else
     {
       // first set iwelemUp to the upstream cell
-      if( ( iwelemNext < 0 && wellType == WellControls::Type::PRODUCER )  // exit connection, producer
+      if( ( iwelemNext < 0 && isProducer )  // exit connection, producer
           || currentConnRate < 0 ) // not an exit connection, iwelem is upstream
       {
         iwelemUp = iwelem;
@@ -602,7 +602,7 @@ PressureRelationKernel::
 {
 
   // static well control data
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
   real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
@@ -644,7 +644,7 @@ PressureRelationKernel::
     if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
     {
       WellControls::Control newControl = currentControl;
-      ControlEquationHelper::switchControl( wellType,
+      ControlEquationHelper::switchControl( isProducer,
                                             currentControl,
                                             targetPhaseIndex,
                                             targetBHP,
@@ -766,7 +766,8 @@ template< integer NC, integer NP >
 GEOSX_HOST_DEVICE
 void
 PerforationKernel::
-  compute( real64 const & resPres,
+  compute( bool const & disableReservoirToWellFlow,
+           real64 const & resPres,
            real64 const & dResPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
@@ -889,8 +890,9 @@ PerforationKernel::
     {
 
       // skip the rest of the calculation if the phase is absent
+      // or if crossflow is disabled for injectors
       bool const phaseExists = (resPhaseVolFrac[ip] > 0);
-      if( !phaseExists )
+      if( !phaseExists || disableReservoirToWellFlow )
       {
         continue;
       }
@@ -1083,6 +1085,7 @@ template< integer NC, integer NP >
 void
 PerforationKernel::
   launch( localIndex const size,
+          bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
@@ -1130,7 +1133,8 @@ PerforationKernel::
     // get the index of the well elem
     localIndex const iwelem = perfWellElemIndex[iperf];
 
-    compute< NC, NP >( resPres[er][esr][ei],
+    compute< NC, NP >( disableReservoirToWellFlow,
+                       resPres[er][esr][ei],
                        dResPres[er][esr][ei],
                        resPhaseVolFrac[er][esr][ei],
                        dResPhaseVolFrac_dPres[er][esr][ei],
@@ -1167,6 +1171,7 @@ PerforationKernel::
   template \
   void PerforationKernel:: \
     launch< NC, NP >( localIndex const size, \
+                      bool const disableReservoirToWellFlow, \
                       ElementViewConst< arrayView1d< real64 const > > const & resPres, \
                       ElementViewConst< arrayView1d< real64 const > > const & dResPres, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac, \
@@ -1320,7 +1325,7 @@ AccumulationKernel::
           arrayView1d< real64 > const & localRhs )
 {
 
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
 
   forAll< parallelDevicePolicy<> >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
@@ -1549,7 +1554,7 @@ PresTempCompFracInitializationKernel::
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
   WellControls::Control const currentControl = wellControls.getControl();
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
 
   // loop over all perforations to compute an average total mass density and component fraction
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
@@ -1600,7 +1605,7 @@ PresTempCompFracInitializationKernel::
     sumCompFrac[ic] = sum.get();
   }
 
-  real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
+  real64 const pres = ( isProducer )
                       ? MpiWrapper::min( minResPres.get() )
                       : MpiWrapper::max( maxResPres.get() );
   real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
@@ -1608,7 +1613,7 @@ PresTempCompFracInitializationKernel::
   stackArray1d< real64, MAX_NUM_COMP > avgCompFrac( numComps );
   real64 avgTemp = 0;
   // compute average component fraction
-  if( wellControls.getType() == WellControls::Type::PRODUCER )
+  if( isProducer )
   {
     // use average temperature from reservoir
     avgTemp = MpiWrapper::sum( sumTemp.get() ) / numPerforations;
@@ -1663,9 +1668,7 @@ PresTempCompFracInitializationKernel::
     // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
     //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
     //       be used for initialization
-    pressureControl = ( wellType == WellControls::Type::PRODUCER )
-                      ? 0.5 * pres
-                      : 2.0 * pres;
+    pressureControl = ( isProducer ) ? 0.5 * pres : 2.0 * pres;
   }
 
   GEOSX_THROW_IF( pressureControl <= 0,
@@ -1711,7 +1714,7 @@ RateInitializationKernel::
           arrayView1d< real64 > const & connRate )
 {
   WellControls::Control const control = wellControls.getControl();
-  WellControls::Type const wellType = wellControls.getType();
+  bool const isProducer = wellControls.isProducer();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( currentTime );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( currentTime );
 
@@ -1722,7 +1725,7 @@ RateInitializationKernel::
     {
       // if BHP constraint set rate below the absolute max rate
       // with the appropriate sign (negative for prod, positive for inj)
-      if( wellType == WellControls::Type::PRODUCER )
+      if( isProducer )
       {
         connRate[iwelem] = LvArray::math::max( 0.1 * targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
       }
@@ -1733,7 +1736,7 @@ RateInitializationKernel::
     }
     else
     {
-      if( wellType == WellControls::Type::PRODUCER )
+      if( isProducer )
       {
         connRate[iwelem] = targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex];
       }
@@ -1746,6 +1749,6 @@ RateInitializationKernel::
 }
 
 
-} // end namespace CompositionalMultiphaseWellKernels
+} // end namespace compositionalMultiphaseWellKernels
 
 } // end namespace geosx

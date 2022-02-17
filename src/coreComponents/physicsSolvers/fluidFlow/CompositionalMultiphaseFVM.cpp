@@ -43,8 +43,8 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseFVMKernels;
-using namespace CompositionalMultiphaseBaseKernels;
+using namespace compositionalMultiphaseFVMKernels;
+using namespace compositionalMultiphaseBaseKernels;
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
@@ -346,7 +346,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
     return 1.0;
   }
 
-  real64 constexpr eps = CompositionalMultiphaseBaseKernels::minDensForDivision;
+  real64 constexpr eps = compositionalMultiphaseBaseKernels::minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
