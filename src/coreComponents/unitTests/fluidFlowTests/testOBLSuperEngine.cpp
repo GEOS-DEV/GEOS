@@ -12,9 +12,6 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include "constitutive/fluid/MultiFluidBase.hpp"
-#include "finiteVolume/FiniteVolumeManager.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "mainInterface/initialization.hpp"
 #include "mainInterface/GeosxState.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
@@ -546,7 +543,7 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
                          [&] ( CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs )
   {
-    solver->assembleAccumulationAndVolumeBalanceTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
+    solver->assembleAccumulationTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
 #endif

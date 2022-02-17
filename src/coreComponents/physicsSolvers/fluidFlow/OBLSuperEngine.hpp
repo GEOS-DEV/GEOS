@@ -27,11 +27,19 @@ namespace geosx
 
 /**
  * @class OBLSuperEngine
- *
- * A compositional multiphase thermal reactive solver based on DARTS super engine
- * Takes into account diffusion, capillarity, kinetic and equilibrium reactions, precipitation/dissolution
- * through OBL approach using only cell-centered variables
- * works with TPFA
+ * - A compositional multiphase thermal reactive solver based on OBL linearization approach (https://doi.org/10.1016/j.petrol.2017.08.009)
+ * - Analogouos to Super Engine in DARTS reservoir simulator (https://darts.citg.tudelft.nl/)
+ * - Takes into account diffusion, capillarity, kinetic and equilibrium reactions, precipitation/dissolution using only cell-centered
+ * variables
+ * - Supports only TPFA discretization
+ * - Does not work with wells and aquifers (will require introduction of additional operator tables)
+ * - Uses a single operator table for the whole reservoir (introduction of several tables will allow to support different fluid properties
+ * in different reservoir regions)
+ * - Since only static MultivariableTableFunction is currently implemented, all operator values have to be stored, which limits OBL
+ * discretization:
+ *    only 3-5 components with 32-64 points is now viable. Adative MultivariableTableFunction with sparse storage will allow for much more
+ * refined OBL parametrizations
+ * - Does not use any fluid model, and solid models are only needed to get initial porosity, and (re-)compute transissibilities.
  */
 //START_SPHINX_INCLUDE_00
 class OBLSuperEngine : public FlowSolverBase
@@ -39,13 +47,21 @@ class OBLSuperEngine : public FlowSolverBase
 //END_SPHINX_INCLUDE_00
 public:
 
+
+  /**
+   * @brief Maximum supported number of fluid components (species)
+   *
+   * @note This puts an upper bound on memory use, allowing to optimize code better
+   */
+  static constexpr integer MAX_NUM_COMPONENTS = 5;
+
   /**
    * @brief main constructor for Group Objects
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
   OBLSuperEngine( const string & name,
-                    Group * const parent );
+                  Group * const parent );
 
   /// deleted default constructor
   OBLSuperEngine() = delete;
@@ -179,28 +195,33 @@ public:
   localIndex numFluidPhases() const { return m_numPhases; }
 
   /**
-   * @brief Get the number of fluid components (species)
-   * @return the number of components
+   * @brief Get the number of OBL operators
+   * @return the number of OBL operators
    */
   localIndex numOBLOperators() const { return m_numOBLOperators; }
 
   /**
-   * @brief assembles the accumulation and volume balance terms for all cells
-   * @param time_n previous time value
+   * @brief assembles the accumulation term for all cells
    * @param dt time step
    * @param domain the physical domain object
    * @param dofManager degree-of-freedom manager associated with the linear system
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  void assembleAccumulationAndVolumeBalanceTerms( real64 const dt,
-                                                  DomainPartition & domain,
-                                                  DofManager const & dofManager,
-                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                  arrayView1d< real64 > const & localRhs ) const;
+  void assembleAccumulationTerms( real64 const dt,
+                                  DomainPartition & domain,
+                                  DofManager const & dofManager,
+                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                  arrayView1d< real64 > const & localRhs ) const;
 
-  /**@}*/
-
+  /**
+   * @brief assembles the flux term for all cells
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix the system matrix
+   * @param localRhs the system right-hand side vector
+   */
   virtual void
   assembleFluxTerms( real64 const dt,
                      DomainPartition const & domain,
@@ -227,8 +248,6 @@ public:
     static constexpr char const * OBLOperatorsTableFileString() { return "OBLOperatorsTableFile"; }
 
     static constexpr char const * transMultExpString() { return "transMultExp"; }
-
-    static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 
@@ -278,22 +297,16 @@ public:
                           arrayView1d< real64 > const & localRhs ) const;
 
   /**
-   * @brief Sets all the negative component densities (if any) to zero.
+   * @brief Sets all the primary variables, which are outside of defined OBL parametrization limits, to be inside them
+   * Helps to evaluate correct operator values/derivatives when a disturbed solution is obtained from a previous Newton iteration
+   * Does not help in case if the model is defined inconsistently:
+   *    for instance, if minimum pressure value in OBL table is higher, than BHP used by a producer/sink
+   *    In that case, the solution will be chopped all the time and Newton will never converge
    * @param domain the physical domain object
    */
-  void chopNegativeDensities( DomainPartition & domain );
+  void chopPrimaryVariablesToOBLLimits( DomainPartition & domain );
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
-
-
-  /**
-   * @brief Compute the largest CFL number in the domain
-   * @param dt the time step size
-   * @param domain the domain containing the mesh and fields
-   */
-  void
-  computeCFLNumbers( real64 const & dt, DomainPartition & domain );
-
 
   virtual void initializePreSubGroups() override;
 
@@ -325,9 +338,6 @@ protected:
 
   /// flag indicating whether energy balance will be enabled or not
   integer m_enableEnergyBalance;
-
-  /// flag indicating whether CFL numbers will be computed or not
-  integer m_computeCFLNumbers;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
