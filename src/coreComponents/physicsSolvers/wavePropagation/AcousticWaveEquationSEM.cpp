@@ -321,7 +321,7 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
           ptmpNp1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
           ptmpN += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
-	//Temporary linear interpolation.
+        //Temporary linear interpolation.
         p_rcvs[iSeismo][ircv] = a1*ptmpN + a2*ptmpNp1;
       }
     } );
