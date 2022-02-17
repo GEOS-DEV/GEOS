@@ -319,8 +319,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
     // gas phase composition  CO2 = 1.0
 
-    LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
-
     phaseCompFraction.value[m_phaseGasIndex][m_CO2Index]   = 1.0;
     phaseCompFraction.value[m_phaseGasIndex][m_waterIndex] = 0.0;
 

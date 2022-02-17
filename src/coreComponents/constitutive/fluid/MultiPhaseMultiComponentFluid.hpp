@@ -409,24 +409,27 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
 
     real64 phaseMolarDens{};
     stackArray1d< real64, numComp+2 > dPhaseMolarDens( numComp+2 );
-    m_p2Density.compute( pressure,
-                         temperatureInCelsius,
-                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
-                         phaseMolarDens, dPhaseMolarDens.toSlice(),
-                         false );
 
     m_p1Density.compute( pressure,
                          temperatureInCelsius,
                          phaseCompFraction.value[ip1].toSliceConst(), phaseCompFraction.derivs[ip1].toSliceConst(),
                          phaseMolarDens, dPhaseMolarDens.toSlice(),
                          false );
-    for( integer ip = 0; ip < numPhase; ++ip )
+    phaseMolecularWeight[ip1] = phaseDensity.value[ip1] / phaseMolarDens;
+    for( integer idof = 0; idof < numComp+2; ++idof )
     {
-      phaseMolecularWeight[ip] = phaseDensity.value[ip] / phaseMolarDens;
-      for( integer idof = 0; idof < numComp+2; ++idof )
-      {
-        dPhaseMolecularWeight[ip][idof] = phaseDensity.derivs[ip][idof] / phaseMolarDens - phaseMolecularWeight[ip] * dPhaseMolarDens[idof] / phaseMolarDens;
-      }
+      dPhaseMolecularWeight[ip1][idof] = phaseDensity.derivs[ip1][idof] / phaseMolarDens - phaseMolecularWeight[ip1] * dPhaseMolarDens[idof] / phaseMolarDens;
+    }
+
+    m_p2Density.compute( pressure,
+                         temperatureInCelsius,
+                         phaseCompFraction.value[ip2].toSliceConst(), phaseCompFraction.derivs[ip2].toSliceConst(),
+                         phaseMolarDens, dPhaseMolarDens.toSlice(),
+                         false );
+    phaseMolecularWeight[ip2] = phaseDensity.value[ip2] / phaseMolarDens;
+    for( integer idof = 0; idof < numComp+2; ++idof )
+    {
+      dPhaseMolecularWeight[ip2][idof] = phaseDensity.derivs[ip2][idof] / phaseMolarDens - phaseMolecularWeight[ip2] * dPhaseMolarDens[idof] / phaseMolarDens;
     }
 
     // 4.2 Convert the mole fractions to mass fractions
