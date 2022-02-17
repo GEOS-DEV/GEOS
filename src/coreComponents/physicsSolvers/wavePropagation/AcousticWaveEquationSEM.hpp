@@ -34,7 +34,11 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  static constexpr real64 epsilonLoc = 1e-12;
+
+  /**
+   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
+   */
+  static constexpr real64 epsilonLoc = 1e-8;
 
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );

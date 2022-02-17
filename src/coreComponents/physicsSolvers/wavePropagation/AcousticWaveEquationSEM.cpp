@@ -147,14 +147,13 @@ void AcousticWaveEquationSEM::postProcessInput()
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/acousticSolver" )
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
   }
 
-  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error );
-
+  GEOSX_THROW_IF( dt < epsilonLoc*maxTime, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   if( m_dtSeismoTrace > 0 )
   {
@@ -218,7 +217,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
   for( localIndex numSubEvent = 0; numSubEvent < event.numSubGroups(); ++numSubEvent )
   {
     EventBase const * subEvent = static_cast< EventBase const * >( event.getSubGroups()[numSubEvent] );
-    if( subEvent->getEventName() == "/Solvers/acousticSolver" )
+    if( subEvent->getEventName() == "/Solvers/" + this->getName() )
     {
       dt = subEvent->getReference< real64 >( EventBase::viewKeyStruct::forceDtString() );
     }
@@ -305,6 +304,9 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
 
   arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
+  real64 a1 = (dt < epsilonLoc) ? 1.0 : (timeNp1 - timeSeismo)/dt;
+  real64 a2 = 1.0 - a1;
+
   if( m_nsamplesSeismoTrace > 0 )
   {
     forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
@@ -319,7 +321,8 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
           ptmpNp1 += pressure_np1[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
           ptmpN += pressure_n[receiverNodeIds[ircv][inode]] * receiverConstants[ircv][inode];
         }
-        p_rcvs[iSeismo][ircv] = ((timeNp1 - timeSeismo)*ptmpN+(timeSeismo - time_n)*ptmpNp1)/dt;
+	//Temporary linear interpolation.
+        p_rcvs[iSeismo][ircv] = a1*ptmpN + a2*ptmpNp1;
       }
     } );
   }
@@ -513,7 +516,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt is too small", std::runtime_error );
+  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
