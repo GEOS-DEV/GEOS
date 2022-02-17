@@ -612,24 +612,8 @@ void TableRelativePermeabilityHysteresis::resizeFields( localIndex const size, l
 
   m_phaseMaxHistoricalVolFraction.resize( size, numPhases );
   m_phaseMinHistoricalVolFraction.resize( size, numPhases );
-}
-
-void TableRelativePermeabilityHysteresis::initializePhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
-{
-  arrayView2d< real64, compflow::USD_PHASE > phaseMaxHistoricalVolFraction = m_phaseMaxHistoricalVolFraction.toView();
-  arrayView2d< real64, compflow::USD_PHASE > phaseMinHistoricalVolFraction = m_phaseMinHistoricalVolFraction.toView();
-
-  localIndex const numElems = initialPhaseVolFraction.size( 0 );
-  integer const numPhases = numFluidPhases();
-
-  forAll< parallelDevicePolicy<> >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-  {
-    for( integer ip = 0; ip < numPhases; ++ip )
-    {
-      phaseMaxHistoricalVolFraction[ei][ip] = initialPhaseVolFraction[ei][ip];
-      phaseMinHistoricalVolFraction[ei][ip] = initialPhaseVolFraction[ei][ip];
-    }
-  } );
+  m_phaseMaxHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 0.0 );
+  m_phaseMinHistoricalVolFraction.setValues< parallelDevicePolicy<> >( 1.0 );
 }
 
 void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
@@ -644,14 +628,8 @@ void TableRelativePermeabilityHysteresis::saveConvergedPhaseVolFractionState( ar
   {
     for( integer ip = 0; ip < numPhases; ++ip )
     {
-      if( phaseVolFraction[ei][ip] > phaseMaxHistoricalVolFraction[ei][ip] )
-      {
-        phaseMaxHistoricalVolFraction[ei][ip] = phaseVolFraction[ei][ip];
-      }
-      if( phaseVolFraction[ei][ip] < phaseMinHistoricalVolFraction[ei][ip] )
-      {
-        phaseMinHistoricalVolFraction[ei][ip] = phaseVolFraction[ei][ip];
-      }
+      phaseMaxHistoricalVolFraction[ei][ip] = LvArray::math::max( phaseVolFraction[ei][ip], phaseMaxHistoricalVolFraction[ei][ip] );
+      phaseMinHistoricalVolFraction[ei][ip] = LvArray::math::min( phaseVolFraction[ei][ip], phaseMinHistoricalVolFraction[ei][ip] );
     }
   } );
 

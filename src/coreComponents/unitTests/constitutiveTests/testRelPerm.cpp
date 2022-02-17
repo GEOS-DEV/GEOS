@@ -980,7 +980,7 @@ TEST_F( RelPermTest, numericalDerivatives_TableRelPermHysteresisTwoPhase )
   initSat[0][1] = 0.4;
 
   m_model->allocateConstitutiveData( m_parent, 1 );
-  m_model->initializePhaseVolFractionState( initSat.toViewConst() );
+  m_model->saveConvergedPhaseVolFractionState( initSat.toViewConst() );
 
   // move the historical phase vol fraction back to the CPU since the test is performed on the CPU
   auto & phaseMinHistoricalVolFraction =

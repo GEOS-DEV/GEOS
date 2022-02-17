@@ -586,7 +586,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     string const & relpermName = subRegion.template getReference< string >( viewKeyStruct::relPermNamesString() );
     RelativePermeabilityBase & relPermMaterial =
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
-    relPermMaterial.initializePhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
+    relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
 
     // 4.4 Then, we initialize/update the capillary pressure model

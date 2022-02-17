@@ -65,7 +65,7 @@ TableRelativePermeability::TableRelativePermeability( std::string const & name,
     setInputFlag( InputFlags::FALSE ). // will be deduced from tables
     setSizedFromParent( 0 );
 
-  registerWrapper( "relPermWrappers", &m_relPermKernelWrappers ).
+  registerWrapper( viewKeyStruct::relPermKernelWrappersString(), &m_relPermKernelWrappers ).
     setSizedFromParent( 0 ).
     setRestartFlags( RestartFlags::NO_WRITE );
 }

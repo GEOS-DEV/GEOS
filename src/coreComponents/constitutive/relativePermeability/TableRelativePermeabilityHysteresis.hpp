@@ -334,8 +334,6 @@ private:
    */
   KernelWrapper createKernelWrapper();
 
-  virtual void initializePhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const override;
-
   virtual void saveConvergedPhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const override;
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct

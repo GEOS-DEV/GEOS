@@ -130,13 +130,6 @@ public:
   arrayView4d< real64 const, relperm::USD_RELPERM_DS > dPhaseRelPerm_dPhaseVolFraction() const { return m_dPhaseRelPerm_dPhaseVolFrac; }
 
   /**
-   * @brief Setup the initial step at the beginning of the simulation (needed for hysteresis)
-   * @param[in] initialPhaseVolFraction an array containing the initial phase volume fractions
-   */
-  virtual void initializePhaseVolFractionState( arrayView2d< real64 const, compflow::USD_PHASE > const & initialPhaseVolFraction ) const
-  { GEOSX_UNUSED_VAR( initialPhaseVolFraction ); }
-
-  /**
    * @brief Save converged phase volume fraction at the end of a time step (needed for hysteresis)
    * @param[in] phaseVolFraction an array containing the phase volume fractions at the end of a converged time step
    */
