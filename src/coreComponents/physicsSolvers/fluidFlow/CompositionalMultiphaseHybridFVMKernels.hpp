@@ -33,7 +33,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseHybridFVMKernels
+namespace compositionalMultiphaseHybridFVMKernels
 {
 
 using namespace constitutive;
@@ -595,15 +595,16 @@ struct FluxKernel
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
 
   using MultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseDensity,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseMassDensity,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
-                      extrinsicMeshData::multifluid::phaseCompFraction,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseMassDensity,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction >;
 
 
   /**
@@ -694,11 +695,11 @@ struct FluxKernel
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class PhaseMobilityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -734,10 +735,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = CompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
@@ -866,7 +867,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -875,7 +876,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -1128,7 +1129,7 @@ void KernelLaunchSelector( integer numFacesInElem, integer numComps, integer num
   }
 }
 
-} // namespace CompositionalMultiphaseHybridFVMKernels
+} // namespace compositionalMultiphaseHybridFVMKernels
 
 } // namespace geosx
 

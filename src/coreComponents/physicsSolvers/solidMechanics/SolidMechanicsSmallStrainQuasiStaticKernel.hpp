@@ -23,7 +23,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -95,10 +95,10 @@ public:
                SUBREGION_TYPE const & elementSubRegion,
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
-               arrayView1d< globalIndex const > const & inputDofNumber,
+               arrayView1d< globalIndex const > const inputDofNumber,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -331,13 +331,13 @@ protected:
 
 /// The factory used to construct a QuasiStatic kernel.
 using QuasiStaticFactory = finiteElement::KernelFactory< QuasiStatic,
-                                                         arrayView1d< globalIndex const > const &,
+                                                         arrayView1d< globalIndex const > const,
                                                          globalIndex,
-                                                         CRSMatrixView< real64, globalIndex const > const &,
-                                                         arrayView1d< real64 > const &,
+                                                         CRSMatrixView< real64, globalIndex const > const,
+                                                         arrayView1d< real64 > const,
                                                          real64 const (&)[3] >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

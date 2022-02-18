@@ -29,7 +29,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseHybridFVMKernels
+namespace compositionalMultiphaseHybridFVMKernels
 {
 
 /******************************** UpwindingHelper ********************************/
@@ -728,7 +728,7 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
   integer constexpr NDOF = NC+1;
 
   // dof numbers
@@ -1540,9 +1540,9 @@ FluxKernel::
 
   // get the element data needed for transmissibility computation
   arrayView2d< real64 const > const & elemCenter =
-    subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
+    subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
   arrayView1d< real64 const > const & elemVolume =
-    subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+    subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
   // TODO add this dependency to the compute function
   //arrayView3d< real64 const > const elemdPermdPres = permeabilityModel.dPerm_dPressure();
@@ -1590,7 +1590,7 @@ FluxKernel::
                                                           transMatrixGrav );
 
     // perform flux assembly in this element
-    CompositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
+    compositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
                                                                                      regionFilter,
                                                                                      elemRegionList,
                                                                                      elemSubRegionList,
@@ -1745,6 +1745,6 @@ INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 
 #undef INST_FluxKernel
 
-} // namespace CompositionalMultiphaseHybridFVMKernels
+} // namespace compositionalMultiphaseHybridFVMKernels
 
 } // namespace geosx

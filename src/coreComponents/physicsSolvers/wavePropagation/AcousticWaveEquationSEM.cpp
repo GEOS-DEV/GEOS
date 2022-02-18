@@ -20,11 +20,9 @@
 #include "AcousticWaveEquationSEM.hpp"
 #include "AcousticWaveEquationSEMKernel.hpp"
 
-#include "dataRepository/KeyNames.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
-#include "mesh/CellBlock.hpp"
 #include "mesh/ElementType.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 
@@ -104,12 +102,11 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
-  meshBodies.forSubGroups< MeshBody >( [&]( MeshBody & meshBody )
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d< string const > const & )
   {
-
-    MeshLevel & meshLevel =  meshBody.getMeshLevel( 0 );
-
-    NodeManager & nodeManager = meshLevel.getNodeManager();
+    NodeManager & nodeManager = mesh.getNodeManager();
 
     nodeManager.registerExtrinsicData< extrinsicMeshData::Pressure_nm1,
                                        extrinsicMeshData::Pressure_n,
@@ -120,16 +117,15 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
                                        extrinsicMeshData::StiffnessVector,
                                        extrinsicMeshData::FreeSurfaceNodeIndicator >( this->getName() );
 
-    FaceManager & faceManager = meshLevel.getFaceManager();
+    FaceManager & faceManager = mesh.getFaceManager();
     faceManager.registerExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >( this->getName() );
 
-    ElementRegionManager & elemManager = meshLevel.getElemManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< extrinsicMeshData::MediumVelocity >( this->getName() );
     } );
-
   } );
 }
 
@@ -162,7 +158,7 @@ void AcousticWaveEquationSEM::postProcessInput()
 
 }
 
-void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
+void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -188,52 +184,46 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh 
   receiverConstants.setValues< EXEC_POLICY >( -1 );
   receiverIsLocal.zero();
 
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
   {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
+    GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
+                    "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
+                    InputError );
+
+    arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+    arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
+    arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+
+    finiteElement::FiniteElementBase const &
+    fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+    finiteElement::dispatch3D( fe,
+                               [&]
+                                 ( auto const finiteElement )
     {
+      using FE_TYPE = TYPEOFREF( finiteElement );
 
-      GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
-                      "Invalid type of element, the acoustic solver is designed for hexahedral meshes only (C3D8) ",
-                      InputError );
+      constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
-      arrayView2d< real64 const > const elemCenter = elementSubRegion.getElementCenter();
+      acousticWaveEquationSEMKernels::
+        PrecomputeSourceAndReceiverKernel::
+        launch< EXEC_POLICY, FE_TYPE >
+        ( elementSubRegion.size(),
+        numNodesPerElem,
+        X,
+        elemsToNodes,
+        elemsToFaces,
+        facesToNodes,
+        elemCenter,
+        sourceCoordinates,
+        sourceIsLocal,
+        sourceNodeIds,
+        sourceConstants,
+        receiverCoordinates,
+        receiverIsLocal,
+        receiverNodeIds,
+        receiverConstants );
 
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
-      finiteElement::dispatch3D( fe,
-                                 [&]
-                                   ( auto const finiteElement )
-      {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-
-        constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-
-        AcousticWaveEquationSEMKernels::
-          PrecomputeSourceAndReceiverKernel::
-          launch< EXEC_POLICY, FE_TYPE >
-          ( elementSubRegion.size(),
-          numNodesPerElem,
-          X,
-          elemsToNodes,
-          elemsToFaces,
-          facesToNodes,
-          elemCenter,
-          sourceCoordinates,
-          sourceIsLocal,
-          sourceNodeIds,
-          sourceConstants,
-          receiverCoordinates,
-          receiverIsLocal,
-          receiverNodeIds,
-          receiverConstants );
-
-      } );
     } );
   } );
 }
@@ -309,41 +299,40 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   WaveSolverBase::initializePostInitialConditionsPreSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
-  precomputeSourceAndReceiverTerm( mesh );
 
-  NodeManager & nodeManager = mesh.getNodeManager();
-  FaceManager & faceManager = mesh.getFaceManager();
-
-  /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-  arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
-  /// get table containing all the face normals
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-
-  // mass matrix to be computed in this function
-  arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-
-  /// damping matrix to be computed for each dof in the boundary of the mesh
-  arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
-  damping.zero();
-
-  /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-  arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
-
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
-    {
+    precomputeSourceAndReceiverTerm( mesh, regionNames );
 
+    NodeManager & nodeManager = mesh.getNodeManager();
+    FaceManager & faceManager = mesh.getFaceManager();
+
+    /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
+    arrayView1d< integer > const & facesDomainBoundaryIndicator = faceManager.getDomainBoundaryIndicator();
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+    /// get table containing all the face normals
+    arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+    ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+
+    // mass matrix to be computed in this function
+    arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+
+    /// damping matrix to be computed for each dof in the boundary of the mesh
+    arrayView1d< real64 > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+    damping.zero();
+
+    /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+    arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion & elementSubRegion )
+    {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes = elementSubRegion.nodeList();
       arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
       arrayView1d< real64 const > const velocity = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocity >();
@@ -359,7 +348,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
-        AcousticWaveEquationSEMKernels::
+        acousticWaveEquationSEMKernels::
           MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
@@ -378,7 +367,6 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
       } );
     } );
   } );
-
 }
 
 
@@ -466,74 +454,77 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  NodeManager & nodeManager = mesh.getNodeManager();
-
-  arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-  arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
-
-  arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
-  arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
-  arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
-
-  arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
-  arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
-  arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
-
-  auto kernelFactory = AcousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
-
-  finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          targetRegionNames(),
-                                                          getDiscretizationName(),
-                                                          arrayView1d< string const >(),
-                                                          kernelFactory );
-
-  addSourceToRightHandSide( time_n, rhs );
-
-  /// calculate your time integrators
-  real64 const dt2 = dt*dt;
-
-  GEOSX_MARK_SCOPE ( updateP );
-  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    if( freeSurfaceNodeIndicator[a] != 1 )
+    NodeManager & nodeManager = mesh.getNodeManager();
+
+    arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+    arrayView1d< real64 const > const damping = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector >();
+
+    arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
+    arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();
+    arrayView1d< real64 > const p_np1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_np1 >();
+
+    arrayView1d< localIndex const > const freeSurfaceNodeIndicator = nodeManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceNodeIndicator >();
+    arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
+    arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
+
+    auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
+
+    finiteElement::
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
+
+    addSourceToRightHandSide( time_n, rhs );
+
+    /// calculate your time integrators
+    real64 const dt2 = dt*dt;
+
+    GEOSX_MARK_SCOPE ( updateP );
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
-      p_np1[a] = p_n[a];
-      p_np1[a] *= 2.0*mass[a];
-      p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
-      p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
-      p_np1[a] /= mass[a]+0.5*dt*damping[a];
+      if( freeSurfaceNodeIndicator[a] != 1 )
+      {
+        p_np1[a] = p_n[a];
+        p_np1[a] *= 2.0*mass[a];
+        p_np1[a] -= (mass[a]-0.5*dt*damping[a])*p_nm1[a];
+        p_np1[a] += dt2*(rhs[a]-stiffnessVector[a]);
+        p_np1[a] /= mass[a]+0.5*dt*damping[a];
+      }
+    } );
+
+    /// synchronize pressure fields
+    std::map< string, string_array > fieldNames;
+    fieldNames["node"].emplace_back( "pressure_np1" );
+
+    CommunicationTools & syncFields = CommunicationTools::getInstance();
+    syncFields.synchronizeFields( fieldNames,
+                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                  domain.getNeighbors(),
+                                  true );
+
+    forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+    {
+      p_nm1[a] = p_n[a];
+      p_n[a]   = p_np1[a];
+
+      stiffnessVector[a] = 0.0;
+      rhs[a] = 0.0;
+    } );
+
+    if( this->m_outputSeismoTrace == 1 )
+    {
+      computeSeismoTrace( cycleNumber, p_np1 );
     }
+
   } );
-
-  /// synchronize pressure fields
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( "pressure_np1" );
-
-  CommunicationTools & syncFields = CommunicationTools::getInstance();
-  syncFields.synchronizeFields( fieldNames,
-                                domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                domain.getNeighbors(),
-                                true );
-
-  forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-  {
-    p_nm1[a] = p_n[a];
-    p_n[a]   = p_np1[a];
-
-    stiffnessVector[a] = 0.0;
-    rhs[a] = 0.0;
-  } );
-
-  if( this->m_outputSeismoTrace == 1 )
-  {
-    computeSeismoTrace( cycleNumber, p_np1 );
-  }
-
   return dt;
 }
 

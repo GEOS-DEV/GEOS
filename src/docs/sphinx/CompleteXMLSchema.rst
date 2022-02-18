@@ -204,6 +204,13 @@ Element: ConstantPermeability
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
 
 
+.. _XML_ConstantThermalConductivity:
+
+Element: ConstantThermalConductivity
+====================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity.rst
+
+
 .. _XML_Constitutive:
 
 Element: Constitutive
@@ -456,6 +463,13 @@ Element: InternalWellbore
 .. include:: ../../coreComponents/schema/docs/InternalWellbore.rst
 
 
+.. _XML_JFunctionCapillaryPressure:
+
+Element: JFunctionCapillaryPressure
+===================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure.rst
+
+
 .. _XML_LagrangianContact:
 
 Element: LagrangianContact
@@ -496,6 +510,13 @@ Element: ModifiedCamClay
 Element: MultiphasePoromechanics
 ================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics.rst
+
+
+.. _XML_MultivariableTableFunction:
+
+Element: MultivariableTableFunction
+===================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction.rst
 
 
 .. _XML_NonlinearSolverParameters:
@@ -911,6 +932,13 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
+.. _XML_VTKMeshGenerator:
+
+Element: VTKMeshGenerator
+=========================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
+
+
 .. _XML_VanGenuchtenBakerRelativePermeability:
 
 Element: VanGenuchtenBakerRelativePermeability
@@ -923,6 +951,13 @@ Element: VanGenuchtenBakerRelativePermeability
 Element: VanGenuchtenCapillaryPressure
 ======================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure.rst
+
+
+.. _XML_VolumeWeightedThermalConductivity:
+
+Element: VolumeWeightedThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity.rst
 
 
 .. _XML_WellControls:
@@ -1151,6 +1186,13 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
+
+
+.. _DATASTRUCTURE_ConstantThermalConductivity:
+
+Datastructure: ConstantThermalConductivity
+==========================================
+.. include:: ../../coreComponents/schema/docs/ConstantThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_Constitutive:
@@ -1419,6 +1461,13 @@ Datastructure: InternalWellbore
 .. include:: ../../coreComponents/schema/docs/InternalWellbore_other.rst
 
 
+.. _DATASTRUCTURE_JFunctionCapillaryPressure:
+
+Datastructure: JFunctionCapillaryPressure
+=========================================
+.. include:: ../../coreComponents/schema/docs/JFunctionCapillaryPressure_other.rst
+
+
 .. _DATASTRUCTURE_LagrangianContact:
 
 Datastructure: LagrangianContact
@@ -1473,6 +1522,13 @@ Datastructure: ModifiedCamClay
 Datastructure: MultiphasePoromechanics
 ======================================
 .. include:: ../../coreComponents/schema/docs/MultiphasePoromechanics_other.rst
+
+
+.. _DATASTRUCTURE_MultivariableTableFunction:
+
+Datastructure: MultivariableTableFunction
+=========================================
+.. include:: ../../coreComponents/schema/docs/MultivariableTableFunction_other.rst
 
 
 .. _DATASTRUCTURE_NonlinearSolverParameters:
@@ -1888,6 +1944,13 @@ Datastructure: VTK
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
 
 
+.. _DATASTRUCTURE_VTKMeshGenerator:
+
+Datastructure: VTKMeshGenerator
+===============================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
+
+
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
 
 Datastructure: VanGenuchtenBakerRelativePermeability
@@ -1900,6 +1963,13 @@ Datastructure: VanGenuchtenBakerRelativePermeability
 Datastructure: VanGenuchtenCapillaryPressure
 ============================================
 .. include:: ../../coreComponents/schema/docs/VanGenuchtenCapillaryPressure_other.rst
+
+
+.. _DATASTRUCTURE_VolumeWeightedThermalConductivity:
+
+Datastructure: VolumeWeightedThermalConductivity
+================================================
+.. include:: ../../coreComponents/schema/docs/VolumeWeightedThermalConductivity_other.rst
 
 
 .. _DATASTRUCTURE_WellControls:
@@ -1921,20 +1991,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_cellBlocks:
-
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
@@ -1986,18 +2042,18 @@ Datastructure: embeddedSurfacesNodeManager
 .. include:: ../../coreComponents/schema/docs/embeddedSurfacesNodeManager_other.rst
 
 
-.. _DATASTRUCTURE_finiteVolumeStencils:
-
-Datastructure: finiteVolumeStencils
-===================================
-.. include:: ../../coreComponents/schema/docs/finiteVolumeStencils_other.rst
-
-
 .. _DATASTRUCTURE_lassen:
 
 Datastructure: lassen
 =====================
 .. include:: ../../coreComponents/schema/docs/lassen_other.rst
+
+
+.. _DATASTRUCTURE_meshLevels:
+
+Datastructure: meshLevels
+=========================
+.. include:: ../../coreComponents/schema/docs/meshLevels_other.rst
 
 
 .. _DATASTRUCTURE_neighborData:

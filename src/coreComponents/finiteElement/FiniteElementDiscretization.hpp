@@ -30,9 +30,6 @@
 namespace geosx
 {
 
-class NodeManager;
-class CellBlockManager;
-
 // TODO remove when these quantities are placed inside the FiniteElementBase
 // class.
 namespace dataRepository

@@ -10,8 +10,10 @@ set( constitutive_headers
      NullModel.hpp
      capillaryPressure/BrooksCoreyCapillaryPressure.hpp
      capillaryPressure/CapillaryPressureBase.hpp
-     capillaryPressure/CapillaryPressureExtrinsicData.hpp     
-     capillaryPressure/TableCapillaryPressure.hpp     
+     capillaryPressure/CapillaryPressureExtrinsicData.hpp
+     capillaryPressure/JFunctionCapillaryPressure.hpp          
+     capillaryPressure/TableCapillaryPressure.hpp
+     capillaryPressure/TableCapillaryPressureHelpers.hpp          
      capillaryPressure/VanGenuchtenCapillaryPressure.hpp
      capillaryPressure/capillaryPressureSelector.hpp
      capillaryPressure/layouts.hpp
@@ -26,7 +28,7 @@ set( constitutive_headers
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiFluidExtrinsicData.hpp
-     fluid/MultiPhaseMultiComponentFluid.hpp     
+     fluid/MultiPhaseMultiComponentFluid.hpp
      fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
@@ -43,6 +45,8 @@ set( constitutive_headers
      fluid/PVTFunctions/CO2Enthalpy.hpp
      fluid/PVTFunctions/BrineInternalEnergy.hpp
      fluid/PVTFunctions/CO2InternalEnergy.hpp
+     fluid/PVTFunctions/CO2EOSSolver.hpp
+     fluid/PVTFunctions/PureWaterProperties.hpp     
      fluid/ParticleFluid.hpp
      fluid/ParticleFluidBase.hpp
      fluid/ProppantSlurryFluid.hpp
@@ -102,6 +106,11 @@ set( constitutive_headers
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
      solid/porosity/ProppantPorosity.hpp
+     thermalConductivity/ConstantThermalConductivity.hpp
+     thermalConductivity/ThermalConductivityBase.hpp
+     thermalConductivity/ThermalConductivityExtrinsicData.hpp
+     thermalConductivity/thermalConductivitySelector.hpp
+     thermalConductivity/VolumeWeightedThermalConductivity.hpp
    )
 #
 # Specify all sources
@@ -112,7 +121,9 @@ set( constitutive_sources
      NullModel.cpp
      capillaryPressure/BrooksCoreyCapillaryPressure.cpp
      capillaryPressure/CapillaryPressureBase.cpp
+     capillaryPressure/JFunctionCapillaryPressure.cpp               
      capillaryPressure/TableCapillaryPressure.cpp
+     capillaryPressure/TableCapillaryPressureHelpers.cpp     
      capillaryPressure/VanGenuchtenCapillaryPressure.cpp
      contact/ContactBase.cpp
      contact/CoulombContact.cpp
@@ -137,6 +148,8 @@ set( constitutive_sources
      fluid/PVTFunctions/CO2Enthalpy.cpp
      fluid/PVTFunctions/BrineInternalEnergy.cpp
      fluid/PVTFunctions/CO2InternalEnergy.cpp
+     fluid/PVTFunctions/CO2EOSSolver.cpp
+     fluid/PVTFunctions/PureWaterProperties.cpp		
      fluid/ParticleFluid.cpp              
      fluid/ParticleFluidBase.cpp
      fluid/ProppantSlurryFluid.cpp
@@ -175,6 +188,9 @@ set( constitutive_sources
      solid/porosity/PorosityBase.cpp
      solid/porosity/PressurePorosity.cpp
      solid/porosity/ProppantPorosity.cpp
+     thermalConductivity/ConstantThermalConductivity.cpp     
+     thermalConductivity/ThermalConductivityBase.cpp
+     thermalConductivity/VolumeWeightedThermalConductivity.cpp     
    )
 
 set( dependencyList events dataRepository functions )

@@ -93,11 +93,11 @@ public:
                     SUBREGION_TYPE const & elementSubRegion,
                     FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE & inputConstitutiveType,
-                    arrayView1d< globalIndex const > const & inputDofNumber,
+                    arrayView1d< globalIndex const > const inputDofNumber,
                     globalIndex const rankOffset,
-                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                    arrayView1d< real64 > const & inputRhs,
-                    string const & fieldName ):
+                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                    arrayView1d< real64 > const inputRhs,
+                    string const fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -252,9 +252,11 @@ protected:
 
 /// The factory used to construct a LaplaceFEMKernel.
 using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              globalIndex, CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const &, string const & >;
+                                                              arrayView1d< globalIndex const > const,
+                                                              globalIndex const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const,
+                                                              string const >;
 
 } // namespace geosx
 

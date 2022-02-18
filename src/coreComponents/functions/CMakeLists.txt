@@ -14,6 +14,7 @@ set( functions_sources
      FunctionBase.cpp
      FunctionManager.cpp
      TableFunction.cpp
+     MultivariableTableFunction.cpp
    )
 
 if( ENABLE_MATHPRESSO )

@@ -85,7 +85,7 @@ static void
 checkStabilizationMatrixConsistency ( arrayView2d< real64 const,
                                                    nodes::REFERENCE_POSITION_USD > const & nodesCoords,
                                       localIndex const & cellIndex,
-                                      traits::ViewTypeConst< CellBlock::NodeMapType > const & cellToNodes,
+                                      traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodes,
                                       arrayView2d< real64 const > const & cellCenters,
                                       FiniteElementBase const & feBase,
                                       typename VEM::StackVariables const & stack,
@@ -185,7 +185,7 @@ static void testCellsInMeshLevel( MeshLevel const & mesh )
   // Get geometric properties to be passed as inputs.
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > nodesCoords =
     nodeManager.referencePosition();
-  traits::ViewTypeConst< CellBlock::NodeMapType > const & cellToNodeMap = cellSubRegion.nodeList();
+  traits::ViewTypeConst< CellElementSubRegion::NodeMapType > const & cellToNodeMap = cellSubRegion.nodeList();
   arrayView2d< real64 const > cellCenters = cellSubRegion.getElementCenter();
   arrayView1d< real64 const > cellVolumes = cellSubRegion.getElementVolume();
 
