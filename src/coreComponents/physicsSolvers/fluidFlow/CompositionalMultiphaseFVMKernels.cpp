@@ -496,7 +496,7 @@ AquiferBCKernel::
            real64 (& localFlux)[NC],
            real64 (& localFluxJacobian)[NC][NC+1] )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 dProp_dC[NC]{};
   real64 dPhaseFlux_dCompDens[NC]{};

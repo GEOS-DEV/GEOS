@@ -198,7 +198,7 @@ void EzrokhiBrineDensityUpdate::compute( real64 const & pressure,
                                          arraySlice1d< real64, USD3 > const & dValue,
                                          bool useMass ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 waterSatDensity_dTemperature = 0.0;
   real64 waterSatPressure_dTemperature = 0.0;

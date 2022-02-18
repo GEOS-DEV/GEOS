@@ -296,7 +296,7 @@ public:
   void compute( localIndex const ei,
                 FUNC && phaseVolFractionKernelOp = NoOpFunc{} ) const
   {
-    using namespace multifluid;
+    using Deriv = multifluid::DerivativeOffset;
 
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
@@ -731,7 +731,7 @@ public:
                             StackVariables & stack,
                             FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
   {
-    using namespace multifluid;
+    using Deriv = multifluid::DerivativeOffset;
 
     // construct the slices for variables accessed multiple times
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];

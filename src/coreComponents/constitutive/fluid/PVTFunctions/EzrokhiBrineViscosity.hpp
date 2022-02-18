@@ -179,7 +179,7 @@ void EzrokhiBrineViscosityUpdate::compute( real64 const & pressure,
 {
   GEOSX_UNUSED_VAR( pressure, useMass );
 
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 waterVisc_dTemperature = 0.0;
   real64 const waterVisc = m_waterViscosityTable.compute( &temperature, &waterVisc_dTemperature );

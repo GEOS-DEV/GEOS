@@ -150,7 +150,7 @@ void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
                                real64 const perturbParameter,
                                real64 const relTol )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer constexpr numComp  = 2;
   integer constexpr numDof   = numComp + 2;
@@ -223,6 +223,7 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                                real64 const relTol )
 {
   using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer constexpr numPhase = 2;
   integer constexpr numComp  = 2;

@@ -550,7 +550,7 @@ public:
   void compute( localIndex const ei,
                 FUNC && totalMassDensityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
-    using namespace multifluid;
+    using Deriv = multifluid::DerivativeOffset;
 
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];

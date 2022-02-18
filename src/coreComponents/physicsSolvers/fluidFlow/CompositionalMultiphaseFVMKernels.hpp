@@ -102,7 +102,7 @@ public:
   void compute( localIndex const ei,
                 FUNC && phaseMobilityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
-    using namespace multifluid;
+    using Deriv = multifluid::DerivativeOffset;
 
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
@@ -588,7 +588,7 @@ public:
                     FUNC1 && phaseFluxKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{},
                     FUNC2 && localFluxJacobianKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
-    using namespace multifluid;
+    using Deriv = multifluid::DerivativeOffset;
 
     // first, compute the transmissibilities at this face
     m_stencilWrapper.computeWeights( iconn,

@@ -120,6 +120,8 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                                real64 const relTol,
                                real64 const absTol = std::numeric_limits< real64 >::max() )
 {
+  using Deriv = multifluid::DerivativeOffset;
+
   integer const NC = fluid.numFluidComponents();
   integer const NP = fluid.numFluidPhases();
   integer const NDOF = NC+2;

@@ -626,7 +626,7 @@ void CompositionalMultiphaseWell::updateVolRatesForConstraint( WellElementSubReg
                                 dCurrentPhaseVolRate_dRate,
                                 &iwelemRef] ( localIndex const )
     {
-      using namespace multifluid;
+      using Deriv = multifluid::DerivativeOffset;
 
       stackArray1d< real64, maxNumComp > work( numComp );
 

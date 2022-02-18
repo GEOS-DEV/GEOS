@@ -54,7 +54,7 @@ UpwindingHelper::
                             real64 ( & dUpwPhaseViscCoef_dCompDens )[ NP ][ NC ][ NC ],
                             globalIndex & upwViscDofNumber )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 dUpwMobRatio_dCompDens[ NC ]{};
   real64 dUpwDensMobRatio_dCompDens[ NC ]{};
@@ -155,7 +155,7 @@ UpwindingHelper::
                              real64 ( & dUpwPhaseGravCoef_dPres )[ NP ][ NP-1 ][ NC ][ 2 ],
                              real64 ( & dUpwPhaseGravCoef_dCompDens )[ NP ][ NP-1 ][ NC ][ 2 ][ NC ] )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   // 1) Compute the driving force: T ( \rho^{avg}_{\ell} - \rho^{avg}_m ) g \Delta z
   computePhaseGravTerm( localIds,
@@ -283,7 +283,7 @@ UpwindingHelper::
                         real64 ( & dPhaseGravTerm_dPres )[ NP ][ NP-1 ][ 2 ],
                         real64 ( & dPhaseGravTerm_dCompDens )[ NP ][ NP-1 ][ 2 ][ NC ] )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   localIndex const er   = localIds[0];
   localIndex const esr  = localIds[1];
@@ -611,7 +611,7 @@ AssemblerKernelHelper::
                  real64 ( & dOneSidedVolFlux_dFacePres )[ NF ][ NF ],
                  real64 ( & dOneSidedVolFlux_dCompDens )[ NF ][ NC ] )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 dPhaseMassDens_dC[ NP ][ NC ]{};
   real64 dPresDif_dCompDens[ NC ]{};

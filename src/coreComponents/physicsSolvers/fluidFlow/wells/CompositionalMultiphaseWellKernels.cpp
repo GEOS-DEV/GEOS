@@ -797,7 +797,7 @@ PerforationKernel::
            arraySlice2d< real64 > const & dCompPerfRate_dPres,
            arraySlice3d< real64 > const & dCompPerfRate_dComp )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   // local working variables and arrays
   real64 pres[2]{};
@@ -1239,7 +1239,7 @@ AccumulationKernel::
            real64 ( & localAccum )[NC],
            real64 ( & localAccumJacobian )[NC][NC + 1] )
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   // temporary work arrays
   real64 dPhaseAmount_dC[NC]{};

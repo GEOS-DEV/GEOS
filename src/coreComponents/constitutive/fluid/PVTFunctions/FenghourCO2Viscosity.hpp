@@ -139,7 +139,7 @@ void FenghourCO2ViscosityUpdate::compute( real64 const & pressure,
                     dPhaseComposition,
                     useMass );
 
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
   real64 densityDeriv[2]{};

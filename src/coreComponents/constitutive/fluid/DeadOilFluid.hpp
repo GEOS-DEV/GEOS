@@ -209,7 +209,7 @@ DeadOilFluid::KernelWrapper::
   computeDensities( real64 const pressure,
                     PhaseProp::SliceType const & phaseMassDens ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   LvArray::forValuesInSlice( phaseMassDens.derivs, []( real64 & val ){ val = 0.0; } );
 
@@ -283,7 +283,7 @@ DeadOilFluid::KernelWrapper::
   computeViscosities( real64 const pressure,
                       PhaseProp::SliceType const & phaseVisc ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   LvArray::forValuesInSlice( phaseVisc.derivs, []( real64 & val ){ val = 0.0; } );
 
@@ -374,7 +374,7 @@ DeadOilFluid::KernelWrapper::
 {
   GEOSX_UNUSED_VAR( temperature );
 
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer const nComps = numComponents();
   integer const nPhases = numPhases();

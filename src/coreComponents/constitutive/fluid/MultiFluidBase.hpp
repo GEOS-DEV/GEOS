@@ -609,7 +609,7 @@ MultiFluidBase::KernelWrapper::
                                real64 const (&dPhaseMolecularWeight)[maxNumPhase][maxNumDof],
                                PhaseProp::SliceType const phaseFrac ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
@@ -663,7 +663,7 @@ MultiFluidBase::KernelWrapper::
                                    PhaseProp::SliceType const phaseFrac,
                                    PhaseComp::SliceType const phaseCompFrac ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
@@ -711,7 +711,7 @@ MultiFluidBase::KernelWrapper::
                                       arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
                                       arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer const numPhase = numPhases();
   integer const numComp = numComponents();
@@ -767,7 +767,7 @@ MultiFluidBase::KernelWrapper::
                        PhaseProp::SliceType const phaseDensity,
                        FluidProp::SliceType const totalDensity ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer const numComp = numComponents();
   integer const numPhase = numPhases();

@@ -220,7 +220,7 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
                               PhaseProp::SliceType const phaseFraction,
                               PhaseComp::SliceType const phaseCompFraction ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   // solubility mol/kg(water)  X = Csat/W
   real64 const input[2] = { pressure, temperature };
@@ -252,6 +252,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
   }
 
   auto setZero = []( real64 & val ){ val = 0.0; };
+  LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
+  LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
 
   if( Y < solubility )
   {
@@ -261,8 +263,6 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
     phaseFraction.value[m_phaseLiquidIndex] = 1.0;
     phaseFraction.value[m_phaseGasIndex] = 0.0;
-    LvArray::forValuesInSlice( phaseFraction.derivs, setZero );
-    LvArray::forValuesInSlice( phaseCompFraction.derivs, setZero );
 
     // 2) Compute phase component fractions
 

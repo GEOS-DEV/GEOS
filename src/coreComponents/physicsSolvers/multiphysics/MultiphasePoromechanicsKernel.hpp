@@ -366,7 +366,7 @@ public:
     // --- Mass balance accumulation
     // --- --- sum contributions to component accumulation from each phase
 
-    using namespace constitutive::multifluid;
+    using Deriv = constitutive::multifluid::DerivativeOffset;
 
     // --- --- temporary work arrays
     real64 dPhaseAmount_dC[numMaxComponents]{};

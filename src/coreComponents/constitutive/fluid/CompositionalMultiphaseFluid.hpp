@@ -261,7 +261,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
 
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;

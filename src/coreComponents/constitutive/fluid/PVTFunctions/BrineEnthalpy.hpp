@@ -175,7 +175,7 @@ void BrineEnthalpyUpdate::compute( real64 const & pressure,
                                    arraySlice1d< real64, USD3 > const & dValue,
                                    bool useMass ) const
 {
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
   real64 brineEnthalpy_dTemperature = 0.0;

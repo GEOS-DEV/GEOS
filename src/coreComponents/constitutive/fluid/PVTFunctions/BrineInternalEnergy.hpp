@@ -132,7 +132,7 @@ void BrineInternalEnergyUpdate::compute( real64 const & pressure,
 {
   GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition, useMass );
 
-  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
 
   value =  0.001 * pressure + 1.0 * temperature;
   LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );

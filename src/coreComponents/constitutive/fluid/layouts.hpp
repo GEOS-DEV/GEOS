@@ -33,7 +33,7 @@ namespace multifluid
 {
 
 /// indices of pressure, temperature, and composition derivatives
-struct Deriv
+struct DerivativeOffset
 {
   /// index of derivative wrt pressure
   static integer constexpr dP = 0;
