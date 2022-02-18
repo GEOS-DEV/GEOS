@@ -239,6 +239,20 @@ void Group::printDataHierarchy( integer const indent )
   }
 }
 
+void Group::printDataHierarchy( integer const indent ) const
+{
+  for( auto & view : wrappers() )
+  {
+    GEOSX_LOG( string( indent, '\t' ) << view.second->getName() << ", " << LvArray::system::demangleType( view.second ) );
+  }
+
+  for( auto & group : m_subGroups )
+  {
+    GEOSX_LOG( string( indent, '\t' ) << group.first << ':' );
+    group.second->printDataHierarchy( indent + 1 );
+  }
+}
+
 string Group::dumpInputOptions() const
 {
   string rval;

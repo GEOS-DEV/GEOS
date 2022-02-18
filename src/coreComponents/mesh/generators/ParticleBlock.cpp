@@ -72,5 +72,14 @@ void ParticleBlock::setParticleType( ParticleType const particleType )
   }
 }
 
+void ParticleBlock::resize( dataRepository::indexType const numParticles )
+{
+  Group::resize( numParticles );
+
+  // Those members are not registered as wrappers because I do not want them
+  // to be exposed though the `Group` public interface.
+  m_localToGlobalMap.resize( numParticles );
+}
+
 
 }
