@@ -3,7 +3,7 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, -0.0 }">
-    <!-- SPHINX_HYDRIFRACSOLVER -->
+    <!-- SPHINX_HYDROFRACSOLVER -->
     <Hydrofracture
       name="hydrofracture"
       solidSolverName="lagsolve"
@@ -22,7 +22,7 @@
       <LinearSolverParameters
         directParallel="0"/>
     </Hydrofracture>
-    <!-- SPHINX_HYDRIFRACSOLVER_END -->
+    <!-- SPHINX_HYDROFRACSOLVER_END -->
 
     <!-- SPHINX_MECHANICALSOLVER -->
     <SolidMechanicsLagrangianSSLE
