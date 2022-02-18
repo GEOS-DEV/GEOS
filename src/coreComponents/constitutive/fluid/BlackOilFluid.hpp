@@ -894,13 +894,8 @@ BlackOilFluid::KernelWrapper::
     if( needDerivs )
     {
       phaseVisc.derivs[ipOil][Deriv::dP] = dVisc_dP;
-      for( integer ich = 0; ich < HNC_BO; ++ich )
-      {
-        // get the phase index
-        integer const ic = m_hydrocarbonPhaseOrder[ich];
-        // fill the vector
-        phaseVisc.derivs[ipOil][Deriv::dC+ic] = dVisc_dC[ic];
-      }
+      phaseVisc.derivs[ipOil][Deriv::dC+icOil] = dVisc_dC[PT::OIL];
+      phaseVisc.derivs[ipOil][Deriv::dC+icGas] = dVisc_dC[PT::GAS];
     }
   }
 }
@@ -1081,15 +1076,12 @@ BlackOilFluid::KernelWrapper::
   dens =  Binv * tmp;
   if( needDerivs )
   {
-    dDens[Deriv::dP] = Binv * Binv * (Bo * gasDens * dRs_dPres - tmp * dBo_dPres);
+    integer const icOil = m_phaseOrder[PT::OIL];
+    integer const icGas = m_phaseOrder[PT::GAS];
 
-    for( integer ich = 0; ich < HNC_BO; ++ich )
-    {
-      // get the phase index
-      integer const ic = m_hydrocarbonPhaseOrder[ich];
-      // fill the vector
-      dDens[Deriv::dC+ic] = Binv * Binv * (Bo * gasDens * dRs_dComp[ic] - tmp * dBo_dComp[ic]);
-    }
+    dDens[Deriv::dP] = Binv * Binv * (Bo * gasDens * dRs_dPres - tmp * dBo_dPres);
+    dDens[Deriv::dC+icOil] = Binv * Binv * (Bo * gasDens * dRs_dComp[PT::OIL] - tmp * dBo_dComp[PT::OIL]);
+    dDens[Deriv::dC+icGas] = Binv * Binv * (Bo * gasDens * dRs_dComp[PT::GAS] - tmp * dBo_dComp[PT::GAS]);
   }
 }
 
