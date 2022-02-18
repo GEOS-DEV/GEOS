@@ -557,10 +557,34 @@ void ProblemManager::generateMesh()
     if(meshBody.m_hasParticles)
     {
       std::cout << "MeshBody " << meshBody.getName() << " has particles!" << std::endl;
+
+      ParticleBlockManager & particleBlockManager = meshBody.getGroup< ParticleBlockManager >( keys::particleManager ); // This was created by the relevant mesh generator, it will be de-registered at the end of this function!
+      for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
+      {
+        MeshLevel & meshLevel = meshBody.getMeshLevel( b );
+
+        ParticleManager & particleManager = meshLevel.getParticleManager();
+
+        particleManager.generateMesh( particleBlockManager );
+
+        //particleManager.buildRegionMaps();
+
+        particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase & subRegion )
+        {
+          //subRegion.setupRelatedObjectsInRelations( meshLevel );
+          //subRegion.calculateParticleGeometricQuantities();
+          subRegion.setMaxGlobalIndex();
+        } );
+
+        particleManager.setMaxGlobalIndex();
+      }
+
+      // The cell block manager is not meant to be used anymore, let's free space.
+      meshBody.deregisterGroup( keys::particleManager );
     }
     else
     {
-      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager ); // This was created by the relevant mesh generator, it will be de-registered at the end of this function!
       for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
       {
         MeshLevel & meshLevel = meshBody.getMeshLevel( b );
@@ -623,7 +647,6 @@ void ProblemManager::generateMesh()
   }
 
 
-
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
   domain.setupCommunications( useNonblockingMPI );
@@ -668,7 +691,7 @@ void ProblemManager::applyNumericalMethods()
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
 
-map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
+map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies ) // Need to modify this to handle particles. We'll assign a single quadrature point to each particle. -SJP
 {
 
   NumericalMethodsManager const &
@@ -760,36 +783,73 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
   for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
-    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+    if(!meshBody.m_hasParticles)
     {
-      ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-      elemManager.forElementSubRegionsComplete( [&]( localIndex const,
-                                                     localIndex const,
-                                                     ElementRegionBase & elemRegion,
-                                                     ElementSubRegionBase & elemSubRegion )
+      meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
       {
-        string const & regionName = elemRegion.getName();
-        string const & subRegionName = elemSubRegion.getName();
-        string_array const & materialList = elemRegion.getMaterialList();
-        TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
-                                                                                                        regionName,
-                                                                                                        subRegionName ) );
-        if( rqIter != regionQuadrature.end() )
+        ElementRegionManager & elemManager = meshLevel.getElemManager();
+
+        elemManager.forElementSubRegionsComplete( [&]( localIndex const,
+                                                       localIndex const,
+                                                       ElementRegionBase & elemRegion,
+                                                       ElementSubRegionBase & elemSubRegion )
         {
-          localIndex const quadratureSize = rqIter->second;
-          for( auto & materialName : materialList )
+          string const & regionName = elemRegion.getName();
+          string const & subRegionName = elemSubRegion.getName();
+          string_array const & materialList = elemRegion.getMaterialList();
+          TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
+                                                                                                          regionName,
+                                                                                                          subRegionName ) );
+          if( rqIter != regionQuadrature.end() )
           {
-            constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
-            GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
+            localIndex const quadratureSize = rqIter->second;
+            for( auto & materialName : materialList )
+            {
+              constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
+              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
+            }
           }
-        }
-        else
-        {
-          GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
-        }
+          else
+          {
+            GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
+          }
+        } );
       } );
-    } );
+    }
+    else
+    {
+      std::cout << "setRegionQuadrature has been called on a MeshBody with particles!" << std::endl;
+      meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+      {
+        ParticleManager & particleManager = meshLevel.getParticleManager();
+
+        particleManager.forParticleSubRegionsComplete( [&]( localIndex const,
+                                                            localIndex const,
+                                                            ParticleRegionBase & particleRegion,
+                                                            ParticleSubRegionBase & particleSubRegion )
+        {
+          string const & regionName = particleRegion.getName();
+          string const & subRegionName = particleSubRegion.getName();
+          string_array const & materialList = particleRegion.getMaterialList();
+          TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
+                                                                                                          regionName,
+                                                                                                          subRegionName ) );
+          if( rqIter != regionQuadrature.end() )
+          {
+            localIndex const quadratureSize = rqIter->second;
+            for( auto & materialName : materialList )
+            {
+              constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, quadratureSize );
+              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
+            }
+          }
+          else
+          {
+            GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
+          }
+        } );
+      } );
+    }
   }
 }
 

@@ -101,6 +101,16 @@ public:
 
   Group & getParticleBlocks();
 
+  /**
+   * @brief Get particle block by name.
+   * @param[in] name Name of the particle block.
+   * @return Reference to the particle block instance.
+   */
+  ParticleBlock & getParticleBlock( string const & name )
+  {
+    return this->getGroup( viewKeyStruct::particleBlocks() ).getGroup< ParticleBlock >( name );
+  }
+
 private:
 
   /**
@@ -116,7 +126,7 @@ private:
 
   struct viewKeyStruct
   {
-    /// Cell blocks key
+    /// Particle blocks key
     static constexpr char const * particleBlocks() { return "particleBlocks"; }
   };
 
@@ -127,8 +137,8 @@ private:
   const Group & getParticleBlocks() const;
 
   /**
-   * @brief Get cell block at index @p iCellBlock.
-   * @param[in] iCellBlock The cell block index.
+   * @brief Get particle block at index @p iParticleBlock.
+   * @param[in] iParticleBlock The particle block index.
    * @return Const reference to the instance.
    *
    * @note Mainly useful for iteration purposes.

@@ -119,10 +119,6 @@ SolidMechanicsMPM::SolidMechanicsMPM( const string & name,
                     " 0 - Infinitesimal Strain \n"
                     " 1 - Finite Strain" );
 
-  registerWrapper( viewKeyStruct::solidMaterialNamesString(), &m_solidMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "The name of the material that should be used in the constitutive updates" );
-
   registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
     setApplyDefaultValue( viewKeyStruct::noContactRelationNameString() ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -244,7 +240,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I
         reference().resizeDimension< 1 >( 3 );
 
       Group & nodeSets = nodes.sets();
-      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrRecieveNodesString() ).
+      nodeSets.registerWrapper<SortedArray<localIndex>>( viewKeyStruct::sendOrReceiveNodesString() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
