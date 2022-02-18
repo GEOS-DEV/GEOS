@@ -152,9 +152,10 @@ public:
   localIndex getNumberOfParticles() const
   {
     localIndex numParticle = 0;
-    this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & particleBlock ) -> void
+    this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      numParticle += particleBlock.size();
+      std::cout << "Debug 1: " << group.getName() << std::endl;
+      numParticle += group.size();
     } );
     return numParticle;
   }

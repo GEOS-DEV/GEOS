@@ -75,7 +75,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   MeshLevel & meshLevel0 = meshBody.getMeshLevel( 0 );
   ParticleManager & particleManager = meshLevel0.getParticleManager();
 
-  ParticleBlockManager & particleBlockManager = meshBody.getGroup< ParticleBlockManager >( keys::particleManager );
+  ParticleBlockManager & particleBlockManager = meshBody.registerGroup< ParticleBlockManager >( keys::particleManager );
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
@@ -129,9 +129,9 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     for(localIndex j=0; j<3; j++)
     {
       X[i][j] = particleData[i][j];
-      std::cout << X[i][j] << "\t";
+      std::cout << X[i][j] << "\t"; // debug
     }
-    std::cout << "\n"; //debug
+    std::cout << "\n"; // debug
   }
 
   GEOSX_LOG_RANK_0( "Total number of particles:" << particleManager.size() );
