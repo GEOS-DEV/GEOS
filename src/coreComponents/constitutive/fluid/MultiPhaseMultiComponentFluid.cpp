@@ -235,8 +235,8 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::createKe
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWrapper::
-  KernelWrapper( localIndex const p1Index,
-                 localIndex const p2Index,
+  KernelWrapper( integer const p1Index,
+                 integer const p2Index,
                  P1DENS const & p1DensityWrapper,
                  P1VISC const & p1ViscosityWrapper,
                  P2DENS const & p2DensityWrapper,
