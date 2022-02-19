@@ -21,13 +21,9 @@
 namespace geosx
 {
 
-EmbeddedSurfaceToCellStencil::EmbeddedSurfaceToCellStencil():
-  StencilBase< EmbeddedSurfaceToCellStencil_Traits, EmbeddedSurfaceToCellStencil >()
-{}
-
 void EmbeddedSurfaceToCellStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< EmbeddedSurfaceToCellStencil_Traits, EmbeddedSurfaceToCellStencil >::move( space );
+  StencilBase< EmbeddedSurfaceToCellStencilTraits, EmbeddedSurfaceToCellStencil >::move( space );
 }
 
 void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
@@ -56,5 +52,24 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
   m_connectorIndices[connectorIndex] = oldSize;
 }
 
+EmbeddedSurfaceToCellStencil::StencilWrapper
+EmbeddedSurfaceToCellStencil::createStencilWrapper() const
+{
+  return { m_elementRegionIndices,
+           m_elementSubRegionIndices,
+           m_elementIndices,
+           m_weights };
+}
+
+EmbeddedSurfaceToCellStencilWrapper::
+  EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
+                                       IndexContainerType const & elementSubRegionIndices,
+                                       IndexContainerType const & elementIndices,
+                                       WeightContainerType const & weights )
+  : StencilWrapperBase( elementRegionIndices,
+                        elementSubRegionIndices,
+                        elementIndices,
+                        weights )
+{}
 
 } /* namespace geosx */

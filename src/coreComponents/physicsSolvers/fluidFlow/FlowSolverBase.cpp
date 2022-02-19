@@ -201,41 +201,20 @@ void FlowSolverBase::initializePreSubGroups()
 
   if( fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                  MeshLevel & mesh,
+                                                  MeshLevel &,
                                                   arrayView1d< string const > const & regionNames )
     {
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
-      array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames( meshBodyName );
-
-      std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-      map< string, string > coeffModelNames;
-
-      mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
-                                                                                  [&]( localIndex const,
-                                                                                       localIndex const,
-                                                                                       localIndex const,
-                                                                                       ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const & )
-      {
-//        string const & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
-        coeffModelNames[region.getName()] = viewKeyStruct::permeabilityNamesString();//permName;
-        stencilTargetRegionsSet.insert( region.getName() );
-      } );
-
       stencilTargetRegions.clear();
-      stencilCoeffModelNames.clear();
-      for( auto const & targetRegion: stencilTargetRegionsSet )
+      for( string const & name : regionNames )
       {
-        stencilTargetRegions.emplace_back( targetRegion );
-        stencilCoeffModelNames.emplace_back( coeffModelNames[targetRegion] );
+        stencilTargetRegions.emplace_back( name );
       }
     } );
   }
-
 }
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()

@@ -39,12 +39,12 @@ public:
   /**
    * @brief Number of points the flux is between (normally 2).
    */
-  static localIndex constexpr NUM_POINT_IN_FLUX = 2;
+  static localIndex constexpr maxNumPointsInFlux = 2;
 
   /**
    * @brief Maximum number of points in a stencil (required to use static arrays in kernels).
    */
-  static localIndex constexpr MAX_STENCIL_SIZE = 18;
+  static localIndex constexpr maxStencilSize = 18;
 
   /// Alias for INDEX
   using index_type  = INDEX;
@@ -155,9 +155,9 @@ void FluxStencil< INDEX, WEIGHT >::add( localIndex const numPts,
                                         WEIGHT const * const weights,
                                         localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
 
-  stackArray1d< Entry, MAX_STENCIL_SIZE > entries( numPts );
+  stackArray1d< Entry, maxStencilSize > entries( numPts );
   for( localIndex i = 0; i < numPts; ++i )
   {
     entries[i] = { indices[i], weights[i] };

@@ -23,49 +23,16 @@
 
 namespace geosx
 {
-/**
- * @struct FaceElementToCellStencil_Traits
- * Struct to predeclare the types and constexpr values of FaceElementToCellStencil so that they may be used in
- * StencilBase.
- */
-struct FaceElementToCellStencil_Traits
-{
-  /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = array2d< localIndex >;
-
-  /// The array view type for the stencil indices
-  using IndexContainerViewType = arrayView2d< localIndex >;
-
-  /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = arrayView2d< localIndex const >;
-
-  /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = array2d< real64 >;
-
-  /// The array view type for the stencil weights
-  using WeightContainerViewType = arrayView2d< real64 >;
-
-  /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = arrayView2d< real64 const >;
-
-  /// Number of points the flux is between (always 2 for TPFA)
-  static constexpr localIndex NUM_POINT_IN_FLUX = 2;
-
-  /// Maximum number of points in a stencil (this is 2 for TPFA)
-  static constexpr localIndex MAX_STENCIL_SIZE = 2;
-
-  /// Maximum number of connections in a stencil
-  static constexpr localIndex MAX_NUM_OF_CONNECTIONS = 1;
-};
 
 /**
- * @class FaceElementToCellStencilWrapper
- *
- * Class to provide access to the FaceElementToCellStencil that may be
- * called from a kernel function.
+ * @brief Describes properties of FaceElementToCellStencil.
  */
-class FaceElementToCellStencilWrapper : public StencilWrapperBase< FaceElementToCellStencil_Traits >,
-  public FaceElementToCellStencil_Traits
+using FaceElementToCellStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
+
+/**
+ * @brief Provides access to the FaceElementToCellStencil that may be called from a kernel function.
+ */
+class FaceElementToCellStencilWrapper : public StencilWrapperBase< FaceElementToCellStencilTraits >
 {
 public:
 
@@ -89,19 +56,18 @@ public:
                                    WeightContainerType const & weights,
                                    arrayView2d< real64 > const & faceNormal,
                                    arrayView2d< real64 > const & cellToFaceVec,
-                                   arrayView1d< real64 > const & transMultiplier )
-    : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-    m_faceNormal( faceNormal ),
-    m_cellToFaceVec( cellToFaceVec ),
-    m_transMultiplier( transMultiplier )
-  {}
+                                   arrayView1d< real64 > const & transMultiplier );
 
   /**
    * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
-  virtual localIndex size() const override final
-  { return m_elementRegionIndices.size( 0 ); }
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  localIndex size() const
+  {
+    return m_elementRegionIndices.size( 0 );
+  }
 
   /**
    * @brief Give the number of stencil entries for the provided index.
@@ -110,10 +76,10 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  localIndex stencilSize( localIndex index ) const
+  constexpr localIndex stencilSize( localIndex index ) const
   {
     GEOSX_UNUSED_VAR( index );
-    return MAX_STENCIL_SIZE;
+    return maxStencilSize;
   }
 
   /**
@@ -123,10 +89,10 @@ public:
    */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  localIndex numPointsInFlux( localIndex index ) const
+  constexpr localIndex numPointsInFlux( localIndex index ) const
   {
     GEOSX_UNUSED_VAR( index );
-    return NUM_POINT_IN_FLUX;
+    return maxNumPointsInFlux;
   }
 
   /**
@@ -139,8 +105,8 @@ public:
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
@@ -156,12 +122,12 @@ public:
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
                        real64 ( &weight )[1][2],
                        real64 ( &dWeight_dVar1 )[1][2],
-                       real64 ( &dWeight_dVar2 )[1] [2] ) const;
+                       real64 ( &dWeight_dVar2 )[1][2] ) const;
 
 private:
 
@@ -180,8 +146,7 @@ private:
  *
  * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class FaceElementToCellStencil : public StencilBase< FaceElementToCellStencil_Traits, FaceElementToCellStencil >,
-  public FaceElementToCellStencil_Traits
+class FaceElementToCellStencil final : public StencilBase< FaceElementToCellStencilTraits, FaceElementToCellStencil >
 {
 public:
 
@@ -190,14 +155,14 @@ public:
    */
   FaceElementToCellStencil();
 
-  virtual void move( LvArray::MemorySpace const space ) override final;
+  virtual void move( LvArray::MemorySpace const space ) override;
 
   virtual void add( localIndex const numPts,
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    localIndex const connectorIndex ) override final;
+                    localIndex const connectorIndex ) override;
 
   /**
    * @brief Adds the vectors need to compute weights needed in kernels
@@ -216,30 +181,20 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const
-  {
-    return StencilWrapper( m_elementRegionIndices,
-                           m_elementSubRegionIndices,
-                           m_elementIndices,
-                           m_weights,
-                           m_faceNormal,
-                           m_cellToFaceVec,
-                           m_transMultiplier );
-  }
-
+  StencilWrapper createStencilWrapper() const;
 
   /**
    * @brief Return the stencil size.
    * @return the stencil size
    */
-  virtual localIndex size() const override final
+  virtual localIndex size() const override
   { return m_elementRegionIndices.size( 0 ); }
 
   /**
    * @brief Reserve the size of the stencil
    * @param[in] size the size of the stencil to reserve
    */
-  virtual void reserve( localIndex const size ) override final;
+  virtual void reserve( localIndex const size ) override;
 
   /**
    * @brief Give the number of points in a stencil entry.
@@ -249,22 +204,23 @@ public:
   constexpr localIndex stencilSize( localIndex index ) const
   {
     GEOSX_UNUSED_VAR( index );
-    return MAX_STENCIL_SIZE;
+    return maxStencilSize;
   }
 
 private:
+
   array2d< real64 > m_faceNormal;
   array2d< real64 > m_cellToFaceVec;
   array1d< real64 > m_transMultiplier;
-
 };
 
 GEOSX_HOST_DEVICE
-inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
-                                                             CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                                                             CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                                                             real64 ( & weight )[1][2],
-                                                             real64 ( & dWeight_dVar )[1][2] ) const
+inline void FaceElementToCellStencilWrapper::
+  computeWeights( localIndex const iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                  real64 ( & weight )[1][2],
+                  real64 ( & dWeight_dVar )[1][2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];
@@ -285,13 +241,15 @@ inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
 }
 
 GEOSX_HOST_DEVICE
-inline void FaceElementToCellStencilWrapper::computeWeights( localIndex iconn,
-                                                             CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                                                             CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                                                             CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                                                             real64 (& weight)[1][2],
-                                                             real64 (& dWeight_dVar1 )[1][2],
-                                                             real64 (& dWeight_dVar2 )[1][2] ) const
+inline void
+FaceElementToCellStencilWrapper::
+  computeWeights( localIndex const iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
+                  real64 (& weight)[1][2],
+                  real64 (& dWeight_dVar1 )[1][2],
+                  real64 (& dWeight_dVar2 )[1][2] ) const
 {
   localIndex const er0  =  m_elementRegionIndices[iconn][0];
   localIndex const esr0 =  m_elementSubRegionIndices[iconn][0];

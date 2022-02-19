@@ -20,52 +20,111 @@
 #define GEOSX_FINITEVOLUME_BOUNDARYSTENCIL_HPP_
 
 #include "StencilBase.hpp"
-#include "codingUtilities/traits.hpp"
 
 namespace geosx
 {
 
 /**
- * @struct BoundaryStencil_Traits
- * Struct to predeclare the types and consexpr values of BoundaryStencil so that they may be used in StencilBase.
+ * @brief Describes properties of CellElementStencilTPFA.
  */
-struct BoundaryStencil_Traits
+using BoundaryStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
+
+/**
+ * Provides access to the cellElement stencil that may be called from a kernel function.
+ */
+class BoundaryStencilWrapper : public StencilWrapperBase< BoundaryStencilTraits >
 {
-  /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = array2d< localIndex >;
+public:
 
-  /// The array view type for the stencil indices
-  using IndexContainerViewType = traits::ViewType< IndexContainerType >;
+  /// Coefficient view accessory type
+  template< typename VIEWTYPE >
+  using CoefficientAccessor = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = traits::ViewTypeConst< IndexContainerType >;
+  /**
+   * @brief Constructor
+   * @param elementRegionIndices The container for the element region indices for each point in each stencil
+   * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
+   * @param elementIndices The container for the element indices for each point in each stencil
+   * @param weights The container for the weights for each point in each stencil
+   * @param faceNormal Face normal vector
+   * @param cellToFaceVec Cell center to face center vector
+   * @param weightMultiplier Weight multiplier
+   */
+  BoundaryStencilWrapper( IndexContainerType const & elementRegionIndices,
+                          IndexContainerType const & elementSubRegionIndices,
+                          IndexContainerType const & elementIndices,
+                          WeightContainerType const & weights,
+                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & faceNormal,
+                          arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & cellToFaceVec,
+                          arrayView1d< real64 > const & weightMultiplier );
 
-  /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = array2d< real64 >;
+  /**
+   * @brief Compute weights and derivatives w.r.t to the coefficient.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[out] weight view weights
+   * @param[out] dWeight_dCoef derivative of the weights w.r.t to the coefficient
+   */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex const iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                       real64 & weight,
+                       real64 ( &dWeight_dCoef )[3] ) const;
 
-  /// The array view type for the stencil weights
-  using WeightContainerViewType = traits::ViewType< WeightContainerType >;
+  /**
+   * @brief Give the number of stencil entries.
+   * @return The number of stencil entries
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  localIndex size() const
+  { return m_elementRegionIndices.size( 0 ); }
 
-  /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = traits::ViewTypeConst< WeightContainerType >;
+  /**
+   * @brief Give the number of points in a stencil entry.
+   * @param[in] index of the stencil entry for which to query the size
+   * @return the size of a stencil entry
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr localIndex stencilSize( localIndex const index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return maxStencilSize;
+  }
 
-  /// Number of points the flux is between (always 2 for TPFA)
-  static constexpr localIndex NUM_POINT_IN_FLUX = 2;
+  /**
+   * @brief Give the number of points between which the flux is.
+   * @param[in] index of the stencil entry for which to query the size
+   * @return the number of points.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  constexpr localIndex numPointsInFlux( localIndex const index ) const
+  {
+    GEOSX_UNUSED_VAR( index );
+    return maxNumPointsInFlux;
+  }
 
-  /// Maximum number of points in a stencil (this is 2 for TPFA)
-  static constexpr localIndex MAX_STENCIL_SIZE = 2;
+private:
+
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_faceNormal;
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > m_cellToFaceVec;
+  arrayView1d< real64 > m_weightMultiplier;
 };
 
 /**
- * @class BoundaryStencil
- *
- * Provides management of the boundary stencil points
+ * @brief Provides management of the boundary stencil points
  * (stencils used to prescribe boundary conditions on domain boundaries, i.e. faces)
  */
-class BoundaryStencil : public StencilBase< BoundaryStencil_Traits, BoundaryStencil >,
-  public BoundaryStencil_Traits
+class BoundaryStencil final : public StencilBase< BoundaryStencilTraits, BoundaryStencil >
 {
 public:
+
+  /**
+   * @brief Constructor.
+   */
+  BoundaryStencil();
 
   /**
    * @brief Defines the order of element/face in the stencil.
@@ -76,21 +135,30 @@ public:
     static constexpr localIndex FACE = 1; ///< Order of face index in stencil
   };
 
-  /// default constructor
-  BoundaryStencil();
-
   virtual void add( localIndex const numPts,
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    localIndex const connectorIndex ) override final;
+                    localIndex const connectorIndex ) override;
 
   /**
-   * @copydoc StencilBase<BoundaryStencil_Traits,BoundaryStencil>::size
+   * @brief Add the vectors need to compute the transmissiblity to the Stencil.
+   * @param[in] transMultiplier the transmissibility multiplier
+   * @param[in] faceNormal the normal to the face
+   * @param[in] cellToFaceVec distance vector between the cell center and the face
    */
-  virtual localIndex size() const override final
-  { return m_elementRegionIndices.size( 0 ); }
+  void addVectors( real64 const & transMultiplier,
+                   real64 const (&faceNormal)[3],
+                   real64 const (&cellToFaceVec)[3] );
+
+  /**
+   * @copydoc StencilBase<BoundaryStencilTraits,BoundaryStencil>::size
+   */
+  virtual localIndex size() const override
+  {
+    return m_elementRegionIndices.size( 0 );
+  }
 
   /**
    * @brief Gives the number of points in a stencil entry.
@@ -100,11 +168,67 @@ public:
   constexpr localIndex stencilSize( localIndex const index ) const
   {
     GEOSX_UNUSED_VAR( index );
-    return MAX_STENCIL_SIZE;
+    return maxStencilSize;
   }
+
+  /// Type of kernel wrapper for in-kernel update
+  using StencilWrapper = BoundaryStencilWrapper;
+
+  /**
+   * @brief Create an update kernel wrapper.
+   * @return the wrapper
+   */
+  StencilWrapper createStencilWrapper() const;
+
+private:
+
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_faceNormal;
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_cellToFaceVec;
+  array1d< real64 > m_weightMultiplier;
 
 };
 
+GEOSX_HOST_DEVICE
+inline void
+BoundaryStencilWrapper::
+  computeWeights( localIndex const iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  real64 & weight,
+                  real64 (& dWeight_dCoef)[3] ) const
+{
+  localIndex const er  = m_elementRegionIndices[iconn][BoundaryStencil::Order::ELEM];
+  localIndex const esr = m_elementSubRegionIndices[iconn][BoundaryStencil::Order::ELEM];
+  localIndex const ei  = m_elementIndices[iconn][BoundaryStencil::Order::ELEM];
+
+  // Preload data onto the stack
+  real64 faceNormal[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_faceNormal[iconn] );
+  real64 const cellToFace[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_cellToFaceVec[iconn] );
+  arraySlice1d< real64 const > const coef = coefficient[er][esr][ei][0];
+
+  // Compute the face-cell transmissibility
+  auto const compute = [&]
+  {
+    real64 faceConormal[3];
+    LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coef, faceNormal );
+    weight = LvArray::tensorOps::AiBi< 3 >( cellToFace, faceConormal );
+    LvArray::tensorOps::hadamardProduct< 3 >( dWeight_dCoef, cellToFace, faceNormal );
+  };
+
+  compute();
+  if( weight < 0.0 )
+  {
+    // Correct negative weight issue arising from non-K-orthogonal grids
+    // by replacing face normal with c2f vector
+    LvArray::tensorOps::copy< 3 >( faceNormal, cellToFace );
+    compute();
+  }
+
+  // Scale by face/distance and trans multiplier
+  real64 const mult = m_weights[iconn][BoundaryStencil::Order::ELEM] * m_weightMultiplier[iconn];
+  weight *= mult;
+  LvArray::tensorOps::scale< 3 >( dWeight_dCoef, mult );
 }
 
-#endif //GEOSX_FINITEVOLUME_BOUNDARYSTENCIL_HPP_
+} // namespace geosx
+
+#endif // GEOSX_FINITEVOLUME_BOUNDARYSTENCIL_HPP_
