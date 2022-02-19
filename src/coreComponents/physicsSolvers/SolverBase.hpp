@@ -58,6 +58,8 @@ public:
 
   virtual void initialize_postMeshGeneration() override;
 
+  void generateMeshTargetsFromTargetRegions( Group const & meshBodies );
+
   /**
    * This method is called when its host event is triggered
    */
@@ -610,6 +612,32 @@ public:
       {
         lambda( meshBodyName, meshLevel, regionNames );
       } );
+    }
+  }
+
+  template< typename LAMBDA >
+  void forDiscretizationOnMeshTargets( Group const & meshBodies, LAMBDA && lambda ) const
+  {
+    for( auto const & target: m_meshTargets )
+    {
+      string const meshBodyName = target.first;
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
+      MeshLevel const & meshLevel = meshBody.getMeshLevel(this->m_discretizationName);
+      lambda( meshBodyName, meshLevel, regionNames );
+    }
+  }
+
+  template< typename LAMBDA >
+  void forDiscretizationOnMeshTargets( Group & meshBodies, LAMBDA && lambda ) const
+  {
+    for( auto const & target: m_meshTargets )
+    {
+      string const meshBodyName = target.first;
+      arrayView1d< string const > const & regionNames = target.second.toViewConst();
+      MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
+      MeshLevel & meshLevel = meshBody.getMeshLevel(this->m_discretizationName);
+      lambda( meshBodyName, meshLevel, regionNames );
     }
   }
 

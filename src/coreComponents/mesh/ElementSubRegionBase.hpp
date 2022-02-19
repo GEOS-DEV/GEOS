@@ -95,6 +95,11 @@ public:
    */
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
 
+
+  virtual void resizePerElementValues( localIndex const numNodesPerElement,
+                                       localIndex const numEdgesPerElement,
+                                       localIndex const numFacesPerElement );
+
   ///@}
 
   /**
@@ -108,6 +113,8 @@ public:
    */
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
+  void setNumNodesPerElement( localIndex const input ) { m_numNodesPerElement = input; }
+
   /**
    * @brief Get the number of nodes per element.
    * @param[in] k cell index (not used)
@@ -120,6 +127,14 @@ public:
    * @return number of faces per element
    */
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
+
+  void setNumFacesPerElement( localIndex const input ) { m_numFacesPerElement = input; }
+
+  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
+
+  void setNumEdgesPerElement( localIndex const input ) { m_numEdgesPerElement = input; }
+
+
 
   /**
    * @brief Get the center of each element in this subregion.

@@ -517,17 +517,15 @@ void ProblemManager::generateMesh()
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
 
-  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
-  discretizations = getDiscretizations();
 
   meshManager.generateMeshes( domain );
 
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
+  discretizations = getDiscretizations();
 
-
-  Group & meshBodies = domain.getMeshBodies();
-  meshBodies.forSubGroups<MeshBody>( [&]( MeshBody & meshBody )
+  domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-        CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
     MeshLevel & baseMesh = meshBody.getMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString() );
     array1d<string> junk;
@@ -540,7 +538,7 @@ void ProblemManager::generateMesh()
     FiniteElementDiscretization const & discretization = *(discretizationPair.first.second);
     string const & discretizationName = discretization.getName();
     arrayView1d< string const > const regionNames = discretizationPair.second;
-    MeshBody & meshBody = meshBodies.getGroup<MeshBody>( meshBodyName );
+    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
 
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
@@ -565,21 +563,21 @@ void ProblemManager::generateMesh()
 
 
 
-  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-  domain.setupCommunications( useNonblockingMPI );
+//  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+//  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+//  domain.setupCommunications( useNonblockingMPI );
 
-  domain.forMeshBodies( [&]( MeshBody & meshBody )
-  {
-    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
-    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
-
-    FaceManager & faceManager = meshLevel.getFaceManager();
-    EdgeManager & edgeManager = meshLevel.getEdgeManager();
-
-    faceManager.setIsExternal();
-    edgeManager.setIsExternal( faceManager );
-  } );
+//  domain.forMeshBodies( [&]( MeshBody & meshBody )
+//  {
+//    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
+//    MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
+//
+//    FaceManager & faceManager = meshLevel.getFaceManager();
+//    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+//
+//    faceManager.setIsExternal();
+//    edgeManager.setIsExternal( faceManager );
+//  } );
 
 }
 
@@ -626,8 +624,11 @@ ProblemManager::getDiscretizations() const
   DomainPartition const & domain  = getDomainPartition();
   Group const & meshBodies = domain.getMeshBodies();
 
-  m_physicsSolverManager->forSubGroups<SolverBase>( [&]( SolverBase const & solver )
+  m_physicsSolverManager->forSubGroups<SolverBase>( [&]( SolverBase & solver )
   {
+
+    solver.generateMeshTargetsFromTargetRegions( meshBodies );
+
     string const discretizationName = solver.getDiscretizationName();
 
     FiniteElementDiscretization const &
@@ -716,16 +717,15 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
   }
   meshLevel.generateSets();
 
-  elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
-  {
-    subRegion.setupRelatedObjectsInRelations( meshLevel );
-    subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
-
-    subRegion.setMaxGlobalIndex();
-  } );
 
   if( meshLevel.getName() == MeshLevel::viewStructKeys::baseDiscretizationString() )
   {
+    elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+    {
+      subRegion.setupRelatedObjectsInRelations( meshLevel );
+      subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
+      subRegion.setMaxGlobalIndex();
+    } );
     elemManager.setMaxGlobalIndex();
   }
 

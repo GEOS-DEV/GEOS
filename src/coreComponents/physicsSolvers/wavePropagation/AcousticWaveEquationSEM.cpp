@@ -98,6 +98,41 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
   GEOSX_THROW_IF( feDiscretization == nullptr,
                   getName() << ": FE discretization not found: " << m_discretizationName,
                   InputError );
+
+  localIndex numNodesPerElem = 0;
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(),
+                                  [&]( string const &,
+                                       MeshLevel const & mesh,
+                                       arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+    elemManager.forElementSubRegions([&]( ElementSubRegionBase const & elementSubRegion)
+    {
+      finiteElement::FiniteElementBase const &
+      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
+      localIndex const numSupportPoints = fe.getNumSupportPoints();
+      if( numSupportPoints > numNodesPerElem )
+      {
+        numNodesPerElem = numSupportPoints;
+      }
+    });
+
+  });
+
+  localIndex const numSourcesGlobal = m_sourceCoordinates.size( 0 );
+  m_sourceNodeIds.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceConstants.resize( numSourcesGlobal, numNodesPerElem );
+  m_sourceIsLocal.resize( numSourcesGlobal );
+
+  localIndex const numReceiversGlobal = m_receiverCoordinates.size( 0 );
+  m_receiverNodeIds.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverConstants.resize( numReceiversGlobal, numNodesPerElem );
+  m_receiverIsLocal.resize( numReceiversGlobal );
+
+  m_pressureNp1AtReceivers.resize( numReceiversGlobal );
+
+
+
 }
 
 
@@ -307,9 +342,9 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
 
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                                MeshLevel & mesh,
+                                                                arrayView1d< string const > const & regionNames )
   {
     precomputeSourceAndReceiverTerm( mesh, regionNames );
 
@@ -380,8 +415,8 @@ void AcousticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainParti
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
 
-  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 1 ).getFaceManager();
-  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 1 ).getNodeManager();
+  FaceManager & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
+  NodeManager & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getNodeManager();
 
   arrayView1d< real64 > const p_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_nm1 >();
   arrayView1d< real64 > const p_n = nodeManager.getExtrinsicData< extrinsicMeshData::Pressure_n >();

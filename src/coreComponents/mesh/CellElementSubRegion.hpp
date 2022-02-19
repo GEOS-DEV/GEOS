@@ -99,6 +99,11 @@ public:
   void addFracturedElement( localIndex const cellElemIndex,
                             localIndex const embSurfIndex );
 
+  virtual void resizePerElementValues( localIndex const numNodesPerElement,
+                                       localIndex const numEdgesPerElement,
+                                       localIndex const numFacesPerElement ) override;
+
+
   /**
    * @name Overriding packing / Unpacking functions
    */
@@ -374,8 +379,9 @@ private:
 
     for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
-      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
+      localIndex const nodeIndex = m_toNodesRelation( k, a ) ;
+      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ nodeIndex ] );
+      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ nodeIndex ] );
     }
     LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 

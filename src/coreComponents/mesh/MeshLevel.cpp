@@ -166,8 +166,14 @@ MeshLevel::MeshLevel( string const & name,
 
     sourceRegion.forElementSubRegions<CellElementSubRegion>( [&]( CellElementSubRegion const & sourceSubRegion )
     {
+      localIndex const numNodesPerElem = pow(order+1,3);
+
       CellElementSubRegion & newSubRegion = region.getSubRegions().registerGroup< CellElementSubRegion >( sourceSubRegion.getName() );
       newSubRegion.setElementType( sourceSubRegion.getElementType() );
+
+      newSubRegion.resizePerElementValues( numNodesPerElem,
+                                           sourceSubRegion.numEdgesPerElement(),
+                                           sourceSubRegion.numFacesPerElement() );
 
       newSubRegion.resize( sourceSubRegion.size() );
 
@@ -176,10 +182,8 @@ MeshLevel::MeshLevel( string const & name,
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodesSource = sourceSubRegion.nodeList().toViewConst();
       array2d< localIndex, cells::NODE_MAP_PERMUTATION > & elemsToNodesNew = newSubRegion.nodeList();
      
-      arrayView2d< localIndex > const & elemToFacesNew = newSubRegion.faceList();
+      array2d< localIndex > & elemToFacesNew = newSubRegion.faceList();
 
-      localIndex const numNodesPerElem = pow(order+1,3);
-      //localIndex const numNodesPerElem = pow(numBasisSupportPoints,3);
 
 
       //Copy a new elemToFaces map from the old one 
@@ -189,12 +193,11 @@ MeshLevel::MeshLevel( string const & name,
          {
            elemToFacesNew[elem][face] = elemToFaces[elem][face];
          }
-         
       }
 
 
 
-      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
+//      elemsToNodesNew.resize( elemsToNodesSource.size(0), numNodesPerElem );
 
       // Fill a temporary table which knowing the global number of a degree of freedom and a face, gives you the local number of this degree
       // of freedom on the considering face

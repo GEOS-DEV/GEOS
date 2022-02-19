@@ -203,7 +203,25 @@ protected:
       string_array const targetTokens = stringutilities::tokenize( objectPath, "/" );
       localIndex const targetTokenLength = LvArray::integerConversion< localIndex >( targetTokens.size() );
 
-      dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
+      dataRepository::Group const * targetGroup = nullptr;
+      //dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
+
+      localIndex const numMeshBodies = domain.getMeshBodies().numSubGroups();
+      if( numMeshBodies == 1 )
+      {
+        MeshBody const & meshBody = domain.getMeshBody( 0 );
+        localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
+        if( numMeshLevels <= 2 )
+        {
+          targetGroup = &(meshBody.getMeshLevels().getGroup( 1 ));
+        }
+      }
+
+      if( targetGroup == nullptr )
+      {
+        GEOSX_ERROR("not implmented");
+      }
+
       for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
       {
         dataRepository::Group const * elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );

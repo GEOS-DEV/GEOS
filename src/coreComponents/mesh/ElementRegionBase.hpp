@@ -149,7 +149,7 @@ public:
    */
   localIndex numSubRegions() const
   {
-    return this->getSubRegions().size();
+    return this->getSubRegions().numSubGroups();
   }
 
   /**
