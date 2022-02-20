@@ -948,9 +948,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 
-  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 1).getElemManager();
-  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( 1 ).getNodeManager();
-  EmbeddedSurfaceNodeManager const & embSurfNodeManager = domain.getMeshBody( 0 ).getMeshLevel( 1 ).getEmbSurfNodeManager();
+  MeshLevel const & meshLevel = domain.getMeshBody(0).getMeshLevel(1);
+  ElementRegionManager const & elemManager = meshLevel.getElemManager();
+  NodeManager const & nodeManager = meshLevel.getNodeManager();
+  EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
   std::cout << MeshLevel::viewStructKeys::baseDiscretizationString() << std::endl;
   writeCellElementRegions( time, elemManager, nodeManager );
   writeWellElementRegions( time, elemManager, nodeManager );

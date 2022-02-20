@@ -89,7 +89,7 @@ public:
    * @return pointer to MeshLevel
    */
   MeshLevel & getMeshLevel( localIndex const level )
-  { return getMeshLevel( intToMeshLevelString( level ) ); }
+  { return m_meshLevels.getGroup< MeshLevel >( level );}//getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Get mesh level
@@ -97,7 +97,7 @@ public:
    * @return pointer to const MeshLevel
    */
   MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return getMeshLevel( intToMeshLevelString( level ) ); }
+  { return m_meshLevels.getGroup< MeshLevel >( level );}// getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Apply the given functor to all meshLevels on this meshBody.

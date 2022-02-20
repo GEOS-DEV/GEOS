@@ -246,7 +246,7 @@ public:
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
           MeshBody & meshBody = domain.getMeshBody( 0 );
-          meshBody.forSubGroups<MeshLevel>( [&] ( MeshLevel & meshLevel )
+          meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
           {
           dataRepository::Group * targetGroup = &meshLevel;
 
