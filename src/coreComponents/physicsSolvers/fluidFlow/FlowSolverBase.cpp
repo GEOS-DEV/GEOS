@@ -208,10 +208,12 @@ void FlowSolverBase::initializePreSubGroups()
                                                   arrayView1d< string const > const & regionNames )
     {
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
+      std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
+      stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
       stencilTargetRegions.clear();
-      for( string const & name : regionNames )
+      for( auto const & targetRegion: stencilTargetRegionsSet )
       {
-        stencilTargetRegions.emplace_back( name );
+        stencilTargetRegions.emplace_back( targetRegion );
       }
     } );
   }
