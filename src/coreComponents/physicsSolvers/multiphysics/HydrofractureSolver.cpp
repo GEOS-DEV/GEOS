@@ -227,9 +227,56 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
   real64 dtReturn = dt;
 
   m_totalTime = time_n + dt;
+  //assume the thickness of the KGD problem is 1.0
+  real64 const KGDthickness = 1.0;
 
-  m_meshSize = 1.0;  //hard-coded mesh size, the only place needs to be changed
+  {
+    //m_meshSize = 1.0;  //hard-coded mesh size, the only place needs to be changed
 
+    SurfaceGenerator * const mySurface = this->getParent()->GetGroup< SurfaceGenerator >( "SurfaceGen" );
+    SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
+    Group * elementSubRegions = domain->GetGroup("MeshBodies")
+                                      ->GetGroup<MeshBody>("mesh1")
+                                      ->GetGroup<MeshLevel>("Level0")
+                                      ->GetGroup<ElementRegionManager>("ElementRegions")
+                                      ->GetRegion< FaceElementRegion >( "Fracture" )
+                                      ->GetGroup("elementSubRegions");
+
+    FaceElementSubRegion * subRegion = elementSubRegions->GetGroup< FaceElementSubRegion >( "default" );
+    FaceElementSubRegion::FaceMapType & faceMap = subRegion->faceList();
+
+    for(auto const & trailingFace : trailingFaces)
+    {
+      bool found = false;
+      // loop over all the face element
+      for(localIndex i=0; i<faceMap.size(0); i++)
+      {
+        // loop over all the (TWO) faces in a face element
+        for(localIndex j=0; j<faceMap.size(1); j++)
+        {
+          // if the trailingFace is one of the two faces in a face element,
+          // we find it
+          if (faceMap[i][j] == trailingFace)
+          {
+            m_tipElement = i;
+            found = true;
+            break;
+          }
+        } // for localIndex j
+        if (found)
+          break;
+      } // for localIndex i
+      GEOSX_ASSERT_MSG( found == true,
+                      "Trailing face is not found among the fracture face elements" );
+    }
+
+    if (subRegion->size() > 0)
+    {
+      real64 const tipElmtArea = subRegion->getElementArea()[m_tipElement];
+      m_meshSize = tipElmtArea/KGDthickness;
+      std::cout << "Mesh size = " << m_meshSize << std::endl;
+    }
+  }
 
   SolverBase * const surfaceGenerator =  this->getParent()->GetGroup< SolverBase >( "SurfaceGen" );
 
@@ -256,8 +303,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
     int const rank = MpiWrapper::Comm_rank( MPI_COMM_WORLD );
 
     //TJ the hard coded elmt length
-    real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
-    GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+    real64 meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
+    //GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
     //TJ: We use this global flag to ensure that the MPI processes are either ALL in
     //    the initial guess solver (globalSolverIterFlag = 0), or ALL in the tip iteration
@@ -1305,8 +1352,13 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      std::cout << "Rank " << rank << ": m_tipElement = " << m_tipElement << std::endl;
 */
 	      real64 const tipElmtArea = subRegion->getElementArea()[m_tipElement];
-	      real64 tipElmtSize = sqrt(tipElmtArea);
-	      tipElmtSize = meshSize;  // hard coded
+	      //real64 tipElmtSize = sqrt(tipElmtArea);
+	      real64 tipElmtSize = tipElmtArea/KGDthickness;
+	      //tipElmtSize = meshSize;  // hard coded
+	      m_meshSize = tipElmtSize;
+	      meshSize = m_meshSize;
+	      std::cout << "Mesh size = " << m_meshSize << std::endl;
+
 	      R1Tensor const tipElmtCenter = subRegion->getElementCenter()[m_tipElement];
 	      // Tip propagates in the y-direction (hard coded)
 	      real64 const tipBCLocation = tipElmtCenter[1] - 0.5 * tipElmtSize;
@@ -1584,8 +1636,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	                                 ->getReference<real64>("defaultViscosity");
       string fileName = "KGD_timeTip_visco_"
 	               + std::to_string( viscosityFile )
-                       + "_meshSize_"
-		       + std::to_string( meshSize )
+                       //+ "_meshSize_"
+		       //+ std::to_string( meshSize )
                        + ".hist";
       std::ofstream myFile;
       myFile.open(fileName, std::ios::out | std::ios::app);
@@ -1605,7 +1657,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 {
   //TJ the hard coded elmt length
   real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
-  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+  //GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
   MeshLevel * const meshLevel = domain->getMeshBody( 0 )->getMeshLevel( 0 );
   ElementRegionManager * const elemManager = meshLevel->getElemManager();
@@ -2747,7 +2799,7 @@ HydrofractureSolver::
 
   //TJ the hard coded elmt length
   real64 const meshSize = m_meshSize;  // this value needs to be changed for a mesh-refinement
-  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+  //GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
   MeshLevel const & mesh = *domain->getMeshBody( 0 )->getMeshLevel( 0 );
   FaceManager const * const faceManager = mesh.getFaceManager();

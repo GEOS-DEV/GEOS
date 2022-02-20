@@ -2946,11 +2946,14 @@ void SurfaceGenerator::IdentifyRupturedFacesTipTreatment(DomainPartition * GEOSX
 			   - 0.5*sqrt(faceArea[pickedFace]);
 
 	  //TJ the hard coded elmt length
-	  real64 const meshSize = myHydroSolver->getMeshSize();  // this value needs to be changed for a mesh-refinement
-	  GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
+	  //real64 const meshSize = myHydroSolver->getMeshSize();  // this value needs to be changed for a mesh-refinement
+	  //GEOSX_LOG_RANK_0( "Mesh size = " << meshSize );
 
+	  //tipElmtBC = faceCenter[pickedFace][component]
+	  //			   - 0.5 * meshSize;  //hard coded
+	  real64 const KGDthickness = 1.0;
 	  tipElmtBC = faceCenter[pickedFace][component]
-	  			   - 0.5 * meshSize;  //hard coded
+	                                     - 0.5 * faceArea[pickedFace]/KGDthickness;  //hard coded
 	  std::cout << "Rank " << rank << ": tipLoc = " << tipLoc << std::endl;
 	  std::cout << "Rank " << rank << ": tipElmtBC = " << tipElmtBC << std::endl;
 	  if( tipLoc > tipElmtBC && time_np1 > 0.0 && edgeMode == 1 && isFaceSeparable[pickedFace] == 1 )
