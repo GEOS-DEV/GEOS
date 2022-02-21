@@ -103,12 +103,16 @@ else()
   set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
 endif()
 
-if ( NOT ENABLE_PYGEOSX )
-  blt_add_executable( NAME geosx
-                      SOURCES main/main.cpp
-                      DEPENDS_ON ${extraComponentsLinkList}
+if( ENABLE_PYGEOSX )
+  set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver )
+endif()
+
+
+blt_add_executable( NAME geosx
+                    SOURCES main/main.cpp
+                    DEPENDS_ON ${extraComponentsLinkList}
                                ${externalComponentsLinkList}
-		    )
+			       )
 
 
 			     # Seems to be required on some CMake versions (e.g. 3.16) to get enforce device linking
@@ -158,7 +162,7 @@ if ( NOT ENABLE_PYGEOSX )
 				 )
 			     endif()
 
-endif()
+
 
 if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )

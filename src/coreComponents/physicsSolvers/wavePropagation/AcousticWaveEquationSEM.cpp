@@ -133,6 +133,7 @@ void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void AcousticWaveEquationSEM::postProcessInput()
 {
   WaveSolverBase::postProcessInput();
+
   GEOSX_THROW_IF( m_sourceCoordinates.size( 1 ) != 3,
                   "Invalid number of physical coordinates for the sources",
                   InputError );
@@ -295,7 +296,7 @@ void AcousticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNum
 }
 
 
-void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n )
+void AcousticWaveEquationSEM::computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 )
 {
   real64 const timeSeismo = m_dtSeismoTrace*iSeismo;
   real64 const timeNp1 = time_n+dt;
@@ -303,13 +304,14 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
   arrayView2d< real64 const > const receiverConstants   = m_receiverConstants.toViewConst();
   arrayView1d< localIndex const > const receiverIsLocal = m_receiverIsLocal.toViewConst();
 
-  arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
+  arrayView1d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
-  if( m_nsamplesSeismoTrace > 0 )
+  forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
   {
-    forAll< EXEC_POLICY >( receiverConstants.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const ircv )
+    if( receiverIsLocal[ircv] == 1 )
     {
-      if( receiverIsLocal[ircv] == 1 )
+      p_rcvs[ircv] = 0.0;
+      for( localIndex inode = 0; inode < receiverConstants.size( 1 ); ++inode )
       {
         p_rcvs[iSeismo][ircv] = 0.0;
         real64 ptmpNp1 = 0.0;
@@ -321,35 +323,29 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
         }
         p_rcvs[iSeismo][ircv] = ((timeNp1 - timeSeismo)*ptmpN+(timeSeismo - time_n)*ptmpNp1)/dt;
       }
-    } );
-  }
+    }
+  } );
 
-  if( iSeismo == m_nsamplesSeismoTrace - 1 )
+  forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
   {
-    forAll< serialPolicy >( receiverConstants.size( 0 ), [=] ( localIndex const ircv )
+    if( this->m_outputSeismoTrace == 1 )
     {
-      if( this->m_outputSeismoTrace == 1 )
+      if( receiverIsLocal[ircv] == 1 )
       {
-        if( receiverIsLocal[ircv] == 1 )
-        {
-          // Note: this "manual" output to file is temporary
-          //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
-          // TODO: remove saveSeismo and replace with TimeHistory
-          for( localIndex iSample = 0; iSample < m_nsamplesSeismoTrace; ++iSample )
-          {
-            this->saveSeismo( iSample, p_rcvs[iSample][ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
-          }
-        }
+        // Note: this "manual" output to file is temporary
+        //       It should be removed as soon as we can use TimeHistory to output data not registered on the mesh
+        // TODO: remove saveSeismo and replace with TimeHistory
+        this->saveSeismo( iseismo, p_rcvs[ircv], GEOSX_FMT( "seismoTraceReceiver{:03}.txt", ircv ) );
       }
-    } );
-  }
+    }
+  } );
 }
 
 /// Use for now until we get the same functionality in TimeHistory
-void AcousticWaveEquationSEM::saveSeismo( localIndex iSeismo, real64 valPressure, string const & filename )
+void AcousticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valPressure, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
-  f<< iSeismo << " " << valPressure << std::endl;
+  f<< iseismo << " " << valPressure << std::endl;
   f.close();
 }
 

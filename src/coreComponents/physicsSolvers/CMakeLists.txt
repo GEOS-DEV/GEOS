@@ -151,3 +151,7 @@ if( externalComponentDeps )
 endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
+
+if( ENABLE_PYGEOSX )
+  add_subdirectory( python )
+endif()
