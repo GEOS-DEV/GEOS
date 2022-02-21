@@ -10,7 +10,6 @@ set( finiteVolume_headers
      FaceElementToCellStencil.hpp
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
-     FluxStencil.hpp
      ProjectionEDFMHelper.hpp
      HybridMimeticDiscretization.hpp
      MimeticInnerProductDispatch.hpp 

@@ -136,8 +136,8 @@ void EmbeddedSurfaceFluxKernel::
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs )
 {
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex MAX_STENCIL_SIZE = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::maxNumPointsInFlux;
+  constexpr localIndex maxStencilSize = SurfaceElementStencilWrapper::maxStencilSize;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -152,12 +152,12 @@ void EmbeddedSurfaceFluxKernel::
     // working arrays
     stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS * 4 > dofColIndices( numDofs );
     stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
-    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE * 4 > localFluxJacobian( numFluxElems, numDofs );
+    stackArray2d< real64, MAX_NUM_FLUX_ELEMS * maxStencilSize * 4 > localFluxJacobian( numFluxElems, numDofs );
 
     // compute transmissibility
-    real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-    real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2][3];
+    real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
+    real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
+    real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
@@ -216,15 +216,15 @@ void EmbeddedSurfaceFluxKernel::
   } );
 }
 
-template< localIndex MAX_NUM_OF_CONNECTIONS >
+template< localIndex MAX_NUM_CONNECTIONS >
 void EmbeddedSurfaceFluxKernel::
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
-           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
-           real64 const (&dTrans_dDispJump)[MAX_NUM_OF_CONNECTIONS][2][3],
+           real64 const (&transmissibility)[MAX_NUM_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_CONNECTIONS][2],
+           real64 const (&dTrans_dDispJump)[MAX_NUM_CONNECTIONS][2][3],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -397,8 +397,8 @@ void FaceElementFluxKernel::
                                           arrayView1d< real64 > const & localRhs,
                                           CRSMatrixView< real64, localIndex const > const & dR_dAper )
 {
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex MAX_STENCIL_SIZE  = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
+  constexpr localIndex maxStencilSize  = SurfaceElementStencilWrapper::maxStencilSize;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -417,19 +417,19 @@ void FaceElementFluxKernel::
     if( numFluxElems > 1 )
     {
       // working arrays
-      stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
-      stackArray1d< localIndex, MAX_NUM_FLUX_ELEMS > localColIndices( numFluxElems );
+      stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( numDofs );
+      stackArray1d< localIndex, maxNumFluxElems > localColIndices( numFluxElems );
 
-      stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
-      stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
+      stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
+      stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, numDofs );
 
       // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-      stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
+      stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-      real64 dTrans_dPres[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2];
-      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS][2][3];
+      real64 transmissibility[SurfaceElementStencilWrapper::maxNumConnections][2];
+      real64 dTrans_dPres[SurfaceElementStencilWrapper::maxNumConnections][2];
+      real64 dTrans_dDispJump[SurfaceElementStencilWrapper::maxNumConnections][2][3];
 
       stencilWrapper.computeWeights( iconn,
                                      permeability,
@@ -512,9 +512,9 @@ void FaceElementFluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex MAX_STENCIL_SIZE  = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
-  constexpr localIndex MAX_NUM_OF_CONNECTIONS  = SurfaceElementStencilWrapper::MAX_NUM_OF_CONNECTIONS;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
+  constexpr localIndex maxStencilSize  = SurfaceElementStencilWrapper::maxStencilSize;
+  constexpr localIndex maxNumConnections  = SurfaceElementStencilWrapper::maxNumConnections;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
@@ -534,17 +534,17 @@ void FaceElementFluxKernel::
     {
 
       // working arrays
-      stackArray1d< globalIndex, MAX_NUM_FLUX_ELEMS > dofColIndices( numDofs );
-      stackArray1d< localIndex, MAX_NUM_FLUX_ELEMS > localColIndices( numFluxElems );
+      stackArray1d< globalIndex, maxNumFluxElems > dofColIndices( numDofs );
+      stackArray1d< localIndex, maxNumFluxElems > localColIndices( numFluxElems );
 
-      stackArray1d< real64, MAX_NUM_FLUX_ELEMS > localFlux( numFluxElems );
-      stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, numDofs );
+      stackArray1d< real64, maxNumFluxElems > localFlux( numFluxElems );
+      stackArray2d< real64, maxNumFluxElems * maxStencilSize > localFluxJacobian( numFluxElems, numDofs );
 
       // need to store this for later use in determining the dFlux_dU terms when using better permeabilty approximations.
-      stackArray2d< real64, MAX_NUM_FLUX_ELEMS * MAX_STENCIL_SIZE > dFlux_dAper( numFluxElems, stencilSize );
+      stackArray2d< real64, maxNumFluxElems * maxStencilSize > dFlux_dAper( numFluxElems, stencilSize );
 
       // compute transmissibility
-      real64 transmissibility[MAX_NUM_OF_CONNECTIONS][2], dTrans_dPres[MAX_NUM_OF_CONNECTIONS][2], dTrans_dDispJump[MAX_NUM_OF_CONNECTIONS][2][3];
+      real64 transmissibility[maxNumConnections][2], dTrans_dPres[maxNumConnections][2], dTrans_dDispJump[maxNumConnections][2][3];
       GEOSX_UNUSED_VAR( dPerm_dPres, dPerm_dDispJump );
       stencilWrapper.computeWeights( iconn,
                                      permeability,
@@ -602,16 +602,16 @@ void FaceElementFluxKernel::
 
 
 
-template< localIndex MAX_NUM_OF_CONNECTIONS >
+template< localIndex MAX_NUM_CONNECTIONS >
 GEOSX_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & seri,
                                 arraySlice1d< localIndex const > const & sesri,
                                 arraySlice1d< localIndex const > const & sei,
-                                real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
-                                real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
-                                real64 const (&dTrans_dDispJump)[MAX_NUM_OF_CONNECTIONS][2][3],
+                                real64 const (&transmissibility)[MAX_NUM_CONNECTIONS][2],
+                                real64 const (&dTrans_dPres)[MAX_NUM_CONNECTIONS][2],
+                                real64 const (&dTrans_dDispJump)[MAX_NUM_CONNECTIONS][2][3],
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,

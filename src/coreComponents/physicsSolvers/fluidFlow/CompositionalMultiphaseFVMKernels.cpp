@@ -77,7 +77,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
 
 /******************************** CFLFluxKernel ********************************/
 
-template< integer NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
+template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
 GEOSX_HOST_DEVICE
 void
 CFLFluxKernel::
@@ -193,14 +193,14 @@ CFLFluxKernel::
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  localIndex constexpr NUM_ELEMS   = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-  localIndex constexpr MAX_STENCIL_SIZE   = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+  localIndex constexpr numElems = STENCILWRAPPER_TYPE::maxNumPointsInFlux;
+  localIndex constexpr maxStencilSize = STENCILWRAPPER_TYPE::maxStencilSize;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
-    real64 transmissiblity[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
-    real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+    real64 transmissiblity[STENCILWRAPPER_TYPE::maxNumConnections][2];
+    real64 dTrans_dPres[STENCILWRAPPER_TYPE::maxNumConnections][2];
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
@@ -210,23 +210,23 @@ CFLFluxKernel::
 
     localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
 
-    CFLFluxKernel::compute< NC, NUM_ELEMS, MAX_STENCIL_SIZE >( numPhases,
-                                                               stencilSize,
-                                                               dt,
-                                                               seri[iconn],
-                                                               sesri[iconn],
-                                                               sei[iconn],
-                                                               transmissiblity[0],
-                                                               pres,
-                                                               gravCoef,
-                                                               phaseVolFrac,
-                                                               phaseRelPerm,
-                                                               phaseVisc,
-                                                               phaseDens,
-                                                               phaseMassDens,
-                                                               phaseCompFrac,
-                                                               phaseOutflux,
-                                                               compOutflux );
+    CFLFluxKernel::compute< NC, numElems, maxStencilSize >( numPhases,
+                                                            stencilSize,
+                                                            dt,
+                                                            seri[iconn],
+                                                            sesri[iconn],
+                                                            sei[iconn],
+                                                            transmissiblity[0],
+                                                            pres,
+                                                            gravCoef,
+                                                            phaseVolFrac,
+                                                            phaseRelPerm,
+                                                            phaseVisc,
+                                                            phaseDens,
+                                                            phaseMassDens,
+                                                            phaseCompFrac,
+                                                            phaseOutflux,
+                                                            compOutflux );
   } );
 }
 
@@ -279,7 +279,6 @@ INST_CFLFluxKernel( 5, FaceElementToCellStencilWrapper );
 
 template< integer NP >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 CFLKernel::
   computePhaseCFL( real64 const & poreVol,
@@ -364,7 +363,6 @@ CFLKernel::
 
 template< integer NC >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 CFLKernel::
   computeCompCFL( real64 const & poreVol,
