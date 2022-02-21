@@ -53,6 +53,7 @@ ProppantSolidProppantPermeability                       node         :ref:`XML_P
 SlipDependentPermeability                               node         :ref:`XML_SlipDependentPermeability`                               
 TableCapillaryPressure                                  node         :ref:`XML_TableCapillaryPressure`                                  
 TableRelativePermeability                               node         :ref:`XML_TableRelativePermeability`                               
+TableRelativePermeabilityHysteresis                     node         :ref:`XML_TableRelativePermeabilityHysteresis`                     
 VanGenuchtenBakerRelativePermeability                   node         :ref:`XML_VanGenuchtenBakerRelativePermeability`                   
 VanGenuchtenCapillaryPressure                           node         :ref:`XML_VanGenuchtenCapillaryPressure`                           
 VolumeWeightedThermalConductivity                       node         :ref:`XML_VolumeWeightedThermalConductivity`                       

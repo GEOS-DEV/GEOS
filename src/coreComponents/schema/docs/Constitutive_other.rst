@@ -53,6 +53,7 @@ ProppantSolidProppantPermeability                       node :ref:`DATASTRUCTURE
 SlipDependentPermeability                               node :ref:`DATASTRUCTURE_SlipDependentPermeability`                               
 TableCapillaryPressure                                  node :ref:`DATASTRUCTURE_TableCapillaryPressure`                                  
 TableRelativePermeability                               node :ref:`DATASTRUCTURE_TableRelativePermeability`                               
+TableRelativePermeabilityHysteresis                     node :ref:`DATASTRUCTURE_TableRelativePermeabilityHysteresis`                     
 VanGenuchtenBakerRelativePermeability                   node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`                   
 VanGenuchtenCapillaryPressure                           node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`                           
 VolumeWeightedThermalConductivity                       node :ref:`DATASTRUCTURE_VolumeWeightedThermalConductivity`                       
