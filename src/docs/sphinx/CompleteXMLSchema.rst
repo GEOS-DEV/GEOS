@@ -883,6 +883,13 @@ Element: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability.rst
 
 
+.. _XML_TableRelativePermeabilityHysteresis:
+
+Element: TableRelativePermeabilityHysteresis
+============================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -1893,6 +1900,13 @@ Datastructure: TableFunction
 Datastructure: TableRelativePermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_TableRelativePermeabilityHysteresis:
+
+Datastructure: TableRelativePermeabilityHysteresis
+==================================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:
