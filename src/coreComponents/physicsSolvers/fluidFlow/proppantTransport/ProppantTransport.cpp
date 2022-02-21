@@ -632,7 +632,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
     {
 
-      SurfaceElementStencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      SurfaceElementStencilWrapper stencilWrapper = stencil.createKernelWrapper();
 
       FluxKernel::launch( stencilWrapper,
                           m_numDofPerCell,
@@ -999,7 +999,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
   {
-    SurfaceElementStencilWrapper stencilWrapper = stencil.createStencilWrapper();
+    SurfaceElementStencilWrapper stencilWrapper = stencil.createKernelWrapper();
 
     FluxKernel::launchCellBasedFluxCalculation( stencilWrapper,
                                                 downVector,
