@@ -450,7 +450,6 @@
 			<xsd:element name="CompositionalMultiphaseHybridFVM" type="CompositionalMultiphaseHybridFVMType" />
 			<xsd:element name="CompositionalMultiphaseReservoir" type="CompositionalMultiphaseReservoirType" />
 			<xsd:element name="CompositionalMultiphaseWell" type="CompositionalMultiphaseWellType" />
-			<xsd:element name="OBLSuperEngine" type="OBLSuperEngineType" />
 			<xsd:element name="EmbeddedSurfaceGenerator" type="EmbeddedSurfaceGeneratorType" />
 			<xsd:element name="FlowProppantTransport" type="FlowProppantTransportType" />
 			<xsd:element name="Hydrofracture" type="HydrofractureType" />
@@ -458,6 +457,7 @@
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="LaplaceVEM" type="LaplaceVEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
+			<xsd:element name="OBLSuperEngine" type="OBLSuperEngineType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
@@ -542,16 +542,6 @@
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="WellControlsType" />
-	<xsd:complexType name="OBLSuperEngineType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
-		<xsd:attribute name="maxStableDt" type="real64" />
-		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
-		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-	</xsd:complexType>
 	<xsd:complexType name="EmbeddedSurfaceGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -619,6 +609,16 @@
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
 	<xsd:complexType name="MultiphasePoromechanicsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
+		<xsd:attribute name="maxStableDt" type="real64" />
+		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
+		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="OBLSuperEngineType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />

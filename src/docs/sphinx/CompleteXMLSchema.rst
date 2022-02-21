@@ -232,13 +232,6 @@ Element: Cylinder
 .. include:: ../../coreComponents/schema/docs/Cylinder.rst
 
 
-.. _XML_DARTSSuperEngine:
-
-Element: DARTSSuperEngine
-=========================
-.. include:: ../../coreComponents/schema/docs/DARTSSuperEngine.rst
-
-
 .. _XML_DamageElasticIsotropic:
 
 Element: DamageElasticIsotropic
@@ -552,6 +545,13 @@ Element: NullModel
 Element: NumericalMethods
 =========================
 .. include:: ../../coreComponents/schema/docs/NumericalMethods.rst
+
+
+.. _XML_OBLSuperEngine:
+
+Element: OBLSuperEngine
+=======================
+.. include:: ../../coreComponents/schema/docs/OBLSuperEngine.rst
 
 
 .. _XML_Outputs:
@@ -1237,13 +1237,6 @@ Datastructure: Cylinder
 .. include:: ../../coreComponents/schema/docs/Cylinder_other.rst
 
 
-.. _DATASTRUCTURE_DARTSSuperEngine:
-
-Datastructure: DARTSSuperEngine
-===============================
-.. include:: ../../coreComponents/schema/docs/DARTSSuperEngine_other.rst
-
-
 .. _DATASTRUCTURE_DamageElasticIsotropic:
 
 Datastructure: DamageElasticIsotropic
@@ -1578,6 +1571,13 @@ Datastructure: NullModel
 Datastructure: NumericalMethods
 ===============================
 .. include:: ../../coreComponents/schema/docs/NumericalMethods_other.rst
+
+
+.. _DATASTRUCTURE_OBLSuperEngine:
+
+Datastructure: OBLSuperEngine
+=============================
+.. include:: ../../coreComponents/schema/docs/OBLSuperEngine_other.rst
 
 
 .. _DATASTRUCTURE_Outputs:

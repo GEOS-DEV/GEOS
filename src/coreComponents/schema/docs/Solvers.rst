@@ -9,7 +9,6 @@ CompositionalMultiphaseFVM                node                 :ref:`XML_Composi
 CompositionalMultiphaseHybridFVM          node                 :ref:`XML_CompositionalMultiphaseHybridFVM`          
 CompositionalMultiphaseReservoir          node                 :ref:`XML_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseWell               node                 :ref:`XML_CompositionalMultiphaseWell`               
-DARTSSuperEngine                          node                 :ref:`XML_DARTSSuperEngine`                          
 EmbeddedSurfaceGenerator                  node                 :ref:`XML_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node                 :ref:`XML_FlowProppantTransport`                     
 Hydrofracture                             node                 :ref:`XML_Hydrofracture`                             
@@ -17,6 +16,7 @@ LagrangianContact                         node                 :ref:`XML_Lagrang
 LaplaceFEM                                node                 :ref:`XML_LaplaceFEM`                                
 LaplaceVEM                                node                 :ref:`XML_LaplaceVEM`                                
 MultiphasePoromechanics                   node                 :ref:`XML_MultiphasePoromechanics`                   
+OBLSuperEngine                            node                 :ref:`XML_OBLSuperEngine`                            
 PhaseFieldDamageFEM                       node                 :ref:`XML_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node                 :ref:`XML_PhaseFieldFracture`                        
 ProppantTransport                         node                 :ref:`XML_ProppantTransport`                         
