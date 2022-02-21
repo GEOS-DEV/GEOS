@@ -215,11 +215,6 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const elemGhostRank =
     elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-  // TODO: can we look this up better?
-  string const & meshBodyName = mesh.getParent().getParent().getName();
-  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
-
-
   arrayView1d< real64 const > faceArea   = faceManager.faceArea();
   arrayView2d< real64 const > faceCenter = faceManager.faceCenter();
   arrayView2d< real64 const > faceNormal = faceManager.faceNormal();
@@ -250,7 +245,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
 
   FixedToManyElementRelation const & faceElementsToCells = fractureSubRegion.getToCellRelation();
 
-  localIndex constexpr maxElems = SurfaceElementStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr maxElems = SurfaceElementStencil::maxStencilSize;
 
   arrayView1d< integer const > const & edgeGhostRank = edgeManager.ghostRank();
 
@@ -671,7 +666,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
 
   // start from last connectorIndex from surface-To-cell connections
   localIndex connectorIndex = edfmStencil.size();
-  localIndex constexpr MAX_NUM_ELEMS = EmbeddedSurfaceToCellStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr MAX_NUM_ELEMS = EmbeddedSurfaceToCellStencil::maxStencilSize;
 
   // reserve memory for the connections of this fracture
   edfmStencil.reserve( edfmStencil.size() + fractureSubRegion.size() );
@@ -743,7 +738,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
 
   EdgeManager::FaceMapType const & edgeToEmbSurfacesMap = embSurfEdgeManager.faceList();
 
-  localIndex constexpr maxElems = SurfaceElementStencil::MAX_STENCIL_SIZE;
+  localIndex constexpr maxElems = SurfaceElementStencil::maxStencilSize;
 
   localIndex connectorIndex = 0;
 
@@ -855,6 +850,9 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   arrayView2d< localIndex const > const & elemList           = faceManager.elementList();
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
+  arrayView1d< real64 const > const & transMultiplier =
+    faceManager.getReference< array1d< real64 > >( m_coeffName + viewKeyStruct::transMultiplierString() );
+
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
@@ -864,12 +862,6 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   // TODO: can we look this up better?
   string const & meshBodyName = mesh.getParent().getParent().getName();
   arrayView1d< string const > const targetRegions = m_targetRegions.at( meshBodyName );
-  string const coeffModelNames = m_coefficientModelNames.at( meshBodyName )[0];
-
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const coefficient =
-    elemManager.constructMaterialArrayViewAccessor< real64, 3 >( m_coeffName,
-                                                                 targetRegions,
-                                                                 coeffModelNames );
 
   ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
 
@@ -880,7 +872,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
     regionFilter.insert( elemManager.getRegions().getIndex( regionName ) );
   }
 
-  constexpr localIndex numPts = BoundaryStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex numPts = BoundaryStencil::maxNumPointsInFlux;
 
   stackArray1d< localIndex, numPts > stencilRegionIndices( numPts );
   stackArray1d< localIndex, numPts > stencilSubRegionIndices( numPts );
@@ -889,39 +881,44 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
 
   real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
-  real64 const weightTolerance = 1e-30 * lengthTolerance; // TODO: choice of constant based on physics?
 
   // loop over faces and calculate faceArea, faceNormal and faceCenter
   stencil.reserve( faceSet.size() );
   for( localIndex kf : faceSet )
   {
-    real64 faceCenter[ 3 ], faceNormal[ 3 ], faceConormal[ 3 ], cellToFaceVec[ 3 ];
-    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf], nodePosition, faceCenter, faceNormal, areaTolerance );
+    real64 faceCenter[ 3 ];
+    real64 faceNormal[ 3 ];
+    real64 const faceArea = computationalGeometry::centroid_3DPolygon( faceToNodes[kf],
+                                                                       nodePosition,
+                                                                       faceCenter,
+                                                                       faceNormal,
+                                                                       areaTolerance );
 
     for( localIndex ke = 0; ke < numPts; ++ke )
     {
+      localIndex const er  = elemRegionList[kf][ke];
+      localIndex const esr = elemSubRegionList[kf][ke];
+      localIndex const ei  = elemList[kf][ke];
+
       // Filter out elements not locally present
-      if( elemRegionList[kf][ke] < 0 )
+      if( er < 0 )
       {
         continue;
       }
 
       // Filter out elements not in target regions
-      if( !regionFilter.contains( elemRegionList[kf][ke] ))
+      if( !regionFilter.contains( er ) )
       {
         continue;
       }
 
-      localIndex const er  = elemRegionList[kf][ke];
-      localIndex const esr = elemSubRegionList[kf][ke];
-      localIndex const ei  = elemList[kf][ke];
-
-      // Filter out ghosted elements
+      // Filter out ghosted elements - to be handled by the owning rank
       if( elemGhostRank[er][esr][ei] >= 0 )
       {
         continue;
       }
 
+      real64 cellToFaceVec[ 3 ];
       LvArray::tensorOps::copy< 3 >( cellToFaceVec, faceCenter );
       LvArray::tensorOps::subtract< 3 >( cellToFaceVec, elemCenter[ er ][ esr ][ ei ] );
 
@@ -931,19 +928,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
       }
 
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec );
-
-      LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], faceNormal );
-      real64 faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-
-      // correct negative weight issue arising from non-K-orthogonal grids
-      if( faceWeight < 0.0 )
-      {
-        LvArray::tensorOps::hadamardProduct< 3 >( faceConormal, coefficient[er][esr][ei][0], cellToFaceVec );
-        faceWeight = LvArray::tensorOps::AiBi< 3 >( cellToFaceVec, faceConormal );
-      }
-
-      faceWeight *= faceArea / c2fDistance;
-      faceWeight = std::fmax( faceWeight, weightTolerance );
+      real64 const faceWeight = faceArea / c2fDistance;
 
       stencilRegionIndices[BoundaryStencil::Order::ELEM] = er;
       stencilSubRegionIndices[BoundaryStencil::Order::ELEM] = esr;
@@ -961,6 +946,8 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
                    stencilElemOrFaceIndices.data(),
                    stencilWeights.data(),
                    kf );
+
+      stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
     }
   }
 }
@@ -990,7 +977,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
   arrayView2d< localIndex const > const & elemSubRegionList = faceManager.elementSubRegionList();
   arrayView2d< localIndex const > const & elemList          = faceManager.elementList();
 
-  constexpr localIndex numPts = BoundaryStencil::NUM_POINT_IN_FLUX;
+  constexpr localIndex numPts = BoundaryStencil::maxNumPointsInFlux;
 
   // make a list of region indices to be included
   SortedArray< localIndex > regionFilter;
