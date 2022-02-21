@@ -190,7 +190,6 @@ static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
       {
         for (localIndex i = 0; i < order-1; ++i)
         {
-          std::cout << "BUG" << std::endl;
           vtkNodes.push_back(pow(order+1,2) +order+1+order+ pow(order+1,2)*j+(order+1)*i);
         }
       }
@@ -225,16 +224,6 @@ static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
         }
       }
 
-
-      //vtkNodes = { 0, 1, 3, 2, 4, 5, 7, 6 };
-      // localIndex counter = 0;
-      // for ( localIndex i = 0; i < vtkNodes.size(); ++i )
-      // { 
-      //   std::cout << counter << " "<< vtkNodes[i] << " " << std::endl;
-      //   counter++;
-      // }
-      
-      std::exit(2);
        return vtkNodes;
     }
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
