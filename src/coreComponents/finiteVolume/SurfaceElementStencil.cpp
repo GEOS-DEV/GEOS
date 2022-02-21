@@ -23,7 +23,7 @@ namespace geosx
 
 void SurfaceElementStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< SurfaceElementStencilTraits, SurfaceElementStencil >::move( space );
+  StencilBase::move( space );
   m_cellCenterToEdgeCenters.move( space, true );
 }
 
@@ -87,8 +87,8 @@ void SurfaceElementStencil::add( localIndex const numPts,
   }
 }
 
-SurfaceElementStencil::StencilWrapper
-SurfaceElementStencil::createStencilWrapper() const
+SurfaceElementStencil::KernelWrapper
+SurfaceElementStencil::createKernelWrapper() const
 {
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,

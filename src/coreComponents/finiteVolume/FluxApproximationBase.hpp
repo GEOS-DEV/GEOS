@@ -21,7 +21,6 @@
 #define GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "SurfaceElementStencil.hpp"
 #include "FaceElementToCellStencil.hpp"

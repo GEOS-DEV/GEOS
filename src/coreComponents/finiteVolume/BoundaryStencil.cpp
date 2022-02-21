@@ -21,8 +21,8 @@
 namespace geosx
 {
 
-BoundaryStencil::BoundaryStencil():
-  StencilBase< BoundaryStencilTraits, BoundaryStencil >()
+BoundaryStencil::BoundaryStencil()
+  : StencilBase()
 {
   m_faceNormal.resize( 0, 3 );
   m_cellToFaceVec.resize( 0, 3 );
@@ -66,7 +66,7 @@ void BoundaryStencil::addVectors( real64 const & transMultiplier,
   LvArray::tensorOps::copy< 3 >( m_cellToFaceVec[size], cellToFaceVec );
 }
 
-BoundaryStencil::StencilWrapper BoundaryStencil::createStencilWrapper() const
+BoundaryStencil::KernelWrapper BoundaryStencil::createKernelWrapper() const
 {
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,

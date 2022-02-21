@@ -25,14 +25,9 @@ namespace geosx
 {
 
 /**
- * @brief Describes properties of CellElementStencilTPFA.
- */
-using CellElementStencilTPFATraits = StencilTraits< array2d, 2, 2, 1 >;
-
-/**
  * Provides access to the cellElement stencil that may be called from a kernel function.
  */
-class CellElementStencilTPFAWrapper : public StencilWrapperBase< CellElementStencilTPFATraits >
+class CellElementStencilTPFAWrapper : public StencilWrapperBase< TwoPointStencilTraits >
 {
 public:
 
@@ -121,7 +116,7 @@ private:
  *
  * Provides management of the interior stencil points when using Two-Point flux approximation.
  */
-class CellElementStencilTPFA final : public StencilBase< CellElementStencilTPFATraits, CellElementStencilTPFA >
+class CellElementStencilTPFA final : public StencilBase< TwoPointStencilTraits, CellElementStencilTPFA >
 {
 public:
 
@@ -172,13 +167,13 @@ public:
   }
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = CellElementStencilTPFAWrapper;
+  using KernelWrapper = CellElementStencilTPFAWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const;
+  KernelWrapper createKernelWrapper() const;
 
 private:
 

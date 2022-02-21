@@ -22,8 +22,8 @@
 namespace geosx
 {
 
-CellElementStencilTPFA::CellElementStencilTPFA():
-  StencilBase< CellElementStencilTPFATraits, CellElementStencilTPFA >()
+CellElementStencilTPFA::CellElementStencilTPFA()
+  : StencilBase()
 {
   m_faceNormal.resize( 0, 3 );
   m_cellToFaceVec.resize( 0, 2, 3 );
@@ -83,8 +83,8 @@ void CellElementStencilTPFA::addVectors( real64 const & transMultiplier,
   }
 }
 
-CellElementStencilTPFA::StencilWrapper
-CellElementStencilTPFA::createStencilWrapper() const
+CellElementStencilTPFA::KernelWrapper
+CellElementStencilTPFA::createKernelWrapper() const
 {
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,

@@ -45,8 +45,11 @@ namespace geosx
 
 /**
  * @brief Describes properties of SurfaceElementStencil.
+ *
+ * This type of stencil allows for up to 6 surface elements to be connected in a flux computation.
+ * The total number of pairwise connections is thus: 6*(6-1)/2 = 15.
  */
-using SurfaceElementStencilTraits = StencilTraits< ArrayOfArrays, 6, 6, 6 * ( 6 - 1) / 2 >;
+using SurfaceElementStencilTraits = StencilTraits< ArrayOfArrays, 6, 6, 15 >;
 
 /**
  * @brief Provides access to the SurfaceElementStencil that may be called from a kernel function.
@@ -226,13 +229,13 @@ public:
 
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = SurfaceElementStencilWrapper;
+  using KernelWrapper = SurfaceElementStencilWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const;
+  KernelWrapper createKernelWrapper() const;
 
   /**
    * @brief Return the stencil size.

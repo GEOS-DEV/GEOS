@@ -213,7 +213,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
@@ -270,7 +270,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
       typename FluxKernel::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
@@ -339,7 +339,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
       typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
@@ -400,7 +400,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
       typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
@@ -531,7 +531,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
         typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
         typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
 
-        FaceDirichletBCKernel::launch( stencil.createStencilWrapper(),
+        FaceDirichletBCKernel::launch( stencil.createKernelWrapper(),
                                        flowAccessors.get< extrinsicMeshData::ghostRank >(),
                                        elemDofNumber.toNestedViewConst(),
                                        dofManager.rankOffset(),

@@ -23,15 +23,11 @@
 
 namespace geosx
 {
-/**
- * @brief Describes properties of EmbeddedSurfaceToCellStencil.
- */
-using EmbeddedSurfaceToCellStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
 
 /**
  * @brief Provide access to the EmbeddedSurfaceToCellStencil that may be called from a kernel function.
  */
-class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< EmbeddedSurfaceToCellStencilTraits >
+class EmbeddedSurfaceToCellStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits >
 {
 public:
 
@@ -125,7 +121,7 @@ public:
 /**
  * @brief Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class EmbeddedSurfaceToCellStencil final : public StencilBase< EmbeddedSurfaceToCellStencilTraits, EmbeddedSurfaceToCellStencil >
+class EmbeddedSurfaceToCellStencil final : public StencilBase< TwoPointStencilTraits, EmbeddedSurfaceToCellStencil >
 {
 public:
 
@@ -139,13 +135,13 @@ public:
                     localIndex const connectorIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = EmbeddedSurfaceToCellStencilWrapper;
+  using KernelWrapper = EmbeddedSurfaceToCellStencilWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const;
+  KernelWrapper createKernelWrapper() const;
 
   /**
    * @brief Return the stencil size.

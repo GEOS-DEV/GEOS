@@ -25,14 +25,9 @@ namespace geosx
 {
 
 /**
- * @brief Describes properties of CellElementStencilTPFA.
+ * Provides access to the boundary stencil that may be called from a kernel function.
  */
-using BoundaryStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
-
-/**
- * Provides access to the cellElement stencil that may be called from a kernel function.
- */
-class BoundaryStencilWrapper : public StencilWrapperBase< BoundaryStencilTraits >
+class BoundaryStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits >
 {
 public:
 
@@ -117,7 +112,7 @@ private:
  * @brief Provides management of the boundary stencil points
  * (stencils used to prescribe boundary conditions on domain boundaries, i.e. faces)
  */
-class BoundaryStencil final : public StencilBase< BoundaryStencilTraits, BoundaryStencil >
+class BoundaryStencil final : public StencilBase< TwoPointStencilTraits, BoundaryStencil >
 {
 public:
 
@@ -172,13 +167,13 @@ public:
   }
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = BoundaryStencilWrapper;
+  using KernelWrapper = BoundaryStencilWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const;
+  KernelWrapper createKernelWrapper() const;
 
 private:
 

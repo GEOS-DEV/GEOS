@@ -23,7 +23,7 @@ namespace geosx
 
 void EmbeddedSurfaceToCellStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< EmbeddedSurfaceToCellStencilTraits, EmbeddedSurfaceToCellStencil >::move( space );
+  StencilBase::move( space );
 }
 
 void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
@@ -52,8 +52,8 @@ void EmbeddedSurfaceToCellStencil::add( localIndex const numPts,
   m_connectorIndices[connectorIndex] = oldSize;
 }
 
-EmbeddedSurfaceToCellStencil::StencilWrapper
-EmbeddedSurfaceToCellStencil::createStencilWrapper() const
+EmbeddedSurfaceToCellStencil::KernelWrapper
+EmbeddedSurfaceToCellStencil::createKernelWrapper() const
 {
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,

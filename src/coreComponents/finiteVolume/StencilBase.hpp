@@ -62,6 +62,11 @@ struct StencilTraits
 };
 
 /**
+ * @brief Describes properties of a standard two-point stencil.
+ */
+using TwoPointStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
+
+/**
  * @class StencilWrapperBase
  *
  * Class to provide access to the computation of stencil weights that may be

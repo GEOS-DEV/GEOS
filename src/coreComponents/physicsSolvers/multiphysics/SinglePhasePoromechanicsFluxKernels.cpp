@@ -216,15 +216,15 @@ void EmbeddedSurfaceFluxKernel::
   } );
 }
 
-template< localIndex maxNumConnections >
+template< localIndex MAX_NUM_CONNECTIONS >
 void EmbeddedSurfaceFluxKernel::
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[maxNumConnections][2],
-           real64 const (&dTrans_dPres)[maxNumConnections][2],
-           real64 const (&dTrans_dDispJump)[maxNumConnections][2][3],
+           real64 const (&transmissibility)[MAX_NUM_CONNECTIONS][2],
+           real64 const (&dTrans_dPres)[MAX_NUM_CONNECTIONS][2],
+           real64 const (&dTrans_dDispJump)[MAX_NUM_CONNECTIONS][2][3],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -602,16 +602,16 @@ void FaceElementFluxKernel::
 
 
 
-template< localIndex maxNumConnections >
+template< localIndex MAX_NUM_CONNECTIONS >
 GEOSX_HOST_DEVICE
 void
 FaceElementFluxKernel::compute( localIndex const numFluxElems,
                                 arraySlice1d< localIndex const > const & seri,
                                 arraySlice1d< localIndex const > const & sesri,
                                 arraySlice1d< localIndex const > const & sei,
-                                real64 const (&transmissibility)[maxNumConnections][2],
-                                real64 const (&dTrans_dPres)[maxNumConnections][2],
-                                real64 const (&dTrans_dDispJump)[maxNumConnections][2][3],
+                                real64 const (&transmissibility)[MAX_NUM_CONNECTIONS][2],
+                                real64 const (&dTrans_dPres)[MAX_NUM_CONNECTIONS][2],
+                                real64 const (&dTrans_dDispJump)[MAX_NUM_CONNECTIONS][2][3],
                                 ElementViewConst< arrayView1d< real64 const > > const & pres,
                                 ElementViewConst< arrayView1d< real64 const > > const & dPres,
                                 ElementViewConst< arrayView1d< real64 const > > const & gravCoef,

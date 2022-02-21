@@ -21,8 +21,8 @@
 namespace geosx
 {
 
-FaceElementToCellStencil::FaceElementToCellStencil():
-  StencilBase< FaceElementToCellStencilTraits, FaceElementToCellStencil >()
+FaceElementToCellStencil::FaceElementToCellStencil()
+  : StencilBase()
 {
   m_faceNormal.resize( 0, 3 );
   m_cellToFaceVec.resize( 0, 3 );
@@ -39,7 +39,7 @@ void FaceElementToCellStencil::reserve( localIndex const size )
 
 void FaceElementToCellStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< FaceElementToCellStencilTraits, FaceElementToCellStencil >::move( space );
+  StencilBase::move( space );
 }
 
 void FaceElementToCellStencil::add( localIndex const numPts,
@@ -83,8 +83,8 @@ void FaceElementToCellStencil::addVectors( real64 const & transMultiplier,
   LvArray::tensorOps::copy< 3 >( m_cellToFaceVec[oldSize], cellToFaceVec );
 }
 
-FaceElementToCellStencil::StencilWrapper
-FaceElementToCellStencil::createStencilWrapper() const
+FaceElementToCellStencil::KernelWrapper
+FaceElementToCellStencil::createKernelWrapper() const
 {
   return { m_elementRegionIndices,
            m_elementSubRegionIndices,

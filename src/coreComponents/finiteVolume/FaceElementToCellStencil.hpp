@@ -25,14 +25,9 @@ namespace geosx
 {
 
 /**
- * @brief Describes properties of FaceElementToCellStencil.
- */
-using FaceElementToCellStencilTraits = StencilTraits< array2d, 2, 2, 1 >;
-
-/**
  * @brief Provides access to the FaceElementToCellStencil that may be called from a kernel function.
  */
-class FaceElementToCellStencilWrapper : public StencilWrapperBase< FaceElementToCellStencilTraits >
+class FaceElementToCellStencilWrapper : public StencilWrapperBase< TwoPointStencilTraits >
 {
 public:
 
@@ -146,7 +141,7 @@ private:
  *
  * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class FaceElementToCellStencil final : public StencilBase< FaceElementToCellStencilTraits, FaceElementToCellStencil >
+class FaceElementToCellStencil final : public StencilBase< TwoPointStencilTraits, FaceElementToCellStencil >
 {
 public:
 
@@ -175,13 +170,13 @@ public:
                    real64 const (&cellToFaceVec)[3] );
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = FaceElementToCellStencilWrapper;
+  using KernelWrapper = FaceElementToCellStencilWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const;
+  KernelWrapper createKernelWrapper() const;
 
   /**
    * @brief Return the stencil size.

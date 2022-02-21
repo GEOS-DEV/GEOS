@@ -25,7 +25,10 @@ namespace geosx
 {
 
 /**
- * @brief Describes properties of CellElementStencilMPFATraits
+ * @brief Describes properties of CellElementStencilMPFA.
+ *
+ * This type of stencil supports connecting exactly two elements in each
+ * flux with a larger number of points involved in the flux computation.
  */
 using CellElementStencilMPFATraits = StencilTraits< ArrayOfArrays, 2, 18, 1 >;
 
