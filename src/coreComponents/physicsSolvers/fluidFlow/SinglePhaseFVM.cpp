@@ -213,7 +213,7 @@ void SinglePhaseFVM< SinglePhaseBase >::assembleFluxTerms( real64 const GEOSX_UN
 
     fluxApprox.forAllStencils( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
@@ -270,7 +270,7 @@ void SinglePhaseFVM< SinglePhaseProppantBase >::assembleFluxTerms( real64 const 
 
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, getName() );
       typename FluxKernel::SlurryFluidAccessors fluidAccessors( elemManager, getName() );
@@ -339,7 +339,7 @@ void SinglePhaseFVM< BASE >::assemblePoroelasticFluxTerms( real64 const GEOSX_UN
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, EmbeddedSurfaceToCellStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
       typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
@@ -400,7 +400,7 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
 
     fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
       typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
@@ -507,39 +507,36 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
       }
 
       // first, evaluate BC to get primary field values (pressure)
-      fs.applyFieldValue< FieldSpecificationEqual, parallelDevicePolicy<> >( targetSet,
-                                                                             time_n + dt,
-                                                                             targetGroup,
-                                                                             extrinsicMeshData::flow::facePressure::key() );
-
-      // Now run the actual kernel
-      BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-      BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-      BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
-      BoundaryStencil::WeightContainerViewConstType const & trans = stencil.getWeights();
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    extrinsicMeshData::flow::facePressure::key() );
 
       // TODO: currently we just use model from the first cell in this stencil
       //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
       //       Can we just use cell properties for an approximate flux computation?
       //       Then we can forget about capturing the fluid model.
-      ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( seri( 0, 0 ) ).getSubRegion( sesri( 0, 0 ) );
-
+      localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
+      localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
+      ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
       string & fluidName = subRegion.getReference< string >( BASE::viewKeyStruct::fluidNamesString() );
-
-      SingleFluidBase & fluidBase = subRegion.template getConstitutiveModel< SingleFluidBase >( fluidName );
+      SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
       constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
       {
-        // create the fluid compute wrapper suitable for capturing in a kernel lambda
         typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
         typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
         typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
+        typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
 
-        FaceDirichletBCKernel::launch( seri, sesri, sefi, trans,
+        FaceDirichletBCKernel::launch( stencil.createKernelWrapper(),
                                        flowAccessors.get< extrinsicMeshData::ghostRank >(),
                                        elemDofNumber.toNestedViewConst(),
                                        dofManager.rankOffset(),
+                                       permAccessors.get< extrinsicMeshData::permeability::permeability >(),
+                                       permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
                                        flowAccessors.get< extrinsicMeshData::flow::pressure >(),
                                        flowAccessors.get< extrinsicMeshData::flow::deltaPressure >(),
                                        flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),

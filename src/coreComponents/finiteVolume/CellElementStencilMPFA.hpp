@@ -24,56 +24,22 @@
 namespace geosx
 {
 
-
 /**
- * @struct CellElementStencilMPFA_Traits
- * Struct to predeclare the types and constexpr values of CellElementStencilMPFA so that they may be used in
- * StencilBase.
- */
-struct CellElementStencilMPFA_Traits
-{
-  /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = ArrayOfArrays< localIndex >;
-
-  /// The array view type for the stencil indices
-  using IndexContainerViewType = ArrayOfArraysView< localIndex >;
-
-  /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = ArrayOfArraysView< localIndex const >;
-
-  /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = ArrayOfArrays< real64 >;
-
-  /// The array view type for the stencil weights
-  using WeightContainerViewType = ArrayOfArraysView< real64 >;
-
-  /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = ArrayOfArraysView< real64 const >;
-
-  /// Number of points the flux is between (always 2)
-  static localIndex constexpr NUM_POINT_IN_FLUX = 2;
-
-  /// Maximum number of points in a stencil
-  static localIndex constexpr MAX_STENCIL_SIZE = 18;
-
-};
-
-/**
- * @class CellElementStencilMPFA
+ * @brief Describes properties of CellElementStencilMPFA.
  *
- * Provides management of the interior stencil points when using a Multi-point flux approximation.
+ * This type of stencil supports connecting exactly two elements in each
+ * flux with a larger number of points involved in the flux computation.
  */
-class CellElementStencilMPFA : public StencilBase< CellElementStencilMPFA_Traits, CellElementStencilMPFA >,
-  public CellElementStencilMPFA_Traits
+using CellElementStencilMPFATraits = StencilTraits< ArrayOfArrays, 2, 18, 1 >;
+
+/**
+ * @brief Provides management of the interior stencil points when using a Multi-point flux approximation.
+ */
+class CellElementStencilMPFA final : public StencilBase< CellElementStencilMPFATraits, CellElementStencilMPFA >
 {
 public:
 
-  /**
-   * @brief Default constructor.
-   */
-  CellElementStencilMPFA();
-
-  virtual void reserve( localIndex const size ) override final;
+  virtual void reserve( localIndex const size ) override;
 
   virtual void add( localIndex const numPts,
                     localIndex const * const elementRegionIndices,
@@ -86,7 +52,7 @@ public:
    * @brief Return the stencil size.
    * @return the stencil size
    */
-  virtual localIndex size() const override final
+  virtual localIndex size() const override
   { return m_elementRegionIndices.size(); }
 
   /**
@@ -97,7 +63,6 @@ public:
   localIndex stencilSize( localIndex index ) const
   { return m_elementRegionIndices.sizeOfArray( index ); }
 
-
   /**
    * @brief Give the number of points between which the flux is.
    * @param[in] index of the stencil entry for which to query the size
@@ -106,7 +71,7 @@ public:
   constexpr localIndex numPointsInFlux( localIndex index ) const
   {
     GEOSX_UNUSED_VAR( index );
-    return NUM_POINT_IN_FLUX;
+    return maxNumPointsInFlux;
   }
 
 };

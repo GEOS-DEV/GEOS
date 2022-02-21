@@ -137,7 +137,6 @@ struct ProppantUpdateKernel
 struct AccumulationKernel
 {
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   compute( localIndex const NC,
            real64 const proppantConcOld,
@@ -303,7 +302,6 @@ struct FluxKernel
    */
   template< localIndex MAX_NUM_FLUX_ELEMS >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeJunction( localIndex const numElems,
                    localIndex const numDofPerCell,
@@ -344,7 +342,6 @@ struct FluxKernel
 
   template< localIndex MAX_NUM_FLUX_ELEMS >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
@@ -420,7 +417,6 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
@@ -449,7 +445,6 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
