@@ -144,7 +144,6 @@ void TimeHistoryOutput::reinit()
   initializePostInitialConditionsPostSubGroups();
 }
 
-
 bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),

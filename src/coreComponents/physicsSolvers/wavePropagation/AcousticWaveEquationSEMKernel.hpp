@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /// Namespace to contain the acoustic wave kernels.
-namespace AcousticWaveEquationSEMKernels
+namespace acousticWaveEquationSEMKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
@@ -554,7 +554,7 @@ protected:
 using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
                                                                  real64 >;
 
-} // namespace AcousticWaveEquationSEMKernels
+} // namespace acousticWaveEquationSEMKernels
 
 } // namespace geosx
 

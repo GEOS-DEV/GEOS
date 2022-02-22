@@ -103,8 +103,7 @@ static PyObject * setOutputName( PyHistoryOutput * self, PyObject * args )
   VERIFY_INITIALIZED( self );
 
   PyObject * unicodePath;
-  PyObject * defaultReturnValue = nullptr;
-  if( !PyArg_ParseTuple( args, "U|O", &unicodePath, &defaultReturnValue ) )
+  if( !PyArg_ParseTuple( args, "U", &unicodePath) )
   {
     return nullptr;
   }
@@ -144,8 +143,8 @@ static PyObject * reinit( PyHistoryOutput * self, PyObject *args )
 }
 
 static PyMethodDef PyHistoryOutput_methods[] = {
-  { "output", (PyCFunction) output, METH_VARARGS, "wrapper to routine TimeHistoryOutput::execute()"},
-  { "setOutputName", (PyCFunction) setOutputName, METH_VARARGS, "wrapper to routine OutputBase::setFileNameRoot()"},
+  { "output", (PyCFunction) output, METH_VARARGS, "wrapper to routine TimeHistoryOutput::execute"},
+  { "setOutputName", (PyCFunction) setOutputName, METH_VARARGS, "wrapper to routine TimeHistoryOutput::setFileName()"},
   { "reinit", (PyCFunction) reinit, METH_VARARGS, "reinitialization function"},
   { nullptr, nullptr, 0, nullptr }      /* Sentinel */
 };

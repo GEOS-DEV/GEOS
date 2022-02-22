@@ -13,7 +13,7 @@ class MeshLevel;
 class NeighborCommunicator;
 struct ModifiedObjectLists;
 
-namespace ParallelTopologyChange
+namespace parallelTopologyChange
 {
 
 void synchronizeTopologyChange( MeshLevel * const mesh,

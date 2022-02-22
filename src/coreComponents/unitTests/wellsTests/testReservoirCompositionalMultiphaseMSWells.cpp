@@ -417,7 +417,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + CompositionalMultiphaseWellKernels::ColOffset::DPRES,
+                                 wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DPRES,
                                  dP,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -438,7 +438,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + CompositionalMultiphaseWellKernels::ColOffset::DCOMP + jc,
+                                 wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + jc,
                                  dRho,
                                  jacobianFD.toViewConstSizes() );
         }
@@ -463,7 +463,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
 
           fillNumericalJacobian( residual.toViewConst(),
                                  residualOrig.toViewConst(),
-                                 wellElemDofNumber[iwelem] + CompositionalMultiphaseWellKernels::ColOffset::DCOMP + NC,
+                                 wellElemDofNumber[iwelem] + compositionalMultiphaseWellKernels::ColOffset::DCOMP + NC,
                                  dRate,
                                  jacobianFD.toViewConstSizes() );
         }
