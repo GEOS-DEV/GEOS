@@ -71,4 +71,4 @@ void SymbolicFunction::initializeFunction()
 
 REGISTER_CATALOG_ENTRY( FunctionBase, SymbolicFunction, string const &, Group * const )
 
-} /* namespace ANST */
+} // namespace geosx

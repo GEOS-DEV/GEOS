@@ -41,7 +41,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace SinglePhaseWellKernels;
+using namespace singlePhaseWellKernels;
 
 SinglePhaseWell::SinglePhaseWell( const string & name,
                                   Group * const parent ):
@@ -122,10 +122,7 @@ string SinglePhaseWell::resElementDofName() const
 
 void SinglePhaseWell::validateWellConstraints( WellElementSubRegion const & subRegion ) const
 {
-  // now that we know we are single-phase, we can check a few things in the constraints
-
   WellControls const & wellControls = getWellControls( subRegion );
-  WellControls::Type const wellType = wellControls.getType();
   WellControls::Control const currentControl = wellControls.getControl();
   real64 const targetTotalRate = wellControls.getTargetTotalRate( m_currentTime + m_currentDt );
   real64 const targetPhaseRate = wellControls.getTargetPhaseRate( m_currentTime + m_currentDt );
@@ -134,8 +131,8 @@ void SinglePhaseWell::validateWellConstraints( WellElementSubRegion const & subR
                   ": Phase rate control is not available for SinglePhaseWell",
                   InputError );
   // The user always provides positive rates, but these rates are later multiplied by -1 internally for producers
-  GEOSX_THROW_IF( ( (wellType == WellControls::Type::INJECTOR && targetTotalRate < 0.0) ||
-                    (wellType == WellControls::Type::PRODUCER && targetTotalRate > 0.0) ),
+  GEOSX_THROW_IF( ( ( wellControls.isInjector() && targetTotalRate < 0.0 ) ||
+                    ( wellControls.isProducer() && targetTotalRate > 0.0) ),
                   "WellControls named " << wellControls.getName() <<
                   ": Target total rate cannot be negative",
                   InputError );
@@ -301,7 +298,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    SinglePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
+    singlePhaseBaseKernels::FluidUpdateKernel::launch( fluidWrapper, pres, dPres );
   } );
 }
 
@@ -552,7 +549,7 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
     {
       // for now, we do not want to model storage effects in the wells (unless the well is shut)
       WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
+      if( wellControls.isWellOpen( m_currentTime + m_currentDt ) )
       {
         return;
       }
@@ -604,7 +601,7 @@ void SinglePhaseWell::computePerforationRates( MeshLevel const & meshLevel,
   // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
   // therefore, we do not want to compute perforation rates and we simply assume they are zero
   WellControls const & wellControls = getWellControls( subRegion );
-  if( !wellControls.wellIsOpen( m_currentTime + m_currentDt ) )
+  if( !wellControls.isWellOpen( m_currentTime + m_currentDt ) )
   {
     return;
   }
@@ -766,7 +763,7 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
 
       // here we can reuse the flow solver kernel checking that pressures are positive
       localIndex const subRegionSolutionCheck =
-        SinglePhaseWellKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+        singlePhaseWellKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                              parallelDeviceReduce >( localSolution,
                                                                                      dofManager.rankOffset(),
                                                                                      wellElemDofNumber,

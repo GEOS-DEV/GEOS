@@ -278,7 +278,7 @@ void HydrofractureSolver::updateDeformationForCoupling( DomainPartition & domain
       using ContactType = TYPEOFREF( castedContact );
       typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      HydrofractureSolverKernels::DeformationUpdateKernel
+      hydrofractureSolverKernels::DeformationUpdateKernel
         ::launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
                                             u,
@@ -872,7 +872,7 @@ HydrofractureSolver::
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        HydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
+        hydrofractureSolverKernels::FluidMassResidualDerivativeAssemblyKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             rankOffset,
                                             contactWrapper,

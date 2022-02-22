@@ -44,7 +44,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace ProppantTransportKernels;
+using namespace proppantTransportKernels;
 
 ProppantTransport::ProppantTransport( const string & name,
                                       Group * const parent ):
@@ -632,7 +632,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
     fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
     {
 
-      SurfaceElementStencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      SurfaceElementStencilWrapper stencilWrapper = stencil.createKernelWrapper();
 
       FluxKernel::launch( stencilWrapper,
                           m_numDofPerCell,
@@ -999,7 +999,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
 
   fluxApprox.forStencils< SurfaceElementStencil >( mesh, [&]( auto const & stencil )
   {
-    SurfaceElementStencilWrapper stencilWrapper = stencil.createStencilWrapper();
+    SurfaceElementStencilWrapper stencilWrapper = stencil.createKernelWrapper();
 
     FluxKernel::launchCellBasedFluxCalculation( stencilWrapper,
                                                 downVector,

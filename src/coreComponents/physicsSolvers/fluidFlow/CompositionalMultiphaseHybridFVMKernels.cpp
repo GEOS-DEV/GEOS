@@ -29,7 +29,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseHybridFVMKernels
+namespace compositionalMultiphaseHybridFVMKernels
 {
 
 /******************************** UpwindingHelper ********************************/
@@ -728,7 +728,7 @@ AssemblerKernelHelper::
                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                           arrayView1d< real64 > const & localRhs )
 {
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
   integer constexpr NDOF = NC+1;
 
   // dof numbers
@@ -1590,7 +1590,7 @@ FluxKernel::
                                                           transMatrixGrav );
 
     // perform flux assembly in this element
-    CompositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
+    compositionalMultiphaseHybridFVMKernels::AssemblerKernel::compute< NF, NC, NP >( er, esr, ei,
                                                                                      regionFilter,
                                                                                      elemRegionList,
                                                                                      elemSubRegionList,
@@ -1745,6 +1745,6 @@ INST_FluxKernel( 6, 5, 3, mimeticInnerProduct::BdVLMInnerProduct const );
 
 #undef INST_FluxKernel
 
-} // namespace CompositionalMultiphaseHybridFVMKernels
+} // namespace compositionalMultiphaseHybridFVMKernels
 
 } // namespace geosx

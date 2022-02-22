@@ -201,41 +201,22 @@ void FlowSolverBase::initializePreSubGroups()
 
   if( fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
     forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                  MeshLevel & mesh,
+                                                  MeshLevel &,
                                                   arrayView1d< string const > const & regionNames )
     {
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
-      array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames( meshBodyName );
-
       std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-      map< string, string > coeffModelNames;
-
-      mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
-                                                                                  [&]( localIndex const,
-                                                                                       localIndex const,
-                                                                                       localIndex const,
-                                                                                       ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const & )
-      {
-//        string const & permName = subRegion.getReference<string>( viewKeyStruct::permeabilityNamesString() );
-        coeffModelNames[region.getName()] = viewKeyStruct::permeabilityNamesString();//permName;
-        stencilTargetRegionsSet.insert( region.getName() );
-      } );
-
+      stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
       stencilTargetRegions.clear();
-      stencilCoeffModelNames.clear();
       for( auto const & targetRegion: stencilTargetRegionsSet )
       {
         stencilTargetRegions.emplace_back( targetRegion );
-        stencilCoeffModelNames.emplace_back( coeffModelNames[targetRegion] );
       }
     } );
   }
-
 }
 
 void FlowSolverBase::initializePostInitialConditionsPreSubGroups()
@@ -447,7 +428,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
     m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes =
-      FluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
+      fluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
                                                      aquiferBCWrapper,
                                                      m_pressure.toNestedViewConst(),
                                                      m_deltaPressure.toNestedViewConst(),

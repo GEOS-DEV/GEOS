@@ -334,25 +334,23 @@
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
+			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 		<!--nx => Number of elements in the x-direction within each mesh block-->
@@ -366,7 +364,11 @@
 	</xsd:complexType>
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellManager" type="cellManagerType" />
+			<xsd:element name="meshLevels" type="meshLevelsType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="VTKMeshGeneratorType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -399,8 +401,6 @@
 	<xsd:complexType name="TwoPointFluxApproximationType">
 		<!--cellStencil => (no description available)-->
 		<xsd:attribute name="cellStencil" type="geosx_CellElementStencilTPFA" />
-		<!--coefficientModelNames => List of constitutive models that contain the coefficient used to build the stencil-->
-		<xsd:attribute name="coefficientModelNames" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--coefficientName => Name of coefficient field-->
 		<xsd:attribute name="coefficientName" type="string" />
 		<!--edfmStencil => (no description available)-->
@@ -876,6 +876,7 @@
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
+			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
 			<xsd:element name="VanGenuchtenBakerRelativePermeability" type="VanGenuchtenBakerRelativePermeabilityType" />
 			<xsd:element name="VanGenuchtenCapillaryPressure" type="VanGenuchtenCapillaryPressureType" />
 			<xsd:element name="VolumeWeightedThermalConductivity" type="VolumeWeightedThermalConductivityType" />
@@ -1639,6 +1640,40 @@
 		<!--relPermWrappers => (no description available)-->
 		<xsd:attribute name="relPermWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
 	</xsd:complexType>
+	<xsd:complexType name="TableRelativePermeabilityHysteresisType">
+		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
+		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
+		<!--drainagePhaseMaxVolumeFraction => (no description available)-->
+		<xsd:attribute name="drainagePhaseMaxVolumeFraction" type="real64_array" />
+		<!--drainagePhaseMinVolumeFraction => (no description available)-->
+		<xsd:attribute name="drainagePhaseMinVolumeFraction" type="real64_array" />
+		<!--drainagePhaseRelPermEndPoint => (no description available)-->
+		<xsd:attribute name="drainagePhaseRelPermEndPoint" type="real64_array" />
+		<!--drainageRelPermWrappers => (no description available)-->
+		<xsd:attribute name="drainageRelPermWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--imbibitionPhaseMaxVolumeFraction => (no description available)-->
+		<xsd:attribute name="imbibitionPhaseMaxVolumeFraction" type="real64_array" />
+		<!--imbibitionPhaseMinVolumeFraction => (no description available)-->
+		<xsd:attribute name="imbibitionPhaseMinVolumeFraction" type="real64_array" />
+		<!--imbibitionPhaseRelPermEndPoint => (no description available)-->
+		<xsd:attribute name="imbibitionPhaseRelPermEndPoint" type="real64_array" />
+		<!--imbibitionRelPermWrappers => (no description available)-->
+		<xsd:attribute name="imbibitionRelPermWrappers" type="LvArray_Array&lt;geosx_TableFunction_KernelWrapper, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;" />
+		<!--landParameter => (no description available)-->
+		<xsd:attribute name="landParameter" type="real64_array" />
+		<!--phaseHasHysteresis => (no description available)-->
+		<xsd:attribute name="phaseHasHysteresis" type="integer_array" />
+		<!--phaseMaxHistoricalVolFraction => Phase max historical phase volume fraction-->
+		<xsd:attribute name="phaseMaxHistoricalVolFraction" type="real64_array2d" />
+		<!--phaseMinHistoricalVolFraction => Phase min historical phase volume fraction-->
+		<xsd:attribute name="phaseMinHistoricalVolFraction" type="real64_array2d" />
+		<!--phaseOrder => (no description available)-->
+		<xsd:attribute name="phaseOrder" type="integer_array" />
+		<!--phaseRelPerm => Phase relative permeability-->
+		<xsd:attribute name="phaseRelPerm" type="real64_array3d" />
+		<!--phaseTypes => (no description available)-->
+		<xsd:attribute name="phaseTypes" type="integer_array" />
+	</xsd:complexType>
 	<xsd:complexType name="VanGenuchtenBakerRelativePermeabilityType">
 		<!--dPhaseRelPerm_dPhaseVolFraction => Derivative of phase relative permeability with respect to phase volume fraction-->
 		<xsd:attribute name="dPhaseRelPerm_dPhaseVolFraction" type="real64_array4d" />
@@ -1677,14 +1712,9 @@
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
+			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="cellManagerType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellBlocks" type="cellBlocksType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="cellBlocksType" />
 	<xsd:complexType name="meshLevelsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Level0" type="Level0Type" />
