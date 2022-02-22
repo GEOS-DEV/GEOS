@@ -222,32 +222,16 @@ void LagrangianContactSolver::initializePreSubGroups()
     fluxApprox.setCoeffName( "penaltyStiffness" );
 
     forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                  MeshLevel & mesh,
+                                                  MeshLevel &,
                                                   arrayView1d< string const > const & regionNames )
     {
       array1d< string > & stencilTargetRegions = fluxApprox.targetRegions( meshBodyName );
-      array1d< string > & stencilCoeffModelNames = fluxApprox.coefficientModelNames( meshBodyName );
-
       std::set< string > stencilTargetRegionsSet( stencilTargetRegions.begin(), stencilTargetRegions.end() );
-      map< string, string > coeffModelNames;
-
-      mesh.getElemManager().forElementSubRegionsComplete< ElementSubRegionBase >( regionNames,
-                                                                                  [&]( localIndex const,
-                                                                                       localIndex const,
-                                                                                       localIndex const,
-                                                                                       ElementRegionBase const & region,
-                                                                                       ElementSubRegionBase const & )
-      {
-        coeffModelNames[region.getName()] = viewKeyStruct::contactRelationNameString();//permName;
-        stencilTargetRegionsSet.insert( region.getName() );
-      } );
-
+      stencilTargetRegionsSet.insert( regionNames.begin(), regionNames.end() );
       stencilTargetRegions.clear();
-      stencilCoeffModelNames.clear();
       for( auto const & targetRegion: stencilTargetRegionsSet )
       {
         stencilTargetRegions.emplace_back( targetRegion );
-        stencilCoeffModelNames.emplace_back( coeffModelNames[targetRegion] );
       }
     } );
   }
