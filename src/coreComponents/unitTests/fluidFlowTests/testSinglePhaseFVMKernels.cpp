@@ -73,12 +73,12 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const * dDens_dPres,
                      real64 const dt )
 {
-  localIndex constexpr numElems = CellElementStencilTPFA::NUM_POINT_IN_FLUX;
+  localIndex constexpr numElems = CellElementStencilTPFA::maxNumPointsInFlux;
 
-  typename CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
-  typename CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
-  typename CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
-  typename CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
+  CellElementStencilTPFA::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+  CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+  CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
+  CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   auto presView        = AccessorHelper< FULL >::template makeElementAccessor< 1 >( pres,
                                                                                     stencilSize,

@@ -417,13 +417,13 @@ public:
   static constexpr integer numEqn = NUM_DOF-1;
 
   /// Maximum number of elements at the face
-  static constexpr localIndex maxNumElems = STENCILWRAPPER::NUM_POINT_IN_FLUX;
+  static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
 
   /// Maximum number of connections at the face
-  static constexpr localIndex maxNumConns = STENCILWRAPPER::MAX_NUM_OF_CONNECTIONS;
+  static constexpr localIndex maxNumConns = STENCILWRAPPER::maxNumConnections;
 
   /// Maximum number of points in the stencil
-  static constexpr localIndex maxStencilSize = STENCILWRAPPER::MAX_STENCIL_SIZE;
+  static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
   /**
    * @brief Constructor for the kernel interface
@@ -1029,7 +1029,7 @@ struct CFLFluxKernel
   using RelPermAccessors =
     StencilMaterialAccessors< RelativePermeabilityBase, extrinsicMeshData::relperm::phaseRelPerm >;
 
-  template< integer NC, localIndex NUM_ELEMS, localIndex MAX_STENCIL_SIZE >
+  template< integer NC, localIndex NUM_ELEMS, localIndex maxStencilSize >
   GEOSX_HOST_DEVICE
   static void
   compute( integer const numPhases,
@@ -1082,7 +1082,6 @@ struct CFLKernel
 
   template< integer NP >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computePhaseCFL( real64 const & poreVol,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
@@ -1094,7 +1093,6 @@ struct CFLKernel
 
   template< integer NC >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
   static void
   computeCompCFL( real64 const & poreVol,
                   arraySlice1d< real64 const, compflow::USD_COMP - 1 > compDens,

@@ -106,7 +106,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       FaceBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -180,7 +180,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
 
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
       KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
