@@ -200,6 +200,11 @@ void PackCollection::buildMetaCollectors( )
     {
       coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
     }
+    else
+    {
+      GEOSX_ERROR( "Data collection for \"" << m_objectPath << "\" is unimplemented." );
+    }
+
     string metaName( "coordinates" );
     std::unique_ptr< PackCollection > coordCollector = std::make_unique< PackCollection >( metaName, this );
     coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString() ).reference() = m_objectPath;
