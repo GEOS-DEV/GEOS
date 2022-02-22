@@ -155,6 +155,13 @@ public:
 	                                  DiscretizationOps & stiffness ) const;
 
 	GEOSX_HOST_DEVICE
+	virtual void hypoUpdate_StressOnly( localIndex const k,
+	                                      localIndex const q,
+	                                      real64 const ( &Ddt )[6],
+	                                      real64 const ( &Rot )[3][3],
+	                                      real64 ( & stress )[6] )  const override final;
+
+	GEOSX_HOST_DEVICE
 	virtual void getElasticStiffness( localIndex const k,
 	                                    localIndex const q,
 	                                    real64 ( &stiffness )[6][6] ) const override;
@@ -1032,6 +1039,29 @@ void CycLiqCPSPUpdates::smallStrainUpdate( localIndex const k,
   stiffness.m_bulkModulus = K;
   stiffness.m_shearModulus = G;
 }
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void CycLiqCPSPUpdates::hypoUpdate_StressOnly( localIndex const k,
+        										localIndex const q,
+												real64 const ( &Ddt )[6],
+												real64 const ( &Rot )[3][3],
+												real64 ( & stress )[6] ) const
+{
+    smallStrainUpdate_StressOnly( k, q, Ddt, stress );
+
+    real64 temp[6] = { 0 };
+    LvArray::tensorOps::Rij_eq_AikSymBklAjl< 3 >( temp, Rot, m_newStress[ k ][ q ] );
+    LvArray::tensorOps::copy< 6 >( stress, temp );
+
+    // avoid positive stress by ron
+    stress[0] = fmin(temp[0], -5);
+    stress[1] = fmin(temp[1], -5);
+    stress[2] = fmin(temp[2], -5);
+
+    saveStress( k, q, stress );
+}
+
 
 class CycLiqCPSP : public SolidBase
 {
