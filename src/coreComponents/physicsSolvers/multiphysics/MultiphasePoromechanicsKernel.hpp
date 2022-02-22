@@ -63,9 +63,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   static constexpr int numMaxComponents = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -175,7 +176,7 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::numRows;
+    static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
     GEOSX_HOST_DEVICE

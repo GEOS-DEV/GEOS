@@ -11,7 +11,6 @@ set( subdirs
      fieldSpecification
      finiteElement
      finiteVolume
-     virtualElement
      discretizationMethods
      fileIO
      physicsSolvers
