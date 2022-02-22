@@ -630,6 +630,14 @@ public:
 /**
  * @brief Base class for FaceBasedAssemblyKernel that holds all data not dependent
  *        on template parameters (like stencil type and number of components/dofs).
+ * 
+ *        FaceBasedAssemblyKernel is used for flux terms calculation.
+ *        In case mesh geometry/configuration is not changing during simulation, 
+ *        all connections can be pre-computed, sorted by element, and stored. 
+ *        Then, ElementBasedAssemblyKernel can be used for flux calculation: every flux will be computed twice, 
+ *        but data races during matrix and RHS data writes will be avoided, atomic operations are then no longer needed,
+ *        and therefore overall performance can significantly improve
+ * 
  */
 class FaceBasedAssemblyKernelBase
 {
@@ -944,6 +952,10 @@ public:
 
 
     // first, compute the transmissibilities at this face
+    // though weights are recomputed every time, the perm derivative is not used:
+    // perm/poro changes are treated differently in OBL: via m_transMultExp and PORO operator
+    
+    // in case mesh geometry/configuration is not changing during simulation, weights can be computed as a preprocessing step
     m_stencilWrapper.computeWeights( iconn,
                                      m_permeability,
                                      m_dPerm_dPres,
@@ -1013,10 +1025,10 @@ public:
     {     // loop over number of phases for convective operator
 
       // calculate gravity term for phase p
-      real64 const avg_density = (OBLValsI[GRAV_OP + p] + OBLValsJ[GRAV_OP + p]) / 2;
+      real64 const averageDensity = (OBLValsI[GRAV_OP + p] + OBLValsJ[GRAV_OP + p]) / 2;
 
       // p = 1 means oil phase, it's reference phase. pw=po-pcow, pg=po-(-pcog).
-      real64 const phase_p_diff = (pDiff + avg_density * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p]) * pascalToBarMult;
+      real64 const phasePDiff = (pDiff + averageDensity * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p]) * pascalToBarMult;
 
       // calculate partial derivatives for gravity and capillary terms
       real64 gravPcDerI[numDofs];
@@ -1027,36 +1039,36 @@ public:
         gravPcDerJ[v] = -(OBLDersJ[GRAV_OP + p][v]) * gravCoef / 2 + OBLDersJ[PC_OP + p][v];
       }
 
-      real64 phase_gamma_p_diff = transMult * trans * m_dt * phase_p_diff;
+      real64 phaseGammaPDiff = transMult * trans * m_dt * phasePDiff;
 
-      if( phase_p_diff < 0 )
+      if( phasePDiff < 0 )
       {
         // mass and energy outflow with effect of gravity and capillarity
         for( integer c = 0; c < numDofs; c++ )
         {
-          real64 c_flux = transMult * trans * m_dt * OBLValsI[FLUX_OP + p * numDofs + c];
+          real64 compFlux = transMult * trans * m_dt * OBLValsI[FLUX_OP + p * numDofs + c];
 
-          stack.localFlux[c] -= phase_p_diff * c_flux;     // flux operators only
-          // if( phase_p_diff < 10 )
-          //   printf( "OUTFlux comp %d is %e subtracted %e trans %e m_dt %e\n", c, stack.localFlux[c], phase_p_diff * c_flux, trans, m_dt
+          stack.localFlux[c] -= phasePDiff * compFlux;     // flux operators only
+          // if( phasePDiff < 10 )
+          //   printf( "OUTFlux comp %d is %e subtracted %e trans %e m_dt %e\n", c, stack.localFlux[c], phasePDiff * compFlux, trans, m_dt
           // );
           for( integer v = 0; v < numDofs; v++ )
           {
             // if( eiI == 2 && v == 0 )
             //   printf( "OUTFlux diag contrib0 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
-            stack.localFluxJacobian[c][v] -= (phase_gamma_p_diff * OBLDersI[FLUX_OP + p * numDofs + c][v] +
-                                              trans * m_dt * phase_p_diff * transMultDerI[v] * OBLValsI[FLUX_OP + p * numDofs + c]);
+            stack.localFluxJacobian[c][v] -= (phaseGammaPDiff * OBLDersI[FLUX_OP + p * numDofs + c][v] +
+                                              trans * m_dt * phasePDiff * transMultDerI[v] * OBLValsI[FLUX_OP + p * numDofs + c]);
             // if( eiI == 2 && v == 0 )
             //   printf( "OUTFlux diag contrib1 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
-            stack.localFluxJacobian[c][v] += c_flux * gravPcDerI[v];
+            stack.localFluxJacobian[c][v] += compFlux * gravPcDerI[v];
             // if( eiI == 2 && v == 0 )
             //   printf( "OUTFlux diag contrib2 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
-            stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
+            stack.localFluxJacobian[c][numDofs + v] += compFlux * gravPcDerJ[v];
 
             if( v == 0 )
             {
-              stack.localFluxJacobian[c][numDofs + v] -= c_flux;
-              stack.localFluxJacobian[c][v] += c_flux;
+              stack.localFluxJacobian[c][numDofs + v] -= compFlux;
+              stack.localFluxJacobian[c][v] += compFlux;
             }
             // if( eiI == 2 && v == 0 )
             //   printf( "OUTFlux diag contrib3 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
@@ -1068,23 +1080,23 @@ public:
         // mass and energy inflow with effect of gravity and capillarity
         for( integer c = 0; c < numDofs; c++ )
         {
-          real64 c_flux = transMult * trans * m_dt * OBLValsJ[FLUX_OP + p * numDofs + c];
+          real64 compFlux = transMult * trans * m_dt * OBLValsJ[FLUX_OP + p * numDofs + c];
 
-          stack.localFlux[c] -= phase_p_diff * c_flux;     // flux operators only
+          stack.localFlux[c] -= phasePDiff * compFlux;     // flux operators only
           for( integer v = 0; v < numDofs; v++ )
           {
             // if( eiI == 2 && v == 0 )
             //   printf( "INFlux diag contrib0 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
-            stack.localFluxJacobian[c][numDofs + v] -= (phase_gamma_p_diff * OBLDersJ[FLUX_OP + p * numDofs + c][v] +
-                                                        trans * m_dt * phase_p_diff * transMultDerJ[v] * OBLValsJ[FLUX_OP + p * numDofs + c]);
-            stack.localFluxJacobian[c][v] += c_flux * gravPcDerI[v];
+            stack.localFluxJacobian[c][numDofs + v] -= (phaseGammaPDiff * OBLDersJ[FLUX_OP + p * numDofs + c][v] +
+                                                        trans * m_dt * phasePDiff * transMultDerJ[v] * OBLValsJ[FLUX_OP + p * numDofs + c]);
+            stack.localFluxJacobian[c][v] += compFlux * gravPcDerI[v];
             // if( eiI == 2 && v == 0 )
             //   printf( "INFlux diag contrib1 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
-            stack.localFluxJacobian[c][numDofs + v] += c_flux * gravPcDerJ[v];
+            stack.localFluxJacobian[c][numDofs + v] += compFlux * gravPcDerJ[v];
             if( v == 0 )
             {
-              stack.localFluxJacobian[c][v] += c_flux;     //-= Jac[jac_idx + c * numDofs];
-              stack.localFluxJacobian[c][numDofs + v] -= c_flux;      // -trans * m_dt * op_vals[NC + c];
+              stack.localFluxJacobian[c][v] += compFlux;     //-= Jac[jac_idx + c * numDofs];
+              stack.localFluxJacobian[c][numDofs + v] -= compFlux;      // -trans * m_dt * op_vals[NC + c];
             }
             // if( eiI == 2 && v == 0 )
             //   printf( "INFlux diag contrib2 %ld %ld is %e \n", eiI * numDofs + c, eiI * numDofs + v, stack.localFluxJacobian[c][v] );
@@ -1106,39 +1118,39 @@ public:
     {
       for( integer p = 0; p < numPhases; p++ )
       {
-        real64 grad_con = OBLValsJ[GRAD_OP + c * numPhases + p] - OBLValsI[GRAD_OP + c * numPhases + p];
+        real64 phaseCompGrad = OBLValsJ[GRAD_OP + c * numPhases + p] - OBLValsI[GRAD_OP + c * numPhases + p];
 
-        if( grad_con < 0 )
+        if( phaseCompGrad < 0 )
         {
           // Diffusion flows from cell i to j (high to low), use upstream quantity from cell i for compressibility and saturation (mass or
           // energy):
-          real64 diff_mob_ups_m = m_dt * transD * poroAverage * OBLValsI[UPSAT_OP + p];
+          real64 phaseGammaDDiff = m_dt * transD * poroAverage * OBLValsI[UPSAT_OP + p];
 
-          stack.localFlux[c] -= diff_mob_ups_m * grad_con;       // diffusion term
+          stack.localFlux[c] -= phaseGammaDDiff * phaseCompGrad;       // diffusion term
 
           // Add diffusion terms to Jacobian:
           for( integer v = 0; v < numDofs; v++ )
           {
-            stack.localFluxJacobian[c][v] += diff_mob_ups_m * OBLDersI[GRAD_OP + c * numPhases + p][v];
-            stack.localFluxJacobian[c][numDofs + v] -= diff_mob_ups_m * OBLDersJ[GRAD_OP + c * numPhases + p][v];
+            stack.localFluxJacobian[c][v] += phaseGammaDDiff * OBLDersI[GRAD_OP + c * numPhases + p][v];
+            stack.localFluxJacobian[c][numDofs + v] -= phaseGammaDDiff * OBLDersJ[GRAD_OP + c * numPhases + p][v];
 
-            stack.localFluxJacobian[c][v] -= grad_con * m_dt * transD * poroAverage * OBLDersI[UPSAT_OP + p][v];
+            stack.localFluxJacobian[c][v] -= phaseCompGrad * m_dt * transD * poroAverage * OBLDersI[UPSAT_OP + p][v];
           }
         }
         else
         {
           // Diffusion flows from cell j to i (high to low), use upstream quantity from cell j for density and saturation:
-          real64 diff_mob_ups_m = m_dt * transD * poroAverage * OBLValsJ[UPSAT_OP + p];
+          real64 phaseGammaDDiff = m_dt * transD * poroAverage * OBLValsJ[UPSAT_OP + p];
 
-          stack.localFlux[c] -= diff_mob_ups_m * grad_con;       // diffusion term
+          stack.localFlux[c] -= phaseGammaDDiff * phaseCompGrad;       // diffusion term
 
           // Add diffusion terms to Jacobian:
           for( integer v = 0; v < numDofs; v++ )
           {
-            stack.localFluxJacobian[c][v] += diff_mob_ups_m * OBLDersI[GRAD_OP + c * numPhases + p][v];
-            stack.localFluxJacobian[c][numDofs + v] -= diff_mob_ups_m * OBLDersJ[GRAD_OP + c * numPhases + p][v];
+            stack.localFluxJacobian[c][v] += phaseGammaDDiff * OBLDersI[GRAD_OP + c * numPhases + p][v];
+            stack.localFluxJacobian[c][numDofs + v] -= phaseGammaDDiff * OBLDersJ[GRAD_OP + c * numPhases + p][v];
 
-            stack.localFluxJacobian[c][numDofs + v] -= grad_con * m_dt * transD * poroAverage * OBLDersJ[UPSAT_OP + p][v];
+            stack.localFluxJacobian[c][numDofs + v] -= phaseCompGrad * m_dt * transD * poroAverage * OBLDersJ[UPSAT_OP + p][v];
           }
         }
       }
@@ -1213,8 +1225,8 @@ public:
           stack.localFluxJacobian[id][numDofs] *= pascalToBarMult;
         }
       }
-      // during second (and the last) loop iteration (i ==1), we fill now the equations for element j.
-      // here, we need to multiply all values by -1, since the flow direction changes w.r.t element mass balance space
+      // during second (and the last - TPFA) loop iteration (i ==1), we fill now the equations for element j.
+      // here, we need to multiply all values by -1, since the flow direction changes w.r.t element
       else
       {
         for( integer id = 0; id < numDofs; ++id )
