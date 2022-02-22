@@ -423,6 +423,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
         real64 const mup = 12.0 * viscosity;
 
+        real64 const dimensionlessK = Kprime/pow(pow(Eprime, 3.0)*mup*q0, 0.25);
+
 	//TJ: find the location of the tip boundary
 	SortedArray< localIndex > const trailingFaces = mySurface->getTrailingFaces();
 	for(auto const & trailingFace : trailingFaces)
@@ -469,15 +471,19 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      r1_array & faceNormal = faceManager.getReference< r1_array >( FaceManager::viewKeyStruct::faceNormalString );
 	      SortedArray< localIndex > const tipNodes = mySurface->getTipNodes();
 
-	      if (viscosity < 2.0e-3) // Toughness-dominated case
+	      if (dimensionlessK >= 4.0 ) // Toughness-dominated case
 	      {
+	        std::cout << "Toughness-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 		refDispFirstStep = 0.5 * pow(3.0/2.0*
 					     pow(Kprime/Eprime,2.0)*
 					     volume/1.0,  // assume that the tip thickness is 1
 					     1.0/3.0);
 	      }
-	      else  // Viscosity-dominated case
+	      else if (dimensionlessK <= 1.0 )  // Viscosity-dominated case
 	      {
+                std::cout << "Viscosity-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 		real64 gamma_m0 = 0.616;
 		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
@@ -490,6 +496,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 					     pow(Betam, 3.0/2.0)*
 					     pow(mup*velocity/Eprime, 0.5),
 					     2.0/5.0);
+	      }
+	      else
+	      {
+                std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
+	        GEOSX_ERROR( "Transition not implemented" );
 	      }
 	      //refDispFirstStep = 0.00019;
 
@@ -682,13 +693,17 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 				       << std::endl;
 */
 	  real64 tipX = 0.0;
-	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  if (dimensionlessK >= 4.0) // Toughness-dominated case
 	  {
+            std::cout << "Toughness-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 	    //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 	    tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
 	  }
-	  else // Viscosity-dominated case
+	  else if (dimensionlessK <= 1.0)// Viscosity-dominated case
 	  {
+            std::cout << "Viscosity-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 /*	    real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
 	    real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
             real64 gamma_m0 = 0.616;
@@ -700,6 +715,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
 	    real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
             tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
+	  }
+	  else
+	  {
+            std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
+            GEOSX_ERROR( "Transition not implemented" );
 	  }
 	  m_newTipLocation = tipX + tipBCLocation;
 	  localConvergedTipLoc = m_newTipLocation;
@@ -800,6 +820,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
         real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
         real64 const mup = 12.0 * viscosity;
 
+        real64 const dimensionlessK = Kprime/pow(pow(Eprime, 3.0)*mup*q0, 0.25);
 
 	//TJ: tolerance for the tip iteration,
 	//    convergence is achieved when || m_newTipLocation - m_oldTipLocation || < tipTol
@@ -1009,13 +1030,17 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    else
 	    {
 	      real64 tipX = 0.0;
-	      if (viscosity < 2.0e-3) // Toughness-dominated case
+	      if (dimensionlessK >= 4.0) // Toughness-dominated case
 	      {
+                std::cout << "Toughness-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 		//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 		tipX = (1.0*refDisp * Eprime / Kprime) * (1.0*refDisp * Eprime / Kprime);
 	      }
-	      else // Viscosity-dominated case
+	      else if (dimensionlessK <= 1.0) // Viscosity-dominated case
 	      {
+                std::cout << "Viscosity-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
     /*	    real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
 		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 		real64 gamma_m0 = 0.616;
@@ -1027,6 +1052,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
 		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 		tipX = sqrt( Eprime/(mup*velocity) * pow( refDisp/Betam ,3.0) );
+	      }
+	      else
+	      {
+	        std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
+	        GEOSX_ERROR( "Transition not implemented" );
 	      }
 	      m_newTipLocation = tipX + channelElmtCenter[1] - 0.5 * channelElmtSize;
 
@@ -1119,15 +1149,19 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 			    "Tip location falls behind the edge of the newly generated face element!" );
 
 	    real64 refValue = 0.0;
-	    if (viscosity < 2.0e-3) // Toughness-dominated case
+	    if (dimensionlessK >= 4.0) // Toughness-dominated case
 	    {
+	      std::cout << "Toughness-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 	      //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 	      // 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
 	      // based on symmetry
 	      refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
 	    }
-	    else // Viscosity-dominated case
+	    else if (dimensionlessK <= 1.0)// Viscosity-dominated case
 	    {
+              std::cout << "Viscosity-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
   /*	    real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
 	      real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 	      real64 gamma_m0 = 0.616;
@@ -1142,6 +1176,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 	      refValue = 0.5 * Betam
 			     * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
+	    }
+	    else
+	    {
+	      std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
+              GEOSX_ERROR( "Transition not implemented" );
 	    }
 
 	    for(auto node : nodesWithAssignedDisp)
@@ -1315,6 +1354,8 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
 	    real64 const mup = 12.0 * viscosity;
 
+	    real64 const dimensionlessK = Kprime/pow(pow(Eprime, 3.0)*mup*q0, 0.25);
+
 	    // initial magnitude of the essential B.C. at the newly splited nodes
 	    // this initial value can not be zero, since the sign of the displacement
 	    // will be used in the later update.
@@ -1372,15 +1413,19 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 
 
 	      real64 refValue = 0.0;
-	      if (viscosity < 2.0e-3) // Toughness-dominated case
+	      if (dimensionlessK >= 4.0) // Toughness-dominated case
 	      {
+	        std::cout << "Toughness-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 		//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 		// 0.5 is used to get the magnitude of the displacement from the node to the fracture plan
 		// based on symmetry
 		refValue = 0.5 * Kprime/(1.0*Eprime) * sqrt(relativeDist);
 	      }
-	      else // Viscosity-dominated case
+	      else if (dimensionlessK <= 1.0)// Viscosity-dominated case
 	      {
+                std::cout << "Viscosity-dominated, dimensionless K = " << dimensionlessK << std::endl;
+
 /*		real64 em = pow( mup/(Eprime*total_time), 1.0/3.0 );
 		real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 		real64 gamma_m0 = 0.616;
@@ -1395,6 +1440,11 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 		real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 		refValue = 0.5 * Betam
 		               * pow( mup*velocity*relativeDist*relativeDist/Eprime, 1.0/3.0);
+	      }
+	      else
+	      {
+	        std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
+	        GEOSX_ERROR( "Transition not implemented" );
 	      }
 	      //TJ: We can try to give different magnitude of refValue as initial guess
 	      //    to test whether different initial guess will lead to different converged
@@ -1857,10 +1907,12 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
       real64 const mup = 12.0 * viscosity;
 
-      real64 vTip;
-      real64 aperTip;
+      real64 const dimensionlessK = Kprime/pow(pow(Eprime, 3.0)*mup*q0, 0.25);
 
-      if (viscosity < 2.0e-3) // Toughness-dominated case
+      real64 vTip = 0.0;
+      real64 aperTip = 0.0;
+
+      if (dimensionlessK >= 4.0) // Toughness-dominated case
       {
 	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 	vTip = 2.0/3.0 * pow(Eprime/Kprime, 2.0) * pow(refDisp, 3.0);
@@ -1868,7 +1920,7 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 	aperTip = vTip/meshSize;
 	aperTip = 2.0/3.0 * refDisp;
       }
-      else // Viscosity-dominated case
+      else if (dimensionlessK <= 1.0) // Viscosity-dominated case
       {
 	real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
 	real64 gamma_m0 = 0.616;
@@ -1879,6 +1931,11 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
 	// average aperture
 	aperTip = vTip/meshSize;
 	aperTip = 3.0/5.0 * refDisp;
+      }
+      else
+      {
+        std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
+        GEOSX_ERROR( "Transition not implemented" );
       }
 
 
@@ -2848,8 +2905,7 @@ HydrofractureSolver::
   real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
   real64 const mup = 12.0 * viscosity;
 
-
-
+  real64 const dimensionlessK = Kprime/pow(pow(Eprime, 3.0)*mup*q0, 0.25);
 
   matrix10->open();
 
@@ -2963,7 +3019,7 @@ HydrofractureSolver::
               real64 coeff;
               real64 dGap_dU_tip;
               //real64 dAper_dU_tip;
-              if (viscosity < 2.0e-3) // Toughness-dominated case
+              if (dimensionlessK >= 4.0) // Toughness-dominated case
               {
         	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
         	coeff = 2.0/3.0 * pow(Eprime/Kprime, 2.0)/meshSize;
@@ -2991,7 +3047,7 @@ HydrofractureSolver::
                   } // for( localIndex a = 0; a < numNodesPerFace; ++a )
                 } // for (localIndex kf = 0; kf < 2; ++kf)
               }
-              else // Viscosity-dominated case
+              else if (dimensionlessK <= 1.0)// Viscosity-dominated case
               {
         	real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
         	real64 gamma_m0 = 0.616;
@@ -3022,6 +3078,11 @@ HydrofractureSolver::
                   } // for( localIndex a = 0; a < numNodesPerFace; ++a )
                 } // for (localIndex kf = 0; kf < 2; ++kf)
               } // toughness or viscosity dominated case
+              else
+              {
+
+              }
+
             }  // if ei is a tip element
           } // loop over all the trailing faces
 
@@ -3089,7 +3150,7 @@ HydrofractureSolver::
               real64 coeff;
               real64 dGap_dU_tip;
               //real64 dAper_dU_tip;
-              if (viscosity < 2.0e-3) // Toughness-dominated case
+              if (dimensionlessK >= 4.0) // Toughness-dominated case
               {
         	//TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
         	coeff = 2.0/3.0 * pow(Eprime/Kprime, 2.0)/meshSize;
@@ -3118,7 +3179,7 @@ HydrofractureSolver::
                   } // for( localIndex a = 0; a < numNodesPerFace; ++a )
                 } // for (localIndex kf = 0; kf < 2; ++kf)
               }
-              else // Viscosity-dominated case
+              else if (dimensionlessK <= 1.0)// Viscosity-dominated case
               {
         	real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
         	real64 gamma_m0 = 0.616;
@@ -3150,6 +3211,10 @@ HydrofractureSolver::
                   } // for( localIndex a = 0; a < numNodesPerFace; ++a )
                 } // for (localIndex kf = 0; kf < 2; ++kf)
               } // toughness or viscosity dominated case
+              else
+              {
+
+              }
             }  // if ei2 is a tip element
           } // loop over all the trailing faces
 

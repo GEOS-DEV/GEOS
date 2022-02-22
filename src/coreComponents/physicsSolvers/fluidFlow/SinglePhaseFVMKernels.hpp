@@ -487,6 +487,7 @@ struct FluxKernel
     real64 const Kprime = 4.0*sqrt(2.0/PI)*toughness;
     real64 const mup = 12.0 * viscosity;
 
+    real64 const dimensionlessK = Kprime/pow(pow(Eprime, 3.0)*mup*q0, 0.25);
 
 
     SortedArray< localIndex > tipElements;
@@ -550,18 +551,22 @@ struct FluxKernel
 	  }
 	}
 
-	if (viscosity < 2.0e-3) // Toughness-dominated case
+	if (dimensionlessK >= 4.0) // Toughness-dominated case
 	{
 	  //TJ: the tip asymptote w = Kprime / Eprime * x^(1/2)
 	  tipLength = (averageGap * Eprime / Kprime) * (averageGap * Eprime / Kprime);
 	}
-	else // Viscosity-dominated case
+	else if (dimensionlessK <= 1.0)// Viscosity-dominated case
 	{
 	  real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
 	  real64 gamma_m0 = 0.616;
 	  real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
 	  real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 	  tipLength = sqrt( Eprime/(mup*velocity) * pow( averageGap/Betam, 3.0) );
+	}
+	else
+	{
+
 	}
       } // if (tipElmt > -1), we have a tip elmt here
 
@@ -664,13 +669,17 @@ struct FluxKernel
         if (tipElmt > -1)
         {
           real64 dExtraTerm;
-	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  if (dimensionlessK >= 4.0) // Toughness-dominated case
 	  {
 	    dExtraTerm = -2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
 	  }
-	  else // Viscosity-dominated case
+	  else if (dimensionlessK <= 1.0) // Viscosity-dominated case
 	  {
 	    dExtraTerm = -3.0/2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
+	  }
+	  else
+	  {
+
 	  }
 
           if (ei[0] == tipElmt)
@@ -728,13 +737,17 @@ struct FluxKernel
         if (tipElmt > -1)
         {
           real64 dExtraTerm;
-	  if (viscosity < 2.0e-3) // Toughness-dominated case
+	  if (dimensionlessK >= 4.0) // Toughness-dominated case
 	  {
 	    dExtraTerm = -2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
 	  }
-	  else // Viscosity-dominated case
+	  else if (dimensionlessK <= 1.0)// Viscosity-dominated case
 	  {
 	    dExtraTerm = -3.0/2.0 * 0.5*meshSize / lEr / aperture[tipElmt];
+	  }
+	  else
+	  {
+
 	  }
 
           if (ei[0] == tipElmt)
