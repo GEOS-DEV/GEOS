@@ -134,6 +134,18 @@ void TimeHistoryOutput::initializePostSubGroups()
   }
 }
 
+void TimeHistoryOutput::setFileName( string const & root )
+{
+  m_filename = root;
+}
+
+void TimeHistoryOutput::reinit()
+{
+  m_recordCount = 0;
+  m_io.clear();
+  initializePostInitialConditionsPostSubGroups();
+}
+
 bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),

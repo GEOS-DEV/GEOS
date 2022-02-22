@@ -60,6 +60,17 @@ public:
   virtual void initializePostSubGroups() override;
 
   /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() override;
+
+  /**
+   * @brief Set the output filename (This is usefull for pygeosx user)
+   * @param root The string name of the output file
+   */
+  void setFileName( string const & root );
+
+  /**
    * @brief Writes out a time history file.
    * @copydoc EventBase::execute()
    */

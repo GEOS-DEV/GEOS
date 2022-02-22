@@ -1331,6 +1331,11 @@ public:
   ///@}
 
   /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() {}
+
+  /**
    * @brief Return PyGroup type.
    * @return Return PyGroup type.
    */
