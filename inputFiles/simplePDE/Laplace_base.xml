@@ -1,8 +1,9 @@
 <?xml version="1.0" ?>
 
 <Problem>
+
   <Solvers>
-    <LaplaceVEM
+    <LaplaceFEM
       name="laplace"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
@@ -10,34 +11,21 @@
       targetRegions="{ Region1 }">
       <LinearSolverParameters
         directParallel="0"/>
-    </LaplaceVEM>
+    </LaplaceFEM>
   </Solvers>
-
-  <Mesh>
-    <InternalMesh
-      name="mesh1"
-      elementTypes="{ C3D8 }"
-      xCoords="{ 0, 1 }"
-      yCoords="{ 0, 1 }"
-      zCoords="{ 0, 1 }"
-      nx="{ 10 }"
-      ny="{ 10 }"
-      nz="{ 10 }"
-      cellBlockNames="{ cb1 }"/>
-  </Mesh>
 
   <Events
     maxTime="2.0">
     <!-- This event is applied every cycle, and overrides the
-         solver time-step request -->
+    solver time-step request -->
     <PeriodicEvent
       name="solverApplications"
       forceDt="1.0"
       target="/Solvers/laplace"/>
 
     <!-- This event is applied every 1.0s.  The targetExactTimestep
-         flag allows this event to request a dt modification to match an
-         integer multiple of the timeFrequency. -->
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
     <PeriodicEvent
       name="outputs"
       timeFrequency="1.0"
@@ -48,11 +36,6 @@
       timeFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/restartOutput"/>
-
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="1.0"
-      target="/Outputs/vtkOutput"/>
   </Events>
 
   <ElementRegions>
@@ -91,12 +74,6 @@
 
     <Restart
       name="restartOutput"/>
-
-    <VTK
-      name="vtkOutput"
-      childDirectory="LaplaceVEM"
-      parallelThreads="32"
-      plotFileRoot="plot"/>
   </Outputs>
 
   <Geometry>
@@ -118,4 +95,5 @@
       coordinates="{ 0.0, 1.0, 2.0 }"
       values="{ 0.0, 3.e2, 4.e3 }"/>
   </Functions>
+
 </Problem>
