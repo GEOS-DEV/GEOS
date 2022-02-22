@@ -31,7 +31,6 @@ namespace proppantTransportKernels
 {
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 AccumulationKernel::
   compute( localIndex const numComps,
@@ -157,7 +156,6 @@ AccumulationKernel::
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 FluxKernel::
   computeJunction( localIndex const numElems,
@@ -775,15 +773,15 @@ void FluxKernel::
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
-  constexpr localIndex MAX_STENCIL_SIZE = SurfaceElementStencilWrapper::MAX_STENCIL_SIZE;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
+  constexpr localIndex maxStencilSize = SurfaceElementStencilWrapper::maxStencilSize;
 
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & seri = stencilWrapper.getElementRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  constexpr localIndex DOF1 = MAX_NUM_FLUX_ELEMS * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
-  constexpr localIndex DOF2 = MAX_STENCIL_SIZE * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+  constexpr localIndex DOF1 = maxNumFluxElems * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
+  constexpr localIndex DOF2 = maxStencilSize * constitutive::ParticleFluidBase::MAX_NUM_COMPONENTS;
 
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
@@ -804,9 +802,9 @@ void FluxKernel::
       localIndex const esr = sesri[iconn][0];
 
       // compute transmissibility
-      real64 transmissibility[MAX_NUM_FLUX_ELEMS]{};
-      real64 apertureWeight[MAX_NUM_FLUX_ELEMS]{};
-      real64 geometricWeight[MAX_NUM_FLUX_ELEMS]{};
+      real64 transmissibility[maxNumFluxElems]{};
+      real64 apertureWeight[maxNumFluxElems]{};
+      real64 geometricWeight[maxNumFluxElems]{};
       stencilWrapper.computeWeights( iconn,
                                      permeability,
                                      permeabilityMultiplier,
@@ -886,7 +884,6 @@ void FluxKernel::
 
 template< localIndex MAX_NUM_FLUX_ELEMS >
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 FluxKernel::
   computeCellBasedFlux( localIndex const numElems,
@@ -964,7 +961,7 @@ void FluxKernel::
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
   typename SurfaceElementStencilWrapper::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-  constexpr localIndex MAX_NUM_FLUX_ELEMS = SurfaceElementStencilWrapper::NUM_POINT_IN_FLUX;
+  constexpr localIndex maxNumFluxElems = SurfaceElementStencilWrapper::maxNumPointsInFlux;
 
   ArrayOfArraysView< R1Tensor const > const & cellCenterToEdgeCenters = stencilWrapper.getCellCenterToEdgeCenters();
 
@@ -976,9 +973,9 @@ void FluxKernel::
     localIndex const esr = sesri[iconn][0];
 
     // compute transmissibility
-    real64 transmissibility[MAX_NUM_FLUX_ELEMS]{};
-    real64 apertureWeight[MAX_NUM_FLUX_ELEMS]{};
-    real64 geometricWeight[MAX_NUM_FLUX_ELEMS]{};
+    real64 transmissibility[maxNumFluxElems]{};
+    real64 apertureWeight[maxNumFluxElems]{};
+    real64 geometricWeight[maxNumFluxElems]{};
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    permeabilityMultiplier,
@@ -1004,7 +1001,6 @@ void FluxKernel::
 
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
   computeProppantPackVolume( localIndex const numElems,
@@ -1210,7 +1206,6 @@ void ProppantPackVolumeKernel::
 }
 
 GEOSX_HOST_DEVICE
-GEOSX_FORCE_INLINE
 void
 ProppantPackVolumeKernel::
   updateProppantPackVolume( localIndex const numElems,
