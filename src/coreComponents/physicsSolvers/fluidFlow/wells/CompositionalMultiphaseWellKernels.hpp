@@ -37,7 +37,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseWellKernels
+namespace compositionalMultiphaseWellKernels
 {
 
 using namespace constitutive;
@@ -77,12 +77,12 @@ struct RowOffset
 struct ControlEquationHelper
 {
 
-  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   GEOSX_HOST_DEVICE
   static void
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  localIndex const phasePhaseIndex,
                  real64 const & targetBHP,
@@ -124,9 +124,9 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  using TAG = CompositionalMultiphaseWellKernels::ElemTag;
-  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+  using TAG = compositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -174,9 +174,9 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  using TAG = CompositionalMultiphaseWellKernels::ElemTag;
-  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+  using TAG = compositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -224,7 +224,7 @@ struct PressureRelationKernel
 struct PerforationKernel
 {
 
-  using TAG = CompositionalMultiphaseWellKernels::SubRegionTag;
+  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
 
   using CompFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::pressure,
@@ -266,7 +266,8 @@ struct PerforationKernel
   template< localIndex NC, localIndex NP >
   GEOSX_HOST_DEVICE
   static void
-  compute( real64 const & resPres,
+  compute( bool const & disableReservoirToWellFlow,
+           real64 const & resPres,
            real64 const & dResPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
@@ -302,6 +303,7 @@ struct PerforationKernel
   template< localIndex NC, localIndex NP >
   static void
   launch( localIndex const size,
+          bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
@@ -346,8 +348,8 @@ struct PerforationKernel
 struct AccumulationKernel
 {
 
-  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -401,8 +403,8 @@ struct AccumulationKernel
 struct VolumeBalanceKernel
 {
 
-  using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
-  using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   template< localIndex NC >
   GEOSX_HOST_DEVICE
@@ -520,11 +522,11 @@ struct RateInitializationKernel
  * @brief Define the interface for the property kernel in charge of computing the total mass density
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class TotalMassDensityKernel : public CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class TotalMassDensityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = CompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
 
   using Base::numComp;
 
@@ -557,10 +559,10 @@ public:
    * @param[in] ei the element index
    * @param[in] totalMassDensityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = CompositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && totalMassDensityKernelOp = CompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && totalMassDensityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
@@ -647,7 +649,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
@@ -656,7 +658,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      CompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
@@ -691,9 +693,9 @@ struct ResidualNormKernel
           real64 const dt,
           real64 * localResidualNorm )
   {
-    using ROFFSET = CompositionalMultiphaseWellKernels::RowOffset;
+    using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
 
-    WellControls::Type const wellType = wellControls.getType();
+    bool const isProducer = wellControls.isProducer();
     WellControls::Control const currentControl = wellControls.getControl();
     real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
     real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
@@ -742,7 +744,7 @@ struct ResidualNormKernel
 
           else if( idof >= ROFFSET::MASSBAL && idof < ROFFSET::MASSBAL + numComponents )
           {
-            if( wellType == WellControls::Type::PRODUCER ) // only PHASEVOLRATE is supported for now
+            if( isProducer ) // only PHASEVOLRATE is supported for now
             {
               normalizer = dt * absTargetPhaseRate * wellElemPhaseDensOld[iwelem][targetPhaseIndex];
             }
@@ -758,7 +760,7 @@ struct ResidualNormKernel
 
           else
           {
-            if( wellType == WellControls::Type::PRODUCER ) // only PHASEVOLRATE is supported for now
+            if( isProducer ) // only PHASEVOLRATE is supported for now
             {
               normalizer = dt * absTargetPhaseRate;
             }
@@ -875,7 +877,7 @@ struct SolutionCheckKernel
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
-    using COFFSET = CompositionalMultiphaseWellKernels::ColOffset;
+    using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
     real64 constexpr eps = minDensForDivision;
 
@@ -936,7 +938,7 @@ struct SolutionCheckKernel
 };
 
 
-} // end namespace CompositionalMultiphaseWellKernels
+} // end namespace compositionalMultiphaseWellKernels
 
 } // end namespace geosx
 

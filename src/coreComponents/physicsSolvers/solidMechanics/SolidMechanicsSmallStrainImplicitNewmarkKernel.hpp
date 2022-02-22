@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -304,7 +304,7 @@ using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
                                                              real64,
                                                              real64 >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

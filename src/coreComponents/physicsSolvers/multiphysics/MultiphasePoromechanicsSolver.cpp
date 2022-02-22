@@ -245,7 +245,7 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    PoromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
+    poromechanicsKernels::MultiphaseKernelFactory kernelFactory( displacementDofNumber,
                                                                  flowDofKey,
                                                                  dofManager.rankOffset(),
                                                                  gravityVectorData,

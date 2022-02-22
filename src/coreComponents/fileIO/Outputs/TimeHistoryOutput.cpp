@@ -111,7 +111,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::initializePostSubGroups()
+void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses

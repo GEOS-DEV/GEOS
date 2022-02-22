@@ -441,7 +441,9 @@ CapillaryPressureBase & makeJFunctionCapPressureThreePhase( string const & name,
 class CapillaryPressureTest : public ConstitutiveTestBase< CapillaryPressureBase >
 {
 public:
-  void test( arraySlice1d< real64 const > const sat, real64 const eps, real64 const tol )
+  void test( arraySlice1d< real64 const > const sat,
+             real64 const eps,
+             real64 const tol )
   {
     arrayView3d< real64 const, USD_CAPPRES > phaseCapPressure;
     arrayView4d< real64 const, USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction;
@@ -472,12 +474,16 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureTwoPha
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
   real64 const dS = 1e-1;
+
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1.0-sat[0];
-  while( sat[0] <= end_sat )
+
+  sat[0] = startSat;
+  sat[1] = 1.0-sat[0];
+
+  while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
@@ -493,14 +499,17 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_brooksCoreyCapPressureThreeP
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
   real64 const dS = 1e-1;
+
   array1d< real64 > sat( 3 );
-  sat[0] = start_sat;
+
+  sat[0] = startSat;
   sat[1] = 0.5*(1-sat[0]);
   sat[2] = 1.0-sat[0]-sat[1];
-  while( sat[0] <= end_sat )
+
+  while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
@@ -517,12 +526,16 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureTwoPh
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
-  real64 const dS        = 1e-1;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
+  real64 const dS = 1e-1;
+
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1-sat[1];
-  while( sat[0] <= end_sat )
+
+  sat[0] = startSat;
+  sat[1] = 1-sat[1];
+
+  while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
@@ -539,14 +552,17 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_vanGenuchtenCapPressureThree
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.4;
-  real64 const end_sat   = 0.6;
-  real64 const dS        = 1e-1;
+  real64 const startSat = 0.4;
+  real64 const endSat = 0.6;
+  real64 const dS = 1e-1;
+
   array1d< real64 > sat( 3 );
-  sat[0] = start_sat;
+
+  sat[0] = startSat;
   sat[1] = 0.5*(1-sat[0]);
   sat[2] = 1.0-sat[0]-sat[1];
-  while( sat[0] <= end_sat )
+
+  while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
@@ -563,12 +579,13 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureTwoPhase )
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.25;
-  real64 const end_sat   = 0.75;
+  real64 const startSat = 0.25;
+  real64 const endSat   = 0.75;
   real64 const dS        = 1e-1;
+
   array1d< real64 > sat( 2 );
-  sat[0] = start_sat; sat[1] = 1-sat[0];
-  while( sat[0] <= end_sat )
+  sat[0] = startSat; sat[1] = 1-sat[0];
+  while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
@@ -585,14 +602,17 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_tableCapPressureThreePhase )
   real64 const eps = std::sqrt( std::numeric_limits< real64 >::epsilon() );
   real64 const tol = 1e-4;
 
-  real64 const start_sat = 0.25;
-  real64 const end_sat   = 0.75;
-  real64 const dS        = 1e-1;
+  real64 const startSat = 0.25;
+  real64 const endSat = 0.75;
+  real64 const dS = 1e-1;
+
   array1d< real64 > sat( 3 );
-  sat[0] = start_sat;
+
+  sat[0] = startSat;
   sat[1] = 0.5*(1-sat[0]);
   sat[2] = 1.0-sat[0]-sat[1];
-  while( sat[0] <= end_sat )
+
+  while( sat[0] <= endSat )
   {
     test( sat, eps, tol );
     sat[0] += dS;
@@ -605,8 +625,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureTwoPhase
 {
   initialize( makeJFunctionCapPressureTwoPhase( "capPressure", m_parent ) );
 
-  // here, we have to apply a special treatment to this test to make sure that the J-function multiplier is initialized using
-  // initializeRockState
+  // here, we have to apply a special treatment to this test
+  // to make sure that the J-function multiplier is initialized using initializeRockState
   // this requires calling allocateConstitutiveData in advance (it will be called again later, in the "test" function)
 
   // setup some values for porosity and permeability
@@ -651,8 +671,8 @@ TEST_F( CapillaryPressureTest, numericalDerivatives_jFunctionCapPressureThreePha
 {
   initialize( makeJFunctionCapPressureThreePhase( "capPressure", m_parent ) );
 
-  // here, we have to apply a special treatment to this test to make sure that the J-function multiplier is initialized using
-  // initializeRockState
+  // here, we have to apply a special treatment to this test
+  // to make sure that the J-function multiplier is initialized using initializeRockState
   // this requires calling allocateConstitutiveData in advance (it will be called again later, in the "test" function)
 
   // setup some values for porosity and permeability

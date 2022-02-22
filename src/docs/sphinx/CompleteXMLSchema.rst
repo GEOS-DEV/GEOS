@@ -890,6 +890,13 @@ Element: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability.rst
 
 
+.. _XML_TableRelativePermeabilityHysteresis:
+
+Element: TableRelativePermeabilityHysteresis
+============================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -1909,6 +1916,13 @@ Datastructure: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_TableRelativePermeabilityHysteresis:
+
+Datastructure: TableRelativePermeabilityHysteresis
+==================================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis_other.rst
+
+
 .. _DATASTRUCTURE_Tasks:
 
 Datastructure: Tasks
@@ -2005,20 +2019,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_cellBlocks:
-
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

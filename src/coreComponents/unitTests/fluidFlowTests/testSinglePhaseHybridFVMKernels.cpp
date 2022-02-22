@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 
 using namespace geosx;
-using namespace geosx::SinglePhaseHybridFVMKernels;
+using namespace geosx::singlePhaseHybridFVMKernels;
 using namespace geosx::testing;
 
 
