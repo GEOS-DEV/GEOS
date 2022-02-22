@@ -103,7 +103,7 @@ static PyObject * setOutputName( PyHistoryOutput * self, PyObject * args )
   VERIFY_INITIALIZED( self );
 
   PyObject * unicodePath;
-  if( !PyArg_ParseTuple( args, "U", &unicodePath) )
+  if( !PyArg_ParseTuple( args, "U", &unicodePath ) )
   {
     return nullptr;
   }
