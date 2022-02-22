@@ -29,9 +29,9 @@
       xCoords="{ 0, 2000 }"
       yCoords="{ 0, 2000 }"
       zCoords="{ 0, 2000 }"
-      nx="{ 5 }"
-      ny="{ 5 }"
-      nz="{ 5 }"
+      nx="{ 30 }"
+      ny="{ 30 }"
+      nz="{ 20 }"
       cellBlockNames="{ cb }"/>
   </Mesh>
 
@@ -161,15 +161,6 @@
       objectPath="nodeManager"
       fieldName="pressure_np1"/>
 
-    <!--PackCollection
-      name="waveFieldNCollection"
-      objectPath="nodeManager"
-      fieldName="pressure_n"-->
-
-    <!--PackCollection
-      name="waveFieldNm1Collection"
-      objectPath="nodeManager"
-      fieldName="pressure_nm1"-->
 
   </Tasks>
 

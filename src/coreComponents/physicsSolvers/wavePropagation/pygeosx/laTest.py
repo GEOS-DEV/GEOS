@@ -41,7 +41,7 @@ def main():
                                 receivers_depth = 4149)
     """
     acquisition.add_xml(sys.argv[2])
-    acquisition.limitedAperture(300)
+    acquisition.limitedAperture(500)
     #acquisition.calculDt()
 
 
@@ -75,12 +75,9 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, rank=0
         else:
             problem = pygeosx.reinit(sys.argv)
 
-        #print_group(problem.get_group("domain/MeshBodies/mesh"))
         #Get solver, get hdf5 collection/outputs wrappers
         acousticSolver = problem.get_group("/Solvers/acousticSolver")
         collectionNp1 = problem.get_group("/Tasks/waveFieldNp1Collection")
-        #collectionN = problem.get_group("/Tasks/waveFieldNCollection")
-        #collectionNm1 = problem.get_group("/Tasks/waveFieldNm1Collection")
         output = problem.get_group("Outputs/waveFieldOutput")
 
         #Set times variables
@@ -130,8 +127,6 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, rank=0
             #Collect/export waveField values to hdf5
             if i % outputWaveFieldInterval == 0:
                 collectionNp1.collect(time, dt)
-                #collectionN.collect(time, dt)
-                #collectionNm1.collect(time, dt)
                 output.output(time, dt)
 
         #Export pressure at receivers to segy
@@ -174,8 +169,6 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, rank=0
             #Collect/export waveField values to hdf5
             if i % outputWaveFieldInterval == 0:
                 collectionNp1.collect(time, dt)
-                #collectionN.collect(time, dt)
-                #collectionNm1.collect(time, dt)
                 output.output(time, dt)
 
             time -= dt
@@ -204,22 +197,26 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, rank=0
 
             h5p = h5py.File(os.path.join(directory,"partialGradient"+shot.id+".hdf5"), "w")
 
-            h5p.create_dataset("ReferencePosition", data = h5f[keys[-2]], dtype='d')
+            h5p.create_dataset("ReferencePosition", data = h5f[keys[-2]][0], dtype='d')
             h5p.create_dataset("Time", data = h5f[keys[-1]], dtype='d')
-            h5p.create_dataset("partialGradient", data = h5b[keys[0]], dtype='d')
+            h5p.create_dataset("partialGradient", data = np.zeros(h5b[keys[0]][0].shape[0]), dtype='d')
+
 
             keyp = list(h5p.keys())
 
             n = len( list( h5f[keys[0]] ) )
             for i in range(n):
                 #h5p["partialGradient"][-i-1, :] *= -(h5f["pressure_np1"][i, :] - 2*h5f["pressure_n"][i, :] + h5f["pressure_nm1"][i, :]) / (dt*dt)
-                h5p["partialGradient"][-i-1, :] *= -h5f["pressure_np1"][i, :]
+                h5p["partialGradient"][:] += h5f["pressure_np1"][i, :] * h5b["pressure_np1"][-i-1, :]
+
+
             h5f.close()
             h5b.close()
             h5p.close()
 
             os.remove(os.path.join(directory,"forwardWaveField"+shot.id+".hdf5"))
             os.remove(os.path.join(directory,"backwardWaveField"+shot.id+".hdf5"))
+
 
         #Update shot flag
         shot.flag = "Done"

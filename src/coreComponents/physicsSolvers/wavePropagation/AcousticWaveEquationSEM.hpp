@@ -34,7 +34,11 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-  static constexpr real64 epsilonLoc = 1e-16;
+
+  /**
+   * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
+   */
+  static constexpr real64 epsilonLoc = 1e-8;
 
   AcousticWaveEquationSEM( const std::string & name,
                            Group * const parent );
@@ -91,7 +95,7 @@ public:
    * @param pressure_np1 the array to save the pressure value at the receiver position
    * @param pressure_n the array to save the pressure value at the receiver position
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) override;
+  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) override;
 
   struct viewKeyStruct : WaveSolverBase::viewKeyStruct
   {
@@ -157,7 +161,7 @@ private:
   array1d< localIndex > m_receiverIsLocal;
 
   /// Pressure_np1 at the receiver location for each time step for each receiver
-  array1d< real64 > m_pressureNp1AtReceivers;
+  array2d< real64 > m_pressureNp1AtReceivers;
 
 
 };

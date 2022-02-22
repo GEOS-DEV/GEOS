@@ -55,8 +55,15 @@ public:
 
     static constexpr char const * rickerOrderString() { return "rickerOrder"; }
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
+    static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
+    static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
 
   };
+
+  /**
+   * @brief Re-initialize source and receivers positions in the mesh, and resize the pressureNp1_at_receivers array
+   */
+  void reinit() override final;
 
 protected:
 
@@ -96,7 +103,7 @@ protected:
    * @param iseismo index number of the seismo trace
    * @param val_np1 the array to save the value at the receiver position
    */
-  virtual void computeSeismoTrace( localIndex const iseismo, arrayView1d< real64 > const pressure_np1 ) = 0;
+  virtual void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const pressure_np1, arrayView1d< real64 > const pressure_n ) = 0;
 
   /**
    * @brief Save the sismo trace in file

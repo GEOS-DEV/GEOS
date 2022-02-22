@@ -97,8 +97,8 @@ def computeFullGradient(directory_in_str, acquisition):
             continue
 
     h5F = h5py.File("fullGradient.hdf5", "w")
-    h5F.create_dataset("fullGradient", data = h5p["partialGradient"], dtype='d', chunks=True, maxshape=(h5p["partialGradient"].shape[0], None))
-    h5F.create_dataset("ReferencePosition", data = h5p["ReferencePosition"], chunks=True, maxshape=(h5p["ReferencePosition"].shape[0], None, 3))
+    h5F.create_dataset("fullGradient", data = h5p["partialGradient"], dtype='d', chunks=True, maxshape=(None,))
+    h5F.create_dataset("ReferencePosition", data = h5p["ReferencePosition"], chunks=True, maxshape=(None, 3))
     h5F.create_dataset("Time", data = h5p["Time"])
     keysF = list(h5F.keys())
 
@@ -115,16 +115,17 @@ def computeFullGradient(directory_in_str, acquisition):
                 if filename.startswith("partialGradient"):
                     h5p = h5py.File(os.path.join(directory_in_str, filename), 'r')
                     keysp = list(h5p.keys())
+                    print(h5p["ReferencePosition"][:], "\n")
 
                     if limited_aperture_flag:
                         indp = 0
                         ind = []
-                        for coordsp in h5p["ReferencePosition"][0]:
+                        for coordsp in h5p["ReferencePosition"]:
                             indF = 0
                             flag = 0
-                            for coordsF in h5F["ReferencePosition"][0]:
+                            for coordsF in h5F["ReferencePosition"]:
                                 if not any(coordsF - coordsp):
-                                    h5F["fullGradient"][:, indF] += h5p["partialGradient"][:,indp]
+                                    h5F["fullGradient"][indF] += h5p["partialGradient"][indp]
                                     flag = 1
                                     break
                                 indF += 1
@@ -133,14 +134,14 @@ def computeFullGradient(directory_in_str, acquisition):
                             indp += 1
 
                         if len(ind) > 0:
-                            h5F["fullGradient"].resize(h5F["fullGradient"].shape[1] + len(ind), axis=1)
-                            h5F["fullGradient"][:, -len(ind):] = h5p["partialGradient"][:, ind]
+                            h5F["fullGradient"].resize(h5F["fullGradient"].shape[0] + len(ind), axis=0)
+                            h5F["fullGradient"][-len(ind):] = h5p["partialGradient"][ind]
 
-                            h5F["ReferencePosition"].resize(h5F["ReferencePosition"].shape[1] + len(ind), axis=1)
-                            h5F["ReferencePosition"][:, -len(ind):] = h5p["ReferencePosition"][:, ind]
+                            h5F["ReferencePosition"].resize(h5F["ReferencePosition"].shape[0] + len(ind), axis=0)
+                            h5F["ReferencePosition"][-len(ind):] = h5p["ReferencePosition"][ind]
 
                     else:
-                        h5F["fullGradient"][:,:] += h5p["partialGradient"][:,:]
+                        h5F["fullGradient"][:] += h5p["partialGradient"][:]
 
                     h5p.close()
                     os.remove(os.path.join(directory_in_str,filename))
@@ -151,9 +152,16 @@ def computeFullGradient(directory_in_str, acquisition):
         else:
             continue
 
-    ind = np.lexsort((h5F["ReferencePosition"][0][:,2], h5F["ReferencePosition"][0][:,1], h5F["ReferencePosition"][0][:,0]))
-    h5F["ReferencePosition"][:,:] = h5F["ReferencePosition"][:,ind]
-    h5F["fullGradient"][:,:] = h5F["fullGradient"][:,ind]
+    ind = np.lexsort((h5F["ReferencePosition"][:, 2], h5F["ReferencePosition"][:, 1], h5F["ReferencePosition"][:, 0]))
+
+    tempPos = np.zeros( h5F["ReferencePosition"].shape)
+    tempVal = np.zeros( h5F["fullGradient"].shape)
+    for i in range(len(ind)):
+        tempPos[i] = h5F["ReferencePosition"][ind[i]]
+        tempVal[i] = h5F["fullGradient"][ind[i]]
+
+    h5F["ReferencePosition"][:] = tempPos[:]
+    h5F["fullGradient"][:] = tempVal[:]
 
     h5F.close()
     os.rmdir(directory_in_str)
