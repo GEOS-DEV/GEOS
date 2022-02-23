@@ -59,7 +59,7 @@ class GeosxMathpressoLogger : public mathpresso::OutputLog
 public:
 
   explicit GeosxMathpressoLogger( string name )
-  : m_name( std::move( name ) )
+    : m_name( std::move( name ) )
   {}
 
   virtual ~GeosxMathpressoLogger() override
@@ -78,7 +78,7 @@ public:
                     const char * const message,
                     size_t const GEOSX_UNUSED_PARAM( size ) ) override
   {
-    switch (type)
+    switch( type )
     {
       case kMessageError:
       {
