@@ -484,13 +484,6 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
 
 
-.. _XML_LaplaceVEM:
-
-Element: LaplaceVEM
-===================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM.rst
-
-
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -888,6 +881,13 @@ Element: TableFunction
 Element: TableRelativePermeability
 ==================================
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability.rst
+
+
+.. _XML_TableRelativePermeabilityHysteresis:
+
+Element: TableRelativePermeabilityHysteresis
+============================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis.rst
 
 
 .. _XML_Tasks:
@@ -1489,13 +1489,6 @@ Datastructure: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
 
 
-.. _DATASTRUCTURE_LaplaceVEM:
-
-Datastructure: LaplaceVEM
-=========================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
-
-
 .. _DATASTRUCTURE_Level0:
 
 Datastructure: Level0
@@ -1907,6 +1900,13 @@ Datastructure: TableFunction
 Datastructure: TableRelativePermeability
 ========================================
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability_other.rst
+
+
+.. _DATASTRUCTURE_TableRelativePermeabilityHysteresis:
+
+Datastructure: TableRelativePermeabilityHysteresis
+==================================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis_other.rst
 
 
 .. _DATASTRUCTURE_Tasks:
