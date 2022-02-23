@@ -373,26 +373,23 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
       string const fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
-      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac = fluid.dPhaseCompFraction();
 
       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens = fluid.dPhaseMassDensity();
 
       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens = fluid.dPhaseDensity();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                        [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                                         phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
-                                         phaseDens, dPhaseDens_dPres, dPhaseDens_dComp]
+                                        [phaseCompFrac, dPhaseCompFrac,
+                                         phaseMassDens, dPhaseMassDens,
+                                         phaseDens, dPhaseDens]
                                         GEOSX_HOST_DEVICE ( localIndex const )
       {
-        GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                          phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
-                          phaseDens, dPhaseDens_dPres, dPhaseDens_dComp );
+        GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac,
+                          phaseMassDens, dPhaseMassDens,
+                          phaseDens, dPhaseDens );
       } );
     } );
 
@@ -485,14 +482,11 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
                                          compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
                                          elemDofNumber.toNestedViewConst(),
                                          dofManager.rankOffset(),
                                          lengthTolerance,

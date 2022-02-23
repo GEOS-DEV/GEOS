@@ -25,8 +25,6 @@
 #include "finiteVolume/FaceElementToCellStencil.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 
-
-
 namespace geosx
 {
 
@@ -64,11 +62,9 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
   m_dPhaseMob_dPres( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dPressure {} ) ),
   m_dPhaseMob_dCompDens( compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity {} ) ),
   m_phaseMassDens( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity {} ) ),
-  m_dPhaseMassDens_dPres( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure {} ) ),
-  m_dPhaseMassDens_dComp( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction {} ) ),
+  m_dPhaseMassDens( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity {} ) ),
   m_phaseCompFrac( multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction {} ) ),
-  m_dPhaseCompFrac_dPres( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure {} ) ),
-  m_dPhaseCompFrac_dComp( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction {} ) ),
+  m_dPhaseCompFrac( multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction {} ) ),
   m_phaseCapPressure( capPressureAccessors.get( extrinsicMeshData::cappres::phaseCapPressure {} ) ),
   m_dPhaseCapPressure_dPhaseVolFrac( capPressureAccessors.get( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction {} ) ),
   m_localMatrix( localMatrix ),
@@ -199,13 +195,13 @@ CFLFluxKernel::
   forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
     // compute transmissibility
-    real64 transmissiblity[STENCILWRAPPER_TYPE::maxNumConnections][2];
+    real64 transmissibility[STENCILWRAPPER_TYPE::maxNumConnections][2];
     real64 dTrans_dPres[STENCILWRAPPER_TYPE::maxNumConnections][2];
 
     stencilWrapper.computeWeights( iconn,
                                    permeability,
                                    dPerm_dPres,
-                                   transmissiblity,
+                                   transmissibility,
                                    dTrans_dPres );
 
     localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
@@ -216,7 +212,7 @@ CFLFluxKernel::
                                                             seri[iconn],
                                                             sesri[iconn],
                                                             sei[iconn],
-                                                            transmissiblity[0],
+                                                            transmissibility[0],
                                                             pres,
                                                             gravCoef,
                                                             phaseVolFrac,
@@ -487,19 +483,19 @@ AquiferBCKernel::
            real64 const & aquiferWaterPhaseDens,
            arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
            arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens,
-           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseDens_dPres,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens_dCompFrac,
+           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac,
-           arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > dPhaseCompFrac_dPres,
-           arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac_dCompFrac,
+           arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac,
            arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens,
            real64 const & dt,
            real64 (& localFlux)[NC],
            real64 (& localFluxJacobian)[NC][NC+1] )
 {
+  using Deriv = multifluid::DerivativeOffset;
+
   real64 dProp_dC[NC]{};
   real64 dPhaseFlux_dCompDens[NC]{};
 
@@ -532,9 +528,9 @@ AquiferBCKernel::
         real64 const phaseDensVolFrac = phaseDens[ip] * phaseVolFrac[ip];
         real64 const phaseFlux = aquiferVolFlux * phaseDensVolFrac;
         real64 const dPhaseFlux_dPres = dAquiferVolFlux_dPres * phaseDensVolFrac
-                                        + aquiferVolFlux * ( dPhaseDens_dPres[ip] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dPres[ip] );
+                                        + aquiferVolFlux * ( dPhaseDens[ip][Deriv::dP] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dPres[ip] );
 
-        applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens_dCompFrac[ip], dProp_dC );
+        applyChainRule( NC, dCompFrac_dCompDens, dPhaseDens[ip], dProp_dC, Deriv::dC );
         for( integer ic = 0; ic < NC; ++ic )
         {
           dPhaseFlux_dCompDens[ic] = aquiferVolFlux * ( dProp_dC[ic] * phaseVolFrac[ip] + phaseDens[ip] * dPhaseVolFrac_dCompDens[ip][ic] );
@@ -543,9 +539,9 @@ AquiferBCKernel::
         for( integer ic = 0; ic < NC; ++ic )
         {
           localFlux[ic] -= dt * phaseFlux * phaseCompFrac[ip][ic];
-          localFluxJacobian[ic][0] -= dt * ( dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac_dPres[ip][ic] );
+          localFluxJacobian[ic][0] -= dt * ( dPhaseFlux_dPres * phaseCompFrac[ip][ic] + phaseFlux * dPhaseCompFrac[ip][ic][Deriv::dP] );
 
-          applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac_dCompFrac[ip][ic], dProp_dC );
+          applyChainRule( NC, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dProp_dC, Deriv::dC );
           for( integer jc = 0; jc < NC; ++jc )
           {
             localFluxJacobian[ic][jc+1] -= dt * ( dPhaseFlux_dCompDens[jc] * phaseCompFrac[ip][ic] + phaseFlux * dProp_dC[jc] );
@@ -577,11 +573,9 @@ AquiferBCKernel::
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres,
-          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac,
+          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac,
           real64 const & timeAtBeginningOfStep,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -629,14 +623,12 @@ AquiferBCKernel::
                                     aquiferWaterPhaseDens,
                                     aquiferWaterPhaseCompFrac,
                                     phaseDens[er][esr][ei][0],
-                                    dPhaseDens_dPres[er][esr][ei][0],
-                                    dPhaseDens_dCompFrac[er][esr][ei][0],
+                                    dPhaseDens[er][esr][ei][0],
                                     phaseVolFrac[er][esr][ei],
                                     dPhaseVolFrac_dPres[er][esr][ei],
                                     dPhaseVolFrac_dCompDens[er][esr][ei],
                                     phaseCompFrac[er][esr][ei][0],
-                                    dPhaseCompFrac_dPres[er][esr][ei][0],
-                                    dPhaseCompFrac_dCompFrac[er][esr][ei][0],
+                                    dPhaseCompFrac[er][esr][ei][0],
                                     dCompFrac_dCompDens[er][esr][ei],
                                     dt,
                                     localFlux,
@@ -696,11 +688,9 @@ AquiferBCKernel::
                   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dPhaseVolFrac_dCompDens, \
                   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dCompFrac_dCompDens, \
                   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens, \
-                  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dPhaseDens_dPres, \
-                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens_dCompFrac, \
+                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens, \
                   ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & phaseCompFrac, \
-                  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dPhaseCompFrac_dPres, \
-                  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac_dCompFrac, \
+                  ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dPhaseCompFrac, \
                   real64 const & timeAtBeginningOfStep, \
                   real64 const & dt, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
