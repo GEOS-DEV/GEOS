@@ -27,7 +27,6 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       discretization="FE1"
       couplingTypeOption="FIM"
       logLevel="1"
@@ -54,7 +53,6 @@
       logLevel="0"
       discretization="FE1"
       targetRegions="{Domain, void, Fracture}"
-      solidMaterialNames="{rock}"
       contactRelationName="fractureContact"/>
 
     <SinglePhaseFVM
@@ -62,9 +60,6 @@
       logLevel="0"
       discretization="singlePhaseTPFA"
       targetRegions="{Fracture}"
-      fluidNames="{water}"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }"
       inputFluxEstimate="1.0"/>
 
     <SurfaceGenerator
@@ -73,7 +68,6 @@
       fractureRegion="Fracture"
       targetRegions="{Domain, void}"
       nodeBasedSIF="1"
-      solidMaterialNames="{rock}"
       rockToughness="3.0e6">
     </SurfaceGenerator>
   </Solvers>
