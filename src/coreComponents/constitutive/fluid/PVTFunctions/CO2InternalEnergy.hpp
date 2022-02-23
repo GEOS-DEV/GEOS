@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -49,18 +50,14 @@ public:
                 real64 & value,
                 bool useMass ) const;
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
@@ -118,37 +115,31 @@ void CO2InternalEnergyUpdate::compute( real64 const & pressure,
                                        real64 & value,
                                        bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
-  GEOSX_UNUSED_VAR( useMass );
+  GEOSX_UNUSED_VAR( phaseComposition, useMass );
 
   value =  0.001 * pressure + 1.0 * temperature;
 }
 
-template< int USD1, int USD2, int USD3, int USD4 >
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void CO2InternalEnergyUpdate::compute( real64 const & pressure,
                                        real64 const & temperature,
                                        arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                       arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                       arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                       arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                       arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                        real64 & value,
-                                       real64 & dValue_dPressure,
-                                       real64 & dValue_dTemperature,
-                                       arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                       arraySlice1d< real64, USD3 > const & dValue,
                                        bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dPressure );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dTemperature );
-  GEOSX_UNUSED_VAR( dPhaseComposition_dGlobalCompFraction );
-  GEOSX_UNUSED_VAR( useMass );
+  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition, useMass );
+
+  using Deriv = multifluid::DerivativeOffset;
 
   value =  0.001 * pressure + 1.0 * temperature;
-  dValue_dPressure = 0.001;
-  dValue_dTemperature = 1.0;
 
-  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
+  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  dValue[Deriv::dP] = 0.001;
+  dValue[Deriv::dT] = 1.0;
+
 }
 
 } // end namespace PVTProps
