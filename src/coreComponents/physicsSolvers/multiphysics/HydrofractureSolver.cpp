@@ -500,7 +500,39 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      else
 	      {
                 std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
-	        GEOSX_ERROR( "Transition not implemented" );
+                real64 const alpha = (dimensionlessK - 1.0)/3.0;
+
+                real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+                real64 gamma_m0 = 0.616;
+                real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+                real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+                real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+                real64 const B = alpha*Kprime/Eprime;
+	        real64 const C = (1-alpha)*3.0/5.0*Betam*pow( mup*velocity/Eprime, 1.0/3.0);
+	        real64 const D = alpha*2.0/3.0*Kprime/Eprime;
+	        real64 l0 = 1.0e-9*meshSize;
+	        real64 dVdl;
+	        real64 lold = l0;
+	        real64 deltal;
+	        real64 Vold;
+	        for (int i = 0; i < 41; i++)
+	        {
+	          dVdl = 5.0/3.0*C*pow(lold ,2.0/3.0) + 3.0/2.0*D*pow(lold ,0.5);
+	          Vold = C*pow(lold, 5.0/3.0) + D*pow(lold, 3.0/2.0);
+	          if (std::abs(Vold*KGDthickness - volume)< 1.0e-6*volume)
+	          {
+	            break;
+	          }
+	          if (i == 40)
+	          {
+	            GEOSX_ERROR( "Newton loop cannot converge to solve l from V." );
+	          }
+	          deltal = (volume/KGDthickness - Vold)/dVdl;
+	          lold = lold + deltal;
+	        }
+	        l0 = lold;
+	        refDispFirstStep = 0.5 * ( A*pow(l0, 2.0/3.0) + B*pow(l0, 0.5) );
 	      }
 	      //refDispFirstStep = 0.00019;
 
@@ -719,7 +751,37 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	  else
 	  {
             std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
-            GEOSX_ERROR( "Transition not implemented" );
+            real64 const alpha = (dimensionlessK - 1.0)/3.0;
+
+            real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+            real64 gamma_m0 = 0.616;
+            real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+            real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+            real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+            real64 const B = alpha*Kprime/Eprime;
+
+            real64 l0 = 1.0e-9*meshSize;
+            real64 dwdl;
+            real64 lold = l0;
+            real64 deltal;
+            real64 wold;
+            for (int i = 0; i < 41; i++)
+            {
+              dwdl = 2.0/3.0*A*pow(lold, -1.0/3.0) + 1.0/2.0*B*pow(lold, -0.5);
+              wold = A*pow(lold, 2.0/3.0) + B*pow(lold, 1.0/2.0);
+              if (std::abs(wold - refDisp)< 1.0e-6*refDisp)
+              {
+                break;
+              }
+              if (i == 40)
+              {
+                GEOSX_ERROR( "Newton loop cannot converge to solve l from w." );
+              }
+              deltal = (refDisp - wold)/dwdl;
+              lold = lold + deltal;
+            }
+            tipX = lold;
 	  }
 	  m_newTipLocation = tipX + tipBCLocation;
 	  localConvergedTipLoc = m_newTipLocation;
@@ -1056,7 +1118,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      else
 	      {
 	        std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
-	        GEOSX_ERROR( "Transition not implemented" );
+	        GEOSX_ERROR( "We should not be here." );
 	      }
 	      m_newTipLocation = tipX + channelElmtCenter[1] - 0.5 * channelElmtSize;
 
@@ -1180,7 +1242,7 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	    else
 	    {
 	      std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
-              GEOSX_ERROR( "Transition not implemented" );
+              GEOSX_ERROR( "We should not be here." );
 	    }
 
 	    for(auto node : nodesWithAssignedDisp)
@@ -1444,7 +1506,17 @@ real64 HydrofractureSolver::SolverStep( real64 const & time_n,
 	      else
 	      {
 	        std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
-	        GEOSX_ERROR( "Transition not implemented" );
+                real64 const alpha = (dimensionlessK - 1.0)/3.0;
+
+                real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+                real64 gamma_m0 = 0.616;
+                real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+                real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+                real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+                real64 const B = alpha*Kprime/Eprime;
+                refValue = 0.5* (A*pow(relativeDist, 2.0/3.0) + B*pow(relativeDist, 1.0/2.0));
+
 	      }
 	      //TJ: We can try to give different magnitude of refValue as initial guess
 	      //    to test whether different initial guess will lead to different converged
@@ -1935,7 +2007,50 @@ void HydrofractureSolver::UpdateDeformationForCoupling( DomainPartition * const 
       else
       {
         std::cout << "Transition, dimensionless K = " << dimensionlessK << std::endl;
-        GEOSX_ERROR( "Transition not implemented" );
+        real64 const alpha = (dimensionlessK - 1.0)/3.0;
+
+        if (std::abs(refDisp) < 1.0e-9)
+        {
+          aperTip = 0.0;
+        }
+        else
+        {
+          real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+          real64 gamma_m0 = 0.616;
+          real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+          real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+          real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+          real64 const B = alpha*Kprime/Eprime;
+          real64 const C = (1-alpha)*3.0/5.0*Betam*pow( mup*velocity/Eprime, 1.0/3.0);
+          real64 const D = alpha*2.0/3.0*Kprime/Eprime;
+
+          real64 l0 = 1.0e-9*meshSize;
+          real64 dwdl;
+          real64 lold = l0;
+          real64 deltal;
+          real64 wold;
+          for (int i = 0; i < 41; i++)
+          {
+            dwdl = 2.0/3.0*A*pow(lold, -1.0/3.0) + 1.0/2.0*B*pow(lold, -0.5);
+            wold = A*pow(lold, 2.0/3.0) + B*pow(lold, 1.0/2.0);
+            if (std::abs(wold - refDisp)< 1.0e-6*refDisp)
+            {
+              break;
+            }
+            if (i == 40)
+            {
+              GEOSX_ERROR( "Newton loop cannot converge to solve l from w." );
+            }
+            deltal = (refDisp - wold)/dwdl;
+            lold = lold + deltal;
+            if (lold <= 0.0)
+              lold = 1.0e-6;
+          }
+          l0 = lold;
+          vTip = C*pow(l0, 5.0/3.0) + D*pow(l0, 3.0/2.0);
+          aperTip = vTip/l0;
+        }
       }
 
 
@@ -3080,9 +3195,74 @@ HydrofractureSolver::
               } // toughness or viscosity dominated case
               else
               {
+                if (std::abs(averageGap) < 1.0e-9)
+                {
+                  coeff = 0.0;
+                }
+                else
+                {
+                  real64 const alpha = (dimensionlessK - 1.0)/3.0;
 
-              }
+                  real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+                  real64 gamma_m0 = 0.616;
+                  real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+                  real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
 
+                  real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+                  real64 const B = alpha*Kprime/Eprime;
+                  real64 const C = (1-alpha)*3.0/5.0*Betam*pow( mup*velocity/Eprime, 1.0/3.0);
+                  real64 const D = alpha*2.0/3.0*Kprime/Eprime;
+
+                  real64 l0 = 1.0e-9*meshSize;
+                  real64 dwdl;
+                  real64 lold = l0;
+                  real64 deltal;
+                  real64 wold;
+                  for (int i = 0; i < 41; i++)
+                  {
+                    dwdl = 2.0/3.0*A*pow(lold, -1.0/3.0) + 1.0/2.0*B*pow(lold, -0.5);
+                    wold = A*pow(lold, 2.0/3.0) + B*pow(lold, 1.0/2.0);
+                    if (std::abs(wold - averageGap)< 1.0e-6*averageGap)
+                    {
+                      break;
+                    }
+                    if (i == 40)
+                    {
+                      GEOSX_ERROR( "Newton loop cannot converge to solve l from w." );
+                    }
+                    deltal = (averageGap - wold)/dwdl;
+                    lold = lold + deltal;
+                  }
+                  l0 = lold;
+                  real64 coeff1 = 5.0/3.0*C*pow(l0, 2.0/3.0) + 3.0/2.0*D*pow(l0, 0.5);
+                  real64 coeff2 = 2.0/3.0*A*pow(l0, -1.0/3.0) + 1.0/2.0*B*pow(l0, -0.5);
+                  coeff = coeff1/coeff2/meshSize;
+                }
+
+                for (localIndex kf = 0; kf < 2; ++kf)
+                {
+                  for( localIndex a = 0; a < numNodesPerFace; ++a )
+                  {
+                    localIndex node = faceToNodeMap( elemsToFaces[ei][kf], a );
+                    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+                    {
+                      for (int i = 0; i < 3; ++i)
+                      {
+                        dGap_dU_tip = coeff * 0.5 * (-pow(-1, kf)) *Nbar[i];
+                        //dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei] ) * dGap_dU_tip;
+                        dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dAccumulationResidualdAperture * dGap_dU_tip;
+                      }
+                    }
+                    else
+                    {
+                      for (int i = 0; i < 3; ++i)
+                      {
+                        dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+                      }
+                    } // if else
+                  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+                } // for (localIndex kf = 0; kf < 2; ++kf)
+              } // dimensionlessK is between 1.0 and 4.0
             }  // if ei is a tip element
           } // loop over all the trailing faces
 
@@ -3213,8 +3393,73 @@ HydrofractureSolver::
               } // toughness or viscosity dominated case
               else
               {
+                if (std::abs(averageGap) < 1.0e-9)
+                {
+                  coeff = 0.0;
+                }
+                else
+                {
+                  real64 const alpha = (dimensionlessK - 1.0)/3.0;
 
-              }
+                  real64 Lm = pow( Eprime*pow(q0,3.0)*pow(total_time,4.0)/mup, 1.0/6.0 );
+                  real64 gamma_m0 = 0.616;
+                  real64 velocity = 2.0/3.0 * Lm * gamma_m0 / total_time;
+                  real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+                  real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+                  real64 const B = alpha*Kprime/Eprime;
+                  real64 const C = (1-alpha)*3.0/5.0*Betam*pow( mup*velocity/Eprime, 1.0/3.0);
+                  real64 const D = alpha*2.0/3.0*Kprime/Eprime;
+
+                  real64 l0 = 1.0e-9*meshSize;
+                  real64 dwdl;
+                  real64 lold = l0;
+                  real64 deltal;
+                  real64 wold;
+                  for (int i = 0; i < 41; i++)
+                  {
+                    dwdl = 2.0/3.0*A*pow(lold, -1.0/3.0) + 1.0/2.0*B*pow(lold, -0.5);
+                    wold = A*pow(lold, 2.0/3.0) + B*pow(lold, 1.0/2.0);
+                    if (std::abs(wold - averageGap)< 1.0e-6*averageGap)
+                    {
+                      break;
+                    }
+                    if (i == 40)
+                    {
+                      GEOSX_ERROR( "Newton loop cannot converge to solve l from w." );
+                    }
+                    deltal = (averageGap - wold)/dwdl;
+                    lold = lold + deltal;
+                  }
+                  l0 = lold;
+                  real64 coeff1 = 2.0/3.0*C*pow(l0, -1.0/3.0) + 1.0/2.0*D*pow(l0, -0.5);
+                  real64 coeff2 = 2.0/3.0*A*pow(l0, -1.0/3.0) + 1.0/2.0*B*pow(l0, -0.5);
+                  coeff = coeff1/coeff2/meshSize;
+                }
+                for (localIndex kf = 0; kf < 2; ++kf)
+                {
+                  for( localIndex a = 0; a < numNodesPerFace; ++a )
+                  {
+                    localIndex node = faceToNodeMap( elemsToFaces[ei2][kf], a );
+                    if ( std::find( tipNodes.begin(), tipNodes.end(), node ) == tipNodes.end() )
+                    {
+                      for (int i = 0; i < 3; ++i)
+                      {
+                        dGap_dU_tip = coeff * (-pow(-1, kf)) *Nbar[i]/2;
+                        //dAper_dU_tip = contactRelation->dEffectiveAperture_dAperture( aperture[ei2] ) * dGap_dU_tip;
+                        dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = dRdAper * dGap_dU_tip;
+                      }
+                    }
+                    else
+                    {
+                      for (int i = 0; i < 3; ++i)
+                      {
+                        dRdU( kf * 3 * numNodesPerFace + 3 * a + i ) = 0.0;
+                      }
+                    } // if else
+                  } // for( localIndex a = 0; a < numNodesPerFace; ++a )
+                } // for (localIndex kf = 0; kf < 2; ++kf)
+              } // dimensionless K is between 1.0 and 4.0
             }  // if ei2 is a tip element
           } // loop over all the trailing faces
 

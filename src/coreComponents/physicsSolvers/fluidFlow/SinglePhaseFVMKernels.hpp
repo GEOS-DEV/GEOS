@@ -566,7 +566,38 @@ struct FluxKernel
 	}
 	else
 	{
+          real64 const alpha = (dimensionlessK - 1.0)/3.0;
 
+          real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+          real64 gamma_m0 = 0.616;
+          real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+          real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+          real64 const A = (1-alpha)*Betam*pow(mup*velocity/Eprime ,1.0/3.0);
+          real64 const B = alpha*Kprime/Eprime;
+
+          real64 l0 = 1.0e-9*meshSize;
+          real64 dwdl;
+          real64 lold = l0;
+          real64 deltal;
+          real64 wold;
+          for (int i = 0; i < 41; i++)
+          {
+            dwdl = 2.0/3.0*A*pow(lold, -1.0/3.0) + 1.0/2.0*B*pow(lold, -0.5);
+            wold = A*pow(lold, 2.0/3.0) + B*pow(lold, 1.0/2.0);
+            if (std::abs(wold - averageGap)< 1.0e-6*averageGap)
+            {
+              break;
+            }
+            if (i == 40)
+            {
+              GEOSX_ERROR( "Newton loop cannot converge to solve l from w." );
+            }
+            deltal = (averageGap - wold)/dwdl;
+            lold = lold + deltal;
+          }
+          l0 = lold;
+          tipLength = l0;
 	}
       } // if (tipElmt > -1), we have a tip elmt here
 
@@ -679,7 +710,39 @@ struct FluxKernel
 	  }
 	  else
 	  {
+            real64 const alpha = (dimensionlessK - 1.0)/3.0;
 
+            real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+            real64 gamma_m0 = 0.616;
+            real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+            real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+            real64 const C = (1-alpha)*3.0/5.0*Betam*pow( mup*velocity/Eprime, 1.0/3.0);
+            real64 const D = alpha*2.0/3.0*Kprime/Eprime;
+
+            real64 l0 = 1.0e-9*meshSize;
+            real64 dwdl;
+            real64 lold = l0;
+            real64 deltal;
+            real64 wold;
+            for (int i = 0; i < 41; i++)
+            {
+              dwdl = 2.0/3.0*C*pow(lold, -1.0/3.0) + 1.0/2.0*D*pow(lold, -0.5);
+              wold = C*pow(lold, 2.0/3.0) + D*pow(lold, 1.0/2.0);
+              if (std::abs(wold - aperture[tipElmt])< 1.0e-6*aperture[tipElmt])
+              {
+                break;
+              }
+              if (i == 40)
+              {
+                GEOSX_ERROR( "Newton loop cannot converge to solve l from w_tip." );
+              }
+              deltal = (aperture[tipElmt] - wold)/dwdl;
+              lold = lold + deltal;
+            }
+            l0 = lold;
+            real64 coeff = 0.5 / (2.0/3.0*C*pow(l0, -1.0/3.0) + 1.0/2.0*D*pow(l0, -0.5));
+            dExtraTerm = -0.5*meshSize/pow(0.5*l0, 2.0)*coeff;
 	  }
 
           if (ei[0] == tipElmt)
@@ -747,7 +810,39 @@ struct FluxKernel
 	  }
 	  else
 	  {
+            real64 const alpha = (dimensionlessK - 1.0)/3.0;
 
+            real64 Lm = pow( Eprime*pow(q0,3.0)*pow(totalTime,4.0)/mup, 1.0/6.0 );
+            real64 gamma_m0 = 0.616;
+            real64 velocity = 2.0/3.0 * Lm * gamma_m0 / totalTime;
+            real64 Betam = pow(2.0, 1.0/3.0) * pow(3.0, 5.0/6.0);
+
+            real64 const C = (1-alpha)*3.0/5.0*Betam*pow( mup*velocity/Eprime, 1.0/3.0);
+            real64 const D = alpha*2.0/3.0*Kprime/Eprime;
+
+            real64 l0 = 1.0e-9*meshSize;
+            real64 dwdl;
+            real64 lold = l0;
+            real64 deltal;
+            real64 wold;
+            for (int i = 0; i < 41; i++)
+            {
+              dwdl = 2.0/3.0*C*pow(lold, -1.0/3.0) + 1.0/2.0*D*pow(lold, -0.5);
+              wold = C*pow(lold, 2.0/3.0) + D*pow(lold, 1.0/2.0);
+              if (std::abs(wold - aperture[tipElmt])< 1.0e-6*aperture[tipElmt])
+              {
+                break;
+              }
+              if (i == 40)
+              {
+                GEOSX_ERROR( "Newton loop cannot converge to solve l from w_tip." );
+              }
+              deltal = (aperture[tipElmt] - wold)/dwdl;
+              lold = lold + deltal;
+            }
+            l0 = lold;
+            real64 coeff = 0.5 / (2.0/3.0*C*pow(l0, -1.0/3.0) + 1.0/2.0*D*pow(l0, -0.5));
+            dExtraTerm = -0.5*meshSize/pow(0.5*l0, 2.0)*coeff;
 	  }
 
           if (ei[0] == tipElmt)
