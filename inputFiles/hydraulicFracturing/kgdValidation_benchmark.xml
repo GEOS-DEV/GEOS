@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+
+<Problem>
+   <Included>
+    <File name="./kgdValidation_base.xml"/>
+   </Included>
+  
+   <Mesh>
+    <!-- SPHINX_MESH -->
+    <InternalMesh 
+      name="mesh1"
+      elementTypes="{C3D8}"
+      xCoords="{ 0, 0.1525 }"
+      yCoords="{ -0.048, -0.012, -0.006, 0.006, 0.012, 0.048 }"
+      zCoords="{ 0.037, 0.092 }"
+      nx="{ 80 }"
+      ny="{ 4, 2, 6, 2, 4 }"
+      nz="{ 10 }"	  
+      cellBlockNames="{cb1}"/>
+    <!-- SPHINX_MESH_END -->
+  </Mesh>
+
+  <Geometry>
+    <!-- SPHINX_INITIALFRAC -->
+    <Box
+      name="fracture"
+      xMin="{ -0.1, -0.001, 0.036 }"
+      xMax="{  0.003, 0.001, 0.093 }"/>
+    <!-- SPHINX_INITIALFRAC_END -->
+
+    <!-- SPHINX_INJSOURCE -->
+    <Box
+      name="source"
+      xMin="{ -0.1, -0.001, 0.036 }"
+      xMax="{  0.003, 0.001, 0.093 }"/>
+    <!-- SPHINX_INJSOURCE_END -->
+
+    <!-- SPHINX_FRACPLANE -->
+    <Box
+      name="core"
+      xMin="{ -0.1, -0.001, 0.036 }"
+      xMax="{  0.2, 0.001, 0.093 }"/>
+    <!-- SPHINX_FRACPLANE_END -->
+  </Geometry>
+
+  <Events
+    maxTime="100.0">
+
+    <SoloEvent 
+      name="initialPlot"
+      target="/Outputs/siloOutput"
+      />
+
+    <SoloEvent 
+      name="preFracture"
+      target="/Solvers/SurfaceGen"
+      />
+
+    <PeriodicEvent 
+      name="solverApplications1"
+      beginTime="0.0"
+      endTime="1.0"
+      forceDt="0.1000000000001"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications2"
+      beginTime="1.0"
+      endTime="2.0"
+      forceDt="0.2"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications3"
+      beginTime="2.0"
+      endTime="8.0"
+      forceDt="0.5"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications4"
+      beginTime="8.0"
+      endTime="20.0"
+      forceDt="2.0"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications5"
+      beginTime="20.0"
+      endTime="60.0"
+      forceDt="4.0"
+      target="/Solvers/hydrofracture" />
+
+    <PeriodicEvent 
+      name="solverApplications6"
+      beginTime="60.0"
+      endTime="100.0"
+      forceDt="4.0"
+      target="/Solvers/hydrofracture" /> 
+
+    <PeriodicEvent 
+      name="outputs"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput" />
+    
+  </Events>
+  
+</Problem>
