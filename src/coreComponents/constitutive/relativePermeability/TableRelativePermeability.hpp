@@ -74,24 +74,24 @@ public:
 
 
     GEOSX_HOST_DEVICE
-    void computeTwoPhase( localIndex const ipWetting,
-                          localIndex const ipNonWetting,
+    void computeTwoPhase( integer const ipWetting,
+                          integer const ipNonWetting,
                           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                           arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                           arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
-    void computeThreePhase( localIndex const ipWetting,
-                            localIndex const ipInter,
-                            localIndex const ipNonWetting,
+    void computeThreePhase( integer const ipWetting,
+                            integer const ipInter,
+                            integer const ipNonWetting,
                             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                             arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                             arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
-    virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                          arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                          arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+    void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                  arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                  arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -123,6 +123,7 @@ private:
 
   struct viewKeyStruct : RelativePermeabilityBase::viewKeyStruct
   {
+    static constexpr char const * relPermKernelWrappersString() { return "relPermWrappers"; }
     static constexpr char const * phaseMinVolumeFractionString() { return "phaseMinVolumeFraction"; }
     static constexpr char const * wettingNonWettingRelPermTableNamesString() { return "wettingNonWettingRelPermTableNames"; }
     static constexpr char const * wettingIntermediateRelPermTableNamesString() { return "wettingIntermediateRelPermTableNames"; }
@@ -139,13 +140,6 @@ private:
    * @brief Create all the table kernel wrappers needed for the simulation (for all the phases present)
    */
   void createAllTableKernelWrappers();
-
-  /**
-   * @brief Validate the relative permeability table provided in input (increasing phase vol frac and rel perm, etc)
-   * @param[in] relPermTable the relative permeability table (kr vs s) for a given phase)
-   * @return the minimum phase volume fraction deduced from the table
-   */
-  real64 validateRelativePermeabilityTable( TableFunction const & relPermTable ) const;
 
   /// Relative permeability table names (one for each phase in the wetting-non-wetting pair)
   array1d< string > m_wettingNonWettingRelPermTableNames;
@@ -175,8 +169,8 @@ private:
 GEOSX_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
-  computeTwoPhase( localIndex const ipWetting,
-                   localIndex const ipNonWetting,
+  computeTwoPhase( integer const ipWetting,
+                   integer const ipNonWetting,
                    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                    arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                    arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const
@@ -200,9 +194,9 @@ TableRelativePermeability::KernelWrapper::
 GEOSX_HOST_DEVICE
 inline void
 TableRelativePermeability::KernelWrapper::
-  computeThreePhase( localIndex const ipWetting,
-                     localIndex const ipInter,
-                     localIndex const ipNonWetting,
+  computeThreePhase( integer const ipWetting,
+                     integer const ipInter,
+                     integer const ipNonWetting,
                      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
                      arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
                      arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const

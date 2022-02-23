@@ -549,7 +549,13 @@ if(DEFINED VTK_DIR)
                  PATHS ${VTK_DIR}
                  NO_DEFAULT_PATH)
 
-    set( VTK_TARGETS VTK::WrappingTools VTK::WrapHierarchy VTK::WrapPython VTK::WrapPythonInit VTK::ParseJava VTK::WrapJava VTK::loguru VTK::kwiml VTK::vtksys VTK::utf8 VTK::CommonCore VTK::CommonMath VTK::CommonTransforms VTK::CommonMisc VTK::CommonSystem VTK::CommonDataModel VTK::CommonExecutionModel VTK::doubleconversion VTK::lz4 VTK::lzma VTK::zlib VTK::IOCore VTK::expat VTK::IOXMLParser VTK::IOXML )
+    set( VTK_TARGETS
+         VTK::FiltersParallelDIY2
+         VTK::IOLegacy
+         VTK::IOParallelXML
+         VTK::IOXML
+         VTK::ParallelMPI
+         )
     foreach( targetName ${VTK_TARGETS} )
 
         get_target_property( includeDirs ${targetName}  INTERFACE_INCLUDE_DIRECTORIES)

@@ -4,7 +4,8 @@
 set( mainInterface_headers
      NumericalMethodsManager.hpp )
 
-set( dependencyList ${commonDeps} finiteElement finiteVolume virtualElement )
+
+set( dependencyList ${commonDeps} finiteVolume )
 
 #
 # Specify all sources
