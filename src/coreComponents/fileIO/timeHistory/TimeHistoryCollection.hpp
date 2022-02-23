@@ -111,7 +111,7 @@ public:
       buffer_unit_type * buffer = m_bufferCalls[collectionIdx]( );
       collect( domain, time_n, dt, collectionIdx, buffer );
     }
-    for( auto & metaCollector : m_metaCollectors )
+    for( auto & metaCollector : m_metaDataCollectors )
     {
       metaCollector->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
     }
@@ -161,22 +161,22 @@ public:
    * @brief Get the number of collectors of meta-information (set indices, etc) writing time-independent information during initialization.
    * @return The number of collectors of meta-information for this collector.
    */
-  virtual localIndex getNumMetaCollectors( ) const
+  virtual localIndex numMetaDataCollectors( ) const
   {
     return 0;
   }
 
   /**
    * @brief Get a pointer to a collector of meta-information for this collector.
-   * @param metaIdx Which of the meta-info collectors to return. (see HistoryCollection::getNumMetaCollectors( ) ).
+   * @param metaIdx Which of the meta-info collectors to return. (see HistoryCollection::numMetaDataCollectors()).
    * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
    * immediately
    *         after being used to perform output during simulation initialization.
    */
   virtual HistoryCollection & getMetaCollector( localIndex metaIdx )
   {
-    GEOSX_ASSERT_MSG( metaIdx >= 0 && metaIdx < getNumMetaCollectors( ), "Requesting nonexistent meta collector index." );
-    return *m_metaCollectors[ metaIdx ].get( );
+    GEOSX_ASSERT_MSG( metaIdx >= 0 && metaIdx < numMetaDataCollectors(), "Requesting nonexistent meta collector index." );
+    return *m_metaDataCollectors[ metaIdx ].get( );
   }
   /**
    * @brief Update the indices from the sets being collected.
@@ -261,7 +261,7 @@ protected:
   std::vector< std::function< buffer_unit_type *() > > m_bufferCalls;
   /// The set of metadata collectors for this collector ( currently only used to collect coordinates of mesh
   ///   objects when collecting field data )
-  std::vector< std::unique_ptr< HistoryCollection > > m_metaCollectors;
+  std::vector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
 };
 
 }

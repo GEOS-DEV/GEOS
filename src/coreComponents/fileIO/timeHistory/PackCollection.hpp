@@ -69,7 +69,7 @@ public:
    */
   virtual void updateSetsIndices( DomainPartition & domain ) override final;
 
-  virtual localIndex getNumMetaCollectors( ) const override final;
+  virtual localIndex numMetaDataCollectors( ) const override final;
 
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
@@ -88,7 +88,7 @@ public:
 
 protected:
   /// Construct the metadata collectors for this collector.
-  void buildMetaCollectors( );
+  void buildMetaDataCollectors( );
 
   /// Do not construct metadata collectors to collect coordinate information.
   ///   ( Prevents reccuring initialization of coordinate collection for coordinate collectors ).

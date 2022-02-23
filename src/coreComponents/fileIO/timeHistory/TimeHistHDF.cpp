@@ -408,9 +408,9 @@ void HDFHistIO::resizeBuffer( )
   //  regardless of whether the size changes
   m_localIdxCounts_buffered.emplace_back( m_dims[0] );
 
-  size_t capacity = m_dataBuffer.size();
-  size_t inUse = m_bufferHead - &m_dataBuffer[0];
-  size_t nextRow = getRowBytes( );
+  size_t const capacity = m_dataBuffer.size();
+  size_t const inUse = m_bufferHead - &m_dataBuffer[0];
+  size_t const nextRow = getRowBytes( );
   // if needed, resize the buffer
   if( inUse + nextRow > capacity )
   {

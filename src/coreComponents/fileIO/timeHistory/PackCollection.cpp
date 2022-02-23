@@ -46,8 +46,8 @@ void PackCollection::initializePostSubGroups( )
     updateSetsIndices( domain );
     HistoryCollection::initializePostSubGroups( );
     // build any persistent meta collectors that are required
-    buildMetaCollectors( );
-    for( auto & metaCollector : m_metaCollectors )
+    buildMetaDataCollectors();
+    for( auto & metaCollector : m_metaDataCollectors )
     {
       // coord meta collectors should have m_disableCoordCollection == true to avoid
       //  infinite recursive init calls here
@@ -60,7 +60,7 @@ void PackCollection::initializePostSubGroups( )
 HistoryMetadata PackCollection::getMetadata( DomainPartition const & domain, localIndex collectionIdx )
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
+  WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
   if( m_setNames.size() != 0 )
   {
     GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
@@ -69,13 +69,15 @@ HistoryMetadata PackCollection::getMetadata( DomainPartition const & domain, loc
     {
       collectionSize = 0;
     }
-    HistoryMetadata metadata = target.getHistoryMetadata( collectionSize );
+    HistoryMetadata metadata = targetField.getHistoryMetadata( collectionSize );
     metadata.setName( metadata.getName() + " " + m_setNames[ collectionIdx ] );
     return metadata;
   }
   else
   {
-    return target.getHistoryMetadata( m_setsIndices[ 0 ].size( ) );
+    localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size();
+    return targetField.getHistoryMetadata( packCount );
+//    return targetField.getHistoryMetadata(2);
   }
 }
 
@@ -84,24 +86,34 @@ HistoryMetadata PackCollection::getMetadata( DomainPartition const & domain, loc
 void PackCollection::updateSetsIndices( DomainPartition & domain )
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
-  GEOSX_ERROR_IF( !target.isPackable( false ), "The object targeted for collection must be packable!" );
-  localIndex numSets = m_setNames.size( );
+  WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
+  GEOSX_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
+  localIndex const numSets = m_setNames.size( );
   std::vector< localIndex > oldSetSizes( numSets == 0 ? 1 : numSets );
-  bool collectAll = (numSets == 0);
-  if( !collectAll )
+
+  bool const collectAll = ( numSets == 0 ) or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
+
+  if( collectAll )
+  {
+    // if no set or "all" is specified we retrieve the entire field
+    m_setsIndices.resize( 1 );
+    m_setsIndices[0].resize( targetField.size() );
+    for( localIndex ii = 0; ii < targetField.size(); ++ii )
+    {
+      m_setsIndices[0][ii] = ii;
+    }
+    // this causes the ghost nodes to be filtered when collecting all
+//    numSets = 1;
+    oldSetSizes[ 0 ] = m_setsIndices[ 0 ].size( );
+  }
+  else
   {
     // if sets are specified we retrieve the field only from those sets
     Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-    m_setsIndices.resize( numSets );
+    m_setsIndices.resize( numSets ); // TODO Warning refactoring because of this `numSets`, check twice.
     localIndex setIdx = 0;
     for( auto & setName : m_setNames )
     {
-      if( setName == "all" )
-      {
-        collectAll = true;
-        break;
-      }
       if( setGroup.hasWrapper( setName ) )
       {
         SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
@@ -119,19 +131,7 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
       setIdx++;
     }
   }
-  if( collectAll )
-  {
-    // if no set or "all" is specified we retrieve the entire field
-    m_setsIndices.resize( 1 );
-    m_setsIndices[0].resize( targetObject->size() );
-    for( localIndex ii = 0; ii < targetObject->size(); ++ii )
-    {
-      m_setsIndices[0][ii] = ii;
-    }
-    // this causes the ghost nodes to be filtered when collecting all
-    numSets = 1;
-    oldSetSizes[ 0 ] = m_setsIndices[ 0 ].size( );
-  }
+
   // filter out the ghost indices immediately when we update the index sets
   if( m_targetIsMeshObject )
   {
@@ -174,12 +174,13 @@ void PackCollection::updateSetsIndices( DomainPartition & domain )
   }
 }
 
-localIndex PackCollection::getNumMetaCollectors( ) const
+localIndex PackCollection::numMetaDataCollectors( ) const
 {
-  return m_targetIsMeshObject && !m_disableCoordCollection ? 1 : 0;
+  return 1; // TODO This is unclear.
+//  return m_targetIsMeshObject && !m_disableCoordCollection ? 1 : 0;
 }
 
-void PackCollection::buildMetaCollectors( )
+void PackCollection::buildMetaDataCollectors( )
 {
   if( !m_disableCoordCollection )
   {
@@ -200,20 +201,20 @@ void PackCollection::buildMetaCollectors( )
     {
       coordField = ElementSubRegionBase::viewKeyStruct::elementCenterString();
     }
-    else
-    {
-      GEOSX_ERROR( "Data collection for \"" << m_objectPath << "\" is unimplemented." );
-    }
+//    else
+//    {
+//      GEOSX_ERROR( "Data collection for \"" << m_objectPath << "\" is unimplemented." );
+//    }
 
-    string metaName( "coordinates" );
-    std::unique_ptr< PackCollection > coordCollector = std::make_unique< PackCollection >( metaName, this );
-    coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::objectPathString() ).reference() = m_objectPath;
-    coordCollector->getWrapper< string >( PackCollection::viewKeysStruct::fieldNameString() ).reference() = string( coordField );
-    coordCollector->getWrapper< string_array >( PackCollection::viewKeysStruct::setNamesString() ).reference() = m_setNames;
-    coordCollector->getWrapper< localIndex >( PackCollection::viewKeysStruct::onlyOnSetChangeString() ).reference() = 1;
-    // don't recursively keep creating coordinate metacollectors
-    coordCollector->disableCoordCollection( );
-    m_metaCollectors.push_back( std::move( coordCollector ) );
+    string metaName( "coordinates" ); // FIXME Name?
+    std::unique_ptr< PackCollection > collector = std::make_unique< PackCollection >( metaName, this );
+    collector->m_objectPath = m_objectPath;
+    collector->m_fieldName = coordField ? string( coordField ) : m_fieldName;
+    collector->m_setNames = m_setNames;
+    collector->m_onlyOnSetChange = true;
+    // don't recursively keep creating metaDataCollectors
+    collector->disableCoordCollection();
+    m_metaDataCollectors.push_back( std::move( collector ) );
   }
 }
 
