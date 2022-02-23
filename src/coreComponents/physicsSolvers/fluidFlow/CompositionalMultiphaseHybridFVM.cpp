@@ -41,8 +41,8 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseBaseKernels;
-using namespace CompositionalMultiphaseHybridFVMKernels;
+using namespace compositionalMultiphaseBaseKernels;
+using namespace compositionalMultiphaseHybridFVMKernels;
 using namespace mimeticInnerProduct;
 
 CompositionalMultiphaseHybridFVM::CompositionalMultiphaseHybridFVM( const std::string & name,
@@ -219,7 +219,7 @@ void CompositionalMultiphaseHybridFVM::precomputeData( MeshLevel & mesh, arrayVi
     // scheme
     // This one-sided gravity term is currently always treated with TPFA, as in MRST.
     // In the future, I will change that (here and in the FluxKernel) to have a consistent inner product for the gravity term as well
-    SinglePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
+    singlePhaseHybridFVMKernels::KernelLaunchSelector< mimeticInnerProduct::TPFAInnerProduct,
                                                        PrecomputeKernel >( subRegion.numFacesPerElement(),
                                                                            subRegion.size(),
                                                                            faceManager.size(),
@@ -373,26 +373,23 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
       string const fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
       arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & phaseCompFrac = fluid.phaseCompFraction();
-      arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & dPhaseCompFrac_dPres = fluid.dPhaseCompFraction_dPressure();
-      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac_dComp = fluid.dPhaseCompFraction_dGlobalCompFraction();
+      arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dPhaseCompFrac = fluid.dPhaseCompFraction();
 
       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens = fluid.phaseMassDensity();
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres = fluid.dPhaseMassDensity_dPressure();
-      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp = fluid.dPhaseMassDensity_dGlobalCompFraction();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens = fluid.dPhaseMassDensity();
 
       arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens = fluid.phaseDensity();
-      arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseDens_dPres = fluid.dPhaseDensity_dPressure();
-      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens_dComp = fluid.dPhaseDensity_dGlobalCompFraction();
+      arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseDens = fluid.dPhaseDensity();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                        [phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                                         phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
-                                         phaseDens, dPhaseDens_dPres, dPhaseDens_dComp]
+                                        [phaseCompFrac, dPhaseCompFrac,
+                                         phaseMassDens, dPhaseMassDens,
+                                         phaseDens, dPhaseDens]
                                         GEOSX_HOST_DEVICE ( localIndex const )
       {
-        GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac_dPres, dPhaseCompFrac_dComp,
-                          phaseMassDens, dPhaseMassDens_dPres, dPhaseMassDens_dComp,
-                          phaseDens, dPhaseDens_dPres, dPhaseDens_dComp );
+        GEOSX_UNUSED_VAR( phaseCompFrac, dPhaseCompFrac,
+                          phaseMassDens, dPhaseMassDens,
+                          phaseDens, dPhaseDens );
       } );
     } );
 
@@ -485,14 +482,11 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
                                          compFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity{} ),
                                          compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity{} ),
                                          multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
-                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                         multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
                                          elemDofNumber.toNestedViewConst(),
                                          dofManager.rankOffset(),
                                          lengthTolerance,
@@ -519,7 +513,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     return 1.0;
   }
 
-  real64 constexpr eps = CompositionalMultiphaseBaseKernels::minDensForDivision;
+  real64 constexpr eps = compositionalMultiphaseBaseKernels::minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
   real64 const maxRelativePresChange = m_maxRelativePresChange;
 
@@ -681,7 +675,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
-        CompositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+        compositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                                          parallelDeviceReduce >( localSolution,
                                                                                                  dofManager.rankOffset(),
                                                                                                  numFluidComponents(),
@@ -709,7 +703,7 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
       faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
 
     localIndex const faceSolutionCheck =
-      CompositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
+      compositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
                                                                             parallelDeviceReduce >( localSolution,
                                                                                                     dofManager.rankOffset(),
                                                                                                     faceDofNumber,
@@ -812,7 +806,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
       arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
 
       real64 subRegionResidualNorm = 0.0;
-      CompositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
+      compositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
                                                                       parallelDeviceReduce >( localRhs,
                                                                                               rankOffset,
                                                                                               numFluidComponents(),
@@ -835,7 +829,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
     // 2. Compute the residual for the face-based constraints
     real64 faceResidualNorm = 0.0;
-    CompositionalMultiphaseHybridFVMKernels::
+    compositionalMultiphaseHybridFVMKernels::
       ResidualNormKernel::launch< parallelDevicePolicy<>,
                                   parallelDeviceReduce >( localRhs,
                                                           rankOffset,
@@ -950,7 +944,7 @@ void CompositionalMultiphaseHybridFVM::updatePhaseMobility( ObjectManagerBase & 
     getConstitutiveModel< RelativePermeabilityBase >( dataGroup,
                                                       dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() ) );
 
-  CompositionalMultiphaseHybridFVMKernels::
+  compositionalMultiphaseHybridFVMKernels::
     PhaseMobilityKernelFactory::
     createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                m_numPhases,

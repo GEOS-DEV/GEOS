@@ -172,36 +172,31 @@ CompositionalMultiphaseFluid::KernelWrapper::
 #if defined(__CUDA_ARCH__)
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
-  localIndex const NC = m_componentMolarWeight.size();
-  localIndex const NP = m_phaseTypes.size();
+
+  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
+  integer const numComp = numComponents();
+  integer const numPhase = numPhases();
 
   // 1. Convert input mass fractions to mole fractions and keep derivatives
-  std::vector< double > compMoleFrac( NC );
+
+  std::vector< double > compMoleFrac( numComp );
 
   if( m_useMass )
   {
-    real64 totalMolality = 0.0;
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      compMoleFrac[ic] = composition[ic] / m_componentMolarWeight[ic]; // this is molality (units of mole/mass)
-      totalMolality += compMoleFrac[ic];
-    }
-
-    real64 const totalMolalityInv = 1.0 / totalMolality;
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      compMoleFrac[ic] *= totalMolalityInv;
-    }
+    convertToMoleFractions< maxNumComp >( composition,
+                                          compMoleFrac );
   }
   else
   {
-    for( localIndex ic = 0; ic < NC; ++ic )
+    for( integer ic = 0; ic < numComp; ++ic )
     {
       compMoleFrac[ic] = composition[ic];
     }
   }
 
   // 2. Trigger PVTPackage compute and get back phase split
+
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
   GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
@@ -210,7 +205,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
   pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
 
   // 3. Extract phase split and phase properties from PVTPackage
-  for( localIndex ip = 0; ip < NP; ++ip )
+
+  for( integer ip = 0; ip < numPhase; ++ip )
   {
     pvt::PHASE_TYPE const & phaseType = m_phaseTypes[ip];
 
@@ -223,59 +219,178 @@ CompositionalMultiphaseFluid::KernelWrapper::
     phaseDens[ip] = dens.value;
     phaseMassDens[ip] = massDens.value;
     phaseVisc[ip] = 0.001;   // TODO
-    for( localIndex jc = 0; jc < NC; ++jc )
+    for( integer jc = 0; jc < numComp; ++jc )
     {
       phaseCompFrac[ip][jc] = comp.value[jc];
     }
   }
 
   // 4. if mass variables used instead of molar, perform the conversion
+
   if( m_useMass )
   {
-    // 4.1. Convert phase fractions (requires two passes)
-    real64 totalMass{};
 
-    // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
-    for( localIndex ip = 0; ip < NP; ++ip )
+    // unfortunately here, we have to copy the molecular weight coming from PVT package...
+    real64 phaseMolecularWeight[maxNumPhase]{};
+    for( integer ip = 0; ip < numPhase; ++ip )
     {
-      auto const & phaseMW = props.getMolecularWeight( m_phaseTypes[ip] );
-      phaseFrac[ip] *= phaseMW.value;
-      totalMass += phaseFrac[ip];
+      phaseMolecularWeight[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).value;
     }
 
-    // 4.1.2. Normalize to get mass fractions
-    real64 const totalMassInv = 1.0 / totalMass;
-    for( localIndex ip = 0; ip < NP; ++ip )
+    // convert mole fractions to mass fractions
+    convertToMassFractions< maxNumComp >( phaseMolecularWeight,
+                                          phaseFrac,
+                                          phaseCompFrac );
+
+  }
+
+  // 5. Compute total fluid mass/molar density
+
+  computeTotalDensity< maxNumComp, maxNumPhase >( phaseFrac,
+                                                  phaseDens,
+                                                  totalDens );
+
+#endif
+}
+
+GEOSX_HOST_DEVICE
+inline void
+CompositionalMultiphaseFluid::KernelWrapper::
+  compute( real64 const pressure,
+           real64 const temperature,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
+           PhaseProp::SliceType const phaseFraction,
+           PhaseProp::SliceType const phaseDensity,
+           PhaseProp::SliceType const phaseMassDensity,
+           PhaseProp::SliceType const phaseViscosity,
+           PhaseProp::SliceType const phaseEnthalpy,
+           PhaseProp::SliceType const phaseInternalEnergy,
+           PhaseComp::SliceType const phaseCompFraction,
+           FluidProp::SliceType const totalDensity ) const
+{
+  GEOSX_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
+#if defined(__CUDA_ARCH__)
+  GEOSX_ERROR( "This function cannot be used on GPU" );
+#else
+
+  using Deriv = multifluid::DerivativeOffset;
+
+  integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
+  integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
+  integer const numComp = numComponents();
+  integer const numPhase = numPhases();
+
+  // 1. Convert input mass fractions to mole fractions and keep derivatives
+
+  std::vector< double > compMoleFrac( numComp );
+  real64 dCompMoleFrac_dCompMassFrac[maxNumComp][maxNumComp]{};
+
+  if( m_useMass )
+  {
+    // convert mass fractions to mole fractions
+    convertToMoleFractions( composition,
+                            compMoleFrac,
+                            dCompMoleFrac_dCompMassFrac );
+  }
+  else
+  {
+    for( integer ic = 0; ic < numComp; ++ic )
     {
-      phaseFrac[ip] *= totalMassInv;
+      compMoleFrac[ic] = composition[ic];
     }
+  }
 
-    // 4.2. Convert phase compositions
-    for( localIndex ip = 0; ip < NP; ++ip )
+  // 2. Trigger PVTPackage compute and get back phase split
+
+  m_fluid.Update( pressure, temperature, compMoleFrac );
+
+  GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
+                    "Phase equilibrium calculations not converged" );
+
+  pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
+
+  // 3. Extract phase split, phase properties and derivatives from PVTPackage
+
+  for( integer ip = 0; ip < numPhase; ++ip )
+  {
+    pvt::PHASE_TYPE const & phaseType = m_phaseTypes[ip];
+
+    auto const & frac = props.getPhaseMoleFraction( phaseType );
+    auto const & comp = props.getMoleComposition( phaseType );
+    auto const & dens = m_useMass ? props.getMassDensity( phaseType ) : props.getMoleDensity( phaseType );
+    auto const & massDens = props.getMassDensity( phaseType );
+
+    phaseFraction.value[ip] = frac.value;
+    phaseFraction.derivs[ip][Deriv::dP] = frac.dP;
+    phaseFraction.derivs[ip][Deriv::dT] = frac.dT;
+
+    phaseDensity.value[ip] = dens.value;
+    phaseDensity.derivs[ip][Deriv::dP] = dens.dP;
+    phaseDensity.derivs[ip][Deriv::dT] = dens.dT;
+
+    phaseMassDensity.value[ip] = massDens.value;
+    phaseMassDensity.derivs[ip][Deriv::dP] = massDens.dP;
+    phaseMassDensity.derivs[ip][Deriv::dT] = massDens.dT;
+
+    // TODO
+    phaseViscosity.value[ip] = 0.001;
+    phaseViscosity.derivs[ip][Deriv::dP] = 0.0;
+    phaseViscosity.derivs[ip][Deriv::dT] = 0.0;
+
+    for( integer jc = 0; jc < numComp; ++jc )
     {
-      auto const & phaseMW = props.getMolecularWeight( m_phaseTypes[ip] );
-      real64 const phaseMWInv = 1.0 / phaseMW.value;
+      phaseFraction.derivs[ip][Deriv::dC+jc] = frac.dz[jc];
+      phaseDensity.derivs[ip][Deriv::dC+jc] = dens.dz[jc];
+      phaseMassDensity.derivs[ip][Deriv::dC+jc] = massDens.dz[jc];
+      phaseViscosity.derivs[ip][Deriv::dC+jc] = 0.0; // TODO
 
-      for( localIndex ic = 0; ic < NC; ++ic )
+      phaseCompFraction.value[ip][jc] = comp.value[jc];
+      phaseCompFraction.derivs[ip][jc][Deriv::dP] = comp.dP[jc];
+      phaseCompFraction.derivs[ip][jc][Deriv::dT] = comp.dT[jc];
+
+      for( integer ic = 0; ic < numComp; ++ic )
       {
-        phaseCompFrac[ip][ic] = phaseCompFrac[ip][ic] * m_componentMolarWeight[ic] * phaseMWInv;
+        phaseCompFraction.derivs[ip][ic][Deriv::dC+jc] = comp.dz[ic][jc];
       }
     }
   }
 
-  // 5. Compute total fluid mass/molar density
+  // 4. if mass variables used instead of molar, perform the conversion
+  if( m_useMass )
   {
-    totalDens = 0.0;
 
-    // 5.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-    for( localIndex ip = 0; ip < NP; ++ip )
+    // unfortunately here, we have to copy the molecular weight coming from PVT package...
+    real64 phaseMolecularWeight[maxNumPhase]{};
+    real64 dPhaseMolecularWeight[maxNumPhase][maxNumComp+2]{};
+
+    for( integer ip = 0; ip < numPhase; ++ip )
     {
-      totalDens += phaseFrac[ip] / phaseDens[ip];
+      phaseMolecularWeight[ip] = props.getMolecularWeight( m_phaseTypes[ip] ).value;
+      dPhaseMolecularWeight[ip][Deriv::dP] = props.getMolecularWeight( m_phaseTypes[ip] ).dP;
+      dPhaseMolecularWeight[ip][Deriv::dT] = props.getMolecularWeight( m_phaseTypes[ip] ).dT;
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+        dPhaseMolecularWeight[ip][Deriv::dC+ic] = props.getMolecularWeight( m_phaseTypes[ip] ).dz[ic];
+      }
     }
 
-    // 5.2. Invert the previous quantity to get actual density
-    totalDens = 1.0 / totalDens;
+    convertToMassFractions( dCompMoleFrac_dCompMassFrac,
+                            phaseMolecularWeight,
+                            dPhaseMolecularWeight,
+                            phaseFraction,
+                            phaseCompFraction,
+                            phaseDensity.derivs,
+                            phaseViscosity.derivs,
+                            phaseEnthalpy.derivs,
+                            phaseInternalEnergy.derivs );
   }
+
+  // 5. Compute total fluid mass/molar density and derivatives
+
+  computeTotalDensity( phaseFraction,
+                       phaseDensity,
+                       totalDensity );
+
 #endif
 }
 
@@ -299,245 +414,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
            m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
-}
-
-GEOSX_HOST_DEVICE
-inline void
-CompositionalMultiphaseFluid::KernelWrapper::
-  compute( real64 const pressure,
-           real64 const temperature,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
-           PhaseProp::SliceType const phaseFraction,
-           PhaseProp::SliceType const phaseDensity,
-           PhaseProp::SliceType const phaseMassDensity,
-           PhaseProp::SliceType const phaseViscosity,
-           PhaseProp::SliceType const phaseEnthalpy,
-           PhaseProp::SliceType const phaseInternalEnergy,
-           PhaseComp::SliceType const phaseCompFraction,
-           FluidProp::SliceType const totalDensity ) const
-{
-  GEOSX_UNUSED_VAR( phaseEnthalpy, phaseInternalEnergy );
-#if defined(__CUDA_ARCH__)
-  GEOSX_ERROR( "This function cannot be used on GPU" );
-#else
-
-  localIndex constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
-  localIndex const NC = numComponents();
-  localIndex const NP = numPhases();
-
-  // 1. Convert input mass fractions to mole fractions and keep derivatives
-
-  std::vector< double > compMoleFrac( NC );
-  stackArray2d< real64, maxNumComp * maxNumComp > dCompMoleFrac_dCompMassFrac( NC, NC );
-
-  if( m_useMass )
-  {
-    dCompMoleFrac_dCompMassFrac.resize( NC, NC );
-    dCompMoleFrac_dCompMassFrac.zero();
-
-    real64 totalMolality = 0.0;
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      real64 const mwInv = 1.0 / m_componentMolarWeight[ic];
-      compMoleFrac[ic] = composition[ic] * mwInv; // this is molality (units of mole/mass)
-      dCompMoleFrac_dCompMassFrac[ic][ic] = mwInv;
-      totalMolality += compMoleFrac[ic];
-    }
-
-    real64 const totalMolalityInv = 1.0 / totalMolality;
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      compMoleFrac[ic] *= totalMolalityInv;
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        dCompMoleFrac_dCompMassFrac[ic][jc] -= compMoleFrac[ic] / m_componentMolarWeight[jc];
-        dCompMoleFrac_dCompMassFrac[ic][jc] *= totalMolalityInv;
-      }
-    }
-  }
-  else
-  {
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      compMoleFrac[ic] = composition[ic];
-    }
-  }
-
-  // 2. Trigger PVTPackage compute and get back phase split
-  m_fluid.Update( pressure, temperature, compMoleFrac );
-
-  GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
-                    "Phase equilibrium calculations not converged" );
-
-  pvt::MultiphaseSystemProperties const & props = m_fluid.getMultiphaseSystemProperties();
-
-  // 3. Extract phase split, phase properties and derivatives from PVTPackage
-  for( localIndex ip = 0; ip < NP; ++ip )
-  {
-    pvt::PHASE_TYPE const & phaseType = m_phaseTypes[ip];
-
-    auto const & frac = props.getPhaseMoleFraction( phaseType );
-    auto const & comp = props.getMoleComposition( phaseType );
-    auto const & dens = m_useMass ? props.getMassDensity( phaseType ) : props.getMoleDensity( phaseType );
-    auto const & massDens = props.getMassDensity( phaseType );
-
-    phaseFraction.value[ip] = frac.value;
-    phaseFraction.dPres[ip] = frac.dP;
-    phaseFraction.dTemp[ip] = frac.dT;
-
-    phaseDensity.value[ip] = dens.value;
-    phaseDensity.dPres[ip] = dens.dP;
-    phaseDensity.dTemp[ip] = dens.dT;
-
-    phaseMassDensity.value[ip] = massDens.value;
-    phaseMassDensity.dPres[ip] = massDens.dP;
-    phaseMassDensity.dTemp[ip] = massDens.dT;
-
-    // TODO
-    phaseViscosity.value[ip] = 0.001;
-    phaseViscosity.dPres[ip] = 0.0;
-    phaseViscosity.dTemp[ip] = 0.0;
-
-    for( localIndex jc = 0; jc < NC; ++jc )
-    {
-      phaseFraction.dComp[ip][jc] = frac.dz[jc];
-      phaseDensity.dComp[ip][jc] = dens.dz[jc];
-      phaseMassDensity.dComp[ip][ip] = massDens.dz[jc];
-      phaseViscosity.dComp[ip][jc] = 0.0; // TODO
-
-      phaseCompFraction.value[ip][jc] = comp.value[jc];
-      phaseCompFraction.dPres[ip][jc] = comp.dP[jc];
-      phaseCompFraction.dTemp[ip][jc] = comp.dT[jc];
-
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        phaseCompFraction.dComp[ip][ic][jc] = comp.dz[ic][jc];
-      }
-    }
-  }
-
-  // 4. if mass variables used instead of molar, perform the conversion
-  if( m_useMass )
-  {
-    // 4.1. Convert phase fractions (requires two passes)
-    real64 totalMass{};
-    real64 dTotalMass_dP{};
-    real64 dTotalMass_dT{};
-    real64 dTotalMass_dC[maxNumComp]{};
-
-    // 4.1.1. Compute mass of each phase and total mass (on a 1-mole basis)
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      auto const & phaseMW = props.getMolecularWeight( m_phaseTypes[ip] );
-      real64 const nu = phaseFraction.value[ip];
-
-      phaseFraction.value[ip] *= phaseMW.value;
-      phaseFraction.dPres[ip] = phaseFraction.dPres[ip] * phaseMW.value + nu * phaseMW.dP;
-      phaseFraction.dTemp[ip] = phaseFraction.dTemp[ip] * phaseMW.value + nu * phaseMW.dT;
-
-      totalMass += phaseFraction.value[ip];
-      dTotalMass_dP += phaseFraction.dPres[ip];
-      dTotalMass_dT += phaseFraction.dTemp[ip];
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        phaseFraction.dComp[ip][jc] = phaseFraction.dComp[ip][jc] * phaseMW.value + nu * phaseMW.dz[jc];
-        dTotalMass_dC[jc] += phaseFraction.dComp[ip][jc];
-      }
-    }
-
-    // 4.1.2. Normalize to get mass fractions
-    real64 const totalMassInv = 1.0 / totalMass;
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      phaseFraction.value[ip] *= totalMassInv;
-      phaseFraction.dPres[ip] = ( phaseFraction.dPres[ip] - phaseFraction.value[ip] * dTotalMass_dP ) * totalMassInv;
-      phaseFraction.dTemp[ip] = ( phaseFraction.dTemp[ip] - phaseFraction.value[ip] * dTotalMass_dT ) * totalMassInv;
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        phaseFraction.dComp[ip][jc] = ( phaseFraction.dComp[ip][jc] - phaseFraction.value[ip] * dTotalMass_dC[jc] ) * totalMassInv;
-      }
-    }
-
-    // 4.2. Convert phase compositions
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      auto const & phaseMW = props.getMolecularWeight( m_phaseTypes[ip] );
-      real64 const phaseMWInv = 1.0 / phaseMW.value;
-
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-
-        real64 const compMW = m_componentMolarWeight[ic];
-
-        phaseCompFraction.value[ip][ic] = phaseCompFraction.value[ip][ic] * compMW * phaseMWInv;
-        phaseCompFraction.dPres[ip][ic] =
-          ( phaseCompFraction.dPres[ip][ic] * compMW - phaseCompFraction.value[ip][ic] * phaseMW.dP ) * phaseMWInv;
-        phaseCompFraction.dTemp[ip][ic] =
-          ( phaseCompFraction.dTemp[ip][ic] * compMW - phaseCompFraction.value[ip][ic] * phaseMW.dT ) * phaseMWInv;
-
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          phaseCompFraction.dComp[ip][ic][jc] =
-            ( phaseCompFraction.dComp[ip][ic][jc] * compMW - phaseCompFraction.value[ip][ic] * phaseMW.dz[jc] ) * phaseMWInv;
-        }
-      }
-    }
-
-    // 4.3. Update derivatives w.r.t. mole fractions to derivatives w.r.t mass fractions
-    array1d< real64 > work( NC );
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseFraction.dComp[ip], work );
-      applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseDensity.dComp[ip], work );
-
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        applyChainRuleInPlace( NC, dCompMoleFrac_dCompMassFrac, phaseCompFraction.dComp[ip][ic], work );
-      }
-    }
-  }
-
-  // 5. Compute total fluid mass/molar density and derivatives
-  {
-    totalDensity.value = 0.0;
-    totalDensity.dPres = 0.0;
-    totalDensity.dTemp = 0.0;
-    for( localIndex jc = 0; jc < NC; ++jc )
-    {
-      totalDensity.dComp[jc] = 0.0;
-    }
-
-    // 5.1. Sum mass/molar fraction/density ratio over all phases to get the inverse of density
-    for( localIndex ip = 0; ip < NP; ++ip )
-    {
-      real64 const densInv = 1.0 / phaseDensity.value[ip];
-      real64 const value = phaseFraction.value[ip] * densInv;
-
-      totalDensity.value += value;
-      totalDensity.dPres += ( phaseFraction.dPres[ip] - value * phaseDensity.dPres[ip] ) * densInv;
-      totalDensity.dTemp += ( phaseFraction.dTemp[ip] - value * phaseDensity.dTemp[ip] ) * densInv;
-
-      for( localIndex jc = 0; jc < NC; ++jc )
-      {
-        totalDensity.dComp[jc] += ( phaseFraction.dComp[ip][jc] - value * phaseDensity.dComp[ip][jc] ) * densInv;
-      }
-    }
-
-    // 5.2. Invert the previous quantity to get actual density
-    totalDensity.value = 1.0 / totalDensity.value;
-    real64 const minusDens2 = -totalDensity.value * totalDensity.value;
-    totalDensity.dPres *= minusDens2;
-    totalDensity.dTemp *= minusDens2;
-
-    for( localIndex jc = 0; jc < NC; ++jc )
-    {
-      totalDensity.dComp[jc] *= minusDens2;
-    }
-  }
-#endif
 }
 
 } /* namespace constitutive */

@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /// Namespace to contain the acoustic wave kernels.
-namespace AcousticWaveEquationSEMKernels
+namespace acousticWaveEquationSEMKernels
 {
 
 struct PrecomputeSourceAndReceiverKernel
@@ -364,9 +364,10 @@ public:
                                           1,
                                           1 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -502,7 +503,7 @@ protected:
 using ExplicitAcousticSEMFactory = finiteElement::KernelFactory< ExplicitAcousticSEM,
                                                                  real64 >;
 
-} // namespace AcousticWaveEquationSEMKernels
+} // namespace acousticWaveEquationSEMKernels
 
 } // namespace geosx
 

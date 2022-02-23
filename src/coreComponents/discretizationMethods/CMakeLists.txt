@@ -4,7 +4,7 @@
 set( mainInterface_headers
      NumericalMethodsManager.hpp )
 
-set( dependencyList finiteElement finiteVolume virtualElement )
+set( dependencyList finiteElement finiteVolume )
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

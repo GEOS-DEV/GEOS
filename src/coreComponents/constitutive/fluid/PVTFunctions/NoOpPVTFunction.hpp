@@ -49,23 +49,19 @@ public:
     GEOSX_UNUSED_VAR( pressure, temperature, phaseComposition, value, useMass );
   }
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const
   {
     GEOSX_UNUSED_VAR( pressure, temperature,
-                      phaseComposition, dPhaseComposition_dPressure, dPhaseComposition_dTemperature, dPhaseComposition_dTemperature, dPhaseComposition_dGlobalCompFraction,
-                      value, dValue_dPressure, dValue_dTemperature, dValue_dGlobalCompFraction,
+                      phaseComposition, dPhaseComposition,
+                      value, dValue,
                       useMass );
   }
 

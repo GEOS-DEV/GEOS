@@ -498,13 +498,6 @@ Element: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
 
 
-.. _XML_LaplaceVEM:
-
-Element: LaplaceVEM
-===================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM.rst
-
-
 .. _XML_LinearSolverParameters:
 
 Element: LinearSolverParameters
@@ -904,6 +897,13 @@ Element: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability.rst
 
 
+.. _XML_TableRelativePermeabilityHysteresis:
+
+Element: TableRelativePermeabilityHysteresis
+============================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis.rst
+
+
 .. _XML_Tasks:
 
 Element: Tasks
@@ -951,6 +951,13 @@ Element: TwoPointFluxApproximation
 Element: VTK
 ============
 .. include:: ../../coreComponents/schema/docs/VTK.rst
+
+
+.. _XML_VTKMeshGenerator:
+
+Element: VTKMeshGenerator
+=========================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
 
 
 .. _XML_VanGenuchtenBakerRelativePermeability:
@@ -1510,13 +1517,6 @@ Datastructure: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
 
 
-.. _DATASTRUCTURE_LaplaceVEM:
-
-Datastructure: LaplaceVEM
-=========================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
-
-
 .. _DATASTRUCTURE_Level0:
 
 Datastructure: Level0
@@ -1930,6 +1930,13 @@ Datastructure: TableRelativePermeability
 .. include:: ../../coreComponents/schema/docs/TableRelativePermeability_other.rst
 
 
+.. _DATASTRUCTURE_TableRelativePermeabilityHysteresis:
+
+Datastructure: TableRelativePermeabilityHysteresis
+==================================================
+.. include:: ../../coreComponents/schema/docs/TableRelativePermeabilityHysteresis_other.rst
+
+
 .. _DATASTRUCTURE_Tasks:
 
 Datastructure: Tasks
@@ -1979,6 +1986,13 @@ Datastructure: VTK
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
 
 
+.. _DATASTRUCTURE_VTKMeshGenerator:
+
+Datastructure: VTKMeshGenerator
+===============================
+.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
+
+
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:
 
 Datastructure: VanGenuchtenBakerRelativePermeability
@@ -2019,20 +2033,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_cellBlocks:
-
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
