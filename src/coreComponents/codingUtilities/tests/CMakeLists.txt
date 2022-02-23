@@ -8,7 +8,6 @@ set( testSources
 
 set(dependencyList gtest codingUtilities ${commonDeps} )
 
-
 #
 # Add gtest C++ based tests
 #

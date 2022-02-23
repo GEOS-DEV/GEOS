@@ -423,7 +423,7 @@ localIndex calculateTotalNumberOfEdges( ArrayOfArraysView< EdgeBuilder const > c
 
   // At this point uniqueEdgeOffsets[ i ] holds the number of unique edges associated with node i - 1.
   // Perform an inplace prefix-sum to get the unique edge offset.
-  RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueEdgeOffsets.begin(), uniqueEdgeOffsets.end() );
+  RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueEdgeOffsets ); //.begin(), uniqueEdgeOffsets.end() );
 
   return uniqueEdgeOffsets.back();
 }

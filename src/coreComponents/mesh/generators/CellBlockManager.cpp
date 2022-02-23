@@ -220,7 +220,7 @@ localIndex calculateTotalNumberOfFaces( ArrayOfArraysView< NodesAndElementOfFace
   } );
   // At this point uniqueFaceOffsets[ i ] holds the number of unique face associated with node i - 1.
   // Perform an inplace prefix-sum to get the unique face offset.
-  RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueFaceOffsets.begin(), uniqueFaceOffsets.end() );
+  RAJA::inclusive_scan_inplace< parallelHostPolicy >( uniqueFaceOffsets ) ; // .begin(), uniqueFaceOffsets.end() );
   return uniqueFaceOffsets.back();
 }
 
