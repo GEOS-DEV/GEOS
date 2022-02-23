@@ -11,7 +11,7 @@ set( pygroup_sources PyGroup.cpp
 blt_add_library( NAME             pygroup
                  SOURCES          ${pygroup_sources}
                  HEADERS          ${pygroup_headers}
-                 DEPENDS_ON       Python3::Python dataRepository mainInterface
+                 DEPENDS_ON       ${dependencyList} ${extraComponentsList} ${externalComponentList} Python3::Python dataRepository mainInterface
 		 OBJECT           ${GEOSX_BUILD_OBJ_LIBS}                 )
 
 target_include_directories( pygroup PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
