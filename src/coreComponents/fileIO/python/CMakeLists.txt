@@ -10,7 +10,7 @@ PyHistoryOutput.cpp
 blt_add_library( NAME             pyfileIO
                  SOURCES          ${pyfileIO_sources}
                  HEADERS          ${pyfileIO_headers}
-                 DEPENDS_ON       Python3::Python fileIO
+                 DEPENDS_ON       ${dependencyList} ${extraComponentsList} ${externalComponentList} Python3::Python fileIO
                  OBJECT           ${GEOSX_BUILD_OBJ_LIBS}
                  )
 
