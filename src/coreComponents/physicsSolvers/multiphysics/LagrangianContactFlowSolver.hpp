@@ -183,7 +183,7 @@ public:
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * contactSolverNameString() { return "contactSolverName"; }
-    constexpr static char const * flowSolverNameString() { return "flowSolverName"; }
+    constexpr static char const * flowSolverNameString() { return "fluidSolverName"; }
     constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
   } LagrangianContactFlowSolverViewKeys;
 
@@ -223,10 +223,8 @@ public:
 private:
 
   string m_contactSolverName;
-  string m_flowSolverName;
 
   LagrangianContactSolver * m_contactSolver;
-  SinglePhaseBase * m_flowSolver;
 
   string m_stabilizationName;
 

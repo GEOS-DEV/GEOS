@@ -50,10 +50,8 @@ using namespace interpolation;
 
 SinglePhasePoromechanicsLagrangianContactSolver::SinglePhasePoromechanicsLagrangianContactSolver( const string & name,
                                                                 Group * const parent ):
-  SolverBase( name, parent ),
-  m_contactSolverName(),
-  m_flowSolverName()
-
+  SinglePhasePoromechanicsSolver( name, parent ),
+  m_contactSolverName()
 {
   registerWrapper( viewKeyStruct::contactSolverNameString(), &m_contactSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -66,10 +64,6 @@ SinglePhasePoromechanicsLagrangianContactSolver::SinglePhasePoromechanicsLagrang
   registerWrapper( viewKeyStruct::flowSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poromechanics solver" );
-
-  registerWrapper( viewKeyStruct::porousMaterialNamesString(), &m_porousMaterialNames ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "The name of the material that should be used in the constitutive updates" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -170,7 +164,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartiti
   }
 
   // setup monolithic coupled system
-  SolverBase::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
+  SinglePhasePoromechanicsSolver::setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
   m_contactFlowSolver->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
 
@@ -246,7 +240,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
 
 void SinglePhasePoromechanicsLagrangianContactSolver::postProcessInput()
 {
-  SolverBase::postProcessInput();
+  SinglePhasePoromechanicsSolver::postProcessInput();
 
   m_flowSolver = &this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
   //m_contactFlowSolver = &this->getParent().getGroup< LagrangianContactSolver >( m_contactSolverName );
@@ -849,7 +843,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::solveSystem( DofManager co
                                                   ParallelVector & rhs,
                                                   ParallelVector & solution )
 {
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SinglePhasePoromechanicsSolver::solveSystem( dofManager, matrix, rhs, solution );
 
   int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   if( rank == 0 )

@@ -52,9 +52,7 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
                                                           Group * const parent ):
   SinglePhasePoromechanicsSolver( name, parent ),
   m_contactSolverName(),
-  m_flowSolverName(),
   m_contactSolver( nullptr ),
-  m_flowSolver( nullptr ),
   m_stabilizationName( "" )
 {
   registerWrapper( viewKeyStruct::contactSolverNameString(), &m_contactSolverName ).
@@ -80,12 +78,15 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
   */
 }
 
-void LagrangianContactFlowSolver::registerDataOnMesh( Group & )
-{}
+void LagrangianContactFlowSolver::registerDataOnMesh( Group & meshBodies )
+{
+  m_contactSolver->registerDataOnMesh( meshBodies );
+}
 
 void LagrangianContactFlowSolver::initializePreSubGroups()
 {
   SinglePhasePoromechanicsSolver::initializePreSubGroups();
+  m_contactSolver->initializePreSubGroups();
 }
 
 void LagrangianContactFlowSolver::implicitStepSetup( real64 const & time_n,
@@ -1553,7 +1554,7 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
   
   //  string const &
   //  fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( fractureRegion.getName() )];
-    string const & fluidName = fractureRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
+    string const & fluidName = fractureSubRegion.getReference< string >( FlowSolverBase::viewKeyStruct::fluidNamesString() );
   
     SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( fractureSubRegion, fluidName );
     arrayView2d< real64 const > const & density = fluid.density();

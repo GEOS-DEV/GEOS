@@ -22,6 +22,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
@@ -32,7 +33,7 @@ class LagrangianContactSolver;
 class LagrangianContactFlowSolver;
 class SinglePhaseBase;
 
-class SinglePhasePoromechanicsLagrangianContactSolver : public SolverBase
+class SinglePhasePoromechanicsLagrangianContactSolver : public SinglePhasePoromechanicsSolver
 {
 public:
   SinglePhasePoromechanicsLagrangianContactSolver( const string & name,
@@ -120,8 +121,6 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
 
-  arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
-
   virtual real64
   nonlinearImplicitStep( real64 const & time_n,
                          real64 const & dt,
@@ -148,9 +147,6 @@ protected:
 
   string m_contactSolverName;
   string m_contactFlowSolverName;
-  string m_flowSolverName;
-
-  array1d< string > m_porousMaterialNames;
 
   // pointer to the flow sub-solver
   SinglePhaseBase * m_flowSolver;
