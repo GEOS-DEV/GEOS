@@ -73,7 +73,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   fillWaterData( data );
 
   // gas data
-  fillHydrocarbonData( PT::GAS, boTables.getGasTable() );
+  fillHydrocarbonData( m_phaseOrder[PT::GAS], boTables.getGasTable() );
 
   // for the Black-Oil model, the oil PVT is treated differently from gas
   fillPVTOData( boTables.getOilTable(),
@@ -109,7 +109,6 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
   // (standard) format of oilTable:
   // if oilTable.size() == 4 (saturated case):   Rs, bubble point pressure, Bo, viscosity
   // if ollTable.size() == 3 (unsaturated case):     unsaturated pressure,  Bo, viscosity
-
 
   // Step 1: count the number of saturated points by looping through oilTable, and resize tables accordingly
 

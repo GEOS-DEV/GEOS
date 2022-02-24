@@ -120,12 +120,15 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
                                real64 const relTol,
                                real64 const absTol = std::numeric_limits< real64 >::max() )
 {
-  localIndex const NC = fluid.numFluidComponents();
-  localIndex const NP = fluid.numFluidPhases();
+  using Deriv = multifluid::DerivativeOffset;
+
+  integer const NC = fluid.numFluidComponents();
+  integer const NP = fluid.numFluidPhases();
+  integer const NDOF = NC+2;
 
   // Copy input values into an array with expected layout
   array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, NC );
-  for( localIndex i = 0; i < NC; ++i )
+  for( integer i = 0; i < NC; ++i )
   {
     compositionValues[0][i] = compositionInput[i];
   }
@@ -147,37 +150,27 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseFrac {
     GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseFraction ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction_dPressure ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction_dTemperature ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction_dGlobalCompFraction )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseFraction )
   };
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseDens {
     GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseDensity ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity_dPressure ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity_dTemperature ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseDensity )
   };
 
   MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 > phaseVisc {
     GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseViscosity ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity_dPressure ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity_dTemperature ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseViscosity )
   };
 
   MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 > phaseCompFrac {
     GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::phaseCompFraction ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction_dTemperature ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dPhaseCompFraction )
   };
 
   MultiFluidVarSlice< real64, 0, USD_FLUID - 2, USD_FLUID_DC - 2 > totalDens {
     GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::totalDensity ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity_dPressure ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity_dTemperature ),
-    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity_dGlobalCompFraction )
+    GET_FLUID_DATA( fluid, extrinsicMeshData::multifluid::dTotalDensity )
   };
 
   auto const & phaseFracCopy     = GET_FLUID_DATA( fluidCopy, extrinsicMeshData::multifluid::phaseFraction );
@@ -200,20 +193,27 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
 
+    // to be able to use the checkDerivative utility function, we have to invert the layout
+    auto dPhaseFrac     = invertLayout( phaseFrac.derivs.toSliceConst(), NP, NDOF );
+    auto dPhaseDens     = invertLayout( phaseDens.derivs.toSliceConst(), NP, NDOF );
+    auto dPhaseVisc     = invertLayout( phaseVisc.derivs.toSliceConst(), NP, NDOF );
+    auto dTotalDens     = invertLayout( totalDens.derivs.toSliceConst(), NDOF );
+    auto dPhaseCompFrac = invertLayout( phaseCompFrac.derivs.toSliceConst(), NP, NC, NDOF );
+
     // update pressure and check derivatives
     {
       real64 const dP = perturbParameter * (P + perturbParameter);
       fluidWrapper.update( 0, 0, P + dP, T, composition );
 
-      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), phaseFrac.dPres.toSliceConst(),
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseFrac", "Pres", phases );
-      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), phaseDens.dPres.toSliceConst(),
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseDens", "Pres", phases );
-      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), phaseVisc.dPres.toSliceConst(),
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseVisc", "Pres", phases );
-      checkDerivative( totalDensCopy, totalDens.value, totalDens.dPres,
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dP],
                        dP, relTol, absTol, "totalDens", "Pres" );
-      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), phaseCompFrac.dPres.toSliceConst(),
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dP].toSliceConst(),
                        dP, relTol, absTol, "phaseCompFrac", "Pres", phases, components );
     }
 
@@ -222,30 +222,23 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       real64 const dT = perturbParameter * (T + perturbParameter);
       fluidWrapper.update( 0, 0, P, T + dT, composition );
 
-      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), phaseFrac.dTemp.toSliceConst(),
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseFrac", "Temp", phases );
-      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), phaseDens.dTemp.toSliceConst(),
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseDens", "Temp", phases );
-      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), phaseVisc.dTemp.toSliceConst(),
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseVisc", "Temp", phases );
-      checkDerivative( totalDensCopy, totalDens.value, totalDens.dTemp,
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dT],
                        dT, relTol, absTol, "totalDens", "Temp" );
-      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), phaseCompFrac.dTemp.toSliceConst(),
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dT].toSliceConst(),
                        dT, relTol, absTol, "phaseCompFrac", "Temp", phases, components );
     }
 
-    // update composition and check derivatives
-    auto dPhaseFrac_dC     = invertLayout( phaseFrac.dComp.toSliceConst(), NP, NC );
-    auto dPhaseDens_dC     = invertLayout( phaseDens.dComp.toSliceConst(), NP, NC );
-    auto dPhaseVisc_dC     = invertLayout( phaseVisc.dComp.toSliceConst(), NP, NC );
-    auto dTotalDens_dC     = invertLayout( totalDens.dComp.toSliceConst(), NC );
-    auto dPhaseCompFrac_dC = invertLayout( phaseCompFrac.dComp.toSliceConst(), NP, NC, NC );
-
     array2d< real64, compflow::LAYOUT_COMP > compNew( 1, NC );
-    for( localIndex jc = 0; jc < NC; ++jc )
+    for( integer jc = 0; jc < NC; ++jc )
     {
       real64 const dC = perturbParameter * ( composition[jc] + perturbParameter );
-      for( localIndex ic = 0; ic < NC; ++ic )
+      for( integer ic = 0; ic < NC; ++ic )
       {
         compNew[0][ic] = composition[ic];
       }
@@ -265,11 +258,11 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       {
         // renormalize
         real64 sum = 0.0;
-        for( localIndex ic = 0; ic < NC; ++ic )
+        for( integer ic = 0; ic < NC; ++ic )
         {
           sum += compNew[0][ic];
         }
-        for( localIndex ic = 0; ic < NC; ++ic )
+        for( integer ic = 0; ic < NC; ++ic )
         {
           compNew[0][ic] /= sum;
         }
@@ -278,15 +271,15 @@ void testNumericalDerivatives( MultiFluidBase & fluid,
       fluidWrapper.update( 0, 0, P, T, compNew[0] );
 
       string const var = "compFrac[" + components[jc] + "]";
-      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac_dC[jc].toSliceConst(),
+      checkDerivative( phaseFracCopy.toSliceConst(), phaseFrac.value.toSliceConst(), dPhaseFrac[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseFrac", var, phases );
-      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens_dC[jc].toSliceConst(),
+      checkDerivative( phaseDensCopy.toSliceConst(), phaseDens.value.toSliceConst(), dPhaseDens[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseDens", var, phases );
-      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc_dC[jc].toSliceConst(),
+      checkDerivative( phaseViscCopy.toSliceConst(), phaseVisc.value.toSliceConst(), dPhaseVisc[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseVisc", var, phases );
-      checkDerivative( totalDensCopy, totalDens.value, dTotalDens_dC[jc],
+      checkDerivative( totalDensCopy, totalDens.value, dTotalDens[Deriv::dC+jc],
                        dC, relTol, absTol, "totalDens", var );
-      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac_dC[jc].toSliceConst(),
+      checkDerivative( phaseCompFracCopy.toSliceConst(), phaseCompFrac.value.toSliceConst(), dPhaseCompFrac[Deriv::dC+jc].toSliceConst(),
                        dC, relTol, absTol, "phaseCompFrac", var, phases, components );
     }
   } );
@@ -308,79 +301,59 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
                                               real64 const & savedWaterPhaseWaterComp,
                                               real64 const relTol )
 {
+  integer constexpr numPhase = 2;
+  integer constexpr numComp  = 2;
+  integer constexpr numDof   = numComp + 2;
+
   // Copy input values into an array with expected layout
-  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, 2 );
-  for( localIndex i = 0; i < 2; ++i )
+  array2d< real64, compflow::LAYOUT_COMP > compositionValues( 1, numComp );
+  for( integer i = 0; i < numComp; ++i )
   {
     compositionValues[0][i] = compositionInput[i];
   }
   arraySlice1d< real64 const, compflow::USD_COMP - 1 > const composition = compositionValues[0];
 
-  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseFraction( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseFraction_dPressure( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseFraction_dTemperature( 1, 1, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseFraction_dGlobalCompFraction( 1, 1, 2, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseDensity( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseDensity_dPressure( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseDensity_dTemperature( 1, 1, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseDensity_dGlobalCompFraction( 1, 1, 2, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseMassDensity( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseMassDensity_dPressure( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseMassDensity_dTemperature( 1, 1, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseMassDensity_dGlobalCompFraction( 1, 1, 2, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > phaseViscosity( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseViscosity_dPressure( 1, 1, 2 );
-  StackArray< real64, 3, 2, LAYOUT_PHASE > dPhaseViscosity_dTemperature( 1, 1, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_DC > dPhaseViscosity_dGlobalCompFraction( 1, 1, 2, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, 2, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > dPhaseCompFraction_dPressure( 1, 1, 2, 2 );
-  StackArray< real64, 4, 4, LAYOUT_PHASE_COMP > dPhaseCompFraction_dTemperature( 1, 1, 2, 2 );
-  StackArray< real64, 5, 8, LAYOUT_PHASE_COMP_DC > dPhaseCompFraction_dGlobalCompFraction( 1, 1, 2, 2, 2 );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFraction( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFraction( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseDensity( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseDensity( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseMassDensity( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseMassDensity( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseViscosity( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseViscosity( 1, 1, numPhase, numDof );
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFraction( 1, 1, numPhase, numComp, numDof );
   StackArray< real64, 2, 1, LAYOUT_FLUID > totalDensity( 1, 1 );
-  StackArray< real64, 2, 1, LAYOUT_FLUID > dTotalDensity_dPressure( 1, 1 );
-  StackArray< real64, 2, 1, LAYOUT_FLUID > dTotalDensity_dTemperature( 1, 1 );
-  StackArray< real64, 3, 2, LAYOUT_FLUID_DC >  dTotalDensity_dGlobalCompFraction( 1, 1, 2 );
+  StackArray< real64, 3, numDof, LAYOUT_FLUID_DC >  dTotalDensity( 1, 1, numDof );
 
   wrapper.compute( P, T, composition,
   {
     phaseFraction[0][0],
-    dPhaseFraction_dPressure[0][0],
-    dPhaseFraction_dTemperature[0][0],
-    dPhaseFraction_dGlobalCompFraction[0][0]
+    dPhaseFraction[0][0]
   },
   {
     phaseDensity[0][0],
-    dPhaseDensity_dPressure[0][0],
-    dPhaseDensity_dTemperature[0][0],
-    dPhaseDensity_dGlobalCompFraction[0][0]
+    dPhaseDensity[0][0]
   },
   {
     phaseMassDensity[0][0],
-    dPhaseMassDensity_dPressure[0][0],
-    dPhaseMassDensity_dTemperature[0][0],
-    dPhaseMassDensity_dGlobalCompFraction[0][0]
+    dPhaseMassDensity[0][0]
   },
   {
     phaseViscosity[0][0],
-    dPhaseViscosity_dPressure[0][0],
-    dPhaseViscosity_dTemperature[0][0],
-    dPhaseViscosity_dGlobalCompFraction[0][0]
+    dPhaseViscosity[0][0]
   },
   {
     phaseCompFraction[0][0],
-    dPhaseCompFraction_dPressure[0][0],
-    dPhaseCompFraction_dTemperature[0][0],
-    dPhaseCompFraction_dGlobalCompFraction[0][0]
+    dPhaseCompFraction[0][0]
   },
   {
     totalDensity[0][0],
-    dTotalDensity_dPressure[0][0],
-    dTotalDensity_dTemperature[0][0],
-    dTotalDensity_dGlobalCompFraction[0][0]
+    dTotalDensity[0][0]
   } );
 
   checkRelativeError( totalDensity[0][0], savedTotalDensity, relTol );
-  for( localIndex ip = 0; ip < 2; ++ip )
+  for( integer ip = 0; ip < numPhase; ++ip )
   {
     real64 const savedPhaseFrac = ( ip == 0 ) ? savedGasPhaseFrac : 1 - savedGasPhaseFrac;
     checkRelativeError( phaseFraction[0][0][ip], savedPhaseFrac, relTol );
@@ -390,7 +363,7 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
     checkRelativeError( phaseMassDensity[0][0][ip], savedPhaseMassDens, relTol );
     real64 const savedPhaseVisc = ( ip == 0 ) ? savedGasVisc : savedWaterVisc;
     checkRelativeError( phaseViscosity[0][0][ip], savedPhaseVisc, relTol );
-    for( localIndex ic = 0; ic < 2; ++ic )
+    for( integer ic = 0; ic < numComp; ++ic )
     {
       real64 savedCompFrac = 0.0;
       if( ip == 0 )
@@ -566,8 +539,8 @@ MultiFluidBase & makeDeadOilFluidFromTable( string const & name, Group * parent 
   // 1) First, define the tables (PVDO, PVDG)
 
   // 1D table with linear interpolation
-  localIndex const NaxisPVDO = 21;
-  localIndex const NaxisPVDG = 13;
+  integer const NaxisPVDO = 21;
+  integer const NaxisPVDG = 13;
 
   array1d< real64_array > coordinatesPVDO;
   real64_array valuesPVDO_Bo( NaxisPVDO );
@@ -730,7 +703,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-12;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
     testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
@@ -748,7 +721,7 @@ TEST_F( LiveOilFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-12;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
     testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
@@ -791,7 +764,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
     testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
@@ -810,7 +783,7 @@ TEST_F( DeadOilFluidTest, numericalDerivativesMass )
   real64 const relTol = 1e-4;
   real64 const absTol = 1e-14;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
     testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol, absTol );
   }
@@ -842,7 +815,7 @@ TEST_F( DeadOilFluidFromTableTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
     testNumericalDerivatives( *fluid, parent, P[i], T, comp, eps, false, relTol );
   }
@@ -950,10 +923,10 @@ TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMolar )
   { 0.99169371576101794652, 0.9917227252632633272, 0.99175665845994742664, 0.98861693470973388553, 0.98865078280193963156, 0.98869031763719927852, 0.98461764703062204518, 0.98464956836357520054,
     0.98468678194258063563 };
 
-  localIndex counter = 0;
-  for( localIndex i = 0; i < 3; ++i )
+  integer counter = 0;
+  for( integer i = 0; i < 3; ++i )
   {
-    for( localIndex j = 0; j < 3; ++j )
+    for( integer j = 0; j < 3; ++j )
     {
       testValuesAgainstPreviousImplementation( wrapper,
                                                P[i], T[j], comp,
@@ -1015,10 +988,10 @@ TEST_F( CO2BrinePhillipsFluidTest, checkAgainstPreviousImplementationMass )
   { 0.9797478006656266114, 0.97981828292617156873, 0.97990072673671935188, 0.97227194517798976037, 0.97235397979974458327, 0.97244979317916002692, 0.9625743441996873484, 0.9626514061444874093,
     0.962741233539301966 };
 
-  localIndex counter = 0;
-  for( localIndex i = 0; i < 3; ++i )
+  integer counter = 0;
+  for( integer i = 0; i < 3; ++i )
   {
-    for( localIndex j = 0; j < 3; ++j )
+    for( integer j = 0; j < 3; ++j )
     {
       testValuesAgainstPreviousImplementation( wrapper,
                                                P[i], T[j], comp,
@@ -1046,9 +1019,9 @@ TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
-    for( localIndex j = 0; j < 3; ++j )
+    for( integer j = 0; j < 3; ++j )
     {
       testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
     }
@@ -1068,9 +1041,9 @@ TEST_F( CO2BrinePhillipsFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-8;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
-    for( localIndex j = 0; j < 3; ++j )
+    for( integer j = 0; j < 3; ++j )
     {
       testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
     }
@@ -1143,9 +1116,9 @@ TEST_F( CO2BrineEzrokhiFluidTest, numericalDerivativesMolar )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-4;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
-    for( localIndex j = 0; j < 3; ++j )
+    for( integer j = 0; j < 3; ++j )
     {
       testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
     }
@@ -1165,9 +1138,9 @@ TEST_F( CO2BrineEzrokhiFluidTest, numericalDerivativesMass )
   real64 const eps = sqrt( std::numeric_limits< real64 >::epsilon());
   real64 const relTol = 1e-8;
 
-  for( localIndex i = 0; i < 3; ++i )
+  for( integer i = 0; i < 3; ++i )
   {
-    for( localIndex j = 0; j < 3; ++j )
+    for( integer j = 0; j < 3; ++j )
     {
       testNumericalDerivatives( *fluid, parent, P[i], T[j], comp, eps, false, relTol );
     }
