@@ -172,17 +172,17 @@ Events
 ---------
 
 Rather than explicitly specify the desired timestep behavior, this example uses a flexible approach for timestepping.
-The hydrofracture solver is applied in two segments, where ``maxEventDt`` indicates the maximum allowable timestep:
+The hydrofracture solver is applied in the ``solverApplications`` event, which request a ``maxEventDt = 30 s``.
+To maintain stability during the critical early phase of the model, we delay turning on the pump by ``pump_start``.
+We then use the ``pumpStart`` event to limit the further limit the timestep to ``pump_ramp_dt_limit`` as the fracture experiences rapid development (``pump_start`` to ``pump_start + pump_ramp``).
+Note that while this event does not have a target, it can still influence the time step behavior.
+After this period, the hydraulic fracture solver will attempt to increase / decrease the requested timestep to maintain stability.
 
-- solverApplications_a: this corresponds to the problem initialization, where we request ``$dt_init$=2``.
-- solverApplications_b: this corresponds to the period of initial fluid injection, where we request ``$dt_max$=30``.
-
-Depending upon how well the solution converges, the timestep may be smaller than the maximum requested value.
 Other key events in this problem include:
 
 - preFracture: this calls the surface generator at the beginning of the problem and helps to initialize the fracture.
-- outputs: this produces output vtk and silo files.
-- restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the specified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
+- outputs_vtk and outputs_silo: these produces output vtk and silo files.
+- restarts (inactive): this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the specified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
 
 
 .. literalinclude:: ../../../../../inputFiles/hydraulicFracturing/heterogeneousInSitu_base.xml
@@ -283,11 +283,11 @@ Modifying Parameters Via the Command-Line
 The advanced xml feature preprocessor allows parameters to be set or overriden by specifying any number of `-p name value` arguments on the command-line.
 Note that if the parameter value has spaces, it needs to be enclosed by quotation marks.
 
-To illustrate this feature, we can re-run the previous analysis with viscosity lowered from 5 cP to 1 cP:
+To illustrate this feature, we can re-run the previous analysis with viscosity increased from 1 cP to 5 cP:
 
 .. code-block:: bash
 
-  srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -p mu 0.001 -x 6 -y 2 -z 3 -o hf_results_lower_mu
+  srun -n 36 -ppdebug geosx_preprocessed -i heterogeneousInSitu_benchmark.xml -p mu 0.005 -x 6 -y 2 -z 3 -o hf_results_lower_mu
 
 
 ------------------------------------------------------------------

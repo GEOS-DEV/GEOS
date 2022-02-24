@@ -46,7 +46,7 @@
 
     <Parameter
       name="pump_ramp"
-      value="10 [s]"/>
+      value="5 [s]"/>
 
     <Parameter
       name="pump_ramp_dt_limit"
