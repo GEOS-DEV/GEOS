@@ -730,7 +730,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
     vtmWriter.addSubBlock( region.getCatalogName(), region.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
-      if( mpiRank == 0 && nbElemsInRegion[i] > 0 )
+      if( mpiRank == 0 )
       {
         string const dataSetFile = GEOSX_FMT( "{:06d}/{}_{}.vtu", cycle, paddedRank( MPI_COMM_GEOSX, i ), region.getName() );
         vtmWriter.addDataToSubBlock( region.getCatalogName(), region.getName(), dataSetFile, i );
