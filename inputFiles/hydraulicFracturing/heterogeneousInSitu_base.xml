@@ -62,6 +62,9 @@
     <VTK
       name="vtkOutput"/>
 
+    <Silo
+      name="siloOutput"/>
+
     <Restart
       name="restartOutput"/>
   </Outputs>
@@ -77,10 +80,16 @@
 
     <!-- Primary outputs -->
     <PeriodicEvent
-      name="outputs"
+      name="outputs_vtk"
       timeFrequency="1 [min]"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
+
+    <PeriodicEvent
+      name="outputs_silo"
+      timeFrequency="1 [min]"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
 
     <!-- Apply the hydrofracture solver -->
     <PeriodicEvent

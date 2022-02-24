@@ -181,7 +181,7 @@ Depending upon how well the solution converges, the timestep may be smaller than
 Other key events in this problem include:
 
 - preFracture: this calls the surface generator at the beginning of the problem and helps to initialize the fracture.
-- outputs: this produces output vtk files.
+- outputs: this produces output vtk and silo files.
 - restarts: this is a HaltEvent, which tracks the external clock.  When the runtime exceeds the specified value (here $t_allocation$=28 minutes), the code will call the target (which writes a restart file) and instruct the code to exit.
 
 
@@ -254,11 +254,16 @@ When developing an xml with advanced features, we reccomend that you check this 
 Inspecting results
 ---------------------------------
 
-In the above example, we requested vtk-format output files every minute.
-We can therefore import these into VisIt or python and visualize the outcome.
+In the above example, we requested vtk- and silo-format output files every minute.
+We can therefore import these into VisIt, Paraview, or python and visualize the outcome.
 The following figure shows the extents of the generated fracture over time:
 
 .. image:: extents.png
+
+Notes for visualization tools:
+
+1) In Visit, we currently recommend that you look at the silo-format files (due to a compatibility issue with vtk)
+2) In Paraview, you may need to use the Multi-block Inspector (on the right-hand side of the screen by default) to limit the visualization to the fracture.  In addition, the Properties inspector (on the left-hand side of the sceen by default) may not include some of the parameters present on the fracture.  Instead, we recommend that you use the property dropdown box at the top of the screen.
 
 Because we did not explicitly specify any fracture barriers in this example, the fracture dimensions are controlled by the in-situ stresses.
 During the first couple of minutes of growth, the fracture quickly reaches its maximum/minimum height, which corresponds to a region of low in-situ minimum stress.

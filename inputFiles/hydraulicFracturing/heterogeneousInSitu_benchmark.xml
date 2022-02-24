@@ -58,7 +58,7 @@
 
     <Parameter
       name="t_max"
-      value="50 [min]"/>
+      value="20 [min]"/>
 
     <!-- Etc. -->
     <Parameter
