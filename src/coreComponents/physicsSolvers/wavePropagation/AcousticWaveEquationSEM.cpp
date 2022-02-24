@@ -245,7 +245,7 @@ void AcousticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh,
 
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
 
-      AcousticWaveEquationSEMKernels::
+      acousticWaveEquationSEMKernels::
         PrecomputeSourceAndReceiverKernel::
         launch< EXEC_POLICY, FE_TYPE >
         ( elementSubRegion.size(),
@@ -304,8 +304,8 @@ void AcousticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 co
 
   arrayView2d< real64 > const p_rcvs   = m_pressureNp1AtReceivers.toView();
 
-  real64 a1 = (dt < epsilonLoc) ? 1.0 : (timeNp1 - timeSeismo)/dt;
-  real64 a2 = 1.0 - a1;
+  real64 const a1 = (dt < epsilonLoc) ? 1.0 : (timeNp1 - timeSeismo)/dt;
+  real64 const a2 = 1.0 - a1;
 
   if( m_nsamplesSeismoTrace > 0 )
   {
@@ -410,7 +410,7 @@ void AcousticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
         localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
         localIndex const numNodesPerFace = 4;
 
-        AcousticWaveEquationSEMKernels::
+        acousticWaveEquationSEMKernels::
           MassAndDampingMatrixKernel< FE_TYPE > kernel( finiteElement );
         kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >
           ( elementSubRegion.size(),
@@ -535,7 +535,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     arrayView1d< real64 > const stiffnessVector = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector >();
     arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
-    auto kernelFactory = AcousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
+    auto kernelFactory = acousticWaveEquationSEMKernels::ExplicitAcousticSEMFactory( dt );
 
     finiteElement::
       regionBasedKernelApplication< EXEC_POLICY,
@@ -566,7 +566,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     /// synchronize pressure fields
     std::map< string, string_array > fieldNames;
-    fieldNames["node"].emplace_back( "pressure_np1" );
+    fieldNames["node"].emplace_back( extrinsicMeshData::Pressure_np1::key() );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldNames,
@@ -583,7 +583,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       rhs[a] = 0.0;
     } );
 
-    real64 checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
+    real64 const checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
     if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
     {
       computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );

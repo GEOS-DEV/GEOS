@@ -46,10 +46,6 @@ FluxApproximationBase::FluxApproximationBase( string const & name, Group * const
     setInputFlag( InputFlags::FALSE ).
     setDescription( "List of regions to build the stencil for" );
 
-  registerWrapper( viewKeyStruct::coefficientModelNamesString(), &m_coefficientModelNames ).
-    setInputFlag( InputFlags::FALSE ).
-    setDescription( "List of constitutive models that contain the coefficient used to build the stencil" );
-
   registerWrapper( viewKeyStruct::areaRelativeToleranceString(), &m_areaRelTol ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1.0e-8 ).

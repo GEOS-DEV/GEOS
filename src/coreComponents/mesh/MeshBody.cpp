@@ -18,7 +18,6 @@
 
 #include "MeshBody.hpp"
 #include "MeshLevel.hpp"
-#include "generators/CellBlockManager.hpp"
 
 namespace geosx
 {
@@ -51,7 +50,8 @@ void MeshBody::setGlobalLengthScale( real64 scale )
 string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
   char temp[100] = {0};
-  sprintf( temp, "Level%.1ld", meshLevel );
+  // for now, the integer conversion is needed to avoid a warning on Lassen
+  sprintf( temp, "Level%.1d", LvArray::integerConversion< integer >( meshLevel ) );
   return temp;
 }
 

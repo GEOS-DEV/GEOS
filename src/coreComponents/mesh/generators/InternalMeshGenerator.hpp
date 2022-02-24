@@ -344,8 +344,6 @@ public:
 
 };
 
-//ENUM_STRINGS( InternalMeshGenerator::MeshType, "Cartesian", "Cylindrical", "CylindricalSquareBoundary" )
-
 } /* namespace geosx */
 
 #endif /* GEOSX_MESH_GENERATORS_INTERNALMESHGENERATOR_HPP */
