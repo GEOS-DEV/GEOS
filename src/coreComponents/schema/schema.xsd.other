@@ -475,12 +475,14 @@
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
+		<xsd:attribute name="indexSeismoTrace" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std_string, LvArray_Array&lt;std_string, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 		<!--pressureNp1AtReceivers => Pressure value at each receiver for each timestep-->
-		<xsd:attribute name="pressureNp1AtReceivers" type="real64_array" />
+		<xsd:attribute name="pressureNp1AtReceivers" type="real64_array2d" />
 		<!--receiverIsLocal => Flag that indicates whether the receiver is local to this MPI rank-->
 		<xsd:attribute name="receiverIsLocal" type="localIndex_array" />
 		<!--receiverNodeIds => Indices of the nodes (in the right order) for each receiver point-->
@@ -491,6 +493,8 @@
 		<xsd:attribute name="sourceIsLocal" type="localIndex_array" />
 		<!--sourceNodeIds => Indices of the nodes (in the right order) for each source point-->
 		<xsd:attribute name="sourceNodeIds" type="localIndex_array2d" />
+		<!--sourceValue => Source Value of the sources-->
+		<xsd:attribute name="sourceValue" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="CompositionalMultiphaseFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
