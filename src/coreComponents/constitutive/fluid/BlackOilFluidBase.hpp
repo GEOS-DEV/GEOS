@@ -98,6 +98,8 @@ protected:
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
                    PhaseProp::ViewType phaseViscosity,
+                   PhaseProp::ViewType phaseEnthalpy,
+                   PhaseProp::ViewType phaseInternalEnergy,
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity );
 

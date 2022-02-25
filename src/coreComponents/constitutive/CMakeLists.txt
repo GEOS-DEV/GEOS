@@ -24,11 +24,12 @@ set( constitutive_headers
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
+     fluid/CO2BrineFluid.hpp          
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiFluidExtrinsicData.hpp
-     fluid/MultiPhaseMultiComponentFluid.hpp
+     fluid/PhaseModel.hpp
      fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
@@ -38,7 +39,8 @@ set( constitutive_headers
      fluid/PVTFunctions/CO2Solubility.hpp
      fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
-     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/PVTFunctionBase.hpp 
+     fluid/PVTFunctions/NoOpPVTFunction.hpp    
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
      fluid/PVTFunctions/BrineEnthalpy.hpp
@@ -131,11 +133,11 @@ set( constitutive_sources
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/CO2BrineFluid.cpp     
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
-     fluid/MultiPhaseMultiComponentFluid.cpp
      fluid/PVTDriver.cpp
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp

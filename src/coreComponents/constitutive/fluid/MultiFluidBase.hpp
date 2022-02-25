@@ -90,6 +90,14 @@ public:
   virtual integer getWaterPhaseIndex() const = 0;
 
   /**
+   * @brief Get the thermal flag.
+   * @return boolean value indicating whether the model can be used to assemble the energy balance equation or not
+   * @detail if isThermal is true, the constitutive model compute the enthalpy and internal energy of the phase.
+   *         This can be used to check the compatibility of the constitutive model with the solver
+   */
+  virtual bool isThermal() const { return false; }
+
+  /**
    * @brief Get the mass flag.
    * @return boolean value indicating whether the model is using mass-based quantities (as opposed to mole-based)
    */
@@ -143,6 +151,17 @@ public:
   arrayView2d< real64 const, multifluid::USD_FLUID > initialTotalMassDensity() const
   { return m_initialTotalMassDensity.toViewConst(); }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
+  { return m_phaseEnthalpy.value; }
+
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseEnthalpy() const
+  { return m_phaseEnthalpy.derivs; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
+  { return m_phaseInternalEnergy.value; }
+
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseInternalEnergy() const
+  { return m_phaseInternalEnergy.derivs; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -208,6 +227,8 @@ protected:
      * @param[out] phaseDensity the array of phase densities (+ derivatives)
      * @param[out] phaseMassDensity the array of phase mass densities (+derivatives)
      * @param[out] phaseViscosity the array of phase viscosities (+derivatives)
+     * @param[out] phaseEnthalpy the array of phase enthalpy (+derivatives)
+     * @param[out] phaseInternalEnergy the array of phase internal energy (+derivatives)
      * @param[out] phaseCompFraction the array of phase component fractions (+derivatives)
      * @param[out] totalDensity the total density (+derivatives)
      */
@@ -217,6 +238,8 @@ protected:
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
                    PhaseProp::ViewType phaseViscosity,
+                   PhaseProp::ViewType phaseEnthalpy,
+                   PhaseProp::ViewType phaseInternalEnergy,
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity )
       : m_componentMolarWeight( std::move( componentMolarWeight ) ),
@@ -225,6 +248,8 @@ protected:
       m_phaseDensity( std::move( phaseDensity ) ),
       m_phaseMassDensity( std::move( phaseMassDensity ) ),
       m_phaseViscosity( std::move( phaseViscosity ) ),
+      m_phaseEnthalpy( std::move( phaseEnthalpy ) ),
+      m_phaseInternalEnergy( std::move( phaseInternalEnergy ) ),
       m_phaseCompFraction( std::move( phaseCompFraction ) ),
       m_totalDensity( std::move( totalDensity ) )
     { }
@@ -283,6 +308,8 @@ protected:
      * @param[inout] phaseCompFrac the phase component fractions in moles that will be converted to mass
      * @param[inout] dPhaseDens the derivatives of phase densities wrt pressure, temperature, and comp fractions
      * @param[inout] dPhaseVisc the derivatives of phase viscosities wrt pressure, temperature, and comp fractions
+     * @param[inout] dPhaseEnthalpy the derivatives of phase enthalpy wrt pressure, temperature, and comp fractions
+     * @param[inout] dPhaseInternalEnergy the derivatives of phase internal energy wrt pressure, temperature, and comp fractions
      * @detail This function performs three conversions
      *    1) Conversion of phase mass fractions into phase mole fractions
      *    2) Conversion of phase component mass fractions into phase component mole fractions
@@ -296,7 +323,9 @@ protected:
                                  PhaseProp::SliceType const phaseFrac,
                                  PhaseComp::SliceType const phaseCompFrac,
                                  arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc ) const;
+                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
+                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
+                                 arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const;
 
     /**
      * @brief Utility function to convert mole fractions to mass fractions
@@ -335,6 +364,8 @@ protected:
     PhaseProp::ViewType m_phaseDensity;
     PhaseProp::ViewType m_phaseMassDensity;
     PhaseProp::ViewType m_phaseViscosity;
+    PhaseProp::ViewType m_phaseEnthalpy;
+    PhaseProp::ViewType m_phaseInternalEnergy;
     PhaseComp::ViewType m_phaseCompFraction;
     FluidProp::ViewType m_totalDensity;
 
@@ -378,6 +409,8 @@ private:
      * @param[inout] phaseCompFrac the phase component fractions in the cell
      * @param[inout] dPhaseDens the derivatives of phase densities wrt pressure, temperature, and comp fractions
      * @param[inout] dPhaseVisc the derivatives of phase viscosities wrt pressure, temperature, and comp fractions
+     * @param[inout] dPhaseEnthalpy the derivatives of phase enthalpy wrt pressure, temperature, and comp fractions
+     * @param[inout] dPhaseInternalEnergy the derivatives of phase internal energy wrt pressure, temperature, and comp fractions
      */
     template< integer maxNumComp >
     GEOSX_HOST_DEVICE
@@ -385,7 +418,9 @@ private:
                                              PhaseProp::SliceType const phaseFrac,
                                              PhaseComp::SliceType const phaseCompFrac,
                                              arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc ) const;
+                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
+                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
+                                             arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const;
 
 
     /**
@@ -397,6 +432,8 @@ private:
      * @param[out] phaseDensity phase mass/molar density in the cell
      * @param[out] phaseMassDensity phase mass density in the cell
      * @param[out] phaseViscosity phase viscosity in the cell
+     * @param[out] phaseEnthalpy phase enthalpy in the cell
+     * @param[out] phaseInternalEnergy phase internal energy in the cell
      * @param[out] phaseCompFraction phase component fraction in the cell
      * @param[out] totalDensity total mass/molar density in the cell
      */
@@ -408,6 +445,8 @@ private:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const = 0;
 
@@ -420,6 +459,8 @@ private:
      * @param[out] phaseDensity phase mass/molar density in the cell (+ derivatives)
      * @param[out] phaseMassDensity phase mass density in the cell (+ derivatives)
      * @param[out] phaseViscosity phase viscosity in the cell (+ derivatives)
+     * @param[out] phaseEnthalpy phase enthalpy in the cell (+ derivatives)
+     * @param[out] phaseInternalEnergy phase internal energy in the cell (+ derivatives)
      * @param[out] phaseCompFraction phase component fraction in the cell (+ derivatives)
      * @param[out] totalDensity total mass/molar density in the cell (+ derivatives)
      */
@@ -431,6 +472,8 @@ private:
                           PhaseProp::SliceType const phaseDensity,
                           PhaseProp::SliceType const phaseMassDensity,
                           PhaseProp::SliceType const phaseViscosity,
+                          PhaseProp::SliceType const phaseEnthalpy,
+                          PhaseProp::SliceType const phaseInternalEnergy,
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const = 0;
 
@@ -483,6 +526,8 @@ protected:
   PhaseProp m_phaseDensity;
   PhaseProp m_phaseMassDensity;
   PhaseProp m_phaseViscosity;
+  PhaseProp m_phaseEnthalpy;
+  PhaseProp m_phaseInternalEnergy;
   PhaseComp m_phaseCompFraction;
   FluidProp m_totalDensity;
 
@@ -563,16 +608,20 @@ MultiFluidBase::KernelWrapper::
   MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
   phaseCompFracAndDeriv { phaseCompFrac, dPhaseCompFrac[0][0] };
 
-  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens_dComp( 1, 1, numPhase, numComp );
-  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseVisc_dComp( 1, 1, numPhase, numComp );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseVisc( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
 
   convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                           phaseMolecularWeight,
                           dPhaseMolecularWeight,
                           phaseFracAndDeriv,
                           phaseCompFracAndDeriv,
-                          dPhaseDens_dComp[0][0],
-                          dPhaseVisc_dComp[0][0] );
+                          dPhaseDens[0][0],
+                          dPhaseVisc[0][0],
+                          dPhaseEnthalpy[0][0],
+                          dPhaseInternalEnergy[0][0] );
 }
 
 template< integer maxNumComp, integer maxNumPhase >
@@ -585,7 +634,9 @@ MultiFluidBase::KernelWrapper::
                           PhaseProp::SliceType const phaseFrac,
                           PhaseComp::SliceType const phaseCompFrac,
                           arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc ) const
+                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
+                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
+                          arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const
 {
   convertToPhaseMassFractions( phaseMolecularWeight,
                                dPhaseMolecularWeight,
@@ -598,7 +649,9 @@ MultiFluidBase::KernelWrapper::
                                       phaseFrac,
                                       phaseCompFrac,
                                       dPhaseDens,
-                                      dPhaseVisc );
+                                      dPhaseVisc,
+                                      dPhaseEnthalpy,
+                                      dPhaseInternalEnergy );
 }
 
 template< integer maxNumDof, integer maxNumPhase >
@@ -709,7 +762,9 @@ MultiFluidBase::KernelWrapper::
                                       PhaseProp::SliceType const phaseFrac,
                                       PhaseComp::SliceType const phaseCompFrac,
                                       arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseDens,
-                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc ) const
+                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc,
+                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseEnthalpy,
+                                      arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const
 {
   using Deriv = multifluid::DerivativeOffset;
 
@@ -722,6 +777,9 @@ MultiFluidBase::KernelWrapper::
     applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, phaseFrac.derivs[ip], work, Deriv::dC );
     applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, dPhaseDens[ip], work, Deriv::dC );
     applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, dPhaseVisc[ip], work, Deriv::dC );
+    applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, dPhaseEnthalpy[ip], work, Deriv::dC );
+    applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, dPhaseInternalEnergy[ip], work, Deriv::dC );
+
     for( integer ic = 0; ic < numComp; ++ic )
     {
       applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, phaseCompFrac.derivs[ip][ic], work, Deriv::dC );
