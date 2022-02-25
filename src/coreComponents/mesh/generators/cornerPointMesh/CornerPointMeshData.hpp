@@ -22,7 +22,7 @@
 
 #include "common/DataTypes.hpp"
 #include "dataRepository/ObjectCatalog.hpp"
-
+#include "mesh/generators/cornerPointMesh/utilities/GeometryUtilities.hpp"
 namespace geosx
 {
 
@@ -246,6 +246,8 @@ struct CornerPointMeshVertices
 
 
   // helpers for corner-point vertices
+  // this helper set is needed for rapidly searching indices for newly created points
+  std::set< geometryUtilities::Vertex > m_uniqueVerticesHelper;
 
   /// original (duplicated) CPG vertex position
   array2d< real64 > m_cpVertexPositions;

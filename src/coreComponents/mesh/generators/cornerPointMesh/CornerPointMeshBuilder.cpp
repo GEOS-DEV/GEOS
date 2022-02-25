@@ -86,7 +86,24 @@ void CornerPointMeshBuilder::postProcessMesh()
 
   // for now, do some debugging
   //outputDebugVTKFile( m_vertices, m_faces, m_cells );
+  updateVertex();
   outputDebugVTKFileWithFaces( m_vertices, m_faces, m_cells);
+}
+
+void CornerPointMeshBuilder::updateVertex()
+{
+  std::set< Vertex > const & uniqueVerticesHelper = m_vertices.m_uniqueVerticesHelper;
+  array2d< real64 > & vertexPositions = m_vertices.m_vertexPositions;
+
+  vertexPositions.resizeDimension< 0, 1 >( uniqueVerticesHelper.size(), 3 );
+  std::for_each( uniqueVerticesHelper.begin(), uniqueVerticesHelper.end(),
+                 [&vertexPositions]( geometryUtilities::Vertex const & v )
+  {
+    vertexPositions( v.m_localIndex, 0 ) = v.m_x;
+    vertexPositions( v.m_localIndex, 1 ) = v.m_y;
+    vertexPositions( v.m_localIndex, 2 ) = v.m_z;
+  } );
+
 }
 
 void CornerPointMeshBuilder::buildCornerPointCells()
@@ -521,12 +538,13 @@ void CornerPointMeshBuilder::filterVertices()
   array1d< globalIndex > const & cpVertexToGlobalCPVertex = m_vertices.m_cpVertexToGlobalCPVertex;
   array1d< localIndex > & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
   cpVertexToVertex.resize( cpVertexPositions.size() );
+
   // TODO: cpVertexToVertex.resize( cpVertexPositions.size( 0 ) );
 
   // First step: filter the unique vertices using a set
-
-  std::set< Vertex, CompareVertices > uniqueVerticesHelper;
-  std::set< Vertex, CompareVertices >::iterator it;
+  // the compareVertex struct has been replaced less than operator for set's sortting purpose
+  std::set< Vertex > & uniqueVerticesHelper = m_vertices.m_uniqueVerticesHelper;
+  std::set< Vertex >::iterator it;
 
   // loop over of the CP vertices (for now, including those of inactive cells)
   for( localIndex iCPVertex = 0; iCPVertex < cpVertexPositions.size( 0 ); ++iCPVertex )
@@ -711,7 +729,6 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
         // loop over cells in k direction
         for (localIndex k = 0; k < nZLocal + 2; ++k)
         {
-
           if( !onFrontBoundary )
           {
             iCellPrev = k*nXLocal*nYLocal + (j - jOffset)*nXLocal + i - iOffset;
@@ -742,12 +759,13 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
             orderNext = {0, 1, 5, 4};
           }
 
-          if (isInternalFace && prevIsActive && nextIsActive)
+          if (isInternalFace)
           {
+            // we need to consider the intersection between auxillary cells and internal cells
             localIndex const iFirstVertexPrev = cellToCPVertices( iCellPrev );
             localIndex const iFirstVertexNext = cellToCPVertices( iCellNext );
 
-            bool isBothCellActive = true;
+//            bool isBothCellActive = true;
             // get internal faces
             // get the vertices of the previous faces
             localIndex const verticesPrevFace[4] = { cpVertexToVertex( iFirstVertexPrev + orderPrev[0] ),
@@ -769,19 +787,30 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
 
               // TODO: change the name of addHorizontalFace to addConformingFace, since all horizontal faces and regular vertical faces
               //       conforming
-              addHorizontalFace(verticesPrevFace,
-                                activeCellToOwnedActiveCell( iActiveCellPrev ),
-                                activeCellToOwnedActiveCell( iActiveCellNext ),
-                                  ownedActiveCellToFaces,
-                                  faceToVertices);
+              if (prevIsActive && nextIsActive)
+              {
+                // both cells are active
+                addHorizontalFace(verticesPrevFace,
+                                   activeCellToOwnedActiveCell( iActiveCellPrev ),
+                                   activeCellToOwnedActiveCell( iActiveCellNext ),
+                                     ownedActiveCellToFaces,
+                                     faceToVertices);
+              }
+              else if (prevIsActive || nextIsActive )
+              {
+                // either prev or next cell is inactive
+                addSingleConformingFace(prevIsActive, orderPrev, orderNext, iActiveCellPrev, iActiveCellNext,
+                                          iCellPrev, iCellNext);
+              }
             }
             else
             {
               // a faulted face is found. Need to loop over a column of cells to find all intersection points
-              std::cout << "Found a faulted face with vertex ["<< verticesPrevFace[0] << "," << verticesPrevFace[1] << ","
-                                                                              << verticesPrevFace[2] << "," << verticesPrevFace[3] << "]" << std::endl;
+              std::cout << "Found a faulted face with vertex ["<< verticesNextFace[0] << "," << verticesNextFace[1] << ","
+                                                                              << verticesNextFace[2] << "," << verticesNextFace[3] << "]" << std::endl;
               // Not completed
-              // addNonconformingFace( iCellPrev, k, verticesNextFace, orderPrev );
+              addNonconformingFace( iCellPrev, k, verticesNextFace,
+                                    orderPrev, iActiveCellNext);
 
             }
           }
@@ -789,21 +818,8 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
           {
             // this is either: an interior face between an active cell and an inactive cell
             //             or: an boundary face at the bottom
-            localIndex const iFirstVertex = prevIsActive ? cellToCPVertices( iCellPrev ) : cellToCPVertices( iCellNext );
-            localIndex const iActiveCell = prevIsActive ? iActiveCellPrev : iActiveCellNext;
-            std::vector<localIndex> vertexOrder(4);
-            vertexOrder = prevIsActive ? orderPrev : orderNext;
-
-            localIndex const vertices[4] = { cpVertexToVertex( iFirstVertex + vertexOrder[0] ),
-                                             cpVertexToVertex( iFirstVertex + vertexOrder[1] ),
-                                             cpVertexToVertex( iFirstVertex + vertexOrder[2] ),
-                                             cpVertexToVertex( iFirstVertex + vertexOrder[3] )};
-
-            addHorizontalFace( vertices,
-                               activeCellToOwnedActiveCell( iActiveCell ),
-                               -1,
-                               ownedActiveCellToFaces,
-                               faceToVertices );
+            addSingleConformingFace(prevIsActive, orderPrev, orderNext, iActiveCellPrev, iActiveCellNext,
+                                      iCellPrev, iCellNext);
 
           }
         }
@@ -812,10 +828,44 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
   }
 }
 
+void CornerPointMeshBuilder::addSingleConformingFace(bool const prevIsActive,
+                                                     const std::vector<localIndex > orderPrev,
+                                                     const std::vector<localIndex > orderNext,
+                                                     const localIndex iActiveCellPrev,
+                                                     const localIndex iActiveCellNext,
+                                                     const localIndex iCellPrev,
+                                                     const localIndex iCellNext)
+{
+  array1d< localIndex > const & cellToCPVertices = m_cells.m_cellToCPVertices;
+  array1d< localIndex > const & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
+  ArrayOfArrays< localIndex > & ownedActiveCellToFaces = m_cells.m_ownedActiveCellToFaces;
+  array1d< localIndex > const & activeCellToOwnedActiveCell = m_cells.m_activeCellToOwnedActiveCell;
+  // faces
+  ArrayOfArrays< localIndex > & faceToVertices = m_faces.m_faceToVertices;
+
+  localIndex const iFirstVertex = prevIsActive ? cellToCPVertices( iCellPrev ) : cellToCPVertices( iCellNext );
+  localIndex const iActiveCell = prevIsActive ? iActiveCellPrev : iActiveCellNext;
+  std::vector<localIndex> vertexOrder(4);
+  vertexOrder = prevIsActive ? orderPrev : orderNext;
+
+  localIndex const vertices[4] = { cpVertexToVertex( iFirstVertex + vertexOrder[0] ),
+                                   cpVertexToVertex( iFirstVertex + vertexOrder[1] ),
+                                   cpVertexToVertex( iFirstVertex + vertexOrder[2] ),
+                                   cpVertexToVertex( iFirstVertex + vertexOrder[3] )};
+
+  addHorizontalFace( vertices,
+                     activeCellToOwnedActiveCell( iActiveCell ),
+                     -1,
+                     ownedActiveCellToFaces,
+                     faceToVertices );
+
+
+}
 
 void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localIndex const zIdxPrev,
-                                                  localIndex const (&nextfaceVertices)[ 4 ],
-                                                  localIndex const (&orderPrev)[4])
+                                                  localIndex const (&nextFaceVertices)[ 4 ],
+                                                  const std::vector<localIndex > orderPrev,
+                                                  localIndex const iActiveCellNext)
 {
   // loop over the column of cells that have the same i and j values with that of the previous cell
   // loop over cells in k direction
@@ -846,6 +896,7 @@ void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localInd
   for (localIndex k = 0; k < nZLocal + 2; ++k)
   {
     newCellPrev = k*nXLocal*nYLocal + firstCellAtPrevColumn;
+    const localIndex iActiveCellPrev = cellToActiveCell( newCellPrev );
     localIndex const iFirstVertexPrev = cellToCPVertices( newCellPrev );
     // get internal faces
     // get the vertices of the previous faces
@@ -853,29 +904,59 @@ void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localInd
                                              cpVertexToVertex( iFirstVertexPrev + orderPrev[1] ),
                                              cpVertexToVertex( iFirstVertexPrev + orderPrev[2] ),
                                              cpVertexToVertex( iFirstVertexPrev + orderPrev[3] ) };
-    const bool isOKForIntesecting = checkFaceOverlap( nextfaceVertices, verticesPrevFace);
-    if (isOKForIntesecting)
-    {
 
+    std::vector<Face> adjFaceVec;
+    const bool isOKForIntesecting = checkFaceOverlap( nextFaceVertices, verticesPrevFace, adjFaceVec);
+
+    if (isOKForIntesecting && ((iActiveCellPrev != -1) || (iActiveCellNext != -1)))
+    {
       // TODO: we can check if the intersected faces satisfy certain conditions:
       //       1. area check
       //       2. cell volume check
-      //
 
       // TODO: we need a computational geometry function
+      std::vector<Vertex> newVertexVec;
+      const bool foundIntersection = computeFaceGeometry( adjFaceVec,  newVertexVec);
 
+      localIndex const iOwnedActiveCellPrev = (iActiveCellPrev != -1) ? activeCellToOwnedActiveCell( iActiveCellPrev ) : -1;
+      localIndex const iOwnedActiveCellNext = (iActiveCellNext != -1) ? activeCellToOwnedActiveCell( iActiveCellNext ) : -1;
+
+      if(foundIntersection)
+      {
+        updateVerticalFaceMaps(newVertexVec,
+                               iOwnedActiveCellPrev, iOwnedActiveCellNext,
+                               ownedActiveCellToFaces,
+                               faceToVertices);
+      }
+      else
+      {
+        GEOSX_THROW( "Cannot find intersections from two candidate nonconforming faces!", InputError );
+      }
     }
     else
       continue; // two faces are impossible to intersect with each other
   }
 }
 
+bool CornerPointMeshBuilder::computeFaceGeometry( const std::vector<Face>& adjFaceVec,
+                                                  std::vector<Vertex>& newVertexVector)
+{
+  //  Performs 3D geometrical calculation for two intersected faces, both of which are represented by multiple points
+  //  face0 and face1 contain sequences of 3D points
+
+  bool isValid;
+  newVertexVector = adjFaceVec[0].findIntersectionPoints(adjFaceVec[1], isValid);
+  if (!isValid)
+    return false;
+  return true;
+}
+
 bool CornerPointMeshBuilder::checkFaceOverlap(localIndex const (&nextfaceVertices)[ 4 ],
-                                              localIndex const (&prevfaceVertices)[ 4 ])
+                                              localIndex const (&prevfaceVertices)[ 4 ],
+                                              std::vector<Face> & adjFaceVec)
 {
   // coordinates (no duplicated)
-  array2d< real64 > & vertexPositions = m_vertices.m_vertexPositions;
-
+  array2d< real64 > const & vertexPositions = m_vertices.m_vertexPositions;
   // TODO: this is super ugly. at some corner cases, the algorithm might fail
   // edges of next cell
   Vertex pointNext0 = { vertexPositions(nextfaceVertices[0], 0),
@@ -885,7 +966,7 @@ bool CornerPointMeshBuilder::checkFaceOverlap(localIndex const (&nextfaceVertice
   Vertex pointNext2 = { vertexPositions(nextfaceVertices[1], 0),
                         vertexPositions(nextfaceVertices[1], 1),
                         vertexPositions(nextfaceVertices[1], 2)};
-  const Edge nextEdge02( pointNext0, pointNext2);
+  const Line nextEdge02( pointNext0, pointNext2);
 
   Vertex pointNext4 = { vertexPositions(nextfaceVertices[2], 0),
                         vertexPositions(nextfaceVertices[2], 1),
@@ -895,7 +976,8 @@ bool CornerPointMeshBuilder::checkFaceOverlap(localIndex const (&nextfaceVertice
                         vertexPositions(nextfaceVertices[3], 1),
                         vertexPositions(nextfaceVertices[3], 2)};
 
-  const Edge nextEdge46( pointNext4, pointNext6);
+  const Line nextEdge46( pointNext4, pointNext6);
+
   // edges of previous cell
   Vertex pointPrev1 = { vertexPositions(prevfaceVertices[0], 0),
                         vertexPositions(prevfaceVertices[0], 1),
@@ -905,7 +987,7 @@ bool CornerPointMeshBuilder::checkFaceOverlap(localIndex const (&nextfaceVertice
                         vertexPositions(prevfaceVertices[1], 1),
                         vertexPositions(prevfaceVertices[1], 2)};
 
-  const Edge prevEdge13( pointPrev1, pointPrev3);
+  const Line prevEdge13( pointPrev1, pointPrev3);
 
   Vertex pointPrev5 = { vertexPositions(prevfaceVertices[2], 0),
                         vertexPositions(prevfaceVertices[2], 1),
@@ -915,19 +997,29 @@ bool CornerPointMeshBuilder::checkFaceOverlap(localIndex const (&nextfaceVertice
                         vertexPositions(prevfaceVertices[3], 1),
                         vertexPositions(prevfaceVertices[3], 2)};
 
-  const Edge prevEdge57( pointPrev5, pointPrev7);
+  const Line prevEdge57( pointPrev5, pointPrev7);
   // TODO: is there a better way to compare the position between two cells
 
   bool isPrevCellHigher = prevEdge13.compare(nextEdge46);
-  bool isPrevCellLower = prevEdge57.compare(nextEdge02);
+  bool isPrevCellLower = nextEdge02.compare(prevEdge57);
 
   if (isPrevCellHigher || isPrevCellLower)
   {
     return false;
   }
+  else
+  {
+    Face faceNext(pointNext0, pointNext2, pointNext4, pointNext6);
+    Face facePrev(pointPrev1, pointPrev3, pointPrev5, pointPrev7);
+
+    faceNext.setIndexForFacePoints( nextfaceVertices );
+    facePrev.setIndexForFacePoints( prevfaceVertices );
+
+    adjFaceVec.emplace_back(faceNext);
+    adjFaceVec.emplace_back(facePrev);
+  }
   return true;
 }
-
 
 void CornerPointMeshBuilder::buildHorizontalFaces()
 {
@@ -1027,6 +1119,57 @@ void CornerPointMeshBuilder::buildHorizontalFaces()
       }
     }
   }
+}
+
+void CornerPointMeshBuilder::updateVerticalFaceMaps( std::vector<Vertex>& newVertexVector,
+                                                     localIndex const iOwnedActiveCellPrev,
+                                                     localIndex const iOwnedActiveCellNext,
+                                                     ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
+                                                     ArrayOfArrays< localIndex > & faceToVertices)
+{
+  //  some new points might be created when two faces intersect with each other. split these points, which latter
+  //  be added to coord array and update corner index
+//  array2d< real64 > & vertexPositions = m_vertices.m_vertexPositions;
+  std::set<Vertex> & uniqueVerticesHelper = m_vertices.m_uniqueVerticesHelper;
+
+  localIndex const newFaceId = faceToVertices.size();
+  localIndex const newFaceNodeNum = newVertexVector.size();
+  faceToVertices.appendArray( newVertexVector.size() );
+  localIndex count(0);
+  for (auto iter = newVertexVector.begin(); iter != newVertexVector.end(); iter ++)
+  {
+    if ((*iter).m_localIndex < 0)
+    {
+      // find  a possible newly created vertex
+      if ( uniqueVerticesHelper.find( (*iter)) != uniqueVerticesHelper.end())
+      {
+        // already existed and get the index
+        const localIndex oldLocalIdx = (*uniqueVerticesHelper.find( (*iter))).m_localIndex;
+        (*iter).setIndex( oldLocalIdx );
+      }
+      else
+      {
+        // a newly created point
+        const localIndex newLocalIdx = uniqueVerticesHelper.size();
+        (*iter).setIndex( newLocalIdx );
+        uniqueVerticesHelper.insert( (*iter) );
+      }
+    }
+
+    faceToVertices( newFaceId, count ) = (*iter).m_localIndex;
+    count ++;
+  }
+
+  // populate the cell-to-face map
+  if( iOwnedActiveCellPrev != -1 )
+  {
+    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellPrev, newFaceId );
+  }
+  if( iOwnedActiveCellNext != -1 )
+  {
+    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellNext, newFaceId );
+  }
+
 }
 
 void CornerPointMeshBuilder::addHorizontalFace( localIndex const (&faceVertices)[ 4 ],

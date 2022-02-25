@@ -95,13 +95,41 @@ void printFile(std::ostream& fStream, std::ostream& cStream, std::string& str )
 }
 // Change the original function to accomodate data with cell type of 42
 // this only works with conforming case
+
+std::vector<localIndex> getPolygonOffsets(  localIndex const nActiveCells,
+                               ArrayOfArrays< localIndex > const & ownedActiveCellToFaces,
+                              ArrayOfArrays< localIndex > const & faceToVertices )
+{
+  std::vector<localIndex> offsetVec(nActiveCells + 1, 0);
+  localIndex count = 1;
+  for( localIndex iActiveCell = 0; iActiveCell < nActiveCells; ++iActiveCell )
+  {
+    offsetVec[count] += 1;
+    for ( auto iter = ownedActiveCellToFaces[iActiveCell].begin(); iter != ownedActiveCellToFaces[iActiveCell].end(); ++iter  )
+    {
+      localIndex const faceIndex = *iter;
+      offsetVec[count] += 1;
+      for (auto iterVer = faceToVertices[faceIndex].begin(); iterVer != faceToVertices[faceIndex].end(); ++iterVer)
+      {
+        offsetVec[count] += 1;
+      }
+    }
+    if (count < nActiveCells)
+    {
+      count += 1;
+      offsetVec[count] = offsetVec[count - 1];
+    }
+  }
+  return offsetVec;
+}
+
 void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
                          CornerPointMeshFaces const & faces,
                          CornerPointMeshCells const & cells )
 {
 
   std::ofstream myfile;
-  myfile.open ( "debug_conforming_face.vtk" );
+  myfile.open ( "debug_nonconforming_face.vtk" );
   myfile << "# vtk DataFile Version 5.1\n";
   myfile << "vtk output\n";
   myfile << "ASCII\n";
@@ -115,7 +143,7 @@ void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
   currLine = "POINTS " + std::to_string(  vertexPositions.size(0) ) + " float\n";
   printFile( myfile, std::cout, currLine);
 
-  for( localIndex iVertex = 0; iVertex < vertexPositions.size( 0 ); ++iVertex )
+  for( localIndex iVertex = 0; iVertex < vertexPositions.size(0); ++iVertex )
   {
     //myfile << vertexPositions( iVertex, 0 ) << " " << vertexPositions( iVertex, 1 ) << " " << vertexPositions( iVertex, 2 ) << "\n";
     currLine = std::to_string(  vertexPositions( iVertex, 0 ) ) + " " + std::to_string(  vertexPositions( iVertex, 1 ) ) + " " +
@@ -128,31 +156,23 @@ void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
   array1d< localIndex > const & cpVertexToVertex = vertices.m_cpVertexToVertex;
   localIndex const nActiveCells = activeCellToCell.size();
 
-  //myfile << "CELLS " << nActiveCells << " " << 9*nActiveCells << "\n";
-  myfile << "CELLS " << nActiveCells + 1 << " " << 31*( nActiveCells ) << "\n";
-  myfile << "OFFSETS vtktypeint64" << "\n";
-
   // print offset of each cell.
   // for conforming cases, each cell is known to have 6 faces
-
-  //myfile << "0 ";
-  currLine = std::to_string( 0 ) + " ";
-  printFile( myfile, std::cout, currLine);
-
-  localIndex tmpOffset = 31;
-  for( localIndex iActiveCell = 0; iActiveCell < nActiveCells; ++iActiveCell )
-  {
-    //myfile << tmpOffset << " ";
-    currLine = std::to_string( tmpOffset ) + " ";
-    printFile( myfile, std::cout, currLine);
-    tmpOffset += 31;
-  }
+  // for nonconforming cases, we need to calculate the offset
 
   // face-related data
   ArrayOfArrays< localIndex > const & ownedActiveCellToFaces = cells.m_ownedActiveCellToFaces;
   ArrayOfArrays< localIndex > const & faceToVertices = faces.m_faceToVertices;
+  auto offsetVec = getPolygonOffsets(nActiveCells, ownedActiveCellToFaces, faceToVertices);
 
-  // myfile << "\nCONNECTIVITY vtktypeint64" << "\n";
+  myfile << "CELLS " << nActiveCells + 1 << " " << offsetVec[nActiveCells] << "\n";
+  myfile << "OFFSETS vtktypeint64" << "\n";
+
+  for (auto iter = offsetVec.begin(); iter != offsetVec.end(); ++iter)
+  {
+    currLine = std::to_string( *iter ) + " ";
+    printFile(myfile, std::cout, currLine);
+  }
   currLine = "\nCONNECTIVITY vtktypeint64\n";
   printFile( myfile, std::cout, currLine);
 
@@ -160,27 +180,25 @@ void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
   {
     //localIndex const iLocalCell = activeCellToCell( iActiveCell );
     //myfile << "6" << "\n";
-    currLine = "6\n";
+    currLine = std::to_string(ownedActiveCellToFaces[iActiveCell].size()) + "\n";
     printFile( myfile, std::cout, currLine);
     for ( auto iter = ownedActiveCellToFaces[iActiveCell].begin(); iter != ownedActiveCellToFaces[iActiveCell].end(); ++iter  )
     {
-      //myfile << "4 ";
-      currLine = "4 ";
-      printFile( myfile, std::cout, currLine);
       localIndex const faceIndex = *iter;
+      currLine = std::to_string(faceToVertices[faceIndex].size()) + " ";
+      printFile( myfile, std::cout, currLine);
       for (auto iterVer = faceToVertices[faceIndex].begin(); iterVer != faceToVertices[faceIndex].end(); ++iterVer)
       {
         //myfile << *iterVer << " ";
         currLine =  std::to_string( *iterVer ) + " ";
         printFile( myfile, std::cout, currLine);
       }
-      //myfile << "\n";
       currLine =  "\n";
       printFile( myfile, std::cout, currLine);
     }
   }
 
-  myfile << "CELL_TYPES " << nActiveCells << std::endl;
+  myfile << "CELL_TYPES " << nActiveCells << "\n";
   for( localIndex iActiveCell = 0; iActiveCell < nActiveCells; ++iActiveCell )
   {
     myfile << "42\n";

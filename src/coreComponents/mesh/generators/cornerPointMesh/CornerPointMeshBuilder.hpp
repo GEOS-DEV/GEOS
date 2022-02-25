@@ -321,13 +321,34 @@ private:
 
   void addNonconformingFace(localIndex iCellPrev, localIndex const zIdxPrev,
                             localIndex const (&nextFaceVertices)[ 4 ],
-                            localIndex const (&orderPrev)[4]);
+                            const std::vector<localIndex > orderPrev,
+                            localIndex const iActiveCellNext);
+
+  bool computeFaceGeometry(const std::vector<geometryUtilities::Face>& adjFaceVec,
+                           std::vector<geometryUtilities::Vertex>& newVertexVector);
+
+  void updateVerticalFaceMaps(std::vector<geometryUtilities::Vertex>& newVertexVector,
+                              localIndex const iOwnedActiveCellPrev,
+                              localIndex const iOwnedActiveCellNext,
+                              ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
+                              ArrayOfArrays< localIndex > & faceToVertices);
 
   bool checkFaceOverlap(localIndex const (&nextfaceVertices)[ 4 ],
-                        localIndex const (&prevfaceVertices)[ 4 ]);
+                        localIndex const (&prevfaceVertices)[ 4 ], std::vector<geometryUtilities::Face> & adjFaceVec);
 
   // a temporary method for debugging
   void printDataForDebugging();
+
+  // a temporary method for updating vertexes for visualization
+  void updateVertex();
+
+  void addSingleConformingFace(bool const prevIsActive,
+                               const std::vector<localIndex > orderPrev,
+                               const std::vector<localIndex > orderNext,
+                               const localIndex iActiveCellPrev,
+                               const localIndex iActiveCellNext,
+                               const localIndex iCellPrev,
+                               const localIndex iCellNext);
 
   /// Object holding the mesh (and MPI partition) dimensions
   CornerPointMeshDimensions m_dims;
