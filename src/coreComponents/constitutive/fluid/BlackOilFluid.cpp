@@ -496,6 +496,8 @@ BlackOilFluid::KernelWrapper::
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
                  PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
                  PhaseComp::ViewType phaseCompFraction,
                  FluidProp::ViewType totalDensity )
   : BlackOilFluidBase::KernelWrapper( std::move( phaseTypes ),
@@ -511,6 +513,8 @@ BlackOilFluid::KernelWrapper::
                                       std::move( phaseDensity ),
                                       std::move( phaseMassDensity ),
                                       std::move( phaseViscosity ),
+                                      std::move( phaseEnthalpy ),
+                                      std::move( phaseInternalEnergy ),
                                       std::move( phaseCompFraction ),
                                       std::move( totalDensity ) ),
   m_PVTOView( PVTO.createKernelWrapper() )
@@ -533,6 +537,8 @@ BlackOilFluid::createKernelWrapper()
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
                         m_phaseViscosity.toView(),
+                        m_phaseEnthalpy.toView(),
+                        m_phaseInternalEnergy.toView(),
                         m_phaseCompFraction.toView(),
                         m_totalDensity.toView() );
 }
