@@ -22,6 +22,11 @@
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlock.hpp"
 
+#include "common/DataTypes.hpp"
+
+
+#include <cassert>
+
 namespace geosx
 {
 
@@ -109,6 +114,16 @@ public:
   // ------  Group functions  ---- 
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
+  using Group::resize;
+
+  /**
+   * @brief Set the number of elements for a set of element regions.
+   * @param[in] numElements list of the new element numbers
+   * @param[in] regionNames list of the element region names
+   */
+  void resize( integer_array const & numElements,
+               string_array const & regionNames );
+
 
   // ------ CellBlock management functions
 
@@ -132,7 +147,8 @@ public:
    * @param name The name of the created cell block.
    * @return A reference to the new cell block. The HexCellBlockManager owns this new instance.
    */
-  CellBlock & registerCellBlock( string name );
+  CellBlock & registerCellBlock( string name )
+  { return this->getCellBlocks().registerGroup< CellBlock >( name ); }
 
   /**
    * @brief Launch kernel function over all the sub-regions
@@ -149,62 +165,60 @@ public:
 
   // ----------- 
 
-  /**
-   * @brief Maximum number of faces allowed (in memory) per each node.
-   * @return The number as an integer.
-   */
+  // TODO Get rid of this
   static constexpr int maxFacesPerNode()
-  { return 200; }
-
-  /**
-   * @brief Extra space for node to faces mapping.
-   * @return Number of extra values as an integer.
-   */
+  { 
+    assert(false);
+    return -1; 
+  }
+  // TODO Get rid of this 
   static constexpr localIndex getFaceMapOverallocation()
-  { return 8; }
+  {
+    assert(false);
+    return -1; 
+  }
 
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodesPositions() const override;
+  localIndex numNodes() const override
+  { return m_numNodes; }
+
+  localIndex numEdges() const override
+  { return m_numEdges; }
+
+  localIndex numFaces() const override
+  { return m_numFaces; }
+
 
   /**
-   * @brief Returns a view to the vector holding the nodes coordinates
-   * @return The reference
-   *
-   * @note This is meant to be used as a values setter.
+   * @brief Compute all the mappings
    */
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodesPositions();
+  void buildMaps();
 
-  ArrayOfSets< localIndex > getNodeToEdges() const override;
+  bool computeFacesToNodes()    { return false; }
+  bool computeEdgesToNodes()    { return false; }
 
-  ArrayOfSets< localIndex > getNodeToFaces() const override;
+  bool computeNodesToEdges();
+  bool computeNodesToFaces(); 
+  bool computeNodesToElements() { return false; }
 
+  bool computeFacesToElements() { return false; }
+  bool computeFacesToEdges()    { return false; }
+  
+  bool computeEdgesToFaces()    { return false; }
+  bool computeEdgesToElements() { return false; }  // A priori used by no one
+
+  
+  array2d< geosx::localIndex >     getEdgeToNodes() const override { return m_edgeToNodes; }
+  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override { return m_edgeToFaces; }
+
+
+  ArrayOfArrays< localIndex >        getFaceToNodes() const override    { return m_faceToNodes; }
+  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override    { return m_faceToEdges; }
+  array2d< localIndex >              getFaceToElements() const override { return m_faceToElements; }
+
+  
+  ArrayOfSets< localIndex >   getNodeToEdges() const override { return m_nodeToEdges; }
+  ArrayOfSets< localIndex >   getNodeToFaces() const override { return m_nodeToFaces; }
   ArrayOfArrays< localIndex > getNodeToElements() const override;
-
-  array2d< geosx::localIndex > getEdgeToNodes() const override;
-
-  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override;
-
-  ArrayOfArrays< localIndex > getFaceToNodes() const override;
-
-  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override;
-
-  array2d< localIndex > getFaceToElements() const override;
-
-  array1d< globalIndex > getNodeLocalToGlobal() const override;
-
-
-  arrayView1d< globalIndex > getNodeLocalToGlobal();
-
-  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override;
-
-  /**
-   * @brief Returns a mutable reference to the node sets.
-   * @return A reference to the mapping.
-   *
-   * The key of the map is the name of the set.
-   * While the values are sorted arrays which sizes are meant to be managed by the client code.
-   * This member function is meant to be used like a setter.
-   */
-  std::map< string, SortedArray< localIndex > > & getNodeSets();
 
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
@@ -212,33 +226,38 @@ public:
    *
    * The nodes coordinates and nodes local to global mappings get resized to @p numNodes.
    */
-  void setNumNodes( localIndex numNodes ); // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+  // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
+  void setNumNodes( localIndex numNodes ); 
 
-  localIndex numNodes() const override;
 
-  localIndex numEdges() const override;
-
-  localIndex numFaces() const override;
-
-  using Group::resize;
+  // TODO What is the point of implementing the abstract accessor
+  // and having the same name for functions giving open-access 
 
   /**
-   * @brief Set the number of elements for a set of element regions.
-   * @param[in] numElements list of the new element numbers
-   * @param[in] regionNames list of the element region names
+   * @brief Returns a view to the vector holding the nodes coordinates
+   * @return The reference
    */
-  void resize( integer_array const & numElements,
-               string_array const & regionNames );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodesPositions()
+  { return m_nodesPositions.toView(); }
 
+  array2d< real64, nodes::REFERENCE_POSITION_PERM > getNodesPositions() const override
+  { return m_nodesPositions; }
+
+  array1d< globalIndex > getNodeLocalToGlobal() const override
+  { return m_nodeLocalToGlobal; }
+  
+  arrayView1d< globalIndex > getNodeLocalToGlobal()
+  { return m_nodeLocalToGlobal.toView(); }
+  
   /**
-   * @brief Trigger the computation of all the mappings.
-   *
-   * Call this member function to compute all the mappings.
-   * Computations could be done lazily when calling getters.
-   * But this is not yet implemented.
+   * @brief Returns a mutable reference to the node sets.
+   * @return A reference to the mapping.
    */
-  void buildMaps();
-
+  std::map< string, SortedArray< localIndex > > & getNodeSets()
+  { return m_nodeSets; }
+  
+  std::map< string, SortedArray< localIndex > > const & getNodeSets() const override
+  { return m_nodeSets; }
 
 
 private:
@@ -252,44 +271,55 @@ private:
   /**
    * @brief Get cell block at index @p iCellBlock.
    * @param[in] iCellBlock The cell block index.
-   * @return Const reference to the instance.
-   *
-   * @note Mainly useful for iteration purposes.
    */
-  const CellBlockABC & getCellBlock( localIndex iCellBlock ) const;
+  const CellBlockABC & getCellBlock( localIndex iCellBlock ) const
+  { return this->getCellBlocks().getGroup< const CellBlockABC >( iCellBlock ); }
+
 
   /**
    * @brief Returns the number of cells blocks
-   * @return Number of cell blocks
    */
-  localIndex numCellBlocks() const;
+  localIndex numCellBlocks() const
+  { return this->getCellBlocks().numSubGroups(); }
 
-  /**
-   * @brief Trigger the node to edges mapping computation.
-   */
-  void buildNodeToEdges();
 
   /**
    * @brief Trigger the face to nodes, edges and elements mappings.
    */
   void buildFaceMaps();
 
+private:
+  // The numbers of things we are dealing with 
+  localIndex m_numNodes = 0;
+  localIndex m_numEdges = 0;
+  localIndex m_numFaces = 0;
+  localIndex m_numElements = 0;
+
+  // The nodes that this HexCellBlockManager is responsible of
+  // with their global index in the full mesh
+  // Typically one CellBlockManager per MPI rank
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_nodesPositions;
-
-  ArrayOfSets< localIndex > m_nodeToEdges;
-  ArrayOfSets< localIndex > m_edgeToFaces;
-  array2d< localIndex > m_edgeToNodes;
-  ArrayOfArrays< localIndex >  m_faceToNodes;
-  ArrayOfArrays< localIndex > m_faceToEdges;
-  array2d< localIndex >  m_faceToElements;
-
   array1d< globalIndex >  m_nodeLocalToGlobal;
 
+  // The cells/Elements are stored by the CellBlocks
+
+  // The mappings that this class is responsible of building
+  // TODO Why are storage strategies different is beyond my understanding
+
+  ArrayOfSets< localIndex >   m_nodeToEdges;
+  ArrayOfSets< localIndex >   m_nodeToFaces;
+  ArrayOfArrays< localIndex > m_nodeToElements;
+
+  ArrayOfSets< localIndex > m_edgeToFaces;
+  array2d< localIndex >     m_edgeToNodes;
+
+  ArrayOfArrays< localIndex > m_faceToNodes;
+  ArrayOfArrays< localIndex > m_faceToEdges;
+  array2d< localIndex >       m_faceToElements;
+
+  // TODO  What are these ? 
   std::map< string, SortedArray< localIndex > > m_nodeSets;
 
-  localIndex m_numNodes;
-  localIndex m_numFaces;
-  localIndex m_numEdges;
 };
 
 }

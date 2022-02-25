@@ -25,6 +25,7 @@ namespace
 
 using namespace geosx;
 using geosx::dataRepository::Group;
+
 /**
  * @brief Convenience programming structure that holds the nodes for a given Face. No information about which cell though.
  *
@@ -435,10 +436,12 @@ HexCellBlockManager::HexCellBlockManager( string const & name, Group * const par
   m_nodesPositions( 0, 3 )
 {
   this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
+
+  m_numElements = 0; // warning to error is a pain
 }
 
 void HexCellBlockManager::resize( integer_array const & numElements,
-                               string_array const & regionNames )
+                                  string_array const & regionNames )
 {
   localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<numRegions; ++reg )
@@ -536,7 +539,7 @@ void HexCellBlockManager::buildFaceMaps()
   fillElementToFacesOfCellBlocks( lowestNodeToFaces, uniqueFaceOffsets, this->getCellBlocks() );
 }
 
-void HexCellBlockManager::buildNodeToEdges()
+bool HexCellBlockManager::computeNodesToEdges()
 {
   ArrayOfArrays< localIndex > toEdgesTemp( m_numNodes, maxEdgesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
@@ -574,6 +577,8 @@ void HexCellBlockManager::buildNodeToEdges()
     localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
     toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
   } );
+
+  return true;
 }
 
 void HexCellBlockManager::buildMaps()
@@ -584,17 +589,12 @@ void HexCellBlockManager::buildMaps()
                               m_faceToEdges,
                               m_edgeToFaces,
                               m_edgeToNodes );
-  buildNodeToEdges();
+  computeNodesToEdges();
 
   fillElementToEdgesOfCellBlocks( m_faceToEdges, this->getCellBlocks() );
 }
 
-ArrayOfArrays< localIndex > HexCellBlockManager::getFaceToNodes() const
-{
-  return m_faceToNodes;
-}
-
-ArrayOfSets< localIndex > HexCellBlockManager::getNodeToFaces() const
+bool HexCellBlockManager::computeNodesToFaces()
 {
   localIndex const numFaces = m_faceToNodes.size();
   ArrayOfArrays< localIndex > nodeToFacesTemp( m_numNodes, maxFacesPerNode() );
@@ -610,24 +610,22 @@ ArrayOfSets< localIndex > HexCellBlockManager::getNodeToFaces() const
     }
   } );
 
-  ArrayOfSets< localIndex > result;
-
   // Resize the node to face map.
-  result.resize( 0 );
+  m_nodeToFaces.resize( 0 );
 
   // Reserve space for the number of nodes faces plus some extra.
   double const overAllocationFactor = 0.3;
   localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * m_numNodes;
-  result.reserve( entriesToReserve );
+  m_nodeToFaces.reserve( entriesToReserve );
 
   // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
   localIndex const valuesToReserve = totalNodeFaces.get() + m_numNodes * nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
-  result.reserveValues( valuesToReserve );
+  m_nodeToFaces.reserveValues( valuesToReserve );
 
   // Append the individual arrays.
   for( localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID )
   {
-    result.appendSet( nodeToFacesTemp.sizeOfArray( nodeID ) + getFaceMapOverallocation() );
+    m_nodeToFaces.appendSet( nodeToFacesTemp.sizeOfArray( nodeID ) + getFaceMapOverallocation() );
   }
 
   forAll< parallelHostPolicy >( m_numNodes, [&]( localIndex const nodeID )
@@ -635,77 +633,14 @@ ArrayOfSets< localIndex > HexCellBlockManager::getNodeToFaces() const
     localIndex * const faces = nodeToFacesTemp[ nodeID ];
     localIndex const numNodeFaces = nodeToFacesTemp.sizeOfArray( nodeID );
     localIndex const numUniqueFaces = LvArray::sortedArrayManipulation::makeSortedUnique( faces, faces + numNodeFaces );
-    result.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
+    m_nodeToFaces.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
   } );
 
-  return result;
-}
-
-array2d< localIndex > HexCellBlockManager::getFaceToElements() const
-{
-  return m_faceToElements;
+  return true;
 }
 
 
-localIndex HexCellBlockManager::numNodes() const
-{
-  return m_numNodes;
-}
 
-localIndex HexCellBlockManager::numCellBlocks() const
-{
-  return this->getCellBlocks().numSubGroups();
-}
-
-const CellBlockABC & HexCellBlockManager::getCellBlock( localIndex iCellBlock ) const
-{
-  return this->getCellBlocks().getGroup< const CellBlockABC >( iCellBlock );
-}
-
-localIndex HexCellBlockManager::numFaces() const
-{
-  return m_numFaces;
-}
-
-ArrayOfSets< geosx::localIndex > HexCellBlockManager::getEdgeToFaces() const
-{
-  return m_edgeToFaces;
-}
-
-array2d< geosx::localIndex > HexCellBlockManager::getEdgeToNodes() const
-{
-  return m_edgeToNodes;
-}
-
-ArrayOfArrays< geosx::localIndex > HexCellBlockManager::getFaceToEdges() const
-{
-  return m_faceToEdges;
-}
-
-ArrayOfSets< localIndex > HexCellBlockManager::getNodeToEdges() const
-{
-  return m_nodeToEdges;
-}
-
-localIndex HexCellBlockManager::numEdges() const
-{
-  return m_numEdges;
-}
-
-CellBlock & HexCellBlockManager::registerCellBlock( string name )
-{
-  return this->getCellBlocks().registerGroup< CellBlock >( name );
-}
-
-array2d< real64, nodes::REFERENCE_POSITION_PERM > HexCellBlockManager::getNodesPositions() const
-{
-  return m_nodesPositions;
-}
-
-arrayView2d< real64, nodes::REFERENCE_POSITION_USD > HexCellBlockManager::getNodesPositions()
-{
-  return m_nodesPositions.toView();
-}
 
 void HexCellBlockManager::setNumNodes( localIndex numNodes )
 {
@@ -715,24 +650,4 @@ void HexCellBlockManager::setNumNodes( localIndex numNodes )
   m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
 }
 
-array1d< globalIndex > HexCellBlockManager::getNodeLocalToGlobal() const
-{
-  return m_nodeLocalToGlobal;
-}
-
-arrayView1d< globalIndex > HexCellBlockManager::getNodeLocalToGlobal()
-{
-  return m_nodeLocalToGlobal.toView();
-}
-
-std::map< string, SortedArray< localIndex > > const & HexCellBlockManager::getNodeSets() const
-{
-  return m_nodeSets;
-}
-
-std::map< string, SortedArray< localIndex > > & HexCellBlockManager::getNodeSets()
-{
-  return m_nodeSets;
-}
-
-}
+} // namespace
