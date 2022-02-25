@@ -336,6 +336,10 @@ public:
         packedSize += wrapperHelpers::PackByIndex< true >( buffer, *m_data, packList );
       }
     }
+    else
+    {
+      GEOSX_LOG("COUCOU I was there 0");
+    }
     return packedSize;
   }
 
@@ -390,6 +394,10 @@ public:
       {
         packedSize += wrapperHelpers::PackByIndex< false >( buffer, *m_data, packList );
       }
+    }
+    else
+    {
+      GEOSX_LOG("COUCOU I was there 1");
     }
     return packedSize;
   }
@@ -453,6 +461,10 @@ public:
       {
         unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
       }
+    }
+    else
+    {
+      GEOSX_LOG("COUCOU I was there 2");
     }
     return unpackedSize;
   }
@@ -544,6 +556,10 @@ public:
     if( sizedFromParent() )
     {
       copy_wrapper::copy( reference(), sourceIndex, destIndex );
+    }
+    else
+    {
+      GEOSX_LOG("COUCOU I was there copy");
     }
   }
 

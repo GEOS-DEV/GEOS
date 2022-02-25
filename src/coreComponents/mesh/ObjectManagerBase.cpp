@@ -261,47 +261,71 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
   {
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
 
-
-    string_array wrapperNamesForPacking;
-    if( wrapperNames.size()==0 )
+    std::vector< string > wrapperNamesForPacking;
+    if( wrapperNames.empty() )
     {
       SortedArray< localIndex > exclusionList;
       viewPackingExclusionList( exclusionList );
-      wrapperNamesForPacking.resize( this->wrappers().size() );
-      localIndex count = 0;
       for( localIndex k=0; k<this->wrappers().size(); ++k )
       {
-        if( exclusionList.count( k ) == 0 )
+        string const & wrapperName = wrappers().values()[k].first;
+        WrapperBase const * wrapper = wrappers().values()[k].second;
+        if( exclusionList.count( k ) == 0 and wrapper->sizedFromParent() )
         {
-          wrapperNamesForPacking[count++] = wrappers().values()[k].first;
+          wrapperNamesForPacking.push_back( wrapperName );
         }
       }
-      wrapperNamesForPacking.resize( count );
     }
     else
     {
-      wrapperNamesForPacking = wrapperNames;
+//      SortedArray< localIndex > exclusionList;
+//      viewPackingExclusionList( exclusionList );
+//      std::vector< string > excludedWrapperNames;
+//
+//      for( localIndex k=0; k<this->wrappers().size(); ++k )
+//      {
+//        if( exclusionList.count( k ) != 0 )
+//        {
+//          string const & wrapperName = wrappers().values()[k].first;
+////          WrapperBase const * wrapper = wrappers().values()[k].second;
+//          excludedWrapperNames.push_back( wrapperName );
+//        }
+//      }
+//
+//      for( string const & wrapperName: wrapperNames )
+//      {
+//        if( std::find( excludedWrapperNames.begin(), excludedWrapperNames.end(), wrapperName ) != excludedWrapperNames.end() )
+//        {
+//          GEOSX_LOG("COUCOU excludedWrapperNames contains : " << wrapperName);
+//        }
+//      }
+
+      // So we do not respect the `exclusionList` here? I could find no occurrence of the pattern so let's replace and document.
+//      wrapperNamesForPacking = wrapperNames;
+      for( auto const & wrapperName : wrapperNames )
+      {
+        if( this->hasWrapper( wrapperName ) ) // TODO double check
+        {
+          WrapperBase const & wrapper = getWrapperBase( wrapperName );
+
+          if( wrapper.sizedFromParent() )
+          { wrapperNamesForPacking.push_back( wrapperName ); }
+        }
+      }
     }
 
     packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperNamesForPacking.size() );
-    for( auto const & wrapperName : wrapperNamesForPacking )
+    for( auto const & wrapperName: wrapperNamesForPacking )
     {
-      if( this->hasWrapper( wrapperName ) )
+      dataRepository::WrapperBase const & wrapper = this->getWrapperBase( wrapperName );
+      packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
+      if( DOPACK )
       {
-        dataRepository::WrapperBase const & wrapper = this->getWrapperBase( wrapperName );
-        packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
-        if( DOPACK )
-        {
-          packedSize += wrapper.packByIndex( buffer, packList, true, onDevice, events );
-        }
-        else
-        {
-          packedSize += wrapper.packByIndexSize( packList, true, onDevice, events );
-        }
+        packedSize += wrapper.packByIndex( buffer, packList, true, onDevice, events );
       }
       else
       {
-        packedSize += bufferOps::Pack< DOPACK >( buffer, string( "nullptr" ) );
+        packedSize += wrapper.packByIndexSize( packList, true, onDevice, events );
       }
     }
   }
@@ -353,7 +377,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      if( wrapperName != "nullptr" )
+      if( wrapperName != "nullptr" ) // This should now be useless.
       {
         unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
       }
@@ -841,9 +865,13 @@ void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const
 
 void ObjectManagerBase::copyObject( const localIndex source, const localIndex destination )
 {
-  for( auto & wrapper : wrappers() )
+  for( auto & nameToWrapper: wrappers() )
   {
-    wrapper.second->copy( source, destination );
+    WrapperBase * wrapper = nameToWrapper.second;
+    if( wrapper->sizedFromParent() )
+    {
+      wrapper->copy( source, destination );
+    }
   }
 
   for( localIndex i=0; i<m_sets.wrappers().size(); ++i )
