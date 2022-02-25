@@ -69,6 +69,8 @@ public:
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
                           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+                          arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
                           arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
                           real64 & totalDensity ) const override;
 
@@ -80,6 +82,8 @@ public:
                           PhaseProp::SliceType const phaseDensity,
                           PhaseProp::SliceType const phaseMassDensity,
                           PhaseProp::SliceType const phaseViscosity,
+                          PhaseProp::SliceType const phaseEnthalpy,
+                          PhaseProp::SliceType const phaseInternalEnergy,
                           PhaseComp::SliceType const phaseCompFraction,
                           FluidProp::SliceType const totalDensity ) const override;
 
@@ -127,6 +131,8 @@ private:
                    PhaseProp::ViewType phaseDensity,
                    PhaseProp::ViewType phaseMassDensity,
                    PhaseProp::ViewType phaseViscosity,
+                   PhaseProp::ViewType phaseEnthalpy,
+                   PhaseProp::ViewType phaseInternalEnergy,
                    PhaseComp::ViewType phaseCompFraction,
                    FluidProp::ViewType totalDensity );
 
@@ -368,10 +374,12 @@ BlackOilFluid::KernelWrapper::
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseDensity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseMassDensity,
            arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseViscosity,
+           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseEnthalpy,
+           arraySlice1d< real64, multifluid::USD_PHASE - 2 > const & phaseInternalEnergy,
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( temperature );
+  GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
   real64 compMoleFrac[NC_BO]{};
   real64 phaseMolecularWeight[NP_BO]{};
@@ -435,10 +443,12 @@ BlackOilFluid::KernelWrapper::
            PhaseProp::SliceType const phaseDensity,
            PhaseProp::SliceType const phaseMassDensity,
            PhaseProp::SliceType const phaseViscosity,
+           PhaseProp::SliceType const phaseEnthalpy,
+           PhaseProp::SliceType const phaseInternalEnergy,
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-  GEOSX_UNUSED_VAR( temperature );
+  GEOSX_UNUSED_VAR( temperature, phaseEnthalpy, phaseInternalEnergy );
 
   real64 compMoleFrac[NC_BO]{};
   real64 dCompMoleFrac_dCompMassFrac[NC_BO][NC_BO]{};
@@ -492,7 +502,9 @@ BlackOilFluid::KernelWrapper::
                             phaseFraction,
                             phaseCompFraction,
                             phaseDensity.derivs,
-                            phaseViscosity.derivs );
+                            phaseViscosity.derivs,
+                            phaseEnthalpy.derivs,
+                            phaseInternalEnergy.derivs );
   }
 
   // 5. Compute total fluid mass/molar density and derivatives
@@ -1101,6 +1113,8 @@ BlackOilFluid::KernelWrapper::
            m_phaseDensity( k, q ),
            m_phaseMassDensity( k, q ),
            m_phaseViscosity( k, q ),
+           m_phaseEnthalpy( k, q ),
+           m_phaseInternalEnergy( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
 }

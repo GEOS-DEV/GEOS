@@ -321,6 +321,10 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
   StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseMassDensity( 1, 1, numPhase, numDof );
   StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseViscosity( 1, 1, numPhase );
   StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseViscosity( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseEnthalpy( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numDof );
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseInternalEnergy( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numDof );
   StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFraction( 1, 1, numPhase, numComp );
   StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFraction( 1, 1, numPhase, numComp, numDof );
   StackArray< real64, 2, 1, LAYOUT_FLUID > totalDensity( 1, 1 );
@@ -342,6 +346,14 @@ void testValuesAgainstPreviousImplementation( CO2BrinePhillipsFluid::KernelWrapp
   {
     phaseViscosity[0][0],
     dPhaseViscosity[0][0]
+  },
+  {
+    phaseEnthalpy[0][0],
+    dPhaseEnthalpy[0][0]
+  },
+  {
+    phaseInternalEnergy[0][0],
+    dPhaseInternalEnergy[0][0]
   },
   {
     phaseCompFraction[0][0],
