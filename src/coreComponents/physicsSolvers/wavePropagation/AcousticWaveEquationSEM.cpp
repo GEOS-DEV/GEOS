@@ -157,13 +157,12 @@ void AcousticWaveEquationSEM::postProcessInput()
 
   if( m_dtSeismoTrace > 0 )
   {
-    m_nsamplesSeismoTrace = int(maxTime/m_dtSeismoTrace) + 1;
+    m_nsamplesSeismoTrace = int( maxTime / m_dtSeismoTrace) + 1;
   }
   else
   {
     m_nsamplesSeismoTrace = 0;
   }
-
   localIndex const nsamples = int(maxTime/dt) + 1;
 
   localIndex const numNodesPerElem = 8;
@@ -516,7 +515,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  GEOSX_THROW_IF( dt < epsilonLoc, "Value for dt: " << dt <<" is smaller than local threshold: " << epsilonLoc, std::runtime_error );
+  GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,

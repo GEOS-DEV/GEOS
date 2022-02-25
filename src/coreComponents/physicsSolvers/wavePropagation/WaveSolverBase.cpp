@@ -43,6 +43,7 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
 
   registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
     setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
     setSizedFromParent( 0 ).
     setDescription( "Source Value of the sources" );
 
