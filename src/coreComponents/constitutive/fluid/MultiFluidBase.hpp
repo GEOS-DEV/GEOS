@@ -608,20 +608,20 @@ MultiFluidBase::KernelWrapper::
   MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
   phaseCompFracAndDeriv { phaseCompFrac, dPhaseCompFrac[0][0] };
 
-  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens_dComp( 1, 1, numPhase, numComp );
-  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseVisc_dComp( 1, 1, numPhase, numComp );
-  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy_dComp( 1, 1, numPhase, numComp );
-  StackArray< real64, 4, maxNumComp *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy_dComp( 1, 1, numPhase, numComp );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseDens( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseVisc( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
 
   convertToMassFractions( dCompMoleFrac_dCompMassFrac,
                           phaseMolecularWeight,
                           dPhaseMolecularWeight,
                           phaseFracAndDeriv,
                           phaseCompFracAndDeriv,
-                          dPhaseDens_dComp[0][0],
-                          dPhaseVisc_dComp[0][0],
-                          dPhaseEnthalpy_dComp[0][0],
-                          dPhaseInternalEnergy_dComp[0][0] );
+                          dPhaseDens[0][0],
+                          dPhaseVisc[0][0],
+                          dPhaseEnthalpy[0][0],
+                          dPhaseInternalEnergy[0][0] );
 }
 
 template< integer maxNumComp, integer maxNumPhase >
