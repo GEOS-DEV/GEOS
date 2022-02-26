@@ -12,17 +12,21 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#include <gtest/gtest.h>
 
 #include "mainInterface/initialization.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "LvArray/src/Array.hpp"
-
-#include "common/GEOS_RAJA_Interface.hpp"
 
 #ifdef UMPIRE_ENABLE_CUDA
+#include "common/GEOS_RAJA_Interface.hpp"
+
 #include "umpire/alloc/CudaPinnedAllocator.hpp"
+
+#include "LvArray/src/Array.hpp"
+
+#include "codingUtilities/UnitTestUtilities.hpp"
 #endif
+
+#include <gtest/gtest.h>
 
 #include <ctime>
 #include <cstdlib>
@@ -32,31 +36,6 @@ using namespace geosx;
 #ifndef GTEST_SKIP
 #define GTEST_SKIP() return
 #endif
-
-#define SKIP_TEST_IF( COND, REASON ) \
-  do \
-  { \
-    if( COND ) \
-    { \
-      GEOSX_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
-                                                                                             "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
-      GTEST_SKIP(); \
-    } \
-  } while( 0 )
-
-#define SKIP_TEST_IN_SERIAL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize == 1, REASON ); \
-  } while( 0 )
-
-#define SKIP_TEST_IN_PARALLEL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize != 1, REASON ); \
-  } while( 0 )
 
 char crand( )
 {

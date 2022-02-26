@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace ThermalCompositionalMultiphaseFVMKernels
+namespace thermalCompositionalMultiphaseFVMKernels
 {
 
 using namespace constitutive;
@@ -39,14 +39,16 @@ using namespace constitutive;
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public IsothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
+class PhaseMobilityKernel : public isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >
 {
 public:
 
-  using Base = IsothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::PhaseMobilityKernel< NUM_COMP, NUM_PHASE >;
   using Base::numPhase;
   using Base::m_phaseDens;
+  using Base::m_dPhaseDens;
   using Base::m_phaseVisc;
+  using Base::m_dPhaseVisc;
   using Base::m_dPhaseRelPerm_dPhaseVolFrac;
 
   /**
@@ -60,8 +62,6 @@ public:
                        RelativePermeabilityBase const & relperm )
     : Base( subRegion, fluid, relperm ),
     m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
-    m_dPhaseDens_dTemp( fluid.dPhaseDensity_dTemperature() ),
-    m_dPhaseVisc_dTemp( fluid.dPhaseViscosity_dTemperature() ),
     m_dPhaseMob_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dTemperature >() )
   {}
 
@@ -72,11 +72,12 @@ public:
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
 
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseDens_dTemp = m_dPhaseDens_dTemp[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseVisc = m_phaseVisc[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseVisc_dTemp = m_dPhaseVisc_dTemp[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseVisc = m_dPhaseVisc[ei][0];
     arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const dPhaseRelPerm_dPhaseVolFrac = m_dPhaseRelPerm_dPhaseVolFrac[ei][0];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dTemp = m_dPhaseVolFrac_dTemp[ei];
 
@@ -97,7 +98,7 @@ public:
 
       // Step 2: compute the derivative of phaseMob[ip] wrt temperature
       dPhaseMob_dTemp[ip] = dRelPerm_dT * phaseDens[ip] / phaseVisc[ip]
-                            + phaseMob * (dPhaseDens_dTemp[ip] / phaseDens[ip] - dPhaseVisc_dTemp[ip] / phaseVisc[ip] );
+                            + phaseMob * (dPhaseDens[ip][Deriv::dT] / phaseDens[ip] - dPhaseVisc[ip][Deriv::dT] / phaseVisc[ip] );
     } );
   }
 
@@ -107,12 +108,6 @@ protected:
 
   /// Views on thermal derivatives of phase volume fractions
   arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
-
-  /// Views on thermal derivatives of phase densities
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseDens_dTemp;
-
-  /// Views on thermal derivatives of phase viscosities
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseVisc_dTemp;
 
   // outputs
 
@@ -147,7 +142,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      IsothermalCompositionalMultiphaseBaseKernels::
+      isothermalCompositionalMultiphaseBaseKernels::
         internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
@@ -157,7 +152,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      IsothermalCompositionalMultiphaseBaseKernels::
+      isothermalCompositionalMultiphaseBaseKernels::
         internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
@@ -179,7 +174,7 @@ public:
  * @brief Define the interface for the assembly kernel in charge of flux terms
  */
 template< integer NUM_COMP, integer NUM_DOF, typename STENCILWRAPPER >
-class FaceBasedAssemblyKernel : public IsothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
+class FaceBasedAssemblyKernel : public isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >
 {
 public:
 
@@ -192,7 +187,7 @@ public:
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  using AbstractBase = IsothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
+  using AbstractBase = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernelBase;
   using DofNumberAccessor = AbstractBase::DofNumberAccessor;
   using CompFlowAccessors = AbstractBase::CompFlowAccessors;
   using MultiFluidAccessors = AbstractBase::MultiFluidAccessors;
@@ -207,11 +202,13 @@ public:
   using AbstractBase::m_dofNumber;
   using AbstractBase::m_gravCoef;
   using AbstractBase::m_phaseMob;
+  using AbstractBase::m_dPhaseMassDens;
   using AbstractBase::m_phaseCompFrac;
+  using AbstractBase::m_dPhaseCompFrac;
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
-  using Base = IsothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
+  using Base = isothermalCompositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
   using Base::numEqn;
@@ -230,12 +227,8 @@ public:
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >;
 
   using ThermalMultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::dPhaseMassDensity_dTemperature,
-                      extrinsicMeshData::multifluid::dPhaseCompFraction_dTemperature,
-                      extrinsicMeshData::multifluid::phaseEnthalpy,
-                      extrinsicMeshData::multifluid::dPhaseEnthalpy_dPressure,
-                      extrinsicMeshData::multifluid::dPhaseEnthalpy_dTemperature,
-                      extrinsicMeshData::multifluid::dPhaseEnthalpy_dGlobalCompFraction >;
+    StencilAccessors< extrinsicMeshData::multifluid::phaseEnthalpy,
+                      extrinsicMeshData::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
     StencilAccessors< extrinsicMeshData::thermalconductivity::effectiveConductivity >;
@@ -290,12 +283,8 @@ public:
     m_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::deltaTemperature {} ) ),
     m_dPhaseMob_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dTemperature {} ) ),
     m_dPhaseVolFrac_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature {} ) ),
-    m_dPhaseMassDens_dTemp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseMassDensity_dTemperature {} ) ),
-    m_dPhaseCompFrac_dTemp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dTemperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
-    m_dPhaseEnthalpy_dPres( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dPressure {} ) ),
-    m_dPhaseEnthalpy_dTemp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dTemperature {} ) ),
-    m_dPhaseEnthalpy_dComp( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy_dGlobalCompFraction {} ) ),
+    m_dPhaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseEnthalpy {} ) ),
     m_thermalConductivity( thermalConductivityAccessors.get( extrinsicMeshData::thermalconductivity::effectiveConductivity {} ) )
   {}
 
@@ -352,6 +341,8 @@ public:
   void computeFlux( localIndex const iconn,
                     StackVariables & stack ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     arraySlice2d< real64 > dCompFlux_dTSlice = stack.dCompFlux_dT.toSlice();
 
     real64 * energyFluxPtr = &(stack.energyFlux);
@@ -391,7 +382,7 @@ public:
         localIndex const esr = m_sesri( iconn, i );
         localIndex const ei  = m_sei( iconn, i );
 
-        real64 const dDens_dT = m_dPhaseMassDens_dTemp[er][esr][ei][0][ip];
+        real64 const dDens_dT = m_dPhaseMassDens[er][esr][ei][0][ip][Deriv::dT];
         dDensMean_dT[i] = 0.5 * dDens_dT;
       }
 
@@ -458,10 +449,10 @@ public:
       // Step 3.2: compute the derivative of component flux wrt temperature
 
       // slice some constitutive arrays to avoid too much indexing in component loop
-      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > phaseCompFracSub =
+      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP - 3 > phaseCompFracSub =
         m_phaseCompFrac[er_up][esr_up][ei_up][0][ip];
-      arraySlice1d< real64 const, multifluid::USD_PHASE_COMP-3 > dPhaseCompFrac_dTempSub =
-        m_dPhaseCompFrac_dTemp[er_up][esr_up][ei_up][0][ip];
+      arraySlice2d< real64 const, multifluid::USD_PHASE_COMP_DC - 3 > dPhaseCompFracSub =
+        m_dPhaseCompFrac[er_up][esr_up][ei_up][0][ip];
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
@@ -470,7 +461,7 @@ public:
         {
           dCompFlux_dTSlice[ke][ic] += dPhaseFlux_dT[ke] * ycp;
         }
-        dCompFlux_dTSlice[k_up][ic] += phaseFlux * dPhaseCompFrac_dTempSub[ic];
+        dCompFlux_dTSlice[k_up][ic] += phaseFlux * dPhaseCompFracSub[ic][Deriv::dT];
       }
 
       // Step 4: compute the enthalpy flux
@@ -489,14 +480,15 @@ public:
         }
       }
 
-      dEnergyFlux_dPSlice[k_up] += phaseFlux * m_dPhaseEnthalpy_dPres[er_up][esr_up][ei_up][0][ip];
-      dEnergyFlux_dTSlice[k_up] += phaseFlux * m_dPhaseEnthalpy_dTemp[er_up][esr_up][ei_up][0][ip];
+      dEnergyFlux_dPSlice[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dP];
+      dEnergyFlux_dTSlice[k_up] += phaseFlux * m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip][Deriv::dT];
 
       real64 dProp_dC[numComp]{};
       applyChainRule( numComp,
                       m_dCompFrac_dCompDens[er_up][esr_up][ei_up],
-                      m_dPhaseEnthalpy_dComp[er_up][esr_up][ei_up][0][ip],
-                      dProp_dC );
+                      m_dPhaseEnthalpy[er_up][esr_up][ei_up][0][ip],
+                      dProp_dC,
+                      Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dEnergyFlux_dCSlice[k_up][jc] += phaseFlux * dProp_dC[jc];
@@ -607,14 +599,10 @@ protected:
   /// Views on derivatives of phase mobilities, volume fractions, mass densities and phase comp fractions
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dTemp;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseVolFrac_dTemp;
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseMassDens_dTemp;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const m_dPhaseCompFrac_dTemp;
 
   /// Views on phase enthalpies
   ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_phaseEnthalpy;
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseEnthalpy_dPres;
-  ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const m_dPhaseEnthalpy_dTemp;
-  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy_dComp;
+  ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const m_dPhaseEnthalpy;
 
   /// View on thermal conductivity
   ElementViewConst< arrayView3d< real64 const > > m_thermalConductivity;
@@ -641,11 +629,6 @@ public:
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] targetRegionNames names of the target regions
-   * @param[in] fluidModelNames names of the fluid models
-   * @param[in] capPresModelNames names of the capillary pressure models
-   * @param[in] permeabilityModelNames names of the permeability models
-   * @param[in] thermalConductivityNames names of the thermal conductivity models
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -660,16 +643,11 @@ public:
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
-                   arrayView1d< string const > const & targetRegionNames,
-                   arrayView1d< string const > const & fluidModelNames,
-                   arrayView1d< string const > const & capPresModelNames,
-                   arrayView1d< string const > const & permeabilityModelNames,
-                   arrayView1d< string const > const & thermalConductivityModelNames,
                    real64 const & dt,
                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
                    arrayView1d< real64 > const & localRhs )
   {
-    IsothermalCompositionalMultiphaseBaseKernels::
+    isothermalCompositionalMultiphaseBaseKernels::
       internal::kernelLaunchSelectorCompSwitch( numComps, [&] ( auto NC )
     {
       integer constexpr NUM_COMP = NC();
@@ -682,11 +660,11 @@ public:
       using KERNEL_TYPE = FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
       typename KERNEL_TYPE::CompFlowAccessors compFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::ThermalCompFlowAccessors thermalCompFlowAccessors( elemManager, solverName );
-      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName, targetRegionNames, fluidModelNames );
-      typename KERNEL_TYPE::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName, targetRegionNames, fluidModelNames );
-      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName, targetRegionNames, capPresModelNames );
-      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName, targetRegionNames, permeabilityModelNames );
-      typename KERNEL_TYPE::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName, targetRegionNames, thermalConductivityModelNames );
+      typename KERNEL_TYPE::MultiFluidAccessors multiFluidAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::ThermalMultiFluidAccessors thermalMultiFluidAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, capPressureFlag, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
@@ -698,7 +676,7 @@ public:
 };
 
 
-} // namespace ThermalCompositionalMultiphaseFVMKernels
+} // namespace thermalCompositionalMultiphaseFVMKernels
 
 } // namespace geosx
 

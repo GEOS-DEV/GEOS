@@ -33,7 +33,7 @@
 namespace geosx
 {
 
-namespace IsothermalCompositionalMultiphaseBaseKernels
+namespace isothermalCompositionalMultiphaseBaseKernels
 {
 
 using namespace constitutive;
@@ -280,11 +280,9 @@ public:
     m_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
-    m_dPhaseFrac_dPres( fluid.dPhaseFraction_dPressure() ),
-    m_dPhaseFrac_dComp( fluid.dPhaseFraction_dGlobalCompFraction() ),
+    m_dPhaseFrac( fluid.dPhaseFraction() ),
     m_phaseDens( fluid.phaseDensity() ),
-    m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
-    m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() )
+    m_dPhaseDens( fluid.dPhaseDensity() )
   {}
 
   /**
@@ -298,15 +296,15 @@ public:
   void compute( localIndex const ei,
                 FUNC && phaseVolFractionKernelOp = NoOpFunc{} ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseDens_dPres = m_dPhaseDens_dPres[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens_dComp = m_dPhaseDens_dComp[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseFrac = m_phaseFrac[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const dPhaseFrac_dPres = m_dPhaseFrac_dPres[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac_dComp = m_dPhaseFrac_dComp[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseFrac = m_dPhaseFrac[ei][0];
     arraySlice1d< real64, compflow::USD_PHASE - 1 > const phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice1d< real64, compflow::USD_PHASE - 1 > const dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
     arraySlice2d< real64, compflow::USD_PHASE_DC - 1 > const dPhaseVolFrac_dComp = m_dPhaseVolFrac_dComp[ei];
@@ -344,12 +342,12 @@ public:
       phaseVolFrac[ip] = phaseFrac[ip] * phaseDensInv;
 
       dPhaseVolFrac_dPres[ip] =
-        (dPhaseFrac_dPres[ip] - phaseVolFrac[ip] * dPhaseDens_dPres[ip]) * phaseDensInv;
+        (dPhaseFrac[ip][Deriv::dP] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP]) * phaseDensInv;
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseVolFrac_dComp[ip][jc] =
-          (dPhaseFrac_dComp[ip][jc] - phaseVolFrac[ip] * dPhaseDens_dComp[ip][jc]) * phaseDensInv;
+          (dPhaseFrac[ip][Deriv::dC+jc] - phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dC+jc]) * phaseDensInv;
       }
 
       // apply chain rule to convert derivatives from global component fractions to densities
@@ -389,13 +387,11 @@ protected:
 
   /// Views on phase fractions
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseFrac;
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseFrac_dPres;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseFrac_dComp;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseFrac;
 
   /// Views on phase densities
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseDens;
-  arrayView3d< real64 const, multifluid::USD_PHASE > m_dPhaseDens_dPres;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens_dComp;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseDens;
 
 };
 
@@ -571,12 +567,10 @@ public:
     m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
     m_phaseDensOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseDensityOld >() ),
     m_phaseDens( fluid.phaseDensity() ),
-    m_dPhaseDens_dPres( fluid.dPhaseDensity_dPressure() ),
-    m_dPhaseDens_dComp( fluid.dPhaseDensity_dGlobalCompFraction() ),
+    m_dPhaseDens( fluid.dPhaseDensity() ),
     m_phaseCompFracOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseComponentFractionOld >() ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
-    m_dPhaseCompFrac_dPres( fluid.dPhaseCompFraction_dPressure() ),
-    m_dPhaseCompFrac_dComp( fluid.dPhaseCompFraction_dGlobalCompFraction() ),
+    m_dPhaseCompFrac( fluid.dPhaseCompFraction() ),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
   {}
@@ -661,6 +655,8 @@ public:
                             StackVariables & stack,
                             FUNC && phaseAmountKernelOp = NoOpFunc{} ) const
   {
+    using Deriv = multifluid::DerivativeOffset;
+
     // construct the slices for variables accessed multiple times
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
 
@@ -671,13 +667,11 @@ public:
 
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseDensOld = m_phaseDensOld[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > dPhaseDens_dPres = m_dPhaseDens_dPres[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens_dComp = m_dPhaseDens_dComp[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
 
     arraySlice2d< real64 const, compflow::USD_PHASE_COMP-1 > phaseCompFracOld = m_phaseCompFracOld[ei];
     arraySlice2d< real64 const, multifluid::USD_PHASE_COMP-2 > phaseCompFrac = m_phaseCompFrac[ei][0];
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP-2 > dPhaseCompFrac_dPres = m_dPhaseCompFrac_dPres[ei][0];
-    arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC-2 > dPhaseCompFrac_dComp = m_dPhaseCompFrac_dComp[ei][0];
+    arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC-2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
 
     // temporary work arrays
     real64 dPhaseAmount_dC[numComp]{};
@@ -690,11 +684,11 @@ public:
       real64 const phaseAmountOld = stack.poreVolumeOld * phaseVolFracOld[ip] * phaseDensOld[ip];
 
       real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
-                                     + stack.poreVolumeNew * (dPhaseVolFrac_dPres[ip] * phaseDens[ip]
-                                                              + phaseVolFrac[ip] * dPhaseDens_dPres[ip]);
+                                     + stack.poreVolumeNew * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
+                                                               + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
 
       // assemble density dependence
-      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens_dComp[ip], dPhaseAmount_dC );
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseDens[ip], dPhaseAmount_dC, Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * phaseVolFrac[ip]
@@ -710,7 +704,7 @@ public:
         real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
-                                           + phaseAmountNew * dPhaseCompFrac_dPres[ip][ic];
+                                           + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dP];
 
         stack.localResidual[ic] += phaseCompAmountNew - phaseCompAmountOld;
         stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
@@ -719,7 +713,7 @@ public:
         // (i.e. col number in local matrix)
 
         // assemble phase composition dependence
-        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac_dComp[ip][ic], dPhaseCompFrac_dC );
+        applyChainRule( numComp, dCompFrac_dCompDens, dPhaseCompFrac[ip][ic], dPhaseCompFrac_dC, Deriv::dC );
         for( integer jc = 0; jc < numComp; ++jc )
         {
           real64 const dPhaseCompAmount_dC = dPhaseCompFrac_dC[jc] * phaseAmountNew
@@ -788,7 +782,7 @@ public:
   void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
                  StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
+    using namespace compositionalMultiphaseUtilities;
 
     // apply equation/variable change transformation to the component mass balance equations
     real64 work[numDof]{};
@@ -864,23 +858,21 @@ protected:
   /// Views on the derivatives of comp fractions wrt component density
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dCompFrac_dCompDens;
 
-  /// Views on the phase volume fractions (excluding derivative wrt temperature)
+  /// Views on the phase volume fractions
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFracOld;
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac;
   arrayView2d< real64 const, compflow::USD_PHASE > const m_dPhaseVolFrac_dPres;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac_dCompDens;
 
-  /// Views on the phase densities (excluding derivative wrt temperature)
+  /// Views on the phase densities
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseDensOld;
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens;
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_dPhaseDens_dPres;
-  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseDens_dComp;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseDens;
 
-  /// Views on the phase component fraction (excluding derivative wrt temperature)
+  /// Views on the phase component fraction
   arrayView3d< real64 const, compflow::USD_PHASE_COMP > const m_phaseCompFracOld;
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_dPhaseCompFrac_dPres;
-  arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac_dComp;
+  arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac;
 
   /// View on the local CRS matrix
   CRSMatrixView< real64, globalIndex const > const m_localMatrix;
@@ -1380,7 +1372,7 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
   }
 }
 
-} // namespace IsothermalCompositionalMultiphaseBaseKernels
+} // namespace isothermalCompositionalMultiphaseBaseKernels
 
 } // namespace geosx
 

@@ -96,6 +96,6 @@ protected:
 
 };
 
-} // namespace GEOSX
+} // namespace geosx
 
 #endif /*GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_ */

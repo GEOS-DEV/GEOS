@@ -9,7 +9,9 @@ BrooksCoreyBakerRelativePermeability        node :ref:`DATASTRUCTURE_BrooksCorey
 BrooksCoreyCapillaryPressure                node :ref:`DATASTRUCTURE_BrooksCoreyCapillaryPressure`                
 BrooksCoreyRelativePermeability             node :ref:`DATASTRUCTURE_BrooksCoreyRelativePermeability`             
 CO2BrineEzrokhiFluid                        node :ref:`DATASTRUCTURE_CO2BrineEzrokhiFluid`                        
+CO2BrineEzrokhiThermalFluid                 node :ref:`DATASTRUCTURE_CO2BrineEzrokhiThermalFluid`                 
 CO2BrinePhillipsFluid                       node :ref:`DATASTRUCTURE_CO2BrinePhillipsFluid`                       
+CO2BrinePhillipsThermalFluid                node :ref:`DATASTRUCTURE_CO2BrinePhillipsThermalFluid`                
 CarmanKozenyPermeability                    node :ref:`DATASTRUCTURE_CarmanKozenyPermeability`                    
 CompositionalMultiphaseFluid                node :ref:`DATASTRUCTURE_CompositionalMultiphaseFluid`                
 CompressibleSinglePhaseFluid                node :ref:`DATASTRUCTURE_CompressibleSinglePhaseFluid`                
@@ -51,6 +53,7 @@ ProppantSolidProppantPermeability           node :ref:`DATASTRUCTURE_ProppantSol
 SlipDependentPermeability                   node :ref:`DATASTRUCTURE_SlipDependentPermeability`                   
 TableCapillaryPressure                      node :ref:`DATASTRUCTURE_TableCapillaryPressure`                      
 TableRelativePermeability                   node :ref:`DATASTRUCTURE_TableRelativePermeability`                   
+TableRelativePermeabilityHysteresis         node :ref:`DATASTRUCTURE_TableRelativePermeabilityHysteresis`         
 VanGenuchtenBakerRelativePermeability       node :ref:`DATASTRUCTURE_VanGenuchtenBakerRelativePermeability`       
 VanGenuchtenCapillaryPressure               node :ref:`DATASTRUCTURE_VanGenuchtenCapillaryPressure`               
 VolumeWeightedThermalConductivity           node :ref:`DATASTRUCTURE_VolumeWeightedThermalConductivity`           
