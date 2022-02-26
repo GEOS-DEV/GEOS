@@ -61,8 +61,7 @@ void ElementRegionManager::setMaxGlobalIndex()
   {
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
-
-  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOSX );
+  ObjectManagerBase::setMaxGlobalIndex();
 }
 
 

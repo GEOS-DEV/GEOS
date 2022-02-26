@@ -42,22 +42,16 @@ class LinearSolverParametersInput : public dataRepository::Group
 {
 public:
 
-  LinearSolverParametersInput() = delete;
-
   /// Constructor
   LinearSolverParametersInput( string const & name, Group * const parent );
-
-  /// Copy constructor
-  LinearSolverParametersInput( LinearSolverParametersInput && ) = default;
-
-  /// Destructor
-  virtual ~LinearSolverParametersInput() override = default;
 
   /// Catalog name
   static string catalogName() { return "LinearSolverParameters"; }
 
   /// Postprocessing of input
   virtual void postProcessInput() override;
+
+  virtual Group * createChild( string const & childKey, string const & childName ) override final;
 
   LinearSolverParameters const & get() const
   { return m_parameters; }
@@ -101,6 +95,16 @@ public:
     /// Krylov weakest tolerance key
     static constexpr char const * krylovWeakTolString() { return "krylovWeakestTol"; }
 
+    /// Relaxation weight key
+    static constexpr char const * relaxationWeightString() { return "relaxationWeight"; }
+
+    /// Chebyshev order key
+    static constexpr char const * chebyshevOrderString() { return "chebyshevOrder"; }
+    /// Number of eigenvalue estimation CG iterations key
+    static constexpr char const * chebyshevEigNumIterString() { return "chebyshevEigNumIter"; }
+
+    /// AMG number of sweeps key
+    static constexpr char const * amgNumCyclesString() { return "amgNumCycles"; }
     /// AMG number of sweeps key
     static constexpr char const * amgNumSweepsString() { return "amgNumSweeps"; }
     /// AMG smoother type key
@@ -129,11 +133,19 @@ public:
     static constexpr char const * amgAggressiveInterpTypeString() { return "amgAggressiveInterpType"; }
     /// AMG separate components flag
     static constexpr char const * amgSeparateComponentsString() { return "amgSeparateComponents"; }
+    /// AMG coarse grid threshold key
+    static constexpr char const * amgMaxCoarseSizeString() { return "amgMaxCoarseSize"; }
 
     /// ILU fill key
     static constexpr char const * iluFillString() { return "iluFill"; }
     /// ILU threshold key
     static constexpr char const * iluThresholdString() { return "iluThreshold"; }
+  };
+
+  /// Keys appearing in XML
+  struct groupKeyStruct
+  {
+    static constexpr char const * blockString() { return "Block"; }
   };
 
 private:

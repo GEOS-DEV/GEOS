@@ -74,7 +74,8 @@ template< typename FLOW_SOLVER >
 SinglePhasePoromechanics< FLOW_SOLVER >::SinglePhasePoromechanics( const string & name,
                                                                    Group * const parent )
   : Base( name, parent ),
-  m_isThermal( 0 )
+  m_isThermal( 0 ),
+  m_systemScaling( 0 )
 {
   this->registerWrapper( viewKeyStruct::isThermalString(), &m_isThermal ).
     setApplyDefaultValue( 0 ).
@@ -85,6 +86,11 @@ SinglePhasePoromechanics< FLOW_SOLVER >::SinglePhasePoromechanics( const string 
     setApplyDefaultValue( false ).
     setInputFlag( InputFlags::FALSE ).
     setDescription( "Flag to indicate that the solver is going to perform stress initialization" );
+
+  this->registerWrapper( viewKeyStruct::linearSystemScalingString(), &m_systemScaling ).
+     setInputFlag( InputFlags::OPTIONAL ).
+     setDefaultValue( m_systemScaling ).
+     setDescription( "Whether block system scaling should be performed" );
 
   LinearSolverParameters & linearSolverParameters = this->m_linearSolverParameters.get();
   linearSolverParameters.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanics;
@@ -230,13 +236,14 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::setupSystem( DomainPartition & dom
 
   if( !this->m_precond && this->m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
   {
-    createPreconditioner();
+    this->m_precond = createPreconditioner( domain );
   }
 }
 
 template< typename FLOW_SOLVER >
 void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPreSubGroups()
 {
+
   SolverBase::initializePostInitialConditionsPreSubGroups();
 
   arrayView1d< string const > const & poromechanicsTargetRegionNames =
@@ -259,17 +266,28 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::initializePostInitialConditionsPre
                                 FlowSolverBase::viewKeyStruct::isThermalString(), flowSolver()->getDataContext() ) );
   isFlowThermal = m_isThermal;
 
+  using StrategyType = LinearSolverParameters::MGR::StrategyType;
+  LinearSolverParameters & linParams = this->m_linearSolverParameters.get();
   if( m_isThermal )
   {
-    this->m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::thermalSinglePhasePoromechanics;
+    linParams.mgr.strategy = StrategyType::thermalSinglePhasePoromechanics;
   }
   else
   {
-    if( flowSolver()->getLinearSolverParameters().mgr.strategy == LinearSolverParameters::MGR::StrategyType::singlePhaseHybridFVM )
+    if( flowSolver()->getLinearSolverParameters().mgr.strategy == StrategyType::singlePhaseHybridFVM )
     {
-      this->m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::hybridSinglePhasePoromechanics;
+      linParams.mgr.strategy = StrategyType::hybridSinglePhasePoromechanics;
     }
   }
+
+  // Populate sub-block solver parameters for block preconditioner
+  linParams.block.resize( 2 );
+  linParams.block.subParams[toUnderlying( Base::SolverType::SolidMechanics )] = &solidMechanicsSolver()->getLinearSolverParameters();
+  linParams.block.subParams[toUnderlying( Base::SolverType::Flow )] = &flowSolver()->getLinearSolverParameters();
+
+  // For classical fixed-stress scheme the order must be mechanics-flow
+  linParams.block.order[toUnderlying( Base::SolverType::SolidMechanics )] = 0;
+  linParams.block.order[toUnderlying( Base::SolverType::Flow )] = 1;
 }
 
 template< typename FLOW_SOLVER >
@@ -394,31 +412,80 @@ void SinglePhasePoromechanics< FLOW_SOLVER >::assembleElementBasedTerms( real64 
 }
 
 template< typename FLOW_SOLVER >
-void SinglePhasePoromechanics< FLOW_SOLVER >::createPreconditioner()
+std::unique_ptr< PreconditionerBase< LAInterface > >
+SinglePhasePoromechanics< FLOW_SOLVER >::createPreconditioner( DomainPartition & domain ) const
 {
-  if( this->m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
+  LinearSolverParameters const & linParams = this->m_linearSolverParameters.get();
+  switch( linParams.preconditionerType )
   {
-    auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::UpperTriangular,
-                                                                           SchurComplementOption::RowsumDiagonalProbing,
-                                                                           BlockScalingOption::FrobeniusNorm );
+    case LinearSolverParameters::PreconditionerType::block:
+    {
+      auto precond = std::make_unique< BlockPreconditioner< LAInterface > >( linParams.block );
 
-    auto mechPrecond = LAInterface::createPreconditioner( solidMechanicsSolver()->getLinearSolverParameters() );
-    precond->setupBlock( 0,
-                         { { solidMechanics::totalDisplacement::key(), { 3, true } } },
-                         std::make_unique< SeparateComponentPreconditioner< LAInterface > >( 3, std::move( mechPrecond ) ) );
+      precond->setupBlock( linParams.block.order[toUnderlying( Base::SolverType::SolidMechanics )],
+                           { { solidMechanics::totalDisplacement::key(), { 3, true } } },
+                           solidMechanicsSolver()->createPreconditioner( domain ) );
+      precond->setupBlock( linParams.block.order[toUnderlying( Base::SolverType::Flow )],
+                           { { SinglePhaseBase::viewKeyStruct::elemDofFieldString(), { 1, true } } },
+                           flowSolver()->createPreconditioner( domain ) );
 
-    auto flowPrecond = LAInterface::createPreconditioner( flowSolver()->getLinearSolverParameters() );
-    precond->setupBlock( 1,
-                         { { flow::pressure::key(), { 1, true } } },
-                         std::move( flowPrecond ) );
-
-    this->m_precond = std::move( precond );
+      return precond;
+    }
+    default:
+    {
+      return SolverBase::createPreconditioner( domain );
+    }
   }
-  else
+}
+
+template< typename FLOW_SOLVER >
+void SinglePhasePoromechanics< FLOW_SOLVER >::solveLinearSystem( DofManager const & dofManager,
+                                                                 ParallelMatrix & matrix,
+                                                                 ParallelVector & rhs,
+                                                                 ParallelVector & solution )
+{
+  if( m_systemScaling )
   {
-    //TODO: Revisit this part such that is coherent across physics solver
-    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+    // Only compute this once and reuse for the entire simulation
+    if( !m_scalingVector.created() )
+    {
+      // TODO: currently only handles displacement and cell pressure blocks, ignores face pressure in HybridFVM
+      DofManager::SubComponent fields[2];
+      fields[toUnderlying( Base::SolverType::SolidMechanics )] = { solidMechanics::totalDisplacement::key(), DofManager::CompMask{ 3, true } };
+      fields[toUnderlying( Base::SolverType::Flow )] = { SinglePhaseBase::viewKeyStruct::elemDofFieldString(), DofManager::CompMask{ 1, true } };
+
+      real64 norms[2];
+      for( integer i = 0; i < 2; ++i )
+      {
+        ParallelMatrix P, A;
+        dofManager.makeRestrictor( { fields[i] }, matrix.comm(), true, P );
+        matrix.multiplyPtAP( P, A );
+        norms[i] = A.normFrobenius();
+      }
+      real64 const scale[2] = { std::min( norms[1] / norms[0], 1.0 ), std::min( norms[0] / norms[1], 1.0 ) };
+
+      m_scalingVector.create( rhs.localSize(), rhs.comm() );
+      m_scalingVector.set( 1.0 );
+
+      localIndex offset = 0;
+      arrayView1d< real64 > const values = m_scalingVector.open();
+      for( integer i = 0; i < 2; ++i )
+      {
+        localIndex const numDof = dofManager.numLocalDofs( fields[i].fieldName );
+        forAll< parallelDevicePolicy<> >( numDof, [=] GEOS_HOST_DEVICE ( localIndex const k )
+        {
+          values[offset + k] = scale[i];
+        } );
+        offset += numDof;
+      }
+      m_scalingVector.close();
+    }
+
+    matrix.leftScale( m_scalingVector );
+    rhs.pointwiseProduct( m_scalingVector, rhs );
   }
+
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 template< typename FLOW_SOLVER >

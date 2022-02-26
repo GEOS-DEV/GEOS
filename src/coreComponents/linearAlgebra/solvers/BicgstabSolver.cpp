@@ -19,6 +19,7 @@
 
 #include "BicgstabSolver.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/LinearOperator.hpp"
@@ -39,6 +40,7 @@ template< typename VECTOR >
 void BicgstabSolver< VECTOR >::solve( Vector const & b,
                                       Vector & x ) const
 {
+  GEOS_MARK_FUNCTION;
   Stopwatch watch;
 
   // Define vectors
@@ -91,8 +93,8 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
     // Compute r0.rk
     real64 const rho = r.dot( r0 );
 
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( rho_old )
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( omega )
+    GEOS_KRYLOV_BREAKDOWN_IF_ZERO( rho_old )
+    GEOS_KRYLOV_BREAKDOWN_IF_ZERO( omega )
 
     // Compute beta
     real64 const beta = rho / rho_old * alpha / omega;
@@ -107,7 +109,7 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
 
     // Compute alpha
     real64 const vr0 = v.dot( r0 );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( vr0 )
+    GEOS_KRYLOV_BREAKDOWN_IF_ZERO( vr0 )
     alpha = rho / vr0;
 
     // compute x = x + alpha*y
@@ -125,7 +127,7 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
 
     // Update omega
     real64 const t2 = t.dot( t );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( t2 )
+    GEOS_KRYLOV_BREAKDOWN_IF_ZERO( t2 )
     omega = t.dot( s ) / t2;
 
     // Update x = x + omega*z

@@ -718,25 +718,28 @@ real64 LagrangianContactSolver::calculateResidualNorm( real64 const & GEOS_UNUSE
   return globalResidualNorm[2];
 }
 
-void LagrangianContactSolver::createPreconditioner( DomainPartition const & domain )
+std::unique_ptr< PreconditionerBase< LAInterface > >
+LagrangianContactSolver::createPreconditioner( DomainPartition & domain ) const
 {
-  if( m_linearSolverParameters.get().preconditionerType == LinearSolverParameters::PreconditionerType::block )
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+  if( linParams.preconditionerType == LinearSolverParameters::PreconditionerType::block )
   {
     // TODO: move among inputs (xml)
     string const leadingBlockApproximation = "blockJacobi";
 
     LinearSolverParameters mechParams = m_solidSolver->getLinearSolverParameters();
-    // Because of boundary conditions
-    mechParams.isSymmetric = false;
 
     std::unique_ptr< BlockPreconditioner< LAInterface > > precond;
     std::unique_ptr< PreconditionerBase< LAInterface > > tracPrecond;
 
+    LinearSolverParameters::Block blockParams;
+    blockParams.shape = LinearSolverParameters::Block::Shape::LowerUpperTriangular;
+    blockParams.scaling = LinearSolverParameters::Block::Scaling::UserProvided;
+
     if( leadingBlockApproximation == "jacobi" )
     {
-      precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-                                                                        SchurComplementOption::FirstBlockDiagonal,
-                                                                        BlockScalingOption::UserProvided );
+      blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockDiagonal;
+      precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
       // Using GEOSX implementation of Jacobi preconditioner
       // tracPrecond = std::make_unique< PreconditionerJacobi< LAInterface > >();
 
@@ -747,9 +750,8 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     }
     else if( leadingBlockApproximation == "blockJacobi" )
     {
-      precond = std::make_unique< BlockPreconditioner< LAInterface > >( BlockShapeOption::LowerUpperTriangular,
-                                                                        SchurComplementOption::FirstBlockUserDefined,
-                                                                        BlockScalingOption::UserProvided );
+      blockParams.schurType = LinearSolverParameters::Block::SchurType::FirstBlockUserDefined;
+      precond = std::make_unique< BlockPreconditioner< LAInterface > >( blockParams );
       tracPrecond = std::make_unique< PreconditionerBlockJacobi< LAInterface > >( mechParams.dofsPerNode );
     }
     else
@@ -762,31 +764,19 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
                          { { contact::traction::key(), { 3, true } } },
                          std::move( tracPrecond ) );
 
-    if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
-    {
-      if( m_solidSolver->getRigidBodyModes().empty() )
-      {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getBaseDiscretization();
-        LAIHelperFunctions::computeRigidBodyModes( mesh,
-                                                   m_dofManager,
-                                                   { solidMechanics::totalDisplacement::key() },
-                                                   m_solidSolver->getRigidBodyModes() );
-      }
-    }
-
     // Preconditioner for the Schur complement: mechPrecond
-    std::unique_ptr< PreconditionerBase< LAInterface > > mechPrecond = LAInterface::createPreconditioner( mechParams, m_solidSolver->getRigidBodyModes() );
     precond->setupBlock( 1,
-                         { { solidMechanics::totalDisplacement::key(), { 3, true } } },
-                         std::move( mechPrecond ) );
+                         { { fields::solidMechanics::totalDisplacement::key(), { 3, true } } },
+                         m_solidSolver->createPreconditioner( domain ) );
 
-    m_precond = std::move( precond );
+    return precond;
   }
   else
   {
-    //TODO: Revisit this part such that is coherent across physics solver
-    //m_precond = LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+    // Unomment to use GEOSX's implementations of Krylov solvers instead of LA backend's
+    //return SolverBase::createPreconditioner( domain );
   }
+  return {};
 }
 
 void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain ) const

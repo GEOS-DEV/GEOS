@@ -368,7 +368,7 @@ real64 SolverBase::setNextDtBasedOnCFL( const geos::real64 & currentDt, geos::Do
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
-                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                       integer const cycleNumber,
                                        DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -414,12 +414,6 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   {
     Timer timer( m_timers["linear solver total"] );
 
-    // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-    if( m_precond )
-    {
-      m_precond->clear();
-    }
-
     {
       Timer timer_create( m_timers["linear solver create"] );
 
@@ -428,7 +422,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
     }
 
     // Output the linear system matrix/rhs for debugging purposes
-    debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
+    debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
     // Solve the linear system
     solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
@@ -848,7 +842,8 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
   for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
   {
-    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "  Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}",
+                                        dtAttempt, configurationLoopIter, newtonIter ) );
 
     {
       Timer timer( m_timers["assemble"] );
@@ -893,13 +888,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       // get residual norm
       residualNorm = calculateResidualNorm( time_n, stepDt, domain, m_dofManager, m_rhs.values() );
       GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        ( R ) = ( {:4.2e} )", residualNorm ) );
-    }
-
-    if( newtonIter > 0 )
-    {
-      GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Last LinSolve(iter,res) = ( {:3}, {:4.2e} )",
-                                          m_linearSolverResult.numIterations,
-                                          m_linearSolverResult.residualReduction ) );
     }
 
     // if the residual norm is less than the Newton tolerance we denote that we have
@@ -981,12 +969,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
     {
       Timer timer( m_timers["linear solver total"] );
 
-      // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-      if( m_precond )
-      {
-        m_precond->clear();
-      }
-
       {
         Timer timer_setup( m_timers["linear solver create"] );
 
@@ -1004,6 +986,10 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
 
     // Increment the solver statistics for reporting purposes
     m_solverStatistics.logNonlinearIteration( m_linearSolverResult.numIterations );
+
+    GEOS_LOG_LEVEL_RANK_0( 1, GEOS_FMT( "        Linear solve: ( iter, res ) = ( {:3}, {:4.2e} )",
+                                        m_linearSolverResult.numIterations,
+                                        m_linearSolverResult.residualReduction ) );
 
     // Output the linear system solution for debugging purposes
     debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
@@ -1094,6 +1080,12 @@ void SolverBase::setupSystem( DomainPartition & domain,
   solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
+std::unique_ptr< PreconditionerBase< LAInterface > >
+SolverBase::createPreconditioner( DomainPartition & GEOS_UNUSED_PARAM( domain ) ) const
+{
+  return LAInterface::createPreconditioner( m_linearSolverParameters.get() );
+}
+
 void SolverBase::assembleSystem( real64 const GEOS_UNUSED_PARAM( time ),
                                  real64 const GEOS_UNUSED_PARAM( dt ),
                                  DomainPartition & GEOS_UNUSED_PARAM( domain ),
@@ -1140,8 +1132,7 @@ void debugOutputLAObject( T const & obj,
 {
   if( toScreen )
   {
-    string const frame( screenName.size() + 1, '=' );
-    GEOS_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{2:=>{1}}\n{0}:\n{2:=>{1}}", screenName, screenName.size() + 1, "" ) );
     GEOS_LOG( obj );
   }
 
@@ -1149,7 +1140,7 @@ void debugOutputLAObject( T const & obj,
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
-    GEOS_LOG_RANK_0( screenName << " written to " << filename );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{} written to {}", screenName, filename ) );
   }
 }
 

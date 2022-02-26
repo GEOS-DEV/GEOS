@@ -68,6 +68,9 @@ public:
                ParallelVector & solution,
                bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
@@ -159,8 +162,6 @@ private:
   real64 const m_slidingCheckTolerance = 0.05;
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
-
-  void createPreconditioner( DomainPartition const & domain );
 
   void computeFaceDisplacementJump( DomainPartition & domain );
 

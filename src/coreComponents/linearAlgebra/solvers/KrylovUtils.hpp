@@ -24,7 +24,7 @@
  * @brief Exit solver iteration and report a breakdown if value too close to zero.
  * @param VAR the variable or expression
  */
-#define GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( VAR ) \
+#define GEOS_KRYLOV_BREAKDOWN_IF_ZERO( VAR ) \
   if( isZero( VAR, 0.0 ) )                  \
   {                                         \
     if( m_params.logLevel >= 1 )            \

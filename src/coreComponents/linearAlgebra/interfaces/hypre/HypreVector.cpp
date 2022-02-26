@@ -379,7 +379,7 @@ void HypreVector::write( string const & filename,
 
           for( HYPRE_Int i = 0; i < size; i++ )
           {
-            GEOS_FMT_TO( str, sizeof( str ), "{:>28.16e}\n", data[i] );
+            GEOS_FMT_TO( str, sizeof( str ), "{:>24.16e}\n", data[i] );
             os << str;
           }
         }

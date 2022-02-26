@@ -20,6 +20,7 @@
 #define GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/Span.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
 #include "mesh/FieldIdentifiers.hpp"
 
@@ -44,10 +45,10 @@ class DofManager
 public:
 
   /// Maximum number of components in a field
-  static int constexpr MAX_COMP = 32;
+  static int constexpr maxNumComp = 32;
 
   /// Type of component mask used by DofManager
-  using CompMask = ComponentMask< MAX_COMP >;
+  using CompMask = ComponentMask< maxNumComp >;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -325,7 +326,7 @@ public:
    * @brief @return number of components in a given field.
    * @param fieldName name of the field
    */
-  integer numComponents( string const & fieldName = "" ) const;
+  integer numComponents( string const & fieldName ) const;
 
   /**
    * @brief @return number of dof components across all fields.
@@ -344,6 +345,12 @@ public:
    * @param [in] fieldName name of the field.
    */
   globalIndex globalOffset( string const & fieldName ) const;
+
+  /**
+   * @brief @return support of the given field (list of mesh body/levels/regions)
+   * @param fieldName
+   */
+  Span< FieldSupport const > support( string const & fieldName ) const;
 
   /**
    * @brief Return an array of number of components per field, sorted by field registration order.
@@ -367,7 +374,7 @@ public:
     auto it = labels.begin();
     for( FieldDescription const & field : m_fields )
     {
-      localIndex const numComp = field.numComponents;
+      integer const numComp = field.numComponents;
       localIndex const numSupp = field.numLocalDof / numComp;
       for( localIndex i = 0; i < numSupp; ++i, it += numComp )
       {
@@ -396,7 +403,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                          CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -412,7 +419,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          SCALING_FACTOR_TYPE const & scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                         CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Copy values from simulation data arrays to vectors.
@@ -427,7 +434,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                          CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -442,7 +449,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                         CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Create a dof selection by filtering out excluded components
@@ -526,13 +533,13 @@ private:
   /**
    * @brief Get field index from string key
    */
-  localIndex getFieldIndex( string const & name ) const;
+  integer getFieldIndex( string const & name ) const;
 
   /**
    * @brief Compute and save dof offsets the field
    * @param fieldIndex index of the field
    */
-  void computeFieldDimensions( localIndex fieldIndex );
+  void computeFieldDimensions( integer const fieldIndex );
 
   /**
    * @brief Create index array for the field
@@ -572,11 +579,11 @@ private:
    * @param colFieldIndex index of col field (must be non-negative)
    */
   void countRowLengthsOneBlock( arrayView1d< localIndex > const & rowLengths,
-                                localIndex rowFieldIndex,
-                                localIndex colFieldIndex ) const;
+                                integer rowFieldIndex,
+                                integer colFieldIndex ) const;
 
   void countRowLengthsFromStencil( arrayView1d< localIndex > const & rowLengths,
-                                   localIndex fieldIndex ) const;
+                                   integer fieldIndex ) const;
 
   /**
    * @brief Populate the sparsity pattern for a coupling block between given fields.
@@ -587,15 +594,11 @@ private:
    * This private function is used as a building block by higher-level SetSparsityPattern()
    */
   void setSparsityPatternOneBlock( SparsityPatternView< globalIndex > const & pattern,
-                                   localIndex rowFieldIndex,
-                                   localIndex colFieldIndex ) const;
+                                   integer rowFieldIndex,
+                                   integer colFieldIndex ) const;
 
   void setSparsityPatternFromStencil( SparsityPatternView< globalIndex > const & pattern,
-                                      localIndex fieldIndex ) const;
-
-  template< int DIMS_PER_DOF >
-  void setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
-                                        localIndex fieldIndex ) const;
+                                      integer fieldIndex ) const;
 
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
@@ -634,14 +637,14 @@ private:
   /// Name of the manager (unique, for unique identification of index array keys)
   string m_name;
 
-  /// Pointer to corresponding MeshLevel
+  /// Pointer to domain that holds mesh bodies/levels
   DomainPartition * m_domain = nullptr;
 
   /// Array of field descriptions
   std::vector< FieldDescription > m_fields;
 
   /// Table of connector types within and between fields
-  std::map< std::pair< localIndex, localIndex >, CouplingDescription > m_coupling;
+  std::map< std::pair< integer, integer >, CouplingDescription > m_coupling;
 
   /// Flag indicating that DOFs have been reordered rank-wise.
   bool m_reordered = false;

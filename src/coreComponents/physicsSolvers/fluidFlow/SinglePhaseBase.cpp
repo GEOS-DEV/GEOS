@@ -354,12 +354,6 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
                                                                MeshLevel & mesh,
                                                                arrayView1d< string const > const & regionNames )
   {
-    FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { fields::flow::pressure::key() },
-                                     regionNames );
-
-    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
-
     // Moved the following part from ImplicitStepSetup to here since it only needs to be initialized once
     // They will be updated in applySystemSolution and ImplicitStepComplete, respectively
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion, SurfaceElementSubRegion >( regionNames, [&]( localIndex const,

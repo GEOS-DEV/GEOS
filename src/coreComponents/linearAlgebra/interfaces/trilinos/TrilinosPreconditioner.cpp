@@ -103,8 +103,8 @@ string getMLSmootherType( LinearSolverParameters::AMG::SmootherType const & valu
     { LinearSolverParameters::AMG::SmootherType::sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::l1sgs, "symmetric Gauss-Seidel" },
     { LinearSolverParameters::AMG::SmootherType::chebyshev, "Chebyshev" },
-    { LinearSolverParameters::AMG::SmootherType::ic0, "IC" },
-    { LinearSolverParameters::AMG::SmootherType::ilu0, "ILU" },
+    { LinearSolverParameters::AMG::SmootherType::ic, "IC" },
+    { LinearSolverParameters::AMG::SmootherType::ilu, "ILU" },
     { LinearSolverParameters::AMG::SmootherType::ilut, "ILUT" },
   };
 
@@ -154,14 +154,17 @@ createMLOperator( LinearSolverParameters const & params,
 
   list.set( "ML output", params.logLevel );
   list.set( "max levels", params.amg.maxLevels );
+  list.set( "coarse: max size", params.amg.maxCoarseSize );
   list.set( "aggregation: type", "Uncoupled" );
   list.set( "aggregation: threshold", params.amg.threshold );
-  list.set( "PDE equations", params.dofsPerNode );
+  list.set( "PDE equations", params.amg.numFunctions );
   list.set( "smoother: sweeps", params.amg.numSweeps );
   list.set( "prec type", getMLCycleType( params.amg.cycleType ) );
   list.set( "smoother: type", getMLSmootherType( params.amg.smootherType ) );
   list.set( "smoother: pre or post", getMLPreOrPostSmoothingType( params.amg.preOrPostSmoothing ) );
   list.set( "coarse: type", getMLCoarseType( params.amg.coarseType ) );
+  list.set( "repartition: enable", 1 );
+  list.set( "repartition: partitioner", "ParMETIS" );
 
   if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::constantModes )
   {
@@ -175,25 +178,24 @@ createMLOperator( LinearSolverParameters const & params,
     list.set( "null space: dimension", LvArray::integerConversion< integer >( nullSpacePointer.size( 0 ) ) );
   }
 
-  std::unique_ptr< Epetra_Operator > precond =
-    std::make_unique< ML_Epetra::MultiLevelPreconditioner >( matrix, list );
-
-  return precond;
+  return std::make_unique< ML_Epetra::MultiLevelPreconditioner >( matrix, list, true );
 }
 
 Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerType const & type )
 {
   static std::map< LinearSolverParameters::PreconditionerType, Ifpack::EPrecType > const typeMap =
   {
-    { LinearSolverParameters::PreconditionerType::iluk, Ifpack::ILU },
+    { LinearSolverParameters::PreconditionerType::ilu, Ifpack::ILU },
     { LinearSolverParameters::PreconditionerType::ilut, Ifpack::ILUT },
     { LinearSolverParameters::PreconditionerType::ic, Ifpack::IC },
     { LinearSolverParameters::PreconditionerType::ict, Ifpack::ICT },
     { LinearSolverParameters::PreconditionerType::chebyshev, Ifpack::CHEBYSHEV },
     { LinearSolverParameters::PreconditionerType::jacobi, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::l1jacobi, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::fgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::bgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::sgs, Ifpack::POINT_RELAXATION },
+    { LinearSolverParameters::PreconditionerType::l1sgs, Ifpack::POINT_RELAXATION },
     { LinearSolverParameters::PreconditionerType::direct, Ifpack::AMESOS }
   };
 
@@ -202,11 +204,16 @@ Ifpack::EPrecType getIfpackPrecondType( LinearSolverParameters::PreconditionerTy
 }
 string getIfpackRelaxationType( LinearSolverParameters::PreconditionerType const & type )
 {
+  // Trilinos does not implement l1 smoother variants, so we map them to regular
+  // smoothers for compatibility with input files designed for hypre.
   static std::map< LinearSolverParameters::PreconditionerType, string > const typeMap =
   {
     { LinearSolverParameters::PreconditionerType::jacobi, "Jacobi" },
+    { LinearSolverParameters::PreconditionerType::l1jacobi, "Jacobi" },
     { LinearSolverParameters::PreconditionerType::fgs, "Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::bgs, "Gauss-Seidel" },
     { LinearSolverParameters::PreconditionerType::sgs, "symmetric Gauss-Seidel" },
+    { LinearSolverParameters::PreconditionerType::l1sgs, "symmetric Gauss-Seidel" },
   };
 
   GEOS_LAI_ASSERT_MSG( typeMap.count( type ) > 0, "Unsupported Trilinos/Ifpack preconditioner option: " << type );
@@ -245,6 +252,11 @@ createIfpackOperator( LinearSolverParameters const & params,
       list.set( "fact: ict level-of-fill", std::max( real64( params.ifact.fill ), 1.0 ) );
       break;
     }
+    case Ifpack::CHEBYSHEV:
+    {
+      list.set( "relaxation: sweeps", params.chebyshev.order );
+      list.set( "chebyshev: eigenvalue max iterations", params.chebyshev.eigNumIter );
+    }
     default:
     {
       break;
@@ -266,11 +278,19 @@ EpetraMatrix const & TrilinosPreconditioner::setupPreconditioningMatrix( EpetraM
     mat.separateComponentFilter( m_precondMatrix, m_params.dofsPerNode );
     return m_precondMatrix;
   }
-  return mat;
+  else
+  {
+    // To avoid the issue of ML destructor crashing if matrix has been disposed of,
+    // we always perform setup on a copy of the input matrix
+    m_precondMatrix = mat;
+  }
+  return m_precondMatrix;
 }
 
 void TrilinosPreconditioner::setup( Matrix const & mat )
 {
+  m_precond.reset();
+
   EpetraMatrix const & precondMat = setupPreconditioningMatrix( mat );
   Base::setup( precondMat );
 
@@ -286,11 +306,13 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
       break;
     }
     case LinearSolverParameters::PreconditionerType::jacobi:
+    case LinearSolverParameters::PreconditionerType::l1jacobi:
     case LinearSolverParameters::PreconditionerType::fgs:
     case LinearSolverParameters::PreconditionerType::bgs:
     case LinearSolverParameters::PreconditionerType::sgs:
+    case LinearSolverParameters::PreconditionerType::l1sgs:
     case LinearSolverParameters::PreconditionerType::chebyshev:
-    case LinearSolverParameters::PreconditionerType::iluk:
+    case LinearSolverParameters::PreconditionerType::ilu:
     case LinearSolverParameters::PreconditionerType::ilut:
     case LinearSolverParameters::PreconditionerType::ic:
     case LinearSolverParameters::PreconditionerType::ict:
@@ -301,7 +323,6 @@ void TrilinosPreconditioner::setup( Matrix const & mat )
     }
     case LinearSolverParameters::PreconditionerType::none:
     {
-      m_precond.reset();
       break;
     }
     default:

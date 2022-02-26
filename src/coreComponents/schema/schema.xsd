@@ -1651,13 +1651,16 @@ stress - traction is applied to the faces as specified by the inner product of i
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="LinearSolverParametersType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="Block" type="BlockType" maxOccurs="1" />
+		</xsd:choice>
 		<!--amgAggressiveCoarseningLevels => AMG number of levels for aggressive coarsening-->
 		<xsd:attribute name="amgAggressiveCoarseningLevels" type="integer" default="0" />
 		<!--amgAggressiveCoarseningPaths => AMG number of paths for aggressive coarsening-->
 		<xsd:attribute name="amgAggressiveCoarseningPaths" type="integer" default="1" />
 		<!--amgAggressiveInterpType => AMG aggressive interpolation algorithm. Available options are: ``default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass``-->
 		<xsd:attribute name="amgAggressiveInterpType" type="geos_LinearSolverParameters_AMG_AggInterpType" default="multipass" />
-		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|direct|bgs``-->
+		<!--amgCoarseSolver => AMG coarsest level solver/smoother type. Available options are: ``default``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``direct``, ``bgs``-->
 		<xsd:attribute name="amgCoarseSolver" type="geos_LinearSolverParameters_AMG_CoarseType" default="direct" />
 		<!--amgCoarseningType => AMG coarsening algorithm. Available options are: ``default|CLJP|RugeStueben|Falgout|PMIS|HMIS``-->
 		<xsd:attribute name="amgCoarseningType" type="geos_LinearSolverParameters_AMG_CoarseningType" default="HMIS" />
@@ -1665,8 +1668,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="amgInterpolationMaxNonZeros" type="integer" default="4" />
 		<!--amgInterpolationType => AMG interpolation algorithm. Available options are: ``default|modifiedClassical|direct|multipass|extendedI|standard|extended|directBAMG|modifiedExtended|modifiedExtendedI|modifiedExtendedE``-->
 		<xsd:attribute name="amgInterpolationType" type="geos_LinearSolverParameters_AMG_InterpType" default="extendedI" />
-		<!--amgNullSpaceType => AMG near null space approximation. Available options are:``constantModes|rigidBodyModes``-->
+		<!--amgMaxCoarseSize => AMG threshold for coarse grid size-->
+		<xsd:attribute name="amgMaxCoarseSize" type="integer" default="9" />
+		<!--amgNullSpaceType => AMG near null space approximation. Available options are: ``constantModes``, ``rigidBodyModes``-->
 		<xsd:attribute name="amgNullSpaceType" type="geos_LinearSolverParameters_AMG_NullSpaceType" default="constantModes" />
+		<!--amgNumCycles => AMG number of cycles-->
+		<xsd:attribute name="amgNumCycles" type="integer" default="1" />
 		<!--amgNumFunctions => AMG number of functions-->
 		<xsd:attribute name="amgNumFunctions" type="integer" default="1" />
 		<!--amgNumSweeps => AMG smoother sweeps-->
@@ -1675,13 +1682,17 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="amgRelaxWeight" type="real64" default="1" />
 		<!--amgSeparateComponents => AMG apply separate component filter for multi-variable problems-->
 		<xsd:attribute name="amgSeparateComponents" type="integer" default="0" />
-		<!--amgSmootherType => AMG smoother type. Available options are: ``default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict``-->
+		<!--amgSmootherType => AMG smoother type. Available options are: ``default``, ``jacobi``, ``l1jacobi``, ``fgs``, ``bgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``ilu``, ``ilut``, ``ic``, ``ict``-->
 		<xsd:attribute name="amgSmootherType" type="geos_LinearSolverParameters_AMG_SmootherType" default="l1sgs" />
 		<!--amgThreshold => AMG strength-of-connection threshold-->
 		<xsd:attribute name="amgThreshold" type="real64" default="0" />
+		<!--chebyshevEigNumIter => Number of eigenvalue estimation CG iterations-->
+		<xsd:attribute name="chebyshevEigNumIter" type="integer" default="10" />
+		<!--chebyshevOrder => Chebyshev order-->
+		<xsd:attribute name="chebyshevOrder" type="integer" default="2" />
 		<!--directCheckResidual => Whether to check the linear system solution residual-->
 		<xsd:attribute name="directCheckResidual" type="integer" default="0" />
-		<!--directColPerm => How to permute the columns. Available options are: ``none|MMD_AtplusA|MMD_AtA|colAMD|metis|parmetis``-->
+		<!--directColPerm => How to permute the columns. Available options are: ``none``, ``MMD_AtplusA``, ``MMD_AtA``, ``colAMD``, ``metis``, ``parmetis``-->
 		<xsd:attribute name="directColPerm" type="geos_LinearSolverParameters_Direct_ColPerm" default="metis" />
 		<!--directEquil => Whether to scale the rows and columns of the matrix-->
 		<xsd:attribute name="directEquil" type="integer" default="1" />
@@ -1691,7 +1702,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="directParallel" type="integer" default="1" />
 		<!--directReplTinyPivot => Whether to replace tiny pivots by sqrt(epsilon)*norm(A)-->
 		<xsd:attribute name="directReplTinyPivot" type="integer" default="1" />
-		<!--directRowPerm => How to permute the rows. Available options are: ``none|mc64``-->
+		<!--directRowPerm => How to permute the rows. Available options are: ``none``, ``mc64``-->
 		<xsd:attribute name="directRowPerm" type="geos_LinearSolverParameters_Direct_RowPerm" default="mc64" />
 		<!--iluFill => ILU(K) fill factor-->
 		<xsd:attribute name="iluFill" type="integer" default="0" />
@@ -1712,13 +1723,38 @@ the relative residual norm satisfies:
 		<xsd:attribute name="krylovWeakestTol" type="real64" default="0.001" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs``-->
-		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="iluk" />
-		<!--solverType => Linear solver type. Available options are: ``direct|cg|gmres|fgmres|bicgstab|preconditioner``-->
+		<!--preconditionerType => Preconditioner type. Available options are: ``none``, ``jacobi``, ``l1jacobi``, ``fgs``, ``sgs``, ``l1sgs``, ``chebyshev``, ``ilu``, ``ilut``, ``ic``, ``ict``, ``amg``, ``mgr``, ``block``, ``direct``, ``bgs``-->
+		<xsd:attribute name="preconditionerType" type="geos_LinearSolverParameters_PreconditionerType" default="ilu" />
+		<!--relaxationWeight => Relaxation weight (omega) for stationary iterations-->
+		<xsd:attribute name="relaxationWeight" type="real64" default="0.666667" />
+		<!--solverType => Linear solver type. Available options are: ``direct``, ``cg``, ``gmres``, ``fgmres``, ``bicgstab``, ``richardson``, ``preconditioner``-->
 		<xsd:attribute name="solverType" type="geos_LinearSolverParameters_SolverType" default="direct" />
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
 		<xsd:attribute name="stopIfError" type="integer" default="1" />
 	</xsd:complexType>
+	<xsd:complexType name="BlockType">
+		<!--scaling => Block scaling type, options: ``none``, ``frobenius``, ``user``-->
+		<xsd:attribute name="scaling" type="geos_LinearSolverParameters_Block_Scaling" default="frobenius" />
+		<!--schurType => Schur complement type, options: ``none``, ``diagonal``, ``probing``, ``user``-->
+		<xsd:attribute name="schurType" type="geos_LinearSolverParameters_Block_SchurType" default="probing" />
+		<!--shape => Block preconditioner shape, options: ``D``, ``DU``, ``LD``, ``LDU``-->
+		<xsd:attribute name="shape" type="geos_LinearSolverParameters_Block_Shape" default="DU" />
+	</xsd:complexType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Block_Scaling">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|frobenius|user" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Block_SchurType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|none|diagonal|probing|user" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geos_LinearSolverParameters_Block_Shape">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|D|DU|LD|LDU" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_AggInterpType">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|default|extendedIStage2|standardStage2|extendedStage2|multipass|modifiedExtended|modifiedExtendedI|modifiedExtendedE|modifiedMultipass" />
@@ -1746,7 +1782,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_AMG_SmootherType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu0|ilut|ic0|ict" />
+			<xsd:pattern value=".*[\[\]`$].*|default|jacobi|l1jacobi|fgs|bgs|sgs|l1sgs|chebyshev|ilu|ilut|ic|ict" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_Direct_ColPerm">
@@ -1761,12 +1797,12 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_PreconditionerType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs" />
+			<xsd:pattern value=".*[\[\]`$].*|none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|ilu|ilut|ic|ict|amg|mgr|block|direct|bgs" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:simpleType name="geos_LinearSolverParameters_SolverType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|direct|cg|gmres|fgmres|bicgstab|preconditioner" />
+			<xsd:pattern value=".*[\[\]`$].*|direct|cg|gmres|fgmres|bicgstab|richardson|preconditioner" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="NonlinearSolverParametersType">
@@ -2653,6 +2689,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="isMatrixPoroelastic" type="integer" default="0" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--linearSystemScaling => Whether block system scaling should be performed-->
+		<xsd:attribute name="linearSystemScaling" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxNumResolves => Value to indicate how many resolves may be executed to perform surface generation after the execution of flow and mechanics solver. -->
@@ -2977,6 +3015,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--linearSystemScaling => Whether block system scaling should be performed-->
+		<xsd:attribute name="linearSystemScaling" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
@@ -3023,6 +3063,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--linearSystemScaling => Whether block system scaling should be performed-->
+		<xsd:attribute name="linearSystemScaling" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--solidSolverName => Name of the solid solver used by the coupled solver-->
@@ -3109,6 +3151,8 @@ Local - Add stabilization only to interiors of macro elements.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--isThermal => Flag indicating whether the problem is thermal or not. Set isThermal="1" to enable the thermal coupling-->
 		<xsd:attribute name="isThermal" type="integer" default="0" />
+		<!--linearSystemScaling => Whether block system scaling should be performed-->
+		<xsd:attribute name="linearSystemScaling" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--reservoirAndWellsSolverName => Name of the reservoirAndWells solver used by the coupled solver-->

@@ -12,6 +12,10 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+/**
+ * @file KrylovSolver.hpp
+ */
+
 #ifndef GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
 #define GEOS_LINEARALGEBRA_SOLVERS_KRYLOVSOLVER_HPP_
 
@@ -46,9 +50,10 @@ public:
    * @param precond preconditioning operator (must be set up by the user prior to calling solve()/apply())
    * @return an owning pointer to the newly instantiated solver
    */
-  static std::unique_ptr< KrylovSolver< VECTOR > > create( LinearSolverParameters const & parameters,
-                                                           LinearOperator< VECTOR > const & matrix,
-                                                           LinearOperator< VECTOR > const & precond );
+  static std::unique_ptr< KrylovSolver< VECTOR > >
+  create( LinearSolverParameters const & parameters,
+          LinearOperator< VECTOR > const & matrix,
+          LinearOperator< VECTOR > const & precond );
 
   /**
    * @brief Constructor.
@@ -61,21 +66,14 @@ public:
                 LinearOperator< Vector > const & precond );
 
   /**
-   * @brief Virtual destructor
-   */
-  virtual ~KrylovSolver() override = default;
-
-  /**
    * @brief Solve preconditioned system
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
   virtual void solve( Vector const & b, Vector & x ) const = 0;
 
-
   /**
    * @brief Apply operator to a vector.
-   *
    * @param src Input vector (src).
    * @param dst Output vector (dst).
    */

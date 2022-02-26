@@ -121,13 +121,11 @@ void checkRelativeError( real64 const v1, real64 const v2, real64 const relTol, 
   EXPECT_PRED_FORMAT4( checkRelativeErrorFormat, v1, v2, relTol, absTol );
 }
 
-template< typename ROW_INDEX, typename COL_INDEX, typename VALUE >
-void compareMatrixRow( ROW_INDEX const rowNumber, VALUE const relTol, VALUE const absTol,
+template< typename COL_INDEX, typename VALUE >
+void compareMatrixRow( VALUE const relTol, VALUE const absTol,
                        localIndex const length1, COL_INDEX const * const indices1, VALUE const * const values1,
                        localIndex const length2, COL_INDEX const * const indices2, VALUE const * const values2 )
 {
-  SCOPED_TRACE( "Row " + std::to_string( rowNumber ));
-
   EXPECT_EQ( length1, length2 );
 
   for( localIndex j1 = 0, j2 = 0; j1 < length1 && j2 < length2; ++j1, ++j2 )
@@ -152,17 +150,31 @@ void compareMatrixRow( ROW_INDEX const rowNumber, VALUE const relTol, VALUE cons
   }
 }
 
-template< typename ROW_INDEX, typename COL_INDEX, typename VALUE >
-void compareMatrixRow( ROW_INDEX const rowNumber, VALUE const relTol, VALUE const absTol,
-                       arraySlice1d< COL_INDEX const > indices1, arraySlice1d< VALUE const > values1,
-                       arraySlice1d< COL_INDEX const > indices2, arraySlice1d< VALUE const > values2 )
+template< typename T, typename COL_INDEX >
+void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
+                           CRSMatrixView< T const, COL_INDEX const > const & matrix2,
+                           real64 const relTol = DEFAULT_REL_TOL,
+                           real64 const absTol = DEFAULT_ABS_TOL,
+                           globalIndex const rowOffset = 0 )
 {
-  ASSERT_EQ( indices1.size(), values1.size() );
-  ASSERT_EQ( indices2.size(), values2.size() );
+  ASSERT_EQ( matrix1.numRows(), matrix2.numRows() );
+  ASSERT_EQ( matrix1.numColumns(), matrix2.numColumns() );
 
-  compareMatrixRow( rowNumber, relTol, absTol,
-                    indices1.size(), indices1.dataIfContiguous(), values1.dataIfContiguous(),
-                    indices2.size(), indices2.dataIfContiguous(), values2.dataIfContiguous() );
+  matrix1.move( hostMemorySpace, false );
+  matrix2.move( hostMemorySpace, false );
+
+  // check the accuracy across local rows
+  for( localIndex i = 0; i < matrix1.numRows(); ++i )
+  {
+    SCOPED_TRACE( GEOS_FMT( "Row {}", i + rowOffset ) );
+    compareMatrixRow( relTol, absTol,
+                      matrix1.numNonZeros( i ),
+                      matrix1.getColumns( i ).dataIfContiguous(),
+                      matrix1.getEntries( i ).dataIfContiguous(),
+                      matrix2.numNonZeros( i ),
+                      matrix2.getColumns( i ).dataIfContiguous(),
+                      matrix2.getEntries( i ).dataIfContiguous() );
+  }
 }
 
 template< typename MATRIX >
@@ -177,45 +189,10 @@ void compareMatrices( MATRIX const & matrix1,
   ASSERT_EQ( matrix1.numLocalRows(), matrix2.numLocalRows() );
   ASSERT_EQ( matrix1.numLocalCols(), matrix2.numLocalCols() );
 
-  array1d< globalIndex > indices1, indices2;
-  array1d< real64 > values1, values2;
+  CRSMatrix< real64, globalIndex > const mat1 = matrix1.extract();
+  CRSMatrix< real64, globalIndex > const mat2 = matrix2.extract();
 
-  // check the accuracy across local rows
-  for( globalIndex i = matrix1.ilower(); i < matrix1.iupper(); ++i )
-  {
-    indices1.resize( matrix1.rowLength( i ) );
-    values1.resize( matrix1.rowLength( i ) );
-    matrix1.getRowCopy( i, indices1, values1 );
-
-    indices2.resize( matrix2.rowLength( i ) );
-    values2.resize( matrix2.rowLength( i ) );
-    matrix2.getRowCopy( i, indices2, values2 );
-
-    compareMatrixRow( i, relTol, absTol,
-                      indices1.size(), indices1.data(), values1.data(),
-                      indices2.size(), indices2.data(), values2.data() );
-  }
-}
-
-template< typename T, typename COL_INDEX >
-void compareLocalMatrices( CRSMatrixView< T const, COL_INDEX const > const & matrix1,
-                           CRSMatrixView< T const, COL_INDEX const > const & matrix2,
-                           real64 const relTol = DEFAULT_REL_TOL,
-                           real64 const absTol = DEFAULT_ABS_TOL )
-{
-  ASSERT_EQ( matrix1.numRows(), matrix2.numRows() );
-  ASSERT_EQ( matrix1.numColumns(), matrix2.numColumns() );
-
-  matrix1.move( hostMemorySpace, false );
-  matrix2.move( hostMemorySpace, false );
-
-  // check the accuracy across local rows
-  for( localIndex i = 0; i < matrix1.numRows(); ++i )
-  {
-    compareMatrixRow( i, relTol, absTol,
-                      matrix1.getColumns( i ), matrix1.getEntries( i ),
-                      matrix2.getColumns( i ), matrix2.getEntries( i ) );
-  }
+  compareLocalMatrices( mat1.toViewConst(), mat2.toViewConst(), relTol, absTol, matrix1.ilower() );
 }
 
 } // namespace testing

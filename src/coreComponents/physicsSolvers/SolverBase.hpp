@@ -327,6 +327,14 @@ public:
                bool const setSparsity = true );
 
   /**
+   * @brief Create a preconditioner for this solver's linear system.
+   * @param domain the domain containing the mesh and fields
+   * @return the newly created preconditioner object
+   */
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const;
+
+  /**
    * @brief function to assemble the linear system matrix and rhs
    * @param time the time at the beginning of the step
    * @param dt the desired timestep

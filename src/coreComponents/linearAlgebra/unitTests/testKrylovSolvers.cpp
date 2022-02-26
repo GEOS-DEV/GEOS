@@ -54,6 +54,16 @@ LinearSolverParameters params_GMRES()
   return parameters;
 }
 
+LinearSolverParameters params_Richardson()
+{
+  LinearSolverParameters parameters;
+  parameters.krylov.relTolerance = 1e-4;
+  parameters.krylov.maxIterations = 500;
+  parameters.solverType = geos::LinearSolverParameters::SolverType::richardson;
+  parameters.relaxation.weight = 0.2;
+  return parameters;
+}
+
 template< typename OPERATOR, typename PRECOND, typename VECTOR >
 class KrylovSolverTestBase : public ::testing::Test
 {
@@ -153,10 +163,16 @@ TYPED_TEST_P( KrylovSolverTest, GMRES )
   this->test( params_GMRES() );
 }
 
+TYPED_TEST_P( KrylovSolverTest, Richardson )
+{
+  this->test( params_Richardson() );
+}
+
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverTest,
                              CG,
                              BiCGSTAB,
-                             GMRES );
+                             GMRES,
+                             Richardson );
 
 #ifdef GEOSX_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverTest, TrilinosInterface, );
@@ -243,10 +259,17 @@ TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
   this->test( params_GMRES() );
 }
 
+TYPED_TEST_P( KrylovSolverBlockTest, Richardson )
+{
+  this->test( params_Richardson() );
+}
+
+
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverBlockTest,
                              CG,
                              BiCGSTAB,
-                             GMRES );
+                             GMRES,
+                             Richardson );
 
 #ifdef GEOSX_USE_TRILINOS
 INSTANTIATE_TYPED_TEST_SUITE_P( Trilinos, KrylovSolverBlockTest, TrilinosInterface, );
