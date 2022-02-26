@@ -16,8 +16,8 @@
  * @file TransposeOperator.hpp
  */
 
-#ifndef GEOS_LINEARALGEBRA_TRANSPOSEMATRIXOPERATOR_HPP_
-#define GEOS_LINEARALGEBRA_TRANSPOSEMATRIXOPERATOR_HPP_
+#ifndef GEOS_LINEARALGEBRA_UTILITIES_TRANSPOSEOPERATOR_HPP_
+#define GEOS_LINEARALGEBRA_UTILITIES_TRANSPOSEOPERATOR_HPP_
 
 #include "linearAlgebra/common/LinearOperator.hpp"
 
@@ -26,21 +26,21 @@ namespace geos
 
 /**
  * @brief Simple class that wraps a matrix and represents its transpose as a linear operator.
- * @tparam LAI the linear algebra interface
+ * @tparam MATRIX the linear algebra matrix type
  */
-template< typename LAI >
-class TransposeOperator : public LinearOperator< typename LAI::ParallelVector >
+template< typename MATRIX >
+class TransposeOperator : public LinearOperator< typename MATRIX::Vector >
 {
 public:
 
   /// Alias for base type
-  using Base = LinearOperator< typename LAI::ParallelVector >;
+  using Base = LinearOperator< typename MATRIX::Vector >;
 
   /// Alias for vector type
   using Vector = typename Base::Vector;
 
   /// Alias for matrix type
-  using Matrix = typename LAI::ParallelMatrix;
+  using Matrix = MATRIX;
 
   /**
    * @brief Constructor.
@@ -50,11 +50,6 @@ public:
     : Base(),
     m_matrix( mat )
   { }
-
-  /**
-   * @brief Destructor.
-   */
-  virtual ~TransposeOperator() override = default;
 
   /**
    * @brief Apply operator to a vector.
@@ -69,8 +64,7 @@ public:
   }
 
   /**
-   * @brief Get the number of global rows.
-   * @return Number of global rows in the operator.
+   * @brief @return the number of global rows.
    */
   virtual globalIndex numGlobalRows() const override
   {
@@ -78,8 +72,7 @@ public:
   }
 
   /**
-   * @brief Get the number of global columns.
-   * @return Number of global columns in the operator.
+   * @brief @return the number of global columns.
    */
   virtual globalIndex numGlobalCols() const override
   {
@@ -87,8 +80,7 @@ public:
   }
 
   /**
-   * @brief Get the number of local rows.
-   * @return Number of local rows in the operator.
+   * @brief @return the number of local rows.
    */
   virtual localIndex numLocalRows() const override
   {
@@ -96,8 +88,7 @@ public:
   }
 
   /**
-   * @brief Get the number of local columns.
-   * @return Number of local columns in the operator.
+   * @brief @return the number of local columns.
    */
   virtual localIndex numLocalCols() const override
   {
@@ -120,4 +111,4 @@ private:
 
 }
 
-#endif //GEOS_LINEARALGEBRA_TRANSPOSEMATRIXOPERATOR_HPP_
+#endif //GEOS_LINEARALGEBRA_UTILITIES_TRANSPOSEOPERATOR_HPP_

@@ -34,7 +34,7 @@ namespace geos
  *        from Y. Saad (2003).
  */
 template< typename VECTOR >
-class BicgstabSolver : public KrylovSolver< VECTOR >
+class BicgstabSolver final : public KrylovSolver< VECTOR >
 {
 public:
 
@@ -71,9 +71,9 @@ public:
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
-  virtual void solve( Vector const & b, Vector & x ) const override final;
+  virtual void solve( Vector const & b, Vector & x ) const override;
 
-  virtual string methodName() const override final
+  virtual string methodName() const override
   {
     return "BiCGStab";
   };

@@ -205,144 +205,67 @@ MATRIX permuteMatrix( MATRIX const & matrix,
 /**
  * @brief Computes rigid body modes
  * @tparam VECTOR output vector type
- * @param mesh the mesh
- * @param dofManager the degree-of-freedom manager
- * @param selection list of field names
- * @param rigidBodyModes the output array of linear algebra vectors containing RBMs
+ * @param nodePosition array of node coordinates
+ * @param dofIndex array of nodal degree-of-freedom indices
+ * @param dofOffset global dof offset for displacement field
+ * @param numLocalDof the number of locally owned displacement dofs
+ * @return the output array of linear algebra vectors containing RBMs
  */
 template< typename VECTOR >
-void computeRigidBodyModes( MeshLevel const & mesh,
-                            DofManager const & dofManager,
-                            std::vector< string > const & selection,
-                            array1d< VECTOR > & rigidBodyModes )
+array1d< VECTOR >
+computeRigidBodyModes( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                       arrayView1d< globalIndex const > const & dofIndex,
+                       globalIndex const dofOffset,
+                       localIndex const numLocalDof )
 {
-  NodeManager const & nodeManager = mesh.getNodeManager();
+  GEOS_ASSERT_EQ( nodePosition.size( 0 ), dofIndex.size() );
+  integer const numComponents = nodePosition.size( 1 );
+  integer const numRidigBodyModes = numComponents * ( numComponents + 1 ) / 2;
 
-  localIndex numComponents = 0;
-  array1d< localIndex > globalNodeList;
-  for( localIndex k = 0; k < LvArray::integerConversion< localIndex >( selection.size() ); ++k )
-  {
-    if( dofManager.location( selection[k] ) ==  FieldLocation::Node )
-    {
-      string const & dispDofKey = dofManager.getKey( selection[k] );
-      arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-      localIndex const numComponentsField = dofManager.numComponents( selection[k] );
-      numComponents = numComponents > 0 ? numComponents : numComponentsField;
-      GEOS_ERROR_IF( numComponents != numComponentsField, "Rigid body modes called with different number of components." );
-      globalIndex const globalOffset = dofManager.globalOffset( selection[k] );
-      globalIndex const numLocalDofs = LvArray::integerConversion< globalIndex >( dofManager.numLocalDofs( selection[k] ) );
-      for( globalIndex i = 0; i < dofNumber.size(); ++i )
-      {
-        if( dofNumber[i] >= globalOffset && ( dofNumber[i] - globalOffset ) < numLocalDofs )
-        {
-          globalNodeList.emplace_back( LvArray::integerConversion< localIndex >( dofNumber[i] - globalOffset ) / numComponentsField );
-        }
-      }
-    }
-  }
-  localIndex const numNodes = globalNodeList.size();
-  arrayView1d< localIndex const > globalNodeListView = globalNodeList.toViewConst();
+  array1d< VECTOR > rigidBodyModes( numRidigBodyModes );
 
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
-
-  localIndex const numRidigBodyModes = numComponents * ( numComponents + 1 ) / 2;
-  rigidBodyModes.resize( numRidigBodyModes );
+  // Translation RBMs
   for( localIndex k = 0; k < numComponents; ++k )
   {
-    rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
+    rigidBodyModes[k].create( numLocalDof, MPI_COMM_GEOSX );
     arrayView1d< real64 > const values = rigidBodyModes[k].open();
-    forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+    forAll< parallelHostPolicy >( dofIndex.size(), [=]( localIndex const i )
     {
-      values[numComponents * i + k] = 1.0;
+      localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
+      if( 0 <= localDof && localDof < numLocalDof )
+      {
+        values[localDof + k] = 1.0;
+      }
     } );
     rigidBodyModes[k].close();
     rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
-  switch( numComponents )
+
+  // Rotation RBMs
+  for( localIndex k = numComponents; k < numRidigBodyModes; ++k )
   {
-    case 2:
+    rigidBodyModes[k].create( numLocalDof, MPI_COMM_GEOSX );
+    arrayView1d< real64 > const values = rigidBodyModes[k].open();
+    integer const ind[2] = { ( k - numComponents + 1 ) % numComponents,
+                             ( k - numComponents + 2 ) % numComponents };
+    forAll< parallelHostPolicy >( dofIndex.size(), [=]( localIndex const i )
     {
-      localIndex const k = 2;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
+      localIndex const localDof = LvArray::integerConversion< localIndex >( dofIndex[i] - dofOffset );
+      if( 0 <= localDof && localDof < numLocalDof )
       {
-        arrayView1d< real64 > const values = rigidBodyModes[k].open();
-        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
-        {
-          values[numComponents * i + 0] = -nodePosition[globalNodeListView[i]][1];
-          values[numComponents * i + 1] = +nodePosition[globalNodeListView[i]][0];
-        } );
-        rigidBodyModes[k].close();
+        values[localDof + ind[0]] = -nodePosition( i, ind[1] );
+        values[localDof + ind[1]] = +nodePosition( i, ind[0] );
       }
-
-      for( localIndex j = 0; j < k; ++j )
-      {
-        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
-      }
-      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
-      break;
-    }
-    case 3:
+    } );
+    rigidBodyModes[k].close();
+    for( localIndex j = 0; j < k; ++j )
     {
-      localIndex k = 3;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
-      {
-        arrayView1d< real64 > const values = rigidBodyModes[k].open();
-        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
-        {
-          values[numComponents * i + 0] = +nodePosition[globalNodeListView[i]][1];
-          values[numComponents * i + 1] = -nodePosition[globalNodeListView[i]][0];
-        } );
-        rigidBodyModes[k].close();
-      }
-
-      for( localIndex j = 0; j < k; ++j )
-      {
-        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
-      }
-      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
-
-      ++k;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
-      {
-        arrayView1d< real64 > const values = rigidBodyModes[k].open();
-        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
-        {
-          values[numComponents * i + 1] = -nodePosition[globalNodeListView[i]][2];
-          values[numComponents * i + 2] = +nodePosition[globalNodeListView[i]][1];
-        } );
-        rigidBodyModes[k].close();
-      }
-
-      for( localIndex j = 0; j < k; ++j )
-      {
-        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
-      }
-      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
-
-      ++k;
-      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
-      {
-        arrayView1d< real64 > const values = rigidBodyModes[k].open();
-        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
-        {
-          values[numComponents * i + 0] = +nodePosition[globalNodeListView[i]][2];
-          values[numComponents * i + 2] = -nodePosition[globalNodeListView[i]][0];
-        } );
-        rigidBodyModes[k].close();
-      }
-
-      for( localIndex j = 0; j < k; ++j )
-      {
-        rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
-      }
-      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
-      break;
+      rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
     }
-    default:
-    {
-      GEOS_ERROR( "Rigid body modes computation unsupported for " << numComponents << " components." );
-    }
+    rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
+
+  return rigidBodyModes;
 }
 
 } // LAIHelperFunctions namespace

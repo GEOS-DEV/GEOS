@@ -38,12 +38,12 @@ public:
   using Vector = VECTOR;
 
   /**
-   * @brief Constructor
+   * @brief Constructor.
    */
   LinearOperator() = default;
 
   /**
-   * @brief Destructor
+   * @brief Destructor.
    */
   virtual ~LinearOperator() = default;
 
@@ -73,32 +73,50 @@ public:
   }
 
   /**
-   * @brief Get the number of global rows.
-   * @return Number of global rows in the operator.
+   * @brief @return the number of global rows.
    */
   virtual globalIndex numGlobalRows() const = 0;
 
   /**
-   * @brief Get the number of global columns.
-   * @return Number of global columns in the operator.
+   * @brief @return the number of global columns.
    */
   virtual globalIndex numGlobalCols() const = 0;
 
   /**
-   * @brief Get the number of local rows.
-   * @return Number of local rows in the operator.
+   * @brief @return the total number of nonzero entries in the operator.
+   *
+   * @note While "non-zero entries" is not a well-defined term for the abstract concept of a linear operator,
+   *       in practice this value is needed to track runtime/memory complexity of the operator implementation.
+   *       The function returns the number of nonzero floating-point values stored/used when applying to a vector.
+   *       A matrix-free operator implemented without any additional FP storage may either return 0,
+   *       or the (approximate) number of floating-point multiply operations performed by apply().
+   */
+  virtual globalIndex numGlobalNonzeros() const
+  {
+    return 0;
+  }
+
+  /**
+   * @brief @return the number of local rows.
    */
   virtual localIndex numLocalRows() const = 0;
 
   /**
-   * @brief Get the number of local columns.
-   * @return Number of local columns in the operator.
+   * @brief @return the number of local columns.
    *
    * @note The use of term "local columns" refers not to physical partitioning of columns across ranks
    *       (as e.g. matrices are partitioned by rows and typically physically store all column entries),
    *       but to the partitioning of a compatible vector object that this operator can be applied to.
    */
   virtual localIndex numLocalCols() const = 0;
+
+  /**
+   * @brief @return the number of nonzero entries in the local portion of the operator.
+   */
+  virtual localIndex numLocalNonzeros() const
+  {
+    return 0;
+  }
 
   /**
    * @brief Get the MPI communicator the matrix was created with

@@ -157,10 +157,9 @@ void HypreExport::exportCRS( HypreMatrix const & mat,
     // Sort the values by column index after copying (some solvers expect this)
     forAll< hypre::execPolicy >( numRow, [rowOffsets, colIndices, values] GEOS_HYPRE_DEVICE ( HYPRE_Int const i )
     {
-      using LvArray::sortedArrayManipulation::dualSort;
-      dualSort( colIndices.data() + rowOffsets[i],
-                colIndices.data() + rowOffsets[i + 1],
-                values.data() + rowOffsets[i] );
+      LvArray::sortedArrayManipulation::dualSort( colIndices.data() + rowOffsets[i],
+                                                  colIndices.data() + rowOffsets[i + 1],
+                                                  values.data() + rowOffsets[i] );
     } );
   }
 
@@ -175,7 +174,7 @@ void HypreExport::exportVector( HypreVector const & vec,
   // Gather vector on target rank, or just get the local part
   hypre_Vector * const localVector = m_targetRank < 0
                                    ? hypre_ParVectorLocalVector( vec.unwrapped() )
-                                   : (hypre_Vector *)hypre::parVectorToVectorAll( vec.unwrapped() );
+                                   : (hypre_Vector *)hypre::parVectorToVector( vec.unwrapped(), m_targetRank );
   GEOS_ERROR_IF( rank == m_targetRank && !localVector, "HypreExport: vector is empty on target rank" );
 
   if( m_targetRank < 0 || m_targetRank == rank )

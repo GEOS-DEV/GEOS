@@ -13,11 +13,11 @@
  */
 
 /**
- * @file GmresSolver.hpp
+ * @file RichardsonSolver.hpp
  */
 
-#ifndef GEOS_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
-#define GEOS_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
+#ifndef GEOSX_LINEARALGEBRA_SOLVERS_RICHARDSONSOLVER_HPP_
+#define GEOSX_LINEARALGEBRA_SOLVERS_RICHARDSONSOLVER_HPP_
 
 #include "linearAlgebra/solvers/KrylovSolver.hpp"
 
@@ -25,16 +25,14 @@ namespace geos
 {
 
 /**
- * @brief This class implements Generalized Minimized RESidual method
- *        (right-preconditioned) for monolithic and block linear operators.
- * @tparam VECTOR type of vectors this solver operates on.
- * @note  The notation is consistent with "Iterative Methods for
- *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
- *        and "Iterative Methods for Sparse Linear Systems"
- *        from Y. Saad (2003).
+ * @brief Implements right-preconditioned modified Richardson iteration.
+ * @tparam VECTOR type of vectors this solver operates on
+ * @note Richardson is not a Krylov subspace method, but
+ *       for convenience inherits from KrylovSolver; that
+ *       class should really be renamed to IterativeSolver.
  */
 template< typename VECTOR >
-class GmresSolver final : public KrylovSolver< VECTOR >
+class RichardsonSolver final : public KrylovSolver< VECTOR >
 {
 public:
 
@@ -55,9 +53,9 @@ public:
    * @param[in] matrix  reference to the system matrix
    * @param[in] precond reference to the preconditioning operator
    */
-  GmresSolver( LinearSolverParameters params,
-               LinearOperator< Vector > const & matrix,
-               LinearOperator< Vector > const & precond );
+  RichardsonSolver( LinearSolverParameters params,
+                    LinearOperator< Vector > const & matrix,
+                    LinearOperator< Vector > const & precond );
 
   ///@}
 
@@ -75,7 +73,7 @@ public:
 
   virtual string methodName() const override
   {
-    return "GMRES";
+    return "Richardson";
   };
 
   ///@}
@@ -94,10 +92,11 @@ protected:
   using Base::logProgress;
   using Base::logResult;
 
-  /// Storage for Krylov subspace vectors
-  mutable array1d< VectorTemp > m_kspace;
+private:
+
+  real64 m_omega;
 };
 
-} // namespace geos
+} // geosx
 
-#endif //GEOS_LINEARALGEBRA_SOLVERS_GMRESSOLVER_HPP_
+#endif //GEOSX_LINEARALGEBRA_SOLVERS_RICHARDSONSOLVER_HPP_

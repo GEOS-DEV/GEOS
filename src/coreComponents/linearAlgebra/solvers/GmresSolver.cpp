@@ -18,6 +18,7 @@
 
 #include "GmresSolver.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
@@ -30,11 +31,10 @@ template< typename VECTOR >
 GmresSolver< VECTOR >::GmresSolver( LinearSolverParameters params,
                                     LinearOperator< Vector > const & A,
                                     LinearOperator< Vector > const & M )
-  : KrylovSolver< VECTOR >( std::move( params ), A, M ),
-  m_kspace( m_params.krylov.maxRestart + 1 ),
-  m_kspaceInitialized( false )
+  : KrylovSolver< VECTOR >( std::move( params ), A, M )
 {
   GEOS_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of iterations until restart must be positive." );
+  m_kspace.reserve( m_params.krylov.maxRestart + 1 );
 }
 
 namespace
@@ -89,16 +89,21 @@ template< typename VECTOR >
 void GmresSolver< VECTOR >::solve( Vector const & b,
                                    Vector & x ) const
 {
-  // We create Krylov subspace vectors once using the size and partitioning of b.
-  // On repeated calls to solve() input vectors must have the same size and partitioning.
-  if( !m_kspaceInitialized )
+  GEOS_MARK_FUNCTION;
+
+  // Function to grow K-space on demand
+  auto const addKspaceVector = [&]( integer const n )
   {
-    for( VectorTemp & kv : m_kspace )
+    for( integer i = m_kspace.size(); i <= n; ++i )
     {
-      kv = createTempVector( b );
+      m_kspace.emplace_back( createTempVector( b ) );
     }
-    m_kspaceInitialized = true;
-  }
+  };
+
+  // TEMP: evaluate the speed benefit of pre-allocation vs memory waste.
+  // Rationale: LA packages (e.g. hypre) allocate krylov space this during
+  // setup, so we don't want to include it in the timing of the solve.
+  addKspaceVector( m_params.krylov.maxRestart );
 
   Stopwatch watch;
 
@@ -125,6 +130,10 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.clear();
+
+  // On subsequent calls to solve(), b must have the same size/distribution
+  addKspaceVector( 0 );
+  GEOS_LAI_ASSERT_EQ( b.localSize(), m_kspace[0].localSize() );
 
   integer & k = m_result.numIterations;
   while( k <= m_params.krylov.maxIterations && m_result.status == LinearSolverResult::Status::NotConverged )
@@ -165,7 +174,9 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
       }
 
       H( j+1, j ) = w.norm2();
-      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
+      GEOS_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
+
+      addKspaceVector( j+1 );
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column

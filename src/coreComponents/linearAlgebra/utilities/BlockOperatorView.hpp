@@ -55,11 +55,6 @@ public:
   ///@{
 
   /**
-   * @brief Destructor.
-   */
-  virtual ~BlockOperatorView() override = default;
-
-  /**
    * @brief Deleted copy assignment.
    * @return not callable
    */
