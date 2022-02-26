@@ -23,6 +23,7 @@ set( linearAlgebra_headers
      solvers/PreconditionerBlockJacobi.hpp
      solvers/PreconditionerIdentity.hpp
      solvers/PreconditionerJacobi.hpp
+     solvers/PreconditionerNull.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
      utilities/BlockOperator.hpp
@@ -159,6 +160,11 @@ endif()
 
 if ( ENABLE_CUDA )
     list( APPEND dependencyList cuda )
+endif()
+
+# We depend on METIS for multiscale coarsening
+if( ENABLE_METIS )
+    list( APPEND dependencyList metis )
 endif()
 
 blt_add_library( NAME       linearAlgebra

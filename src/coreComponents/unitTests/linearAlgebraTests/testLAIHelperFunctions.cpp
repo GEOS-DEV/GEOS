@@ -104,8 +104,8 @@ TYPED_TEST_P( LAIHelperFunctionsTest, nodalVectorPermutation )
   DofManager dofManager( "test" );
   dofManager.setDomain( domain );
 
-  std::vector< DofManager::Regions > regions;
-  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  std::vector< DofSupport > regions;
+  DofSupport region = { "mesh1", "Level0", { "region1"} };
   regions.emplace_back( region );
 
   dofManager.addField( "nodalVariable", FieldLocation::Node, 3, regions );
@@ -155,8 +155,8 @@ TYPED_TEST_P( LAIHelperFunctionsTest, cellCenteredVectorPermutation )
   DofManager dofManager( "test" );
   dofManager.setDomain( domain );
 
-  std::vector< DofManager::Regions > regions;
-  DofManager::Regions region = { "mesh1", "Level0", {"region1"} };
+  std::vector< DofSupport > regions;
+  DofSupport region = { "mesh1", "Level0", { "region1"} };
   regions.emplace_back( region );
 
   dofManager.addField( fieldName, FieldLocation::Elem, numDofPerCell, regions );

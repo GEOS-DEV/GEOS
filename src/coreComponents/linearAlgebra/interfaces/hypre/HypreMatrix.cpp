@@ -667,17 +667,19 @@ void HypreMatrix::multiplyRAP( HypreMatrix const & R,
   dst.parCSRtoIJ( dst_parcsr );
 }
 
-void HypreMatrix::multiplyPtAP( HypreMatrix const & P,
+void HypreMatrix::multiplyPtAP( HypreMatrix const & P1,
+                                HypreMatrix const & P2,
                                 HypreMatrix & dst ) const
 {
   GEOSX_LAI_ASSERT( ready() );
-  GEOSX_LAI_ASSERT( P.ready() );
-  GEOSX_LAI_ASSERT_EQ( numLocalRows(), P.numLocalRows() );
-  GEOSX_LAI_ASSERT_EQ( numLocalCols(), P.numLocalRows() );
+  GEOSX_LAI_ASSERT( P1.ready() );
+  GEOSX_LAI_ASSERT( P2.ready() );
+  GEOSX_LAI_ASSERT_EQ( numLocalRows(), P1.numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( numLocalCols(), P2.numLocalRows() );
 
-  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P.unwrapped(),
+  HYPRE_ParCSRMatrix const dst_parcsr = hypre_ParCSRMatrixRAPKT( P1.unwrapped(),
                                                                  m_parcsr_mat,
-                                                                 P.unwrapped(),
+                                                                 P2.unwrapped(),
                                                                  0 );
 
   dst.parCSRtoIJ( dst_parcsr );
@@ -820,9 +822,9 @@ void HypreMatrix::separateComponentFilter( HypreMatrix & dst,
   localIndex const maxRowEntries = maxRowLength();
   GEOSX_LAI_ASSERT_EQ( maxRowEntries % dofsPerNode, 0 );
 
-  CRSMatrix< real64 > tempMat;
+  CRSMatrix< real64, globalIndex > tempMat;
   tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );
-  CRSMatrixView< real64 > const tempMatView = tempMat.toView();
+  CRSMatrixView< real64, globalIndex > const tempMatView = tempMat.toView();
 
   globalIndex const firstLocalRow = ilower();
   globalIndex const firstLocalCol = jlower();
@@ -877,24 +879,14 @@ void HypreMatrix::addEntries( HypreMatrix const & src,
   {
     case MatrixPatternOp::Restrict:
     {
-      hypre::addEntriesRestricted( hypre_ParCSRMatrixDiag( src.unwrapped() ),
-                                   hypre::ops::identity< HYPRE_Int >,
-                                   hypre_ParCSRMatrixDiag( unwrapped() ),
-                                   hypre::ops::identity< HYPRE_Int >,
-                                   scale );
-      if( hypre_CSRMatrixNumCols( hypre_ParCSRMatrixOffd( unwrapped() ) ) > 0 )
-      {
-        HYPRE_BigInt const * const src_colmap = hypre::getOffdColumnMap( src.unwrapped() );
-        HYPRE_BigInt const * const dst_colmap = hypre::getOffdColumnMap( unwrapped() );
-        hypre::addEntriesRestricted( hypre_ParCSRMatrixOffd( src.unwrapped() ),
-                                     [src_colmap] GEOSX_HYPRE_DEVICE ( auto i ) { return src_colmap[i]; },
-                                     hypre_ParCSRMatrixOffd( unwrapped() ),
-                                     [dst_colmap] GEOSX_HYPRE_DEVICE ( auto i ) { return dst_colmap[i]; },
-                                     scale );
-      }
+      hypre::addMatrixEntries< hypre::AddEntriesRestrictedKernel >( src.unwrapped(), unwrapped(), scale );
       break;
     }
-    case MatrixPatternOp::Same:
+    case MatrixPatternOp::Equal:
+    {
+      hypre::addMatrixEntries< hypre::AddEntriesSamePatternKernel >( src.unwrapped(), unwrapped(), scale );
+      break;
+    }
     case MatrixPatternOp::Subset:
     case MatrixPatternOp::Extend:
     {
@@ -1029,6 +1021,70 @@ void HypreMatrix::extractDiagonal( HypreVector & dst ) const
   HYPRE_Real * const data = hypre_VectorData( hypre_ParVectorLocalVector( dst.unwrapped() ) );
   hypre_CSRMatrixExtractDiagonal( hypre_ParCSRMatrixDiag( m_parcsr_mat ), data, 0 );
   dst.touch();
+}
+
+void HypreMatrix::extract( CRSMatrixView< real64, globalIndex > const & localMat ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+  hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( unwrapped() ) };
+  HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
+  globalIndex const firstLocalCol = jlower();
+
+  forAll< hypre::execPolicy >( localMat.numRows(),
+                               [localMat, diag, offd,
+                                colMap, firstLocalCol] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    localMat.removeNonZeros( localRow, localMat.getColumns( localRow ), localMat.numNonZeros( localRow ) );
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      globalIndex const col = firstLocalCol + diag.colind[k];
+      localMat.insertNonZero( localRow, col, diag.values[k] );
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
+      {
+        globalIndex const col = colMap[offd.colind[k]];
+        localMat.insertNonZero( localRow, col, offd.values[k] );
+      }
+    }
+  } );
+}
+
+void HypreMatrix::extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  hypre::CSRData< true > const diag{ hypre_ParCSRMatrixDiag( unwrapped() ) };
+  hypre::CSRData< true > const offd{ hypre_ParCSRMatrixOffd( unwrapped() ) };
+  HYPRE_BigInt const * const colMap = hypre::getOffdColumnMap( unwrapped() );
+  globalIndex const firstLocalCol = jlower();
+
+  localMat.zero();
+  forAll< hypre::execPolicy >( localMat.numRows(),
+                               [localMat, diag, offd,
+                                colMap, firstLocalCol] GEOSX_HYPRE_DEVICE ( localIndex const localRow )
+  {
+    for( HYPRE_Int k = diag.rowptr[localRow]; k < diag.rowptr[localRow + 1]; ++k )
+    {
+      globalIndex const col = firstLocalCol + diag.colind[k];
+      localMat.addToRow< serialAtomic >( localRow, &col, &diag.values[k], 1 );
+    }
+    if( offd.ncol > 0 )
+    {
+      for( HYPRE_Int k = offd.rowptr[localRow]; k < offd.rowptr[localRow + 1]; ++k )
+      {
+        globalIndex const col = colMap[offd.colind[k]];
+        localMat.addToRow< serialAtomic >( localRow, &col, &offd.values[k], 1 );
+      }
+    }
+  } );
 }
 
 namespace
@@ -1279,17 +1335,21 @@ void HypreMatrix::write( string const & filename,
     {
       int const rank = MpiWrapper::commRank( comm() );
 
+      globalIndex const numRows = numGlobalRows();
+      globalIndex const numCols = numGlobalCols();
+      globalIndex const numNonzeros = numGlobalNonzeros();
+
       // Write MatrixMarket header
       if( rank == 0 )
       {
         std::ofstream os( filename );
         GEOSX_ERROR_IF( !os, GEOSX_FMT( "Unable to open file for writing: {}", filename ) );
         os << "%%MatrixMarket matrix coordinate real general\n";
-        os << GEOSX_FMT( "{} {} {}\n", numGlobalRows(), numGlobalCols(), numGlobalNonzeros() );
+        os << GEOSX_FMT( "{} {} {}\n", numRows, numCols, numNonzeros );
       }
 
       // Write matrix values
-      if( numGlobalRows() > 0 && numGlobalCols() > 0 )
+      if( numRows > 0 && numCols > 0 )
       {
         // Copy distributed parcsr matrix in a local CSR matrix on every process with at least one row
         // Warning: works for a parcsr matrix that is smaller than 2^31-1

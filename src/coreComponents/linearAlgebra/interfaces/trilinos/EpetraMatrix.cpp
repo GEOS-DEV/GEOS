@@ -29,6 +29,7 @@
 #include <EpetraExt_MatrixMatrix.h>
 #include <EpetraExt_RowMatrixOut.h>
 #include <EpetraExt_Transpose_RowMatrix.h>
+#include <ml_epetra_utils.h>
 
 #include <numeric>
 
@@ -453,8 +454,8 @@ void EpetraMatrix::multiplyRAP( EpetraMatrix const & R,
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( R.ready() );
   GEOSX_LAI_ASSERT( P.ready() );
-  GEOSX_LAI_ASSERT_EQ( numGlobalRows(), R.numGlobalCols() );
-  GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
+  GEOSX_LAI_ASSERT_EQ( R.numLocalCols(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( numLocalCols(), P.numLocalRows() );
 
   Epetra_CrsMatrix * result = nullptr;
   GEOSX_LAI_CHECK_ERROR( ML_Epetra::ML_Epetra_RAP( unwrapped(), P.unwrapped(), R.unwrapped(), result, false ) );
@@ -469,21 +470,22 @@ void EpetraMatrix::multiplyRAP( EpetraMatrix const & R,
 void EpetraMatrix::multiplyPtAP( EpetraMatrix const & P,
                                  EpetraMatrix & dst ) const
 {
-  // TODO: ML_Epetra_PtAP does not work with long long indices, find a workaround?
-#if 0
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( P.ready() );
   GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
   GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
 
   Epetra_CrsMatrix * result = nullptr;
-  GEOSX_LAI_CHECK_ERROR( ML_Epetra::ML_Epetra_PtAP( unwrapped(), P.unwrapped(), result, false ) );
+  // TODO: ML_Epetra_PtAP does not work with long long indices, find a workaround?
+#if 0
+  GEOSX_LAI_CHECK_ERROR( ML_Epetra::ML_Epetra_PtAP( unwrapped(), P.unwrapped(), result ) );
+#else
+  GEOSX_LAI_CHECK_ERROR( ML_Epetra::Epetra_PtAP( unwrapped(), P.unwrapped(), result ) );
+#endif
 
+  // After we switch to Epetra_CrsMatrix for storage, can avoid this copy
   dst.create( *result );
   delete result;
-#else
-  MatrixBase::multiplyPtAP( P, dst );
-#endif
 }
 
 void EpetraMatrix::gemv( real64 const alpha,
@@ -546,9 +548,8 @@ void EpetraMatrix::separateComponentFilter( EpetraMatrix & dst,
   localIndex const maxRowEntries = maxRowLength();
   GEOSX_LAI_ASSERT_EQ( maxRowEntries % dofsPerNode, 0 );
 
-  CRSMatrix< real64 > tempMat;
+  CRSMatrix< real64, globalIndex > tempMat;
   tempMat.resize( numLocalRows(), numGlobalCols(), maxRowEntries / dofsPerNode );
-  CRSMatrixView< real64 > const tempMatView = tempMat.toView();
 
   globalIndex const firstLocalRow = ilower();
   auto const getComponent = [dofsPerNode] ( auto i )
@@ -556,7 +557,8 @@ void EpetraMatrix::separateComponentFilter( EpetraMatrix & dst,
     return LvArray::integerConversion< integer >( i % dofsPerNode );
   };
 
-  forAll< parallelHostPolicy >( numLocalRows(), [&] ( localIndex const localRow )
+  forAll< parallelHostPolicy >( numLocalRows(), [this, getComponent, firstLocalRow,
+                                                 tempMatView = tempMat.toView()] ( localIndex const localRow )
   {
     int numEntries;
     int * columns;
@@ -574,7 +576,7 @@ void EpetraMatrix::separateComponentFilter( EpetraMatrix & dst,
     }
   } );
 
-  dst.create( tempMatView.toViewConst(), numLocalCols(), MPI_COMM_GEOSX );
+  dst.create( tempMat.toViewConst(), numLocalCols(), MPI_COMM_GEOSX );
   dst.setDofManager( dofManager() );
 }
 
@@ -636,12 +638,14 @@ void addEntriesRestricted( Epetra_CrsMatrix const & src,
 
   for( int localRow = 0; localRow < dst.NumMyRows(); ++localRow )
   {
-    dst.ExtractMyRowView( LvArray::integerConversion< int >( localRow ), dst_length, dst_values, dst_indices );
-    src.ExtractMyRowView( LvArray::integerConversion< int >( localRow ), src_length, src_values, src_indices );
+    dst.ExtractMyRowView( localRow, dst_length, dst_values, dst_indices );
+    src.ExtractMyRowView( localRow, src_length, src_values, src_indices );
     for( int i = 0, j = 0; i < dst_length && j < src_length; ++i )
     {
       while( j < src_length && src_indices[j] < dst_indices[i] )
+      {
         ++j;
+      }
       if( j < src_length && src_indices[j] == dst_indices[i] )
       {
         dst_values[i] += scale * src_values[j++];
@@ -663,7 +667,7 @@ void EpetraMatrix::addEntries( EpetraMatrix const & src,
 
   switch( op )
   {
-    case MatrixPatternOp::Same:
+    case MatrixPatternOp::Equal:
     case MatrixPatternOp::Subset:
     {
       GEOSX_LAI_CHECK_ERROR( EpetraExt::MatrixMatrix::Add( src.unwrapped(), false, scale, *m_matrix, 1.0 ) );
@@ -764,7 +768,7 @@ void EpetraMatrix::getRowCopy( globalIndex globalRow,
   GEOSX_LAI_ASSERT_GE( values.size(), numEntries );
 
   std::transform( indicesPtr, indicesPtr + numEntries, colIndices.begin(),
-                  [&mat=*m_matrix]( int const c ){ return LvArray::integerConversion< globalIndex >( mat.GCID64( c ) ); } );
+                  [this]( int const c ){ return LvArray::integerConversion< globalIndex >( m_matrix->GCID64( c ) ); } );
   std::copy( valuesPtr, valuesPtr + numEntries, values.begin() );
 }
 
@@ -776,6 +780,50 @@ void EpetraMatrix::extractDiagonal( EpetraVector & dst ) const
 
   GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractDiagonalCopy( dst.unwrapped() ) );
   dst.touch();
+}
+
+void EpetraMatrix::extract( CRSMatrixView< real64, globalIndex > const & localMat ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  forAll< parallelHostPolicy >( localMat.numRows(), [this, localMat] ( localIndex const localRow )
+  {
+    int numEntries;
+    int * indicesPtr;
+    double * valuesPtr;
+    GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractMyRowView( localRow, numEntries, valuesPtr, indicesPtr ) );
+
+    localMat.removeNonZeros( localRow, localMat.getColumns( localRow ), localMat.numNonZeros( localRow ) );
+    for( int k = 0; k < numEntries; ++k )
+    {
+      globalIndex const col = m_matrix->GCID64( indicesPtr[k] );
+      localMat.insertNonZero( localRow, col, valuesPtr[k] );
+    }
+  } );
+}
+
+void EpetraMatrix::extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numRows(), numLocalRows() );
+  GEOSX_LAI_ASSERT_EQ( localMat.numColumns(), numGlobalCols() );
+
+  localMat.zero();
+  forAll< parallelHostPolicy >( localMat.numRows(), [this, localMat] ( localIndex const localRow )
+  {
+    int numEntries;
+    int * indicesPtr;
+    double * valuesPtr;
+    GEOSX_LAI_CHECK_ERROR( m_matrix->ExtractMyRowView( localRow, numEntries, valuesPtr, indicesPtr ) );
+
+    for( int k = 0; k < numEntries; ++k )
+    {
+      globalIndex const col = m_matrix->GCID64( indicesPtr[k] );
+      localMat.addToRow< serialAtomic >( localRow, &col, &valuesPtr[k], 1 );
+    }
+  } );
 }
 
 namespace

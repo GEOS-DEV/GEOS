@@ -18,6 +18,7 @@
 
 #include "GmresSolver.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "linearAlgebra/solvers/KrylovUtils.hpp"
@@ -29,11 +30,10 @@ template< typename VECTOR >
 GmresSolver< VECTOR >::GmresSolver( LinearSolverParameters params,
                                     LinearOperator< Vector > const & A,
                                     LinearOperator< Vector > const & M )
-  : KrylovSolver< VECTOR >( std::move( params ), A, M ),
-  m_kspace( m_params.krylov.maxRestart + 1 ),
-  m_kspaceInitialized( false )
+  : KrylovSolver< VECTOR >( std::move( params ), A, M )
 {
   GEOSX_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of iterations until restart must be positive." );
+  m_kspace.reserve( m_params.krylov.maxRestart + 1 );
 }
 
 namespace
@@ -88,16 +88,7 @@ template< typename VECTOR >
 void GmresSolver< VECTOR >::solve( Vector const & b,
                                    Vector & x ) const
 {
-  // We create Krylov subspace vectors once using the size and partitioning of b.
-  // On repeated calls to solve() input vectors must have the same size and partitioning.
-  if( !m_kspaceInitialized )
-  {
-    for( VectorTemp & kv : m_kspace )
-    {
-      kv = createTempVector( b );
-    }
-    m_kspaceInitialized = true;
-  }
+  GEOSX_MARK_FUNCTION;
 
   Stopwatch watch;
 
@@ -124,6 +115,19 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
   m_residualNorms.clear();
+
+  // Function to grow K-space on demand
+  auto const addKspaceVector = [&]( integer const n )
+  {
+    for( integer i = m_kspace.size(); i <= n; ++i )
+    {
+      m_kspace.emplace_back( createTempVector( b ) );
+    }
+  };
+
+  // On subsequent calls to solve(), b must have the same size/distribution
+  addKspaceVector( 0 );
+  GEOSX_LAI_ASSERT_EQ( b.localSize(), m_kspace[0].localSize() );
 
   integer & k = m_result.numIterations;
   while( k <= m_params.krylov.maxIterations && m_result.status == LinearSolverResult::Status::NotConverged )
@@ -165,6 +169,8 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
 
       H( j+1, j ) = w.norm2();
       GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
+
+      addKspaceVector( j+1 );
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column

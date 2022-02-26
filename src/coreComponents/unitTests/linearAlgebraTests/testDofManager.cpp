@@ -91,10 +91,10 @@ protected:
 template< FieldLocation LOC >
 void collectLocalDofNumbers( DomainPartition const & domain,
                              string const & dofIndexKey,
-                             std::vector< DofManager::Regions > const & support,
+                             std::vector< DofSupport > const & support,
                              array1d< globalIndex > & dofNumbers )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -122,10 +122,10 @@ void collectLocalDofNumbers( DomainPartition const & domain,
 template<>
 void collectLocalDofNumbers< FieldLocation::Elem >( DomainPartition const & domain,
                                                     string const & dofIndexKey,
-                                                    std::vector< DofManager::Regions > const & support,
+                                                    std::vector< DofSupport > const & support,
                                                     array1d< globalIndex > & dofNumbers )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -204,7 +204,7 @@ protected:
     string name;
     FieldLocation location;
     integer components;
-    std::vector< DofManager::Regions > regions{};
+    std::vector< DofSupport > regions{};
   };
 
   void test( std::vector< FieldDesc > const & fields );
@@ -469,7 +469,7 @@ protected:
 
   using PatternFunc = void ( * )( DomainPartition const & mesh,
                                   string const & dofIndexKey,
-                                  std::vector< DofManager::Regions > const & regions,
+                                  std::vector< DofSupport > const & regions,
                                   globalIndex const rankOffset,
                                   localIndex const numComp,
                                   CRSMatrix< real64 > & sparsity );
@@ -477,7 +477,7 @@ protected:
   using CoupledPatternFunc = void ( * )( DomainPartition const & mesh,
                                          string const & dofIndexKey1,
                                          string const & dofIndexKey2,
-                                         std::vector< DofManager::Regions > const & regions,
+                                         std::vector< DofSupport > const & regions,
                                          globalIndex const rankOffset,
                                          localIndex const numComp1,
                                          localIndex const numComp2,
@@ -490,7 +490,7 @@ protected:
     DofManager::Connector connectivity;
     localIndex components;
     PatternFunc makePattern;
-    std::vector< DofManager::Regions > regions = {};
+    std::vector< DofSupport > regions = {};
   };
 
   struct CouplingDesc
@@ -498,7 +498,7 @@ protected:
     DofManager::Connector connectivity;
     CoupledPatternFunc makeCouplingPattern;
     bool symmetric = true;
-    std::vector< DofManager::Regions > regions = {};
+    std::vector< DofSupport > regions = {};
   };
 
   void addFields( std::vector< FieldDesc > fields,
@@ -506,7 +506,7 @@ protected:
   {
     for( FieldDesc const & f : fields )
     {
-      std::vector< DofManager::Regions > const regions = getRegions( domain, f.regions );
+      std::vector< DofSupport > const regions = getRegions( domain, f.regions );
       dofManager.addField( f.name, f.location, f.components, regions );
       dofManager.addCoupling( f.name, f.name, f.connectivity );
     }
@@ -514,7 +514,7 @@ protected:
     {
       std::pair< string, string > const & fieldNames = entry.first;
       CouplingDesc const & c = entry.second;
-      std::vector< DofManager::Regions > const regions = getRegions( domain, c.regions );
+      std::vector< DofSupport > const regions = getRegions( domain, c.regions );
       dofManager.addCoupling( fieldNames.first, fieldNames.second, c.connectivity, regions, c.symmetric );
     }
     dofManager.reorderByRank();
@@ -552,7 +552,7 @@ void DofManagerSparsityTest< LAI >::test( std::vector< FieldDesc > fields,
   localIndex numCompTotal = 0;
   for( FieldDesc const & f : fields )
   {
-    std::vector< DofManager::Regions > const regions = getRegions( domain, f.regions );
+    std::vector< DofSupport > const regions = getRegions( domain, f.regions );
     localIndex numLocalObj = 0;
     switch( f.location )
     {
@@ -1080,12 +1080,12 @@ TEST( DofManagerRegions, aggregateInitialization )
   // C++20's new feature "designated initializers" would probably make this test useless.
 
   {
-    DofManager::Regions regions0;
+    DofSupport regions0;
     regions0.meshBodyName = "meshBodyName";
     regions0.meshLevelName = "meshLevelName";
     regions0.regionNames = { "regionName0", "regionName1" };
 
-    DofManager::Regions const regions1{ regions0.meshBodyName, regions0.meshLevelName, regions0.regionNames };
+    DofSupport const regions1{ regions0.meshBodyName, regions0.meshLevelName, regions0.regionNames };
 
     ASSERT_EQ( regions0.meshBodyName, regions1.meshBodyName );
     ASSERT_EQ( regions0.meshLevelName, regions1.meshLevelName );

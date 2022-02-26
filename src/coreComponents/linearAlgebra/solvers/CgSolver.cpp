@@ -20,6 +20,7 @@
 
 #include "CgSolver.hpp"
 
+#include "common/TimingMacros.hpp"
 #include "common/Stopwatch.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "common/LinearOperator.hpp"
@@ -57,6 +58,7 @@ CgSolver< VECTOR >::CgSolver( LinearSolverParameters params,
 template< typename VECTOR >
 void CgSolver< VECTOR >::solve( Vector const & b, Vector & x ) const
 {
+  GEOSX_MARK_FUNCTION;
   Stopwatch watch;
 
   // Define residual vector

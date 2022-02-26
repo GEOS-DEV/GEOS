@@ -52,7 +52,7 @@
     /** The actual type to be registered. */ \
     using type = TYPE; \
     /** The template type T for registration of a container<T>. */ \
-    using dataType = internal::typeHelper_t< TYPE >; \
+    using dataType = ::geosx::extrinsicMeshData::internal::typeHelper_t< TYPE >; \
     /** @brief @return The default data value for NAME. */ \
     static constexpr dataType defaultValue() \
     { return DEFAULT; } \

@@ -13,7 +13,7 @@
  */
 
 /**
- * @file PreconditionerIdentity.hpp
+ * @file PreconditionerNull.hpp
  */
 
 #ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
@@ -29,7 +29,7 @@ namespace geosx
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
 template< typename LAI >
-class PreconditionerIdentity : public PreconditionerBase< LAI >
+class PreconditionerNull : public PreconditionerBase< LAI >
 {
 public:
 
@@ -53,7 +53,7 @@ public:
   {
     GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
     GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    dst.copy( src );
+    dst.zero();
   }
 };
 

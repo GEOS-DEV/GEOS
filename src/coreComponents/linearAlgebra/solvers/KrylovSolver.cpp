@@ -81,8 +81,18 @@ void KrylovSolver< VECTOR >::logProgress() const
   GEOSX_ASSERT( !m_residualNorms.empty() );
   if( m_params.logLevel >= 2 )
   {
-    real64 const relNorm = m_residualNorms[0] > 0.0 ? m_residualNorms.back() / m_residualNorms[0] : 0.0;
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] iteration {}: residual = {:e}", methodName(), m_result.numIterations, relNorm ) );
+    constexpr char const * headFormat = "{:>4}   {:>12}   {:>9}   {:>12}";
+    constexpr char const * lineFormat = "{:>4}   {:>12.6e}   {:>9.6f}   {:>12.6e}";
+    integer const iter = m_result.numIterations;
+    if( iter == 0 )
+    {
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "[{}] start iteration", methodName() ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( headFormat, "iter", "resid.norm", "conv.rate", "rel.res.norm" ) );
+    }
+    real64 const norm = m_residualNorms[iter];
+    real64 const relNorm = m_residualNorms[0] > 0.0 ? norm / m_residualNorms[0] : 0.0;
+    real64 const convRate = iter > 0 ? norm / m_residualNorms[iter - 1] : 1.0;
+    GEOSX_LOG_RANK_0( GEOSX_FMT( lineFormat, iter, norm, convRate, relNorm ) );
   }
 }
 

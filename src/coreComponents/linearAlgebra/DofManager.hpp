@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/Span.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
 #include "mesh/FieldIdentifiers.hpp"
 
@@ -34,6 +35,19 @@ class ObjectManagerBase;
 class FluxApproximationBase;
 
 /**
+ * @brief Describes field support on a single mesh body/level
+ */
+struct DofSupport
+{
+  /// name of the mesh body
+  string meshBodyName;
+  /// name of the mesh level
+  string meshLevelName;
+  /// list of the region names
+  std::vector< string > regionNames;
+};
+
+/**
  * @class DofManager
  * @brief The DoFManager is responsible for allocating global dofs, constructing
  * sparsity patterns, and generally simplifying the interaction between
@@ -44,10 +58,10 @@ class DofManager
 public:
 
   /// Maximum number of components in a field
-  static int constexpr MAX_COMP = 32;
+  static int constexpr maxNumComp = 32;
 
   /// Type of component mask used by DofManager
-  using CompMask = ComponentMask< MAX_COMP >;
+  using CompMask = ComponentMask< maxNumComp >;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -58,19 +72,6 @@ public:
   {
     string fieldName;  ///< Name of the DOF field in DofManager
     CompMask mask;     ///< Mask that defines component selection
-  };
-
-  /**
-   * @brief Describes field support on a single mesh body/level
-   */
-  struct Regions
-  {
-    /// name of the mesh body
-    string meshBodyName;
-    /// name of the mesh level
-    string meshLevelName;
-    /// list of the region names
-    std::vector< string > regionNames;
   };
 
   /**
@@ -143,10 +144,10 @@ public:
   void addField( string const & fieldName,
                  FieldLocation location,
                  integer components,
-                 std::vector< Regions > const & regions = {} );
+                 std::vector< DofSupport > const & regions = {} );
 
   /**
-   * @copydoc addField(string const &, FieldLocation, integer, std::vector< Regions > const &)
+   * @copydoc addField(string const &, FieldLocation, integer, std::vector< DofSupport > const &)
    *
    * Overload for  map< string, array1d< string > > bodyRegions used by physics solvers.
    */
@@ -181,10 +182,10 @@ public:
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
                     Connector connectivity,
-                    std::vector< Regions > const & regions = {},
+                    std::vector< DofSupport > const & regions = {},
                     bool symmetric = true );
   /**
-   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< Regions > const & , bool  );
+   * @copydoc addCoupling( string const & ,string const & ,Connector , std::vector< DofSupport > const & , bool  );
    */
   void addCoupling( string const & rowFieldName,
                     string const & colFieldName,
@@ -271,7 +272,7 @@ public:
    * @brief @return number of components in a given field.
    * @param fieldName name of the field
    */
-  integer numComponents( string const & fieldName = "" ) const;
+  integer numComponents( string const & fieldName ) const;
 
   /**
    * @brief @return number of dof components across all fields.
@@ -290,6 +291,12 @@ public:
    * @param [in] fieldName name of the field.
    */
   globalIndex globalOffset( string const & fieldName ) const;
+
+  /**
+   * @brief @return support of the given field (list of mesh body/levels/regions)
+   * @param fieldName
+   */
+  Span< DofSupport const > support( string const & fieldName ) const;
 
   /**
    * @brief Return an array of number of components per field, sorted by field registration order.
@@ -342,7 +349,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                          CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -357,7 +364,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                         CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Copy values from simulation data arrays to vectors.
@@ -372,7 +379,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                          CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -387,7 +394,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                         CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Create a dof selection by filtering out excluded components
@@ -445,7 +452,7 @@ private:
     string name;                   ///< field name
     string key;                    ///< string key for index array
     string docstring;              ///< documentation string
-    std::vector< Regions > support;///< list of mesh body/level/region supports
+    std::vector< DofSupport > support;///< list of mesh body/level/region supports
     FieldLocation location;             ///< support location
     integer numComponents = 1;     ///< number of vector components
     localIndex numLocalDof = 0;    ///< number of local rows
@@ -461,7 +468,7 @@ private:
   struct CouplingDescription
   {
     Connector connector = Connector::None;  //!< geometric object defining dof connections
-    std::vector< Regions > support; //!< list of region names
+    std::vector< DofSupport > support; //!< list of region names
     FluxApproximationBase const * stencils = nullptr; //!< pointer to flux stencils for stencil based connections
   };
 
@@ -516,10 +523,6 @@ private:
   void setSparsityPatternFromStencil( SparsityPatternView< globalIndex > const & pattern,
                                       localIndex fieldIndex ) const;
 
-  template< int DIMS_PER_DOF >
-  void setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
-                                        localIndex fieldIndex ) const;
-
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
@@ -557,7 +560,7 @@ private:
   /// Name of the manager (unique, for unique identification of index array keys)
   string m_name;
 
-  /// Pointer to corresponding MeshLevel
+  /// Pointer to domain that holds mesh bodies/levels
   DomainPartition * m_domain = nullptr;
 
   /// Array of field descriptions

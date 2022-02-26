@@ -42,24 +42,26 @@ BlockPreconditioner< LAI >::BlockPreconditioner( BlockShapeOption const shapeOpt
 {}
 
 template< typename LAI >
-BlockPreconditioner< LAI >::~BlockPreconditioner() = default;
-
-template< typename LAI >
-void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat, DofManager const & dofManager )
+void BlockPreconditioner< LAI >::reinitialize( Matrix const & mat )
 {
   MPI_Comm const & comm = mat.comm();
 
   if( m_blockDofs[1].empty() )
   {
-    m_blockDofs[1] = dofManager.filterDofs( m_blockDofs[0] );
+    GEOSX_LAI_ASSERT( mat.dofManager() != nullptr );
+    m_blockDofs[1] = mat.dofManager()->filterDofs( m_blockDofs[0] );
   }
 
   for( localIndex i = 0; i < 2; ++i )
   {
-    dofManager.makeRestrictor( m_blockDofs[i], comm, false, m_restrictors[i] );
-    dofManager.makeRestrictor( m_blockDofs[i], comm, true, m_prolongators[i] );
-    m_rhs( i ).create( m_restrictors[i].numLocalRows(), comm );
-    m_sol( i ).create( m_restrictors[i].numLocalRows(), comm );
+    if( m_prolongators[i] == nullptr )
+    {
+      GEOSX_LAI_ASSERT( mat.dofManager() != nullptr );
+      mat.dofManager()->makeRestrictor( m_blockDofs[i], comm, true, m_prolongatorsOwned[i] );
+      m_prolongators[i] = &m_prolongatorsOwned[i];
+    }
+    m_rhs( i ).create( m_prolongators[i]->numLocalCols(), comm );
+    m_sol( i ).create( m_prolongators[i]->numLocalCols(), comm );
   }
 }
 
@@ -75,8 +77,36 @@ void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
   GEOSX_LAI_ASSERT_GT( scaling, 0.0 );
 
   m_blockDofs[blockIndex] = std::move( blockDofs );
-  m_solvers[blockIndex] = std::move( solver );
+  m_solversOwned[blockIndex] = std::move( solver );
+  m_solvers[blockIndex] = m_solversOwned[blockIndex].get();
   m_scaling[blockIndex] = scaling;
+}
+
+template< typename LAI >
+void BlockPreconditioner< LAI >::setupBlock( localIndex const blockIndex,
+                                             std::vector< DofManager::SubComponent > blockDofs,
+                                             PreconditionerBase< LAI > * const solver,
+                                             real64 const scaling )
+{
+  GEOSX_LAI_ASSERT_GT( 2, blockIndex );
+  GEOSX_LAI_ASSERT( solver );
+  GEOSX_LAI_ASSERT( !blockDofs.empty() );
+  GEOSX_LAI_ASSERT_GT( scaling, 0.0 );
+
+  m_blockDofs[blockIndex] = std::move( blockDofs );
+  m_solversOwned[blockIndex].reset();
+  m_solvers[blockIndex] = solver;
+  m_scaling[blockIndex] = scaling;
+}
+
+template< typename LAI >
+void BlockPreconditioner< LAI >::setProlongation( localIndex const blockIndex,
+                                                  Matrix const & P )
+{
+  GEOSX_LAI_ASSERT_GT( 2, blockIndex );
+
+  m_prolongatorsOwned[blockIndex].reset();
+  m_prolongators[blockIndex] = &P;
 }
 
 template< typename LAI >
@@ -151,9 +181,6 @@ void BlockPreconditioner< LAI >::computeSchurComplement()
 template< typename LAI >
 void BlockPreconditioner< LAI >::setup( Matrix const & mat )
 {
-  // Check that DofManager is available
-  GEOSX_LAI_ASSERT_MSG( mat.dofManager() != nullptr, "BlockPreconditioner requires a DofManager" );
-
   // Check that user has set block solvers
   GEOSX_LAI_ASSERT( m_solvers[0] != nullptr );
   GEOSX_LAI_ASSERT( m_solvers[1] != nullptr );
@@ -170,18 +197,18 @@ void BlockPreconditioner< LAI >::setup( Matrix const & mat )
   // If the matrix size/structure has changed, need to resize internal LA objects and recompute restrictors.
   if( newSize )
   {
-    reinitialize( mat, *mat.dofManager() );
+    reinitialize( mat );
   }
 
   // Extract diagonal blocks
-  mat.multiplyPtAP( m_prolongators[0], m_matBlocks( 0, 0 ) );
-  mat.multiplyPtAP( m_prolongators[1], m_matBlocks( 1, 1 ) );
+  mat.multiplyPtAP( *m_prolongators[0], m_matBlocks( 0, 0 ) );
+  mat.multiplyPtAP( *m_prolongators[1], m_matBlocks( 1, 1 ) );
 
   // Extract off-diagonal blocks only if used
   if( m_schurOption != SchurComplementOption::None && m_shapeOption != BlockShapeOption::Diagonal )
   {
-    mat.multiplyRAP( m_restrictors[0], m_prolongators[1], m_matBlocks( 0, 1 ) );
-    mat.multiplyRAP( m_restrictors[1], m_prolongators[0], m_matBlocks( 1, 0 ) );
+    mat.multiplyPtAP( *m_prolongators[0], *m_prolongators[1], m_matBlocks( 0, 1 ) );
+    mat.multiplyPtAP( *m_prolongators[1], *m_prolongators[0], m_matBlocks( 1, 0 ) );
   }
 
   applyBlockScaling();
@@ -194,8 +221,8 @@ template< typename LAI >
 void BlockPreconditioner< LAI >::apply( Vector const & src,
                                         Vector & dst ) const
 {
-  m_restrictors[0].apply( src, m_rhs( 0 ) );
-  m_restrictors[1].apply( src, m_rhs( 1 ) );
+  m_prolongators[0]->applyTranspose( src, m_rhs( 0 ) );
+  m_prolongators[1]->applyTranspose( src, m_rhs( 1 ) );
 
   for( localIndex i = 0; i < 2; ++i )
   {
@@ -222,8 +249,8 @@ void BlockPreconditioner< LAI >::apply( Vector const & src,
   m_solvers[0]->apply( m_rhs( 0 ), m_sol( 0 ) );
 
   // Combine block solutions into global solution vector
-  m_prolongators[0].apply( m_sol( 0 ), dst );
-  m_prolongators[1].gemv( 1.0, m_sol( 1 ), 1.0, dst );
+  m_prolongators[0]->apply( m_sol( 0 ), dst );
+  m_prolongators[1]->gemv( 1.0, m_sol( 1 ), 1.0, dst );
 }
 
 template< typename LAI >
@@ -232,8 +259,8 @@ void BlockPreconditioner< LAI >::clear()
   Base::clear();
   for( localIndex i = 0; i < 2; ++i )
   {
-    m_restrictors[i].reset();
-    m_prolongators[i].reset();
+    m_prolongatorsOwned[i].reset();
+    m_prolongators[i] = nullptr;
     m_solvers[i]->clear();
     m_rhs( i ).reset();
     m_sol( i ).reset();

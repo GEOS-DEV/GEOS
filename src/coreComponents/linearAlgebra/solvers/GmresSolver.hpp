@@ -34,7 +34,7 @@ namespace geosx
  *        from Y. Saad (2003).
  */
 template< typename VECTOR >
-class GmresSolver : public KrylovSolver< VECTOR >
+class GmresSolver final : public KrylovSolver< VECTOR >
 {
 public:
 
@@ -71,9 +71,9 @@ public:
    * @param [in] b system right hand side.
    * @param [inout] x system solution (input = initial guess, output = solution).
    */
-  virtual void solve( Vector const & b, Vector & x ) const override final;
+  virtual void solve( Vector const & b, Vector & x ) const override;
 
-  virtual string methodName() const override final
+  virtual string methodName() const override
   {
     return "GMRES";
   };
@@ -95,10 +95,7 @@ protected:
   using Base::logResult;
 
   /// Storage for Krylov subspace vectors
-  array1d< VectorTemp > m_kspace;
-
-  /// Flag indicating whether kspace vectors have been created
-  bool mutable m_kspaceInitialized;
+  mutable array1d< VectorTemp > m_kspace;
 };
 
 } // namespace geosx

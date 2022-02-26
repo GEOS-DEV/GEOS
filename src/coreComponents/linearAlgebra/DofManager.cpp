@@ -144,15 +144,20 @@ globalIndex DofManager::globalOffset( string const & fieldName ) const
   return m_fields[getFieldIndex( fieldName )].globalOffset;
 }
 
+Span< DofSupport const > DofManager::support( string const & fieldName ) const
+{
+  return m_fields[getFieldIndex( fieldName )].support;
+}
+
 namespace
 {
 
 template< typename FUNC >
-void forMeshSupport( std::vector< DofManager::Regions > const & support,
+void forMeshSupport( std::vector< DofSupport > const & support,
                      DomainPartition & domain,
                      FUNC && func )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -161,11 +166,11 @@ void forMeshSupport( std::vector< DofManager::Regions > const & support,
 }
 
 template< typename FUNC >
-void forMeshSupport( std::vector< DofManager::Regions > const & support,
+void forMeshSupport( std::vector< DofSupport > const & support,
                      DomainPartition const & domain,
                      FUNC && func )
 {
-  for( DofManager::Regions const & regions : support )
+  for( DofSupport const & regions : support )
   {
     MeshBody const & meshBody = domain.getMeshBody( regions.meshBodyName );
     MeshLevel const & meshLevel = meshBody.getMeshLevel( regions.meshLevelName );
@@ -283,13 +288,13 @@ processFieldRegionList( MeshLevel const & mesh,
   return regions;
 }
 
-std::vector< DofManager::Regions >
+std::vector< DofSupport >
 processFieldRegionList( DomainPartition const & domain,
-                        std::vector< DofManager::Regions > const & inputList )
+                        std::vector< DofSupport > const & inputList )
 {
-  std::vector< DofManager::Regions > result;
+  std::vector< DofSupport > result;
   std::set< std::pair< string, string > > processedMeshLevels;
-  for( DofManager::Regions const & r : inputList )
+  for( DofSupport const & r : inputList )
   {
     GEOSX_ERROR_IF( processedMeshLevels.count( { r.meshBodyName, r.meshLevelName } ) > 0,
                     GEOSX_FMT( "Duplicate mesh: {}/{}", r.meshBodyName, r.meshLevelName ) );
@@ -307,12 +312,12 @@ processFieldRegionList( DomainPartition const & domain,
 void DofManager::addField( string const & fieldName,
                            FieldLocation const location,
                            integer const components,
-                           std::vector< Regions > const & regions )
+                           std::vector< DofSupport > const & regions )
 {
   GEOSX_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   GEOSX_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
   GEOSX_ERROR_IF( fieldExists( fieldName ), "Requested field name '" << fieldName << "' already exists." );
-  GEOSX_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
+  GEOSX_ERROR_IF_GT_MSG( components, maxNumComp, "Number of components limit exceeded" );
 
   m_fields.emplace_back();
   FieldDescription & field = m_fields.back();
@@ -338,7 +343,7 @@ void DofManager::addField( string const & fieldName,
                            map< std::pair< string, string >, array1d< string > > const & regions )
 {
   // Convert input into internal format
-  std::vector< Regions > support;
+  std::vector< DofSupport > support;
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
@@ -394,20 +399,20 @@ processCouplingRegionList( std::vector< string > inputList,
 template< typename OP >
 struct RegionComp
 {
-  bool operator()( DofManager::Regions const & l, DofManager::Regions const & r ) const
+  bool operator()( DofSupport const & l, DofSupport const & r ) const
   {
     return OP{} ( std::tie( l.meshBodyName, l.meshLevelName ), std::tie( r.meshBodyName, r.meshLevelName ) );
   }
 };
 
-std::vector< DofManager::Regions >
-processCouplingRegionList( std::vector< DofManager::Regions > inputList,
-                           std::vector< DofManager::Regions > const & rowFieldRegions,
+std::vector< DofSupport >
+processCouplingRegionList( std::vector< DofSupport > inputList,
+                           std::vector< DofSupport > const & rowFieldRegions,
                            string const & rowFieldName,
-                           std::vector< DofManager::Regions > const & colFieldRegions,
+                           std::vector< DofSupport > const & colFieldRegions,
                            string const & colFieldName )
 {
-  std::vector< DofManager::Regions > regions( std::move( inputList ) );
+  std::vector< DofSupport > regions( std::move( inputList ) );
 
   if( regions.empty() )
   {
@@ -416,11 +421,11 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
                            colFieldRegions.begin(), colFieldRegions.end(),
                            std::back_inserter( regions ), RegionComp< std::less<> >{} );
     // Now, compute intersections of region lists
-    for( DofManager::Regions & r : regions )
+    for( DofSupport & r : regions )
     {
       // Find the body/level pair in the column field list (unsorted range)
       auto const comp = [&r]( auto const & c ){ return RegionComp< std::equal_to<> >{} ( r, c ); };
-      DofManager::Regions const & colRegions = *std::find_if( colFieldRegions.begin(), colFieldRegions.end(), comp );
+      DofSupport const & colRegions = *std::find_if( colFieldRegions.begin(), colFieldRegions.end(), comp );
       // Intersect row field regions (already copied into result) with col field regions (found above)
       r.regionNames = processCouplingRegionList( {}, r.regionNames, rowFieldName, colRegions.regionNames, colFieldName );
     }
@@ -428,9 +433,9 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
   else
   {
     // Check that each input entry is included in both row and col field supports
-    auto const checkSupport = [&regions]( std::vector< DofManager::Regions > const & fieldRegions, string const & fieldName )
+    auto const checkSupport = [&regions]( std::vector< DofSupport > const & fieldRegions, string const & fieldName )
     {
-      for( DofManager::Regions const & r : regions )
+      for( DofSupport const & r : regions )
       {
         auto const comp = [&r]( auto const & f ){ return RegionComp< std::equal_to<> >{} ( r, f ); };
         auto const it = std::find_if( fieldRegions.begin(), fieldRegions.end(), comp );
@@ -453,7 +458,7 @@ processCouplingRegionList( std::vector< DofManager::Regions > inputList,
 void DofManager::addCoupling( string const & rowFieldName,
                               string const & colFieldName,
                               Connector const connectivity,
-                              std::vector< Regions > const & regions,
+                              std::vector< DofSupport > const & regions,
                               bool const symmetric )
 {
   GEOSX_ASSERT_MSG( m_domain != nullptr, "Mesh has not been set" );
@@ -505,7 +510,7 @@ void DofManager::addCoupling( string const & rowFieldName,
                               bool symmetric )
 {
   // Convert input into internal format
-  std::vector< Regions > support;
+  std::vector< DofSupport > support;
   for( auto const & p : regions )
   {
     MeshBody const & meshBody = m_domain->getMeshBody( p.first.first );
@@ -1269,6 +1274,12 @@ void DofManager::reorderByRank()
 {
   GEOSX_LAI_ASSERT( !m_reordered );
 
+  m_reordered = true;
+  if( m_fields.size() < 2 )
+  {
+    return;
+  }
+
   // update field offsets to account for renumbering
   globalIndex dofOffset = rankOffset();
   for( FieldDescription & field : m_fields )
@@ -1278,7 +1289,7 @@ void DofManager::reorderByRank()
   }
 
   // This is a map with a key that is the pair of strings specifying the
-  // ( MeshBody name, MeshLevel name), and a value that is another map with a
+  // (MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
   std::map< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
@@ -1321,8 +1332,6 @@ void DofManager::reorderByRank()
     MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
     CommunicationTools::getInstance().synchronizeFields( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );
   }
-
-  m_reordered = true;
 }
 
 std::vector< DofManager::SubComponent >
@@ -1347,6 +1356,7 @@ void DofManager::setupFrom( DofManager const & source,
                             std::vector< SubComponent > const & selection )
 {
   clear();
+  m_domain = source.m_domain;
   for( FieldDescription const & field : source.m_fields )
   {
     auto const it = std::find_if( selection.begin(), selection.end(),
@@ -1381,7 +1391,6 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   GEOSX_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
 
   // 1. Populate selected fields and compute some basic dimensions
-  // array1d< FieldDescription > fieldsSelected( selection.size() );
   std::vector< FieldDescription > fieldsSelected( selection.size() );
 
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
@@ -1406,7 +1415,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     blockOffset += field.numGlobalDof;
   }
 
-  globalIndex globalOffset = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), globalIndex( 0 ),
+  globalIndex globalOffset = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), globalIndex{},
                                               []( localIndex const n, FieldDescription const & f )
   { return n + f.rankOffset; } );
 
@@ -1418,7 +1427,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
   // 3. Build the restrictor field by field
 
-  localIndex const numLocalDofSelected = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), localIndex( 0 ),
+  localIndex const numLocalDofSelected = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), localIndex{},
                                                           []( localIndex const n, FieldDescription const & f )
   { return n + f.numLocalDof; } );
 
@@ -1430,44 +1439,44 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
   array1d< globalIndex > rows;
   array1d< globalIndex > cols;
-  array1d< real64 > values;
+  array1d< real64 > vals;
 
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     FieldDescription const & fieldNew = fieldsSelected[k];
     FieldDescription const & fieldOld = m_fields[getFieldIndex( fieldNew.name )];
 
-    FieldDescription const & fieldRow = transpose ? fieldOld : fieldNew;
-    FieldDescription const & fieldCol = transpose ? fieldNew : fieldOld;
-
     CompMask const mask = selection[k].mask;
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
+    rows.resize( fieldNew.numLocalDof );
+    cols.resize( fieldNew.numLocalDof );
+    vals.resize( fieldNew.numLocalDof );
+    vals.setValues< parallelHostPolicy >( 1.0 );
 
-    rows.resize( numLocalNodes*mask.size() );
-    cols.resize( numLocalNodes*mask.size() );
-    values.resize( numLocalNodes*mask.size() );
-
-    for( localIndex i = 0; i < numLocalNodes; ++i )
+    forAll< parallelHostPolicy >( numLocalNodes, [&fieldNew, &fieldOld, mask, transpose,
+                                                  rows = rows.toView(),
+                                                  cols = cols.toView()]( localIndex const i )
     {
       integer newComp = 0;
       for( integer const oldComp : mask )
       {
-        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
-        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
+        globalIndex row = fieldNew.globalOffset + i * fieldNew.numComponents + newComp;
+        globalIndex col = fieldOld.globalOffset + i * fieldOld.numComponents + oldComp;
+        if( transpose )
+        {
+          std::swap( row, col );
+        }
 
-        rows( i*mask.size() + newComp ) = row;
-        cols( i*mask.size() + newComp ) = col;
-        values[ i*mask.size() + newComp ] = 1.0;
+        rows[ i * fieldNew.numComponents + newComp ] = row;
+        cols[ i * fieldNew.numComponents + newComp ] = col;
         ++newComp;
       }
-    }
+    } );
 
     restrictor.insert( rows.toViewConst(),
                        cols.toViewConst(),
-                       values.toViewConst() );
-
-
+                       vals.toViewConst() );
   }
   restrictor.close();
 }

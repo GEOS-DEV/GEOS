@@ -66,6 +66,7 @@ struct LinearSolverParameters
     block,     ///< Block preconditioner
     direct,    ///< Direct solver as preconditioner
     bgs,       ///< Gauss-Seidel smoothing (backward sweep)
+    multiscale,///< Multiscale preconditioner
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -248,6 +249,64 @@ struct LinearSolverParameters
     integer overlap = 0;   ///< Ghost overlap
   }
   dd;                      ///< Domain decomposition parameter struct
+
+  struct Multiscale
+  {
+    enum class BasisType
+    {
+      msrsb,   ///< Restricted Smoothing Basis Multiscale
+    };
+
+    BasisType basisType = BasisType::msrsb;                       ///< type of basis functions
+    string fieldName;                                             ///< DofManager field name, populated by the physics solver
+    integer maxLevels = 5;                                        ///< limit on total number of grid levels
+    integer galerkin = 1;                                         ///< whether to use Galerkin definition R = P^T
+    integer numSmootherSweeps = 1;                                ///< Number of smoother sweeps
+    AMG::PreOrPost preOrPostSmoothing = AMG::PreOrPost::both;     ///< Pre and/or post smoothing [pre,post,both]
+    PreconditionerType smootherType = PreconditionerType::sgs;    ///< Smoother type
+    PreconditionerType coarseType = PreconditionerType::direct;   ///< Coarse solver type
+    array1d< string > boundarySets;                               ///< List of boundary node set names (needed for coarse node detection)
+
+    integer debugLevel = 0;                                       ///< Flag for enabling addition debugging output
+
+    struct Coarsening
+    {
+      enum class PartitionType
+      {
+        metis,    ///< METIS-based
+        rib,      ///< Recursive Inertial Bisection
+        cartesian ///< Cartesian (only with internal mesh)
+      };
+
+      PartitionType partitionType = PartitionType::metis; ///< partitioning/coarsening method
+      array1d< real64 > ratio;                            ///< coarsening ratio (of coarse-to-fine cells), total or per-dimension
+      localIndex minLocalDof = 0;                         ///< limit of coarsening on current rank
+      globalIndex minGlobalDof = 0;                       ///< limit of coarsening globally (trims the grid hierarchy)
+
+      struct Metis
+      {
+        enum class Method
+        {
+          kway,
+          recursive
+        };
+
+        Method method = Method::kway;    ///< Partitioning method
+        integer minCommonNodes = 3;      ///< Min number of common nodes when constructing a cell connectivity graph
+        integer ufactor = 30;            ///< METIS's UFACTOR option (allowed partition imbalance)
+      } metis;
+
+    } coarsening;
+
+    struct MsRSB
+    {
+      integer maxIter        = 100;        ///< max number of smoothing iterations
+      real64 tolerance       = 1e-3;       ///< smoothing iteration convergence tolerance
+      real64 relaxation      = 2.0 / 3.0;  ///< relaxation parameter for Jacobi smoothing
+      integer checkFrequency = 10;         ///< convergence check frequency
+    } msrsb;
+  }
+  multiscale;
 };
 
 /// Declare strings associated with enumeration values.
@@ -276,7 +335,8 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "mgr",
               "block",
               "direct",
-              "bgs" );
+              "bgs",
+              "multiscale" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
@@ -353,6 +413,21 @@ ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
 ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,
               "constantModes",
               "rigidBodyModes" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::BasisType,
+              "msrsb" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::Coarsening::PartitionType,
+              "metis",
+              "rib",
+              "cartesian" );
+
+/// Declare strings associated with enumeration values.
+ENUM_STRINGS( LinearSolverParameters::Multiscale::Coarsening::Metis::Method,
+              "kway",
+              "recursive" );
 
 } /* namespace geosx */
 

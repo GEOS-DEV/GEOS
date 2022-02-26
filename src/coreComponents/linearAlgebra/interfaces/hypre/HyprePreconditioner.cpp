@@ -84,7 +84,7 @@ void createAMG( LinearSolverParameters const & params,
   // Hypre's parameters to use BoomerAMG as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( precond.ptr, 0.0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxIter( precond.ptr, 1 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.logLevel ) ) );;
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( precond.ptr, params.logLevel >= 3 ? 1 : 0 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumFunctions( precond.ptr, params.dofsPerNode ) );
 
   // Set maximum number of multigrid levels (default 25)

@@ -45,7 +45,7 @@ enum class RowSumType
  */
 enum class MatrixPatternOp
 {
-  Same,     // Caller guarantees patterns of arguments are exactly the same
+  Equal,    // Caller guarantees patterns of arguments are exactly the same
   Subset,   // Caller guarantees pattern of second argument is a subset of the first
   Restrict, // Restrict pattern of second argument, ignoring any entries that don't exist in first
   Extend    // Extend pattern of the first argument with entries from the second
@@ -84,10 +84,12 @@ protected:
   /// Type alias for a compatible vector class
   using Vector = VECTOR;
 
-  using Base::numLocalRows;
-  using Base::numLocalCols;
   using Base::numGlobalRows;
   using Base::numGlobalCols;
+  using Base::numGlobalNonzeros;
+  using Base::numLocalRows;
+  using Base::numLocalCols;
+  using Base::numLocalNonzeros;
 
   /**
    * @name Status query methods
@@ -617,6 +619,27 @@ protected:
   }
 
   /**
+   * @brief Compute the triple product <tt>dst = P1^T * this * P2</tt>
+   * @param P1 the left "prolongation" matrix
+   * @param P2 the right "prolongation" matrix
+   * @param dst the resulting product matrix (will be re-created as needed)
+   */
+  virtual void multiplyPtAP( Matrix const & P1,
+                             Matrix const & P2,
+                             Matrix & dst ) const
+  {
+    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT( P1.ready() );
+    GEOSX_LAI_ASSERT( P2.ready() );
+    GEOSX_LAI_ASSERT_EQ( numLocalRows(), P1.numLocalRows() );
+    GEOSX_LAI_ASSERT_EQ( numLocalCols(), P2.numLocalRows() );
+
+    Matrix AP2;
+    multiply( P2, AP2 );
+    P1.leftMultiplyTranspose( AP2, dst );
+  }
+
+  /**
    * @brief Compute the triple product <tt>dst = P^T * this * P</tt>
    * @param P the "prolongation" matrix
    * @param dst the resulting product matrix (will be re-created as needed)
@@ -624,14 +647,7 @@ protected:
   virtual void multiplyPtAP( Matrix const & P,
                              Matrix & dst ) const
   {
-    GEOSX_LAI_ASSERT( ready() );
-    GEOSX_LAI_ASSERT( P.ready() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalRows(), P.numGlobalRows() );
-    GEOSX_LAI_ASSERT_EQ( numGlobalCols(), P.numGlobalRows() );
-
-    Matrix AP;
-    multiply( P, AP );
-    P.leftMultiplyTranspose( AP, dst );
+    multiplyPtAP( P, P, dst );
   }
 
   /**
@@ -816,6 +832,32 @@ protected:
   virtual void extractDiagonal( Vector & dst ) const = 0;
 
   /**
+   * @brief Extract local part of the matrix using previously allocated storage.
+   * @param localMat view into the local matrix to populate
+   */
+  virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const = 0;
+
+  /**
+   * @brief Extract local part of the matrix using previously allocated storage and structure.
+   * @param localMat view into the local matrix to populate
+   */
+  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const = 0;
+
+  /**
+   * @brief Extract local part of the matrix
+   * @return the local matrix
+   */
+  CRSMatrix< real64, globalIndex > extract() const
+  {
+    array1d< localIndex > rowLengths( numLocalRows() );
+    getRowLengths( rowLengths.toView() );
+    CRSMatrix< real64, globalIndex > localMat;
+    localMat.resizeFromRowCapacities< parallelHostPolicy >( numLocalRows(), numGlobalCols(), rowLengths.data() );
+    extract( localMat.toView() );
+    return localMat;
+  }
+
+  /**
    * @brief Populate a vector with row sums of @p this.
    * @param dst the target vector, must have the same row partitioning as @p this
    * @param rowSumType type of row sum operation to perform
@@ -855,18 +897,6 @@ protected:
    * @note Also see note for @p jlower() about the meaning of "owned" columns.
    */
   virtual globalIndex jupper() const = 0;
-
-  /**
-   * @brief Returns the number of nonzeros in the local portion of the matrix
-   * @return the number of nonzeros in the local portion of the matrix
-   */
-  virtual localIndex numLocalNonzeros() const = 0;
-
-  /**
-   * @brief Returns the total number of nonzeros in the matrix
-   * @return the total number of nonzeros in the matrix
-   */
-  virtual globalIndex numGlobalNonzeros() const = 0;
 
   /**
    * @brief Returns the infinity norm of the matrix.

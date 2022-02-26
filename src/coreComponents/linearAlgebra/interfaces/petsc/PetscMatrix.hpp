@@ -118,6 +118,8 @@ public:
   using MatrixBase::residual;
   using MatrixBase::setDofManager;
   using MatrixBase::dofManager;
+  using MatrixBase::extract;
+  using MatrixBase::multiplyPtAP;
 
   virtual void createWithLocalSize( localIndex const localRows,
                                     localIndex const localCols,
@@ -287,6 +289,10 @@ public:
   virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
   virtual void extractDiagonal( PetscVector & dst ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
 
   virtual void getRowSums( PetscVector & dst,
                            RowSumType const rowSumType ) const override;

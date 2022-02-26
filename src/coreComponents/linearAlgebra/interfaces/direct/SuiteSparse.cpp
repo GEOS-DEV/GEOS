@@ -357,7 +357,7 @@ real64 SuiteSparse< LAI >::estimateConditionNumberAdvanced() const
   GEOSX_LAI_ASSERT( ready() );
   localIndex constexpr numIterations = 4;
 
-  NormalOperator< LAI > const normalOperator( matrix() );
+  NormalOperator< Matrix > const normalOperator( matrix() );
   real64 const lambdaDirect = ArnoldiLargestEigenvalue( normalOperator, numIterations );
 
   InverseNormalOperator< LAI, SuiteSparse > const inverseNormalOperator( matrix(), *this );
