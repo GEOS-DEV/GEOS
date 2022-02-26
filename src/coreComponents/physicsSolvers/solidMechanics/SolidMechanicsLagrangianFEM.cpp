@@ -27,6 +27,7 @@
 #include "kernels/FixedStressThermoPoromechanics.hpp"
 
 #include "codingUtilities/Utilities.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
@@ -34,7 +35,9 @@
 #include "fieldSpecification/TractionBoundaryCondition.hpp"
 #include "finiteElement/FiniteElementDiscretizationManager.hpp"
 #include "finiteElement/FiniteElementDiscretization.hpp"
-#include "LvArray/src/output.hpp"
+#include "finiteElement/FiniteElementDiscretizationManager.hpp"
+#include "finiteElement/Kinematics.h"
+#include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/FaceElementSubRegion.hpp"
@@ -129,27 +132,21 @@ SolidMechanicsLagrangianFEM::SolidMechanicsLagrangianFEM( const string & name,
     setInputFlag( InputFlags::FALSE ).
     setDescription( "The maximum force contribution in the problem domain." );
 
+  // Set physics-dependent parameters for linear solver
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.dofsPerNode = 3;
+  linParams.amg.numFunctions = linParams.dofsPerNode;
+
+  // Must change default value to avoid being overwritten if attribute not specified in XML
+  m_linearSolverParameters.getWrapper< integer >( LinearSolverParametersInput::viewKeyStruct::amgSeparateComponentsString() ).setApplyDefaultValue( true );
 }
 
 void SolidMechanicsLagrangianFEM::postInputInitialization()
 {
   PhysicsSolverBase::postInputInitialization();
 
-  // configure AMG
-  LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  linParams.isSymmetric = true;
-  linParams.dofsPerNode = 3;
-  linParams.amg.numFunctions = linParams.dofsPerNode;
-  linParams.amg.separateComponents = true;
-
   m_surfaceGenerator = this->getParent().getGroupPointer< PhysicsSolverBase >( m_surfaceGeneratorName );
 }
-
-SolidMechanicsLagrangianFEM::~SolidMechanicsLagrangianFEM()
-{
-  // TODO Auto-generated destructor stub
-}
-
 
 void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
 {
@@ -1028,6 +1025,43 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
   sparsityPattern.compress();
   localMatrix.assimilate< parallelDevicePolicy<> >( std::move( sparsityPattern ) );
+
+  if( !m_precond && m_linearSolverParameters.get().solverType != LinearSolverParameters::SolverType::direct )
+  {
+    m_precond = createPreconditioner( domain );
+  }
+}
+
+std::unique_ptr< PreconditionerBase< LAInterface > >
+SolidMechanicsLagrangianFEM::createPreconditioner( DomainPartition & domain ) const
+{
+  LinearSolverParameters const & linParams = m_linearSolverParameters.get();
+
+  if( linParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
+  {
+    forDiscretizationOnMeshTargets( domain.getMeshBodies(), [&]( string const &, MeshLevel const & mesh, auto const & )
+    {
+      // The first target mesh body/level is used to compute RBMs
+      if( m_rigidBodyModes.empty() )
+      {
+        NodeManager const & nodeManager = mesh.getNodeManager();
+        arrayView1d< globalIndex const > const dofIndex =
+          nodeManager.getReference< array1d< globalIndex > >( m_dofManager.getKey( solidMechanics::totalDisplacement::key() ) );
+        m_rigidBodyModes = LAIHelperFunctions::computeRigidBodyModes< ParallelVector >( nodeManager.referencePosition(),
+                                                                                        dofIndex,
+                                                                                        m_dofManager.rankOffset( solidMechanics::totalDisplacement::key() ),
+                                                                                        m_dofManager.numLocalDofs( solidMechanics::totalDisplacement::key() ) );
+      }
+    } );
+  }
+
+  switch( linParams.preconditionerType )
+  {
+    default:
+    {
+      return LAInterface::createPreconditioner( linParams, m_rigidBodyModes );
+    }
+  }
 }
 
 void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOS_UNUSED_PARAM( time_n ),
@@ -1267,7 +1301,7 @@ SolidMechanicsLagrangianFEM::
     totalResidualNorm = std::max( residual, totalResidualNorm );
   } );
 
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
+  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
   {
     std::cout << GEOS_FMT( "        ( R{} ) = ( {:4.2e} )", coupledSolverAttributePrefix(), totalResidualNorm );
   }

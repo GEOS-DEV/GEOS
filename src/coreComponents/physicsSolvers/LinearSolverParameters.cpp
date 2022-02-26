@@ -23,7 +23,78 @@
 
 namespace geos
 {
+
 using namespace dataRepository;
+
+/**
+ * @brief Register an input block handler for a struct.
+ * @tparam CHILD type of child Group that will handle input for @p BLOCK
+ * @tparam T type for which input handling is needed
+ * @param parent pointer to parent group
+ * @param key the group key (XML tag) for sub-block
+ * @param data the struct to handle input for
+ * @note blocks are assumed optional for now, but it may be changed,
+ *       in which case InputFlags should be provided as a parameter.
+ */
+template< typename CHILD, typename T >
+void registerInputBlock( Group * parent, char const * const key, T & data )
+{
+  parent->registerGroup( key, std::make_unique< CHILD >( key, parent, data ) ).setInputFlags( InputFlags::OPTIONAL );
+}
+
+class BlockParametersInput final : public dataRepository::Group
+{
+public:
+
+  /// Constructor
+  BlockParametersInput( string const & name,
+                        Group * const parent,
+                        LinearSolverParameters::Block & params );
+
+  virtual Group * createChild( string const & childKey, string const & childName ) override
+  {
+    GEOS_UNUSED_VAR( childKey, childName );
+    return nullptr;
+  }
+
+  /// Keys appearing in XML
+  struct viewKeyStruct
+  {
+    static constexpr char const * shapeString()  { return "shape"; }
+    static constexpr char const * schurTypeString() { return "schurType"; }
+    static constexpr char const * scalingString()  { return "scaling"; }
+  };
+
+private:
+
+  LinearSolverParameters::Block & m_parameters;
+};
+
+BlockParametersInput::BlockParametersInput( string const & name,
+                                            Group * const parent,
+                                            LinearSolverParameters::Block & params )
+  :
+  Group( name, parent ),
+  m_parameters( params )
+{
+  registerWrapper( viewKeyStruct::shapeString(), &m_parameters.shape ).
+    setDefaultValue( m_parameters.shape ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Block preconditioner shape, options: "
+                    "``" + EnumStrings< LinearSolverParameters::Block::Shape >::concat( "``, ``" ) + "``" );
+
+  registerWrapper( viewKeyStruct::schurTypeString(), &m_parameters.schurType ).
+    setDefaultValue( m_parameters.schurType ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Schur complement type, options: "
+                    "``" + EnumStrings< LinearSolverParameters::Block::SchurType >::concat( "``, ``" ) + "``" );
+
+  registerWrapper( viewKeyStruct::scalingString(), &m_parameters.scaling ).
+    setDefaultValue( m_parameters.scaling ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Block scaling type, options: "
+                    "``" + EnumStrings< LinearSolverParameters::Block::Scaling >::concat( "``, ``" ) + "``" );
+}
 
 LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
                                                           Group * const parent )
@@ -36,13 +107,13 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.solverType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Linear solver type. Available options are: "
-                    "``" + EnumStrings< LinearSolverParameters::SolverType >::concat( "|" ) + "``" );
+                    "``" + EnumStrings< LinearSolverParameters::SolverType >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::preconditionerTypeString(), &m_parameters.preconditionerType ).
     setApplyDefaultValue( m_parameters.preconditionerType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Preconditioner type. Available options are: "
-                    "``" + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "|" ) + "``" );
+                    "``" + EnumStrings< LinearSolverParameters::PreconditionerType >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::stopIfErrorString(), &m_parameters.stopIfError ).
     setApplyDefaultValue( m_parameters.stopIfError ).
@@ -63,13 +134,13 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.direct.colPerm ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "How to permute the columns. Available options are: "
-                    "``" + EnumStrings< LinearSolverParameters::Direct::ColPerm >::concat( "|" ) + "``" );
+                    "``" + EnumStrings< LinearSolverParameters::Direct::ColPerm >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::directRowPermString(), &m_parameters.direct.rowPerm ).
     setApplyDefaultValue( m_parameters.direct.rowPerm ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "How to permute the rows. Available options are: "
-                    "``" + EnumStrings< LinearSolverParameters::Direct::RowPerm >::concat( "|" ) + "``" );
+                    "``" + EnumStrings< LinearSolverParameters::Direct::RowPerm >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::directReplTinyPivotString(), &m_parameters.direct.replaceTinyPivot ).
     setApplyDefaultValue( m_parameters.direct.replaceTinyPivot ).
@@ -130,6 +201,26 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Exponent parameter for adaptive method" );
 
+  registerWrapper( viewKeyStruct::relaxationWeightString(), &m_parameters.relaxation.weight ).
+    setApplyDefaultValue( m_parameters.relaxation.weight ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Relaxation weight (omega) for stationary iterations" );
+
+  registerWrapper( viewKeyStruct::chebyshevOrderString(), &m_parameters.chebyshev.order ).
+    setApplyDefaultValue( m_parameters.chebyshev.order ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Chebyshev order" );
+
+  registerWrapper( viewKeyStruct::chebyshevEigNumIterString(), &m_parameters.chebyshev.eigNumIter ).
+    setApplyDefaultValue( m_parameters.chebyshev.eigNumIter ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Number of eigenvalue estimation CG iterations" );
+
+  registerWrapper( viewKeyStruct::amgNumCyclesString(), &m_parameters.amg.numCycles ).
+    setApplyDefaultValue( m_parameters.amg.numCycles ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG number of cycles" );
+
   registerWrapper( viewKeyStruct::amgNumSweepsString(), &m_parameters.amg.numSweeps ).
     setApplyDefaultValue( m_parameters.amg.numSweeps ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -139,7 +230,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.amg.smootherType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG smoother type. Available options are: "
-                    "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "|" ) + "``" );
+                    "``" + EnumStrings< LinearSolverParameters::AMG::SmootherType >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgRelaxWeight(), &m_parameters.amg.relaxWeight ).
     setApplyDefaultValue( m_parameters.amg.relaxWeight ).
@@ -150,7 +241,7 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.amg.coarseType ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "AMG coarsest level solver/smoother type. Available options are: "
-                    "``" + EnumStrings< LinearSolverParameters::AMG::CoarseType >::concat( "|" ) + "``" );
+                    "``" + EnumStrings< LinearSolverParameters::AMG::CoarseType >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::amgCoarseningString(), &m_parameters.amg.coarseningType ).
     setApplyDefaultValue( m_parameters.amg.coarseningType ).
@@ -190,6 +281,11 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setDescription( "AMG aggressive interpolation algorithm. Available options are: "
                     "``" + EnumStrings< LinearSolverParameters::AMG::AggInterpType >::concat( "|" ) + "``" );
 
+  registerWrapper( viewKeyStruct::amgMaxCoarseSizeString(), &m_parameters.amg.maxCoarseSize ).
+    setApplyDefaultValue( m_parameters.amg.maxCoarseSize ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "AMG threshold for coarse grid size" );
+
   registerWrapper( viewKeyStruct::amgThresholdString(), &m_parameters.amg.threshold ).
     setApplyDefaultValue( m_parameters.amg.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -203,8 +299,8 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
   registerWrapper( viewKeyStruct::amgNullSpaceTypeString(), &m_parameters.amg.nullSpaceType ).
     setApplyDefaultValue( m_parameters.amg.nullSpaceType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "AMG near null space approximation. Available options are:"
-                    "``" + EnumStrings< LinearSolverParameters::AMG::NullSpaceType >::concat( "|" ) + "``" );
+    setDescription( "AMG near null space approximation. Available options are: "
+                    "``" + EnumStrings< LinearSolverParameters::AMG::NullSpaceType >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeyStruct::iluFillString(), &m_parameters.ifact.fill ).
     setApplyDefaultValue( m_parameters.ifact.fill ).
@@ -215,6 +311,8 @@ LinearSolverParametersInput::LinearSolverParametersInput( string const & name,
     setApplyDefaultValue( m_parameters.ifact.threshold ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "ILU(T) threshold factor" );
+
+  registerInputBlock< BlockParametersInput >( this, groupKeyStruct::blockString(), m_parameters.block );
 
   addLogLevel< logInfo::LinearSolver >();
   addLogLevel< logInfo::LinearSolverConfiguration >();
@@ -277,80 +375,13 @@ void LinearSolverParametersInput::postInputInitialization()
                         ": Invalid value." );
 
   // TODO input validation for other AMG parameters ?
-
-  if( getLogLevel() > 0 )
-    print();
 }
 
-void LinearSolverParametersInput::print()
+Group * LinearSolverParametersInput::createChild( string const & childKey,
+                                                  string const & childName )
 {
-  TableData tableData;
-  tableData.addRow( "Log level", getLogLevel());
-  tableData.addRow( "Linear solver type", m_parameters.solverType );
-  tableData.addRow( "Preconditioner type", m_parameters.preconditionerType );
-  tableData.addRow( "Stop if error", m_parameters.stopIfError );
-  if( m_parameters.solverType == LinearSolverParameters::SolverType::direct )
-  {
-    tableData.addRow( "Check residual", m_parameters.direct.checkResidual );
-    tableData.addRow( "Scale rows and columns", m_parameters.direct.equilibrate );
-    tableData.addRow( "Columns permutation", m_parameters.direct.colPerm );
-    tableData.addRow( "Rows permutation", m_parameters.direct.rowPerm );
-    tableData.addRow( "Replace tiny pivots", m_parameters.direct.replaceTinyPivot );
-    tableData.addRow( "Perform iterative refinement", m_parameters.direct.iterativeRefine );
-    tableData.addRow( "Use parallel solver", m_parameters.direct.parallel );
-  }
-  else
-  {
-    tableData.addRow( "Maximum iterations", m_parameters.krylov.maxIterations );
-    if( m_parameters.solverType == LinearSolverParameters::SolverType::gmres ||
-        m_parameters.solverType == LinearSolverParameters::SolverType::fgmres )
-    {
-      tableData.addRow( "Maximum iterations before restart", m_parameters.krylov.maxRestart );
-    }
-    tableData.addRow( "Use adaptive tolerance", m_parameters.krylov.useAdaptiveTol );
-    if( m_parameters.krylov.useAdaptiveTol )
-    {
-      tableData.addRow( "Weakest-allowed tolerance", m_parameters.krylov.weakestTol );
-    }
-    else
-    {
-      tableData.addRow( "Relative convergence tolerance", m_parameters.krylov.relTolerance );
-    }
-  }
-  if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::amg )
-  {
-    tableData.addRow( "AMG", "" );
-    tableData.addRow( "  Smoother sweeps", m_parameters.amg.numSweeps );
-    tableData.addRow( "  Smoother type", m_parameters.amg.smootherType );
-    tableData.addRow( "  Relaxation factor for the smoother", m_parameters.amg.relaxWeight );
-    tableData.addRow( "  Coarsest level solver/smoother type", m_parameters.amg.coarseType );
-    tableData.addRow( "  Coarsening algorithm", m_parameters.amg.coarseningType );
-    tableData.addRow( "  Interpolation algorithm", m_parameters.amg.interpolationType );
-    tableData.addRow( "  Interpolation maximum number of nonzeros per row", m_parameters.amg.interpolationMaxNonZeros );
-    tableData.addRow( "  Number of functions", m_parameters.amg.numFunctions );
-    tableData.addRow( "  Number of paths for aggressive coarsening", m_parameters.amg.aggressiveNumPaths );
-    tableData.addRow( "  Number of levels for aggressive coarsening", m_parameters.amg.aggressiveNumLevels );
-    tableData.addRow( "  Aggressive interpolation algorithm", m_parameters.amg.aggressiveInterpType );
-    tableData.addRow( "  Strength-of-connection threshold", m_parameters.amg.threshold );
-    tableData.addRow( "  Apply separate component filter for multi-variable problems", m_parameters.amg.separateComponents );
-    tableData.addRow( "  Near null space approximation", m_parameters.amg.nullSpaceType );
-  }
-  else if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::iluk ||
-           m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )
-  {
-    tableData.addRow( "ILU(K) fill factor", m_parameters.ifact.fill );
-    if( m_parameters.preconditionerType == LinearSolverParameters::PreconditionerType::ilut )
-    {
-      tableData.addRow( "ILU(T) threshold factor", m_parameters.ifact.threshold );
-    }
-  }
-  TableLayout const tableLayout = TableLayout( GEOS_FMT( "{}: linear solver", getParent().getName() ),
-                                               { TableLayout::Column()
-                                                   .setName( "Parameter" )
-                                                   .setValuesAlignment( TableLayout::Alignment::left ),
-                                                 "Value" } );
-  TableTextFormatter const tableFormatter( tableLayout );
-  GEOS_LOG_RANK_0( tableFormatter.toString( tableData ));
+  GEOS_UNUSED_VAR( childKey, childName );
+  return nullptr;
 }
 
 REGISTER_CATALOG_ENTRY( Group, LinearSolverParametersInput, string const &, Group * const )

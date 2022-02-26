@@ -51,9 +51,6 @@ public:
   SinglePhasePoromechanics( const string & name,
                             dataRepository::Group * const parent );
 
-  /// Destructor for the class
-  ~SinglePhasePoromechanics() override {}
-
   /**
    * @brief name of the node manager in the object catalog
    * @return string that contains the catalog name to generate a new SinglePhasePoromechanics object through the object catalog.
@@ -94,6 +91,14 @@ public:
                             ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
+  virtual std::unique_ptr< PreconditionerBase< LAInterface > >
+  createPreconditioner( DomainPartition & domain ) const override;
+
+  virtual void solveLinearSystem( DofManager const & dofManager,
+                                  ParallelMatrix & matrix,
+                                  ParallelVector & rhs,
+                                  ParallelVector & solution ) override;
+
   virtual void assembleSystem( real64 const time,
                                real64 const dt,
                                DomainPartition & domain,
@@ -114,6 +119,9 @@ public:
   {
     /// Flag to indicate if it is the phase-field formulation
     constexpr static char const * damageFlagString() { return "damageFlag"; }
+
+    /// Flag to enable block row scaling of the coupled system prior to the linear solve
+    constexpr static char const * linearSystemScalingString() { return "linearSystemScaling"; }
   };
 
 protected:
@@ -121,6 +129,12 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   integer m_damageFlag;
+
+  // input flag indicating whether system scaling should be performed
+  integer m_systemScaling = 0;
+
+  // A vector to perform row/block-wise linear system scaling
+  ParallelVector m_scalingVector;
 
   virtual void setMGRStrategy()
   {
@@ -133,9 +147,6 @@ protected:
    * @param[in] subRegion the element subRegion
    */
   virtual void updateBulkDensity( ElementSubRegionBase & subRegion ) override;
-
-  void createPreconditioner();
-
 };
 
 } /* namespace geos */
