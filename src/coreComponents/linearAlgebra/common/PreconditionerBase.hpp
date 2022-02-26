@@ -34,8 +34,6 @@ public:
 
   PreconditionerBase() = default;
 
-  virtual ~PreconditionerBase() = default;
-
   /// Alias for base type
   using Base = LinearOperator< typename LAI::ParallelVector >;
 

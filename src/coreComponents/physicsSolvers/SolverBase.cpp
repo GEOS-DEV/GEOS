@@ -350,7 +350,7 @@ real64 SolverBase::setNextDtBasedOnNewtonIter( real64 const & currentDt )
 
 real64 SolverBase::linearImplicitStep( real64 const & time_n,
                                        real64 const & dt,
-                                       integer const GEOS_UNUSED_PARAM( cycleNumber ),
+                                       integer const cycleNumber,
                                        DomainPartition & domain )
 {
   // call setup for physics solver. Pre step allocations etc.
@@ -391,17 +391,11 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
     m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
   }
 
-  // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-  if( m_precond )
-  {
-    m_precond->clear();
-  }
-
   // Compose parallel LA matrix out of local matrix
   m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
   // Output the linear system matrix/rhs for debugging purposes
-  debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
+  debugOutputSystem( time_n, cycleNumber, 0, m_matrix, m_rhs );
 
   // Solve the linear system
   solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
@@ -912,12 +906,6 @@ bool SolverBase::solveNonlinearSystem( real64 const & time_n,
       krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
     }
 
-    // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-    if( m_precond )
-    {
-      m_precond->clear();
-    }
-
     // Compose parallel LA matrix/rhs out of local LA matrix/rhs
     m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 
@@ -1052,8 +1040,7 @@ void debugOutputLAObject( T const & obj,
 {
   if( toScreen )
   {
-    string const frame( screenName.size() + 1, '=' );
-    GEOS_LOG_RANK_0( frame << "\n" << screenName << ":\n" << frame );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{2:=>{1}}\n{0}:\n{2:=>{1}}", screenName, screenName.size() + 1, "" ) );
     GEOS_LOG( obj );
   }
 
@@ -1061,7 +1048,7 @@ void debugOutputLAObject( T const & obj,
   {
     string const filename = GEOS_FMT( "{}_{:06}_{:02}.mtx", filePrefix.c_str(), cycleNumber, nonlinearIteration );
     obj.write( filename, LAIOutputFormat::MATRIX_MARKET );
-    GEOS_LOG_RANK_0( screenName << " written to " << filename );
+    GEOS_LOG_RANK_0( GEOS_FMT( "{} written to {}", screenName, filename ) );
   }
 }
 
@@ -1140,7 +1127,11 @@ void SolverBase::solveLinearSystem( DofManager const & dofManager,
   }
   else
   {
-    m_precond->setup( matrix );
+    {
+      Stopwatch timer;
+      m_precond->setup( matrix );
+      GEOS_LOG_RANK_0_IF( params.logLevel >= 1, GEOS_FMT( "[Preconditioner] setup complete ({:.3f} s)", timer.elapsedTime() ) );
+    }
     std::unique_ptr< KrylovSolver< ParallelVector > > solver = KrylovSolver< ParallelVector >::create( params, matrix, *m_precond );
     solver->solve( rhs, solution );
     m_linearSolverResult = solver->result();

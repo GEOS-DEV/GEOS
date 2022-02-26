@@ -13,15 +13,15 @@
  */
 
 /**
- * @file PreconditionerIdentity.hpp
+ * @file PreconditionerNull.hpp
  */
 
-#ifndef GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
-#define GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
+#ifndef GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
+#define GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_
 
 #include "linearAlgebra/common/PreconditionerBase.hpp"
 
-namespace geos
+namespace geosx
 {
 
 /**
@@ -29,7 +29,7 @@ namespace geos
  * @tparam LAI linear algebra interface providing vectors, matrices and solvers
  */
 template< typename LAI >
-class PreconditionerIdentity : public PreconditionerBase< LAI >
+class PreconditionerNull : public PreconditionerBase< LAI >
 {
 public:
 
@@ -51,12 +51,12 @@ public:
   virtual void apply( Vector const & src,
                       Vector & dst ) const override
   {
-    GEOS_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
-    GEOS_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
-    dst.copy( src );
+    GEOSX_LAI_ASSERT_EQ( this->numGlobalRows(), dst.globalSize() );
+    GEOSX_LAI_ASSERT_EQ( this->numGlobalCols(), src.globalSize() );
+    dst.zero();
   }
 };
 
-} // namespace geos
+} // namespace geosx
 
-#endif //GEOS_LINEARALGEBRA_SOLVERS_PRECONDITIONERIDENTITY_HPP_
+#endif //GEOSX_LINEARALGEBRA_SOLVERS_PRECONDITIONERNULL_HPP_

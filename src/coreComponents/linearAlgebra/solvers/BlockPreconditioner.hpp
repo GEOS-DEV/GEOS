@@ -121,11 +121,6 @@ public:
                                 BlockScalingOption const scalingOption );
 
   /**
-   * @brief Destructor.
-   */
-  virtual ~BlockPreconditioner() override;
-
-  /**
    * @brief Setup data for one of the two blocks.
    * @param blockIndex index of the block to set up
    * @param blockDofs choice of DoF components (from a monolithic system)
@@ -140,6 +135,22 @@ public:
                    std::vector< DofManager::SubComponent > blockDofs,
                    std::unique_ptr< PreconditionerBase< LAI > > solver,
                    real64 const scaling = 1.0 );
+
+  /**
+   * @copydoc setupBlock(localIndex,std::vector<DofManager::SubComponent>,std::unique_ptr<PreconditionerBase<LAI>>,real64)
+   */
+  void setupBlock( localIndex const blockIndex,
+                   std::vector< DofManager::SubComponent > blockDofs,
+                   PreconditionerBase< LAI > * const solver,
+                   real64 const scaling = 1.0 );
+
+  /**
+   * @brief Set user-provided prolongation operator for a block
+   * @param blockIndex index of the block to set up
+   * @param P the operator
+   */
+  void setProlongation( localIndex const blockIndex,
+                        Matrix const & P );
 
   /**
    * @name PreconditionerBase interface methods
@@ -172,9 +183,8 @@ private:
   /**
    * @brief Initialize/resize internal data structures for a new linear system.
    * @param mat the new system matrix
-   * @param dofManager the new dof manager
    */
-  void reinitialize( Matrix const & mat, DofManager const & dofManager );
+  void reinitialize( Matrix const & mat );
 
   /**
    * @brief Apply block scaling to system blocks (which must be already extracted).
@@ -196,22 +206,25 @@ private:
   BlockScalingOption m_scalingOption;
 
   /// Description of dof components making up each of the two main blocks
-  std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs;
+  std::array< std::vector< DofManager::SubComponent >, 2 > m_blockDofs{};
 
-  /// Restriction operators for each sub-block
-  std::array< Matrix, 2 > m_restrictors;
+  /// Pointers to prolongation operators for each sub-block
+  std::array< Matrix const *, 2 > m_prolongators{};
 
   /// Prolongation operators for each sub-block
-  std::array< Matrix, 2 > m_prolongators;
+  std::array< Matrix, 2 > m_prolongatorsOwned{};
 
   /// Matrix blocks
   BlockOperator< Vector, Matrix > m_matBlocks;
 
-  /// Individual block preconditioners
-  std::array< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solvers;
+  /// Individual block preconditioner pointers
+  std::array< PreconditionerBase< LAI > *, 2 > m_solvers{};
+
+  /// Individual block preconditioner operators (when owned)
+  std::array< std::unique_ptr< PreconditionerBase< LAI > >, 2 > m_solversOwned{};
 
   /// Scaling of each block
-  std::array< real64, 2 > m_scaling;
+  std::array< real64, 2 > m_scaling{};
 
   /// Internal vector of block residuals
   mutable BlockVector< Vector > m_rhs;

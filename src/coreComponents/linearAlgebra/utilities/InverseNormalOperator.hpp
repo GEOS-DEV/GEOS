@@ -52,7 +52,7 @@ public:
     m_transposeSolver.apply( src, dst );
   }
 
-public:
+private:
 
   Matrix m_transposeMatrix;
   Solver m_transposeSolver;

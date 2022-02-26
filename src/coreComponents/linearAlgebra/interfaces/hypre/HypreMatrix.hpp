@@ -128,6 +128,8 @@ public:
   using MatrixBase::setDofManager;
   using MatrixBase::dofManager;
   using MatrixBase::create;
+  using MatrixBase::extract;
+  using MatrixBase::multiplyPtAP;
 
   virtual void create( CRSMatrixView< real64 const, globalIndex const > const & localMatrix,
                        localIndex const numLocalColumns,
@@ -250,8 +252,9 @@ public:
                             HypreMatrix const & P,
                             HypreMatrix & dst ) const override;
 
-  virtual void multiplyPtAP( HypreMatrix const & P,
-                             HypreMatrix & dst ) const override;
+  virtual void multiplyPtAP( Matrix const & P1,
+                             Matrix const & P2,
+                             Matrix & dst ) const override;
 
   virtual void gemv( real64 const alpha,
                      HypreVector const & x,
@@ -305,6 +308,10 @@ public:
                            arraySlice1d< real64 > const & values ) const override;
 
   virtual void extractDiagonal( HypreVector & dst ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex > const & localMat ) const override;
+
+  virtual void extract( CRSMatrixView< real64, globalIndex const > const & localMat ) const override;
 
   virtual void getRowSums( HypreVector & dst,
                            RowSumType const rowSumType ) const override;

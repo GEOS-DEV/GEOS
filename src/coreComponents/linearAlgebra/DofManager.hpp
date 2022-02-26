@@ -20,6 +20,7 @@
 #define GEOS_LINEARALGEBRA_DOFMANAGER_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/Span.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
 #include "mesh/FieldIdentifiers.hpp"
 
@@ -44,10 +45,10 @@ class DofManager
 public:
 
   /// Maximum number of components in a field
-  static int constexpr MAX_COMP = 32;
+  static int constexpr maxNumComp = 32;
 
   /// Type of component mask used by DofManager
-  using CompMask = ComponentMask< MAX_COMP >;
+  using CompMask = ComponentMask< maxNumComp >;
 
   /**
    * @brief Describes a selection of components from a DoF field.
@@ -308,7 +309,7 @@ public:
    * @brief @return number of components in a given field.
    * @param fieldName name of the field
    */
-  integer numComponents( string const & fieldName = "" ) const;
+  integer numComponents( string const & fieldName ) const;
 
   /**
    * @brief @return number of dof components across all fields.
@@ -327,6 +328,12 @@ public:
    * @param [in] fieldName name of the field.
    */
   globalIndex globalOffset( string const & fieldName ) const;
+
+  /**
+   * @brief @return support of the given field (list of mesh body/levels/regions)
+   * @param fieldName
+   */
+  Span< FieldSupport const > support( string const & fieldName ) const;
 
   /**
    * @brief Return an array of number of components per field, sorted by field registration order.
@@ -379,7 +386,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                          CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Add values from LA vectors to simulation data arrays.
@@ -394,7 +401,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                         CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Copy values from simulation data arrays to vectors.
@@ -409,7 +416,7 @@ public:
                           string const & srcFieldName,
                           string const & dstFieldName,
                           real64 scalingFactor,
-                          CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                          CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Add values from a simulation data array to a DOF vector.
@@ -424,7 +431,7 @@ public:
                          string const & srcFieldName,
                          string const & dstFieldName,
                          real64 scalingFactor,
-                         CompMask mask = CompMask( MAX_COMP, true ) ) const;
+                         CompMask mask = CompMask( maxNumComp, true ) ) const;
 
   /**
    * @brief Create a dof selection by filtering out excluded components
@@ -555,10 +562,6 @@ private:
   void setSparsityPatternFromStencil( SparsityPatternView< globalIndex > const & pattern,
                                       localIndex fieldIndex ) const;
 
-  template< int DIMS_PER_DOF >
-  void setFiniteElementSparsityPattern( SparsityPattern< globalIndex > & pattern,
-                                        localIndex fieldIndex ) const;
-
   /**
    * @brief Generic implementation for @ref copyVectorToField and @ref addVectorToField
    * @tparam FIELD_OP operation to perform (see FieldSpecificationOps.hpp)
@@ -596,7 +599,7 @@ private:
   /// Name of the manager (unique, for unique identification of index array keys)
   string m_name;
 
-  /// Pointer to corresponding MeshLevel
+  /// Pointer to domain that holds mesh bodies/levels
   DomainPartition * m_domain = nullptr;
 
   /// Array of field descriptions

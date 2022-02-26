@@ -144,6 +144,11 @@ globalIndex DofManager::globalOffset( string const & fieldName ) const
   return m_fields[getFieldIndex( fieldName )].globalOffset;
 }
 
+Span< DofManager::FieldSupport const > DofManager::support( string const & fieldName ) const
+{
+  return m_fields[getFieldIndex( fieldName )].support;
+}
+
 namespace
 {
 
@@ -326,7 +331,7 @@ void DofManager::addField( string const & fieldName,
 {
   GEOS_ASSERT_MSG( m_domain != nullptr, "Domain has not been set" );
   GEOS_ERROR_IF( m_reordered, "Cannot add fields after reorderByRank() has been called." );
-  GEOS_ERROR_IF_GT_MSG( components, MAX_COMP, "Number of components limit exceeded" );
+  GEOS_ERROR_IF_GT_MSG( components, maxNumComp, "Number of components limit exceeded" );
 
   std::vector< FieldSupport > processedSupports = processFieldSupportList( *m_domain, regions );
 
@@ -1422,7 +1427,7 @@ void DofManager::reorderByRank()
   }
 
   // This is a map with a key that is the pair of strings specifying the
-  // ( MeshBody name, MeshLevel name), and a value that is another map with a
+  // (MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
   std::map< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
@@ -1491,6 +1496,7 @@ void DofManager::setupFrom( DofManager const & source,
                             std::vector< SubComponent > const & selection )
 {
   clear();
+  m_domain = source.m_domain;
   for( FieldDescription const & field : source.m_fields )
   {
     auto const it = std::find_if( selection.begin(), selection.end(),
@@ -1525,7 +1531,6 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
   GEOS_ERROR_IF( !m_reordered, "Cannot make restrictors before reorderByRank() has been called." );
 
   // 1. Populate selected fields and compute some basic dimensions
-  // array1d< FieldDescription > fieldsSelected( selection.size() );
   std::vector< FieldDescription > fieldsSelected( selection.size() );
 
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
@@ -1550,7 +1555,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
     blockOffset += field.numGlobalDof;
   }
 
-  globalIndex globalOffset = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), globalIndex( 0 ),
+  globalIndex globalOffset = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), globalIndex{},
                                               []( localIndex const n, FieldDescription const & f )
   { return n + f.rankOffset; } );
 
@@ -1562,7 +1567,7 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
   // 3. Build the restrictor field by field
 
-  localIndex const numLocalDofSelected = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), localIndex( 0 ),
+  localIndex const numLocalDofSelected = std::accumulate( fieldsSelected.begin(), fieldsSelected.end(), localIndex{},
                                                           []( localIndex const n, FieldDescription const & f )
   { return n + f.numLocalDof; } );
 
@@ -1574,44 +1579,44 @@ void DofManager::makeRestrictor( std::vector< SubComponent > const & selection,
 
   array1d< globalIndex > rows;
   array1d< globalIndex > cols;
-  array1d< real64 > values;
+  array1d< real64 > vals;
 
   for( std::size_t k = 0; k < fieldsSelected.size(); ++k )
   {
     FieldDescription const & fieldNew = fieldsSelected[k];
     FieldDescription const & fieldOld = m_fields[getFieldIndex( fieldNew.name )];
 
-    FieldDescription const & fieldRow = transpose ? fieldOld : fieldNew;
-    FieldDescription const & fieldCol = transpose ? fieldNew : fieldOld;
-
     CompMask const mask = selection[k].mask;
     localIndex const numLocalNodes = fieldNew.numLocalDof / fieldNew.numComponents;
 
+    rows.resize( fieldNew.numLocalDof );
+    cols.resize( fieldNew.numLocalDof );
+    vals.resize( fieldNew.numLocalDof );
+    vals.setValues< parallelHostPolicy >( 1.0 );
 
-    rows.resize( numLocalNodes*mask.size() );
-    cols.resize( numLocalNodes*mask.size() );
-    values.resize( numLocalNodes*mask.size() );
-
-    for( localIndex i = 0; i < numLocalNodes; ++i )
+    forAll< parallelHostPolicy >( numLocalNodes, [&fieldNew, &fieldOld, mask, transpose,
+                                                  rows = rows.toView(),
+                                                  cols = cols.toView()]( localIndex const i )
     {
       integer newComp = 0;
       for( integer const oldComp : mask )
       {
-        globalIndex const row = fieldRow.globalOffset + i * fieldRow.numComponents + ( transpose ? oldComp : newComp );
-        globalIndex const col = fieldCol.globalOffset + i * fieldCol.numComponents + ( transpose ? newComp : oldComp );
+        globalIndex row = fieldNew.globalOffset + i * fieldNew.numComponents + newComp;
+        globalIndex col = fieldOld.globalOffset + i * fieldOld.numComponents + oldComp;
+        if( transpose )
+        {
+          std::swap( row, col );
+        }
 
-        rows( i*mask.size() + newComp ) = row;
-        cols( i*mask.size() + newComp ) = col;
-        values[ i*mask.size() + newComp ] = 1.0;
+        rows[ i * fieldNew.numComponents + newComp ] = row;
+        cols[ i * fieldNew.numComponents + newComp ] = col;
         ++newComp;
       }
-    }
+    } );
 
     restrictor.insert( rows.toViewConst(),
                        cols.toViewConst(),
-                       values.toViewConst() );
-
-
+                       vals.toViewConst() );
   }
   restrictor.close();
 }
