@@ -50,11 +50,6 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
 }
 
-
-WellElementSubRegion::~WellElementSubRegion()
-{}
-
-
 void WellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
   m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
