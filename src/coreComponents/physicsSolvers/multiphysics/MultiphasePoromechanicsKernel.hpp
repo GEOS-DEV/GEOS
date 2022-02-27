@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace PoromechanicsKernels
+namespace poromechanicsKernels
 {
 
 /**
@@ -63,9 +63,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   static constexpr int numMaxComponents = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -89,15 +90,15 @@ public:
               SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
               CONSTITUTIVE_TYPE & inputConstitutiveType,
-              arrayView1d< globalIndex const > const & inputDispDofNumber,
-              string const & inputFlowDofKey,
+              arrayView1d< globalIndex const > const inputDispDofNumber,
+              string const inputFlowDofKey,
               globalIndex const rankOffset,
               real64 const (&inputGravityVector)[3],
               localIndex const numComponents,
               localIndex const numPhases,
-              arrayView1d< string const > const fluidModelNames,
-              CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-              arrayView1d< real64 > const & inputRhs ):
+              string const fluidModelKey,
+              CRSMatrixView< real64, globalIndex const > const inputMatrix,
+              arrayView1d< real64 > const inputRhs ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -125,16 +126,15 @@ public:
 
     // extract fluid constitutive data views
     {
+      string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
       constitutive::MultiFluidBase const & fluid =
-        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] );
+        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
-      m_dFluidPhaseDensity_dPressure = fluid.dPhaseDensity_dPressure();
-      m_dFluidPhaseDensity_dGlobalCompFraction = fluid.dPhaseDensity_dGlobalCompFraction();
+      m_dFluidPhaseDensity = fluid.dPhaseDensity();
 
       m_fluidPhaseCompFrac = fluid.phaseCompFraction();
-      m_dFluidPhaseCompFrac_dPressure = fluid.dPhaseCompFraction_dPressure();
-      m_dFluidPhaseCompFraction_dGlobalCompFraction = fluid.dPhaseCompFraction_dGlobalCompFraction();
+      m_dFluidPhaseCompFrac = fluid.dPhaseCompFraction();
 
       m_fluidPhaseMassDensity = fluid.phaseMassDensity();
       m_initialFluidTotalMassDensity = fluid.initialTotalMassDensity();
@@ -174,7 +174,7 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::numRows;
+    static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
     GEOSX_HOST_DEVICE
@@ -367,10 +367,12 @@ public:
     // --- Mass balance accumulation
     // --- --- sum contributions to component accumulation from each phase
 
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+
     // --- --- temporary work arrays
-    real64 dPhaseAmount_dC[numMaxComponents];
-    real64 dPhaseCompFrac_dC[numMaxComponents];
-    real64 componentAmount[numMaxComponents] = { 0.0 };
+    real64 dPhaseAmount_dC[numMaxComponents]{};
+    real64 dPhaseCompFrac_dC[numMaxComponents]{};
+    real64 componentAmount[numMaxComponents]{};
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -379,13 +381,14 @@ public:
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip )
                                      + porosityNew * (m_dFluidPhaseSaturation_dPressure( k, ip ) * m_fluidPhaseDensity( k, q, ip )
-                                                      + m_fluidPhaseSaturation( k, ip ) * m_dFluidPhaseDensity_dPressure( k, q, ip ) );
+                                                      + m_fluidPhaseSaturation( k, ip ) * m_dFluidPhaseDensity( k, q, ip, Deriv::dP ) );
 
       // assemble density dependence
       applyChainRule( NC,
                       m_dGlobalCompFraction_dGlobalCompDensity[k],
-                      m_dFluidPhaseDensity_dGlobalCompFraction[k][q][ip],
-                      dPhaseAmount_dC );
+                      m_dFluidPhaseDensity[k][q][ip],
+                      dPhaseAmount_dC,
+                      Deriv::dC );
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
@@ -403,7 +406,7 @@ public:
         real64 const phaseCompAmountOld = phaseAmountOld * m_fluidPhaseCompFracOld( k, ip, ic );
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
-                                           + phaseAmountNew * m_dFluidPhaseCompFrac_dPressure( k, q, ip, ic );
+                                           + phaseAmountNew * m_dFluidPhaseCompFrac( k, q, ip, ic, Deriv::dP );
 
         componentAmount[ic] += fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
@@ -416,8 +419,9 @@ public:
         // assemble phase composition dependence
         applyChainRule( NC,
                         m_dGlobalCompFraction_dGlobalCompDensity[k],
-                        m_dFluidPhaseCompFraction_dGlobalCompFraction[k][q][ip][ic],
-                        dPhaseCompFrac_dC );
+                        m_dFluidPhaseCompFrac[k][q][ip][ic],
+                        dPhaseCompFrac_dC,
+                        Deriv::dC );
 
         for( localIndex jc = 0; jc < NC; ++jc )
         {
@@ -461,7 +465,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
-    using namespace CompositionalMultiphaseUtilities;
+    using namespace compositionalMultiphaseUtilities;
 
     GEOSX_UNUSED_VAR( k );
 
@@ -554,27 +558,25 @@ protected:
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseDensityOld;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseDensity_dPressure;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity_dGlobalCompFraction;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity;
+
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
   arrayView3d< real64 const, compflow::USD_PHASE_COMP > m_fluidPhaseCompFracOld;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_dFluidPhaseCompFrac_dPressure;
+  arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFrac;
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseMassDensity_dPressure;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity_dGlobalCompFraction;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity;
 
   arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > m_initialFluidTotalMassDensity;
 
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturationOld;
   arrayView2d< real64 const, compflow::USD_PHASE > m_dFluidPhaseSaturation_dPressure;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation_dGlobalCompFraction;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation_dGlobalCompDensity;
 
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dGlobalCompFraction_dGlobalCompDensity;
 
-  arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFraction_dGlobalCompFraction;
+
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > m_flowDofNumber;
@@ -597,17 +599,17 @@ protected:
 };
 
 using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              string const &,
+                                                              arrayView1d< globalIndex const > const,
+                                                              string const,
                                                               globalIndex const,
                                                               real64 const (&)[3],
                                                               localIndex const,
                                                               localIndex const,
-                                                              arrayView1d< string const > const,
-                                                              CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const & >;
+                                                              string const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const >;
 
-} // namespace PoroelasticKernels
+} // namespace poromechanicsKernels
 
 } // namespace geosx
 

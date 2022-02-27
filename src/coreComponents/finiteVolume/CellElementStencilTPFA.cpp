@@ -18,13 +18,12 @@
 
 
 #include "CellElementStencilTPFA.hpp"
-#include "codingUtilities/Utilities.hpp"
 
 namespace geosx
 {
 
-CellElementStencilTPFA::CellElementStencilTPFA():
-  StencilBase< CellElementStencilTPFA_Traits, CellElementStencilTPFA >()
+CellElementStencilTPFA::CellElementStencilTPFA()
+  : StencilBase()
 {
   m_faceNormal.resize( 0, 3 );
   m_cellToFaceVec.resize( 0, 2, 3 );
@@ -83,5 +82,34 @@ void CellElementStencilTPFA::addVectors( real64 const & transMultiplier,
     LvArray::tensorOps::copy< 3 >( m_cellToFaceVec[oldSize][a], cellToFaceVec[a] );
   }
 }
+
+CellElementStencilTPFA::KernelWrapper
+CellElementStencilTPFA::createKernelWrapper() const
+{
+  return { m_elementRegionIndices,
+           m_elementSubRegionIndices,
+           m_elementIndices,
+           m_weights,
+           m_faceNormal,
+           m_cellToFaceVec,
+           m_transMultiplier };
+}
+
+CellElementStencilTPFAWrapper::
+  CellElementStencilTPFAWrapper( IndexContainerType const & elementRegionIndices,
+                                 IndexContainerType const & elementSubRegionIndices,
+                                 IndexContainerType const & elementIndices,
+                                 WeightContainerType const & weights,
+                                 arrayView2d< real64 > const & faceNormal,
+                                 arrayView3d< real64 > const & cellToFaceVec,
+                                 arrayView1d< real64 > const & transMultiplier )
+  : StencilWrapperBase( elementRegionIndices,
+                        elementSubRegionIndices,
+                        elementIndices,
+                        weights ),
+  m_faceNormal( faceNormal ),
+  m_cellToFaceVec( cellToFaceVec ),
+  m_transMultiplier( transMultiplier )
+{}
 
 } /* namespace geosx */

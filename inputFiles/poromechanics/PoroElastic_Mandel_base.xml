@@ -1,0 +1,237 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_POROMECHANICSSOLVER -->-->
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"
+        newtonTol="1.0e-2"
+        maxTimeStepCuts="1"
+        lineSearchMaxCuts="0"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SinglePhasePoromechanics>
+    <!-- SPHINX_POROMECHANICSSOLVER_END -->
+
+    <!-- SPHINX_MECHANICALSOLVER -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Domain }"/>
+    <!-- SPHINX_MECHANICALSOLVER_END -->
+
+    <!-- SPHINX_SINGLEPHASEFVM -->
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Domain }"/>
+    <!-- SPHINX_SINGLEPHASEFVM_END -->
+  </Solvers>
+ 
+  <!-- SPHINX_NUMERICAL -->
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_NUMERICAL_END -->
+
+  <!-- SPHINX_ELEMENTREGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Domain"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale, water }"/>
+  </ElementRegions>
+  <!-- SPHINX_ELEMENTREGIONS_END -->
+
+  <!-- SPHINX_MATERIAL -->
+  <Constitutive>
+    <PorousElasticIsotropic
+      name="shale"
+      solidModelName="shaleSolid"
+      porosityModelName="shalePorosity"
+      permeabilityModelName="shalePerm"/>
+
+    <ElasticIsotropic
+      name="shaleSolid"
+      defaultDensity="0"
+      defaultBulkModulus="6.6667e7"
+      defaultShearModulus="4.0e7"/>
+
+    <BiotPorosity
+      name="shalePorosity"
+      grainBulkModulus="1.0e27"
+      defaultReferencePorosity="0.375"/>
+
+    <ConstantPermeability
+      name="shalePerm"
+      permeabilityComponents="{ 1.0e-12, 0.0, 1.0e-12 }"/>
+
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.000"
+      referenceDensity="1"
+      compressibility="4.4e-10"
+      referenceViscosity="0.001"
+      viscosibility="0.0"/>
+  </Constitutive>
+  <!-- SPHINX_MATERIAL_END -->
+
+  <!-- SPHINX_BC -->
+  <FieldSpecifications>
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"
+      scale="4934.86"/>
+   
+    <FieldSpecification
+      name="xInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="1.0"
+      functionName="initialUxFunc"/>
+
+    <FieldSpecification
+      name="yInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"/>
+
+    <FieldSpecification
+      name="zInitialDisplacement"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="1.0"
+      functionName="initialUzFunc"/>
+
+    <FieldSpecification
+      name="xnegconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      scale="0.0"
+      setNames="{ xneg }"/>
+
+    <FieldSpecification
+      name="yconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="0.0"
+      setNames="{ yneg, ypos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg }"/>
+
+    <FieldSpecification
+      name="NormalDisplacement"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="-1.0e-5"
+      setNames="{ zpos }"
+      functionName="loadFunction"/>
+  
+    <FieldSpecification
+      name="boundaryPressure"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="0.0"
+      setNames="{ xpos }"/>
+  </FieldSpecifications>
+  <!-- SPHINX_BC_END -->
+
+  <!-- SPHINX_TABLE -->
+  <Functions>
+    <TableFunction
+      name="initialUxFunc"
+      inputVarNames="{ ReferencePosition }"
+      coordinateFiles="{ mandel_tables/xlin.geos, mandel_tables/ylin.geos, mandel_tables/zlin.geos }"
+      voxelFile="mandel_tables/ux.geos"/>
+
+    <TableFunction
+      name="initialUzFunc"
+      inputVarNames="{ ReferencePosition }"
+      coordinateFiles="{ mandel_tables/xlin2.geos, mandel_tables/ylin2.geos, mandel_tables/zlin2.geos }"
+      voxelFile="mandel_tables/uz.geos"/>
+
+    <TableFunction
+      name="loadFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0., 1.00000000e-04, 1.83298071e-04, 3.35981829e-04, 6.15848211e-04, 1.12883789e-03, 2.06913808e-03, 3.79269019e-03, 6.95192796e-03, 1.27427499e-02, 2.33572147e-02, 4.28133240e-02, 7.84759970e-02, 1.43844989e-01, 2.63665090e-01, 4.83293024e-01, 8.85866790e-01, 1.62377674e+00, 2.97635144e+00, 5.45559478e+00, 1.00000000e+01 }"
+      values="{ 6.31691864, 6.31770204, 6.31834881, 6.31952093, 6.32162575, 6.32534495, 6.33173922, 6.34226498, 6.35857272, 6.38222902, 6.41503816, 6.45995655, 6.52156122, 6.60644048, 6.72413111, 6.8887422, 7.12175231, 7.45621336, 7.9280595, 8.51003414, 9.03811794 }"/>
+  </Functions>
+  <!-- SPHINX_TABLE_END -->
+
+  <!-- SPHINX_TASKS -->
+  <Tasks>
+    <PackCollection
+      name="pressureCollection"
+      objectPath="ElementRegions/Domain/cb1"
+      fieldName="pressure"/>
+
+    <PackCollection
+      name="displacementCollection"
+      objectPath="nodeManager" 
+      fieldName="TotalDisplacement"/>  
+  </Tasks>
+  <!-- SPHINX_TASKS_END -->
+
+  <!-- SPHINX_OUTPUT -->
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+
+    <TimeHistory
+      name="pressureHistoryOutput"
+      sources="{/Tasks/pressureCollection}"
+      filename="pressure_history"/> 
+
+    <TimeHistory
+      name="displacementHistoryOutput"
+      sources="{/Tasks/displacementCollection}"
+      filename="displacement_history" />   
+  </Outputs>
+  <!-- SPHINX_OUTPUT_END -->
+</Problem>

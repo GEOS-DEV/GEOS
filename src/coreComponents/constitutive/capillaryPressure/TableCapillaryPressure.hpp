@@ -16,8 +16,8 @@
  * @file TableCapillaryPressure.hpp
  */
 
-#ifndef GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSURE_HPP
-#define GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSURE_HPP
+#ifndef GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_TABLECAPILLARYPRESSURE_HPP
+#define GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_TABLECAPILLARYPRESSURE_HPP
 
 #include "constitutive/capillaryPressure/CapillaryPressureBase.hpp"
 
@@ -31,6 +31,16 @@ namespace constitutive
 class TableCapillaryPressure : public CapillaryPressureBase
 {
 public:
+
+  /// order of the phase properties for three-phase flow
+  struct ThreePhasePairPhaseType
+  {
+    enum : integer
+    {
+      INTERMEDIATE_WETTING = 0,   ///< index for intermediate-wetting
+      INTERMEDIATE_NONWETTING = 1 ///< index for intermediate-non-wetting
+    };
+  };
 
   TableCapillaryPressure( std::string const & name, dataRepository::Group * const parent );
 
@@ -50,9 +60,9 @@ public:
                    arrayView4d< real64, cappres::USD_CAPPRES_DS > const & dPhaseCapPres_dPhaseVolFrac );
 
     GEOSX_HOST_DEVICE
-    virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                          arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                          arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
+    void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                  arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                  arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
     GEOSX_HOST_DEVICE
     virtual void update( localIndex const k,
@@ -79,6 +89,8 @@ private:
     static constexpr char const * wettingNonWettingCapPresTableNameString() { return "wettingNonWettingCapPressureTableName"; }
     static constexpr char const * wettingIntermediateCapPresTableNameString() { return "wettingIntermediateCapPressureTableName"; }
     static constexpr char const * nonWettingIntermediateCapPresTableNameString() { return "nonWettingIntermediateCapPressureTableName"; }
+    static constexpr char const * capPresWrappersString() { return "capPresWrappers"; }
+
   };
 
 private:
@@ -92,25 +104,16 @@ private:
    */
   void createAllTableKernelWrappers();
 
-  /**
-   * @brief Validate the capillary pressure table provided in input (increasing phase vol frac and cap pressure, etc)
-   * @param[in] capPresTable the capillary pressure table (pc vs s) for a given phase)
-   * @param[in] capPresMustBeIncreasing flag saying that we expect an increasing cap pressure (otherwise, we expect a decreasing cap
-   * pressure)
-   */
-  void validateCapillaryPressureTable( TableFunction const & capPresTable,
-                                       bool const capPresMustBeIncreasing ) const;
-
-  /// Relative permeability table names (one for each phase in the wetting-non-wetting pair)
+  /// Capillary pressure table names (one for each phase in the wetting-non-wetting pair)
   string m_wettingNonWettingCapPresTableName;
 
-  /// Relative permeability table names (one for each phase in the wetting-intermediate pair)
+  /// Capillary pressure table names (one for each phase in the wetting-intermediate pair)
   string m_wettingIntermediateCapPresTableName;
 
-  /// Relative permeability table names (one for each phase in the non-wetting-intermediate pair)
+  /// Capillary pressure table names (one for each phase in the non-wetting-intermediate pair)
   string m_nonWettingIntermediateCapPresTableName;
 
-  /// Relative permeability kernel wrapper for the first pair (wetting-intermediate if NP=3, wetting-non-wetting otherwise)
+  /// Capillary pressure kernel wrapper for the first pair (wetting-intermediate if NP=3, wetting-non-wetting otherwise)
   array1d< TableFunction::KernelWrapper > m_capPresKernelWrappers;
 
 };
@@ -131,17 +134,19 @@ TableCapillaryPressure::KernelWrapper::
 
   if( ipWater >= 0 && ipOil >= 0 && ipGas >= 0 )
   {
+    using TPT = TableCapillaryPressure::ThreePhasePairPhaseType;
+
     // water-oil capillary pressure
     phaseCapPres[ipWater] =
-      m_capPresKernelWrappers[0].compute( &(phaseVolFraction)[ipWater],
-                                          &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
+      m_capPresKernelWrappers[TPT::INTERMEDIATE_WETTING].compute( &(phaseVolFraction)[ipWater],
+                                                                  &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
 
     // gas-oil capillary pressure
     phaseCapPres[ipGas] =
-      m_capPresKernelWrappers[1].compute( &(phaseVolFraction)[ipGas],
-                                          &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
+      m_capPresKernelWrappers[TPT::INTERMEDIATE_NONWETTING].compute( &(phaseVolFraction)[ipGas],
+                                                                     &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
 
-    // when pc is on the gas phase, we need to must multiply user input by -1
+    // when pc is on the gas phase, we need to multiply user input by -1
     // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
     phaseCapPres[ipGas] *= -1;
     dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= -1;
@@ -153,19 +158,12 @@ TableCapillaryPressure::KernelWrapper::
       m_capPresKernelWrappers[0].compute( &(phaseVolFraction)[ipGas],
                                           &(dPhaseCapPres_dPhaseVolFrac)[ipGas][ipGas] );
 
-    // when pc is on the gas phase, we need to must multiply user input by -1
+    // when pc is on the gas phase, we need to multiply user input by -1
     // because CompositionalMultiphaseFVM does: pres_gas = pres_oil - pc_og, so we need a negative pc_og
     phaseCapPres[ipGas] *= -1;
     dPhaseCapPres_dPhaseVolFrac[ipGas][ipGas] *= -1;
   }
-  else if( ipOil < 0 )
-  {
-    // put capillary pressure on the wetting phase
-    phaseCapPres[ipWater] =
-      m_capPresKernelWrappers[0].compute( &(phaseVolFraction)[ipWater],
-                                          &(dPhaseCapPres_dPhaseVolFrac)[ipWater][ipWater] );
-  }
-  else if( ipGas < 0 )
+  else if( ipOil < 0 || ipGas < 0 )
   {
     // put capillary pressure on the wetting phase
     phaseCapPres[ipWater] =
@@ -190,4 +188,4 @@ TableCapillaryPressure::KernelWrapper::
 
 } // namespace geosx
 
-#endif //GEOSX_CONSTITUTIVE_TABLECAPILLARYPRESSURE_HPP
+#endif // GEOSX_CONSTITUTIVE_CAPILLARYPRESSURE_TABLECAPILLARYPRESSURE_HPP

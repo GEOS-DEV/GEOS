@@ -54,22 +54,19 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const override;
+  virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
 
-  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                              localIndex const targetIndex ) const override;
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const override;
 
 protected:
 
-  virtual void validateFluidModels( DomainPartition const & domain ) const override;
+  virtual void validateFluidModels( DomainPartition & domain ) const override;
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
 
-  ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > m_permeabilityMultiplier;
-
 private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

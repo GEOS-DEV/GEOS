@@ -21,7 +21,7 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/DeadOilFluid.hpp"
 #include "constitutive/fluid/BlackOilFluid.hpp"
-#include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
+#include "constitutive/fluid/CO2BrineFluid.hpp"
 
 #include "common/GeosxConfig.hpp"
 #ifdef GEOSX_USE_PVTPackage

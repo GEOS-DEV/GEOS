@@ -158,24 +158,74 @@ std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
   return keys;
 }
 
+namespace internal
+{
+template< class F, class ... Ts, std::size_t ... Is >
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func, std::index_sequence< Is ... > )
+{
+  using expander = int[];
+  (void) expander { 0, ( (void)func( std::get< Is >( tuple ), std::integral_constant< size_t, Is >{} ), 0 )... };
+}
+}
+
+/**
+ * @brief Visit every element in a tuple applying a function.
+ * @tparam F type of function
+ * @tparam Ts types of tuple elements
+ * @param tuple the target tuple
+ * @param func the function to apply
+ *
+ * The function will be called with a reference to the tuple element and
+ * a compile-time (std::integral_constant) index of the tuple element.
+ */
+template< class F, class ... Ts >
+void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
+{
+  internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
+}
+
 // The code below should work with any subscriptable vector/matrix types
 
+/**
+ * @brief Utility function to copy a vector into another vector
+ * @tparam VEC1 the type of the source vector
+ * @tparam VEC2 the type of the destination vector
+ * @param[in] N the number of values to copy
+ * @param[in] v1 the source vector
+ * @param[out] v2 the destination vector
+ * @param[in] offset the first index of v2 at which we start copying values
+ */
 template< typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
-void copy( integer const N, VEC1 const & v1, VEC2 const & v2 )
+void copy( integer const N,
+           VEC1 const & v1,
+           VEC2 const & v2,
+           integer const offset = 0 )
 {
   for( integer i = 0; i < N; ++i )
   {
-    v2[i] = v1[i];
+    v2[offset+i] = v1[i];
   }
 }
 
+/**
+ * @brief Utility function to apply the chain rule to compute df_dx as a function of df_dy and dy_dx
+ * @tparam MATRIX the type of the matrix of derivatives
+ * @tparam VEC1 the type of the source vector
+ * @tparam VEC2 the type of the destination vector
+ * @param[in] N the number of derivative values
+ * @param[in] dy_dx the matrix of derivatives of y(x) wrt x
+ * @param[in] df_dy the derivatives of f wrt y
+ * @param[out] df_dx the computed derivatives of f wrt x
+ * @param[in] firstDerivativeOffset the first derivative offset in df_dy
+ */
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
 void applyChainRule( integer const N,
                      MATRIX const & dy_dx,
                      VEC1 const & df_dy,
-                     VEC2 && df_dx )
+                     VEC2 && df_dx,
+                     integer const firstDerivativeOffset = 0 )
 {
   // this could use some dense linear algebra
   for( integer i = 0; i < N; ++i )
@@ -183,20 +233,32 @@ void applyChainRule( integer const N,
     df_dx[i] = 0.0;
     for( integer j = 0; j < N; ++j )
     {
-      df_dx[i] += df_dy[j] * dy_dx[j][i];
+      df_dx[i] += df_dy[firstDerivativeOffset+j] * dy_dx[j][i];
     }
   }
 }
 
+/**
+ * @brief Utility function to apply the chain rule to compute df_dxy in place
+ * @tparam MATRIX the type of the matrix of derivatives
+ * @tparam VEC1 the type of the source vector
+ * @tparam VEC2 the type of the utility vector
+ * @param[in] N the number of derivative values
+ * @param[in] dy_dx the matrix of derivatives of y(x) wrt x
+ * @param[out] df_dxy the derivatives of f wrt y
+ * @param[out] work utility array
+ * @param[in] offset the first derivative offset in df_dy
+ */
 template< typename MATRIX, typename VEC1, typename VEC2 >
 GEOSX_HOST_DEVICE
 void applyChainRuleInPlace( integer const N,
                             MATRIX const & dy_dx,
                             VEC1 && df_dxy,
-                            VEC2 && work )
+                            VEC2 && work,
+                            integer const firstDeriv = 0 )
 {
-  applyChainRule( N, dy_dx, df_dxy, work );
-  copy( N, work, df_dxy );
+  applyChainRule( N, dy_dx, df_dxy, work, firstDeriv );
+  copy( N, work, df_dxy, firstDeriv );
 }
 
 } // namespace geosx

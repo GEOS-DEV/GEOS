@@ -45,15 +45,11 @@ public:
 
   // Aliasing public/protected members/methods of SolverBase so we don't
   // have to use this->member etc.
+  using BASE::forMeshTargets;
   using BASE::m_cflFactor;
   using BASE::m_maxStableDt;
   using BASE::m_nextDt;
   using BASE::m_discretizationName;
-  using BASE::targetRegionNames;
-  using BASE::forTargetRegions;
-  using BASE::forTargetRegionsComplete;
-  using BASE::forTargetSubRegions;
-  using BASE::forTargetSubRegionsComplete;
   using BASE::m_dofManager;
   using BASE::m_matrix;
   using BASE::m_rhs;
@@ -64,31 +60,14 @@ public:
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
-  using BASE::m_fluidModelNames;
-  using BASE::m_solidModelNames;
-  using BASE::m_permeabilityModelNames;
   using BASE::m_poroElasticFlag;
   using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
   using BASE::m_fluxEstimate;
-  using BASE::m_elemGhostRank;
-  using BASE::m_volume;
-  using BASE::m_gravCoef;
 
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't
   // have to use this->member etc.
-  using BASE::m_pressure;
-  using BASE::m_deltaPressure;
-  using BASE::m_deltaVolume;
-  using BASE::m_permeability;
-  using BASE::m_dPerm_dPressure;
-  using BASE::m_mobility;
-  using BASE::m_dMobility_dPres;
-  using BASE::m_density;
-  using BASE::m_dDens_dPres;
-  using BASE::m_viscosity;
-  using BASE::m_dVisc_dPres;
 
   /**
    * @brief main constructor for Group Objects
