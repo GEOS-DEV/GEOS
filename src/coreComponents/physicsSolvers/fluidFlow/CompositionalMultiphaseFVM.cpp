@@ -108,7 +108,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      if( m_thermalFlag )
+      if( m_isThermal )
       {
         thermalCompositionalMultiphaseFVMKernels::
           FaceBasedAssemblyKernelFactory::
@@ -339,7 +339,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
       real64 subRegionFlowResidualNorm = 0.0;
       real64 subRegionEnergyResidualNorm = 0.0;
 
-      if( m_thermalFlag )
+      if( m_isThermal )
       {
         thermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernel::
@@ -377,7 +377,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 
   // compute global residual norms
   real64 residual = 0.0;
-  if( m_thermalFlag )
+  if( m_isThermal )
   {
     real64 const flowResidual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
     real64 const energyResidual = std::sqrt( MpiWrapper::sum( localEnergyResidualNorm ) );
@@ -568,7 +568,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
     fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
 
-    if( m_thermalFlag )
+    if( m_isThermal )
     {
       fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
     }
@@ -588,7 +588,7 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
 
-  if( m_thermalFlag )
+  if( m_isThermal )
   {
     thermalCompositionalMultiphaseFVMKernels::
       PhaseMobilityKernelFactory::

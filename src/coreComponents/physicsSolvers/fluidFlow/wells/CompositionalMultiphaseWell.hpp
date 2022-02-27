@@ -302,17 +302,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
-   * @brief Checks constitutive models for consistency
-   * @param meshLevel reference to the mesh
-   * @param cm        reference to the global constitutive model manager
-   *
-   * This function will produce an error if one of the well constitutive models
-   * (fluid, relperm) is incompatible with the corresponding models in reservoir
-   * regions connected to that particular well.
-   */
-  // void validateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
-
-  /**
    * @brief Checks injection streams for validity (compositions sum to one)
    * @param meshLevel reference to the mesh
    */

@@ -213,7 +213,7 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
-    static constexpr char const * thermalFlagString()  { return "thermalFlag"; }
+    static constexpr char const * isThermalString()  { return "isThermal"; }
 
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
@@ -338,7 +338,7 @@ protected:
   integer m_capPressureFlag;
 
   /// flag to determine whether or not this is a thermal simulation
-  integer m_thermalFlag;
+  integer m_isThermal;
 
   /// maximum (absolute) change in a component fraction between two Newton iterations
   real64 m_maxCompFracChange;
