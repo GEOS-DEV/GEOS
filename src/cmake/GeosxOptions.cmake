@@ -139,7 +139,7 @@ endif()
 
 if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-    set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
+    set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 else()
     set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )

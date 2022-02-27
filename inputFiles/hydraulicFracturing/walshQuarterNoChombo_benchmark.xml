@@ -43,6 +43,20 @@
         preconditionerType="mgr"
         logLevel="1"
         krylovAdaptiveTol="1"/>
+        
+      <!-- LinearSolverParameters
+        logLevel="1"
+        solverType="gmres"
+        preconditionerType="mgr"
+        krylovTol="1.0e-08"
+        amgThreshold="0.3"
+        amgNumSweeps="2"
+        amgSmootherType="default"
+        amgCoarseningType="HMIS"
+        amgInterpolationType="6"
+        amgNumFunctions="3"
+        amgAggresiveCoarseningLevels="1"
+        /-->
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
