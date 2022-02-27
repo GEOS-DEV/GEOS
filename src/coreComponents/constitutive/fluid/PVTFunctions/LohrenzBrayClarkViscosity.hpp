@@ -52,6 +52,7 @@ public:
 
 
   /// Compute phase viscosities (no derivatives)
+
   template< int USD1, int USD2 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
@@ -60,37 +61,28 @@ public:
                 arraySlice2d< real64 const, USD2 > const & phaseComposition,
                 arraySlice1d< real64,       USD1 > const & phaseViscosity ) const
   {
-    GEOSX_UNUSED_VAR( phaseDensity );
+    GEOSX_UNUSED_VAR( pressure ); // no-direct pressure dependence (instead through density)
 
     integer const numPhases = phaseComposition.size(0); 
     integer const numComponents = phaseComposition.size(1);
 
-    // Estimate pure component properties at "near-atmospheric" pressure using
+    // Estimate pure component properties at dilute-gas conditions (pressure near atmospheric) using
     // Stiel and Thodos [1961] correlation: https://doi.org/10.1002/aic.690070416
+    // Dilute viscosity is solely temperature dependent
     // Units are converted so componentViscosity is in centipoise to match original reference
 
-    array1d< real64 > componentViscosityAtm( numComponents ); 
-    for(localIndex c=0; c<numComponents; ++c)
-    {
-      real64 reducedTemperature = temperature / m_componentCriticalTemperature[c];
-      real64 componentChi = chiParameter( m_componentCriticalTemperature[c], m_componentCriticalPressure[c], m_componentMolarWeight[c] );
+    array1d< real64 > componentDiluteViscosity( numComponents ); 
+    array1d< real64 > dComponentDiluteViscosity_dTemperature( numComponents ); 
 
-      if( m_componentMolarWeight[c] < 2.1e-3) // hydrogen correlation, Stiel & Thodos, 1961, Eq. 12
-      {
-        componentViscosityAtm[c] = 90.71e-5 * pow( 0.1375*temperature-1.67, 5.0/8.0 );
-      }
-      else if( reducedTemperature <= 1.5 ) // nonpolar gas correlation at low temp, Eq. 9
-      {
-        componentViscosityAtm[c] = 34e-5 * pow( reducedTemperature, 0.94 ) / componentChi;
-      }
-      else // nonpolar gas correlation at high temp, Eq. 10
-      {
-        componentViscosityAtm[c] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 ) / componentChi;
-      }
-    }
+    computeComponentDiluteViscosity( numComponents,
+                                     temperature,
+                                     componentDiluteViscosity,
+                                     dComponentDiluteViscosity_dTemperature );
 
-    // Estimate phase viscosity (in cp) at near-atmospheric pressure using the 
+    // Estimate phase viscosity (in cp) at dilute gas conditions using the 
     // Herning and Zipperer [1936] mixture rule.  Store in final phaseViscosity array.
+
+    // todo: dPV_dT and dPV_dPC
 
     for( localIndex p=0; p<numPhases; ++p )
     {
@@ -98,14 +90,14 @@ public:
       real64 B = 0; 
       for( localIndex c=0; c<numComponents; ++c)
       {
-        A += phaseComposition[p][c] * sqrt(m_componentMolarWeight[c]) * componentViscosityAtm[c];
+        A += phaseComposition[p][c] * sqrt(m_componentMolarWeight[c]) * componentDiluteViscosity[c];
         B += phaseComposition[p][c] * sqrt(m_componentMolarWeight[c]);
       }
       phaseViscosity[p] = A/B;
     }
 
     // Estimate phase viscosity at given conditions using LBC [1964] correlation.
-    // This is an additional term added to the atmospheric pressure estimate above.
+    // This is an additional term added to the dilute gas estimate above.
 
     for( localIndex p=0; p<numPhases; ++p )
     {
@@ -124,8 +116,6 @@ public:
       }
 
       // compute LBC polynomial
-      real64 reducedTemperature = temperature / phaseCriticalTemperature;
-      real64 reducedPressure = pressure / phaseCriticalPressure;
       real64 reducedDensity = phaseDensity[p] * phaseCriticalVolume / phaseMolarWeight;
       real64 phaseChi = chiParameter( phaseCriticalTemperature, phaseCriticalPressure, phaseMolarWeight );
 
@@ -141,8 +131,9 @@ public:
     }
   }
 
-  /// Compute "chi" parameter from [ST 1961, LBC 1964]
-  /// Using units of (K, atm, amu)
+
+  /// Compute "chi" parameter (viscosity-reducing parameter) from [ST 1961, LBC 1964].
+  /// Using units of (K, atm, amu).
   GEOSX_HOST_DEVICE
   real64 chiParameter( real64 const criticalTemperature, 
                        real64 const criticalPressure, 
@@ -152,6 +143,40 @@ public:
     real64 M = pow( 1000 * molarWeight, 0.5 ); // note: kg/mol to atomic mass units
     real64 P = pow( criticalPressure / 101325., 2.0/3.0 ); // note: pascal to atm conversion
     return T/(M*P);
+  }
+
+  /// Estimate pure component properties at dilute-gas conditions (pressure near atmospheric) using
+  /// Stiel and Thodos [1961] correlation: https://doi.org/10.1002/aic.690070416.
+  /// Dilute viscosity is solely temperature dependent.
+  /// Units are converted so componentViscosity is in centipoise to match original reference.
+
+  GEOSX_HOST_DEVICE
+  void computeComponentDiluteViscosity( integer const numComponents,
+                                        real64 const temperature,
+                                        array1d<real64> & componentDiluteViscosity,
+                                        array1d<real64> & dComponentDiluteViscosity_dTemperature ) const
+  {
+    for(localIndex c=0; c<numComponents; ++c)
+    {
+      real64 reducedTemperature = temperature / m_componentCriticalTemperature[c];
+      real64 componentChi = chiParameter( m_componentCriticalTemperature[c], m_componentCriticalPressure[c], m_componentMolarWeight[c] );
+
+      if( m_componentMolarWeight[c] < 2.1e-3) // hydrogen correlation, Stiel & Thodos, 1961, Eq. 12
+      {
+        componentDiluteViscosity[c] = 90.71e-5 * pow( 0.1375*temperature-1.67, 0.625 );
+        dComponentDiluteViscosity_dTemperature[c] = 90.71e-5 * 0.625 * 0.1375 * pow( 0.1375*temperature-1.67, -0.375); 
+      }
+      else if( reducedTemperature <= 1.5 ) // nonpolar gas correlation at low temp, Eq. 9
+      {
+        componentDiluteViscosity[c] = 34e-5 * pow( reducedTemperature, 0.94 ) / componentChi;
+        dComponentDiluteViscosity_dTemperature[c] = 34e-5 * 0.94 * pow( reducedTemperature, -0.06) / ( componentChi * m_componentCriticalTemperature[c] );
+      }
+      else // nonpolar gas correlation at high temp, Eq. 10
+      {
+        componentDiluteViscosity[c] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 ) / componentChi;
+        dComponentDiluteViscosity_dTemperature[c] = 17.78e-5 * 4.58 * 0.625 * pow( 4.58*reducedTemperature-1.67, -0.375) / ( componentChi * m_componentCriticalTemperature[c] );
+      }
+    }
   }
 
 

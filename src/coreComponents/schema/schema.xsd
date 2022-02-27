@@ -2101,6 +2101,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="componentCriticalPressure" type="real64_array" use="required" />
 		<!--componentCriticalTemperature => Component critical temperatures-->
 		<xsd:attribute name="componentCriticalTemperature" type="real64_array" use="required" />
+		<!--componentCriticalVolume => Component critical volumes-->
+		<xsd:attribute name="componentCriticalVolume" type="real64_array" default="{0}" />
 		<!--componentMolarWeight => Component molar weights-->
 		<xsd:attribute name="componentMolarWeight" type="real64_array" use="required" />
 		<!--componentNames => List of component names-->
