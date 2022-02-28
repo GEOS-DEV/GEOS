@@ -56,7 +56,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
 
 TEST( VTKImport, cube )
 {
-  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  auto validate = []( CellBlockManagerABC & cellBlockManager ) -> void
   {
     // `cube.vtk` is a cube made by 3 x 3 x 3 = 27 Hexahedron 3d-elements.
     // It contains 4 x 4 x 4 = 64 nodes.
@@ -161,7 +161,7 @@ TEST( VTKImport, medley )
 {
   SKIP_TEST_IN_PARALLEL( "Neither relevant nor implemented in parallel" );
 
-  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
+  auto validate = []( CellBlockManagerABC & cellBlockManager ) -> void
   {
     // `medley.vtk` is made of four elements.
     // - Element 0 is a pyramid, in region 0.

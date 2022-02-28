@@ -72,21 +72,21 @@ public:
    */
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > getNodesPositions();
 
-  ArrayOfSets< localIndex > getNodeToEdges() const override;
+  ArrayOfSets< localIndex > getNodeToEdges() override;
 
-  ArrayOfSets< localIndex > getNodeToFaces() const override;
+  ArrayOfSets< localIndex > getNodeToFaces() override;
 
-  ArrayOfArrays< localIndex > getNodeToElements() const override;
+  ArrayOfArrays< localIndex > getNodeToElements() override;
 
-  array2d< geosx::localIndex > getEdgeToNodes() const override;
+  array2d< geosx::localIndex > getEdgeToNodes() override;
 
-  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override;
+  ArrayOfSets< geosx::localIndex > getEdgeToFaces() override;
 
-  ArrayOfArrays< localIndex > getFaceToNodes() const override;
+  ArrayOfArrays< localIndex > getFaceToNodes() override;
 
-  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override;
+  ArrayOfArrays< geosx::localIndex > getFaceToEdges() override;
 
-  array2d< localIndex > getFaceToElements() const override;
+  array2d< localIndex > getFaceToElements() override;
 
   array1d< globalIndex > getNodeLocalToGlobal() const override;
 

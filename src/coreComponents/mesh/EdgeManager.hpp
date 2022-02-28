@@ -129,7 +129,7 @@ public:
    * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Provides the mappings.
    */
-  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC & cellBlockManager );
 
   /**
    * @brief Link the current manager to other managers.

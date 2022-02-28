@@ -71,8 +71,10 @@ void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
   this->edgeList() = cellBlock.getElemToEdges();
   this->faceList() = cellBlock.getElemToFaces();
 
+  
   this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
+  // Why is this notbuilt by the CellBlockManager?
   this->constructGlobalToLocalMap();
   cellBlock.forExternalProperties( [&]( WrapperBase & wrapper )
   {
