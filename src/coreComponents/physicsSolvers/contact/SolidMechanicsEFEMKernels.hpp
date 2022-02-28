@@ -26,7 +26,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsEFEMKernels
+namespace solidMechanicsEFEMKernels
 {
 
 /**
@@ -42,19 +42,20 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class QuasiStatic :
-  public SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
+  public solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                           CONSTITUTIVE_TYPE,
                                                           FE_TYPE >
 {
 public:
   /// Alias for the base class;
-  using Base = SolidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
+  using Base = solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
                                                                 CONSTITUTIVE_TYPE,
                                                                 FE_TYPE >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
@@ -349,26 +350,26 @@ public:
 
     m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
-    SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
+    solidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.X,
                                                                                   m_nVec[embSurfIndex],
                                                                                   m_surfaceCenter[embSurfIndex] );
 
 
-    SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
                                                                   m_nVec[embSurfIndex],
                                                                   m_tVec1[embSurfIndex],
                                                                   m_tVec2[embSurfIndex],
                                                                   stack.hInv );
 
-    SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
                                                                                        m_nVec[embSurfIndex],
                                                                                        m_tVec1[embSurfIndex],
                                                                                        m_tVec2[embSurfIndex],
                                                                                        Heaviside,
                                                                                        dNdX );
 
-    SolidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+    solidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
     // transp(B)D
     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, 6 >( matBD, strainMatrix, stack.constitutiveStiffness );
@@ -519,7 +520,7 @@ struct StateUpdateKernel
 };
 
 
-} // namespace SolidMechanicsEFEMKernels
+} // namespace solidMechanicsEFEMKernels
 
 } // namespace geosx
 

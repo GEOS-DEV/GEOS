@@ -43,8 +43,8 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace CompositionalMultiphaseFVMKernels;
-using namespace CompositionalMultiphaseBaseKernels;
+using namespace compositionalMultiphaseFVMKernels;
+using namespace compositionalMultiphaseBaseKernels;
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
@@ -106,7 +106,7 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       FaceBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
@@ -180,7 +180,7 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
 
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
       KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
@@ -346,7 +346,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
     return 1.0;
   }
 
-  real64 constexpr eps = CompositionalMultiphaseBaseKernels::minDensForDivision;
+  real64 constexpr eps = compositionalMultiphaseBaseKernels::minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
@@ -603,11 +603,9 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                 compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
                                                 compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
                                                 multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{} ),
+                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
                                                 multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{} ),
+                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
                                                 time,
                                                 dt,
                                                 localMatrix.toViewConstSizes(),

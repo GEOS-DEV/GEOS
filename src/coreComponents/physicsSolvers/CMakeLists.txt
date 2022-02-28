@@ -62,7 +62,6 @@ set( physicsSolvers_headers
      simplePDE/LaplaceBaseH1.hpp
      simplePDE/LaplaceFEM.hpp
      simplePDE/LaplaceFEMKernels.hpp
-     simplePDE/LaplaceVEM.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
      solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
@@ -122,7 +121,6 @@ set( physicsSolvers_sources
      multiphysics/SinglePhasePoromechanicsFluxKernels.cpp
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
-     simplePDE/LaplaceVEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp

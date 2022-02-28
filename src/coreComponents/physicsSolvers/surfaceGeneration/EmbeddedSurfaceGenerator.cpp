@@ -217,10 +217,10 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   setGlobalIndices( elemManager, embSurfNodeManager, embeddedSurfaceSubRegion );
 
   // Synchronize embedded Surfaces
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                    domain.getNeighbors(),
-                                                                    newObjects,
-                                                                    m_mpiCommOrder );
+  embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
+                                                                   domain.getNeighbors(),
+                                                                   newObjects,
+                                                                   m_mpiCommOrder );
 
   EmbeddedSurfaceSubRegion::NodeMapType & embSurfToNodeMap = embeddedSurfaceSubRegion.nodeList();
 
@@ -250,14 +250,14 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 
   // TODO this is kind of brute force to resync everything.
-  EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
-                                                                    domain.getNeighbors(),
-                                                                    newObjects,
-                                                                    m_mpiCommOrder );
+  embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( meshLevel,
+                                                                   domain.getNeighbors(),
+                                                                   newObjects,
+                                                                   m_mpiCommOrder );
 
-  EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
-                                                                          domain.getNeighbors(),
-                                                                          this->m_fractureRegionName );
+  embeddedSurfacesParallelSynchronization::synchronizeFracturedElements( meshLevel,
+                                                                         domain.getNeighbors(),
+                                                                         this->m_fractureRegionName );
 
   addEmbeddedElementsToSets( elemManager, embeddedSurfaceSubRegion );
 
