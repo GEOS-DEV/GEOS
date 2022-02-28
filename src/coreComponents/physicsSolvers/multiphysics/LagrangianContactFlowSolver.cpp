@@ -123,6 +123,7 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
 //
 //  setupDofs( domain, dofManager );
 //  dofManager.reorderByRank();
+//
   // Laura
   
   localIndex const numLocalRows = dofManager.numLocalDofs();
@@ -156,8 +157,8 @@ void LagrangianContactFlowSolver::setupSystem( DomainPartition & domain,
   // Add the nonzeros from coupling
   addTransmissibilityCouplingPattern( domain, dofManager, pattern.toView() );
 
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
   localMatrix.setName( this->getName() + "/matrix" );
+  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
 
   rhs.setName( this->getName() + "/rhs" );
   rhs.create( numLocalRows, MPI_COMM_GEOSX );
@@ -741,7 +742,7 @@ void LagrangianContactFlowSolver::assembleSystem( real64 const time,
   // Need to synchronize the two iteration counters
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-  // SynchronizeFractureState is called in AssembleSystem and it is needed by:
+  // SynchronizeFractureState is called in AssembleSystem (contactSolver) and it is needed by:
   // - UpdateOpeningForFlow
   // - AssembleFluidMassResidualDerivativeWrtDisplacement
   m_contactSolver->assembleSystem( time,
@@ -1107,7 +1108,7 @@ void LagrangianContactFlowSolver::
 {
   GEOSX_MARK_FUNCTION;
 
-  std::cout << "in LagrangianContactFlowSolver::addTransmissibilityCouplingNNZ\n";
+//  std::cout << "in LagrangianContactFlowSolver::addTransmissibilityCouplingNNZ\n";
 
 //  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   forMeshTargets( domain.getMeshBodies(), [&] ( string const & ,  //meshBodyName
