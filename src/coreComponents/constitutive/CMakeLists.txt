@@ -59,6 +59,13 @@ set( constitutive_headers
      fluid/particleFluidSelector.hpp
      fluid/singleFluidSelector.hpp
      fluid/slurryFluidSelector.hpp
+     fluid/PVTFunctions/delftflash/flash/flash.h 
+     fluid/PVTFunctions/delftflash/flash/rr.h 
+     fluid/PVTFunctions/delftflash/flash/ssi.h
+     fluid/PVTFunctions/delftflash/phase-correlations/eos.h 
+     fluid/PVTFunctions/delftflash/phase-correlations/phase.h
+     fluid/PVTFunctions/delftflash/global/global.h
+     fluid/PVTFunctions/delftflash/global/misc.h
      permeability/CarmanKozenyPermeability.hpp
      permeability/ConstantPermeability.hpp
      permeability/ParallelPlatesPermeability.hpp
@@ -157,6 +164,18 @@ set( constitutive_sources
      fluid/ProppantSlurryFluid.cpp
      fluid/SingleFluidBase.cpp
      fluid/SlurryFluidBase.cpp
+     fluid/PVTFunctions/delftflash/flash/flash.cpp 
+     fluid/PVTFunctions/delftflash/flash/rr.cpp 
+     fluid/PVTFunctions/delftflash/flash/ssi.cpp
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_aq1.cpp 
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_aq2.cpp 
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_hydrate.cpp 
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_pr.cpp 
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_srk.cpp
+     fluid/PVTFunctions/delftflash/phase-correlations/k_initial.cpp 
+     fluid/PVTFunctions/delftflash/phase-correlations/phase.cpp
+     fluid/PVTFunctions/delftflash/global/global.cpp 
+     fluid/PVTFunctions/delftflash/global/misc.cpp
      permeability/CarmanKozenyPermeability.cpp
      permeability/ConstantPermeability.cpp
      permeability/ParallelPlatesPermeability.cpp
@@ -195,6 +214,7 @@ set( constitutive_sources
      thermalConductivity/ConstantThermalConductivity.cpp     
      thermalConductivity/ThermalConductivityBase.cpp
      thermalConductivity/VolumeWeightedThermalConductivity.cpp     
+
    )
 
 set( dependencyList events dataRepository functions )
@@ -226,7 +246,7 @@ blt_add_library( NAME       constitutive
                  OBJECT     ${GEOSX_BUILD_OBJ_LIBS}
                )
                
-target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
+target_include_directories( constitutive PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents ${CMAKE_SOURCE_DIR}/coreComponents/constitutive/fluid/eigen-3.3.9 )
 
 add_subdirectory( unitTests )
 
