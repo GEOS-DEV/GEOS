@@ -1512,7 +1512,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
                      "ElementRegions",
                      extrinsicMeshData::flow::temperature::key(),
                      [&]( FieldSpecificationBase const & fs,
-                          string const & setName,
+                          string const &,
                           SortedArrayView< localIndex const > const & targetSet,
                           Group & subRegion,
                           string const & )
