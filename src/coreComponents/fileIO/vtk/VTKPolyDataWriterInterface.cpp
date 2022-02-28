@@ -764,7 +764,7 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( integer const cycle,
                                                         string const & name,
                                                         vtkUnstructuredGrid & ug ) const
 {
-  string const cycleSubFolder = joinPath( m_outputDir, VTKPolyDataWriterInterface::getCycleSubFolder( cycle ) );
+  string const cycleSubFolder = joinPath( m_outputDir, getCycleSubFolder( cycle ) );
   vtkSmartPointer< vtkXMLUnstructuredGridWriter > const vtuWriter = vtkXMLUnstructuredGridWriter::New();
   vtuWriter->SetInputData( &ug );
   string const vtuFileName = paddedRank( MPI_COMM_GEOSX ) + "_" + name + ".vtu";
