@@ -53,7 +53,7 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleTypesString(), &m_particleType ).
     setInputFlag( InputFlags::REQUIRED ).
     setSizedFromParent( 0 ).
-    setDescription( "Particle types of each mesh block" );
+    setDescription( "Particle types of each particle block" );
 }
 
 Group * ParticleMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
@@ -80,41 +80,94 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
   // This should probably handled elsewhere:
+  // TODO: This isn't as smart as it should be. Currently assumes that each particle block corresponds to a different particle type.
   int aa = 0;
   for( auto & particleBlockName : m_regionNames )
   {
     ParticleBlock & particleBlock = particleBlockManager.registerParticleBlock( particleBlockName );
-    particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
+    particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa] ) ); // aa++ -> aa for now, see TODO
   }
 
   GEOSX_LOG_RANK_0( "MPM particle file path: " << m_filePath );
 
   int numParticles = 0;
+  map < std::string, std::vector<std::vector<double>> > particleData;
 
   // Get MPI rank
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
-
-  std::vector<std::vector<double> > particleData;
   if(mpiRank==0) // Only rank 0 should read the particle file (for now).
   {
-    std::ifstream file(m_filePath);
-    std::string line;
-    while(std::getline(file, line))
-    {
-      std::vector<double> lineData;
-      std::stringstream lineStream(line);
+    std::ifstream file(m_filePath); // open file
+    std::string line; // initialize line variable
 
-      double value;
-      while(lineStream >> value)
-      {
-        //std::cout << value << "\t"; // debug
-        lineData.push_back(value);
-      }
-      //std::cout << "\n"; //debug
-      particleData.push_back(lineData);
-      numParticles++;
+    int numMaterials;
+    int numParticleTypes;
+    map <std::string, int> materialMap;
+
+    // Read in number of materials and particle types
+    std::getline(file, line); // get a line
+    std::istringstream iss1(line); // turn the line into a stream
+    iss1 >> numMaterials >> numParticleTypes;
+    m_particleType.resize(numParticleTypes);
+
+    std::cout << "Number of particle materials: " << numMaterials << std::endl;
+    std::cout << "Number of particle types: " << numParticleTypes << std::endl;
+
+    // Read in material key
+    for(int i=0; i<numMaterials; i++)
+    {
+      std::getline(file, line);
+      std::istringstream iss2(line);
+      std::string key; // Material name
+      int value; // Material ID
+      iss2 >> key >> value;
+      materialMap[key] = value;
+      std::cout << "Material name/ID: " + key + "/" << value << std::endl;
     }
+
+    // Read in particle data
+    for(int i=0; i<numParticleTypes; i++)
+    {
+      std::getline(file, line);
+      std::istringstream iss2(line);
+      std::string particleType; // Particle type
+      int np; // Number of particles of that type
+      iss2 >> particleType >> np;
+      numParticles += np;
+      m_particleType[i] = particleType;
+      int count = 0; // Ensures we only parse data associated with the current particle type
+      while(std::getline(file, line) && count<np)
+      {
+        std::vector<double> lineData;
+        std::istringstream lineStream(line);
+
+        double value;
+        while(lineStream >> value)
+        {
+          lineData.push_back(value);
+        }
+        particleData[particleType].push_back(lineData);
+        count++;
+      }
+    }
+
+    // Print out particle data
+//    for(int i=0; i<m_particleType.size(); i++)
+//    {
+//      std::string particleType = m_particleType[i];
+//      std::cout << "Printing out data for all particles of type: " << particleType << std::endl;
+//
+//      std::vector<std::vector<double>> & temp = particleData[particleType];
+//      for(size_t j=0; j<temp.size(); j++)
+//      {
+//        for(size_t k=0; k<temp[j].size(); k++)
+//        {
+//          std::cout << temp[j][k] << "\t";
+//        }
+//        std::cout << std::endl;
+//      }
+//    }
   }
 
   // Rank 0 will have to broadcast the particle information to all ranks at some point, probably here. Let's skip this for now and get serial MPM working.
@@ -124,14 +177,22 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   arrayView2d< real64, particles::REFERENCE_POSITION_USD > const & X = particleManager.referencePosition();
 
   // Assign the read-in particle coordinates to the particle reference positions.
-  for(localIndex i=0; i<numParticles; i++)
+  int runningCount = 0;
+  for(localIndex h=0; h<m_particleType.size(); h++)
   {
-    for(localIndex j=0; j<3; j++)
+    std::string particleType = m_particleType[h];
+    int numThisType = particleData[particleType].size();
+    runningCount += numThisType;
+    for(localIndex i=0; i<numThisType; i++)
     {
-      X[i][j] = particleData[i][j];
-      std::cout << X[i][j] << "\t"; // debug
+      for(localIndex j=0; j<3; j++)
+      {
+        int index = runningCount - numThisType + i;
+        X[index][j] = particleData[particleType][i][j];
+        //std::cout << X[index][j] << "\t"; // debug
+      }
+      //std::cout << "\n"; // debug
     }
-    std::cout << "\n"; // debug
   }
 
   GEOSX_LOG_RANK_0( "Total number of particles:" << particleManager.size() );

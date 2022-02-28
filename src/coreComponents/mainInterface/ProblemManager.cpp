@@ -718,52 +718,77 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                                    MeshLevel & meshLevel,
                                    auto const & regionNames )
       {
-        NodeManager & nodeManager = meshLevel.getNodeManager();
-        ElementRegionManager & elemManager = meshLevel.getElemManager();
-        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
-
-        for( auto const & regionName : regionNames )
+        MeshBody const & meshBody = dynamicCast< MeshBody const & >( meshLevel.getParent().getParent() );
+        if(!meshBody.m_hasParticles)
         {
-          if( elemManager.hasRegion( regionName ) )
+          NodeManager & nodeManager = meshLevel.getNodeManager();
+          ElementRegionManager & elemManager = meshLevel.getElemManager();
+          arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+          for( auto const & regionName : regionNames )
           {
-            ElementRegionBase & elemRegion = elemManager.getRegion( regionName );
-
-            if( feDiscretization != nullptr )
+            if( elemManager.hasRegion( regionName ) )
             {
-              elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
+              ElementRegionBase & elemRegion = elemManager.getRegion( regionName );
+
+              if( feDiscretization != nullptr )
               {
-                std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
-
-                finiteElement::FiniteElementBase &
-                fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
-                       setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
-
-                finiteElement::dispatch3D( fe,
-                                           [&] ( auto & finiteElement )
+                elemRegion.forElementSubRegions< CellElementSubRegion, FaceElementSubRegion >( [&]( auto & subRegion )
                 {
-                  using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
+                  std::unique_ptr< finiteElement::FiniteElementBase > newFE = feDiscretization->factory( subRegion.getElementType() );
 
-                  localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+                  finiteElement::FiniteElementBase &
+                  fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
+                         setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
 
-                  feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+                  finiteElement::dispatch3D( fe,
+                                             [&] ( auto & finiteElement )
+                  {
+                    using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
 
+                    localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
+
+                    feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+
+                    localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                                regionName,
+                                                                                                subRegion.getName() ) ];
+
+                    numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+                  } );
+                } );
+              }
+              else   //if( fvFluxApprox != nullptr )
+              {
+                elemRegion.forElementSubRegions( [&]( auto & subRegion )
+                {
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               regionName,
                                                                                               subRegion.getName() ) ];
-
+                  localIndex const numQuadraturePoints = 1;
                   numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
                 } );
-              } );
+              }
             }
-            else   //if( fvFluxApprox != nullptr )
+          }
+        } // if( !meshBody.m_hasParticles )
+        else
+        {
+          ParticleManager & particleManager = meshLevel.getParticleManager();
+
+          for( auto const & regionName : regionNames )
+          {
+            if( particleManager.hasRegion( regionName ) )
             {
-              elemRegion.forElementSubRegions( [&]( auto & subRegion )
+              ParticleRegionBase & particleRegion = particleManager.getRegion( regionName );
+
+              particleRegion.forParticleSubRegions( [&]( auto & subRegion )
               {
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                             regionName,
                                                                                             subRegion.getName() ) ];
-                localIndex const numQuadraturePoints = 1;
-                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
+                localIndex const numQuadraturePoints = subRegion.size(); // The number of quadrature points is equal to the number of particles in a given subregion
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints ); // Not sure why this max is here
               } );
             }
           }
@@ -818,7 +843,6 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
     }
     else
     {
-      std::cout << "setRegionQuadrature has been called on a MeshBody with particles!" << std::endl;
       meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
       {
         ParticleManager & particleManager = meshLevel.getParticleManager();

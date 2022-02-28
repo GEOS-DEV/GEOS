@@ -205,7 +205,7 @@ public:
   template< typename LAMBDA >
   void forParticleSubRegions( LAMBDA && lambda )
   {
-    forParticleSubRegions< ParticleSubRegion  >( std::forward< LAMBDA >( lambda ) );
+    forParticleSubRegions< ParticleSubRegion >( std::forward< LAMBDA >( lambda ) );
   }
 
   /**
