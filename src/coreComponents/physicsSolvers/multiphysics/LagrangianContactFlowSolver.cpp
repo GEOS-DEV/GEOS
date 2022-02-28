@@ -50,10 +50,12 @@ using namespace interpolation;
 
 LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & name,
                                                           Group * const parent ):
-  SinglePhasePoromechanicsSolver( name, parent ),
+  SolverBase( name, parent ),
   m_contactSolverName(),
+  m_flowSolverName(),
   m_contactSolver( nullptr ),
-  m_stabilizationName( "" )
+  m_flowSolver( nullptr ),
+  m_stabilizationName()
 {
   registerWrapper( viewKeyStruct::contactSolverNameString(), &m_contactSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -85,7 +87,7 @@ void LagrangianContactFlowSolver::registerDataOnMesh( Group & meshBodies )
 
 void LagrangianContactFlowSolver::initializePreSubGroups()
 {
-  SinglePhasePoromechanicsSolver::initializePreSubGroups();
+  SolverBase::initializePreSubGroups();
   m_contactSolver->initializePreSubGroups();
 }
 
@@ -187,7 +189,7 @@ void LagrangianContactFlowSolver::postProcessInput()
   m_contactSolver = &this->getParent().getGroup< LagrangianContactSolver >( m_contactSolverName );
   m_flowSolver = &this->getParent().getGroup< SinglePhaseBase >( m_flowSolverName );
 
-  SinglePhasePoromechanicsSolver::postProcessInput();
+  SolverBase::postProcessInput();
 }
 
 void LagrangianContactFlowSolver::initializePostInitialConditionsPreSubGroups()

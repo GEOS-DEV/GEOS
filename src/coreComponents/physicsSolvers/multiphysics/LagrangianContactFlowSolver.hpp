@@ -22,7 +22,6 @@
 
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
-#include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
@@ -32,7 +31,7 @@ namespace geosx
 class LagrangianContactSolver;
 class FlowSolverBase;
 
-class LagrangianContactFlowSolver : public SinglePhasePoromechanicsSolver
+class LagrangianContactFlowSolver : public SolverBase
 {
 public:
   LagrangianContactFlowSolver( const std::string & name,
@@ -223,8 +222,10 @@ public:
 private:
 
   string m_contactSolverName;
+  string m_flowSolverName;
 
   LagrangianContactSolver * m_contactSolver;
+  SinglePhaseBase * m_flowSolver;
 
   string m_stabilizationName;
 
