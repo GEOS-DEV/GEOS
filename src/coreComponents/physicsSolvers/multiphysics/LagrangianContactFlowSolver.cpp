@@ -52,8 +52,10 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
                                                           Group * const parent ):
   SolverBase( name, parent ),
   m_contactSolverName(),
+  m_flowSolverName(),
   m_contactSolver( nullptr ),
-  m_stabilizationName( "" )
+  m_flowSolver( nullptr ),
+  m_stabilizationName()
 {
   registerWrapper( viewKeyStruct::contactSolverNameString(), &m_contactSolverName ).
     setInputFlag( InputFlags::REQUIRED ).

@@ -298,10 +298,10 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           for( localIndex i = 0; i < 3; ++i )
-	  {
+          {
             deltaTraction[kfe][i] = 0.0;
             previousDispJump[kfe][i] = dispJump[kfe][i];
-	  }
+          }
           previousFractureState[kfe] = fractureState[kfe];
         } );
 
@@ -2421,7 +2421,7 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
         } );
 
         checkActiveSet &= checkActiveSetSub.get();
-      };
+      }
     } );
   } );
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
