@@ -93,6 +93,12 @@ public:
   localIndex numElements() const override
   { return size(); }
 
+  localIndex getElementNode( localIndex iElement,
+                              localIndex iNode) const 
+  {
+    return m_elementsToNodes( iElement, iNode );
+  }
+
   /**
    * @brief Puts the nodes of face @p iFace of element @p iElement inside vector @p nodesInFaces.
    * @param[in] iElement The element index.

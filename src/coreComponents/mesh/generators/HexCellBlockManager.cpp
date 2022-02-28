@@ -39,6 +39,25 @@ typedef globalIndex GlobalVertexIndex;
 typedef localIndex LocalCellIndex;
 typedef globalIndex GlobalCellIndex;
 
+typedef localIndex LocalFaceIndex;  // A face in a cell 6*cell + f
+
+typedef localIndex CellBlockIndex;
+
+typedef localIndex SizeOfStuff;
+
+
+struct LocalIndexQuadruplet{
+  localIndex v[4];
+};
+
+struct {
+  bool operator()( LocalIndexQuadruplet const & a, LocalIndexQuadruplet const & b) const {
+    if(a.v[0] != b.v[0]) return a.v[0] < b.v[0];
+    if(a.v[1] != b.v[1]) return a.v[1] < b.v[1];
+    if(a.v[2] != b.v[2]) return a.v[2] < b.v[2];
+    return false;
+  }
+} sortV0V1V2;
 
 
 // Use explicit aliases for indices
@@ -100,6 +119,7 @@ public:
   {
 
   };
+
   ~HexMeshConnectivityBuilder() = default;
 
   ArrayOfArrays<localIndex>        getFaceToNodes   () { return m_faceToNodes;    }
@@ -116,7 +136,8 @@ public:
   // What is the best order to compute this
   void computeAllMaps() {
     computeVertexGlobalToLocal();
-    computeFaces();
+    computeNbElements();
+    computeCellNeighbors();
     computeEdges();
   };
 
@@ -137,12 +158,14 @@ private:
   bool doneElementsToEdges() { return false; }
 
   bool computeVertexGlobalToLocal(); // Done
+  bool computeNbElements();          // Done
+  bool computeCellNeighbors();
 
-  bool computeFaces          ();
   bool computeEdges          ();
   bool computeNodesToEdges   ();
   bool computeNodesToFaces   ();
   bool computeNodesToElements();  //  Done 
+  bool computeFacesToNodes   ();
   bool computeFacesToElements();
   bool computeFacesToEdges   ();
   bool computeEdgesToFaces   ();
@@ -173,11 +196,15 @@ localIndex nbEdges = 0;
 localIndex nbFaces = 0;
 localIndex nbElements = 0;
 
+// Do we need it ?
+// Or areall indices local and we are good
 std::unordered_map< GlobalVertexIndex, LocalVertexIndex > vertexGlobalToLocal; 
 
 
 // Cell adjacencies - for all cell blocks
-
+// I do not understand LvArray - and even less multidimensional LvArrays
+// The advantages of multidimensional tables area mystery to me
+array1d< LocalFaceIndex > m_cellNeighbors;
 
 // The mappings
 
@@ -229,25 +256,170 @@ bool HexMeshConnectivityBuilder::computeVertexGlobalToLocal()
   return true;
 }
 
-bool HexMeshConnectivityBuilder::computeFaces()
+bool HexMeshConnectivityBuilder::computeNbElements()
 {
-  // A big vector in which we put all facets
+  nbElements = 0;
+  for (int i = 0; i < nbCellBlocks(); ++i)
+  {
+    CellBlock const & block = getCellBlock(i);
+    nbElements += block.numElements();
+  }
+  return true;
+}
 
-  // We need the LocalVertexIndex because they are more manageable 
-  // Go from 0 to nbNodes 
 
-
+bool HexMeshConnectivityBuilder::computeCellNeighbors()
+{
   // 1 - Allocate
+  SizeOfStuff nbTotalFaces = nbElements * Hex::nbFacets;
+
+  // One goal is to compute the neighbors 
+  m_cellNeighbors.resize( nbTotalFaces);
+  
+  // A big vector in which we put all facets
+  // We use the LocalVertexIndex because the range is known go from 0 to nbNodes 
+  std::vector< LocalIndexQuadruplet > allFaces ( nbTotalFaces );
 
   // 2 - Fill 
+  localIndex curFace = 0;
+  for (int i = 0; i < nbCellBlocks(); ++i)
+  {
+    CellBlock const & block = getCellBlock(i);
+    CellVertexIndices const & cells = block.getElemToNodes();
+
+    for (int j = 0; j < cells.size(); ++j)
+    {
+      for (int f = 0; f < Hex::nbFacets; ++f)
+      {
+        // TODO Let's bet that we get VertexIds locally to the partition 
+        LocalVertexIndex v0 = cells( j, Hex::facetVertex[f][0] );
+        LocalVertexIndex v1 = cells( j, Hex::facetVertex[f][1] );
+        LocalVertexIndex v2 = cells( j, Hex::facetVertex[f][2] );
+        LocalVertexIndex v3 = cells( j, Hex::facetVertex[f][3] );
+
+        // Sort the vertices 
+        if( v0 > v1 ) std::swap( v0, v1 );
+        if( v2 > v3 ) std::swap( v2, v3 );
+        if( v0 > v2 ) std::swap( v0, v2 );
+        if( v1 > v3 ) std::swap( v1, v3 );
+        if( v1 > v2 ) std::swap( v1, v2 );
+
+        allFaces[curFace].v[0] = v0;
+        allFaces[curFace].v[1] = v1;
+        allFaces[curFace].v[2] = v2;
+        // If the mesh is valid, then if 2 quad faces share 3 vertices they are the same
+        // Last slot is used to identify the facet from its cell 
+        allFaces[curFace].v[3]= Hex::nbFacets * j + f; 
+        
+        curFace++;
+      }
+    }
+  }
 
   // 3 - Sort 
+  // TODO Definitely not the fastest we can do - Use of HXTSort doable? 
+  std::sort( allFaces.begin(), allFaces.end(), sortV0V1V2);
 
-  // 4 - Adjacencies + Faces 
+  // 4 - Counting + Set Cell Adjacencies
+  SizeOfStuff nbBoundaryFaces = 0;
+  SizeOfStuff nbInteriorFaces = 0;
+  int i = 0;
+  for( ; i+1 < nbTotalFaces; ++i )
+  {
+    LocalIndexQuadruplet f = allFaces[i];
+    LocalIndexQuadruplet f1 = allFaces[i+1];
 
+    // If two successive faces are the same - this is an interior facet
+    if( f.v[0]==f1.v[0] && f.v[1]==f1.v[1] && f.v[2]==f1.v[2] )
+    {
+      m_cellNeighbors[f.v[3]] = f1.v[3];
+      m_cellNeighbors[f1.v[3]] = f.v[3];
+      nbInteriorFaces++;
+      ++i;
+    }
+    // If not this is a boundary face
+    else
+    {
+      m_cellNeighbors[f.v[3]] = -1; //Replace by NO_ID - maxvalue of  something
+      nbBoundaryFaces++;
+    }
+  }
+  // Last facet is a boundary facet 
+  if (i < nbTotalFaces) 
+  {
+    nbBoundaryFaces++;
+  }
+  nbFaces = nbBoundaryFaces + nbInteriorFaces; 
   
-  return false;
+  return true;
 }
+
+// Compute Cell Neighbors MUST have been called beforehand
+bool HexMeshConnectivityBuilder::computeFacesToNodes()
+{
+  // 1 - Allocate - No overallocation
+  m_faceToNodes.resize(0);
+
+  // LvArray allocation is an unclear business
+  m_faceToNodes.reserve( nbFaces );
+  m_faceToNodes.reserveValues( 4 * nbFaces );
+  for (int i = 0; i < nbFaces; ++i)
+  {
+    m_faceToNodes.appendArray( 4 );
+  }
+
+  // OOOOOKKK we are going to need this
+  std::vector< CellBlock const * > blocks ( nbCellBlocks(), nullptr );
+  std::vector< LocalCellIndex > offsets ( nbCellBlocks() );
+  LocalCellIndex prevSum = 0;
+  for (int i = 0; i < nbCellBlocks(); ++i)
+  {
+    blocks[i] = &getCellBlock(i);
+    // TODO Accessors at CellBlock Level - I doubt what happens here 
+    offsets[i] = prevSum + blocks[i]->getElemToNodes().size();
+  }
+  
+  // 2 - Fill FaceToNode  -- Could be avoided and done when required from adjacencies
+  localIndex curFace = 0;
+  for( int f= 0; f < m_cellNeighbors.size(); ++f)
+  {
+    LocalCellIndex c = f / Hex::nbFacets;
+    LocalFaceIndex f1 = m_cellNeighbors[f];
+
+    LocalCellIndex c1 = f1 != -1 ? f1 / Hex::nbFacets : c;
+    if( (f1 != -1 && c < c1 ) || (f1 == -1) )
+    {
+      // We want the nodes of face f % 6 in cell c 
+      // TODO Add accessor and functions to ease and clarify this 
+      localIndex blockIndex = 0;
+      localIndex offset = 0;
+      while( c > offsets[blockIndex] )
+      {
+        offset = offsets[blockIndex];
+        blockIndex++;
+        assert(blockIndex <nbCellBlocks()); // debug paranoia
+      }
+      
+      CellBlock const * cB = blocks[blockIndex];
+      localIndex cellInBlock = c - offset;
+      HexFacetIndex faceToStore = f % Hex::nbFacets;
+
+      assert(cellInBlock >= 0); // debug 
+
+      // Maybe the oriented facets would be useful - if they are the ones recomputed 
+      // later one by the FaceManager
+      m_faceToNodes[curFace][0] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][0]);
+      m_faceToNodes[curFace][1] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][1]);
+      m_faceToNodes[curFace][2] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][2]);
+      m_faceToNodes[curFace][3] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][3]);
+
+      ++curFace; 
+    }
+  }
+
+  return true;
+}
+
 
 bool HexMeshConnectivityBuilder::computeEdges()
 {
@@ -350,9 +522,9 @@ RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeEdges = 0;
 
 forAll<parallelHostPolicy>(m_numEdges, [&](localIndex const edgeID)
                             {
-toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 0 ), edgeID );
-toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 1 ), edgeID );
-totalNodeEdges += 2; });
+      toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 0 ), edgeID );
+      toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 1 ), edgeID );
+      totalNodeEdges += 2; });
 
 // Resize the node to edge map.
 m_nodeToEdges.resize(0);
