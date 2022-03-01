@@ -12,15 +12,15 @@ To install the macros, do the following:
 
 If the macros window is not visible, select Controls/Macros from the top menu in VisIt.
 When you select 'Convert pvd', visit will attempt to convert any pvd files in the current
-directory (where the visit command was ran).  The macro will create a new set of .vtm files
+directory (where the visit command was run).  The macro will create a new set of .vtm files
 in the vtk output directory (named '[Region]_*.vtm').
 
 For multi-region problems, you can load each set of .vtm files individual.
 After adding plots to the interface, you may be prompted to 'Correlate databases'.
 If you select 'Yes', VisIt will add a new time slider 'Correlation*' to the interface, which can
-be used to change the visualization time, while keeping the datasets  syncronized.
+be used to change the visualization time, while keeping the datasets syncronized.
 
-Note: the VisIt python interpreter does not allow empty lines within functions or multi-line arguments
+Note: The VisIt python interpreter does not allow empty lines within functions or multi-line arguments
 """
 
 
