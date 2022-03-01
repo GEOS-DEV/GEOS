@@ -77,7 +77,7 @@ public:
     static constexpr auto plotFileRoot = "plotFileRoot";
     static constexpr auto writeFEMFaces = "writeFEMFaces";
     static constexpr auto plotLevel = "plotLevel";
-    static constexpr auto binaryString = "writeBinaryData";
+    static constexpr auto binaryString = "format";
     static constexpr auto outputRegionTypeString = "outputRegionType";
   } vtkOutputViewKeys;
   /// @endcond

@@ -10,8 +10,7 @@
       initialDt="10"
       solidSolverName="matrixSolver"
       contactRelationName="fractureContact"
-      logLevel="1"
-      useStaticCondensation="1">
+      logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="2"
@@ -136,7 +135,7 @@
       name="vtkOutput"
       plotFileRoot="SneddonRotated"
       plotLevel="3"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="restartOutput"/>
