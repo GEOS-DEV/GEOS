@@ -47,7 +47,7 @@ In this example, we set up and solve a poroelastic model to obtain the temporal 
             \text{exp} \left( -\frac{ {\alpha_{n}}^2 c t}{a^2} \right)
 
 .. math::
-   u_z(x,z,t) = \left[ -\frac{F \left( 1 - \nu \right)}{2Ga} + frac{F \left( 1 - \nu_{u} \right)}{Ga} \sum_{n=1}^{\infty} \frac{  {\text{sin} \alpha_{n}} {\text{cos} \alpha_{n}} } { \alpha_{n} - {\text{sin} \alpha_{n}} {\text{cos} \alpha_{n}} } \text{exp} \left( -\frac{{\alpha_{n}}^2 c t}{a^2} \right) \right] z
+   u_z(x,z,t) = \left[ -\frac{F \left( 1 - \nu \right)}{2Ga} + \frac{F \left( 1 - \nu_{u} \right)}{Ga} \sum_{n=1}^{\infty} \frac{  {\text{sin} \alpha_{n}} {\text{cos} \alpha_{n}} } { \alpha_{n} - {\text{sin} \alpha_{n}} {\text{cos} \alpha_{n}} } \text{exp} \left( -\frac{{\alpha_{n}}^2 c t}{a^2} \right) \right] z
 
 with :math:`\alpha_{n}` denoting the positive roots of the following equation:
 

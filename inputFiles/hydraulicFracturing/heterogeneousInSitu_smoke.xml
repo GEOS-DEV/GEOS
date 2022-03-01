@@ -1,7 +1,40 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <!-- SPHINX_HYDROFRACTURE_SOLVERS -->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      xCoords="{ 0, 200, 250 }"
+      yCoords="{ -100, 0, 100 }"
+      zCoords="{ -150, -100, 0, 100, 150 }"
+      nx="{ 20, 5 }"
+      ny="{ 2, 2 }"
+      nz="{ 1, 5, 5, 1 }"
+      xBias="{ 0, -0.6 }"
+      yBias="{ 0.6, -0.6 }"
+      zBias="{ 0.6, 0, 0, -0.6 }"
+      cellBlockNames="{ cb1 }"
+      elementTypes="{ C3D8 }"/>
+  </Mesh>
+
+  <Geometry>
+    <Box
+      name="source_a"
+      xMin="{ -0.1, -0.1, -0.1 }"
+      xMax="{ 10.1, 0.1, 20.1 }"/>
+
+    <Box
+      name="perf_a"
+      xMin="{ -10.1, -0.1, -20.1 }"
+      xMax="{ 10.1, 0.1, 20.1 }"/>
+
+    <ThickPlane
+      name="fracturable_a"
+      normal="{ 0, 1, 0 }"
+      origin="{ 0, 0, 0 }"
+      thickness="0.1"/>
+  </Geometry>
+
   <Solvers
     gravityVector="{ 0.0, 0.0, -9.81 }">
     <Hydrofracture
@@ -20,8 +53,7 @@
         newtonMaxIter="40"
         lineSearchMaxCuts="3"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"/>
+        directParallel="0"/>
     </Hydrofracture>
 
     <SolidMechanicsLagrangianSSLE
@@ -29,35 +61,23 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-6"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-10"/>
+      contactRelationName="fractureContact"> 
     </SolidMechanicsLagrangianSSLE>
 
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }">
-      <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="10"/>
-      <LinearSolverParameters
-        solverType="gmres"
-        krylovTol="1.0e-12"/>
+      targetRegions="{ Fracture }"> 
     </SinglePhaseFVM>
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      rockToughness="$K_upscaled$"
+      rockToughness="2.236068e6"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
   </Solvers>
 
-  <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
   <Outputs>
     <VTK
       name="vtkOutput"/>
@@ -69,49 +89,42 @@
       name="restartOutput"/>
   </Outputs>
 
-  <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   <Events
-    maxTime="$t_max$"
+    maxTime="60.4"
     logLevel="1">
-    <!-- Generate the initial fractures -->
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
 
-    <!-- Primary outputs -->
     <PeriodicEvent
       name="outputs_vtk"
-      timeFrequency="1 [min]"
+      timeFrequency="6e1"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
       name="outputs_silo"
-      timeFrequency="1 [min]"
+      timeFrequency="6e1"
       targetExactTimestep="0"
       target="/Outputs/siloOutput"/>
 
-    <!-- Apply the hydrofracture solver -->
     <PeriodicEvent
       name="solverApplications"
-      maxEventDt="$dt_max$"
+      maxEventDt="3e1"
       target="/Solvers/hydrofracture"/>
 
-    <!-- Limit dt during the pump ramp-up -->
     <PeriodicEvent
       name="pumpStart"
-      beginTime="$pump_start$"
-      endTime="`$pump_start$+$pump_ramp$`"
-      maxEventDt="$pump_ramp_dt_limit$"/>
+      beginTime="6e1"
+      endTime="6.5e1"
+      maxEventDt="2e-1"/>
 
-    <!-- Watch the wall-clock, write a restart, and exit gracefully if necessary -->
-    <!-- <HaltEvent
+    <PeriodicEvent
       name="restarts"
-      maxRuntime="$t_allocation$"
-      target="/Outputs/restartOutput"/> -->
+      timeFrequency="6e1"
+      target="/Outputs/restartOutput"/>
   </Events>
 
-  <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
   <ElementRegions>
     <CellElementRegion
       name="Domain"
@@ -128,10 +141,10 @@
     <CompressibleSinglePhaseFluid
       name="water"
       defaultDensity="1000"
-      defaultViscosity="$mu_upscaled$"
+      defaultViscosity="2.5e-2"
       referencePressure="0.0"
       compressibility="5e-10"
-      referenceViscosity="$mu_upscaled$"
+      referenceViscosity="2.5e-2"
       viscosibility="0.0"/>
 
     <ElasticIsotropic
@@ -178,68 +191,88 @@
     </FiniteVolume>
   </NumericalMethods>
 
-  <!-- SPHINX_HYDROFRACTURE_FUNCTIONS -->
   <Functions>
-    <!-- Pumping Schedule -->
     <TableFunction
       name="flow_rate"
       inputVarNames="{ time }"
-      coordinateFiles="{ $table_root$/flowRate_time.csv }"
-      voxelFile="$table_root$/flowRate.csv"/>
+      coordinateFiles="{ ./tables/flowRate_time.csv }"
+      voxelFile="./tables/flowRate.csv"/>
 
-    <!-- Geologic Model -->
     <TableFunction
       name="sigma_xx"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/sigma_xx.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/sigma_xx.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="sigma_yy"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/sigma_yy.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/sigma_yy.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="sigma_zz"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/sigma_zz.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/sigma_zz.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="init_pressure"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/porePressure.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/porePressure.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="bulk_modulus"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/bulkModulus.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/bulkModulus.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="shear_modulus"
       inputVarNames="{ elementCenter }"
-      coordinateFiles="{ $table_root$/x.csv, $table_root$/y.csv, $table_root$/z.csv }"
-      voxelFile="$table_root$/shearModulus.csv"
+      coordinateFiles="{ ./tables/x.csv, ./tables/y.csv, ./tables/z.csv }"
+      voxelFile="./tables/shearModulus.csv"
       interpolation="upper"/>
 
     <TableFunction
       name="apertureTable"
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-6, 1.0e-4 }"/>
-    
   </Functions>
 
-  <!-- SPHINX_HYDROFRACTURE_FUNCTIONS_END -->
-  <!-- SPHINX_HYDROFRACTURE_BC_BASE -->
+  <!--<Included><File name="./heterogeneousInSitu_base.xml"/></Included>-->
+  <!--<Parameters><Parameter name="Nperf" value="5"/><Parameter name="Nswarm" value="5"/><Parameter name="mu_init" value="0.001"/><Parameter name="K_init" value="1e6"/><Parameter name="mu_upscaled" value="2.5e-2"/><Parameter name="K_upscaled" value="2.236068e6"/><Parameter name="ContactStiffness" value="1e10"/><Parameter name="pump_start" value="6e1"/><Parameter name="pump_ramp" value="5"/><Parameter name="pump_ramp_dt_limit" value="2e-1"/><Parameter name="dt_max" value="3e1"/><Parameter name="t_max" value="1.2e3"/><Parameter name="table_root" value="./tables"/><Parameter name="t_allocation" value="1.68e3"/></Parameters>-->
   <FieldSpecifications>
+    <FieldSpecification
+      name="frac"
+      fieldName="ruptureState"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ perf_a }"/>
+
+    <FieldSpecification
+      name="separableFace"
+      fieldName="isFaceSeparable"
+      initialCondition="1"
+      objectPath="faceManager"
+      scale="1"
+      setNames="{ fracturable_a }"/>
+
+    <FieldSpecification
+      name="waterDensity"
+      fieldName="water_density"
+      initialCondition="1"
+      objectPath="ElementRegions"
+      scale="1000"
+      setNames="{ perf_a }"/>
+
     <FieldSpecification
       name="bulk_modulus"
       initialCondition="1"
@@ -288,7 +321,6 @@
       functionName="sigma_zz"
       scale="1.0"/>
 
-    <!-- Mechanical BC's -->
     <FieldSpecification
       name="x_constraint"
       component="0"
@@ -312,7 +344,12 @@
       objectPath="nodeManager"
       scale="0.0"
       setNames="{ zneg, zpos }"/>
-  </FieldSpecifications>
 
-  <!-- SPHINX_HYDROFRACTURE_BC_BASE_END -->
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/Fracture"
+      scale="-2e2"
+      functionName="flow_rate"
+      setNames="{ source_a }"/>
+  </FieldSpecifications>
 </Problem>

@@ -307,7 +307,7 @@ aperture at LVDT location correlate well with the experimental data (blue circle
 
         plt.show()
         
-        if __name__ == "__main__":
+    if __name__ == "__main__":
           main()
 
 
