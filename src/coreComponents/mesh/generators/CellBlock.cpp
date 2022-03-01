@@ -66,6 +66,9 @@ void CellBlock::setElementType( ElementType elementType )
 
   // If `setElementType` is called after the resize, the first dimension would be removed.
   // We do not want that so we try to keep it.
+
+  // TODO  Who is really allocating ? this or resize ?
+  // Do we always need to allocate? No need to allocate if not computed
   m_elementsToNodes.resize( this->numElements(), m_numNodesPerElement );
   m_elementsToEdges.resize( this->numElements(), m_numEdgesPerElement );
   m_elementsToFaces.resize( this->numElements(), m_numFacesPerElement );

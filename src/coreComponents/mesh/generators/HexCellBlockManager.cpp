@@ -40,16 +40,18 @@ typedef localIndex LocalCellIndex;
 typedef globalIndex GlobalCellIndex;
 
 typedef localIndex LocalFaceIndex;  // A face in a cell 6*cell + f
+typedef localIndex LocalEdgeIndex;  // An edge in a cell 12*cell + e
 
 typedef localIndex CellBlockIndex;
 
 typedef localIndex SizeOfStuff;
 
 
+// Structure for face computation
+// Possible optimisation - using a similar strategies to edges
 struct LocalIndexQuadruplet{
   localIndex v[4];
 };
-
 struct {
   bool operator()( LocalIndexQuadruplet const & a, LocalIndexQuadruplet const & b) const {
     if(a.v[0] != b.v[0]) return a.v[0] < b.v[0];
@@ -59,6 +61,22 @@ struct {
   }
 } sortV0V1V2;
 
+
+// Storage of mesh edges
+typedef std::pair< LocalVertexIndex, LocalEdgeIndex > EdgeInfo;
+struct {
+  bool operator() ( EdgeInfo const & a, EdgeInfo const & b ) const
+  {
+    return a.first < b.first;
+  }
+} compareEdges;
+
+struct {
+  bool operator() ( EdgeInfo const & a, EdgeInfo const & b ) const
+  {
+    return a.first == b.first;
+  }
+} equalEdges;
 
 // Use explicit aliases for indices
 // HEX
@@ -113,11 +131,23 @@ class HexMeshConnectivityBuilder
 {
 public:
 
-  HexMeshConnectivityBuilder( HexCellBlockManager const & cellBlockManager ):
-    m_cellBlockManager(cellBlockManager),
-    m_cellBlocks( m_cellBlockManager.getCellBlocks() )
+  HexMeshConnectivityBuilder( HexCellBlockManager & cellBlockManager ):
+    m_cellBlockManager(cellBlockManager)
   {
+    nbNodes = cellBlockManager.numNodes();
 
+    Group & group =  cellBlockManager.getCellBlocks();
+    localIndex nbBlocks = group.numSubGroups();
+
+    m_cellBlocks.resize(nbBlocks);
+    m_blockCellIndexOffset.resize(nbBlocks);
+    localIndex prevSum = 0;
+    for (int i = 0; i < nbBlocks; ++i)
+    {
+      // TODO - Check that we indeed have CellBlock instantiation 
+      m_cellBlocks[i] = &(group.getGroup< CellBlock >( i ));
+      m_blockCellIndexOffset[i] = prevSum + m_cellBlocks[i]->getElemToNodes().size();
+    }
   };
 
   ~HexMeshConnectivityBuilder() = default;
@@ -153,48 +183,66 @@ private:
   bool doneFacesToElements() { return false; }
   bool doneFacesToEdges   () { return false; }
   bool doneEdgesToFaces   () { return false; }
-  bool doneEdgesToElements() { return false; } // A priori used by no one
+// bool doneEdgesToElements() { return false; } // A priori used by no one
   bool doneElementsToFaces() { return false; } // Here ? yes probably it depends on computation done here
   bool doneElementsToEdges() { return false; }
 
-  bool computeVertexGlobalToLocal(); // Done
-  bool computeNbElements();          // Done
+  // 
+  bool computeVertexGlobalToLocal();
+  bool computeNbElements();
   bool computeCellNeighbors();
-
-  bool computeEdges          ();
+  bool computeEdges          (); 
+  
+  
   bool computeNodesToEdges   ();
   bool computeNodesToFaces   ();
-  bool computeNodesToElements();  //  Done 
+  bool computeNodesToElements();
   bool computeFacesToNodes   ();
   bool computeFacesToElements();
   bool computeFacesToEdges   ();
   bool computeEdgesToFaces   ();
-  bool computeEdgesToElements(); // A priori used by no one
-  bool computeElementsToFaces(); // Here ? yes probably it depends on computation done here
+//  bool computeEdgesToElements(); // A priori used by no one
+  bool computeElementsToFaces(); // Done 
   bool computeElementsToEdges();
 
   unsigned int nbCellBlocks() {
-    return m_cellBlocks.numSubGroups();
+    return m_cellBlocks.size();
   } 
-  CellBlock const & getCellBlock( unsigned int id ){
-    // Maybe need for dynamic cast
-    return m_cellBlocks.getGroup<CellBlock>( id );
+  CellBlock const & getCellBlock( unsigned int id ) const {
+    return *(m_cellBlocks[id]);
   }
+  CellBlock & getCellBlock( unsigned int id ){
+    return *(m_cellBlocks[id]);
+  }
+
 
 private:
 // Bool functions to know which map is already computed
+
+CellBlockIndex getBlockFromCell( LocalCellIndex cellId ) const
+{
+  CellBlockIndex result = 0;
+  while( cellId > m_blockCellIndexOffset[result] )
+  {
+    result++;
+  }
+  assert(result < nbCellBlocks()); // debug paranoia
+  return result;
+}
 
 
 
 private:
 // HexCellBlockManager for which we build the mapping
 HexCellBlockManager const &  m_cellBlockManager;
-Group const & m_cellBlocks;
 
 LocalVertexIndex nbNodes = 0;
 localIndex nbEdges = 0;
 localIndex nbFaces = 0;
 localIndex nbElements = 0;
+
+std::vector< CellBlock * > m_cellBlocks;
+std::vector< LocalCellIndex > m_blockCellIndexOffset;
 
 // Do we need it ?
 // Or areall indices local and we are good
@@ -205,6 +253,8 @@ std::unordered_map< GlobalVertexIndex, LocalVertexIndex > vertexGlobalToLocal;
 // I do not understand LvArray - and even less multidimensional LvArrays
 // The advantages of multidimensional tables area mystery to me
 array1d< LocalFaceIndex > m_cellNeighbors;
+
+std::vector< EdgeInfo > m_edges;
 
 // The mappings
 
@@ -225,14 +275,6 @@ ArrayOfArrays<localIndex> m_faceToEdges;
 array2d<localIndex> m_faceToElements;
 
 };
-
-
-// We need a fast a smart way to sort the facets
-// while keeping information on where this facets is coming from
-// A similar strategy is possible for tet - hex - mixed element meshes
-
-// A facet is a set of sorted nodes - maybe *n or *n*n - to reduce number of sorts
-// Use sorting with adequate functors
 
 // Be able to get out and return an error message if 3 cells have the same facet
 // Flagging boundary facet if the MPI rank should be possible at this point
@@ -349,6 +391,7 @@ bool HexMeshConnectivityBuilder::computeCellNeighbors()
   {
     nbBoundaryFaces++;
   }
+  // Set the number of faces 
   nbFaces = nbBoundaryFaces + nbInteriorFaces; 
   
   return true;
@@ -368,20 +411,9 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes()
     m_faceToNodes.appendArray( 4 );
   }
 
-  // OOOOOKKK we are going to need this
-  std::vector< CellBlock const * > blocks ( nbCellBlocks(), nullptr );
-  std::vector< LocalCellIndex > offsets ( nbCellBlocks() );
-  LocalCellIndex prevSum = 0;
-  for (int i = 0; i < nbCellBlocks(); ++i)
-  {
-    blocks[i] = &getCellBlock(i);
-    // TODO Accessors at CellBlock Level - I doubt what happens here 
-    offsets[i] = prevSum + blocks[i]->getElemToNodes().size();
-  }
-  
   // 2 - Fill FaceToNode  -- Could be avoided and done when required from adjacencies
   localIndex curFace = 0;
-  for( int f= 0; f < m_cellNeighbors.size(); ++f)
+  for( int f = 0; f < m_cellNeighbors.size(); ++f)
   {
     LocalCellIndex c = f / Hex::nbFacets;
     LocalFaceIndex f1 = m_cellNeighbors[f];
@@ -390,17 +422,10 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes()
     if( (f1 != -1 && c < c1 ) || (f1 == -1) )
     {
       // We want the nodes of face f % 6 in cell c 
-      // TODO Add accessor and functions to ease and clarify this 
-      localIndex blockIndex = 0;
-      localIndex offset = 0;
-      while( c > offsets[blockIndex] )
-      {
-        offset = offsets[blockIndex];
-        blockIndex++;
-        assert(blockIndex <nbCellBlocks()); // debug paranoia
-      }
+      localIndex blockIndex = getBlockFromCell( c );
+      localIndex offset = blockIndex > 0 ? m_blockCellIndexOffset[blockIndex-1] : 0 ;
       
-      CellBlock const * cB = blocks[blockIndex];
+      CellBlock const & cB = getCellBlock( blockIndex );
       localIndex cellInBlock = c - offset;
       HexFacetIndex faceToStore = f % Hex::nbFacets;
 
@@ -408,10 +433,10 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes()
 
       // Maybe the oriented facets would be useful - if they are the ones recomputed 
       // later one by the FaceManager
-      m_faceToNodes[curFace][0] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][0]);
-      m_faceToNodes[curFace][1] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][1]);
-      m_faceToNodes[curFace][2] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][2]);
-      m_faceToNodes[curFace][3] = cB->getElementNode(cellInBlock, Hex::facetVertex[faceToStore][3]);
+      m_faceToNodes[curFace][0] = cB.getElementNode(cellInBlock, Hex::facetVertex[faceToStore][0]);
+      m_faceToNodes[curFace][1] = cB.getElementNode(cellInBlock, Hex::facetVertex[faceToStore][1]);
+      m_faceToNodes[curFace][2] = cB.getElementNode(cellInBlock, Hex::facetVertex[faceToStore][2]);
+      m_faceToNodes[curFace][3] = cB.getElementNode(cellInBlock, Hex::facetVertex[faceToStore][3]);
 
       ++curFace; 
     }
@@ -421,14 +446,52 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes()
 }
 
 
+
 bool HexMeshConnectivityBuilder::computeEdges()
 {
+  // Let's use a different strategy than from the faces 
+  // We are going for each edge to store a pair permitting to identify 
+  // the 2 vertices: v0 * nbNodes + v1 - and the identification of the edge:  12 *idCell + e
+
+  // 1 - Allocate 
+  m_edges.resize( nbElements * Hex::nbEdges );
+  
+  // 2 - Get all edges
+  localIndex cur = 0 ;
+  for (int i = 0; i < nbCellBlocks(); ++i)
+  {
+    CellBlock const & block = getCellBlock(i);
+    CellVertexIndices const & cells = block.getElemToNodes();
+
+    for (int j = 0; j < cells.size(); ++j)
+    {
+      for( int e = 0; e < Hex::nbEdges; ++e)
+      {
+        LocalVertexIndex v0 = cells( j, Hex::edgeVertex[e][0]);
+        LocalVertexIndex v1 = cells( j, Hex::edgeVertex[e][1]);
+        if (v1 < v0 ) { std::swap(v0, v1); }
+        LocalVertexIndex v = v0 * nbNodes + v1;
+        LocalEdgeIndex id = j * Hex::nbEdges + e;
+
+        m_edges[cur] = std::pair< LocalVertexIndex,LocalEdgeIndex > (v, id);
+      }
+    }
+  }
+  // 3 - Remove duplicates
+  std::sort( m_edges.begin(), m_edges.end(), compareEdges );
+  auto newEnd = std::unique( m_edges.begin(), m_edges.end(), equalEdges );  
+  m_edges.erase( newEnd, m_edges.end());
+
+  nbEdges = m_edges.size();
   return false;
 }
+
+
 bool HexMeshConnectivityBuilder::computeNodesToEdges()
 {
   return false;
 }
+
 bool HexMeshConnectivityBuilder::computeNodesToFaces()
 {
   return false;
@@ -502,10 +565,36 @@ bool computeEdgesToElements()
 {
   return false;
 }
-bool computeElementsToFaces() 
+
+// We must have the CellNeighbors 
+// Same loop than FaceToNode - more or less - 
+// TODO ?  Assign a FacetIndex to each of the faces and flag those to ignore in CellNeighbors
+bool HexMeshConnectivityBuilder::computeElementsToFaces() 
 {
-  return false;
+  // 1 - Allocation is managed by the CellBlock 
+
+  // 2 - Fill ElementToFace
+  localIndex curFace = 0;
+  for( int id = 0; id < m_cellNeighbors.size(); ++id)
+  {
+    LocalCellIndex c = id / Hex::nbFacets;
+    LocalFaceIndex idNeighbor = m_cellNeighbors[id];
+    
+    if( id < idNeighbor || idNeighbor == -1 )
+    {
+      localIndex blockIndex = getBlockFromCell( c );
+      localIndex offset = blockIndex > 0 ? m_blockCellIndexOffset[blockIndex-1] : 0 ;
+
+      localIndex cellInBlock = c - offset;
+      HexFacetIndex face = id % Hex::nbFacets;
+      getCellBlock( blockIndex ).setElementToFaces( cellInBlock, face, curFace );
+      ++curFace; 
+    }
+  }
+  return true;
 }
+
+
 bool computeElementsToEdges() 
 {
   return false;
@@ -517,42 +606,42 @@ bool computeElementsToEdges()
 bool computeNodesToEdges()
 {
 
-ArrayOfArrays<localIndex> toEdgesTemp(m_numNodes, maxEdgesPerNode());
-RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeEdges = 0;
+  ArrayOfArrays<localIndex> toEdgesTemp(m_numNodes, maxEdgesPerNode());
+  RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeEdges = 0;
 
-forAll<parallelHostPolicy>(m_numEdges, [&](localIndex const edgeID)
-                            {
+  forAll<parallelHostPolicy>(m_numEdges, [&](localIndex const edgeID)
+                             {
       toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 0 ), edgeID );
       toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 1 ), edgeID );
       totalNodeEdges += 2; });
 
-// Resize the node to edge map.
-m_nodeToEdges.resize(0);
+  // Resize the node to edge map.
+  m_nodeToEdges.resize(0);
 
-// Reserve space for the number of current nodes plus some extra.
-double const overAllocationFactor = 0.3;
-localIndex const entriesToReserve = (1 + overAllocationFactor) * m_numNodes;
-m_nodeToEdges.reserve(entriesToReserve);
+  // Reserve space for the number of current nodes plus some extra.
+  double const overAllocationFactor = 0.3;
+  localIndex const entriesToReserve = (1 + overAllocationFactor) * m_numNodes;
+  m_nodeToEdges.reserve(entriesToReserve);
 
-// Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-localIndex const valuesToReserve = totalNodeEdges.get() + m_numNodes * getEdgeMapOverallocation() * (1 + 2 * overAllocationFactor);
-m_nodeToEdges.reserveValues(valuesToReserve);
+  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
+  localIndex const valuesToReserve = totalNodeEdges.get() + m_numNodes * getEdgeMapOverallocation() * (1 + 2 * overAllocationFactor);
+  m_nodeToEdges.reserveValues(valuesToReserve);
 
-// Append the individual sets.
-for (localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID)
-{
-  m_nodeToEdges.appendSet(toEdgesTemp.sizeOfArray(nodeID) + getEdgeMapOverallocation());
-}
+  // Append the individual sets.
+  for (localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID)
+  {
+    m_nodeToEdges.appendSet(toEdgesTemp.sizeOfArray(nodeID) + getEdgeMapOverallocation());
+  }
 
-ArrayOfSetsView<localIndex> const &toEdgesView = m_nodeToEdges.toView(); // FIXME why a view here?
-forAll<parallelHostPolicy>(m_numNodes, [&](localIndex const nodeID)
-                            {
+  ArrayOfSetsView<localIndex> const &toEdgesView = m_nodeToEdges.toView(); // FIXME why a view here?
+  forAll<parallelHostPolicy>(m_numNodes, [&](localIndex const nodeID)
+                             {
 localIndex * const edges = toEdgesTemp[ nodeID ];
 localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
 localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
 toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges ); });
 
-return true;
+  return true;
 }
 
 bool computeNodesToFaces()
@@ -599,353 +688,6 @@ m_nodeToFaces.insertIntoSet( nodeID, faces, faces + numUniqueFaces ); });
 }
 
 
-
-
-
-namespace
-{
-
-using namespace geosx;
-using geosx::dataRepository::Group;
-
-
-/**
-* @brief Convenience programming structure that holds the nodes for a given Face. No information about which cell though.
-*
-* This structure holds `<` and `==` operators such that equal instances in a sorted array
-* are meant to be consecutive. (see `std::unique` for example).
-* Two instances with same nodes in different order are considered equal.
-* Such a case often happen since the same surface is shared by two adjacent elements
-* in conformal meshes.
-*/
-struct NodesAndElementOfFace
-{
-NodesAndElementOfFace(array1d<localIndex> nodes_, localIndex element_, localIndex iCellBlock_, localIndex iFace_) : nodes(nodes_),
-                                                                                                                    element(element_),
-                                                                                                                    iCellBlock(iCellBlock_),
-                                                                                                                    iFace(iFace_),
-                                                                                                                    sortedNodes(nodes_)
-{
-  std::sort(sortedNodes.begin(), sortedNodes.end());
-}
-
-/**
-* @brief Imposes an ordering on NodesAndElementOfFace.
-* @param [in] rhs the NodesAndElementOfFace to compare against.
-* @return a boolean.
-*/
-bool operator<(NodesAndElementOfFace const &rhs) const
-{
-  // Using some standard comparison like vector::operator<.
-  // Two subsequent NodesAndElementOfFace may still be equal
-  // We are consistent with operator==, which is what we require.
-  return std::lexicographical_compare(sortedNodes.begin(), sortedNodes.end(),
-                                      rhs.sortedNodes.begin(), rhs.sortedNodes.end());
-}
-
-/**
-* @brief Two NodesAndElementOfFace instances are considered equal if they share the same node set, whatever the order.
-* @param [in] rhs the NodesAndElementOfFace to compare against.
-* @return a boolean.
-*/
-bool operator==(NodesAndElementOfFace const &rhs) const
-{
-  // Comparing term by term like STL does.
-  return (sortedNodes.size() == rhs.sortedNodes.size() && std::equal(sortedNodes.begin(), sortedNodes.end(), rhs.sortedNodes.begin()));
-}
-
-/// The list of nodes describing the face.
-array1d<localIndex> nodes;
-
-/**
-* @brief The element to which this face belongs.
-*
-* Each face may belong to multiple elements.
-* But during the identification process (we loop on each face of each element),
-* we store the cell we are iterating on.
-* The we'll be able to identify the duplicated faces because we also have the nodes.
-*/
-localIndex element;
-
-/**
-* @brief Cell block index
-*
-* During the process, we need to know form which cell block the instance was created.
-*/
-localIndex iCellBlock;
-
-/**
-* @brief Face index
-*
-* During the process, we need to know what was the face index when this instance was created.
-*/
-localIndex iFace;
-
-private:
-/// Sorted nodes describing the face; only for comparison/sorting reasons.
-array1d<localIndex> sortedNodes;
-};
-
-/**
-* @brief Return the total number of unique faces and fill in the uniqueFaceOffsets array.
-* @param [in] lowestNodeToFaces An array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
-* @param [out] uniqueFaceOffsets An array of size numNodes + 1. After this function returns node i contains
-*              faces with IDs ranging from uniqueFaceOffsets[ i ] to uniqueFaceOffsets[ i + 1 ] - 1.
-* @return return total number of faces
-*/
-localIndex calculateTotalNumberOfFaces(ArrayOfArraysView<NodesAndElementOfFace const> const &lowestNodeToFaces,
-                                      arrayView1d<localIndex> const &uniqueFaceOffsets)
-{
-localIndex const numNodes = lowestNodeToFaces.size();
-GEOSX_ERROR_IF_NE(numNodes, uniqueFaceOffsets.size() - 1);
-uniqueFaceOffsets.setValues<serialPolicy>(0.);
-
-// Loop over all the nodes.
-forAll<parallelHostPolicy>(numNodes, [&](localIndex const nodeID)
-                            {
-localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
-// Since lowestNodeToFaces[ nodeID ] is sorted we can compare subsequent entries
-// count up the unique entries. Since each face can appear at most twice if we find a match we
-// can skip the next entry as well.
-localIndex & numUniqueFaces = uniqueFaceOffsets[ nodeID + 1 ];
-for( localIndex j = 0; j < numFaces; ++j )
-{
-  ++numUniqueFaces;
-  if( j < numFaces - 1 )
-  {
-    if( lowestNodeToFaces( nodeID, j ) == lowestNodeToFaces( nodeID, j + 1 ) )
-    {
-      ++j;
-    }
-  }
-} });
-// At this point uniqueFaceOffsets[ i ] holds the number of unique face associated with node i - 1.
-// Perform an inplace prefix-sum to get the unique face offset.
-RAJA::inclusive_scan_inplace<parallelHostPolicy>(uniqueFaceOffsets.begin(), uniqueFaceOffsets.end());
-return uniqueFaceOffsets.back();
-}
-
-/**
-* @brief Copies the nodes from @p nodesAndElementOfFace into @p faceToNodes[@p faceID ].
-* @param [in] faceID The face index.
-* @param [in] nodesAndElementOfFace The nodes and element for @p faceID.
-* @param [out] faceToNodes No input data is used.
-*/
-void insertFaceToNodesEntry(localIndex const faceID,
-                          NodesAndElementOfFace const &nodesAndElementOfFace,
-                          ArrayOfArrays<localIndex> &faceToNodes)
-{
-localIndex const numFaceNodes = nodesAndElementOfFace.nodes.size();
-// FIXME The size should be OK because it's been allocated previously.
-for (localIndex i = 0; i < numFaceNodes; ++i)
-{
-  faceToNodes[faceID][i] = nodesAndElementOfFace.nodes[i];
-}
-GEOSX_ASSERT_EQ(numFaceNodes, faceToNodes.sizeOfArray(faceID));
-GEOSX_DEBUG_VAR(numFaceNodes);
-}
-
-/**
-* @brief Fills the face to nodes map and face to element maps
-* @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
-* @param [in] uniqueFaceOffsets an array containing the unique ID of the first face associated with each node.
-* @param [inout] faceToElements the face to element map.
-* @param [inout] faceToNodes the face to node map.
-*/
-void populateFaceMaps(ArrayOfArraysView<NodesAndElementOfFace const> const &lowestNodeToFaces,
-                    arrayView1d<localIndex const> const &uniqueFaceOffsets,
-                    ArrayOfArrays<localIndex> &faceToNodes,
-                    arrayView2d<localIndex> &faceToElements)
-{
-GEOSX_MARK_FUNCTION;
-
-localIndex const numNodes = lowestNodeToFaces.size();
-localIndex const numUniqueFaces = uniqueFaceOffsets.back();
-GEOSX_ERROR_IF_NE(numNodes, uniqueFaceOffsets.size() - 1);
-GEOSX_ERROR_IF_NE(numUniqueFaces, faceToNodes.size());
-GEOSX_ERROR_IF_NE(numUniqueFaces, faceToElements.size(0));
-GEOSX_ERROR_IF_NE(2, faceToElements.size(1));
-
-// loop over all the nodes.
-forAll<parallelHostPolicy>(numNodes, [&](localIndex const nodeID)
-                            {
-localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
-// loop over all the `NodesAndElementOfFace` associated with the node.
-for( localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces; ++j, ++curFaceID )
-{
-  // If two subsequent `NodesAndElementOfFace` compare equal then they describe an interior face.
-  // It must therefore be considered "twice".
-  // Otherwise it's a boundary face, and "once" is enough.
-  NodesAndElementOfFace const & f0 = lowestNodeToFaces( nodeID, j );
-  insertFaceToNodesEntry( curFaceID, f0, faceToNodes );
-  faceToElements( curFaceID, 0 ) = f0.element;
-  faceToElements( curFaceID, 1 ) = -1; // TODO Make a constant
-
-  // This is where we check for the two subsequent faces (when they exist).
-  if( j < numFaces - 1 )
-  {
-    NodesAndElementOfFace const & f1 = lowestNodeToFaces( nodeID, j + 1 );
-    if( f0 == f1 )
-    {
-      faceToElements( curFaceID, 1 ) = f1.element;
-      ++j;
-    }
-  }
-} });
-}
-
-/**
-* @brief Resize the face maps
-* @param [in] lowestNodeToFaces and array of size numNodes of arrays of NodesAndElementOfFace associated with each node.
-* @param [in] uniqueFaceOffsets an containing the unique face IDs for each node in lowestNodeToFaces.
-* @param [out] faceToNodeMap the map from faces to nodes. This function resizes the array appropriately.
-* @param [out] faceToElemMap the map from faces to elements. This function resizes the array appropriately.
-*/
-void resizeFaceMaps(ArrayOfArraysView<NodesAndElementOfFace const> const &lowestNodeToFaces,
-                  arrayView1d<localIndex const> const &uniqueFaceOffsets,
-                  ArrayOfArrays<localIndex> &faceToNodeMap,
-                  ArrayOfArrays<localIndex> &faceToEdgesMap,
-                  array2d<localIndex> &faceToElemMap)
-{
-GEOSX_MARK_FUNCTION;
-
-localIndex const numNodes = lowestNodeToFaces.size();
-localIndex const numUniqueFaces = uniqueFaceOffsets.back();
-array1d<localIndex> numNodesPerFace(numUniqueFaces);
-RAJA::ReduceSum<parallelHostReduce, localIndex> totalFaceNodes(0.0);
-
-// loop over all the nodes.
-forAll<parallelHostPolicy>(numNodes, [&](localIndex const nodeID)
-                            {
-localIndex const numFaces = lowestNodeToFaces.sizeOfArray( nodeID );
-// loop over all the NodesAndElementOfFace associated with the node
-for( localIndex j = 0, curFaceID = uniqueFaceOffsets[ nodeID ]; j < numFaces; ++j, ++curFaceID )
-{
-  const NodesAndElementOfFace & f0 = lowestNodeToFaces( nodeID, j );
-  numNodesPerFace[curFaceID] = f0.nodes.size();
-  totalFaceNodes += numNodesPerFace[curFaceID];
-
-  if( ( j < numFaces - 1 ) and ( f0 == lowestNodeToFaces( nodeID, j + 1 ) ) )
-  {
-    ++j;
-  }
-} });
-
-// Resize the face to node map.
-faceToNodeMap.resize(0);
-
-// Reserve space for the number of current faces plus some extra.
-double const overAllocationFactor = 0.3;
-localIndex const entriesToReserve = (1 + overAllocationFactor) * numUniqueFaces; // TODO why this allocation factor
-faceToNodeMap.reserve(entriesToReserve);
-
-// Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-localIndex const valuesToReserve = totalFaceNodes.get() + numUniqueFaces * HexCellBlockManager::nodeMapExtraSpacePerFace() * (1 + 2 * overAllocationFactor);
-faceToNodeMap.reserveValues(valuesToReserve);
-faceToNodeMap.reserveValues(2 * entriesToReserve); // TODO I don"t undertand anythin about LVARRAY :@
-
-// Append the individual arrays.
-for (localIndex faceID = 0; faceID < numUniqueFaces; ++faceID)
-{
-  faceToNodeMap.appendArray(numNodesPerFace[faceID]);
-  faceToNodeMap.setCapacityOfArray(faceToNodeMap.size() - 1,
-                                    numNodesPerFace[faceID] + HexCellBlockManager::nodeMapExtraSpacePerFace());
-}
-
-// Each face may belong to _maximum_ 2 elements.
-// If it belongs to only one, we put `-1` for the undefined value.
-faceToElemMap.resize(numUniqueFaces, 2);
-
-// TODO I'm really not sure.
-faceToEdgesMap.resize(numUniqueFaces, 2 * HexCellBlockManager::edgeMapExtraSpacePerFace());
-}
-
-/**
-* @brief Populate the lowestNodeToFaces map.
-* @param [in] numNodes Number of nodes
-* @param [in] cellBlocks The cell blocks on which we need to operate.
-*
-* For each face of each element of each cell blocks,
-* this function stores some information of the faces (@see NodesAndElementOfFace)
-* in a node to faces (information) mapping.
-* The key of this mapping is the lowest node index of the face.
-* E.g. faces {3, 5, 6, 2} and {4, 2, 9, 7} will both be stored in "bucket" of node 2.
-* Also, bucket of faces information are sorted (@see NodesAndElementOfFace) to make specific computations possible.
-*/
-ArrayOfArrays<NodesAndElementOfFace> createLowestNodeToFaces(localIndex numNodes, const Group &cellBlocks)
-{
-ArrayOfArrays<NodesAndElementOfFace> lowestNodeToFaces(numNodes, 2 * HexCellBlockManager::maxFacesPerNode());
-
-// The function is a bit simplified and is not run in parallel anymore.
-// Can be improved.
-for (localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock)
-{
-  const CellBlock &cb = cellBlocks.getGroup<CellBlock>(iCellBlock);
-  localIndex const numFacesPerElement = cb.numFacesPerElement();
-  localIndex const numElements = cb.numElements();
-
-  for (localIndex iElement = 0; iElement < numElements; ++iElement)
-  {
-    // Looping on the faces of the cell
-    for (localIndex iFace = 0; iFace < numFacesPerElement; ++iFace)
-    {
-      // Get all the nodes of the face
-      array1d<localIndex> nodesInFace;
-      cb.getFaceNodes(iElement, iFace, nodesInFace);
-      // Fill the result with the collected data.
-      localIndex const &lowestNode = *std::min_element(nodesInFace.begin(), nodesInFace.end());
-      lowestNodeToFaces.emplaceBack(lowestNode, nodesInFace, iElement, iCellBlock, iFace);
-    }
-  }
-}
-
-// Loop over all the nodes and sort the associated faces.
-forAll<parallelHostPolicy>(numNodes, [&](localIndex const nodeID)
-                            {
-NodesAndElementOfFace * const faces = lowestNodeToFaces[ nodeID ];
-std::sort( faces, faces + lowestNodeToFaces.sizeOfArray( nodeID ) ); });
-
-return lowestNodeToFaces;
-}
-
-/**
-* @brief Filling the elements to faces maps in the cell blocks.
-* @param lowestNodeToFaces The lowest node to faces information array.
-* @param uniqueFaceOffsets The unique face offsets.
-* @param cellBlocks The cell blocks for which we need to compute the element to faces mappings.
-*
-* @note @p lowestNodeToFaces and @p uniqueFaceOffsets are better described in the documentations of the functions that build them.
-*/
-void fillElementToFacesOfCellBlocks(ArrayOfArrays<NodesAndElementOfFace> const &lowestNodeToFaces,
-                                  array1d<localIndex> const &uniqueFaceOffsets,
-                                  Group &cellBlocks)
-{
-localIndex const numNodes = lowestNodeToFaces.size();
-for (localIndex nodeID = 0; nodeID < numNodes; ++nodeID)
-{
-  localIndex const numFaces = lowestNodeToFaces.sizeOfArray(nodeID);
-  for (localIndex j = 0, curFaceID = uniqueFaceOffsets[nodeID]; j < numFaces; ++j, ++curFaceID)
-  {
-    const NodesAndElementOfFace &f0 = lowestNodeToFaces(nodeID, j);
-    CellBlock &cb0 = cellBlocks.getGroup<CellBlock>(f0.iCellBlock);
-    cb0.setElementToFaces(f0.element, f0.iFace, curFaceID);
-
-    // If the following face exists and is identical to the current one,
-    // Then we insert the following face with the same face id
-    // and remove it from the next iteration (it's already inserted).
-    if (j < numFaces - 1)
-    {
-      const NodesAndElementOfFace &f1 = lowestNodeToFaces(nodeID, j + 1);
-      if (f0 == f1)
-      {
-        CellBlock &cb1 = cellBlocks.getGroup<CellBlock>(f1.iCellBlock);
-        cb1.setElementToFaces(f1.element, f1.iFace, curFaceID);
-        ++j;
-      }
-    }
-  }
-}
-}
 
 /**
 * @brief Fills the element to edges mappings of all the cells provided through @p cellBlocks.
@@ -1083,10 +825,9 @@ void HexCellBlockManager::buildMaps()
 
 void HexCellBlockManager::setNumNodes(localIndex numNodes)
 {
-m_numNodes = numNodes;
-m_nodesPositions.resize(m_numNodes);
-m_nodeLocalToGlobal.resize(m_numNodes);
-m_nodeLocalToGlobal.setValues<serialPolicy>(-1);
+  m_nodesPositions.resize(numNodes);
+  m_nodeLocalToGlobal.resize(numNodes);
+  m_nodeLocalToGlobal.setValues<serialPolicy>(-1);
 }
 
 } // namespace geosx
