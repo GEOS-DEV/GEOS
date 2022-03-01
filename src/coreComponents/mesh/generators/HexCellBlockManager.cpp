@@ -113,14 +113,8 @@ static constexpr HexVertexIndex facetVertex[6][4] = {
 static constexpr HexVertexIndex edgeVertex[12][2]{
     {0, 1}, {0, 3}, {0, 4}, {1, 2}, {1, 5}, {2, 3}, {2, 6}, {3, 7}, {4, 5}, {4, 7}, {5, 6}, {6, 7}};
 
-static constexpr HexVertexIndex quadFacetTriangleVertex[24][3] = {
-    {0, 1, 2}, {0, 2, 3}, {0, 1, 3}, {1, 2, 3}, {4, 5, 6}, {4, 6, 7}, {4, 5, 7}, {5, 6, 7}, {0, 1, 5}, {0, 5, 4}, {0, 1, 4}, {1, 5, 4}, {1, 2, 6}, {1, 6, 5}, {1, 2, 5}, {2, 6, 5}, {3, 2, 6}, {3, 6, 7}, {3, 2, 7}, {2, 6, 7}, {0, 3, 7}, {0, 7, 4}, {3, 7, 4}, {3, 4, 0}};
-
 static constexpr HexFacetIndex vertexAdjacentFacet[8][3] = {
     {0, 2, 5}, {0, 2, 3}, {0, 3, 4}, {0, 4, 5}, {1, 2, 5}, {1, 2, 3}, {1, 3, 4}, {1, 4, 5}};
-
-static constexpr HexVertexIndex vertexAdjacentVertex[8][3] = {
-    {1, 3, 4}, {2, 0, 5}, {3, 1, 6}, {0, 2, 7}, {7, 5, 0}, {4, 6, 1}, {5, 7, 2}, {6, 4, 3}};
 
 static constexpr HexVertexIndex orientedFacetVertex[6][4] = {
     {0, 1, 2, 3}, {4, 7, 6, 5}, {0, 4, 5, 1}, {1, 5, 6, 2}, {3, 2, 6, 7}, {0, 3, 7, 4}};
@@ -175,23 +169,11 @@ public:
 
 
 private:
-  bool doneFaces          () { return false; }
-  bool doneEdges          () { return false; }
-  bool doneNodesToEdges   () { return false; }
-  bool doneNodesToFaces   () { return false; }
-  bool doneNodesToElements() { return false; }
-  bool doneFacesToElements() { return false; }
-  bool doneFacesToEdges   () { return false; }
-  bool doneEdgesToFaces   () { return false; }
-// bool doneEdgesToElements() { return false; } // A priori used by no one
-  bool doneElementsToFaces() { return false; } // Here ? yes probably it depends on computation done here
-  bool doneElementsToEdges() { return false; }
-
-  // 
+  //  
   bool computeVertexGlobalToLocal();
   bool computeNbElements();
   bool computeCellNeighbors();
-  bool computeEdges          (); 
+  bool computeEdges(); 
   
   
   bool computeNodesToEdges   ();
@@ -201,8 +183,8 @@ private:
   bool computeFacesToElements();
   bool computeFacesToEdges   ();
   bool computeEdgesToFaces   ();
-//  bool computeEdgesToElements(); // A priori used by no one
-  bool computeElementsToFaces(); // Done 
+  bool computeEdgesToElements() { return false; } // Not implemented - Not used priori used by no one
+  bool computeElementsToFaces(); 
   bool computeElementsToEdges();
 
   unsigned int nbCellBlocks() {
@@ -219,17 +201,20 @@ private:
 private:
 // Bool functions to know which map is already computed
 
-CellBlockIndex getBlockFromCell( LocalCellIndex cellId ) const
+std::pair< CellBlockIndex, LocalCellIndex> getBlockCellFromManagerCell( LocalCellIndex cellId ) const
 {
-  CellBlockIndex result = 0;
-  while( cellId > m_blockCellIndexOffset[result] )
+  CellBlockIndex b = 0;
+  while( cellId > m_blockCellIndexOffset[b] )
   {
-    result++;
+    b++;
   }
-  assert(result < nbCellBlocks()); // debug paranoia
-  return result;
-}
+  assert(b < nbCellBlocks()); // debug paranoia
 
+  localIndex offset = b > 0 ? m_blockCellIndexOffset[b-1] : 0;
+  LocalCellIndex c = cellId - offset;
+
+  return std::pair< CellBlockIndex, LocalCellIndex> (b, c);
+}
 
 
 private:
@@ -253,8 +238,10 @@ std::unordered_map< GlobalVertexIndex, LocalVertexIndex > vertexGlobalToLocal;
 // I do not understand LvArray - and even less multidimensional LvArrays
 // The advantages of multidimensional tables area mystery to me
 array1d< LocalFaceIndex > m_cellNeighbors;
+std::vector< localIndex > m_uniqueCellIds;
 
 std::vector< EdgeInfo > m_edges;
+std::vector< localIndex > m_uniqueEdgeIds;
 
 // The mappings
 
@@ -422,11 +409,11 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes()
     if( (f1 != -1 && c < c1 ) || (f1 == -1) )
     {
       // We want the nodes of face f % 6 in cell c 
-      localIndex blockIndex = getBlockFromCell( c );
-      localIndex offset = blockIndex > 0 ? m_blockCellIndexOffset[blockIndex-1] : 0 ;
-      
+      auto blockCell = getBlockCellFromManagerCell(c) ;
+      localIndex blockIndex = blockCell.first;
+      localIndex cellInBlock = blockCell.second;
+
       CellBlock const & cB = getCellBlock( blockIndex );
-      localIndex cellInBlock = c - offset;
       HexFacetIndex faceToStore = f % Hex::nbFacets;
 
       assert(cellInBlock >= 0); // debug 
@@ -444,7 +431,6 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes()
 
   return true;
 }
-
 
 
 bool HexMeshConnectivityBuilder::computeEdges()
@@ -479,28 +465,110 @@ bool HexMeshConnectivityBuilder::computeEdges()
   }
   // 3 - Remove duplicates
   std::sort( m_edges.begin(), m_edges.end(), compareEdges );
-  auto newEnd = std::unique( m_edges.begin(), m_edges.end(), equalEdges );  
-  m_edges.erase( newEnd, m_edges.end());
 
-  nbEdges = m_edges.size();
+  // Probably not 
+  // We need to count the number of edges 
+  // uniqueEdgeOffset  - size of nbEdges - index of the stuff in m_edges
+  // uniqueFaceOffset  - same 
+//  auto newEnd = std::unique( m_edges.begin(), m_edges.end(), equalEdges );  
+//  m_edges.erase( newEnd, m_edges.end());
+
+//  nbEdges = m_edges.size();
   return false;
 }
 
 
 bool HexMeshConnectivityBuilder::computeNodesToEdges()
-{
-  return false;
+{ 
+  // 1 - Counting 
+  std::vector<unsigned int> nbEdgesPerNode(nbNodes, 0);
+  if (!isRegularMesh())
+  {
+    for( int i = 0; i < m_edges.size(); ++i)
+    {
+      LocalVertexIndex v0 = m_edges[i].first / nbNodes;
+      LocalVertexIndex v1 = m_edges[i].first % nbNodes;
+      nbEdgesPerNode[v0]++;
+      nbEdgesPerNode[v1]++;
+    }
+  }
+  else{
+    nbEdgesPerNode.assign(nbNodes, 6);
+  }
+  localIndex valuesToReserve = std::accumulate(nbEdgesPerNode.begin(), nbEdgesPerNode.end(), 0);
+
+  // 2 - Allocating 
+  m_nodeToEdges.resize(0);
+  m_nodeToEdges.reserve(nbNodes);
+  m_nodeToEdges.reserveValues(valuesToReserve);
+  for (localIndex n = 0; n < nbNodes; ++n)
+  {
+    m_nodeToEdges.appendSet( nbEdgesPerNode[n] );
+  }
+  
+  // 3 - Filling
+  for( int i = 0; i < m_edges.size(); ++i)
+  {
+    LocalVertexIndex v0 = m_edges[i].first / nbNodes;
+    LocalVertexIndex v1 = m_edges[i].first % nbNodes;
+
+    m_nodeToEdges.insertIntoSet(v0, i); 
+    m_nodeToEdges.insertIntoSet(v1, i);
+  }
+
+  return true;
 }
 
 bool HexMeshConnectivityBuilder::computeNodesToFaces()
 {
+  if( m_faceToNodes.size()== 0) 
+  {
+    computeFacesToNodes();
+  }
+  // 1 - Counting
+  std::vector<unsigned int> nbFacesPerNode(nbNodes, 0);
+  if (!isRegularMesh())
+  {
+    for(int i = 0; i < m_faceToNodes.size(); ++i)
+    {
+      nbFacesPerNode[m_faceToNodes[i][0]]++;
+      nbFacesPerNode[m_faceToNodes[i][1]]++;
+      nbFacesPerNode[m_faceToNodes[i][2]]++;
+      nbFacesPerNode[m_faceToNodes[i][3]]++;
+    }
+  }
+  else
+  {
+    nbFacesPerNode.assign(nbNodes, 12);
+  }
+  localIndex valuesToReserve = std::accumulate(nbFacesPerNode.begin(), nbFacesPerNode.end(), 0);
+
+  // 2 - Allocating 
+  m_nodeToFaces.resize(0);
+  m_nodeToFaces.reserve(nbNodes);
+  m_nodeToFaces.reserveValues(valuesToReserve);
+  for (localIndex n = 0; n < nbNodes; ++n)
+  {
+    m_nodeToFaces.appendSet( nbFacesPerNode[n] );
+  }
+  
+  // 3 - Filling 
+  for(int i = 0; i < m_faceToNodes.size(); ++i)
+  {
+    m_nodeToFaces.insertIntoSet( m_faceToNodes[i][0], i );
+    m_nodeToFaces.insertIntoSet( m_faceToNodes[i][1], i );
+    m_nodeToFaces.insertIntoSet( m_faceToNodes[i][2], i );
+    m_nodeToFaces.insertIntoSet( m_faceToNodes[i][3], i );
+  }
+
   return false;
 }
 
+// TODO We have a problem - where are the Element index valid ? 
 bool HexMeshConnectivityBuilder::computeNodesToElements()
 {
   // 1 -  Counting
-  std::vector<unsigned int> nbElementsPerNode(nbNodes, 8);
+  std::vector<unsigned int> nbElementsPerNode(nbNodes, 0);
 
   if (!isRegularMesh())
   {
@@ -518,13 +586,12 @@ bool HexMeshConnectivityBuilder::computeNodesToElements()
       }
     }
   }
-  unsigned int nbValues = std::accumulate(nbElementsPerNode.begin(), nbElementsPerNode.end(), 0);
+  nbElementsPerNode.assign(nbNodes, 8);
+  localIndex nbValues = std::accumulate(nbElementsPerNode.begin(), nbElementsPerNode.end(), 0);
 
   //  2 - Allocating - No overallocation
   m_nodeToElements.reserve(nbNodes);
   m_nodeToElements.reserveValues(nbValues);
-
-  // Set the adequate array for each node
   for (localIndex v = 0; v < nbNodes; ++v)
   {
     m_nodeToElements.appendArray(0);
@@ -549,20 +616,65 @@ bool HexMeshConnectivityBuilder::computeNodesToElements()
   return true;
 }
 
-bool computeFacesToElements() 
+// TODO We have a problem - where are the Element index valid ? 
+bool HexMeshConnectivityBuilder::computeFacesToElements() 
 {
+  m_faceToElements.resize( nbFaces, 2);
+
+  localIndex curFace = 0;
+  for( int f = 0; f < m_cellNeighbors.size(); ++f)
+  {
+    LocalFaceIndex neighbor = m_cellNeighbors[f];
+
+    LocalCellIndex c = f/Hex::nbFacets;
+    LocalCellIndex cNeighbor = -1;
+    
+    localIndex cellInBlock = getBlockCellFromManagerCell(c).second;
+    localIndex neighborCellInMaybeNotSameBlock = -1;
+    
+    if (neighbor != 1) {
+      cNeighbor = neighbor/Hex::nbFacets;
+      neighborCellInMaybeNotSameBlock = getBlockCellFromManagerCell( cNeighbor ).second;
+    }
+
+    if( c < cNeighbor )
+    {
+      // TODO and here is A problem 
+      // The mapping is toward Elements that may not be in the same CellBlock
+      // Check what was done - Where is this used and what for?
+      m_faceToElements( curFace, 0) = cellInBlock;
+      m_faceToElements( curFace, 1) = neighborCellInMaybeNotSameBlock;
+
+      // TODO We need to find a safer - more robust way  to iterate on unique faces
+      curFace++;
+    }
+  }
   return false;
 }
-bool computeFacesToEdges   () 
+
+bool HexMeshConnectivityBuilder::computeFacesToEdges   () 
 {
+  // What is the point of this? What the hell is it useful for?
+  // 1 - Allocate - No overallocation
+  m_faceToEdges.resize(0);
+
+  // LvArray allocation is an unclear business
+  m_faceToEdges.reserve( nbFaces );
+  m_faceToEdges.reserveValues( 4 * nbFaces );
+  for (int i = 0; i < nbFaces; ++i)
+  {
+    m_faceToEdges.appendArray( 4 );
+  }
+
+  // Then what is the best way to get this useless map ?
+
+
   return false;
 }
-bool computeEdgesToFaces   () 
+
+bool HexMeshConnectivityBuilder::computeEdgesToFaces   () 
 {
-  return false;
-}
-bool computeEdgesToElements() 
-{
+  // What is the point of this? What the hell is it useful for?
   return false;
 }
 
@@ -582,171 +694,32 @@ bool HexMeshConnectivityBuilder::computeElementsToFaces()
     
     if( id < idNeighbor || idNeighbor == -1 )
     {
-      localIndex blockIndex = getBlockFromCell( c );
-      localIndex offset = blockIndex > 0 ? m_blockCellIndexOffset[blockIndex-1] : 0 ;
-
-      localIndex cellInBlock = c - offset;
       HexFacetIndex face = id % Hex::nbFacets;
-      getCellBlock( blockIndex ).setElementToFaces( cellInBlock, face, curFace );
+      auto blockCell = getBlockCellFromManagerCell(c) ;
+      getCellBlock( blockCell.first ).setElementToFaces( blockCell.second, face, curFace );
       ++curFace; 
     }
   }
   return true;
 }
 
-
-bool computeElementsToEdges() 
+bool HexMeshConnectivityBuilder::computeElementsToEdges() 
 {
-  return false;
-}
-
-
-# ifdef CODE_TOREMOVE
-
-bool computeNodesToEdges()
-{
-
-  ArrayOfArrays<localIndex> toEdgesTemp(m_numNodes, maxEdgesPerNode());
-  RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeEdges = 0;
-
-  forAll<parallelHostPolicy>(m_numEdges, [&](localIndex const edgeID)
-                             {
-      toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 0 ), edgeID );
-      toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( m_edgeToNodes( edgeID, 1 ), edgeID );
-      totalNodeEdges += 2; });
-
-  // Resize the node to edge map.
-  m_nodeToEdges.resize(0);
-
-  // Reserve space for the number of current nodes plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = (1 + overAllocationFactor) * m_numNodes;
-  m_nodeToEdges.reserve(entriesToReserve);
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeEdges.get() + m_numNodes * getEdgeMapOverallocation() * (1 + 2 * overAllocationFactor);
-  m_nodeToEdges.reserveValues(valuesToReserve);
-
-  // Append the individual sets.
-  for (localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID)
+  // This is NOT CORRECT 
+  // We do not have all the necessary information 
+  // All duplicate were removed from edges 
+  // Need a solution - similar to facets - to store info 
+  // and loop easily on the edges / facets 
+  for( int i = 0; i < m_edges.size(); ++i)
   {
-    m_nodeToEdges.appendSet(toEdgesTemp.sizeOfArray(nodeID) + getEdgeMapOverallocation());
+    LocalEdgeIndex id = m_edges[i].second;
+    LocalCellIndex c = id/Hex::nbEdges;
+    HexEdgeIndex e = id % Hex::nbEdges;
+    auto blockCell = getBlockCellFromManagerCell( c );
+    getCellBlock( blockCell.first ).setElementToEdges( blockCell.second, e, i );
   }
-
-  ArrayOfSetsView<localIndex> const &toEdgesView = m_nodeToEdges.toView(); // FIXME why a view here?
-  forAll<parallelHostPolicy>(m_numNodes, [&](localIndex const nodeID)
-                             {
-localIndex * const edges = toEdgesTemp[ nodeID ];
-localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
-localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
-toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges ); });
-
   return true;
 }
-
-bool computeNodesToFaces()
-{
-  localIndex const numFaces = m_faceToNodes.size();
-  ArrayOfArrays<localIndex> nodeToFacesTemp(m_numNodes, maxFacesPerNode());
-  RAJA::ReduceSum<parallelHostReduce, localIndex> totalNodeFaces = 0;
-
-  forAll<parallelHostPolicy>(numFaces, [&](localIndex const faceID)
-                             {
-localIndex const numFaceNodes = m_faceToNodes.sizeOfArray( faceID );
-totalNodeFaces += numFaceNodes;
-for( localIndex a = 0; a < numFaceNodes; ++a )
-{
-  nodeToFacesTemp.emplaceBackAtomic< parallelHostAtomic >( m_faceToNodes( faceID, a ), faceID );
-} });
-
-  // Resize the node to face map.
-  m_nodeToFaces.resize(0);
-
-  // Reserve space for the number of nodes faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = (1 + overAllocationFactor) * m_numNodes;
-  m_nodeToFaces.reserve(entriesToReserve);
-
-  // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
-  localIndex const valuesToReserve = totalNodeFaces.get() + m_numNodes * nodeMapExtraSpacePerFace() * (1 + 2 * overAllocationFactor);
-  m_nodeToFaces.reserveValues(valuesToReserve);
-
-  // Append the individual arrays.
-  for (localIndex nodeID = 0; nodeID < m_numNodes; ++nodeID)
-  {
-    m_nodeToFaces.appendSet(nodeToFacesTemp.sizeOfArray(nodeID) + getFaceMapOverallocation());
-  }
-
-  forAll<parallelHostPolicy>(m_numNodes, [&](localIndex const nodeID)
-                             {
-localIndex * const faces = nodeToFacesTemp[ nodeID ];
-localIndex const numNodeFaces = nodeToFacesTemp.sizeOfArray( nodeID );
-localIndex const numUniqueFaces = LvArray::sortedArrayManipulation::makeSortedUnique( faces, faces + numNodeFaces );
-m_nodeToFaces.insertIntoSet( nodeID, faces, faces + numUniqueFaces ); });
-
-  return true;
-}
-
-
-
-/**
-* @brief Fills the element to edges mappings of all the cells provided through @p cellBlocks.
-* @param faceToEdges We need the face to edges mapping to get some edge index.
-* @param cellBlocks The cell blocks for which the mappings will be constructed.
-*/
-void fillElementToEdgesOfCellBlocks(ArrayOfArrays<localIndex> const &faceToEdges,
-                                  Group &cellBlocks)
-{
-for (localIndex iCellBlock = 0; iCellBlock < cellBlocks.numSubGroups(); ++iCellBlock)
-{
-  CellBlock &cellBlock = cellBlocks.getGroup<CellBlock>(iCellBlock);
-  arrayView2d<localIndex const> const cellToFaces = cellBlock.getElemToFacesConstView();
-
-  // We build the edges of each face of each cell,
-  // so we can construct the cell to edges mapping.
-  // Another implementation (used in other contexts) would use some edge signature
-  // Some specific care is required not to insert edges twice (faces share edges).
-  // to remove the duplicates.
-
-  // Loop over the cells
-  for (localIndex kc = 0; kc < cellBlock.numElements(); kc++)
-  {
-    int count = 0;
-    for (localIndex kf = 0; kf < cellBlock.numFacesPerElement(); kf++)
-    {
-      // Loop over edges of each face
-      localIndex const faceIndex = cellToFaces[kc][kf];
-      for (localIndex ke = 0; ke < faceToEdges.sizeOfArray(faceIndex); ke++)
-      {
-        bool isUnique = true;
-        localIndex edgeIndex = faceToEdges[faceIndex][ke];
-
-        // Loop over edges that have already been added to the element.
-        for (localIndex kec = 0; kec < count + 1; kec++)
-        {
-          // make sure that the edge has not been counted yet
-          if (cellBlock.hasElementToEdges(kc, kec, edgeIndex))
-          {
-            isUnique = false;
-            break;
-          }
-        }
-        if (isUnique)
-        {
-          cellBlock.setElementToEdges(kc, count, edgeIndex);
-          count++;
-        }
-      } // end edge loop
-    }   // end face loop
-  }     // end cell loop
-}
-}
-
-} // ANONYMOUS
-
-#endif
-
-
 
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
@@ -816,7 +789,6 @@ ArrayOfArrays<localIndex> HexCellBlockManager::getNodeToElements()
 {
   return m_theOneWhoDoesTheJob->getNodeToElements();
 }
-
 
 void HexCellBlockManager::buildMaps()
 {

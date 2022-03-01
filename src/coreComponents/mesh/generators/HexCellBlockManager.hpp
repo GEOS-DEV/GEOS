@@ -136,10 +136,14 @@ public:
 
   ArrayOfArrays< localIndex >        getFaceToNodes() override;
   ArrayOfArrays< geosx::localIndex > getFaceToEdges() override;
+
+  // TODO We have a problem - where are the Element index valid ? 
   array2d< localIndex >              getFaceToElements() override;
 
   ArrayOfSets< localIndex >   getNodeToEdges() override;
   ArrayOfSets< localIndex >   getNodeToFaces() override;
+  
+  // TODO We have a problem - where are the Element index valid ? 
   ArrayOfArrays< localIndex > getNodeToElements() override;
 
     /**
