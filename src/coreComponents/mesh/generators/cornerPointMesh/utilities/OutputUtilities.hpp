@@ -130,7 +130,7 @@ void outputDebugVTKFileWithFaces( CornerPointMeshVertices const & vertices,
 
   std::ofstream myfile;
   myfile.open ( "debug_nonconforming_face.vtk" );
-  myfile << "# vtk DataFile Version 5.1\n";
+  myfile << "# vtk DataFile Version 5.0\n";
   myfile << "vtk output\n";
   myfile << "ASCII\n";
   myfile << "DATASET UNSTRUCTURED_GRID\n";

@@ -376,6 +376,7 @@ private:
 
   /// offset for obtaining auxillary layers (default value = 1.0)
   real64 m_offset;
+
 };
 
 } // namespace CornerPointMesh

@@ -467,7 +467,7 @@ struct Face
     else
       faceVertexes[5].setStatus(false);
 
-    if (faceVertexes[0].m_z <= faceVertexes[4].m_z)
+    if (faceVertexes[0].m_z < faceVertexes[4].m_z)
     {
       // try to find p8
       Vertex p8(0, 0, 0);
@@ -487,7 +487,7 @@ struct Face
 
     }
 
-    if (faceVertexes[2].m_z <= faceVertexes[6].m_z)
+    if (faceVertexes[2].m_z < faceVertexes[6].m_z)
     {
       // try to find p4
       Vertex p4(0, 0, 0);

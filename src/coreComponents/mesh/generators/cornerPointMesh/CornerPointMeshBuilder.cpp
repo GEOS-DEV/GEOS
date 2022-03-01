@@ -23,7 +23,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "mesh/generators/cornerPointMesh/utilities/GeometryUtilities.hpp"
 #include "mesh/generators/cornerPointMesh/utilities/OutputUtilities.hpp"
-
+#include <chrono>
 namespace geosx
 {
 
@@ -73,13 +73,22 @@ void CornerPointMeshBuilder::postProcessMesh()
 {
   // for each active cell, compute the position of the eight "corner-point" vertices
   // at this point, "corner-point" vertices have not been filtered yet
+  // Recording time spent
+//  auto start = std::chrono::high_resolution_clock::now();
   buildCornerPointCells();
 
   // eliminate duplicates from cpVertices
   filterVertices();
+//  auto end = std::chrono::high_resolution_clock::now();
+//  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+//  std::cout << " Finished building CP cells and removing duplicates. Time measured: " << duration << " microseconds" << std::endl;
 
+//  start = std::chrono::high_resolution_clock::now();
   // match faces, deal with the non-conforming case
   buildFaces();
+//  end = std::chrono::high_resolution_clock::now();
+//  duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+//  std::cout << " Finished building faces. Time measured: " << duration << " microseconds" << std::endl;
 
   // construct map linking a region to its cells
   formRegions();
