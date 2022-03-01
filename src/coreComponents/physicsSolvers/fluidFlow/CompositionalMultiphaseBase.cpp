@@ -377,7 +377,7 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Validate various models against each other (must have same phases and components)
-  validateConstitutiveModels();
+  validateConstitutiveModels( domain );
 
   // 2. Set the value of temperature
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
@@ -398,11 +398,10 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   initializeAquiferBC( cm );
 }
 
-void CompositionalMultiphaseBase::validateConstitutiveModels() const
+void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition const & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
   MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
 
@@ -425,12 +424,12 @@ void CompositionalMultiphaseBase::validateConstitutiveModels() const
       {
         bool const isFluidModelThermal = castedFluid.isThermal();
         GEOSX_THROW_IF( m_isThermal && !isFluidModelThermal,
-                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in solver `{}`, but the fluid model `{}` is incompatible with the thermal option",
-                                   getName(), getName(), fluid.getName() ),
+                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
                         InputError );
         GEOSX_THROW_IF( !m_isThermal && isFluidModelThermal,
-                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options in `{}` are incompatible with the thermal option",
-                                   getName(), fluid.getName(), getName() ),
+                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
                         InputError );
       } );
 

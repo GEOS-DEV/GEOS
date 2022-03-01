@@ -298,11 +298,10 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
-void CompositionalMultiphaseWell::validateConstitutiveModels() const
+void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  DomainPartition const & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
@@ -422,7 +421,7 @@ void CompositionalMultiphaseWell::initializePreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  validateConstitutiveModels();
+  validateConstitutiveModels( domain );
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,

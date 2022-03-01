@@ -313,10 +313,11 @@ protected:
 
   /**
    * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
    * This function will produce an error if one of the constitutive models
    * (fluid, relperm) is incompatible with the reference fluid model.
    */
-  void validateConstitutiveModels() const;
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
 
   virtual void postProcessInput() override;
 
