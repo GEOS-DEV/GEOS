@@ -329,6 +329,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
+<<<<<<< HEAD
     if( !m_useStaticCondensation )
     {
       string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
@@ -353,6 +354,15 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                      kernelFactory );
 
       GEOSX_UNUSED_VAR( maxTraction );
+=======
+    solidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
+                                                                 dispDofNumber,
+                                                                 jumpDofNumber,
+                                                                 dofManager.rankOffset(),
+                                                                 localMatrix,
+                                                                 localRhs,
+                                                                 gravityVectorData );
+>>>>>>> origin/develop
 
     }
     else
@@ -795,7 +805,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
         using ContactType = TYPEOFREF( castedContact );
         typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-        SolidMechanicsEFEMKernels::StateUpdateKernel::
+        solidMechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
                                             oldJump,

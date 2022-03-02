@@ -436,7 +436,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
 
 
     // 1. Cell-based contributions of standard poroelasticity
-    PoromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
+    poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
                                                                   pDofKey,
                                                                   dofManager.rankOffset(),
                                                                   localMatrix,
@@ -455,7 +455,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::assembleSystem( real64 con
                                                               kernelFactory );
 
     // 2.  Add EFEM poroelastic contribution
-    PoromechanicsEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
+    poromechanicsEFEMKernels::SinglePhaseKernelFactory EFEMkernelFactory( subRegion,
                                                                           dispDofNumber,
                                                                           jumpDofNumber,
                                                                           pDofKey,
@@ -649,7 +649,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
       {
         typename TYPEOFREF( castedPorousSolid ) ::KernelWrapper porousMaterialWrapper = castedPorousSolid.createKernelUpdates();
 
-        PoromechanicsEFEMKernels::StateUpdateKernel::
+        poromechanicsEFEMKernels::StateUpdateKernel::
           launch< parallelDevicePolicy<> >( subRegion.size(),
                                             contactWrapper,
                                             porousMaterialWrapper,

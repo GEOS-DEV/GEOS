@@ -28,7 +28,11 @@ class MeshLevel;
 class NeighborCommunicator;
 struct ModifiedObjectLists;
 
+<<<<<<< HEAD
 namespace EmbeddedSurfacesParallelSynchronization
+=======
+namespace embeddedSurfacesParallelSynchronization
+>>>>>>> origin/develop
 {
 
 void sychronizeTopology( MeshLevel & mesh,

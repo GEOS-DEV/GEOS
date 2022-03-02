@@ -261,6 +261,15 @@ public:
   bool isIdle() const
   { return m_eventForecast > 1; }
 
+  /**
+   * @brief Get the string name of the target.
+   * @return @p string name of the target.
+   */
+  string getEventName() const
+  {
+    return m_eventTarget;
+  }
+
 protected:
 
   /**
@@ -293,6 +302,13 @@ protected:
   { m_eventForecast = forecast; }
 
   /**
+   * @brief Get the target of this event.
+   * @return The target of this event.
+   */
+  ExecutableGroup * getEventTarget() const
+  { return m_target; }
+
+  /**
    * @brief Is the event active?
    * @param time The time at which we want to check if the event is active.
    * @return @p true if active, @p false otherwise.
@@ -300,12 +316,6 @@ protected:
   bool isActive( real64 const time ) const
   { return ( time >= m_beginTime ) && ( time < m_endTime ); }
 
-  /**
-   * @brief Get the target of this event.
-   * @return The target of this event.
-   */
-  ExecutableGroup * getEventTarget() const
-  { return m_target; }
 
   /// The last time the event occurred.
   real64 m_lastTime;

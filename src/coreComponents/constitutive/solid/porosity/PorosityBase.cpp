@@ -54,6 +54,7 @@ PorosityBase::PorosityBase( string const & name, Group * const parent ):
     setDescription( "Default value of the reference porosity" );
 
   registerWrapper( viewKeyStruct::referencePorosityString(), &m_referencePorosity ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 1.0 );
 }
 
