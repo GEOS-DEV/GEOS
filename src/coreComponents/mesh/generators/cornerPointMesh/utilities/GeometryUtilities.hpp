@@ -257,6 +257,7 @@ struct Line
   bool findIntersectionPoint( const Line& newLine, Vertex& interPoint) const
   {
     // two points have to be two lines at the same time. When two points are presented, the first point is returned. This is an arbitrary choice.
+    // TODO: use the isoparametric mapping to find the intersection points
     bool isOnLine1(false);
     bool isOnLine2(false);
     bool isNewPoint(false);
@@ -319,12 +320,11 @@ struct Line
 
       if ( roundWithPrecision(intersDist, 4) > 0.0)
       {
-        std::cout << "Two lines are not intersecting. Their distance is " << intersDist << std::endl;
         return false;
       }
       else
       {
-        // arbitray return pa
+        // arbitrarly return pa
         if (isOnLine1 && isOnLine2)
         {
           if (isNewPoint)
@@ -478,7 +478,6 @@ struct Face
       else
       {
         isValid = false;
-        //std::cout << "P8 cannot be found" << std::endl;
         GEOSX_THROW( "P8 cannot be found!!", InputError );
       }
 
@@ -499,7 +498,6 @@ struct Face
       else
       {
         isValid = false;
-        //std::cout << "P4 cannot be found" << std::endl;
         GEOSX_THROW( "P4 cannot be found!", InputError );
       }
 

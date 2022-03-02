@@ -73,22 +73,13 @@ void CornerPointMeshBuilder::postProcessMesh()
 {
   // for each active cell, compute the position of the eight "corner-point" vertices
   // at this point, "corner-point" vertices have not been filtered yet
-  // Recording time spent
-//  auto start = std::chrono::high_resolution_clock::now();
   buildCornerPointCells();
 
   // eliminate duplicates from cpVertices
   filterVertices();
-//  auto end = std::chrono::high_resolution_clock::now();
-//  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-//  std::cout << " Finished building CP cells and removing duplicates. Time measured: " << duration << " microseconds" << std::endl;
 
-//  start = std::chrono::high_resolution_clock::now();
   // match faces, deal with the non-conforming case
   buildFaces();
-//  end = std::chrono::high_resolution_clock::now();
-//  duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-//  std::cout << " Finished building faces. Time measured: " << duration << " microseconds" << std::endl;
 
   // construct map linking a region to its cells
   formRegions();
@@ -348,40 +339,6 @@ void CornerPointMeshBuilder::appendAuxillaryLayer()
   //printDataForDebugging();
 }
 
-void CornerPointMeshBuilder::printDataForDebugging()
-{
-  localIndex const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  if( rank == 0 )
-  {
-    std::string folderName = "debugPrintout";
-    std::cout << "Creating the " << folderName << " directory. System call returned: " << std::endl
-              << system( ( "mkdir -p " + folderName ).c_str() )
-              << std::endl;
-
-    array1d< localIndex > & actnum = m_parser.actnum();
-    array1d< real64 > & zcorn = m_parser.zcorn();
-    // Debugging:
-    std::cout<< "Saving zcorn... " <<std::endl;
-    std::ofstream outfile_;
-
-    std::vector<std::string> fileNameList = {"zcorn", "actnum"};
-    outfile_.open( folderName + "/" + fileNameList[0] + ".txt", std::ios::out | std::ios::binary );
-    outfile_ << "The new zcorn has size of " << zcorn.size() <<std::endl;
-    for( localIndex index = 0 ; index < zcorn.size() ; index++ )
-      outfile_ << zcorn( index ) << std::endl;
-
-    outfile_.close();
-    std::cout<< "zcorn saved. Saving actnum... " <<std::endl;
-    outfile_.open( folderName + "/" + fileNameList[1] + ".txt", std::ios::out | std::ios::binary );
-    outfile_ << "The new zcorn has size of " << actnum.size() <<std::endl;
-    for( localIndex index = 0 ; index < actnum.size() ; index++ )
-      outfile_ << actnum( index ) << std::endl;
-
-    outfile_.close();
-    std::cout<< "actnum saved." <<std::endl;
-  }
-}
-
 bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,
                                                      localIndex const nXLocal, localIndex const nYLocal,
                                                      localIndex const iMinOverlap, localIndex const iMaxOverlap,
@@ -637,12 +594,6 @@ void CornerPointMeshBuilder::buildFaces()
   buildHorizontalFaces();
 }
 
-//void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
-//{
-//  // not ready for review, in construction
-//  GEOSX_UNUSED_VAR( direction );
-//}
-
 void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
 {
   // not ready for review, in construction
@@ -791,15 +742,10 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
                              std::begin(verticesNextFace) ))
             {
               // a conformed face is found
-//              std::cout << "Found a regular face with vertex ["<< verticesPrevFace[0] << "," << verticesPrevFace[1] << ","
-//                                                              << verticesPrevFace[2] << "," << verticesPrevFace[3]<< "]" << std::endl;
-
-              // TODO: change the name of addHorizontalFace to addConformingFace, since all horizontal faces and regular vertical faces
-              //       conforming
               if (prevIsActive && nextIsActive)
               {
                 // both cells are active
-                addHorizontalFace(verticesPrevFace,
+                addConformingFace(verticesPrevFace,
                                    activeCellToOwnedActiveCell( iActiveCellPrev ),
                                    activeCellToOwnedActiveCell( iActiveCellNext ),
                                      ownedActiveCellToFaces,
@@ -815,9 +761,6 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
             else
             {
               // a faulted face is found. Need to loop over a column of cells to find all intersection points
-              std::cout << "Found a faulted face with vertex ["<< verticesNextFace[0] << "," << verticesNextFace[1] << ","
-                                                                              << verticesNextFace[2] << "," << verticesNextFace[3] << "]" << std::endl;
-              // Not completed
               addNonconformingFace( iCellPrev, k, verticesNextFace,
                                     orderPrev, iActiveCellNext);
 
@@ -862,7 +805,7 @@ void CornerPointMeshBuilder::addSingleConformingFace(bool const prevIsActive,
                                    cpVertexToVertex( iFirstVertex + vertexOrder[2] ),
                                    cpVertexToVertex( iFirstVertex + vertexOrder[3] )};
 
-  addHorizontalFace( vertices,
+  addConformingFace( vertices,
                      activeCellToOwnedActiveCell( iActiveCell ),
                      -1,
                      ownedActiveCellToFaces,
@@ -1100,7 +1043,7 @@ void CornerPointMeshBuilder::buildHorizontalFaces()
                                              cpVertexToVertex( iFirstVertexPrev + 1 ),
                                              cpVertexToVertex( iFirstVertexPrev + 3 ),
                                              cpVertexToVertex( iFirstVertexPrev + 2 ) };
-            addHorizontalFace( vertices,
+            addConformingFace( vertices,
                                activeCellToOwnedActiveCell( iActiveCellPrev ),
                                activeCellToOwnedActiveCell( iActiveCellNext ),
                                ownedActiveCellToFaces,
@@ -1118,7 +1061,7 @@ void CornerPointMeshBuilder::buildHorizontalFaces()
                                              cpVertexToVertex( iFirstVertex + firstPos + 1 ),
                                              cpVertexToVertex( iFirstVertex + firstPos + 3 ),
                                              cpVertexToVertex( iFirstVertex + firstPos + 2 ) };
-            addHorizontalFace( vertices,
+            addConformingFace( vertices,
                                activeCellToOwnedActiveCell( iActiveCell ),
                                -1,
                                ownedActiveCellToFaces,
@@ -1181,7 +1124,7 @@ void CornerPointMeshBuilder::updateVerticalFaceMaps( std::vector<Vertex>& newVer
 
 }
 
-void CornerPointMeshBuilder::addHorizontalFace( localIndex const (&faceVertices)[ 4 ],
+void CornerPointMeshBuilder::addConformingFace( localIndex const (&faceVertices)[ 4 ],
                                                 localIndex const iOwnedActiveCellPrev,
                                                 localIndex const iOwnedActiveCellNext,
                                                 ArrayOfArrays< localIndex > & ownedActiveCellToFaces,

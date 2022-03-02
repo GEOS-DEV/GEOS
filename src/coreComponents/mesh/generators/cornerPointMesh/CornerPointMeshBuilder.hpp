@@ -276,14 +276,14 @@ private:
                                        array1d< localIndex > & activeCellToOwnedActiveCell );
 
   /**
-   * @brief add a horizontal face made of four vertices to the maps
+   * @brief add a conforming face made of four vertices to the maps
    * @param[in] faceVertices the four vertices of face k
    * @param[in] iOwnedActiveCellPrev index of the owned active cell before the face (k-1)
    * @param[in] iOwnedActiveCellNext index of the owned active cell after the face (k)
    * @param[out] ownedActiveCellToFaces map from owned active cell to faces
    * @param[out] faceToVertices map from face to vertices
    */
-  static void addHorizontalFace( localIndex const (&faceVertices)[ 4 ],
+  static void addConformingFace( localIndex const (&faceVertices)[ 4 ],
                                  localIndex const iOwnedActiveCellPrev,
                                  localIndex const iOwnedActiveCellNext,
                                  ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
@@ -335,9 +335,6 @@ private:
 
   bool checkFaceOverlap(localIndex const (&nextfaceVertices)[ 4 ],
                         localIndex const (&prevfaceVertices)[ 4 ], std::vector<geometryUtilities::Face> & adjFaceVec);
-
-  // a temporary method for debugging
-  void printDataForDebugging();
 
   // a temporary method for updating vertexes for visualization
   void updateVertex();
