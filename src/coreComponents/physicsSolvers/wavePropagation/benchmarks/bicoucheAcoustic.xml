@@ -121,7 +121,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region1/elementSubRegions/cb1"
       fieldName="mediumVelocity"
-      scale="2000"
+      scale="1500"
       setNames="{ all }"/>
 
     <FieldSpecification
@@ -129,7 +129,7 @@
       initialCondition="1"
       objectPath="ElementRegions/Region2/elementSubRegions/cb2"
       fieldName="mediumVelocity"
-      scale="1500"
+      scale="2000"
       setNames="{ all }"/>
 
     <!-- 4) The free surface condition the domain -->

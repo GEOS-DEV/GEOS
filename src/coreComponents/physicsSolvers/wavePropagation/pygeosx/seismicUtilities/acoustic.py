@@ -90,14 +90,107 @@ def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
     return r
 
 
-def computePartialCostFunction(residual):
+def computePartialCostFunction(directory_in_str, residual, shot):
+    if os.path.exists(directory_in_str):
+        pass
+    else:
+        os.mkdir(directory_in_str)
+
     partialCost = 0
     for i in range(residual.shape[1]):
         partialCost += np.linalg.norm(residual[:, i])
 
     partialCost = partialCost/2
 
-    return partialCost
+    with open(os.path.join(directory_in_str, "partialCost_"+shot.id+".txt"), 'w') as f:
+        f.write(str(partialCost))
+
+    f.close()
+
+
+def computeFullCostFunction(directory_in_str, acquisition):
+    directory = os.fsencode(directory_in_str)
+    nfiles = len(acquisition.shots)
+
+    n=0
+    fullCost=0
+    while n < nfiles:
+        file_list = os.listdir(directory)
+        if len(file_list) != 0:
+            filename = os.fsdecode(file_list[0])
+            costFile = open(os.path.join(directory_in_str,filename), "r")
+            fullCost += float(costFile.readline())
+            costFile.close()
+            os.remove(os.path.join(directory_in_str,filename))
+            n += 1
+        else:
+            continue
+
+    os.rmdir(directory_in_str)
+
+    return fullCost
+
+
+def computePartialGradient(directory_in_str, shot):
+    if os.path.exists(directory_in_str):
+        pass
+    else:
+        os.mkdir(directory_in_str)
+
+    h5fNp1 = h5py.File(os.path.join(directory_in_str,"forwardWaveFieldNp1_"+shot.id+".hdf5"), "r+")
+    h5bNp1 = h5py.File(os.path.join(directory_in_str,"backwardWaveFieldNp1_"+shot.id+".hdf5"), "r+")
+
+    h5fN = h5py.File(os.path.join(directory_in_str,"forwardWaveFieldN_"+shot.id+".hdf5"), "r+")
+    h5bN = h5py.File(os.path.join(directory_in_str,"backwardWaveFieldN_"+shot.id+".hdf5"), "r+")
+
+    h5fNm1 = h5py.File(os.path.join(directory_in_str,"forwardWaveFieldNm1_"+shot.id+".hdf5"), "r+")
+    h5bNm1 = h5py.File(os.path.join(directory_in_str,"backwardWaveFieldNm1_"+shot.id+".hdf5"), "r+")
+
+    keysNp1 = list(h5fNp1.keys())
+    keysN = list(h5fN.keys())
+    keysNm1 = list(h5fNm1.keys())
+
+    for i in range(len(keysNp1)-2):
+        if ("ReferencePosition" in keysNp1[i]) or ("Time" in keysNp1[i]):
+            del h5fNp1[keysNp1[i]]
+            del h5bNp1[keysNp1[i]]
+
+            del h5fN[keysNp1[i]]
+            del h5bN[keysNp1[i]]
+
+            del h5fNm1[keysNp1[i]]
+            del h5bNm1[keysNp1[i]]
+
+    keysNp1 = list(h5fNp1.keys())
+
+    h5p = h5py.File(os.path.join(directory_in_str,"partialGradient_"+shot.id+".hdf5"), "w")
+
+    h5p.create_dataset("ReferencePosition", data = h5fNp1[keysNp1[-2]][0], dtype='d')
+    h5p.create_dataset("Time", data = h5fNp1[keysNp1[-1]], dtype='d')
+    h5p.create_dataset("partialGradient", data = np.zeros(h5bNp1[keysNp1[0]][0].shape[0]), dtype='d')
+
+
+    keyp = list(h5p.keys())
+
+    n = len( list( h5fNp1[keysNp1[0]] ) )
+    for i in range(n):
+        h5p["partialGradient"][:] -= (h5fNp1["pressure_np1"][i, :] - 2*h5fN["pressure_n"][i, :] + h5fNm1["pressure_nm1"][i, :]) * h5bN["pressure_n"][-i-1, :] / (shot.dt*shot.dt)
+
+
+    h5fNp1.close()
+    h5bNp1.close()
+    h5fN.close()
+    h5bN.close()
+    h5fNm1.close()
+    h5bNm1.close()
+    h5p.close()
+
+    os.remove(os.path.join(directory_in_str,"forwardWaveFieldNp1_"+shot.id+".hdf5"))
+    os.remove(os.path.join(directory_in_str,"backwardWaveFieldNp1_"+shot.id+".hdf5"))
+    os.remove(os.path.join(directory_in_str,"forwardWaveFieldN_"+shot.id+".hdf5"))
+    os.remove(os.path.join(directory_in_str,"backwardWaveFieldN_"+shot.id+".hdf5"))
+    os.remove(os.path.join(directory_in_str,"forwardWaveFieldNm1_"+shot.id+".hdf5"))
+    os.remove(os.path.join(directory_in_str,"backwardWaveFieldNm1_"+shot.id+".hdf5"))
 
 
 def computeFullGradient(directory_in_str, acquisition):
