@@ -312,7 +312,7 @@ public:
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] dofNumberAccessor
    * @param[in] compFlowAccessors
    * @param[in] multiFluidAccessors
@@ -324,7 +324,7 @@ public:
    */
   FaceBasedAssemblyKernelBase( integer const numPhases,
                                globalIndex const rankOffset,
-                               integer const capPressureFlag,
+                               integer const hasCapPressure,
                                DofNumberAccessor const & dofNumberAccessor,
                                CompFlowAccessors const & compFlowAccessors,
                                MultiFluidAccessors const & multiFluidAccessors,
@@ -343,7 +343,7 @@ protected:
   globalIndex const m_rankOffset;
 
   /// Flag to specify whether capillary pressure is used or not
-  integer const m_capPressureFlag;
+  integer const m_hasCapPressure;
 
   /// Time step size
   real64 const m_dt;
@@ -429,7 +429,7 @@ public:
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
    * @param[in] compFlowAccessors
@@ -442,7 +442,7 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
-                           integer const capPressureFlag,
+                           integer const hasCapPressure,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -454,7 +454,7 @@ public:
                            arrayView1d< real64 > const & localRhs )
     : FaceBasedAssemblyKernelBase( numPhases,
                                    rankOffset,
-                                   capPressureFlag,
+                                   hasCapPressure,
                                    dofNumberAccessor,
                                    compFlowAccessors,
                                    multiFluidAccessors,
@@ -667,7 +667,7 @@ public:
           dCapPressure_dC[ic] = 0.0;
         }
 
-        if( m_capPressureFlag )
+        if( m_hasCapPressure )
         {
           capPressure = m_phaseCapPressure[er][esr][ei][0][ip];
 
@@ -941,7 +941,7 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
@@ -955,7 +955,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   integer const capPressureFlag,
+                   integer const hasCapPressure,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -978,7 +978,7 @@ public:
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, capPressureFlag, stencilWrapper, dofNumberAccessor,
+      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, multiFluidAccessors, capPressureAccessors, permeabilityAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
