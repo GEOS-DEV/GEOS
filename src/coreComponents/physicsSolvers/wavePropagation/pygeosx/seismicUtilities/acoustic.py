@@ -2,6 +2,7 @@ import pygeosx
 import numpy as np
 import os
 import h5py
+import segyio
 
 
 def recomputeSourceAndReceivers(solver, sources, receivers):
@@ -34,18 +35,12 @@ def updateSourceAndReceivers( solver, sources_list=[], receivers_list=[] ):
 
     solver.reinit()
 
+
 def updateSourceValue( solver, value ):
     src_value = solver.get_wrapper("sourceValue").value()
     src_value.set_access_level(pygeosx.pylvarray.MODIFIABLE)
     src_value.to_numpy()[:] = value[:]
 
-
-def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
-    r = np.zeros((int(maxTime/dt)+1, np.size(rtemp,1)))
-    for i in range(np.size(rtemp,1)):
-        r[:,i] = np.interp(np.linspace(0, maxTime, int(maxTime/dt)+1), np.linspace(0, maxTime, int(maxTime/dtSeismoTrace)+1), rtemp[:,i])
-
-    return r
 
 
 def resetWaveField(group):
@@ -76,6 +71,33 @@ def setTimeVariables(problem, maxTime, dt, dtSeismoTrace):
     problem.get_wrapper("Events/solverApplications/forceDt").value()[0] = dt
     problem.get_wrapper("/Solvers/acousticSolver/dtSeismoTrace").value()[0] = dtSeismoTrace
 
+
+def computeResidual(filename, data_obs):
+    residual = np.zeros(data_obs.shape)
+    with segyio.open(filename, 'r+', ignore_geometry=True) as f:
+        for i in range(data_obs.shape[1]):
+            residual[:, i] = f.trace[i] - data_obs[:, i]
+        f.close()
+
+    return residual
+
+
+def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
+    r = np.zeros((int(maxTime/dt)+1, np.size(rtemp,1)))
+    for i in range(np.size(rtemp,1)):
+        r[:,i] = np.interp(np.linspace(0, maxTime, int(maxTime/dt)+1), np.linspace(0, maxTime, int(maxTime/dtSeismoTrace)+1), rtemp[:,i])
+
+    return r
+
+
+def computePartialCostFunction(residual):
+    partialCost = 0
+    for i in range(residual.shape[1]):
+        partialCost += np.linalg.norm(residual[:, i])
+
+    partialCost = partialCost/2
+
+    return partialCost
 
 
 def computeFullGradient(directory_in_str, acquisition):

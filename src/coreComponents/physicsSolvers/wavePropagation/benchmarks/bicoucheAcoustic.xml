@@ -11,7 +11,7 @@
       name="acousticSolver"
       cflFactor="0.25"
       discretization="FE1"
-      targetRegions="{ Region }"
+      targetRegions="{ Region1, Region2 }"
       sourceCoordinates="{ { 1005.0, 1005.0, 1005.0 } }"
       timeSourceFrequency="2.0"
       receiverCoordinates="{ { 1105,1005, 1005 } }"
@@ -28,11 +28,11 @@
       elementTypes="{ C3D8 }"
       xCoords="{ 0, 2000 }"
       yCoords="{ 0, 2000 }"
-      zCoords="{ 0, 2000 }"
+      zCoords="{ 0, 1000, 2000 }"
       nx="{ 100 }"
       ny="{ 100 }"
-      nz="{ 100 }"
-      cellBlockNames="{ cb }"/>
+      nz="{ 50, 50 }"
+      cellBlockNames="{ cb1, cb2 }"/>
   </Mesh>
 
   <Geometry>
@@ -62,29 +62,6 @@
       targetExactTimestep="0"
       target="/Solvers/acousticSolver"/>
 
-    <PeriodicEvent
-      name="waveFieldNp1Collection"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Tasks/waveFieldNp1Collection" />
-
-    <PeriodicEvent
-      name="waveFieldNCollection"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Tasks/waveFieldNCollection" />
-
-    <PeriodicEvent
-      name="waveFieldNm1Collection"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Tasks/waveFieldNm1Collection" />
-
-    <PeriodicEvent
-      name="waveFieldOutput"
-      timeFrequency="0.5"
-      targetExactTimestep="0"
-      target="/Outputs/waveFieldOutput" />
 
   </Events>
 
@@ -98,8 +75,13 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="Region"
-      cellBlocks="{ cb }"
+      name="Region1"
+      cellBlocks="{ cb1 }"
+      materialList="{ nullModel }"/>
+
+    <CellElementRegion
+      name="Region2"
+      cellBlocks="{ cb2 }"
       materialList="{ nullModel }"/>
   </ElementRegions>
 
@@ -135,9 +117,17 @@
     <!-- 3) The velocity in the domain -->
 
     <FieldSpecification
-      name="cellVelocity"
+      name="cellVelocity1"
       initialCondition="1"
-      objectPath="ElementRegions/Region/elementSubRegions/cb"
+      objectPath="ElementRegions/Region1/elementSubRegions/cb1"
+      fieldName="mediumVelocity"
+      scale="2000"
+      setNames="{ all }"/>
+
+    <FieldSpecification
+      name="cellVelocity2"
+      initialCondition="1"
+      objectPath="ElementRegions/Region2/elementSubRegions/cb2"
       fieldName="mediumVelocity"
       scale="1500"
       setNames="{ all }"/>
@@ -154,41 +144,6 @@
   </FieldSpecifications>
 
     <!-- collect the pressure values at the nodes -->
-
-  <Tasks>
-    <PackCollection
-      name="waveFieldNp1Collection"
-      objectPath="nodeManager"
-      fieldName="pressure_np1"/>
-
-    <PackCollection
-      name="waveFieldNCollection"
-      objectPath="nodeManager"
-      fieldName="pressure_n"/>
-
-    <PackCollection
-      name="waveFieldNm1Collection"
-      objectPath="nodeManager"
-      fieldName="pressure_nm1"/>
-  </Tasks>
-
-  <Outputs>
-    <TimeHistory
-	name="waveFieldNp1Output"
-	sources="{/Tasks/waveFieldNp1Collection}"
-	filename="waveFieldNp1" />
-
-    <TimeHistory
-	name="waveFieldNOutput"
-	sources="{/Tasks/waveFieldNCollection}"
-	filename="waveFieldN" />
-
-    <TimeHistory
-	name="waveFieldNm1Output"
-	sources="{/Tasks/waveFieldNm1Collection}"
-	filename="waveFieldNm1" />
-
-  </Outputs>
 
 
 </Problem>

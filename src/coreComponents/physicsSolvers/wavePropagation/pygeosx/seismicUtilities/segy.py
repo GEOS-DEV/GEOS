@@ -4,7 +4,7 @@ import segyio
 from time import sleep
 
 def exportToSegy(table, shot, filename, directory, rank=0):
-    segyfile = os.path.join(directory, filename+".sgy")
+    segyfile = os.path.join(directory, filename+"_Shot"+shot.id+".sgy")
     nsamples = table.shape[0]
     rcvCoord = [receiver.coords for receiver in shot.receivers.receivers_list]
 

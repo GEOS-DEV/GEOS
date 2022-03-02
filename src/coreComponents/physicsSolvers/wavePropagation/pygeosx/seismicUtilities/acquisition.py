@@ -246,6 +246,10 @@ class Acquisition:
             ny = int(y_nb_cells*(shot.boundary[1][1]-shot.boundary[1][0])/(yCoords[1]-yCoords[0]))
             nz = int(z_nb_cells*(shot.boundary[2][1]-shot.boundary[2][0])/(zCoords[1]-zCoords[0]))
 
+            shot.nx = nx
+            shot.ny = ny
+            shot.nz = nz
+
             internal_mesh['xCoords'] = "{"+str(shot.boundary[0][0])+","+str(shot.boundary[0][1])+"}"
             internal_mesh['yCoords'] = "{"+str(shot.boundary[1][0])+","+str(shot.boundary[1][1])+"}"
             internal_mesh['zCoords'] = "{"+str(shot.boundary[2][0])+","+str(shot.boundary[2][1])+"}"
@@ -916,6 +920,9 @@ class Shot:
         self.flag = "Undone"
         self.dt = None
         self.xml = None
+        self.nx = None
+        self.ny = None
+        self.nz = None
         self.velocity_model = None
         self.boundary = None
 
