@@ -197,7 +197,7 @@ public:
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
-  using AbstractBase::m_capPressureFlag;
+  using AbstractBase::m_hasCapPressure;
   using AbstractBase::m_rankOffset;
   using AbstractBase::m_ghostRank;
   using AbstractBase::m_dofNumber;
@@ -241,7 +241,7 @@ public:
    * @brief Constructor for the kernel interface
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
-   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
    * @param[in] dofNumberAccessor
    * @param[in] compFlowAccessor
@@ -257,7 +257,7 @@ public:
    */
   FaceBasedAssemblyKernel( integer const numPhases,
                            globalIndex const rankOffset,
-                           integer const capPressureFlag,
+                           integer const hasCapPressure,
                            STENCILWRAPPER const & stencilWrapper,
                            DofNumberAccessor const & dofNumberAccessor,
                            CompFlowAccessors const & compFlowAccessors,
@@ -272,7 +272,7 @@ public:
                            arrayView1d< real64 > const & localRhs )
     : Base( numPhases,
             rankOffset,
-            capPressureFlag,
+            hasCapPressure,
             stencilWrapper,
             dofNumberAccessor,
             compFlowAccessors,
@@ -404,7 +404,7 @@ public:
 
         // Step 2.1: compute derivative of capillary pressure wrt temperature
         real64 dCapPressure_dT = 0.0;
-        if( m_capPressureFlag )
+        if( m_hasCapPressure )
         {
           for( integer jp = 0; jp < m_numPhases; ++jp )
           {
@@ -625,7 +625,7 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] dofKey string to get the element degrees of freedom numbers
-   * @param[in] capPressureFlag flag specifying whether capillary pressure is used or not
+   * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] solverName name of the solver (to name accessors)
    * @param[in] elemManager reference to the element region manager
    * @param[in] stencilWrapper reference to the stencil wrapper
@@ -639,7 +639,7 @@ public:
                    integer const numPhases,
                    globalIndex const rankOffset,
                    string const & dofKey,
-                   integer const capPressureFlag,
+                   integer const hasCapPressure,
                    string const & solverName,
                    ElementRegionManager const & elemManager,
                    STENCILWRAPPER const & stencilWrapper,
@@ -666,7 +666,7 @@ public:
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::ThermalConductivityAccessors thermalConductivityAccessors( elemManager, solverName );
 
-      KERNEL_TYPE kernel( numPhases, rankOffset, capPressureFlag, stencilWrapper, dofNumberAccessor,
+      KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, thermalCompFlowAccessors, multiFluidAccessors, thermalMultiFluidAccessors,
                           capPressureAccessors, permeabilityAccessors, thermalConductivityAccessors,
                           dt, localMatrix, localRhs );

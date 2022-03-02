@@ -165,16 +165,22 @@ public:
   virtual void updateState( DomainPartition & domain ) override final;
 
   /**
-   * @brief Get the number of fluid components (species)
+   * @brief Getter for the number of fluid components (species)
    * @return the number of components
    */
   localIndex numFluidComponents() const { return m_numComponents; }
 
   /**
-   * @brief Get the number of fluid phases
+   * @brief Getter for the number of fluid phases
    * @return the number of phases
    */
   localIndex numFluidPhases() const { return m_numPhases; }
+
+  /**
+   * @brief Getter for the name of the reference fluid model name
+   * @return the name of the reference fluid
+   */
+  string referenceFluidModelName() const { return m_referenceFluidModelName; }
 
   /**
    * @brief assembles the accumulation and volume balance terms for all cells
@@ -315,6 +321,14 @@ public:
 
 protected:
 
+  /**
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * This function will produce an error if one of the constitutive models
+   * (fluid, relperm) is incompatible with the reference fluid model.
+   */
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
+
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
@@ -343,7 +357,7 @@ protected:
   integer m_computeCFLNumbers;
 
   /// flag to determine whether or not to apply capillary pressure
-  integer m_capPressureFlag;
+  integer m_hasCapPressure;
 
   /// flag to determine whether or not this is a thermal simulation
   integer m_isThermal;

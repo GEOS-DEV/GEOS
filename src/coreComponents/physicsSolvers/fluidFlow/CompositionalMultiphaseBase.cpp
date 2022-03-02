@@ -60,7 +60,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
-  m_capPressureFlag( 0 ),
+  m_hasCapPressure( 0 ),
   m_isThermal( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
@@ -137,7 +137,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
       if( !capPresName.empty() )
       {
-        m_capPressureFlag = true;
+        m_hasCapPressure = true;
       }
     } );
   } );
@@ -164,7 +164,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     {
       {
 
-        if( m_capPressureFlag )
+        if( m_hasCapPressure )
         {
 
           subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
@@ -290,7 +290,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                   InputError );
 
 
-  if( m_capPressureFlag )
+  if( m_hasCapPressure )
   {
     string & capPressureName = subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
                                  setPlotLevel( PlotLevel::NOPLOT ).
@@ -408,7 +408,10 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
-  // 1. Set the value of temperature
+  // 1. Validate various models against each other (must have same phases and components)
+  validateConstitutiveModels( domain );
+
+  // 2. Set the value of temperature
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
@@ -423,8 +426,65 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
     } );
   } );
 
-  // 2. Initialize and validate the aquifer boundary condition
+  // 3. Initialize and validate the aquifer boundary condition
   initializeAquiferBC( cm );
+}
+
+void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition const & domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      compareMultiphaseModels( fluid, referenceFluid );
+      compareMulticomponentModels( fluid, referenceFluid );
+
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      {
+        bool const isFluidModelThermal = castedFluid.isThermal();
+        GEOSX_THROW_IF( m_isThermal && !isFluidModelThermal,
+                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
+                        InputError );
+        GEOSX_THROW_IF( !m_isThermal && isFluidModelThermal,
+                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
+                        InputError );
+      } );
+
+      string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
+      compareMultiphaseModels( relPerm, referenceFluid );
+
+      if( m_hasCapPressure )
+      {
+        string const & capPressureName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase const & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+        compareMultiphaseModels( capPressure, referenceFluid );
+      }
+
+      if( m_isThermal )
+      {
+        string const & thermalConductivityName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+        ThermalConductivityBase const & conductivity = getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+        compareMultiphaseModels( conductivity, referenceFluid );
+      }
+    } );
+  } );
+
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
@@ -523,7 +583,7 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_capPressureFlag )
+  if( m_hasCapPressure )
   {
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
@@ -668,7 +728,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     // Note:
     // - This must be called after updatePorosityAndPermeability
     // - This step depends on porosity and permeability
-    if( m_capPressureFlag )
+    if( m_hasCapPressure )
     {
       // initialized porosity
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
@@ -1850,7 +1910,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 
       // Step 5: if capillary pressure is supported, send the converged porosity and permeability to the capillary pressure model
       // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)
-      if( m_capPressureFlag )
+      if( m_hasCapPressure )
       {
         arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 

@@ -295,11 +295,23 @@ public:
 
 protected:
 
+
+
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
+
+  /*
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * @detail
+   * This function will produce an error if one of the well constitutive models
+   * (fluid, relperm) is incompatible with the corresponding models in reservoir
+   * regions connected to that particular well.
+   */
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)
