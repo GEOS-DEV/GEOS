@@ -117,16 +117,6 @@ public:
       return false;
   }
 
-//  bool operator<( const Vertex& newPoint) const
-//  {
-//    // TODO: isZero( v1.m_x - v2.m_x ) use isZero
-//    if ( !( isZero(m_x - newPoint.m_x) && isZero( m_y - newPoint.m_y) &&
-//            isZero( m_z - newPoint.m_z)) )
-//      return true;
-//    else
-//      return false;
-//  }
-
   bool operator<( const Vertex& newPoint) const
   {
     if( !isZero( m_x - newPoint.m_x ) )
@@ -188,36 +178,6 @@ public:
     return sqrt( pow(m_x - p1.m_x, 2) + pow(m_y - p1.m_y, 2) + pow(m_z - p1.m_z, 2));
   }
 };
-
-///**
-// * @struct CompareVertices
-// * @brief another helper struct used to filter out duplicate nodes
-// */
-//struct CompareVertices
-//{
-//
-//  /**
-//   * @brief Comparaison operator
-//   * @param[in] v1 first vertex
-//   * @param[in] v2 second vertex
-//   * @return true if v1 > v2, and false otherwise
-//   */
-//  bool operator()( const Vertex & v1, const Vertex & v2 ) const
-//  {
-//    if( !isZero( v1.m_x - v2.m_x ) )
-//    {
-//      return v1.m_x > v2.m_x;
-//    }
-//    else if( !isZero( v1.m_y - v2.m_y ) )
-//    {
-//      return v1.m_y > v2.m_y;
-//    }
-//    else
-//    {
-//      return v1.m_z > v2.m_z;
-//    }
-//  }
-//};
 
 struct Line
 {
