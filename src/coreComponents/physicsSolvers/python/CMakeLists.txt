@@ -9,7 +9,7 @@ set( pysolver_sources PySolver.cpp
 blt_add_library( NAME             pysolver
                  SOURCES          ${pysolver_sources}
                  HEADERS          ${pysolver_headers}
-                 DEPENDS_ON       Python3::Python physicsSolvers
+                 DEPENDS_ON       ${dependencyList} ${extraComponentsList} ${externalComponentList} Python3::Python physicsSolvers
                  OBJECT           ${GEOSX_BUILD_OBJ_LIBS}
                  )
 
