@@ -1120,6 +1120,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -1128,8 +1130,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--thermalFlag => Flag indicating whether the problem is thermal or not.-->
-		<xsd:attribute name="thermalFlag" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1152,6 +1152,8 @@ the relative residual norm satisfies:
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
 		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--isThermal => Flag indicating whether the problem is thermal or not.-->
+		<xsd:attribute name="isThermal" type="integer" default="0" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
@@ -1162,8 +1164,6 @@ the relative residual norm satisfies:
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--temperature => Temperature-->
 		<xsd:attribute name="temperature" type="real64" use="required" />
-		<!--thermalFlag => Flag indicating whether the problem is thermal or not.-->
-		<xsd:attribute name="thermalFlag" type="integer" default="0" />
 		<!--useMass => Use mass formulation instead of molar-->
 		<xsd:attribute name="useMass" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -1896,6 +1896,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
+			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
@@ -2700,6 +2701,16 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="maxPermMultiplier" type="real64" use="required" />
 		<!--shearDispThreshold => Threshold of shear displacement.-->
 		<xsd:attribute name="shearDispThreshold" type="real64" use="required" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidInternalEnergyType">
+		<!--referenceInternalEnergy => Internal energy at the reference temperature-->
+		<xsd:attribute name="referenceInternalEnergy" type="real64" use="required" />
+		<!--referenceTemperature => Reference temperature-->
+		<xsd:attribute name="referenceTemperature" type="real64" use="required" />
+		<!--specificHeatCapacity => Solid specific heat capacity-->
+		<xsd:attribute name="specificHeatCapacity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

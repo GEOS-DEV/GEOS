@@ -19,6 +19,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_THERMALCOMPOSITIONALMULTIPHASEFVMKERNELS_HPP
 
+#include "constitutive/thermalConductivity/ThermalConductivityBase.hpp"
 #include "constitutive/thermalConductivity/ThermalConductivityExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
 
@@ -227,11 +228,13 @@ public:
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >;
 
   using ThermalMultiFluidAccessors =
-    StencilAccessors< extrinsicMeshData::multifluid::phaseEnthalpy,
-                      extrinsicMeshData::multifluid::dPhaseEnthalpy >;
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseEnthalpy,
+                              extrinsicMeshData::multifluid::dPhaseEnthalpy >;
 
   using ThermalConductivityAccessors =
-    StencilAccessors< extrinsicMeshData::thermalconductivity::effectiveConductivity >;
+    StencilMaterialAccessors< ThermalConductivityBase,
+                              extrinsicMeshData::thermalconductivity::effectiveConductivity >;
   // for now, we treat thermal conductivity explicitly
 
   /**
@@ -386,7 +389,6 @@ public:
         dDensMean_dT[i] = 0.5 * dDens_dT;
       }
 
-
       // Step 2: compute the derivatives of the phase potential difference wrt temperature
       //***** calculation of flux *****
 
@@ -421,7 +423,6 @@ public:
           dGravHead_dT[j] += dDensMean_dT[j] * gravD;
         }
       }
-
 
       // Step 3: compute the derivatives of the (upwinded) compFlux wrt temperature
       // *** upwinding ***
@@ -495,7 +496,6 @@ public:
       }
     } );
 
-
     // *****************************************************
     // Computation of the conduction term in the energy flux
     // Note that this term is computed using an explicit treatment of conductivity for now
@@ -544,7 +544,7 @@ public:
       integer const localDofIndexPres = ke * numDof;
       stack.localFluxJacobian[localRowIndexEnergy][localDofIndexPres]     =  m_dt * stack.dEnergyFlux_dP[ke];
       stack.localFluxJacobian[2 * localRowIndexEnergy][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
-      integer const localDofIndexTemp = localDofIndexPres + numDof;
+      integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
       stack.localFluxJacobian[localRowIndexEnergy][localDofIndexTemp]     =  m_dt * stack.dEnergyFlux_dT[ke];
       stack.localFluxJacobian[2 * localRowIndexEnergy][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
 

@@ -534,6 +534,25 @@ struct FluidUpdateKernel
   }
 };
 
+/******************************** SolidInternalEnergyUpdateKernel ********************************/
+
+struct SolidInternalEnergyUpdateKernel
+{
+
+  template< typename POLICY, typename SOLID_INTERNAL_ENERGY_WRAPPER >
+  static void
+  launch( localIndex const size,
+          SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
+          arrayView1d< real64 const > const & temp,
+          arrayView1d< real64 const > const & dTemp )
+  {
+    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+    {
+      solidInternalEnergyWrapper.update( k, temp[k] + dTemp[k] );
+    } );
+  }
+};
+
 /******************************** ResidualNormKernel ********************************/
 
 struct ResidualNormKernel

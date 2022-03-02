@@ -540,6 +540,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   GEOSX_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
+  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
@@ -551,7 +552,17 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                viewKeyStruct::elemDofFieldString(),
                                extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
                                scalingFactor,
-                               ~pressureMask );
+                               componentMask );
+
+  if( m_isThermal )
+  {
+    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents, m_numComponents+1 );
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 extrinsicMeshData::flow::deltaTemperature::key(),
+                                 scalingFactor,
+                                 temperatureMask );
+  }
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function

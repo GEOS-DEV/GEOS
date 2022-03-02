@@ -138,19 +138,25 @@ public:
 
   /**
    * @brief Update all relevant relperm models using current values of phase volume fraction
-   * @param castedRelPerm the group storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateRelPermModel( ObjectManagerBase & castedRelPerm ) const;
+  void updateRelPermModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Update all relevant capillary pressure models using current values of phase volume fraction
-   * @param castedCapPres the group storing the required fields
+   * @param dataGroup the group storing the required fields
    */
-  void updateCapPressureModel( ObjectManagerBase & castedCapPres ) const;
+  void updateCapPressureModel( ObjectManagerBase & dataGroup ) const;
+
+  /**
+   * @brief Update all relevant solid internal energy models using current values of temperature
+   * @param dataGroup the group storing the required fields
+   */
+  void updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Recompute phase mobility from constitutive and primary variables
-   * @param domain the domain containing the mesh and fields
+   * @param dataGroup the group storing the required field
    */
   virtual void updatePhaseMobility( ObjectManagerBase & dataGroup ) const = 0;
 
@@ -222,6 +228,8 @@ public:
     static constexpr char const * capPressureNamesString() { return "capPressureNames"; }
 
     static constexpr char const * thermalConductivityNamesString() { return "thermalConductivityNames"; }
+
+    static constexpr char const * solidInternalEnergyNamesString() { return "solidInternalEnergyNames"; }
 
     static constexpr char const * maxCompFracChangeString() { return "maxCompFractionChange"; }
 

@@ -29,6 +29,7 @@
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "constitutive/relativePermeability/relativePermeabilitySelector.hpp"
 #include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/SolidInternalEnergy.hpp"
 #include "constitutive/thermalConductivity/thermalConductivitySelector.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "fieldSpecification/AquiferBoundaryCondition.hpp"
@@ -305,6 +306,18 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
 
   if( m_isThermal )
   {
+    string & solidInternalEnergyName = subRegion.registerWrapper< string >( viewKeyStruct::solidInternalEnergyNamesString() ).
+                                         setPlotLevel( PlotLevel::NOPLOT ).
+                                         setRestartFlags( RestartFlags::NO_WRITE ).
+                                         setSizedFromParent( 0 ).
+                                         setDescription( "Name of the solid internal energy constitutive model to use" ).
+                                         reference();
+
+    solidInternalEnergyName = getConstitutiveName< SolidInternalEnergy >( subRegion );
+    GEOSX_THROW_IF( solidInternalEnergyName.empty(),
+                    GEOSX_FMT( "Solid internal energy model not found on subregion {}", subRegion.getName() ),
+                    InputError );
+
     string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
                                          setPlotLevel( PlotLevel::NOPLOT ).
                                          setRestartFlags( RestartFlags::NO_WRITE ).
@@ -313,8 +326,8 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                                          reference();
 
     thermalConductivityName = getConstitutiveName< ThermalConductivityBase >( subRegion );
-    GEOSX_THROW_IF( relPermName.empty(),
-                    GEOSX_FMT( "Thermal Conductivity model not found on subregion {}", subRegion.getName() ),
+    GEOSX_THROW_IF( thermalConductivityName.empty(),
+                    GEOSX_FMT( "Thermal conductivity model not found on subregion {}", subRegion.getName() ),
                     InputError );
   }
 }
@@ -531,6 +544,29 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
   }
 }
 
+void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
+{
+  if( m_isThermal )
+  {
+    arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+    arrayView1d< real64 const > const dTemp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+
+    string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+    SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
+
+    SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
+
+    // TODO: this should go somewhere, handle the case of flow in fracture, etc
+
+    thermalCompositionalMultiphaseBaseKernels::
+      SolidInternalEnergyUpdateKernel::
+      launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                        solidInternalEnergyWrapper,
+                                        temp,
+                                        dTemp );
+  }
+}
+
 void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
 {
   GEOSX_MARK_FUNCTION;
@@ -657,12 +693,11 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     // - This step depends phaseRelPerm
     updatePhaseMobility( subRegion );
 
-    // 4.6 Finally, we initialize the thermal conductivity
+    // 4.6 Finally, we initialize the rock thermal quantities: conductivity and solid internal energy
     //
     // Note:
     // - This must be called after updatePorosityAndPermeability and updatePhaseVolumeFraction
     // - This step depends on porosity and phaseVolFraction
-    // - Energy balance is not supported yet, so the following flag is always false for now
     if( m_isThermal )
     {
       // initialized porosity
@@ -673,6 +708,13 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
         getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
       conductivityMaterial.initializeRockFluidState( porosity, phaseVolFrac );
       // note that there is nothing to update here because thermal conductivity is explicit for now
+
+      updateSolidInternalEnergyModel( subRegion );
+      string const & solidInternalEnergyName = subRegion.template getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+      SolidInternalEnergy const & solidInternalEnergyMaterial =
+        getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
+      solidInternalEnergyMaterial.saveConvergedState();
+
     }
 
   } );
@@ -1083,7 +1125,7 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh,
           return;
         }
 
-        for( localIndex ip = 0; ip < numPhase; ++ip )
+        for( integer ip = 0; ip < numPhase; ++ip )
         {
           phaseInternalEnergyOld[ei][ip] = phaseInternalEnergy[ei][0][ip];
         }
@@ -1363,7 +1405,6 @@ bool validateDirichletBC( DomainPartition & domain,
                           Group & subRegion,
                           string const & )
     {
-
       string const & subRegionName = subRegion.getName();
       string const & regionName = subRegion.getParent().getParent().getName();
 
@@ -1374,6 +1415,7 @@ bool validateDirichletBC( DomainPartition & domain,
         bcConsistent = false;
         GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
       }
+      tempSubRegionSetMap.insert( setName );
 
       // 2.2 Check that there is pressure bc applied to this set
       auto & presSubRegionSetMap = bcStatusMap[regionName][subRegionName];
@@ -1731,8 +1773,9 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
         dTemp.zero();
       }
 
-      // update porosity and permeability
+      // update porosity, permeability, and solid internal energy
       updatePorosityAndPermeability( subRegion );
+      updateSolidInternalEnergyModel( subRegion );
       // update all fluid properties
       updateFluidState( subRegion );
     } );
@@ -1773,7 +1816,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         pres[ei] += dPres[ei];
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           compDens[ei][ic] += dCompDens[ei][ic];
         }
@@ -1847,8 +1890,9 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
                                                 SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                              auto & subRegion )
     {
-      // update porosity and permeability
+      // update porosity, permeability, and solid internal energy
       updatePorosityAndPermeability( subRegion );
+      updateSolidInternalEnergyModel( subRegion );
       // update all fluid properties
       updateFluidState( subRegion );
     } );

@@ -869,6 +869,7 @@
 			<xsd:element name="ProppantSlurryFluid" type="ProppantSlurryFluidType" />
 			<xsd:element name="ProppantSolidProppantPermeability" type="ProppantSolidProppantPermeabilityType" />
 			<xsd:element name="SlipDependentPermeability" type="SlipDependentPermeabilityType" />
+			<xsd:element name="SolidInternalEnergy" type="SolidInternalEnergyType" />
 			<xsd:element name="TableCapillaryPressure" type="TableCapillaryPressureType" />
 			<xsd:element name="TableRelativePermeability" type="TableRelativePermeabilityType" />
 			<xsd:element name="TableRelativePermeabilityHysteresis" type="TableRelativePermeabilityHysteresisType" />
@@ -1604,6 +1605,14 @@
 		<xsd:attribute name="dPerm_dPressure" type="real64_array3d" />
 		<!--permeability => Rock permeability-->
 		<xsd:attribute name="permeability" type="real64_array3d" />
+	</xsd:complexType>
+	<xsd:complexType name="SolidInternalEnergyType">
+		<!--dInternalEnergy_dTemperature => Derivative of the solid internal energy w.r.t. temperature-->
+		<xsd:attribute name="dInternalEnergy_dTemperature" type="real64_array2d" />
+		<!--internalEnergy => Internal energy of the solid-->
+		<xsd:attribute name="internalEnergy" type="real64_array2d" />
+		<!--oldInternalEnergy => Internal energy of the solid at the previous time-step-->
+		<xsd:attribute name="oldInternalEnergy" type="real64_array2d" />
 	</xsd:complexType>
 	<xsd:complexType name="TableCapillaryPressureType">
 		<!--capPresWrappers => (no description available)-->

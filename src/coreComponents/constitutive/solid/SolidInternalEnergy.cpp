@@ -48,15 +48,15 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
     setDescription( "Derivative of the solid internal energy w.r.t. temperature" );
 
   registerWrapper( viewKeyStruct::specificHeatCapacityString(), &m_specificHeatCapacity ).
-    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Solid specific heat capacity" );
 
   registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
-    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Reference temperature" );
 
   registerWrapper( viewKeyStruct::referenceInternalEnergyString(), &m_referenceInternalEnergy ).
-    setApplyDefaultValue( 0.0 ).
+    setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Internal energy at the reference temperature" );
 }
 
@@ -81,6 +81,8 @@ void SolidInternalEnergy::saveConvergedState() const
   } );
 }
 
-}
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, SolidInternalEnergy, string const &, Group * const )
 
-}
+} /* namespace constitutive */
+
+} /* namespace geosx */
