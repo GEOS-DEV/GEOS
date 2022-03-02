@@ -256,7 +256,7 @@ A typical one may look like:
   # detect host and name the configuration file
   site_name(HOST_NAME)
   set(CONFIG_NAME "your-platform" CACHE PATH "")
-  message( "CONFIG_NAME = ${CONFIG_NAME}" )
+  message("CONFIG_NAME = ${CONFIG_NAME}")
 
   # set paths to C, C++, and Fortran compilers. Note that while GEOSX does not contain any Fortran code,
   # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
@@ -269,15 +269,15 @@ A typical one may look like:
   # Note that the MPI compilers are wrappers around standard serial compilers.
   # Therefore, the MPI compilers must wrap the appropriate serial compilers specified
   # in CMAKE_C_COMPILER, CMAKE_CXX_COMPILER, and CMAKE_Fortran_COMPILER.
-  set(ENABLE_MPI ON CACHE PATH "")
+  set(ENABLE_MPI ON CACHE BOOL "")
   set(MPI_C_COMPILER "/usr/local/bin/mpicc" CACHE PATH "")
   set(MPI_CXX_COMPILER "/usr/local/bin/mpicxx" CACHE PATH "")
   set(MPI_Fortran_COMPILER "/usr/local/bin/mpifort" CACHE PATH "")
   set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
 
   # disable CUDA and OpenMP
-  set(CUDA_ENABLED "OFF" CACHE PATH "" FORCE)
-  set(ENABLE_OPENMP "OFF" CACHE PATH "" FORCE)
+  set(CUDA_ENABLED OFF CACHE BOOL "" FORCE)
+  set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
 
   # enable PAMELA and PVTPackage
   set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
@@ -286,7 +286,9 @@ A typical one may look like:
   # enable tests
   set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
   
-  # define some third party libraries information
+  # define the path to your compiled installation directory
+  set(GEOSX_TPL_DIR "/path/to/your/TPL/installation/dir" CACHE PATH "")
+  # let GEOSX define some third party libraries information for you
   include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
 
 The various ``set()`` commands are used to set environment variables that control the build.
