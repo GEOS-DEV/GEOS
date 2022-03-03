@@ -612,10 +612,6 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
                                                   MeshLevel const & mesh,
                                                   arrayView1d< string const > const & regionNames )
     {
-      string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
-
-      globalIndex const rankOffset = dofManager.rankOffset();
-
       mesh.getElemManager().forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
                                                                                                 EmbeddedSurfaceSubRegion const & subRegion )
       {
