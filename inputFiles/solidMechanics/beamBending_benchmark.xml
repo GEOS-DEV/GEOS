@@ -17,7 +17,7 @@
       discretization="FE1"
       targetRegions="{ Region2 }"
       solidMaterialNames="{ shale }"
-      logLevel="3">
+      logLevel="1">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -26,7 +26,7 @@
         solverType="gmres"
         krylovTol="1.0e-6"
         preconditionerType="amg"
-        logLevel="3"/>
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 
@@ -38,9 +38,9 @@
       xCoords="{ 0, 80 }"
       yCoords="{ 0, 8 }"
       zCoords="{ 0, 4 }"
-      nx="{ 80 }"
-      ny="{ 8 }"
-      nz="{ 4 }"
+      nx="{ 160 }"
+      ny="{ 16 }"
+      nz="{ 8 }"
       cellBlockNames="{ cb1 }"/>
   </Mesh>
 
