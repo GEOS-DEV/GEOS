@@ -97,7 +97,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
                   ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
                   InputError );
 
-  GEOSX_THROW_IF( m_capPressureFlag,
+  GEOSX_THROW_IF( m_hasCapPressure,
                   catalogName() << " " << getName() <<
                   ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
                   InputError );
