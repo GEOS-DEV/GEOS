@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace PoromechanicsEFEMKernels
+namespace poromechanicsEFEMKernels
 {
 
 /**
@@ -64,9 +64,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
@@ -352,26 +353,26 @@ public:
     //       need to know the strain increment to compute the current stiffness value.
     m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
-    SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
+    solidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.xLocal,
                                                                                   m_nVec[embSurfIndex],
                                                                                   m_surfaceCenter[embSurfIndex] );
 
 
-    SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
                                                                   m_nVec[embSurfIndex],
                                                                   m_tVec1[embSurfIndex],
                                                                   m_tVec2[embSurfIndex],
                                                                   stack.hInv );
 
-    SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
                                                                                        m_nVec[embSurfIndex],
                                                                                        m_tVec1[embSurfIndex],
                                                                                        m_tVec2[embSurfIndex],
                                                                                        Heaviside,
                                                                                        dNdX );
 
-    SolidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+    solidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
     // transp(B)D
     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, 6 >( matBD, strainMatrix, stack.constitutiveStiffness );
@@ -648,7 +649,7 @@ struct StateUpdateKernel
   }
 };
 
-} /* namespace PoromechanicsEFEMKernels */
+} // namespace poromechanicsEFEMKernels
 
 } /* namespace geosx */
 

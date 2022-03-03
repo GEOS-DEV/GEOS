@@ -31,7 +31,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsEFEMKernelsHelper
+namespace solidMechanicsEFEMKernelsHelper
 {
 
 template< int NUM_NODES >

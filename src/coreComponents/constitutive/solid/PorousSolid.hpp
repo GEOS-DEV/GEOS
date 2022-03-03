@@ -161,12 +161,10 @@ public:
                                     real64 const & initialFluidTotalMassDensity,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseDensity,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseDensityOld,
-                                    arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & dFluidPhaseDensity_dPressure,
-                                    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseDensity_dGlobalCompFraction,
+                                    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseDensity,
                                     arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const & fluidPhaseCompFrac,
                                     arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & fluidPhaseCompFracOld,
-                                    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_COMP - 2 > const & dFluidPhaseCompFrac_dPressure,
-                                    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const & dFluidPhaseCompFraction_dGlobalCompFraction,
+                                    arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const & dFluidPhaseCompFrac,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseMassDensity,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturationOld,
@@ -250,6 +248,8 @@ public:
     // Compute component mass contents and derivatives w.r.t. to
     // volumetric strain, pressure and components
 
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+
     // --- temporary work arrays
     real64 dPhaseAmount_dC[NUM_MAX_COMPONENTS];
     real64 dPhaseCompFrac_dC[NUM_MAX_COMPONENTS];
@@ -266,13 +266,14 @@ public:
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * fluidPhaseSaturation( ip ) * fluidPhaseDensity( ip )
                                      + porosity * ( dFluidPhaseSaturation_dPressure( ip ) * fluidPhaseDensity( ip )
-                                                    + fluidPhaseSaturation( ip ) * dFluidPhaseDensity_dPressure( ip ) );
+                                                    + fluidPhaseSaturation( ip ) * dFluidPhaseDensity( ip, Deriv::dP ) );
 
       // assemble density dependence
       applyChainRule( NC,
                       dGlobalCompFraction_dGlobalCompDensity,
-                      dFluidPhaseDensity_dGlobalCompFraction[ip],
-                      dPhaseAmount_dC );
+                      dFluidPhaseDensity[ip],
+                      dPhaseAmount_dC,
+                      Deriv::dC );
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
@@ -290,7 +291,7 @@ public:
                                             - phaseAmountOld * fluidPhaseCompFracOld( ip, ic );
 
         dComponentMassContent_dPressure[ic] = dPhaseAmount_dP * fluidPhaseCompFrac( ip, ic )
-                                              + phaseAmountNew * dFluidPhaseCompFrac_dPressure( ip, ic );
+                                              + phaseAmountNew * dFluidPhaseCompFrac( ip, ic, Deriv::dP );
 
         dComponentMassContent_dVolStrainIncrement[ic] = dComponentMassContent_dVolStrainIncrement[ic]
                                                         + fluidPhaseDensity( ip )
@@ -299,8 +300,9 @@ public:
 
         applyChainRule( NC,
                         dGlobalCompFraction_dGlobalCompDensity,
-                        dFluidPhaseCompFraction_dGlobalCompFraction[ip][ic],
-                        dPhaseCompFrac_dC );
+                        dFluidPhaseCompFrac[ip][ic],
+                        dPhaseCompFrac_dC,
+                        Deriv::dC );
 
         for( localIndex jc = 0; jc < NC; ++jc )
         {

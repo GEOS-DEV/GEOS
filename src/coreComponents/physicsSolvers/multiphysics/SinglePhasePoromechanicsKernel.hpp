@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace PoromechanicsKernels
+namespace poromechanicsKernels
 {
 
 /**
@@ -64,9 +64,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
   using Base::m_dofNumber;
@@ -136,7 +137,7 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::numRows;
+    static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
     GEOSX_HOST_DEVICE
@@ -507,7 +508,7 @@ using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                real64 const (&)[3],
                                                                string const >;
 
-} // namespace PoroelasticKernels
+} // namespace poromechanicsKernels
 
 } // namespace geosx
 

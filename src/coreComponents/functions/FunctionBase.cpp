@@ -71,4 +71,4 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
 }
 
 
-} /* namespace ANST */
+} // end of namespace geosx
