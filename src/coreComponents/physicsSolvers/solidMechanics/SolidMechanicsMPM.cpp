@@ -410,7 +410,6 @@ void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & s
     setSizedFromParent( 0 );
 
   string & solidMaterialName = subRegion.getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-  std::cout << "Here's a material! " << solidMaterialName << std::endl;
   solidMaterialName = SolverBase::getConstitutiveName< SolidBase >( subRegion );
   GEOSX_ERROR_IF( solidMaterialName.empty(), GEOSX_FMT( "SolidBase model not found on subregion {}", subRegion.getName() ) );
 }

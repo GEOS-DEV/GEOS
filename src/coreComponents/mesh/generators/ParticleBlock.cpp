@@ -79,6 +79,9 @@ void ParticleBlock::resize( dataRepository::indexType const numParticles )
   // Those members are not registered as wrappers because I do not want them
   // to be exposed though the `Group` public interface.
   m_localToGlobalMap.resize( numParticles );
+  m_particleCenter.resize( numParticles, 3 );
+  m_particleVelocity.resize( numParticles, 3 );
+  m_particleVolume.resize( numParticles );
 }
 
 

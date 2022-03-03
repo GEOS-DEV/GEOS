@@ -81,6 +81,15 @@ public:
   ParticleType getParticleType() const override
   { return m_particleType; }
 
+  array2d< real64 > getParticleCenters() const
+  { return m_particleCenter; }
+
+  array2d< real64 > getParticleVelocities() const
+  { return m_particleVelocity; }
+
+  array1d< real64 > getParticleVolumes() const
+  { return m_particleVolume; }
+
   bool hasRVectors() const
   { return m_hasRVectors; }
 
@@ -123,10 +132,19 @@ private:
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
 
-  /// Type of particle in this subregion.
+  /// Member level field for the particle center.
+  array2d< real64 > m_particleCenter;
+
+  /// Member level field for the particle velocity.
+  array2d< real64 > m_particleVelocity;
+
+  /// Member level field for the particle volume.
+  array1d< real64 > m_particleVolume;
+
+  /// Type of particles in this subregion.
   ParticleType m_particleType;
 
-  /// Bool flag for whether particle has r-vectors defining its domain
+  /// Bool flag for whether particles in this block have r-vectors defining its domain
   bool m_hasRVectors;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override

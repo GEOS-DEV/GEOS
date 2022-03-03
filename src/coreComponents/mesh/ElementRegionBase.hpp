@@ -158,7 +158,6 @@ public:
     localIndex numElem = 0;
     this->forElementSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      std::cout << "Debug 2: " << group.getName() << std::endl;
       numElem += group.size();
     } );
     return numElem;
