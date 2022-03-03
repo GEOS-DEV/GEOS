@@ -35,7 +35,7 @@ namespace compositionalMultiphaseFVMKernels
 
 FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhases,
                                                           globalIndex const rankOffset,
-                                                          integer const capPressureFlag,
+                                                          integer const hasCapPressure,
                                                           DofNumberAccessor const & dofNumberAccessor,
                                                           CompFlowAccessors const & compFlowAccessors,
                                                           MultiFluidAccessors const & multiFluidAccessors,
@@ -46,7 +46,7 @@ FaceBasedAssemblyKernelBase::FaceBasedAssemblyKernelBase( integer const numPhase
                                                           arrayView1d< real64 > const & localRhs )
   : m_numPhases( numPhases ),
   m_rankOffset( rankOffset ),
-  m_capPressureFlag( capPressureFlag ),
+  m_hasCapPressure( hasCapPressure ),
   m_dt( dt ),
   m_dofNumber( dofNumberAccessor.toNestedViewConst() ),
   m_permeability( permeabilityAccessors.get( extrinsicMeshData::permeability::permeability {} ) ),
