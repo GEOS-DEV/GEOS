@@ -82,11 +82,9 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
                                     arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< SurfaceElementSubRegion >( regionNames, [&] ( localIndex const,
+    elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
                                                                                     SurfaceElementSubRegion & subRegion )
     {
-      region.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-      {
         subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
           setPlotLevel( PlotLevel::NOPLOT ).
           setRegisteringObjects( this->getName()).
@@ -120,7 +118,6 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
         subRegion.registerWrapper< real64_array >( "pressure" ).
           setPlotLevel( PlotLevel::NOPLOT ).
           setRegisteringObjects( this->getName());
-      } );
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
@@ -438,15 +435,15 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
 
     elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( m_tractionKey ) )
+      if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
       {
         arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
         arrayView2d< real64 > const & deltaTraction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::deltaTractionString() );
         arrayView2d< real64 > const & dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
-        arrayView2d< real64 const > const & previousDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
+        arrayView2d< real64 const > const & oldDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
 
         arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-        arrayView1d< integer const > const & previousFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() );
+        arrayView1d< integer const > const & oldFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() );
 
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
@@ -1155,7 +1152,7 @@ void LagrangianContactSolver::
 
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
 
-                    if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
+                    if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NewSlip ) )
                         && slidingNorm > slidingTolerance[kfe] )
                     {
                       for( localIndex i = 1; i < 3; ++i )
@@ -1305,7 +1302,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
     surfaceGenerator = this->getParent().getGroup< SurfaceGenerator >( "SurfaceGen" );
     SurfaceElementRegion const & fractureRegion = elemManager.getRegion< SurfaceElementRegion >( surfaceGenerator.getFractureRegionName() );
     FaceElementSubRegion const & fractureSubRegion = fractureRegion.getSubRegion< FaceElementSubRegion >( "faceElementSubRegion" );
-    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( m_tractionKey ), "The fracture subregion must contain traction field." );
+    GEOSX_ERROR_IF( !fractureSubRegion.hasWrapper( viewKeyStruct::tractionString() ), "The fracture subregion must contain traction field." );
     arrayView2d< localIndex const > const faceMap = fractureSubRegion.faceList();
     GEOSX_ERROR_IF( faceMap.size( 1 ) != 2, "A fracture face has to be shared by two cells." );
 
@@ -1740,7 +1737,7 @@ bool LagrangianContactSolver::setSimplestConfigurationState( DomainPartition & d
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( m_tractionKey ) )
+      if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
       {
         arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
@@ -1760,7 +1757,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  bool checkActiveSet = true;
+  bool hasConfigurationConverged = true;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -1768,14 +1765,12 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
 
-
-
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 FaceElementSubRegion & subRegion )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
-      if( subRegion.hasWrapper( m_tractionKey ) )
+      if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
@@ -1852,7 +1847,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
           } );
         } );
 
-        checkActiveSet &= checkActiveSetSub.get();
+        hasConfigurationConverged &= checkActiveSetSub.get();
       }
     } );
   } );
@@ -1868,22 +1863,6 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
                          MPI_COMM_GEOSX );
 
   return hasConfigurationConvergedGlobally;
-}
-
-void LagrangianContactSolver::synchronizeFractureState( DomainPartition & domain ) const
-{
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
-
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
-  {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                         mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
-  } );
 }
 
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const

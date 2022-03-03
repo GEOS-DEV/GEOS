@@ -283,10 +283,15 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
 
-  CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                       domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                       domain.getNeighbors(),
-                                                       true );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
+  {
+    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
+  } );
 }
 
 } /* namespace geosx */

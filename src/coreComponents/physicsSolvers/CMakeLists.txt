@@ -7,6 +7,7 @@ set( physicsSolvers_headers
      PhysicsSolverManager.hpp
      SolverBase.hpp
      contact/ContactSolverBase.hpp
+     contact/ContactExtrinsicData.hpp
      contact/LagrangianContactSolver.hpp
      contact/SolidMechanicsEFEMKernels.hpp
      contact/SolidMechanicsEFEMKernelsHelper.hpp
