@@ -72,6 +72,74 @@ def setTimeVariables(problem, maxTime, dt, dtSeismoTrace):
     problem.get_wrapper("/Solvers/acousticSolver/dtSeismoTrace").value()[0] = dtSeismoTrace
 
 
+
+def forward(problem, solver, collections, outputs, shot, maxTime, outputWaveFieldInterval, rank=0):
+    gradDir = "partialGradient"
+    costDir = "partialCostFunction"
+
+    if rank == 0:
+        if os.path.exists(gradDir):
+            pass
+        else:
+            os.mkdir(gradDir)
+
+    #To be changed once GEOSX can output multiple variables in same HDF5 file
+    outputs[0].setOutputName(os.path.join(gradDir,"forwardWaveFieldNp1_"+shot.id))
+    outputs[1].setOutputName(os.path.join(gradDir,"forwardWaveFieldN_"+shot.id))
+    outputs[2].setOutputName(os.path.join(gradDir,"forwardWaveFieldNm1_"+shot.id))
+
+    #Get view on pressure at receivers locations
+    pressureAtReceivers = solver.get_wrapper("pressureNp1AtReceivers").value()
+
+    #update source and receivers positions
+    updateSourceAndReceivers(solver, shot.sources.source_list, shot.receivers.receivers_list)
+    pygeosx.apply_initial_conditions()
+
+    shot.flag = "In Progress"
+
+    time = 0.0
+    dt = shot.dt
+    i = 0
+
+    if rank == 0 :
+        print("\nForward")
+
+    #Time loop
+    while time < maxTime:
+        if rank == 0:
+            print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", i+1)
+
+        #Execute one time step
+        solver.execute(time, dt)
+
+        time += dt
+        i += 1
+
+        #Collect/export waveField values to hdf5
+        if i % outputWaveFieldInterval == 0:
+            collections[0].collect(time, dt)
+            outputs[0].output(time, dt)
+
+            collections[1].collect(time, dt)
+            outputs[1].output(time, dt)
+
+            collections[2].collect(time, dt)
+            outputs[2].output(time, dt)
+
+    pressure = np.array(pressureAtReceivers.to_numpy())
+
+    #Residual computation
+    residualTemp = computeResidual("dataTest/seismo_Shot"+shot.id+".sgy", pressure)
+    residual = residualLinearInterpolation(residualTemp, maxTime, dt, dtSeismoTrace)
+
+    if rank == 0:
+        computePartialCostFunction(costDir, residualTemp, shot)
+
+    #Reset waveField
+    resetWaveField(problem)
+
+
+
 def computeResidual(filename, data_obs):
     residual = np.zeros(data_obs.shape)
     with segyio.open(filename, 'r+', ignore_geometry=True) as f:
@@ -282,6 +350,44 @@ def computeFullGradient(directory_in_str, acquisition):
     os.rmdir(directory_in_str)
 
     return h5F
+
+
+
+def armijoCondition(J, Jm, d, gradJ, alpha, k1=0.8):
+    success = (Jm <= k1 * alpha * np.dot(d, gradJ))
+    return success
+
+def goldsteinCondition(J, Jm, d, gradJ, alpha, k2=0.2):
+    success = (Jm >= k2 * alpha * np.dot(d, gradJ))
+    return success
+
+
+def descentDirection(gradJ, method="steepestDescent"):
+    if method == "steepestDescent":
+        d = -gradJ
+    else:
+        print("to be implemented")
+
+    return d
+
+
+def linesearchDirectionacqs(J, gradJ, alpha, d, m, p1=1.5, p2=0.5):
+    while True:
+        m1 = m + alpha * d
+        J1 = computeCostFunction(acqs, m1, client)
+        succesArmijo = armijoCondition(J, J1, gradJ, alpha)
+        if succesArmijo:
+            succesGoldstein = goldsteinCondition(J, J1, gradJ, alpha)
+            if succesGoldstein:
+                return m1
+            else:
+                alpha*=p1
+        else:
+            alpha*=p2
+
+
+def updateModel(acqs, m):
+    print("To be implemented")
 
 
 

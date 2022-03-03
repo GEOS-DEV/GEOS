@@ -233,8 +233,6 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         fullCostFunction = computeFullCostFunction(costDir, acquisition)
         computeFullGradient(gradDir, acquisition)
 
-        print("J =", fullCostFunction)
-
     pygeosx._finalize()
 
 if __name__ == "__main__":
