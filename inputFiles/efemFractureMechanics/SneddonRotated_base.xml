@@ -19,8 +19,6 @@
       <LinearSolverParameters
         directParallel="0"
         solverType="direct"
-        preconditionerType="amg"
-        amgAggresiveCoarseningLevels="1"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
@@ -30,11 +28,11 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"

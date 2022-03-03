@@ -73,7 +73,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   fillWaterData( data );
 
   // gas data
-  fillHydrocarbonData( PT::GAS, boTables.getGasTable() );
+  fillHydrocarbonData( m_phaseOrder[PT::GAS], boTables.getGasTable() );
 
   // for the Black-Oil model, the oil PVT is treated differently from gas
   fillPVTOData( boTables.getOilTable(),
@@ -109,7 +109,6 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
   // (standard) format of oilTable:
   // if oilTable.size() == 4 (saturated case):   Rs, bubble point pressure, Bo, viscosity
   // if ollTable.size() == 3 (unsaturated case):     unsaturated pressure,  Bo, viscosity
-
 
   // Step 1: count the number of saturated points by looping through oilTable, and resize tables accordingly
 
@@ -181,21 +180,32 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
 
   // Step 3: add 1 atm value if does not exist yet
 
-  if( !isZero( m_PVTO.Rs[0] ) )
+  real64 const atmPressure = 101325.0;
+
+  GEOSX_LOG_RANK_0_IF( !isZero( m_PVTO.Rs[0] ) && m_PVTO.bubblePressure[0] <= atmPressure,
+                       GEOSX_FMT( "{}: Warning! In the PVTO table, the first Rs value is different from zero for a bubble-point pressure of {} Pa. \n"
+                                  "The simulation is going to proceed with the user-provided Rs, but we recommend using a Rs equal to zero when the bubble-point pressure is smaller or equal to {} Pa",
+                                  getFullName(), m_PVTO.bubblePressure[0], atmPressure ) );
+
+  if( !isZero( m_PVTO.Rs[0] ) && m_PVTO.bubblePressure[0] > atmPressure )
   {
-    real64 const refPressure = 101325.0;
+
     real64 const viscosity = extrapolation::logExtrapolation( m_PVTO.bubblePressure[1],
                                                               m_PVTO.bubblePressure[0],
                                                               m_PVTO.saturatedViscosity[1],
                                                               m_PVTO.saturatedViscosity[0],
-                                                              refPressure );
-
+                                                              atmPressure );
 
     m_PVTO.Rs.emplace( 0, 0. );
-    m_PVTO.bubblePressure.emplace( 0, refPressure );
+    m_PVTO.bubblePressure.emplace( 0, atmPressure );
     m_PVTO.saturatedBo.emplace( 0, 1.0 );
     m_PVTO.saturatedViscosity.emplace( 0, viscosity );
     m_PVTO.numSaturatedPoints++;
+
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "{}: Warning! GEOSX is adding surface condition values to the PVTO table. \n"
+                                 "The following values are added: Rs = 0; P_bubblePoint = {} Pa; Bo = 1.0; oil viscosity = {} Pa.s. \n"
+                                 "To disable this behavior, you just have to provide a PVTO table entry for P_bubblePoint = {} Pa",
+                                 getFullName(), atmPressure, viscosity, atmPressure ) );
 
     // Note: the additional undersaturated values of this branch will be created in createUndersaturatedProperties
 
@@ -207,7 +217,6 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
     tmp[0] = viscosity;
     m_PVTO.undersaturatedViscosity.emplace( 0, tmp );
   }
-
 
   // Step 4: find the max relative pressure (later used to extend the tables)
 
@@ -444,6 +453,7 @@ void BlackOilFluid::checkTableConsistency() const
     GEOSX_THROW_IF( ( m_PVTO.saturatedBo[i + 1] - m_PVTO.saturatedBo[i] ) <= 0,
                     GEOSX_FMT( "{}: Bo must increase with Pb in saturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
                     InputError );
+
     // Viscosity must decrease with Pb
     GEOSX_THROW_IF( ( m_PVTO.saturatedViscosity[i + 1] - m_PVTO.saturatedViscosity[i] ) >= 0,
                     GEOSX_FMT( "{}: Viscosity must decrease with Pb in saturated region in {}", getFullName(), m_tableFiles[m_phaseOrder[PT::OIL]] ),
@@ -486,6 +496,8 @@ BlackOilFluid::KernelWrapper::
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
                  PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
                  PhaseComp::ViewType phaseCompFraction,
                  FluidProp::ViewType totalDensity )
   : BlackOilFluidBase::KernelWrapper( std::move( phaseTypes ),
@@ -501,6 +513,8 @@ BlackOilFluid::KernelWrapper::
                                       std::move( phaseDensity ),
                                       std::move( phaseMassDensity ),
                                       std::move( phaseViscosity ),
+                                      std::move( phaseEnthalpy ),
+                                      std::move( phaseInternalEnergy ),
                                       std::move( phaseCompFraction ),
                                       std::move( totalDensity ) ),
   m_PVTOView( PVTO.createKernelWrapper() )
@@ -523,6 +537,8 @@ BlackOilFluid::createKernelWrapper()
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
                         m_phaseViscosity.toView(),
+                        m_phaseEnthalpy.toView(),
+                        m_phaseInternalEnergy.toView(),
                         m_phaseCompFraction.toView(),
                         m_totalDensity.toView() );
 }

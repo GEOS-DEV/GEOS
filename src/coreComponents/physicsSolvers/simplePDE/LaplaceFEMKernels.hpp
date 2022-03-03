@@ -20,6 +20,8 @@
 #ifndef GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
 #define GEOSX_PHYSICSSOLVERS_SIMPLEPDE_LAPLACEFEMKERNELS_HPP_
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
 
 namespace geosx
@@ -69,15 +71,14 @@ public:
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
+  using Base::maxNumTestSupportPointsPerElem;
   using Base::m_dofNumber;
   using Base::m_dofRankOffset;
   using Base::m_matrix;
   using Base::m_rhs;
   using Base::m_elemsToNodes;
   using Base::m_finiteElementSpace;
-
-  /// The number of nodes per element.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  using Base::m_meshData;
 
   /**
    * @brief Constructor
@@ -92,11 +93,11 @@ public:
                     SUBREGION_TYPE const & elementSubRegion,
                     FE_TYPE const & finiteElementSpace,
                     CONSTITUTIVE_TYPE & inputConstitutiveType,
-                    arrayView1d< globalIndex const > const & inputDofNumber,
+                    arrayView1d< globalIndex const > const inputDofNumber,
                     globalIndex const rankOffset,
-                    CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                    arrayView1d< real64 > const & inputRhs,
-                    string const & fieldName ):
+                    CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                    arrayView1d< real64 > const inputRhs,
+                    string const fieldName ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -138,11 +139,11 @@ public:
     int xLocal;
 #else
     /// C-array stack storage for element local the nodal positions.
-    real64 xLocal[ numNodesPerElem ][ 3 ];
+    real64 xLocal[ maxNumTestSupportPointsPerElem ][ 3 ];
 #endif
 
     /// C-array storage for the element local primary field variable.
-    real64 primaryField_local[numNodesPerElem];
+    real64 primaryField_local[ maxNumTestSupportPointsPerElem ];
   };
 
 
@@ -159,7 +160,10 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    stack.numRows = m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    stack.numCols = stack.numRows;
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
@@ -185,16 +189,17 @@ public:
                               localIndex const q,
                               StackVariables & stack ) const
   {
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
-
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    real64 dNdX[ maxNumTestSupportPointsPerElem ][ 3 ];
+    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                           stack.feStack, dNdX );
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
-      for( localIndex b=0; b<numNodesPerElem; ++b )
+      for( localIndex b = 0; b < stack.numCols; ++b )
       {
         stack.localJacobian[ a ][ b ] += LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) * detJ;
       }
     }
+    m_finiteElementSpace.template addGradGradStabilizationMatrix< FE_TYPE >( stack.feStack, stack.localJacobian );
   }
 
   /**
@@ -212,22 +217,22 @@ public:
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 
-    for( localIndex a = 0; a < numNodesPerElem; ++a )
+    for( localIndex a = 0; a < stack.numRows; ++a )
     {
-      for( localIndex b = 0; b < numNodesPerElem; ++b )
+      for( localIndex b = 0; b < stack.numCols; ++b )
       {
         stack.localResidual[ a ] += stack.localJacobian[ a ][ b ] * stack.primaryField_local[ b ];
       }
     }
 
-    for( int a = 0; a < numNodesPerElem; ++a )
+    for( int a = 0; a < stack.numRows; ++a )
     {
       localIndex const dof = LvArray::integerConversion< localIndex >( stack.localRowDofIndex[ a ] - m_dofRankOffset );
       if( dof < 0 || dof >= m_matrix.numRows() ) continue;
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.localColDofIndex,
                                                                               stack.localJacobian[ a ],
-                                                                              numNodesPerElem );
+                                                                              stack.numCols );
 
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ a ] );
       maxForce = fmax( maxForce, fabs( stack.localResidual[ a ] ) );
@@ -247,9 +252,11 @@ protected:
 
 /// The factory used to construct a LaplaceFEMKernel.
 using LaplaceFEMKernelFactory = finiteElement::KernelFactory< LaplaceFEMKernel,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              globalIndex, CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const &, string const & >;
+                                                              arrayView1d< globalIndex const > const,
+                                                              globalIndex const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const,
+                                                              string const >;
 
 } // namespace geosx
 

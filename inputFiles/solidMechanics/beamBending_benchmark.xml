@@ -16,7 +16,6 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      solidMaterialNames="{ shale }"
       logLevel="1">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters

@@ -228,8 +228,8 @@ void BlackOilFluidBase::createAllKernelWrappers()
       // grab the tables by name from the function manager
       TableFunction const & fvfTable = functionManager.getGroup< TableFunction const >( m_formationVolFactorTableNames[iph] );
       TableFunction const & viscosityTable = functionManager.getGroup< TableFunction const >( m_viscosityTableNames[iph] );
-      validateTable( fvfTable );
-      validateTable( viscosityTable );
+      validateTable( fvfTable, false );
+      validateTable( viscosityTable, true );
 
       // create the table wrapper for the oil and (if present) the gas phases
       m_formationVolFactorTables.emplace_back( fvfTable.createKernelWrapper() );
@@ -238,24 +238,38 @@ void BlackOilFluidBase::createAllKernelWrappers()
   }
 }
 
-void BlackOilFluidBase::validateTable( TableFunction const & table ) const
+void BlackOilFluidBase::validateTable( TableFunction const & table,
+                                       bool warningIfDecreasing ) const
 {
   arrayView1d< real64 const > const property = table.getValues();
-
   GEOSX_THROW_IF_NE_MSG( table.getInterpolationMethod(), TableFunction::InterpolationType::Linear,
                          GEOSX_FMT( "{}: in table '{}' interpolation method must be linear", getFullName(), table.getName() ),
                          InputError );
   GEOSX_THROW_IF_LT_MSG( property.size(), 2,
-                         GEOSX_FMT( "{}: table `{}` must contain at least two values", getFullName(), table.getName() ),
+                         GEOSX_FMT( "{}: table '{}' must contain at least two values", getFullName(), table.getName() ),
                          InputError );
 
-  for( localIndex i = 2; i < property.size(); ++i )
+  // we don't check the first interval, as the first value may be used to specify surface conditions
+  // we only issue a warning here, as we still want to allow this configuration
+  for( localIndex i = 3; i < property.size(); ++i )
   {
     GEOSX_THROW_IF( (property[i] - property[i-1]) * (property[i-1] - property[i-2]) < 0,
-                    GEOSX_FMT( "{}: in table '{}' values must be monotone", getFullName(), table.getName() ),
+                    GEOSX_FMT( "{}: in table '{}', viscosity values must be monotone", getFullName(), table.getName() ),
                     InputError );
   }
+
+  // we don't check the first value, as it may be used to specify surface conditions
+  for( localIndex i = 2; i < property.size(); ++i )
+  {
+    GEOSX_LOG_RANK_0_IF( ( property[i] - property[i-1] < 0 ) && warningIfDecreasing,
+                         GEOSX_FMT( "{}: Warning! in table '{}', values must be increasing as a function of pressure, please check your PVT tables",
+                                    getFullName(), table.getName() ) );
+    GEOSX_LOG_RANK_0_IF( ( property[i] - property[i-1] > 0 ) && !warningIfDecreasing,
+                         GEOSX_FMT( "{}: Warning! In table '{}', values must be decreasing as a function of pressure, please check your PVT tables",
+                                    getFullName(), table.getName() ) );
+  }
 }
+
 
 void BlackOilFluidBase::validateWaterParams() const
 {
@@ -285,6 +299,8 @@ BlackOilFluidBase::KernelWrapper::
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
                  PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
                  PhaseComp::ViewType phaseCompFraction,
                  FluidProp::ViewType totalDensity )
   : MultiFluidBase::KernelWrapper( std::move( componentMolarWeight ),
@@ -293,6 +309,8 @@ BlackOilFluidBase::KernelWrapper::
                                    std::move( phaseDensity ),
                                    std::move( phaseMassDensity ),
                                    std::move( phaseViscosity ),
+                                   std::move( phaseEnthalpy ),
+                                   std::move( phaseInternalEnergy ),
                                    std::move( phaseCompFraction ),
                                    std::move( totalDensity ) ),
   m_phaseTypes( std::move( phaseTypes ) ),

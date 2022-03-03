@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace FluxKernelsHelper
+namespace fluxKernelsHelper
 {
 
 template< typename VIEWTYPE >
@@ -186,7 +186,7 @@ struct AquiferBCKernel
 };
 
 
-} // namespace FluxKernelsHelper
+} // namespace fluxKernelsHelper
 
 } // namespace geosx
 

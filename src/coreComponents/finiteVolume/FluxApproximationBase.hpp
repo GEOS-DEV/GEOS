@@ -21,7 +21,6 @@
 #define GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "SurfaceElementStencil.hpp"
 #include "FaceElementToCellStencil.hpp"
@@ -129,9 +128,6 @@ public:
     /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// @return The key for coefficientModelNames
-    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
-
     /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
 
@@ -158,30 +154,27 @@ public:
   };
 
   /**
-   * @brief Returns the target region name.
-   * @return the target region name
+   * @brief get the list of the target regions on a given mesh body.
+   * @param[in] meshBodyName name of the meshBody
+   * @return a list of the target regions on the meshBody
    */
-  string_array const & targetRegions() const { return m_targetRegions; }
-  /**
-   * @copydoc targetRegions() const
-   */
-  string_array & targetRegions()       { return m_targetRegions; }
+  array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
-   * @brief Returns the coeff model name.
-   * @return the coeff model name
+   * @brief set the name of the field.
+   * @param name name of the field to be set.
    */
-  string_array const & coefficientModelNames() const { return m_coefficientModelNames; }
-  /**
-   * @copydoc coefficientModelNames() const
-   */
-  string_array & coefficientModelNames()       { return m_coefficientModelNames; }
+  void setFieldName( string const & name );
 
+  /**
+   * @brief set the name of the coefficient.
+   * @param name name of the coefficient.
+   */
+  void setCoeffName( string const & name );
 
 protected:
 
-  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
+  virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
@@ -244,11 +237,8 @@ protected:
   /// name of the coefficient field
   string m_coeffName;
 
-  /// names of coefficient models to build the stencil for
-  string_array m_coefficientModelNames;
-
   /// names of target regions to build the stencil for
-  string_array m_targetRegions;
+  map< string, array1d< string > > m_targetRegions;
 
   /// relative tolerance
   real64 m_areaRelTol;

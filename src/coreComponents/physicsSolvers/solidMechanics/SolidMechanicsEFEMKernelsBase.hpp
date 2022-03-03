@@ -84,10 +84,10 @@ public:
                    FE_TYPE const & finiteElementSpace,
                    CONSTITUTIVE_TYPE & inputConstitutiveType,
                    EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
-                   arrayView1d< globalIndex const > const & uDofNumber,
+                   arrayView1d< globalIndex const > const uDofNumber,
                    globalIndex const rankOffset,
-                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                   arrayView1d< real64 > const & inputRhs,
+                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                   arrayView1d< real64 > const inputRhs,
                    real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -268,16 +268,12 @@ public:
    * @param stressModifier An optional functor to allow for the modification
    *  of stress prior to integration.
    */
-  template< typename STRESS_MODIFIER = NoOpFunctors >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,
                               localIndex const q,
-                              StackVariables & stack,
-                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
+                              StackVariables & stack ) const
   {
-    GEOSX_UNUSED_VAR( stressModifier );
-
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
     real64 dNdX[ numNodesPerElem ][ 3 ];

@@ -42,7 +42,7 @@ Carter-Tracy analytical aquifer
 
 The Carter-Tracy aquifer model is a simplified approximation to a fully transient model
 (see R. D. Carter and G. W. Tracy,
-`An improved method for calculating water influx<https://onepetro.org/TRANS/article/219/01/415/162367/An-Improved-Method-for-Calculating-Water-Influx>`__,
+`An improved method for calculating water influx <https://onepetro.org/TRANS/article/219/01/415/162367/An-Improved-Method-for-Calculating-Water-Influx>`__,
 Transactions of the AIME, 1960).
 
 Although the theory was developed for a radially symmetric reservoir surrounded by an annular aquifer, this method applies to any geometry where the dimensionless pressure can be expressed as a function of a dimensionless time.

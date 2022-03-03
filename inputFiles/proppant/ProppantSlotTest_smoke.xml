@@ -55,11 +55,7 @@
       criticalShieldsNumber="0.0"
       maxProppantConcentration="0.62"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      proppantNames="{ sand }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -67,7 +63,7 @@
         maxTimeStepCuts="5"/>
       <LinearSolverParameters
         solverType="direct"
-        krylovTol="1.0e-7"/>
+        directParallel="0"/>
     </ProppantTransport>
 <!-- SPHINX_PROPPANT_PROPPANTSOLVER_END -->
 
@@ -86,10 +82,7 @@
       name="SinglePhaseFVM"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"
@@ -97,14 +90,14 @@
         newtonMinIter="0"/>
       <LinearSolverParameters
         solverType="direct"	 
-        krylovTol="1.0e-7"/>
+        directParallel="0"/>
     </SinglePhaseProppantFVM>
 <!-- SPHINX_PROPPANT_FLOWSOLVER_END -->
 
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Fracture }"
-      solidMaterialNames="{ granite }"
+      
       rockToughness="1e6"
       mpiCommOrder="1"/>
   </Solvers>
