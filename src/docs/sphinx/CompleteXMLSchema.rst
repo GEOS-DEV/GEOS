@@ -92,11 +92,25 @@ Element: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid.rst
 
 
+.. _XML_CO2BrineEzrokhiThermalFluid:
+
+Element: CO2BrineEzrokhiThermalFluid
+====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid.rst
+
+
 .. _XML_CO2BrinePhillipsFluid:
 
 Element: CO2BrinePhillipsFluid
 ==============================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid.rst
+
+
+.. _XML_CO2BrinePhillipsThermalFluid:
+
+Element: CO2BrinePhillipsThermalFluid
+=====================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid.rst
 
 
 .. _XML_CarmanKozenyPermeability:
@@ -482,13 +496,6 @@ Element: LagrangianContact
 Element: LaplaceFEM
 ===================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM.rst
-
-
-.. _XML_LaplaceVEM:
-
-Element: LaplaceVEM
-===================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM.rst
 
 
 .. _XML_LinearSolverParameters:
@@ -1090,11 +1097,25 @@ Datastructure: CO2BrineEzrokhiFluid
 .. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiFluid_other.rst
 
 
+.. _DATASTRUCTURE_CO2BrineEzrokhiThermalFluid:
+
+Datastructure: CO2BrineEzrokhiThermalFluid
+==========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrineEzrokhiThermalFluid_other.rst
+
+
 .. _DATASTRUCTURE_CO2BrinePhillipsFluid:
 
 Datastructure: CO2BrinePhillipsFluid
 ====================================
 .. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsFluid_other.rst
+
+
+.. _DATASTRUCTURE_CO2BrinePhillipsThermalFluid:
+
+Datastructure: CO2BrinePhillipsThermalFluid
+===========================================
+.. include:: ../../coreComponents/schema/docs/CO2BrinePhillipsThermalFluid_other.rst
 
 
 .. _DATASTRUCTURE_CarmanKozenyPermeability:
@@ -1494,13 +1515,6 @@ Datastructure: LagrangianContact
 Datastructure: LaplaceFEM
 =========================
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
-
-
-.. _DATASTRUCTURE_LaplaceVEM:
-
-Datastructure: LaplaceVEM
-=========================
-.. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
 
 
 .. _DATASTRUCTURE_Level0:

@@ -51,34 +51,28 @@ MultiFluidBase::MultiFluidBase( string const & name, Group * const parent )
     setRestartFlags( RestartFlags::NO_WRITE );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::phaseFraction{}, &m_phaseFraction.value );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction_dPressure{}, &m_phaseFraction.dPres );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction_dTemperature{}, &m_phaseFraction.dTemp );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction_dGlobalCompFraction{}, &m_phaseFraction.dComp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseFraction{}, &m_phaseFraction.derivs );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::phaseDensity{}, &m_phaseDensity.value );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity_dPressure{}, &m_phaseDensity.dPres );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity_dTemperature{}, &m_phaseDensity.dTemp );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity_dGlobalCompFraction{}, &m_phaseDensity.dComp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseDensity{}, &m_phaseDensity.derivs );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::phaseMassDensity{}, &m_phaseMassDensity.value );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity_dPressure{}, &m_phaseMassDensity.dPres );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity_dTemperature{}, &m_phaseMassDensity.dTemp );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity_dGlobalCompFraction{}, &m_phaseMassDensity.dComp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseMassDensity{}, &m_phaseMassDensity.derivs );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::phaseViscosity{}, &m_phaseViscosity.value );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dPressure{}, &m_phaseViscosity.dPres );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dTemperature{}, &m_phaseViscosity.dTemp );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity_dGlobalCompFraction{}, &m_phaseViscosity.dComp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseViscosity{}, &m_phaseViscosity.derivs );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseEnthalpy{}, &m_phaseEnthalpy.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseEnthalpy{}, &m_phaseEnthalpy.derivs );
+
+  registerExtrinsicData( extrinsicMeshData::multifluid::phaseInternalEnergy{}, &m_phaseInternalEnergy.value );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseInternalEnergy{}, &m_phaseInternalEnergy.derivs );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::phaseCompFraction{}, &m_phaseCompFraction.value );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dPressure{}, &m_phaseCompFraction.dPres );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dTemperature{}, &m_phaseCompFraction.dTemp );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction_dGlobalCompFraction{}, &m_phaseCompFraction.dComp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dPhaseCompFraction{}, &m_phaseCompFraction.derivs );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::totalDensity{}, &m_totalDensity.value );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity_dPressure{}, &m_totalDensity.dPres );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity_dTemperature{}, &m_totalDensity.dTemp );
-  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity_dGlobalCompFraction{}, &m_totalDensity.dComp );
+  registerExtrinsicData( extrinsicMeshData::multifluid::dTotalDensity{}, &m_totalDensity.derivs );
 
   registerExtrinsicData( extrinsicMeshData::multifluid::initialTotalMassDensity{}, &m_initialTotalMassDensity );
 
@@ -88,36 +82,31 @@ void MultiFluidBase::resizeFields( localIndex const size, localIndex const numPt
 {
   integer const numPhase = numFluidPhases();
   integer const numComp = numFluidComponents();
+  integer const numDof = numComp + 2;
 
   m_phaseFraction.value.resize( size, numPts, numPhase );
-  m_phaseFraction.dPres.resize( size, numPts, numPhase );
-  m_phaseFraction.dTemp.resize( size, numPts, numPhase );
-  m_phaseFraction.dComp.resize( size, numPts, numPhase, numComp );
+  m_phaseFraction.derivs.resize( size, numPts, numPhase, numDof );
 
   m_phaseDensity.value.resize( size, numPts, numPhase );
-  m_phaseDensity.dPres.resize( size, numPts, numPhase );
-  m_phaseDensity.dTemp.resize( size, numPts, numPhase );
-  m_phaseDensity.dComp.resize( size, numPts, numPhase, numComp );
+  m_phaseDensity.derivs.resize( size, numPts, numPhase, numDof );
 
   m_phaseMassDensity.value.resize( size, numPts, numPhase );
-  m_phaseMassDensity.dPres.resize( size, numPts, numPhase );
-  m_phaseMassDensity.dTemp.resize( size, numPts, numPhase );
-  m_phaseMassDensity.dComp.resize( size, numPts, numPhase, numComp );
+  m_phaseMassDensity.derivs.resize( size, numPts, numPhase, numDof );
 
   m_phaseViscosity.value.resize( size, numPts, numPhase );
-  m_phaseViscosity.dPres.resize( size, numPts, numPhase );
-  m_phaseViscosity.dTemp.resize( size, numPts, numPhase );
-  m_phaseViscosity.dComp.resize( size, numPts, numPhase, numComp );
+  m_phaseViscosity.derivs.resize( size, numPts, numPhase, numDof );
+
+  m_phaseEnthalpy.value.resize( size, numPts, numPhase );
+  m_phaseEnthalpy.derivs.resize( size, numPts, numPhase, numDof );
+
+  m_phaseInternalEnergy.value.resize( size, numPts, numPhase );
+  m_phaseInternalEnergy.derivs.resize( size, numPts, numPhase, numDof );
 
   m_phaseCompFraction.value.resize( size, numPts, numPhase, numComp );
-  m_phaseCompFraction.dPres.resize( size, numPts, numPhase, numComp );
-  m_phaseCompFraction.dTemp.resize( size, numPts, numPhase, numComp );
-  m_phaseCompFraction.dComp.resize( size, numPts, numPhase, numComp, numComp );
+  m_phaseCompFraction.derivs.resize( size, numPts, numPhase, numComp, numDof );
 
   m_totalDensity.value.resize( size, numPts );
-  m_totalDensity.dPres.resize( size, numPts );
-  m_totalDensity.dTemp.resize( size, numPts );
-  m_totalDensity.dComp.resize( size, numPts, numComp );
+  m_totalDensity.derivs.resize( size, numPts, numDof );
 
   m_initialTotalMassDensity.resize( size, numPts );
 }
@@ -134,6 +123,12 @@ void MultiFluidBase::setLabels()
     setDimLabels( 2, m_phaseNames );
 
   getExtrinsicData< extrinsicMeshData::multifluid::phaseViscosity >().
+    setDimLabels( 2, m_phaseNames );
+
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseEnthalpy >().
+    setDimLabels( 2, m_phaseNames );
+
+  getExtrinsicData< extrinsicMeshData::multifluid::phaseInternalEnergy >().
     setDimLabels( 2, m_phaseNames );
 
   getExtrinsicData< extrinsicMeshData::multifluid::phaseCompFraction >().
@@ -178,6 +173,6 @@ void MultiFluidBase::postProcessInput()
   setLabels();
 }
 
-} //namespace constitutive
+} // namespace constitutive
 
-} //namespace geosx
+} // namespace geosx

@@ -39,6 +39,7 @@ using namespace geosx::constitutive;
 using namespace geosx::dataRepository;
 using namespace geosx::stringutilities;
 using namespace geosx::constitutive::PVTProps;
+using namespace geosx::constitutive::multifluid;
 
 /// Input tables written into temporary files during testing
 
@@ -71,23 +72,20 @@ void testValuesAgainstPreviousImplementation( PVT_WRAPPER const & pvtFunctionWra
                                               bool const useMass,
                                               real64 const relTol )
 {
+  integer constexpr numPhase = 2;
+  integer constexpr numComp  = 2;
+  integer constexpr numDof   = numComp + 2;
+
   real64 value = 0.0;
-  real64 dValue_dPressure = 0.0;
-  real64 dValue_dTemperature = 0.0;
-  stackArray1d< real64, 2 > dPhaseComposition_dPressure( 2 );
-  stackArray1d< real64, 2 > dPhaseComposition_dTemperature( 2 );
-  stackArray2d< real64, 4 > dPhaseComposition_dGlobalCompFraction( 2, 2 );
-  stackArray1d< real64, 2 > dValue_dGlobalCompFraction( 2 );
+  stackArray1d< real64, numDof > dValue( numDof );
+  stackArray2d< real64, numDof *numPhase > dPhaseComposition( numPhase, numDof );
+
   pvtFunctionWrapper.compute( pressure,
                               temperature,
                               phaseComposition,
-                              dPhaseComposition_dPressure.toSliceConst(),
-                              dPhaseComposition_dTemperature.toSliceConst(),
-                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
+                              dPhaseComposition.toSliceConst(),
                               value,
-                              dValue_dPressure,
-                              dValue_dTemperature,
-                              dValue_dGlobalCompFraction.toSlice(),
+                              dValue.toSlice(),
                               useMass );
 
   checkRelativeError( value, oldImplValue, relTol );
@@ -102,32 +100,32 @@ void testValuesAgainstPreviousImplementation( FLASH_WRAPPER const & flashModelWr
                                               real64 const & savedWaterPhaseGasComp,
                                               real64 const relTol )
 {
-  stackArray1d< real64, 2 > phaseFraction( 2 );
-  stackArray1d< real64, 2 > dPhaseFraction_dPres( 2 );
-  stackArray1d< real64, 2 > dPhaseFraction_dTemp( 2 );
-  stackArray2d< real64, 4 > dPhaseFraction_dCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > phaseCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > dPhaseCompFraction_dPres( 2, 2 );
-  stackArray2d< real64, 4 > dPhaseCompFraction_dTemp( 2, 2 );
-  stackArray3d< real64, 8 > dPhaseCompFraction_dCompFraction( 2, 2, 2 );
+  integer constexpr numPhase = 2;
+  integer constexpr numComp  = 2;
+  integer constexpr numDof   = numComp + 2;
+
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFrac( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
+
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
+  phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
+
   flashModelWrapper.compute( pressure,
                              temperature,
                              compFraction,
-                             phaseFraction.toSlice(),
-                             dPhaseFraction_dPres.toSlice(),
-                             dPhaseFraction_dTemp.toSlice(),
-                             dPhaseFraction_dCompFraction.toSlice(),
-                             phaseCompFraction.toSlice(),
-                             dPhaseCompFraction_dPres.toSlice(),
-                             dPhaseCompFraction_dTemp.toSlice(),
-                             dPhaseCompFraction_dCompFraction.toSlice() );
+                             phaseFracAndDeriv,
+                             phaseCompFracAndDeriv );
 
-  for( localIndex i = 0; i < 2; ++i )
+  for( integer i = 0; i < numPhase; ++i )
   {
     real64 const savedPhaseFrac = (i == 0) ? savedGasPhaseFrac : 1.0 - savedGasPhaseFrac;
-    checkRelativeError( phaseFraction[i], savedPhaseFrac, relTol );
+    checkRelativeError( phaseFracAndDeriv.value[i], savedPhaseFrac, relTol );
 
-    for( localIndex j = 0; j < 2; ++j )
+    for( integer j = 0; j < numComp; ++j )
     {
       real64 savedCompFrac = 0.0;
       if( i == 0 )
@@ -138,7 +136,7 @@ void testValuesAgainstPreviousImplementation( FLASH_WRAPPER const & flashModelWr
       {
         savedCompFrac = ( j == 0 ) ? savedWaterPhaseGasComp : 1 - savedWaterPhaseGasComp;
       }
-      checkRelativeError( phaseCompFraction[i][j], savedCompFrac, relTol );
+      checkRelativeError( phaseCompFracAndDeriv.value[i][j], savedCompFrac, relTol );
     }
   }
 }
@@ -152,83 +150,67 @@ void testNumericalDerivatives( PVT_WRAPPER const & pvtFunctionWrapper,
                                real64 const perturbParameter,
                                real64 const relTol )
 {
+  using Deriv = multifluid::DerivativeOffset;
+
+  integer constexpr numComp  = 2;
+  integer constexpr numDof   = numComp + 2;
+
   // 1) First compute the unperturbed pressure
   real64 value = 0.0;
-  real64 dValue_dPressure = 0.0;
-  real64 dValue_dTemperature = 0.0;
-  stackArray1d< real64, 2 > dPhaseComposition_dPressure( 2 );
-  stackArray1d< real64, 2 > dPhaseComposition_dTemperature( 2 );
-  stackArray2d< real64, 4 > dPhaseComposition_dGlobalCompFraction( 2, 2 );
-  stackArray1d< real64, 2 > dValue_dGlobalCompFraction( 2 );
-  dPhaseComposition_dGlobalCompFraction[0][0] = 1.0;
-  dPhaseComposition_dGlobalCompFraction[1][1] = 1.0;
+  stackArray1d< real64, numDof > dValue( numDof );
+  stackArray2d< real64, numDof *numComp > dPhaseComposition( numComp, numDof );
+
+  dPhaseComposition[0][Deriv::dC]   = 1.0;
+  dPhaseComposition[1][Deriv::dC+1] = 1.0;
   pvtFunctionWrapper.compute( pressure,
                               temperature,
                               phaseComposition,
-                              dPhaseComposition_dPressure.toSliceConst(),
-                              dPhaseComposition_dTemperature.toSliceConst(),
-                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
+                              dPhaseComposition.toSliceConst(),
                               value,
-                              dValue_dPressure,
-                              dValue_dTemperature,
-                              dValue_dGlobalCompFraction.toSlice(),
+                              dValue.toSlice(),
                               useMass );
   real64 perturbedValue = 0.0;
-  real64 dPerturbedValue_dPressure = 0.0;
-  real64 dPerturbedValue_dTemperature = 0.0;
-  stackArray1d< real64, 2 > dPerturbedValue_dGlobalCompFraction( 2 );
+  stackArray1d< real64, numDof > dPerturbedValue( numDof );
 
   // 2) Check derivative with respect to pressure
   real64 const dP = perturbParameter * (pressure + perturbParameter);
   pvtFunctionWrapper.compute( pressure + dP,
                               temperature,
                               phaseComposition,
-                              dPhaseComposition_dPressure.toSliceConst(),
-                              dPhaseComposition_dTemperature.toSliceConst(),
-                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
+                              dPhaseComposition.toSliceConst(),
                               perturbedValue,
-                              dPerturbedValue_dPressure,
-                              dPerturbedValue_dTemperature,
-                              dPerturbedValue_dGlobalCompFraction.toSlice(),
+                              dPerturbedValue.toSlice(),
                               useMass );
-  checkRelativeError( (perturbedValue-value)/dP, dValue_dPressure, relTol );
+  checkRelativeError( (perturbedValue-value)/dP, dValue[Deriv::dP], relTol );
 
   // 3) Check derivative with respect to temperature
   real64 const dT = perturbParameter * (temperature + perturbParameter);
   pvtFunctionWrapper.compute( pressure,
                               temperature + dT,
                               phaseComposition,
-                              dPhaseComposition_dPressure.toSliceConst(),
-                              dPhaseComposition_dTemperature.toSliceConst(),
-                              dPhaseComposition_dGlobalCompFraction.toSliceConst(),
+                              dPhaseComposition.toSliceConst(),
                               perturbedValue,
-                              dPerturbedValue_dPressure,
-                              dPerturbedValue_dTemperature,
-                              dPerturbedValue_dGlobalCompFraction.toSlice(),
+                              dPerturbedValue.toSlice(),
                               useMass );
-  checkRelativeError( (perturbedValue-value)/dT, dValue_dTemperature, relTol );
+  checkRelativeError( (perturbedValue-value)/dT, dValue[Deriv::dT], relTol );
 
   // 4) Check derivatives with respect to phaseComposition
-  for( localIndex i = 0; i < 2; ++i )
+  for( integer i = 0; i < numComp; ++i )
   {
     real64 const dC = perturbParameter * (phaseComposition[i] + perturbParameter);
-    stackArray1d< real64, 2 > perturbedPhaseComposition( 2 );
-    for( localIndex j = 0; j < 2; ++j )
+    stackArray1d< real64, numComp > perturbedPhaseComposition( numComp );
+    for( integer j = 0; j < numComp; ++j )
     {
       perturbedPhaseComposition[j] = phaseComposition[j] + ( (i == j) ? dC : 0.0 );
     }
     pvtFunctionWrapper.compute( pressure,
                                 temperature,
                                 perturbedPhaseComposition.toSliceConst(),
-                                dPhaseComposition_dPressure.toSliceConst(),
-                                dPhaseComposition_dTemperature.toSliceConst(),
-                                dPhaseComposition_dGlobalCompFraction.toSliceConst(),
+                                dPhaseComposition.toSliceConst(),
                                 perturbedValue,
-                                dPerturbedValue_dPressure,
-                                dPerturbedValue_dTemperature,
-                                dPerturbedValue_dGlobalCompFraction.toSlice(),
+                                dPerturbedValue.toSlice(),
                                 useMass );
-    checkRelativeError( (perturbedValue-value)/dC, dValue_dGlobalCompFraction[i], relTol );
+    checkRelativeError( (perturbedValue-value)/dC, dValue[Deriv::dC+i], relTol );
   }
 }
 
@@ -240,54 +222,59 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
                                real64 const perturbParameter,
                                real64 const relTol )
 {
+  using namespace multifluid;
+  using Deriv = multifluid::DerivativeOffset;
+
+  integer constexpr numPhase = 2;
+  integer constexpr numComp  = 2;
+  integer constexpr numDof   = numComp + 2;
+
   // 1) First compute the unperturbed pressure
-  stackArray1d< real64, 2 > phaseFraction( 2 );
-  stackArray1d< real64, 2 > dPhaseFraction_dPres( 2 );
-  stackArray1d< real64, 2 > dPhaseFraction_dTemp( 2 );
-  stackArray2d< real64, 4 > dPhaseFraction_dCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > phaseCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > dPhaseCompFraction_dPres( 2, 2 );
-  stackArray2d< real64, 4 > dPhaseCompFraction_dTemp( 2, 2 );
-  stackArray3d< real64, 8 > dPhaseCompFraction_dCompFraction( 2, 2, 2 );
+
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > phaseFrac( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseFracAndDeriv { phaseFrac[0][0], dPhaseFrac[0][0] };
+
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > phaseCompFrac( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
+  phaseCompFracAndDeriv { phaseCompFrac[0][0], dPhaseCompFrac[0][0] };
+
   flashModelWrapper.compute( pressure,
                              temperature,
                              compFraction,
-                             phaseFraction.toSlice(),
-                             dPhaseFraction_dPres.toSlice(),
-                             dPhaseFraction_dTemp.toSlice(),
-                             dPhaseFraction_dCompFraction.toSlice(),
-                             phaseCompFraction.toSlice(),
-                             dPhaseCompFraction_dPres.toSlice(),
-                             dPhaseCompFraction_dTemp.toSlice(),
-                             dPhaseCompFraction_dCompFraction.toSlice() );
-  stackArray1d< real64, 2 > perturbedPhaseFraction( 2 );
-  stackArray1d< real64, 2 > dPerturbedPhaseFraction_dPres( 2 );
-  stackArray1d< real64, 2 > dPerturbedPhaseFraction_dTemp( 2 );
-  stackArray2d< real64, 4 > dPerturbedPhaseFraction_dCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > perturbedPhaseCompFraction( 2, 2 );
-  stackArray2d< real64, 4 > dPerturbedPhaseCompFraction_dPres( 2, 2 );
-  stackArray2d< real64, 4 > dPerturbedPhaseCompFraction_dTemp( 2, 2 );
-  stackArray3d< real64, 8 > dPerturbedPhaseCompFraction_dCompFraction( 2, 2, 2 );
+                             phaseFracAndDeriv,
+                             phaseCompFracAndDeriv );
+
+  StackArray< real64, 3, numPhase, LAYOUT_PHASE > perturbedPhaseFrac( 1, 1, numPhase );
+  StackArray< real64, 4, numDof *numPhase, LAYOUT_PHASE_DC > dPerturbedPhaseFrac( 1, 1, numPhase, numDof );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  perturbedPhaseFracAndDeriv { perturbedPhaseFrac[0][0], dPerturbedPhaseFrac[0][0] };
+
+  StackArray< real64, 4, numComp *numPhase, LAYOUT_PHASE_COMP > perturbedPhaseCompFrac( 1, 1, numPhase, numComp );
+  StackArray< real64, 5, numDof *numComp *numPhase, LAYOUT_PHASE_COMP_DC > dPerturbedPhaseCompFrac( 1, 1, numPhase, numComp, numDof );
+  MultiFluidVarSlice< real64, 2, USD_PHASE_COMP - 2, USD_PHASE_COMP_DC - 2 >
+  perturbedPhaseCompFracAndDeriv { perturbedPhaseCompFrac[0][0], dPerturbedPhaseCompFrac[0][0] };
 
   // 2) Check derivative with respect to pressure
   real64 const dP = perturbParameter * (pressure + perturbParameter);
   flashModelWrapper.compute( pressure + dP,
                              temperature,
                              compFraction,
-                             perturbedPhaseFraction.toSlice(),
-                             dPerturbedPhaseFraction_dPres.toSlice(),
-                             dPerturbedPhaseFraction_dTemp.toSlice(),
-                             dPerturbedPhaseFraction_dCompFraction.toSlice(),
-                             perturbedPhaseCompFraction.toSlice(),
-                             dPerturbedPhaseCompFraction_dPres.toSlice(),
-                             dPerturbedPhaseCompFraction_dTemp.toSlice(),
-                             dPerturbedPhaseCompFraction_dCompFraction.toSlice() );
-  for( localIndex i = 0; i < 2; ++i )
+                             perturbedPhaseFracAndDeriv,
+                             perturbedPhaseCompFracAndDeriv );
+
+  for( integer i = 0; i < numPhase; ++i )
   {
-    checkRelativeError( (perturbedPhaseFraction[i]-phaseFraction[i])/dP, dPhaseFraction_dPres[i], relTol );
-    for( localIndex j = 0; j < 2; ++j )
+    checkRelativeError( (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dP,
+                        phaseFracAndDeriv.derivs[i][Deriv::dP],
+                        relTol );
+    for( integer j = 0; j < numComp; ++j )
     {
-      checkRelativeError( (perturbedPhaseCompFraction[i][j]-phaseCompFraction[i][j])/dP, dPhaseCompFraction_dPres[i][j], relTol );
+      checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dP,
+                          phaseCompFracAndDeriv.derivs[i][j][Deriv::dP],
+                          relTol );
     }
   }
 
@@ -296,49 +283,45 @@ void testNumericalDerivatives( FLASH_WRAPPER const & flashModelWrapper,
   flashModelWrapper.compute( pressure,
                              temperature + dT,
                              compFraction,
-                             perturbedPhaseFraction.toSlice(),
-                             dPerturbedPhaseFraction_dPres.toSlice(),
-                             dPerturbedPhaseFraction_dTemp.toSlice(),
-                             dPerturbedPhaseFraction_dCompFraction.toSlice(),
-                             perturbedPhaseCompFraction.toSlice(),
-                             dPerturbedPhaseCompFraction_dPres.toSlice(),
-                             dPerturbedPhaseCompFraction_dTemp.toSlice(),
-                             dPerturbedPhaseCompFraction_dCompFraction.toSlice() );
-  for( localIndex i = 0; i < 2; ++i )
+                             perturbedPhaseFracAndDeriv,
+                             perturbedPhaseCompFracAndDeriv );
+  for( integer i = 0; i < numPhase; ++i )
   {
-    checkRelativeError( (perturbedPhaseFraction[i]-phaseFraction[i])/dT, dPhaseFraction_dTemp[i], relTol );
-    for( localIndex j = 0; j < 2; ++j )
+    checkRelativeError( (perturbedPhaseFracAndDeriv.value[i]-phaseFracAndDeriv.value[i])/dT,
+                        phaseFracAndDeriv.derivs[i][Deriv::dT],
+                        relTol );
+    for( integer j = 0; j < numComp; ++j )
     {
-      checkRelativeError( (perturbedPhaseCompFraction[i][j]-phaseCompFraction[i][j])/dT, dPhaseCompFraction_dTemp[i][j], relTol );
+      checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[i][j]-phaseCompFracAndDeriv.value[i][j])/dT,
+                          phaseCompFracAndDeriv.derivs[i][j][Deriv::dT],
+                          relTol );
     }
   }
 
   // 4) Check derivatives with respect to phaseComposition
-  for( localIndex i = 0; i < 2; ++i )
+  for( integer i = 0; i < numComp; ++i )
   {
     real64 const dC = perturbParameter * (compFraction[i] + perturbParameter);
-    stackArray1d< real64, 2 > perturbedCompFraction( 2 );
-    for( localIndex j = 0; j < 2; ++j )
+    stackArray1d< real64, numComp > perturbedCompFraction( numComp );
+    for( integer j = 0; j < numComp; ++j )
     {
       perturbedCompFraction[j] = compFraction[j] + ( (i == j) ? dC : 0.0 );
     }
     flashModelWrapper.compute( pressure,
                                temperature,
                                perturbedCompFraction.toSliceConst(),
-                               perturbedPhaseFraction.toSlice(),
-                               dPerturbedPhaseFraction_dPres.toSlice(),
-                               dPerturbedPhaseFraction_dTemp.toSlice(),
-                               dPerturbedPhaseFraction_dCompFraction.toSlice(),
-                               perturbedPhaseCompFraction.toSlice(),
-                               dPerturbedPhaseCompFraction_dPres.toSlice(),
-                               dPerturbedPhaseCompFraction_dTemp.toSlice(),
-                               dPerturbedPhaseCompFraction_dCompFraction.toSlice() );
-    for( localIndex j = 0; j < 2; ++j )
+                               perturbedPhaseFracAndDeriv,
+                               perturbedPhaseCompFracAndDeriv );
+    for( integer j = 0; j < numPhase; ++j )
     {
-      checkRelativeError( (perturbedPhaseFraction[j]-phaseFraction[j])/dC, dPhaseFraction_dCompFraction[j][i], relTol );
-      for( localIndex k = 0; k < 2; ++k )
+      checkRelativeError( (perturbedPhaseFracAndDeriv.value[j]-phaseFracAndDeriv.value[j])/dC,
+                          phaseFracAndDeriv.derivs[j][Deriv::dC+i],
+                          relTol );
+      for( integer k = 0; k < numComp; ++k )
       {
-        checkRelativeError( (perturbedPhaseCompFraction[j][k]-phaseCompFraction[j][k])/dC, dPhaseCompFraction_dCompFraction[j][k][i], relTol );
+        checkRelativeError( (perturbedPhaseCompFracAndDeriv.value[j][k]-phaseCompFracAndDeriv.value[j][k])/dC,
+                            phaseCompFracAndDeriv.derivs[j][k][Deriv::dC+i],
+                            relTol );
       }
     }
   }
@@ -476,12 +459,12 @@ TEST_F( PhillipsBrineViscosityTest, brineViscosityValuesAndDeriv )
 
   PhillipsBrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -527,12 +510,12 @@ TEST_F( EzrokhiBrineViscosityTest, brineViscosityValuesAndDeriv )
 
   EzrokhiBrineViscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
         counter++;
@@ -584,12 +567,12 @@ TEST_F( FenghourCO2ViscosityTest, fenghourCO2ViscosityValuesAndDeriv )
 
   FenghourCO2Viscosity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -642,12 +625,12 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
 
   PhillipsBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -675,15 +658,13 @@ TEST_F( PhillipsBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
 
   PhillipsBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
-        //testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
-        //                                         P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
         counter++;
       }
@@ -728,12 +709,12 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMassValuesAndDeriv )
 
   EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, true, eps, relTol );
         counter++;
@@ -759,12 +740,12 @@ TEST_F( EzrokhiBrineDensityTest, brineCO2DensityMolarValuesAndDeriv )
 
   EzrokhiBrineDensity::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testNumericalDerivatives( pvtFunctionWrapper, P[iPres], TC[iTemp], comp, false, eps, relTol );
         counter++;
@@ -818,12 +799,12 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMassValuesAndDeriv )
 
   SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTolPrevImpl );
@@ -857,12 +838,12 @@ TEST_F( SpanWagnerCO2DensityTest, spanWagnerCO2DensityMolarValuesAndDeriv )
 
   SpanWagnerCO2Density::KernelWrapper pvtFunctionWrapper = pvtFunction->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTolPrevImpl );
@@ -922,12 +903,12 @@ TEST_F( CO2SolubilityTest, co2SolubilityValuesAndDeriv )
 
   CO2Solubility::KernelWrapper flashModelWrapper = flashModel->createKernelWrapper();
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( flashModelWrapper,
                                                  P[iPres], TC[iTemp], comp,
@@ -982,12 +963,12 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMassValuesAndDeriv )
                                       174031.122202, 175899.343122, 177450.286494, 135147.894170, 136387.199707,
                                       137419.018273, 121682.558928, 123001.503570, 124098.561778, 88756.649542,
                                       90350.327221, 91670.592316 };
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -1021,12 +1002,12 @@ TEST_F( BrineEnthalpyTest, BrineEnthalpyMolarValuesAndDeriv )
                                    10823742.150877, 10903416.807419, 10969752.900309, 10288015.835964, 10372160.580672, 10442128.397178,
                                    6850772.616574, 6903815.290194, 6947985.177129, 6544742.270173, 6599594.923452, 6645247.529535,
                                    5796426.147754, 5857522.733710, 5908248.223573};
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
@@ -1083,12 +1064,12 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMassValuesAndDeriv )
                                        10779.101555, -37449.569995, -36262.216311, -35283.355068, 28447.084306, 29131.068469, 29700.204529,
                                        9320.187656, 10117.295548, 10779.101555, -37449.569995, -36262.216311, -35283.355068};
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -1122,12 +1103,12 @@ TEST_F( CO2EnthalpyTest, CO2EnthalpyMolarValuesAndDeriv )
                                       211822.446731, 229938.535180, 244979.580788, -851126.590796, -824141.279795, -801894.433361,
                                       646524.643323, 662069.737939, 675004.648394, 211822.446731, 229938.535180, 244979.580788,
                                       -851126.590796, -824141.279795, -801894.433361 };
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
@@ -1184,12 +1165,12 @@ TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMassValuesAndDeriv )
                                       12984.500000, 12985.100000, 12985.600000};
 
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -1223,12 +1204,12 @@ TEST_F( BrineInternalEnergyTest, BrineInternalEnergyMolarValuesAndDeriv )
                                       7640.500000, 7641.100000, 7641.600000, 12984.500000, 12985.100000, 12985.600000,
                                       5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
                                       12984.500000, 12985.100000, 12985.600000};
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
@@ -1285,12 +1266,12 @@ TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMassValuesAndDeriv )
                                       12984.500000, 12985.100000, 12985.600000};
 
 
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], true, relTol );
@@ -1324,12 +1305,12 @@ TEST_F( CO2InternalEnergyTest, CO2InternalEnergyMolarValuesAndDeriv )
                                       7640.500000, 7641.100000, 7641.600000, 12984.500000, 12985.100000, 12985.600000,
                                       5106.500000, 5107.100000, 5107.600000, 7640.500000, 7641.100000, 7641.600000,
                                       12984.500000, 12985.100000, 12985.600000};
-  localIndex counter = 0;
-  for( localIndex iComp = 0; iComp < 3; ++iComp )
+  integer counter = 0;
+  for( integer iComp = 0; iComp < 3; ++iComp )
   {
-    for( localIndex iPres = 0; iPres < 3; ++iPres )
+    for( integer iPres = 0; iPres < 3; ++iPres )
     {
-      for( localIndex iTemp = 0; iTemp < 3; ++iTemp )
+      for( integer iTemp = 0; iTemp < 3; ++iTemp )
       {
         testValuesAgainstPreviousImplementation( pvtFunctionWrapper,
                                                  P[iPres], TC[iTemp], comp, savedValues[counter], false, relTol );
