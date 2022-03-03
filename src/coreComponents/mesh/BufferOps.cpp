@@ -163,7 +163,11 @@ localIndex Pack( buffer_unit_type * & buffer,
 {
   localIndex sizeOfPackedChars = 0;
 
+  string check1("check1");
+  string check2("check2");
+  sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, check1);
   sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, packList.size() );
+  sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, check2);
   for( localIndex a=0; a<packList.size(); ++a )
   {
     localIndex index = packList[a];
@@ -213,13 +217,19 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   localIndex sizeOfUnpackedChars = 0;
 
   localIndex numIndicesUnpacked;
+  string check1, check2;
+  sizeOfUnpackedChars += bufferOps::Unpack( buffer, check1 );
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
+  sizeOfUnpackedChars += bufferOps::Unpack( buffer, check2 );
+  std::cout<<check1<<", "<<check2;
+  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(),
+                  numIndicesUnpacked<<"!="<<packList.size() );
 
   for( localIndex a=0; a<packList.size(); ++a )
   {
     localIndex index = packList[a];
     localIndex numSubIndicesUnpacked;
+
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
     GEOSX_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
 
