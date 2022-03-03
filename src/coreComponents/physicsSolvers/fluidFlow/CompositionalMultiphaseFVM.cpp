@@ -327,31 +327,47 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
     {
 
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+      arrayView1d< real64 const > const totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
 
-      arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
+      arrayView1d< real64 const > const referencePorosity = solidModel.getReferencePorosity();
 
       real64 subRegionFlowResidualNorm = 0.0;
       real64 subRegionEnergyResidualNorm = 0.0;
 
       if( m_isThermal )
       {
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseDensOld =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseDensityOld >();
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFracOld =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >();
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseInternalEnergyOld =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseInternalEnergyOld >();
+
+        string const & solidInternalEnergyName = subRegion.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+        SolidInternalEnergy const & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
+        arrayView2d< real64 const > const solidInternalEnergyOld = solidInternalEnergy.getOldInternalEnergy();
+
         thermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernel::
           launch< parallelDevicePolicy<>,
                   parallelDeviceReduce >( localRhs,
                                           rankOffset,
+                                          numFluidPhases(),
                                           numFluidComponents(),
                                           dofNumber,
                                           elemGhostRank,
                                           referencePorosity,
                                           volume,
+                                          solidInternalEnergyOld,
                                           totalDensOld,
+                                          phaseDensOld,
+                                          phaseVolFracOld,
+                                          phaseInternalEnergyOld,
                                           subRegionFlowResidualNorm,
                                           subRegionEnergyResidualNorm );
       }
@@ -540,7 +556,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   GEOSX_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
-  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents );
+  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
@@ -556,7 +572,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   if( m_isThermal )
   {
-    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents, m_numComponents+1 );
+    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
                                  extrinsicMeshData::flow::deltaTemperature::key(),

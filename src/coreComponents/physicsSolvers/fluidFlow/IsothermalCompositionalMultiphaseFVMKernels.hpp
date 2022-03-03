@@ -817,20 +817,20 @@ public:
     // populate local flux vector and derivatives
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.localFlux[ic]           =  m_dt * stack.compFlux[ic];
-      stack.localFlux[numComp + ic] = -m_dt * stack.compFlux[ic];
+      stack.localFlux[ic]          =  m_dt * stack.compFlux[ic];
+      stack.localFlux[numEqn + ic] = -m_dt * stack.compFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]           =  m_dt * stack.dCompFlux_dP[ke][ic];
-        stack.localFluxJacobian[numComp + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
+        stack.localFluxJacobian[ic][localDofIndexPres]          =  m_dt * stack.dCompFlux_dP[ke][ic];
+        stack.localFluxJacobian[numEqn + ic][localDofIndexPres] = -m_dt * stack.dCompFlux_dP[ke][ic];
 
         for( integer jc = 0; jc < numComp; ++jc )
         {
           localIndex const localDofIndexComp = localDofIndexPres + jc + 1;
-          stack.localFluxJacobian[ic][localDofIndexComp]           =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
-          stack.localFluxJacobian[numComp + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
+          stack.localFluxJacobian[ic][localDofIndexComp]          =  m_dt * stack.dCompFlux_dC[ke][ic][jc];
+          stack.localFluxJacobian[numEqn + ic][localDofIndexComp] = -m_dt * stack.dCompFlux_dC[ke][ic][jc];
         }
       }
     }
@@ -868,11 +868,11 @@ public:
 
         for( integer ic = 0; ic < numComp; ++ic )
         {
-          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numComp + ic] );
+          RAJA::atomicAdd( parallelDeviceAtomic{}, &m_localRhs[localRow + ic], stack.localFlux[i * numEqn + ic] );
           m_localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >
             ( localRow + ic,
             stack.dofColIndices.data(),
-            stack.localFluxJacobian[i * numComp + ic].dataIfContiguous(),
+            stack.localFluxJacobian[i * numEqn + ic].dataIfContiguous(),
             stack.stencilSize * numDof );
         }
       }

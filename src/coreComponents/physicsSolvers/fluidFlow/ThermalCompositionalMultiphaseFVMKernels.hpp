@@ -536,23 +536,23 @@ public:
 
     // Step 2: add energyFlux and its derivatives to localFlux and localFluxJacobian
     integer const localRowIndexEnergy = numEqn-1;
-    stack.localFlux[localRowIndexEnergy]     =  m_dt * stack.energyFlux;
-    stack.localFlux[2 * localRowIndexEnergy] = -m_dt * stack.energyFlux;
+    stack.localFlux[localRowIndexEnergy]          =  m_dt * stack.energyFlux;
+    stack.localFlux[numEqn + localRowIndexEnergy] = -m_dt * stack.energyFlux;
 
     for( integer ke = 0; ke < stack.stencilSize; ++ke )
     {
       integer const localDofIndexPres = ke * numDof;
-      stack.localFluxJacobian[localRowIndexEnergy][localDofIndexPres]     =  m_dt * stack.dEnergyFlux_dP[ke];
-      stack.localFluxJacobian[2 * localRowIndexEnergy][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
+      stack.localFluxJacobian[localRowIndexEnergy][localDofIndexPres]          =  m_dt * stack.dEnergyFlux_dP[ke];
+      stack.localFluxJacobian[numEqn + localRowIndexEnergy][localDofIndexPres] = -m_dt * stack.dEnergyFlux_dP[ke];
       integer const localDofIndexTemp = localDofIndexPres + numDof - 1;
-      stack.localFluxJacobian[localRowIndexEnergy][localDofIndexTemp]     =  m_dt * stack.dEnergyFlux_dT[ke];
-      stack.localFluxJacobian[2 * localRowIndexEnergy][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
+      stack.localFluxJacobian[localRowIndexEnergy][localDofIndexTemp]          =  m_dt * stack.dEnergyFlux_dT[ke];
+      stack.localFluxJacobian[numEqn + localRowIndexEnergy][localDofIndexTemp] = -m_dt * stack.dEnergyFlux_dT[ke];
 
       for( integer jc = 0; jc < numComp; ++jc )
       {
         integer const localDofIndexComp = localDofIndexPres + jc + 1;
-        stack.localFluxJacobian[localRowIndexEnergy][localDofIndexComp]     =  m_dt * stack.dEnergyFlux_dC[ke][jc];
-        stack.localFluxJacobian[2 * localRowIndexEnergy][localDofIndexComp] = -m_dt * stack.dEnergyFlux_dC[ke][jc];
+        stack.localFluxJacobian[localRowIndexEnergy][localDofIndexComp]          =  m_dt * stack.dEnergyFlux_dC[ke][jc];
+        stack.localFluxJacobian[numEqn + localRowIndexEnergy][localDofIndexComp] = -m_dt * stack.dEnergyFlux_dC[ke][jc];
       }
     }
   }

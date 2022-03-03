@@ -206,8 +206,7 @@ public:
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
     m_rockInternalEnergyOld( solid.getOldInternalEnergy() ),
     m_rockInternalEnergy( solid.getInternalEnergy() ),
-    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() ),
-    m_rockDensity( solid.getDensity() )
+    m_dRockInternalEnergy_dTemp( solid.getDinternalEnergy_dTemperature() )
   {}
 
   struct StackVariables : public Base::StackVariables
@@ -260,10 +259,10 @@ public:
     real64 const dSolidVolume_dPres = -m_volume[ei] * m_dPoro_dPres[ei][0];
 
     // initialize the solid internal energy
-    stack.solidEnergyNew = solidVolumeNew * m_rockInternalEnergy[ei][0] * m_rockDensity[ei][0];
-    stack.solidEnergyOld = solidVolumeOld * m_rockInternalEnergyOld[ei][0] * m_rockDensity[ei][0];
-    stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0] * m_rockDensity[ei][0];
-    stack.dSolidEnergy_dTemp = solidVolumeNew * m_dRockInternalEnergy_dTemp[ei][0] * m_rockDensity[ei][0];
+    stack.solidEnergyNew = solidVolumeNew * m_rockInternalEnergy[ei][0];
+    stack.solidEnergyOld = solidVolumeOld * m_rockInternalEnergyOld[ei][0];
+    stack.dSolidEnergy_dPres = dSolidVolume_dPres * m_rockInternalEnergy[ei][0];
+    stack.dSolidEnergy_dTemp = solidVolumeNew * m_dRockInternalEnergy_dTemp[ei][0];
   }
 
   /**
@@ -326,7 +325,7 @@ public:
                                      + phaseAmountNew * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      localResidualPtr[numEqn-1] = phaseEnergyNew - phaseEnergyOld;
+      localResidualPtr[numEqn-1] += phaseEnergyNew - phaseEnergyOld;
 
       // derivatives w.r.t. pressure and temperature
       localJacobianPtr[numEqn-1][0]        += dPhaseEnergy_dP;
@@ -347,6 +346,7 @@ public:
     stack.localResidual[numEqn-1] += stack.solidEnergyNew - stack.solidEnergyOld;
     stack.localJacobian[numEqn-1][0] += stack.dSolidEnergy_dPres;
     stack.localJacobian[numEqn-1][numDof-1] += stack.dSolidEnergy_dTemp;
+
   }
 
   /**
@@ -382,10 +382,10 @@ public:
     Base::complete( ei, stack );
 
     // Step 2: assemble the energy equation
-    m_localRhs[stack.localRow + numDof-1] += stack.localResidual[numDof-1];
-    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numDof-1,
+    m_localRhs[stack.localRow + numEqn-1] += stack.localResidual[numEqn-1];
+    m_localMatrix.template addToRow< serialAtomic >( stack.localRow + numEqn-1,
                                                      stack.dofIndices,
-                                                     stack.localJacobian[numDof-1],
+                                                     stack.localJacobian[numEqn-1],
                                                      numDof );
   }
 
@@ -403,9 +403,6 @@ protected:
   arrayView2d< real64 const > m_rockInternalEnergyOld;
   arrayView2d< real64 const > m_rockInternalEnergy;
   arrayView2d< real64 const > m_dRockInternalEnergy_dTemp;
-
-  /// View on rock density
-  arrayView2d< real64 const > m_rockDensity;
 
 };
 
@@ -561,12 +558,17 @@ struct ResidualNormKernel
   template< typename POLICY, typename REDUCE_POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
-                      localIndex const numComponents,
+                      integer const numComponents,
+                      integer const numPhases,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & refPoro,
                       arrayView1d< real64 const > const & volume,
+                      arrayView2d< real64 const > const & solidInternalEnergyOld,
                       arrayView1d< real64 const > const & totalDensOld,
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseDensOld,
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld,
+                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseInternalEnergyOld,
                       real64 & localFlowResidualNorm,
                       real64 & localEnergyResidualNorm )
   {
@@ -578,10 +580,19 @@ struct ResidualNormKernel
       if( ghostRank[ei] < 0 )
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const flowNormalizer = totalDensOld[ei] * refPoro[ei] * volume[ei];
-        real64 const energyNormalizer = 1.0; // TODO: find a good value for that
 
-        for( localIndex idof = 0; idof < numComponents + 1; ++idof )
+        // first, compute the normalizers for the component mass balance and energy balance equations
+        // TODO: apply a separate treatment to the volume balance equation
+        real64 const poreVolume = refPoro[ei] * volume[ei];
+        real64 const flowNormalizer = totalDensOld[ei] * poreVolume;
+        real64 energyNormalizer = solidInternalEnergyOld[ei][0] * ( 1.0 - refPoro[ei] ) * volume[ei];
+        for( integer ip = 0; ip < numPhases; ++ip )
+        {
+          energyNormalizer += phaseInternalEnergyOld[ei][ip] * phaseDensOld[ei][ip] * phaseVolFracOld[ei][ip] * poreVolume;
+        }
+
+        // then, compute the normalized residual
+        for( integer idof = 0; idof < numComponents + 1; ++idof )
         {
           real64 const val = localResidual[localRow + idof] / flowNormalizer;
           localFlowSum += val * val;

@@ -720,6 +720,7 @@ public:
                                              + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
+
       }
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives

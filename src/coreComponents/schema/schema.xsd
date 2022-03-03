@@ -2165,7 +2165,7 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 	<xsd:complexType name="ConstantThermalConductivityType">
 		<!--phaseNames => List of fluid phases-->
 		<xsd:attribute name="phaseNames" type="string_array" use="required" />
-		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [W/(m.K)]-->
+		<!--thermalConductivityComponents => xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]-->
 		<xsd:attribute name="thermalConductivityComponents" type="R1Tensor" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
@@ -2705,12 +2705,12 @@ If you want to do a three-phase simulation, please use instead wettingIntermedia
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
 	<xsd:complexType name="SolidInternalEnergyType">
-		<!--referenceInternalEnergy => Internal energy at the reference temperature-->
+		<!--referenceInternalEnergy => Internal energy at the reference temperature [J/kg]-->
 		<xsd:attribute name="referenceInternalEnergy" type="real64" use="required" />
-		<!--referenceTemperature => Reference temperature-->
+		<!--referenceTemperature => Reference temperature [K]-->
 		<xsd:attribute name="referenceTemperature" type="real64" use="required" />
-		<!--specificHeatCapacity => Solid specific heat capacity-->
-		<xsd:attribute name="specificHeatCapacity" type="real64" use="required" />
+		<!--volumetricHeatCapacity => Solid volumetric heat capacity [J/(kg.K)]-->
+		<xsd:attribute name="volumetricHeatCapacity" type="real64" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
