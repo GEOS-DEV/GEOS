@@ -724,8 +724,8 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
                                                   DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                               MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();
