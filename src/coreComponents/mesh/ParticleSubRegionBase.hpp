@@ -187,16 +187,19 @@ private:
   dataRepository::Group m_constitutiveModels;
 
 protected:
-  /// Boolean indicating whether the particle has r-vectors defining its domain extent.
+  /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
   bool m_hasRVectors;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
 
+  /// Member level field for the particle velocity.
+  array2d< real64 > m_particleVelocity;
+
   /// Member level field for the particle volume.
   array1d< real64 > m_particleVolume;
 
-  /// Type of particle in this subregion.
+  /// Type of particles in this subregion.
   ParticleType m_particleType;
 };
 

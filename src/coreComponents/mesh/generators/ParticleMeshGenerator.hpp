@@ -101,8 +101,8 @@ private:
   /// Path to the particle file
   Path m_filePath;
 
-  /// String array of particle region names
-  array1d< string > m_regionNames;
+  /// String array of particle block names associated with the particle mesh
+  array1d< string > m_blockNames;
 
   /// String array listing the particle types present
   array1d< string > m_particleType;

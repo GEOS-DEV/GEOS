@@ -73,5 +73,4 @@ const ParticleBlockABC & ParticleBlockManager::getParticleBlock( localIndex iPar
   return this->getParticleBlocks().getGroup< const ParticleBlockABC >( iParticleBlock );
 }
 
-
 }

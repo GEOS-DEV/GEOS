@@ -25,12 +25,11 @@ namespace geosx
 {
 
 /**
- * Abstract base class defining the information provided by any cell block implementation.
- * Mainly element type related information (number of faces per element...),
- * some element to nodes, faces and edges mappings, a local to global mapping and
- * some kind of accessors to external properties.
+ * Abstract base class defining the information provided by any particle block implementation.
+ * Mainly particle type-related information (TODO put an example here),
+ * a local to global mapping and some kind of accessors to external properties.
  *
- * The cells of ParticleBlockABC are all of the same kind.
+ * The particles of ParticleBlockABC are all of the same kind.
  *
  * It's noteworthy that the ParticleBlockABC is immutable oriented.
  * The derived implementations need to have the modification/creation capabilities.
@@ -51,16 +50,16 @@ public:
   { }
 
   /**
-   * @brief Get the type of element in this subregion.
-   * @return a string specifying the type of element in this subregion
+   * @brief Get the type of particle in this subregion.
+   * @return a string specifying the type of particle in this subregion
    *
-   * See class FiniteParticleBase for possible element type.
+   * See class FiniteParticleBase for possible particle type.
    */
   virtual ParticleType getParticleType() const = 0;
 
   /**
-   * @brief Get the number of elements.
-   * @return number of elements in the cell block
+   * @brief Get the number of particles.
+   * @return number of particles in the particle block
    */
   virtual localIndex numParticles() const = 0;
 

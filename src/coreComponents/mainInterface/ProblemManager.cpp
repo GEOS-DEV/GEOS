@@ -556,8 +556,6 @@ void ProblemManager::generateMesh()
     // Enter particle-specific loop
     if(meshBody.m_hasParticles)
     {
-      std::cout << "MeshBody " << meshBody.getName() << " has particles!" << std::endl;
-
       ParticleBlockManager & particleBlockManager = meshBody.getGroup< ParticleBlockManager >( keys::particleManager ); // This was created by the relevant mesh generator, it will be de-registered at the end of this function!
       for( localIndex b = 0; b < meshLevels.numSubGroups(); ++b )
       {
@@ -565,9 +563,7 @@ void ProblemManager::generateMesh()
 
         ParticleManager & particleManager = meshLevel.getParticleManager();
 
-        particleManager.generateMesh( particleBlockManager );
-
-        //particleManager.buildRegionMaps();
+        particleManager.generateMesh( particleBlockManager ); // This creates the particle regions and subregions, copies block info into subregions
 
         particleManager.forParticleSubRegions< ParticleSubRegionBase >( [&]( ParticleSubRegionBase & subRegion )
         {
@@ -579,7 +575,7 @@ void ProblemManager::generateMesh()
         particleManager.setMaxGlobalIndex();
       }
 
-      // The cell block manager is not meant to be used anymore, let's free space.
+      // The particle block manager is not meant to be used anymore, let's free space.
       meshBody.deregisterGroup( keys::particleManager );
     }
     else

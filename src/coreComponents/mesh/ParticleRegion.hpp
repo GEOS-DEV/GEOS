@@ -93,6 +93,14 @@ public:
     m_particleBlockNames.emplace_back( particleBlockName );
   }
 
+  /**
+   * @brief Get the list of particleBlock names.
+   */
+  string_array getParticleBlockNames()
+  {
+    return m_particleBlockNames;
+  }
+
   virtual void generateMesh( Group & particleBlocks ) override;
 
 

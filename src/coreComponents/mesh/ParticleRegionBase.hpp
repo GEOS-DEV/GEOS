@@ -154,7 +154,6 @@ public:
     localIndex numParticle = 0;
     this->forParticleSubRegions< SUBREGIONTYPE, SUBREGIONTYPES... >( [&]( Group const & group ) -> void
     {
-      std::cout << "Debug 1: " << group.getName() << std::endl;
       numParticle += group.size();
     } );
     return numParticle;

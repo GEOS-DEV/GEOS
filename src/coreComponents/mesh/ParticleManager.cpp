@@ -26,7 +26,10 @@
 
 namespace geosx
 {
+
 using namespace dataRepository;
+
+class SpatialPartition;
 
 // *********************************************************************************************************************
 /**

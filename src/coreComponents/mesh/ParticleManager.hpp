@@ -31,6 +31,7 @@ namespace geosx
 {
 
 class MeshManager;
+class DomainPartition;
 
 /**
  * @class ParticleManager
