@@ -1311,11 +1311,7 @@ void HypreMatrix::write( string const & filename,
             for( HYPRE_Int k = csr.rowptr[i]; k < csr.rowptr[i + 1]; k++ )
             {
               // MatrixMarket row/col indices are 1-based
-<<<<<<< HEAD
-              GEOSX_FMT_TO( str, sizeof( str ), "{} {} {:.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
-=======
               GEOSX_FMT_TO( str, sizeof( str ), "{} {} {:>28.16e}\n", i + 1, csr.colind[k] + 1, csr.values[k] );
->>>>>>> origin/develop
               os << str;
             }
           }

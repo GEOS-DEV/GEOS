@@ -29,7 +29,7 @@
 namespace geosx
 {
 
-namespace  EmbeddedSurfacesParallelSynchronization
+namespace  embeddedSurfacesParallelSynchronization
 {
 
 using namespace dataRepository;
@@ -452,17 +452,10 @@ void synchronizeNewNodes( MeshLevel & mesh,
 
 }
 
-<<<<<<< HEAD
 void synchronizeNewSurfaces( MeshLevel & mesh,
                              std::vector< NeighborCommunicator > & neighbors,
                              NewObjectLists & newObjects,
                              int const mpiCommOrder )
-=======
-void embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel & mesh,
-                                                                      std::vector< NeighborCommunicator > & neighbors,
-                                                                      NewObjectLists & newObjects,
-                                                                      int const mpiCommOrder )
->>>>>>> origin/develop
 {
   //************************************************************************************************
   // We need to send over the new embedded surfaces and related objects for those whose parents are ghosts on neighbors.
@@ -533,15 +526,9 @@ void embeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel 
                        commData.mpiSendBufferSizeStatus() );
 }
 
-<<<<<<< HEAD
 void synchronizeFracturedElements( MeshLevel & mesh,
                                    std::vector< NeighborCommunicator > & neighbors,
                                    string const fractureRegionName )
-=======
-void embeddedSurfacesParallelSynchronization::synchronizeFracturedElements( MeshLevel & mesh,
-                                                                            std::vector< NeighborCommunicator > & neighbors,
-                                                                            string const fractureRegionName )
->>>>>>> origin/develop
 {
   MPI_iCommData commDataJunk( CommunicationTools::getInstance().getCommID() );
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
@@ -635,6 +622,6 @@ void sychronizeTopology( MeshLevel & mesh,
 
 }
 
-} /* EmbeddedSurfacesParallelSynchronization */
+} /* embeddedSurfacesParallelSynchronization */
 
 } /* namespace geosx */

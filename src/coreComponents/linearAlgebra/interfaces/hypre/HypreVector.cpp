@@ -379,11 +379,7 @@ void HypreVector::write( string const & filename,
 
           for( HYPRE_Int i = 0; i < size; i++ )
           {
-<<<<<<< HEAD
-            GEOSX_FMT_TO( str, sizeof( str ), "{:.16e}\n", data[i] );
-=======
             GEOSX_FMT_TO( str, sizeof( str ), "{:>28.16e}\n", data[i] );
->>>>>>> origin/develop
             os << str;
           }
         }

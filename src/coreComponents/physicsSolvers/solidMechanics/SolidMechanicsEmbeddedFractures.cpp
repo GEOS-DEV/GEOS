@@ -329,13 +329,12 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-<<<<<<< HEAD
     if( !m_useStaticCondensation )
     {
       string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
       arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-      SolidMechanicsEFEMKernels::EFEMFactory kernelFactory( subRegion,
+      solidMechanicsEFEMKernels::EFEMFactory kernelFactory( subRegion,
                                                             dispDofNumber,
                                                             jumpDofNumber,
                                                             dofManager.rankOffset(),
@@ -354,20 +353,11 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                      kernelFactory );
 
       GEOSX_UNUSED_VAR( maxTraction );
-=======
-    solidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
-                                                                 dispDofNumber,
-                                                                 jumpDofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 gravityVectorData );
->>>>>>> origin/develop
 
     }
     else
     {
-      SolidMechanicsEFEMKernels::EFEMStaticCondensationFactory kernelFactory( subRegion,
+      solidMechanicsEFEMKernels::EFEMStaticCondensationFactory kernelFactory( subRegion,
                                                                               dispDofNumber,
                                                                               dofManager.rankOffset(),
                                                                               localMatrix,
@@ -751,7 +741,7 @@ void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
     CRSMatrix< real64, globalIndex >  voidMatrix;
     array1d< real64 > voidRhs;
 
-    SolidMechanicsEFEMKernels::EFEMJumpUpdateFactory kernelFactory( subRegion,
+    solidMechanicsEFEMKernels::EFEMJumpUpdateFactory kernelFactory( subRegion,
                                                                     dispDofNumber,
                                                                     dofManager.rankOffset(),
                                                                     voidMatrix.toViewConstSizes(),

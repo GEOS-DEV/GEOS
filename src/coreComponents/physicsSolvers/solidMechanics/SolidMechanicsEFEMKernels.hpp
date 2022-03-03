@@ -40,7 +40,6 @@ namespace solidMechanicsEFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-<<<<<<< HEAD
 class EFEM :
   public EFEMKernelsBase< SUBREGION_TYPE,
                           CONSTITUTIVE_TYPE,
@@ -51,18 +50,6 @@ public:
   using Base = EFEMKernelsBase< SUBREGION_TYPE,
                                 CONSTITUTIVE_TYPE,
                                 FE_TYPE >;
-=======
-class QuasiStatic :
-  public solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
-                                                          CONSTITUTIVE_TYPE,
-                                                          FE_TYPE >
-{
-public:
-  /// Alias for the base class;
-  using Base = solidMechanicsLagrangianFEMKernels::QuasiStatic< SUBREGION_TYPE,
-                                                                CONSTITUTIVE_TYPE,
-                                                                FE_TYPE >;
->>>>>>> origin/develop
 
   /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
   /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
@@ -216,118 +203,6 @@ public:
   }
 
   /**
-<<<<<<< HEAD
-=======
-   * @brief Internal struct to provide no-op defaults used in the inclusion
-   *   of lambda functions into kernel component functions.
-   * @struct NoOpFunctors
-   */
-  struct NoOpFunctors
-  {
-    /**
-     * @brief operator() no-op used for adding an additional dynamics term
-     *   inside the jacobian assembly loop.
-     * @param a Node index for the row.
-     * @param b Node index for the col.
-     */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( localIndex const a, localIndex const b )
-    {
-      GEOSX_UNUSED_VAR( a );
-      GEOSX_UNUSED_VAR( b );
-    }
-
-    /**
-     * @brief operator() no-op used for modifying the stress tensor prior to
-     *   integrating the divergence to produce nodal forces.
-     * @param stress The stress array.
-     */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 (& stress)[6] )
-    {
-      GEOSX_UNUSED_VAR( stress );
-    }
-  };
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
-   * @tparam STRESS_MODIFIER Type of optional functor to allow for the
-   * modification of stress prior to integration.
-   * @param stressModifier An optional functor to allow for the modification
-   *  of stress prior to integration.
-   */
-  template< typename STRESS_MODIFIER = NoOpFunctors >
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  void quadraturePointKernel( localIndex const k,
-                              localIndex const q,
-                              StackVariables & stack,
-                              STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
-  {
-    GEOSX_UNUSED_VAR( stressModifier );
-
-    localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
-
-    real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.X, dNdX );
-
-    constexpr int nUdof = numNodesPerElem*3;
-
-    // Gauss contribution to Kww, Kwu and Kuw blocks
-    real64 Kww_gauss[3][3], Kwu_gauss[3][nUdof], Kuw_gauss[nUdof][3];
-
-    //  Compatibility, equilibrium and strain operators. The compatibility operator is constructed as
-    //  a 3 x 6 because it is more convenient for construction purposes (reduces number of local var).
-    real64 compMatrix[3][6], strainMatrix[6][nUdof], eqMatrix[3][6];
-    real64 matBD[nUdof][6], matED[3][6];
-
-    int Heaviside[ numNodesPerElem ];
-
-    // TODO: asking for the stiffness here will only work for elastic models.  most other models
-    //       need to know the strain increment to compute the current stiffness value.
-
-    m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
-
-    solidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
-                                                                                  stack.X,
-                                                                                  m_nVec[embSurfIndex],
-                                                                                  m_surfaceCenter[embSurfIndex] );
-
-
-    solidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
-                                                                  m_nVec[embSurfIndex],
-                                                                  m_tVec1[embSurfIndex],
-                                                                  m_tVec2[embSurfIndex],
-                                                                  stack.hInv );
-
-    solidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
-                                                                                       m_nVec[embSurfIndex],
-                                                                                       m_tVec1[embSurfIndex],
-                                                                                       m_tVec2[embSurfIndex],
-                                                                                       Heaviside,
-                                                                                       dNdX );
-
-    solidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
-
-    // transp(B)D
-    LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, 6 >( matBD, strainMatrix, stack.constitutiveStiffness );
-    // ED
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, 6, 6 >( matED, eqMatrix, stack.constitutiveStiffness );
-    // EDC
-    LvArray::tensorOps::Rij_eq_AikBjk< 3, 3, 6 >( Kww_gauss, matED, compMatrix );
-    // EDB
-    LvArray::tensorOps::Rij_eq_AikBkj< 3, nUdof, 6 >( Kwu_gauss, matED, strainMatrix );
-    // transp(B)DB
-    LvArray::tensorOps::Rij_eq_AikBjk< nUdof, 3, 6 >( Kuw_gauss, matBD, compMatrix );
-
-    // multiply by determinant and add to element matrix
-    LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, Kww_gauss, -detJ );
-    LvArray::tensorOps::scaledAdd< 3, nUdof >( stack.localKwu, Kwu_gauss, -detJ );
-    LvArray::tensorOps::scaledAdd< nUdof, 3 >( stack.localKuw, Kuw_gauss, -detJ );
-  }
-
-  /**
->>>>>>> origin/develop
    * @copydoc geosx::finiteElement::ImplicitKernelBase::complete
    */
   GEOSX_HOST_DEVICE
@@ -344,7 +219,7 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
-    // Add traction contribution tranction
+    // Add traction contribution
     LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.tractionVec, -1 );
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
 
