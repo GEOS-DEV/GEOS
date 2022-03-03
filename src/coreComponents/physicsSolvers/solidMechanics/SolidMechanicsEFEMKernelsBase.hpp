@@ -229,45 +229,6 @@ public:
   }
   //END_kernelLauncher
 
-  /**
-   * @brief Internal struct to provide no-op defaults used in the inclusion
-   *   of lambda functions into kernel component functions.
-   * @struct NoOpFunctors
-   */
-  struct NoOpFunctors
-  {
-    /**
-     * @brief operator() no-op used for adding an additional dynamics term
-     *   inside the jacobian assembly loop.
-     * @param a Node index for the row.
-     * @param b Node index for the col.
-     */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( localIndex const a, localIndex const b )
-    {
-      GEOSX_UNUSED_VAR( a );
-      GEOSX_UNUSED_VAR( b );
-    }
-
-    /**
-     * @brief operator() no-op used for modifying the stress tensor prior to
-     *   integrating the divergence to produce nodal forces.
-     * @param stress The stress array.
-     */
-    GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE constexpr
-    void operator() ( real64 (& stress)[6] )
-    {
-      GEOSX_UNUSED_VAR( stress );
-    }
-  };
-
-  /**
-   * @copydoc geosx::finiteElement::KernelBase::quadraturePointKernel
-   * @tparam STRESS_MODIFIER Type of optional functor to allow for the
-   * modification of stress prior to integration.
-   * @param stressModifier An optional functor to allow for the modification
-   *  of stress prior to integration.
-   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   void quadraturePointKernel( localIndex const k,

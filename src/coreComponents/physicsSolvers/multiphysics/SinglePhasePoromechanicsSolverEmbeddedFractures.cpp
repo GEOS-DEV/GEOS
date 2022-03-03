@@ -69,13 +69,6 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::postProcessInput()
   SinglePhasePoromechanicsSolver::postProcessInput();
 
   m_fracturesSolver  = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_fracturesSolverName );
-
-  LinearSolverParameters & linParams = m_linearSolverParameters.get();
-  linParams.dofsPerNode = 3;
-
-  linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::singlePhasePoromechanicsEmbeddedFractures;
-  linParams.mgr.separateComponents = true;
-  linParams.mgr.displacementFieldName = keys::TotalDisplacement;
 }
 
 void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
