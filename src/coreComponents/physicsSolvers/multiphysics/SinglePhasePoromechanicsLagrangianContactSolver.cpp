@@ -79,6 +79,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   //m_flowSolver->setupDofs( domain, dofManager );
 
   // TODO: stampare m_meshTargets
+  // question: from here...
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
                        3,
@@ -87,16 +88,10 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
                           DofManager::Connector::Elem );
+  // ... to here. Can we replace simply by m_solidSolver->setupDofs( domain, dofManager );   ??
+  // OR, considering also the coupling u-t can we simply call m_contactSolver->setupDofs( domain, dofManager ); ??
 
   // restrict coupling to fracture regions only
-  //
-  //ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-  //string_array fractureRegions;
-  //elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
-  //{
-  //  fractureRegions.emplace_back( elementRegion.getName() );
-  //} );
-  //
   map< string, array1d< string > > meshTargets;
   forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
                                                 MeshLevel const & meshLevel,
@@ -137,13 +132,6 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
                           LagrangianContactSolver::viewKeyStruct::tractionString(),
                           DofManager::Connector::None );
-//  dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
-//                          FlowSolverBase::viewKeyStruct::pressureString(),
-//                          DofManager::Connector::None );
-
-//  dofManager.addCoupling( FlowSolverBase::viewKeyStruct::pressureString(),
-//                          LagrangianContactSolver::viewKeyStruct::tractionString(),
-//                          DofManager::Connector::None );
 //  dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
 //                          FlowSolverBase::viewKeyStruct::pressureString(),
 //                          DofManager::Connector::None );
@@ -263,7 +251,8 @@ SinglePhasePoromechanicsLagrangianContactSolver::~SinglePhasePoromechanicsLagran
 
 void SinglePhasePoromechanicsLagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  m_flowSolver->resetStateToBeginningOfStep( domain );
+// Laura - this is call is already in the m_contactFlowSolver->resetStateToBeginningOfStep( domain );
+//  m_flowSolver->resetStateToBeginningOfStep( domain );
   m_contactFlowSolver->resetStateToBeginningOfStep( domain );
 }
 
@@ -695,6 +684,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   // Need to synchronize the two iteration counters
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
+  // TODO: synchronizeFractureState ?
+
   // MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -898,10 +889,12 @@ void SinglePhasePoromechanicsLagrangianContactSolver::updateState( DomainPartiti
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const &  )
+                                                arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-    elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   CellElementSubRegion & subRegion )
     {
       m_flowSolver->updateFluidState( subRegion );
     } );
