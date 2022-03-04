@@ -18,6 +18,10 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
+if ( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
+endif()
+
 #
 # Add gtest C++ based tests
 #
@@ -28,7 +32,7 @@ foreach(test ${testSources})
                         OUTPUT_DIR ${TEST_OUTPUT_DIRECTORY}
                         DEPENDS_ON ${dependencyList} )
 
-    blt_add_test( NAME ${test_name} 
+    blt_add_test( NAME ${test_name}
                   COMMAND ${test_name}
                   )
 
@@ -40,5 +44,5 @@ endforeach()
 
 if ( ENABLE_CUDA )
 #blt_add_target_compile_flags( TO testShapeFunctionKernel
-#                              FLAGS "--maxrregcount=64") 
+#                              FLAGS "--maxrregcount=64")
 endif()
