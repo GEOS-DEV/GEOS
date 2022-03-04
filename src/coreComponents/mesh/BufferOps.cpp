@@ -55,7 +55,7 @@ localIndex Pack( buffer_unit_type * & buffer,
       }
       else
       {
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, globalIndex(elemIndex) );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, globalIndex( elemIndex ) );
       }
     }
   }
@@ -186,7 +186,7 @@ localIndex Pack( buffer_unit_type * & buffer,
       }
       else
       {
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, globalIndex(elemIndex) );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, globalIndex( elemIndex ) );
       }
     }
   }
@@ -215,7 +215,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 
   localIndex numIndicesUnpacked;
   sizeOfUnpackedChars += bufferOps::Unpack( buffer, numIndicesUnpacked );
-  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(),""  );
+  GEOSX_ERROR_IF( numIndicesUnpacked != packList.size(), "" );
 
   for( localIndex a=0; a<packList.size(); ++a )
   {
