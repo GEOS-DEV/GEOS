@@ -813,122 +813,113 @@ public:
 
 private:
 
-  /**
-   * @copydoc WrapperBase::packPrivate
-   */
-  localIndex packPrivate( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  template< bool DO_PACKING >
+  localIndex packTemplate( buffer_unit_type *& buffer,
+                           bool withMetadata,
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const
   {
     localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
+    if( withMetadata )
+    { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
     if( onDevice )
     {
       if( withMetadata )
       {
-        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference(), events );
+        packedSize += wrapperHelpers::PackDevice< DO_PACKING >( buffer, reference(), events );
       }
       else
       {
-        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference(), events );
+        packedSize += wrapperHelpers::PackDataDevice< DO_PACKING >( buffer, reference(), events );
       }
     }
     else
     {
-      packedSize += bufferOps::Pack< true >( buffer, *m_data );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
     }
     return packedSize;
+  }
+
+  template< bool DO_PACKING >
+  localIndex packByIndexTemplate( buffer_unit_type *& buffer,
+                                  arrayView1d< localIndex const > const & packList,
+                                  bool withMetadata,
+                                  bool onDevice,
+                                  parallelDeviceEvents & events ) const
+  {
+    localIndex packedSize = 0;
+    if( sizedFromParent() == 1 )
+    {
+      if( withMetadata )
+      { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
+      if( onDevice )
+      {
+        if( withMetadata )
+        {
+          packedSize += wrapperHelpers::PackByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
+        }
+        else
+        {
+          packedSize += wrapperHelpers::PackDataByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
+        }
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
+      }
+    }
+    else
+    {
+      GEOSX_LOG( "COUCOU I was there 0" );
+    }
+    return packedSize;
+  }
+
+  /**
+   * @copydoc WrapperBase::packPrivate
+   */
+  localIndex packPrivate( buffer_unit_type * & buffer,
+                          bool withMetadata,
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const override final
+  {
+    return this->packTemplate< true >( buffer, withMetadata, onDevice, events );
   }
 
   /**
    * @copydoc WrapperBase::packByIndexPrivate
    */
-  localIndex packByIndexPrivate( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packByIndexPrivate( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList,
+                                 bool withMetadata,
+                                 bool onDevice,
+                                 parallelDeviceEvents & events ) const override final
   {
-    localIndex packedSize = 0;
-    if( sizedFromParent() == 1 )
-    {
-      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList, events );
-        }
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackByIndex< true >( buffer, *m_data, packList );
-      }
-    }
-    else
-    {
-      GEOSX_LOG("COUCOU I was there 0");
-    }
-    return packedSize;
+    return this->packByIndexTemplate< true >( buffer, packList, withMetadata, onDevice, events );
   }
 
   /**
    * @copydoc WrapperBase::packSizePrivate
    */
-  localIndex packSizePrivate( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packSizePrivate( bool withMetadata,
+                              bool onDevice,
+                              parallelDeviceEvents & events ) const override final
   {
-    buffer_unit_type * buffer = nullptr;
-    localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
-    if( onDevice )
-    {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference(), events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference(), events );
-      }
-    }
-    else
-    {
-      packedSize += bufferOps::Pack< false >( buffer, *m_data );
-    }
-    return packedSize;
+    buffer_unit_type * dummy;
+    return this->packTemplate< false >( dummy, withMetadata, onDevice, events );
   }
 
   /**
    * @copydoc WrapperBase::packByIndexSizePrivate
    */
-  localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList,
+                                     bool withMetadata,
+                                     bool onDevice,
+                                     parallelDeviceEvents & events ) const override final
   {
-    localIndex packedSize = 0;
-    buffer_unit_type * buffer = nullptr;
-    if( sizedFromParent() == 1 )
-    {
-      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList, events );
-        }
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackByIndex< false >( buffer, *m_data, packList );
-      }
-    }
-    else
-    {
-      GEOSX_LOG("COUCOU I was there 1");
-    }
-    return packedSize;
+    buffer_unit_type * dummy;
+    return this->packByIndexTemplate< false >( dummy, packList, withMetadata, onDevice, events );
   }
-
 
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
