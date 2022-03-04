@@ -5,7 +5,7 @@ Constitutive models
 ################################################################################
 
 In GEOSX, all constitutive models defining fluid and rock properties are implemented
-in the namespace ``constitutive`` and derive from a common base class,
+in the namespace ``constitutive`` and derived from a common base class,
 ``ConstitutiveBase``. All objects are owned and handled by the ``ConstitutiveManager``.
 
 Standalone models
@@ -23,7 +23,7 @@ Storage, allocation, and update of properties
 Each constitutive model owns, as member variables, ``LvArray::Array`` containers
 that hold the properties (or fields) and their derivatives with respect to the
 other fields needed to update each property. Each property is stored as an array with the
-first dimension representing the elementIndex and the second dimension the index of the
+first dimension representing the elementIndex and the second dimension storing the index of the
 integration point. These dimensions are determined by the number of elements of the
 subregion on which each constitutive model is registered, and by the chosen discretization
 method. Vector and tensor fields have an additional dimension to identify
