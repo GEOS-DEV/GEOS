@@ -3,6 +3,8 @@
 #
 
 set( gtest_geosx_tests
+     testAquiferBoundaryCondition.cpp
+     testFieldSpecificationsEnums.cpp
      testRecursiveFieldApplication.cpp
    )
 

@@ -7,11 +7,7 @@
       name="compflow"
       logLevel="1"
       discretization="fluidTPFA"
-      targetRegions="{ region }"
-      fluidNames="{ fluid }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
+      targetRegions="{ mesh1/region }"
       temperature="300"
       initialDt="1e-3">
       <NonlinearSolverParameters
@@ -64,10 +60,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
@@ -75,7 +68,8 @@
     <CellElementRegion
       name="region"
       cellBlocks="{ block }"
-      materialList="{ fluid, rock, relperm, rockPerm, rockPorosity, nullSolid }"/>
+      meshBody="mesh1"
+      materialList="{ fluid, rock, relperm }"/>
   </ElementRegions>
 
   <Constitutive>

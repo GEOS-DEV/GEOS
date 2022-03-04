@@ -52,9 +52,9 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const override;
+  void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
+                arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const;
 
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
@@ -93,8 +93,6 @@ public:
 
   VanGenuchtenCapillaryPressure( string const & name,
                                  dataRepository::Group * const parent );
-
-  virtual ~VanGenuchtenCapillaryPressure() override;
 
   static string catalogName() { return "VanGenuchtenCapillaryPressure"; }
 

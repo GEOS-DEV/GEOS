@@ -38,17 +38,6 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
     setDescription( "Biot coefficient." );
 }
 
-BiotPorosity::~BiotPorosity() = default;
-
-std::unique_ptr< ConstitutiveBase >
-BiotPorosity::deliverClone( string const & name,
-                            Group * const parent ) const
-{
-  std::unique_ptr< ConstitutiveBase > clone = ConstitutiveBase::deliverClone( name, parent );
-
-  return clone;
-}
-
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
                                              localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -58,8 +47,31 @@ void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,
 void BiotPorosity::postProcessInput()
 {
   PorosityBase::postProcessInput();
+  // TODO valdate input
 }
 
-REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
+void BiotPorosity::initializeState() const
+{
+  localIndex const numE = numElem();
+  localIndex const numQ = numQuad();
+
+  arrayView1d< real64 const > referencePorosity = m_referencePorosity;
+  arrayView2d< real64 >             newPorosity = m_newPorosity;
+  arrayView2d< real64 >             oldPorosity = m_oldPorosity;
+  arrayView2d< real64 >         initialPorosity = m_initialPorosity;
+
+  forAll< parallelDevicePolicy<> >( numE, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numQ; ++q )
+    {
+      newPorosity[k][q]     = referencePorosity[k];
+      oldPorosity[k][q]     = referencePorosity[k];
+      initialPorosity[k][q] = referencePorosity[k];
+    }
+  } );
 }
+
+
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, BiotPorosity, string const &, Group * const )
+} /* namespace constitutive */
 } /* namespace geosx */

@@ -19,17 +19,48 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_WELLS_SINGLEPHASEWELLKERNELS_HPP
 
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseWellKernels
+namespace singlePhaseWellKernels
 {
+
+// tag to access well and reservoir elements in perforation rates computation
+struct SubRegionTag
+{
+  static constexpr integer RES  = 0;
+  static constexpr integer WELL = 1;
+};
+
+// tag to access the next and current well elements of a connection
+struct ElemTag
+{
+  static constexpr integer CURRENT = 0;
+  static constexpr integer NEXT    = 1;
+};
+
+// define the column offset of the derivatives
+struct ColOffset
+{
+  static constexpr integer DPRES = 0;
+  static constexpr integer DRATE = 1;
+};
+
+// define the row offset of the residual equations
+struct RowOffset
+{
+  static constexpr integer CONTROL = 0;
+  static constexpr integer MASSBAL = 1;
+};
 
 
 /******************************** ControlEquationHelper ********************************/
@@ -37,12 +68,15 @@ namespace SinglePhaseWellKernels
 struct ControlEquationHelper
 {
 
-  using ROFFSET = SinglePhaseWell::RowOffset;
-  using COFFSET = SinglePhaseWell::ColOffset;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+
+  // add an epsilon to the checks to avoid control changes due to tiny pressure/rate updates
+  static constexpr real64 EPS = 1e-15;
 
   GEOSX_HOST_DEVICE
   static void
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
@@ -73,9 +107,9 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  using ROFFSET = SinglePhaseWell::RowOffset;
-  using COFFSET = SinglePhaseWell::ColOffset;
-  using TAG = SinglePhaseWell::ElemTag;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+  using TAG = singlePhaseWellKernels::ElemTag;
 
   static void
   launch( localIndex const size,
@@ -96,9 +130,9 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  using ROFFSET = SinglePhaseWell::RowOffset;
-  using COFFSET = SinglePhaseWell::ColOffset;
-  using TAG = WellSolverBase::ElemTag;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+  using TAG = singlePhaseWellKernels::ElemTag;
 
   static localIndex
   launch( localIndex const size,
@@ -125,7 +159,18 @@ struct PressureRelationKernel
 struct PerforationKernel
 {
 
-  using TAG = SinglePhaseWell::SubRegionTag;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
+
+  using SinglePhaseFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure >;
+
+  using SingleFluidAccessors =
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure,
+                              extrinsicMeshData::singlefluid::viscosity,
+                              extrinsicMeshData::singlefluid::dViscosity_dPressure >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -188,8 +233,8 @@ struct PerforationKernel
 struct AccumulationKernel
 {
 
-  using ROFFSET = SinglePhaseWell::RowOffset;
-  using COFFSET = SinglePhaseWell::ColOffset;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
 
   static void
   launch( localIndex const size,
@@ -209,6 +254,13 @@ struct AccumulationKernel
 
 struct PresInitializationKernel
 {
+
+  using SinglePhaseFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure >;
+
+  using SingleFluidAccessors =
+    StencilMaterialAccessors< constitutive::SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density >;
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -285,7 +337,7 @@ struct ResidualNormKernel
         for( localIndex idof = 0; idof < 2; ++idof )
         {
           real64 normalizer = 0.0;
-          if( idof == SinglePhaseWell::RowOffset::CONTROL )
+          if( idof == singlePhaseWellKernels::RowOffset::CONTROL )
           {
             // for the top well element, normalize using the current control
             if( isLocallyOwned && iwelem == iwelemControl )
@@ -356,7 +408,7 @@ struct SolutionCheckKernel
   }
 };
 
-} // end namespace SinglePhaseWellKernels
+} // end namespace singlePhaseWellKernels
 
 } // end namespace geosx
 

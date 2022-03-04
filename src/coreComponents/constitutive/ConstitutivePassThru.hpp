@@ -26,15 +26,23 @@
 #include "solid/DamageSpectral.hpp"
 #include "solid/DruckerPrager.hpp"
 #include "solid/DruckerPragerExtended.hpp"
+#include "solid/ModifiedCamClay.hpp"
+#include "solid/DelftEgg.hpp"
 #include "solid/ElasticIsotropic.hpp"
+#include "solid/ElasticIsotropicPressureDependent.hpp"
 #include "solid/ElasticTransverseIsotropic.hpp"
 #include "solid/ElasticOrthotropic.hpp"
 #include "solid/PorousSolid.hpp"
 #include "solid/CompressibleSolid.hpp"
+#include "solid/ProppantSolid.hpp"
 #include "solid/porosity/PressurePorosity.hpp"
+#include "solid/porosity/ProppantPorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
+#include "permeability/ProppantPermeability.hpp"
+#include "permeability/SlipDependentPermeability.hpp"
+
 
 namespace geosx
 {
@@ -74,9 +82,12 @@ struct ConstitutivePassThru< SolidBase >
                                  DamageVolDev< ElasticIsotropic >,
                                  Damage< ElasticIsotropic >,
                                  DruckerPragerExtended,
+                                 ModifiedCamClay,
+                                 DelftEgg,
                                  DruckerPrager,
                                  ElasticIsotropic,
                                  ElasticTransverseIsotropic,
+                                 ElasticIsotropicPressureDependent,
                                  ElasticOrthotropic >::execute( constitutiveRelation,
                                                                 std::forward< LAMBDA >( lambda ) );
   }
@@ -133,9 +144,12 @@ struct ConstitutivePassThru< PorousSolidBase >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
@@ -155,8 +169,10 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
-                                                                                                               std::forward< LAMBDA >( lambda ) );
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
   }
 
   template< typename LAMBDA >
@@ -164,8 +180,33 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
-                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > >::execute( constitutiveRelation,
-                                                                                                               std::forward< LAMBDA >( lambda ) );
+                                 CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >
+                                 >::execute( constitutiveRelation,
+                                             std::forward< LAMBDA >( lambda ) );
+  }
+};
+
+/**
+ * Specialization for the ProppantModel.
+ */
+template<>
+struct ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeability > >
+{
+  template< typename LAMBDA >
+  static
+  void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
+  {
+    if( auto * const ptr = dynamic_cast< ProppantSolid< ProppantPorosity, ProppantPermeability > * >( &constitutiveRelation ) )
+    {
+      lambda( *ptr );
+    }
+    else
+    {
+      GEOSX_ERROR( "ConstitutivePassThru< ProppantSolid >::execute failed. The constitutive relation is named "
+                   << constitutiveRelation.getName() << " with type "
+                   << LvArray::system::demangleType( constitutiveRelation ) );
+    }
   }
 };
 
@@ -182,10 +223,14 @@ struct ConstitutivePassThru< CoupledSolidBase >
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,
@@ -199,10 +244,14 @@ struct ConstitutivePassThru< CoupledSolidBase >
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
+                                 CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
                                  PorousSolid< DruckerPragerExtended >,
+                                 PorousSolid< ModifiedCamClay >,
+                                 PorousSolid< DelftEgg >,
                                  PorousSolid< DruckerPrager >,
                                  PorousSolid< ElasticIsotropic >,
                                  PorousSolid< ElasticTransverseIsotropic >,
+                                 PorousSolid< ElasticIsotropicPressureDependent >,
                                  PorousSolid< ElasticOrthotropic >,
                                  PorousSolid< DamageSpectral< ElasticIsotropic > >,
                                  PorousSolid< DamageVolDev< ElasticIsotropic > >,

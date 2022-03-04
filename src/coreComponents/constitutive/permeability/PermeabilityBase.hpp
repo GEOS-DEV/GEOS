@@ -56,15 +56,6 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updateFromPressureStrain( localIndex const k,
-                                         localIndex const q,
-                                         real64 const & pressure,
-                                         real64 const & volStrain ) const
-  {
-    GEOSX_UNUSED_VAR( k, q, pressure, volStrain );
-  }
-
-  GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
                                    real64 const & oldHydraulicAperture,
@@ -72,6 +63,27 @@ public:
   {
     GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndProppantVolumeFraction ( localIndex const k,
+                                                             localIndex const q,
+                                                             real64 const & oldHydraulicAperture,
+                                                             real64 const & newHydraulicAperture,
+                                                             real64 const & proppantPackVolumeFraction ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
+  }
+
 
 protected:
 
@@ -85,7 +97,6 @@ protected:
 
   arrayView3d< real64 > m_dPerm_dPressure;
 };
-
 
 class PermeabilityBase : public ConstitutiveBase
 {
@@ -107,12 +118,8 @@ public:
 
   arrayView3d< real64 const > dPerm_dPressure() const { return m_dPerm_dPressure; }
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {
-    static constexpr char const * permeabilityString() { return "permeability"; }
-    static constexpr char const * dPerm_dPressureString() { return "dPerm_dPressure"; }
-    static constexpr char const * dPerm_dApertureString() { return "dPerm_dAperture"; }
-  } viewKeys;
+  virtual void initializeState() const
+  {}
 
 protected:
 

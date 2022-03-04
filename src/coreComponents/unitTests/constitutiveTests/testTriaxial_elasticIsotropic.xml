@@ -5,12 +5,14 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="elastic"
-      mode="triaxial"
-      strainFunction="strainFunction"
-      stressFunction="stressFunction"
-      steps="50"
+      mode="mixedControl" 
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-1.0"
+      steps="50" 
+      output="none"
       baseline="testTriaxial_elasticIsotropic.txt"
-      logLevel="1"/>
+      logLevel="0" />
   </Tasks>
 
   <Events
@@ -55,4 +57,12 @@
       nz="{ 1 }"
       cellBlockNames="{ cellBlock01 }"/>
   </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+
 </Problem>

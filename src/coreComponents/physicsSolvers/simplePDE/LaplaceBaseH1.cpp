@@ -111,7 +111,7 @@ void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n
                                        DomainPartition & domain )
 {
   // Computation of the sparsity pattern
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 }
 
 void LaplaceBaseH1::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -125,7 +125,7 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
   dofManager.addField( m_fieldName,
                        DofManager::Location::Node,
                        1,
-                       targetRegionNames() );
+                       m_meshTargets );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -196,9 +196,15 @@ void LaplaceBaseH1::
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
-      ( targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
-      dofManager.rankOffset(), localMatrix, localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     m_fieldName,
+                                                                     dofManager.getKey( m_fieldName ),
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 

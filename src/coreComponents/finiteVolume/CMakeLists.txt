@@ -10,7 +10,7 @@ set( finiteVolume_headers
      FaceElementToCellStencil.hpp
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
-     FluxStencil.hpp
+     ProjectionEDFMHelper.hpp
      HybridMimeticDiscretization.hpp
      MimeticInnerProductDispatch.hpp 
      StencilBase.hpp    
@@ -35,8 +35,9 @@ set( finiteVolume_sources
      EmbeddedSurfaceToCellStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
-     HybridMimeticDiscretization.cpp
      TwoPointFluxApproximation.cpp
+     ProjectionEDFMHelper.cpp
+     HybridMimeticDiscretization.cpp
    )
 
 set( dependencyList mesh codingUtilities fieldSpecification )

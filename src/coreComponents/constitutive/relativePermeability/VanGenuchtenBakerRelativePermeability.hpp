@@ -54,9 +54,9 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+  void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
@@ -110,8 +110,6 @@ class VanGenuchtenBakerRelativePermeability : public RelativePermeabilityBase
 public:
 
   VanGenuchtenBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
-
-  virtual ~VanGenuchtenBakerRelativePermeability() override;
 
   static string catalogName() { return "VanGenuchtenBakerRelativePermeability"; }
 

@@ -18,13 +18,16 @@
 
 #ifndef GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_MULTIPHASEPOROMECHANICSKERNEL_HPP_
+
 #include "finiteElement/kernelInterface/ImplicitKernelBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 
 namespace geosx
 {
 
-namespace PoromechanicsKernels
+namespace poromechanicsKernels
 {
 
 /**
@@ -60,9 +63,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   static constexpr int numMaxComponents = 3;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -86,15 +90,15 @@ public:
               SUBREGION_TYPE const & elementSubRegion,
               FE_TYPE const & finiteElementSpace,
               CONSTITUTIVE_TYPE & inputConstitutiveType,
-              arrayView1d< globalIndex const > const & inputDispDofNumber,
-              string const & inputFlowDofKey,
+              arrayView1d< globalIndex const > const inputDispDofNumber,
+              string const inputFlowDofKey,
               globalIndex const rankOffset,
               real64 const (&inputGravityVector)[3],
               localIndex const numComponents,
               localIndex const numPhases,
-              arrayView1d< string const > const fluidModelNames,
-              CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-              arrayView1d< real64 > const & inputRhs ):
+              string const fluidModelKey,
+              CRSMatrixView< real64, globalIndex const > const inputMatrix,
+              arrayView1d< real64 > const inputRhs ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -122,48 +126,39 @@ public:
 
     // extract fluid constitutive data views
     {
+      string const fluidModelName = elementSubRegion.template getReference< string >( fluidModelKey );
       constitutive::MultiFluidBase const & fluid =
-        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelNames[targetRegionIndex] );
+        elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
-      m_dFluidPhaseDensity_dPressure = fluid.dPhaseDensity_dPressure();
-      m_dFluidPhaseDensity_dGlobalCompFraction = fluid.dPhaseDensity_dGlobalCompFraction();
+      m_dFluidPhaseDensity = fluid.dPhaseDensity();
 
       m_fluidPhaseCompFrac = fluid.phaseCompFraction();
-      m_dFluidPhaseCompFrac_dPressure = fluid.dPhaseCompFraction_dPressure();
-      m_dFluidPhaseCompFraction_dGlobalCompFraction = fluid.dPhaseCompFraction_dGlobalCompFraction();
+      m_dFluidPhaseCompFrac = fluid.dPhaseCompFraction();
 
       m_fluidPhaseMassDensity = fluid.phaseMassDensity();
+      m_initialFluidTotalMassDensity = fluid.initialTotalMassDensity();
+
     }
 
-    // extract views into common flow solver data
+    // extract views into flow solver data
     {
-      using keys = FlowSolverBase::viewKeyStruct;
+      using namespace extrinsicMeshData::flow;
 
-      m_fluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::pressureString() );
-      m_deltaFluidPressure = elementSubRegion.template getReference< array1d< real64 > >( keys::deltaPressureString() );
-    }
+      m_initialFluidPressure = elementSubRegion.template getExtrinsicData< initialPressure >();
+      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
+      m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< deltaPressure >();
 
-    // extract views into multiphase solver data
-    {
-      using keys = CompositionalMultiphaseBase::viewKeyStruct;
+      m_fluidPhaseDensityOld = elementSubRegion.template getExtrinsicData< phaseDensityOld >();
+      m_fluidPhaseCompFracOld = elementSubRegion.template getExtrinsicData< phaseComponentFractionOld >();
+      m_fluidPhaseSaturationOld = elementSubRegion.template getExtrinsicData< phaseVolumeFractionOld >();
 
-      m_fluidPhaseDensityOld =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseDensityOldString() );
-      m_fluidPhaseCompFracOld =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_PHASE_COMP > >( keys::phaseComponentFractionOldString() );
-      m_fluidPhaseSaturationOld =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionOldString() );
-
-      m_fluidPhaseSaturation =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::phaseVolumeFractionString() );
-      m_dFluidPhaseSaturation_dPressure =
-        elementSubRegion.template getReference< array2d< real64, compflow::LAYOUT_PHASE > >( keys::dPhaseVolumeFraction_dPressureString() );
-      m_dFluidPhaseSaturation_dGlobalCompDensity =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_PHASE_DC > >( keys::dPhaseVolumeFraction_dGlobalCompDensityString() );
+      m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
+      m_dFluidPhaseSaturation_dPressure = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dPressure >();
+      m_dFluidPhaseSaturation_dGlobalCompDensity = elementSubRegion.template getExtrinsicData< dPhaseVolumeFraction_dGlobalCompDensity >();
 
       m_dGlobalCompFraction_dGlobalCompDensity =
-        elementSubRegion.template getReference< array3d< real64, compflow::LAYOUT_COMP_DC > >( keys::dGlobalCompFraction_dGlobalCompDensityString() );
+        elementSubRegion.template getExtrinsicData< dGlobalCompFraction_dGlobalCompDensity >();
     }
   }
 
@@ -179,7 +174,7 @@ public:
   {
 public:
 
-    static constexpr int numDispDofPerElem =  Base::StackVariables::numRows;
+    static constexpr int numDispDofPerElem =  Base::StackVariables::maxNumRows;
 
     /// Constructor.
     GEOSX_HOST_DEVICE
@@ -278,11 +273,11 @@ public:
     real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
 
     // Evaluate total stress tensor
-    real64 strainIncrement[6] = {0};
+    real64 strainIncrement[6] = {0.0};
     real64 totalStress[6];
     real64 dPorosity_dPressure;
     real64 dPorosity_dVolStrainIncrement;
-    real64 dTotalStress_dPressure;
+    real64 dTotalStress_dPressure[6] = {0.0};
 
 
     // --- Update effective stress tensor (stored in totalStress)
@@ -291,6 +286,8 @@ public:
 
     m_constitutiveUpdate.smallStrainUpdate( k,
                                             q,
+                                            m_initialFluidPressure[k],
+                                            m_fluidPressure[k],
                                             m_deltaFluidPressure[k],
                                             strainIncrement,
                                             totalStress,
@@ -301,29 +298,32 @@ public:
 
     real64 const porosityNew = m_constitutiveUpdate.getPorosity( k, q );
     real64 const porosityOld = m_constitutiveUpdate.getOldPorosity( k, q );
+    real64 const porosityInit = m_constitutiveUpdate.getInitialPorosity( k, q );
 
-    real64 const pressureStressTerm = -dTotalStress_dPressure * ( m_fluidPressure[k] + m_deltaFluidPressure[k] );
-
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, pressureStressTerm );
-
-    // Evaluate body force vector
+    // Evaluate body force vector (incremental form wrt initial equilibrium state)
     real64 bodyForce[3] = { m_gravityVector[0],
                             m_gravityVector[1],
                             m_gravityVector[2]};
     if( m_gravityAcceleration > 0.0 )
     {
       // Compute mixture density
-      real64 mixtureDensity = m_fluidPhaseSaturation( k, 0 ) * m_fluidPhaseMassDensity( k, q, 0 );
+      real64 mixtureDensityNew = m_fluidPhaseSaturation( k, 0 ) * m_fluidPhaseMassDensity( k, q, 0 );
       for( localIndex i = 1; i < NP; ++i )
       {
-        mixtureDensity += m_fluidPhaseSaturation( k, i ) * m_fluidPhaseMassDensity( k, q, i );
+        mixtureDensityNew += m_fluidPhaseSaturation( k, i ) * m_fluidPhaseMassDensity( k, q, i );
       }
-      mixtureDensity *= porosityNew;
-      mixtureDensity += ( 1.0 - porosityNew ) * m_solidDensity( k, q );
-      mixtureDensity *= detJxW;
-      bodyForce[0] *= mixtureDensity;
-      bodyForce[1] *= mixtureDensity;
-      bodyForce[2] *= mixtureDensity;
+      mixtureDensityNew *= porosityNew;
+      mixtureDensityNew += ( 1.0 - porosityNew ) * m_solidDensity( k, q );
+
+      real64 mixtureDensityInit = m_initialFluidTotalMassDensity( k, q ) * porosityInit;
+      mixtureDensityInit += ( 1.0 - porosityInit ) * m_solidDensity( k, q );
+
+      mixtureDensityNew *= detJxW;
+      mixtureDensityInit *= detJxW;
+      real64 const mixtureDensityIncrement = mixtureDensityNew - mixtureDensityInit;
+      bodyForce[0] *= mixtureDensityIncrement;
+      bodyForce[1] *= mixtureDensityIncrement;
+      bodyForce[2] *= mixtureDensityIncrement;
     }
 
     // Assemble local jacobian and residual
@@ -344,9 +344,17 @@ public:
 
     for( integer a = 0; a < numNodesPerElem; ++a )
     {
-      stack.localDispFlowJacobian[a*3+0][0] += dNdX[a][0] * dTotalStress_dPressure * detJxW;
-      stack.localDispFlowJacobian[a*3+1][0] += dNdX[a][1] * dTotalStress_dPressure * detJxW;
-      stack.localDispFlowJacobian[a*3+2][0] += dNdX[a][2] * dTotalStress_dPressure * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][0] * dTotalStress_dPressure[0] * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][2] * dTotalStress_dPressure[4] * detJxW;
+      stack.localDispFlowJacobian[a*3+0][0] -= dNdX[a][1] * dTotalStress_dPressure[5] * detJxW;
+
+      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][1] * dTotalStress_dPressure[1] * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][2] * dTotalStress_dPressure[3] * detJxW;
+      stack.localDispFlowJacobian[a*3+1][0] -= dNdX[a][0] * dTotalStress_dPressure[5] * detJxW;
+
+      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][2] * dTotalStress_dPressure[2] * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][1] * dTotalStress_dPressure[3] * detJxW;
+      stack.localDispFlowJacobian[a*3+2][0] -= dNdX[a][0] * dTotalStress_dPressure[4] * detJxW;
     }
 
     if( m_gravityAcceleration > 0.0 )
@@ -359,10 +367,12 @@ public:
     // --- Mass balance accumulation
     // --- --- sum contributions to component accumulation from each phase
 
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+
     // --- --- temporary work arrays
-    real64 dPhaseAmount_dC[numMaxComponents];
-    real64 dPhaseCompFrac_dC[numMaxComponents];
-    real64 componentAmount[numMaxComponents] = { 0.0 };
+    real64 dPhaseAmount_dC[numMaxComponents]{};
+    real64 dPhaseCompFrac_dC[numMaxComponents]{};
+    real64 componentAmount[numMaxComponents]{};
 
     for( localIndex ip = 0; ip < NP; ++ip )
     {
@@ -371,13 +381,14 @@ public:
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip )
                                      + porosityNew * (m_dFluidPhaseSaturation_dPressure( k, ip ) * m_fluidPhaseDensity( k, q, ip )
-                                                      + m_fluidPhaseSaturation( k, ip ) * m_dFluidPhaseDensity_dPressure( k, q, ip ) );
+                                                      + m_fluidPhaseSaturation( k, ip ) * m_dFluidPhaseDensity( k, q, ip, Deriv::dP ) );
 
       // assemble density dependence
       applyChainRule( NC,
                       m_dGlobalCompFraction_dGlobalCompDensity[k],
-                      m_dFluidPhaseDensity_dGlobalCompFraction[k][q][ip],
-                      dPhaseAmount_dC );
+                      m_dFluidPhaseDensity[k][q][ip],
+                      dPhaseAmount_dC,
+                      Deriv::dC );
 
       for( localIndex jc = 0; jc < NC; ++jc )
       {
@@ -395,7 +406,7 @@ public:
         real64 const phaseCompAmountOld = phaseAmountOld * m_fluidPhaseCompFracOld( k, ip, ic );
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
-                                           + phaseAmountNew * m_dFluidPhaseCompFrac_dPressure( k, q, ip, ic );
+                                           + phaseAmountNew * m_dFluidPhaseCompFrac( k, q, ip, ic, Deriv::dP );
 
         componentAmount[ic] += fluidPhaseDensityTimesFluidPhaseSaturation * m_fluidPhaseCompFrac( k, q, ip, ic );
 
@@ -408,8 +419,9 @@ public:
         // assemble phase composition dependence
         applyChainRule( NC,
                         m_dGlobalCompFraction_dGlobalCompDensity[k],
-                        m_dFluidPhaseCompFraction_dGlobalCompFraction[k][q][ip][ic],
-                        dPhaseCompFrac_dC );
+                        m_dFluidPhaseCompFrac[k][q][ip][ic],
+                        dPhaseCompFrac_dC,
+                        Deriv::dC );
 
         for( localIndex jc = 0; jc < NC; ++jc )
         {
@@ -453,6 +465,8 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+    using namespace compositionalMultiphaseUtilities;
+
     GEOSX_UNUSED_VAR( k );
 
     real64 maxForce = 0;
@@ -460,8 +474,13 @@ public:
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     //int nFlowDof = m_numComponents + 1;
-
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
+
+    // Apply equation/variable change transformation(s)
+    real64 work[nUDof > ( numMaxComponents + 1 ) ? nUDof : numMaxComponents + 1];
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, nUDof, stack.localFlowDispJacobian, work );
+    shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( m_numComponents, m_numComponents + 1, stack.localFlowFlowJacobian, work );
+    shiftElementsAheadByOneAndReplaceFirstElementWithSum( m_numComponents, stack.localFlowResidual );
 
     for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
     {
@@ -536,30 +555,34 @@ protected:
 
   /// The rank global density
   arrayView2d< real64 const > m_solidDensity;
+
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseDensityOld;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseDensity_dPressure;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity_dGlobalCompFraction;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity;
+
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
   arrayView3d< real64 const, compflow::USD_PHASE_COMP > m_fluidPhaseCompFracOld;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_dFluidPhaseCompFrac_dPressure;
+  arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFrac;
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
-  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_dFluidPhaseMassDensity_dPressure;
-  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity_dGlobalCompFraction;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseMassDensity;
+
+  arrayView2d< real64 const, constitutive::multifluid::USD_FLUID > m_initialFluidTotalMassDensity;
 
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturation;
   arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseSaturationOld;
   arrayView2d< real64 const, compflow::USD_PHASE > m_dFluidPhaseSaturation_dPressure;
-  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation_dGlobalCompFraction;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dFluidPhaseSaturation_dGlobalCompDensity;
 
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dGlobalCompFraction_dGlobalCompDensity;
 
-  arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFraction_dGlobalCompFraction;
+
 
   /// The global degree of freedom number
   arrayView1d< globalIndex const > m_flowDofNumber;
+
+  /// The rank-global initial fluid pressure array.
+  arrayView1d< real64 const > m_initialFluidPressure;
 
   /// The rank-global fluid pressure array.
   arrayView1d< real64 const > m_fluidPressure;
@@ -576,17 +599,17 @@ protected:
 };
 
 using MultiphaseKernelFactory = finiteElement::KernelFactory< Multiphase,
-                                                              arrayView1d< globalIndex const > const &,
-                                                              string const &,
+                                                              arrayView1d< globalIndex const > const,
+                                                              string const,
                                                               globalIndex const,
                                                               real64 const (&)[3],
                                                               localIndex const,
                                                               localIndex const,
-                                                              arrayView1d< string const > const,
-                                                              CRSMatrixView< real64, globalIndex const > const &,
-                                                              arrayView1d< real64 > const & >;
+                                                              string const,
+                                                              CRSMatrixView< real64, globalIndex const > const,
+                                                              arrayView1d< real64 > const >;
 
-} // namespace PoroelasticKernels
+} // namespace poromechanicsKernels
 
 } // namespace geosx
 

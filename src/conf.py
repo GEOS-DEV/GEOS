@@ -46,7 +46,6 @@ if read_the_docs_build:
                   "coreComponents/LvArray/src",
                   "coreComponents/mesh",
                   "coreComponents/managers",
-                  "coreComponents/meshUtilities",
                   "coreComponents/finiteElement/kernelInterface",
                   "coreComponents/mesh/ExtrinsicMeshData.hpp",
                   "coreComponents/physicsSolvers/simplePDE/LaplaceFEMKernels.hpp",
@@ -75,8 +74,8 @@ if read_the_docs_build:
 # -- Project information -----------------------------------------------------
 
 project = u'GEOSX'
-copyright = u'2018- LLNL, Stanford, and Total S.A'
-author = u'Randolph Settgast'
+copyright = u'2018-2021 Lawrence Livermore National Security, The Board of Trustees of the Leland Stanford Junior University, TotalEnergies, and GEOSX Contributors.'
+author = u'GEOSX Contributors'
 
 # The short X.Y version
 version = u''

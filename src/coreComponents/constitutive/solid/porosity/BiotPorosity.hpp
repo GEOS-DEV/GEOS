@@ -48,26 +48,29 @@ public:
   BiotPorosityUpdates( arrayView2d< real64 > const & newPorosity,
                        arrayView2d< real64 > const & oldPorosity,
                        arrayView2d< real64 > const & dPorosity_dPressure,
+                       arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
                        real64 const & grainBulkModulus ):
     PorosityBaseUpdates( newPorosity,
                          oldPorosity,
                          dPorosity_dPressure,
+                         initialPorosity,
                          referencePorosity ),
     m_biotCoefficient( biotCoefficient ),
     m_grainBulkModulus( grainBulkModulus )
   {}
 
+  GEOSX_HOST_DEVICE
+  real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
   GEOSX_HOST_DEVICE
-  void updatePorosity( localIndex const k,
-                       localIndex const q,
-                       real64 const & deltaPressure,
-                       real64 const ( &strainIncrement )[6],
-                       real64 & dPorosity_dPressure,
-                       real64 & dPorosity_dVolStrain,
-                       real64 & dTotalStress_dPressure ) const
+  void updateFromPressureAndStrain( localIndex const k,
+                                    localIndex const q,
+                                    real64 const & deltaPressure,
+                                    real64 const ( &strainIncrement )[6],
+                                    real64 & dPorosity_dPressure,
+                                    real64 & dPorosity_dVolStrain ) const
   {
     real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k] - m_referencePorosity[k] ) / m_grainBulkModulus;
 
@@ -80,8 +83,6 @@ public:
     dPorosity_dVolStrain = m_biotCoefficient[k];
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
-
-    dTotalStress_dPressure = m_biotCoefficient[k];
   }
 
 
@@ -104,11 +105,6 @@ class BiotPorosity : public PorosityBase
 public:
   BiotPorosity( string const & name, Group * const parent );
 
-  virtual ~BiotPorosity() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
@@ -120,9 +116,10 @@ public:
   {
     static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
     static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
-
-
   } viewKeys;
+
+
+  virtual void initializeState() const override final;
 
   using KernelWrapper = BiotPorosityUpdates;
 
@@ -135,6 +132,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
                           m_dPorosity_dPressure,
+                          m_initialPorosity,
                           m_referencePorosity,
                           m_biotCoefficient,
                           m_grainBulkModulus );

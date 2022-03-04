@@ -22,7 +22,11 @@ The XML file for this test case is located at :
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+  inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
+
+.. code-block:: console
+
+  inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
 
 This mesh is a simple internally generated regular grid (50 x 1 x 150).
 A single CO :sub:`2` injection well is at the center of the reservoir.
@@ -48,7 +52,7 @@ Multiphase flow and well solvers
 Let us inspect the **Solver** XML tags.
 They consist of three blocks **CompositionalMultiphaseFVM**, **CompositionalMultiphaseWell** and **CompositionalMultiphaseReservoir**, which are respectively handling the solution from multiphase flow in the reservoir, multiphase flow in the wells, and coupling between those two parts.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_SOLVER_END -->
@@ -74,7 +78,7 @@ Mesh and well geometry
 
 In this example, the **Mesh** tag is used to generate the reservoir mesh internally (:ref:`TutorialSinglePhaseFlowWithInternalMesh`). The internal generation of well is defined with the **InternalWell** sub-tag. Apart from the ``name`` identifier attribute and their ``wellRegionName`` (:ref:`ElementRegions <ElementRegions_tag_co2_field_case>`) and ``wellControlsName`` (:ref:`Solver <Solver_tag_co2_field_case>`) binding attributes, ``polylineNodeCoords`` and ``polylineSegmentConn`` attributes are used to define the path of the wellbore and connections between its nodes. The ``numElementsPerSegment`` discretizes the wellbore segments while the ``radius`` attribute specifies the wellbore radius (:ref:`TutorialDeadOilEgg` for details on wells). Once the wellbore is defined and discretized, the position of **Perforations** is defined using the linear distance from the head of the wellbore (``distanceFromHead``).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_MESH -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_MESH_END -->
@@ -101,7 +105,7 @@ It consists of saved checkpoints every 5 x :math:`10^7` seconds, whose physical 
 
 Finally, the time history collection and output events are used to trigger the mechanisms involved in the generation of a time series of well pressure (see the procedure outlined in :ref:`TasksManager`, and the example in :ref:`TutorialDeadOilEgg`).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_EVENTS -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_EVENTS_END -->
@@ -120,7 +124,7 @@ The **TwoPointFluxApproximation** is chosen for the fluid equation discretizatio
 - A ``coefficientName`` pointing to the field used for TPFA transmissibilities construction.
 - A ``coefficientModelNames`` used to specify the permeability constitutive model(s).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_NUMERICAL_END -->
@@ -134,7 +138,7 @@ Element regions
 We define a **CellElementRegion** pointing to the cell block defining the reservoir mesh, and a **WellElementRegion** for the well.
 The two regions contain a list of constitutive model names.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_REGION -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_REGION_END -->
@@ -148,17 +152,17 @@ Constitutive laws
 
 Under the **Constitutive** tag, four items can be found:
 
-- **CO2BrineFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
+- **CO2BrinePhillipsFluid** : this tag defines phase names, component molar weights, and fluid behaviors such as CO :sub:`2` solubility in brine and viscosity/density dependencies on pressure and temperature. 
 - **PressurePorosity** : this tag contains all the data needed to model rock compressibility.
 - **BrooksCoreyRelativePermeability** : this tag defines the relative permeability model for each phase, its end-point values, residual volume fractions (saturations), and the Corey exponents.
 - **ConstantPermeability** : this tag defines the permeability model that is set to a simple constant diagonal tensor, whose values are defined in ``permeabilityComponent``. Note that these values will be overwritten by the permeability field imported in **FieldSpecifications**.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_CONSTITUTIVE_END -->
 
-The PVT data specified by **CO2BrineFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
+The PVT data specified by **CO2BrinePhillipsFluid** is set to model the behavior of the CO :sub:`2`-brine system as a function of pressure, temperature, and salinity.
 We currently rely on a two-phase, two-component (CO :sub:`2` and H :sub:`2` O) model in which salinity is a constant parameter in space and in time.
 The model is described in detail in  :ref:`CO2-EOS`.
 The model definition requires three text files:
@@ -183,13 +187,13 @@ The *pvtgas.txt* and *pvtliquid.txt* files define the models used to compute the
 
 .. code::
   
-        DensityFun BrineCO2Density 1e6 1.5e7 5e4 94 96 1 0
-        ViscosityFun BrineViscosity 0
+        DensityFun PhillipsBrineDensity 1e6 1.5e7 5e4 94 96 1 0
+        ViscosityFun PhillipsBrineViscosity 0
 
 In these files, the first keyword of each line is an identifier for the model type (either a density or a viscosity model).
 It is followed by the model name.
 Then, the lower, upper, and step increment values for pressure and temperature ranges are specified.
-The trailing 0 for ``BrineCO2Density`` and ``BrineViscosity`` entry is the salinity of the brine, set to zero.
+The trailing 0 for ``PhillipsBrineDensity`` and ``PhillipsBrineViscosity`` entry is the salinity of the brine, set to zero.
 
 .. note::
    It is the responsibility of the user to make sure that the pressure and temperature values encountered in the simulation (in the reservoir and in the well) are within the bounds specified in the PVT files. GEOSX will not throw an error if a value outside these bounds is encountered, but the (nonlinear) behavior of the simulation and the quality of the results will likely be negatively impacted.  
@@ -203,7 +207,7 @@ Property specification
 The **FieldSpecifications** tag is used to declare fields such as directional permeability, reference porosity, initial pressure, and compositions.
 Here, these fields are homogeneous, except for the permeability field that is taken as an heterogeneous log-normally distributed field and specified in **Functions** as in :ref:`TutorialFieldCase`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_FIELD -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_FIELD_END -->
@@ -226,7 +230,7 @@ A **Restart** tag is also be specified. In conjunction with a **PeriodicEvent**,
 a restart file allows to resume computations from a set of checkpoints in time. 
 Finally, we require an output of the well pressure history using the **TimeHistory** tag. 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_OUTPUT_END -->
@@ -242,7 +246,7 @@ This task is defined here, in the **PackCollection** XML sub-block of the **Task
 The task contains the path to the object on which the field to collect is registered (here, a ``WellElementSubRegion``) and the name of the field (here, ``pressure``).
 The details of the history collection mechanism can be found in :ref:`TasksManager`. 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/SimpleCo2InjTutorial.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/simpleCo2InjTutorial_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_Co2_TASKS -->
   :end-before: <!-- SPHINX_FIELD_CASE_Co2_TASKS_END -->

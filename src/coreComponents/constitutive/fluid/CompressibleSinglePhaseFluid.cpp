@@ -18,6 +18,8 @@
 
 #include "CompressibleSinglePhaseFluid.hpp"
 
+#include "SingleFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -31,6 +33,15 @@ CompressibleSinglePhaseFluid::CompressibleSinglePhaseFluid( string const & name,
   m_densityModelType( ExponentApproximationType::Linear ),
   m_viscosityModelType( ExponentApproximationType::Linear )
 {
+
+  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value for density." );
+
+  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Default value for viscosity." );
+
   registerWrapper( viewKeyStruct::compressibilityString(), &m_compressibility ).
     setApplyDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -74,6 +85,9 @@ void CompressibleSinglePhaseFluid::allocateConstitutiveData( dataRepository::Gro
 {
   SingleFluidBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 
+  getExtrinsicData< extrinsicMeshData::singlefluid::density >().setApplyDefaultValue( m_defaultDensity );
+  getExtrinsicData< extrinsicMeshData::singlefluid::viscosity >().setApplyDefaultValue( m_defaultViscosity );
+
   m_density.setValues< serialPolicy >( m_referenceDensity );
   m_viscosity.setValues< serialPolicy >( m_referenceViscosity );
 }
@@ -82,25 +96,33 @@ void CompressibleSinglePhaseFluid::postProcessInput()
 {
   SingleFluidBase::postProcessInput();
 
-  GEOSX_ERROR_IF_LT_MSG( m_compressibility, 0.0,
-                         getName() << ": invalid value of " << viewKeyStruct::compressibilityString() );
+  auto const checkNonnegative = [&]( real64 const value, auto const & attribute )
+  {
+    GEOSX_THROW_IF_LT_MSG( value, 0.0,
+                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkNonnegative( m_compressibility, viewKeyStruct::compressibilityString() );
+  checkNonnegative( m_viscosibility, viewKeyStruct::viscosibilityString() );
 
-  GEOSX_ERROR_IF_LT_MSG( m_viscosibility, 0.0,
-                         getName() << ": invalid value of " << viewKeyStruct::viscosibilityString() );
-
-  GEOSX_ERROR_IF_LE_MSG( m_referenceDensity, 0.0,
-                         getName() << ": invalid value of " << viewKeyStruct::referenceDensityString() );
-
-  GEOSX_ERROR_IF_LE_MSG( m_referenceViscosity, 0.0,
-                         getName() << ": invalid value of " << viewKeyStruct::referenceViscosityString() );
+  auto const checkPositive = [&]( real64 const value, auto const & attribute )
+  {
+    GEOSX_THROW_IF_LE_MSG( value, 0.0,
+                           GEOSX_FMT( "{}: invalid value of attribute '{}'", getFullName(), attribute ),
+                           InputError );
+  };
+  checkPositive( m_referenceDensity, viewKeyStruct::referenceDensityString() );
+  checkPositive( m_referenceViscosity, viewKeyStruct::referenceViscosityString() );
 
   // Due to the way update wrapper is currently implemented, we can only support one model type
-
-  GEOSX_ERROR_IF( m_densityModelType != ExponentApproximationType::Linear,
-                  getName() << ": model type currently not supported: " << m_densityModelType );
-
-  GEOSX_ERROR_IF( m_viscosityModelType != ExponentApproximationType::Linear,
-                  getName() << ": model type currently not supported: " << m_viscosityModelType );
+  auto const checkModelType = [&]( ExponentApproximationType const value, auto const & attribute )
+  {
+    GEOSX_THROW_IF_NE_MSG( value, ExponentApproximationType::Linear,
+                           GEOSX_FMT( "{}: invalid model type in attribute '{}' (only linear currently supported)", getFullName(), attribute ),
+                           InputError );
+  };
+  checkModelType( m_densityModelType, viewKeyStruct::densityModelTypeString() );
+  checkModelType( m_viscosityModelType, viewKeyStruct::viscosityModelTypeString() );
 
   // Set default values for derivatives (cannot be done in base class)
   // TODO: reconsider the necessity of this
@@ -108,8 +130,8 @@ void CompressibleSinglePhaseFluid::postProcessInput()
   real64 dRho_dP;
   real64 dVisc_dP;
   createKernelWrapper().compute( m_referencePressure, m_referenceDensity, dRho_dP, m_referenceViscosity, dVisc_dP );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::dDens_dPresString() ).setDefaultValue( dRho_dP );
-  this->getWrapper< array2d< real64 > >( viewKeyStruct::dVisc_dPresString() ).setDefaultValue( dVisc_dP );
+  getExtrinsicData< extrinsicMeshData::singlefluid::dDensity_dPressure >().setDefaultValue( dRho_dP );
+  getExtrinsicData< extrinsicMeshData::singlefluid::dViscosity_dPressure >().setDefaultValue( dVisc_dP );
 }
 
 CompressibleSinglePhaseFluid::KernelWrapper

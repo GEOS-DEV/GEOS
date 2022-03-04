@@ -1,0 +1,182 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <ElementRegions>
+    <CellElementRegion
+      name="Reservoir"
+      cellBlocks="{ Reservoir_TETRA }"
+      materialList="{ water, rock }"/>
+
+    <CellElementRegion
+      name="Burden"
+      cellBlocks="{ Overburden_TETRA, Underburden_TETRA }"
+      materialList="{ water, rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="0.0"
+      compressibility="1e-9"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="10e7"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-16 }"/>
+  </Constitutive>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+      />
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <Solvers>
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Reservoir }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        preconditionerType="amg"
+        krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Geometry>
+    <Box
+      name="all"
+      xMin="{ -1e9, -1e9, -1e9 }"
+      xMax="{ 1e9, 1e9, 1e9 }"/>
+
+    <Box
+      name="source"
+      xMin="{ 15500, 7000, -5000 }"
+      xMax="{ 16000, 7500, 0 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ 6500, 1500, -5000 }"
+      xMax="{ 7000, 2000, 0 }"/>
+  </Geometry>
+
+  <FieldSpecifications>
+
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/Reservoir"
+       fieldName="rockPerm_permeability"
+       scale="1e-15"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Reservoir"
+       fieldName="rockPerm_permeability"
+       scale="1e-15"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/Reservoir"
+       fieldName="rockPerm_permeability"
+       scale="3e-15"
+       functionName="permzFunc"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
+      fieldName="pressure"
+      scale="1e7"
+      />
+
+    <FieldSpecification
+      name="sourceTerm"
+      objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
+      fieldName="pressure"
+      scale="15e7"
+      setNames="{ source }"
+      />
+
+    <FieldSpecification
+      name="sinkTerm"
+      objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
+      fieldName="pressure"
+      scale="5e7"
+      setNames="{ sink }"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <VTK
+      name="reservoir_with_properties"/>
+  </Outputs>
+
+  <Functions>
+    <TableFunction
+      name="timeInj"
+      inputVarNames="{ time }"
+      coordinates="{ 1e6, 10e6, 50e6 }"
+      values="{ 1, 0.01, 0.00001 }"/>
+
+    <TableFunction
+      name="initialPressureFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/pressure.geos"/>
+
+    <TableFunction
+      name="permxFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/permx.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permyFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/permy.geos"
+      interpolation="nearest"/>
+
+    <TableFunction
+      name="permzFunc"
+      inputVarNames="{ elementCenter }"
+      coordinateFiles="{ tables_FieldCaseTuto/xlin.geos, tables_FieldCaseTuto/ylin.geos, tables_FieldCaseTuto/zlin.geos }"
+      voxelFile="tables_FieldCaseTuto/permz.geos"
+      interpolation="nearest"/>
+  </Functions>
+
+</Problem>

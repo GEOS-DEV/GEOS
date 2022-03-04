@@ -35,10 +35,10 @@ DeadOilFluid::DeadOilFluid( string const & name,
 void DeadOilFluid::readInputDataFromPVTFiles()
 {
   GEOSX_THROW_IF_NE_MSG( m_tableFiles.size(), numFluidPhases(),
-                         getFullName() << ": the number of table files must be equal to the number of phases",
+                         GEOSX_FMT( "{}: the number of table files must be equal to the number of phases", getFullName() ),
                          InputError );
   GEOSX_THROW_IF( m_formationVolFactorTableNames.size() > 0.0 || m_viscosityTableNames.size() > 0.0,
-                  getFullName() << ": input is redundant (user provided both TableFunction names and pvt files)",
+                  GEOSX_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
                   InputError );
 
   array1d< array1d< real64 > > tableValues;
@@ -61,7 +61,7 @@ void DeadOilFluid::readInputDataFromPVTFiles()
 void DeadOilFluid::readInputDataFromTableFunctions()
 {
   GEOSX_THROW_IF( !m_tableFiles.empty(),
-                  getFullName() << ": input is redundant (user provided both TableFunction names and pvt files)",
+                  GEOSX_FMT( "{}: input is redundant (both TableFunction names and pvt files)", getFullName() ),
                   InputError );
 
   integer const ipWater = m_phaseOrder[PhaseType::WATER];
@@ -72,26 +72,24 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   }
   else
   {
-    GEOSX_THROW_IF( m_waterParams.referencePressure > 0.0,
-                    getFullName() << ": if water is absent, this keyword is not needed " << viewKeyStruct::waterRefPressureString(),
-                    InputError );
-    GEOSX_THROW_IF( m_waterParams.formationVolFactor > 0.0,
-                    getFullName() << ": if water is absent, this keyword is not needed " << viewKeyStruct::waterFormationVolumeFactorString(),
-                    InputError );
-    GEOSX_THROW_IF( m_waterParams.viscosity > 0.0,
-                    getFullName() << ": if water is absent, this keyword is not needed " << viewKeyStruct::waterViscosityString(),
-                    InputError );
-    GEOSX_THROW_IF( m_waterParams.compressibility > 0.0,
-                    getFullName() << ": if water is absent, this keyword is not needed " << viewKeyStruct::waterCompressibilityString(),
-                    InputError );
+    auto const errorIfPositiveValue = [&]( real64 const value, auto const & attribute )
+    {
+      GEOSX_THROW_IF_GT_MSG( value, 0.0,
+                             GEOSX_FMT( "{}: if water is absent, attribute '{}' is not redundant", getFullName(), attribute ),
+                             InputError );
+    };
+    errorIfPositiveValue( m_waterParams.referencePressure, viewKeyStruct::waterRefPressureString() );
+    errorIfPositiveValue( m_waterParams.formationVolFactor, viewKeyStruct::waterFormationVolumeFactorString() );
+    errorIfPositiveValue( m_waterParams.viscosity, viewKeyStruct::waterViscosityString() );
+    errorIfPositiveValue( m_waterParams.compressibility, viewKeyStruct::waterCompressibilityString() );
   }
 
   integer const numExpectedTables = (ipGas >= 0) ? 2 : 1;
   GEOSX_THROW_IF_NE_MSG( m_formationVolFactorTableNames.size(), numExpectedTables,
-                         getFullName() << ": one formation volume factor table must be provided for each hydrocarbon phase",
+                         GEOSX_FMT( "{}: one formation volume factor table must be provided for each hydrocarbon phase", getFullName() ),
                          InputError );
   GEOSX_THROW_IF_NE_MSG( m_viscosityTableNames.size(), numExpectedTables,
-                         getFullName() << ": one viscosity table must be provided for each hydrocarbon phase",
+                         GEOSX_FMT( "{}: one viscosity table must be provided for each hydrocarbon phase", getFullName() ),
                          InputError );
 
   for( integer ip = 0; ip < numFluidPhases(); ++ip )
@@ -106,10 +104,10 @@ void DeadOilFluid::readInputDataFromTableFunctions()
   for( integer iph = 0; iph < m_hydrocarbonPhaseOrder.size(); ++iph )
   {
     GEOSX_THROW_IF( !functionManager.hasGroup( m_formationVolFactorTableNames[iph] ),
-                    getFullName() << ": the formation volume factor table " << m_formationVolFactorTableNames[iph] << " could not be found",
+                    GEOSX_FMT( "{}: formation volume factor table '{}' not found", getFullName(), m_formationVolFactorTableNames[iph] ),
                     InputError );
     GEOSX_THROW_IF( !functionManager.hasGroup( m_viscosityTableNames[iph] ),
-                    getFullName() << ": the viscosity table " << m_viscosityTableNames[iph] << " could not be found",
+                    GEOSX_FMT( "{}: viscosity table '{}' not found", getFullName(), m_viscosityTableNames[iph] ),
                     InputError );
   }
 }
@@ -128,6 +126,8 @@ DeadOilFluid::KernelWrapper::
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
                  PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
                  PhaseComp::ViewType phaseCompFraction,
                  FluidProp::ViewType totalDensity )
   : BlackOilFluidBase::KernelWrapper( std::move( phaseTypes ),
@@ -143,6 +143,8 @@ DeadOilFluid::KernelWrapper::
                                       std::move( phaseDensity ),
                                       std::move( phaseMassDensity ),
                                       std::move( phaseViscosity ),
+                                      std::move( phaseEnthalpy ),
+                                      std::move( phaseInternalEnergy ),
                                       std::move( phaseCompFraction ),
                                       std::move( totalDensity ) )
 {}
@@ -163,6 +165,8 @@ DeadOilFluid::createKernelWrapper()
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
                         m_phaseViscosity.toView(),
+                        m_phaseEnthalpy.toView(),
+                        m_phaseInternalEnergy.toView(),
                         m_phaseCompFraction.toView(),
                         m_totalDensity.toView() );
 }

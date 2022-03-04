@@ -44,50 +44,22 @@ namespace geosx
 /// @endcond
 
 /**
- * @struct SurfaceElementStencil_Traits
- * Struct to predeclare the types and constexpr values of SurfaceElementStencil so that they may be used in
- * StencilBase.
+ * @brief Describes properties of SurfaceElementStencil.
+ *
+ * This type of stencil allows for up to 6 surface elements to be connected in a flux computation.
+ * The total number of pairwise connections is thus: 6*(6-1)/2 = 15.
  */
-struct SurfaceElementStencil_Traits
-{
-  /// The array type that will be used to store the indices of the stencil contributors
-  using IndexContainerType = ArrayOfArrays< localIndex >;
-
-  /// The array view type for the stencil indices
-  using IndexContainerViewType = ArrayOfArraysView< localIndex >;
-
-  /// The array view to const type for the stencil indices
-  using IndexContainerViewConstType = ArrayOfArraysView< localIndex const >;
-
-  /// The array type that is used to store the weights of the stencil contributors
-  using WeightContainerType = ArrayOfArrays< real64 >;
-
-  /// The array view type for the stencil weights
-  using WeightContainerViewType = ArrayOfArraysView< real64 >;
-
-  /// The array view to const type for the stencil weights
-  using WeightContainerViewConstType = ArrayOfArraysView< real64 const >;
-
-  /// Number of points the flux is between (normally 2)
-  static localIndex constexpr NUM_POINT_IN_FLUX = 6;
-
-  /// Maximum number of points in a stencil
-  static localIndex constexpr MAX_STENCIL_SIZE = 6;
-
-  /// Maximum number of connections in a stencil
-  static localIndex constexpr MAX_NUM_OF_CONNECTIONS = MAX_STENCIL_SIZE * (MAX_STENCIL_SIZE - 1) / 2;
-};
+using SurfaceElementStencilTraits = StencilTraits< ArrayOfArrays, 6, 6, 15 >;
 
 /**
- * @class SurfaceElementStencilWrapper
- *
- * Class to provide access to the SurfaceElementStencil that may be
- * called from a kernel function.
+ * @brief Provides access to the SurfaceElementStencil that may be called from a kernel function.
  */
-class SurfaceElementStencilWrapper : public StencilWrapperBase< SurfaceElementStencil_Traits >,
-  public SurfaceElementStencil_Traits
+class SurfaceElementStencilWrapper : public StencilWrapperBase< SurfaceElementStencilTraits >
 {
 public:
+
+  /// Threshold for the application of the permeability multiplier
+  static constexpr real64 MULTIPLIER_THRESHOLD = 1e-10;
 
   /// Coefficient view accessory type
   template< typename VIEWTYPE >
@@ -107,18 +79,15 @@ public:
                                 IndexContainerType const & elementIndices,
                                 WeightContainerType const & weights,
                                 ArrayOfArrays< R1Tensor > const & cellCenterToEdgeCenters,
-                                real64 const meanPermCoefficient )
-
-    : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
-    m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
-    m_meanPermCoefficient( meanPermCoefficient )
-  {}
+                                real64 const meanPermCoefficient );
 
   /**
    * @brief Give the number of stencil entries.
    * @return The number of stencil entries
    */
-  virtual localIndex size() const override final
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  localIndex size() const
   { return m_elementRegionIndices.size(); }
 
   /**
@@ -154,14 +123,14 @@ public:
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar,
-                       real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
-                       real64 ( &dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const;
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                       real64 ( &weight )[maxNumConnections][2],
+                       real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
 
 
   /**
-   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @brief Compute weights and derivatives w.r.t to one variable.
    * @param[in] iconn connection index
    * @param[in] coefficient view accessor to the coefficient used to compute the weights
    * @param[in] dCoeff_dVar1 view accessor to the derivative of the coefficient w.r.t to the variable 1
@@ -172,12 +141,49 @@ public:
    */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar1,
-                       CoefficientAccessor< arrayView3d< real64 const > > const &  dCoeff_dVar2,
-                       real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
-                       real64 ( &dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
-                       real64 ( &dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const;
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
+                       CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar2,
+                       real64 ( &weight )[maxNumConnections][2],
+                       real64 ( &dWeight_dVar1 )[maxNumConnections][2],
+                       real64 ( &dWeight_dVar2 )[maxNumConnections][2][3] ) const;
+
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient view accessor to the coefficient used to compute the weights
+   * @param[in] coefficientMultiplier view accessor to the coefficient multiplier used to compute the weights
+   * @param[in] gravityVector gravity vector
+   * @param[out] weight view weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                       CoefficientAccessor< arrayView3d< real64 const > > const & coefficientMultiplier,
+                       R1Tensor const & gravityVector,
+                       real64 ( &weight )[maxNumConnections][2] ) const;
+
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable.
+   * @param[in] iconn connection index
+   * @param[in] coefficient1 view accessor to the first coefficient used to compute the first weights
+   * @param[in] coefficient1Multiplier view accessor to the coefficient multiplier used to compute the first weights
+   * @param[in] coefficient2 view accessor to the first coefficient used to compute the second weights
+   * @param[in] gravityVector gravity vector
+   * @param[out] weight1 view on the first weights
+   * @param[out] weight2 view on the second weights
+   * @param[out] geometricWeight view on the purely geometric weights
+   */
+  GEOSX_HOST_DEVICE
+  void computeWeights( localIndex iconn,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1,
+                       CoefficientAccessor< arrayView3d< real64 const > > const &  coefficient1Multiplier,
+                       CoefficientAccessor< arrayView1d< real64 const > > const &  coefficient2,
+                       R1Tensor const & gravityVector,
+                       real64 ( &weight1 )[maxNumPointsInFlux],
+                       real64 ( &weight2 )[maxNumPointsInFlux],
+                       real64 ( &geometricWeight )[maxNumPointsInFlux] ) const;
+
 
   /**
    * @brief Accessor to the CellCenterToEdgeCenter vector
@@ -187,6 +193,7 @@ public:
   { return m_cellCenterToEdgeCenters.toViewConst(); }
 
 private:
+
   /// Cell center to Edge center vector
   ArrayOfArraysView< R1Tensor > m_cellCenterToEdgeCenters;
 
@@ -195,28 +202,20 @@ private:
 };
 
 /**
- * @class SurfaceElementStencil
- *
- * Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
+ * @brief Provides management of the interior stencil points for a face elements when using Two-Point flux approximation.
  */
-class SurfaceElementStencil : public StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >,
-  public SurfaceElementStencil_Traits
+class SurfaceElementStencil final : public StencilBase< SurfaceElementStencilTraits, SurfaceElementStencil >
 {
 public:
 
-  /**
-   * @brief Default constructor.
-   */
-  SurfaceElementStencil();
-
-  virtual void move( LvArray::MemorySpace const space ) override final;
+  virtual void move( LvArray::MemorySpace const space ) override;
 
   virtual void add( localIndex const numPts,
                     localIndex const * const elementRegionIndices,
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
-                    localIndex const connectorIndex ) override final;
+                    localIndex const connectorIndex ) override;
 
   /**
    * @brief Add an entry to the stencil.
@@ -230,28 +229,19 @@ public:
 
 
   /// Type of kernel wrapper for in-kernel update
-  using StencilWrapper = SurfaceElementStencilWrapper;
+  using KernelWrapper = SurfaceElementStencilWrapper;
 
   /**
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  StencilWrapper createStencilWrapper() const
-  {
-    return StencilWrapper( m_elementRegionIndices,
-                           m_elementSubRegionIndices,
-                           m_elementIndices,
-                           m_weights,
-                           m_cellCenterToEdgeCenters,
-                           m_meanPermCoefficient );
-  }
-
+  KernelWrapper createKernelWrapper() const;
 
   /**
    * @brief Return the stencil size.
    * @return the stencil size
    */
-  virtual localIndex size() const override final
+  virtual localIndex size() const override
   { return m_elementRegionIndices.size(); }
 
   /**
@@ -284,19 +274,20 @@ private:
   ArrayOfArrays< R1Tensor > m_cellCenterToEdgeCenters;
 
   /// Mean permeability coefficient
-  real64 m_meanPermCoefficient;
+  real64 m_meanPermCoefficient = 1.0;
 
 };
 
 GEOSX_HOST_DEVICE
-inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
-                                                          CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                                                          CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
-                                                          real64 ( & weight )[MAX_NUM_OF_CONNECTIONS][2],
-                                                          real64 ( & dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const
+inline void
+SurfaceElementStencilWrapper::
+  computeWeights( localIndex iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar,
+                  real64 ( & weight )[maxNumConnections][2],
+                  real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
 
-  // TODO: this should become star-delta method
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
@@ -304,7 +295,7 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][0];
+    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
   }
 
   localIndex k[2];
@@ -353,17 +344,17 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
 
 }
 
-
 GEOSX_HOST_DEVICE
-inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
-                                                          CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
-                                                          CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
-                                                          CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar2,
-                                                          real64 (& weight)[MAX_NUM_OF_CONNECTIONS][2],
-                                                          real64 (& dWeight_dVar1 )[MAX_NUM_OF_CONNECTIONS][2],
-                                                          real64 (& dWeight_dVar2 )[MAX_NUM_OF_CONNECTIONS][2] ) const
+inline void
+SurfaceElementStencilWrapper::
+  computeWeights( localIndex iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & dCoeff_dVar1,
+                  CoefficientAccessor< arrayView4d< real64 const > > const & dCoeff_dVar2,
+                  real64 (& weight)[maxNumConnections][2],
+                  real64 (& dWeight_dVar1 )[maxNumConnections][2],
+                  real64 (& dWeight_dVar2 )[maxNumConnections][2][3] ) const
 {
-  // TODO: this should become star-delta method
   real64 sumOfTrans = 0.0;
   for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
   {
@@ -371,9 +362,8 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
     localIndex const esr =  m_elementSubRegionIndices[iconn][k];
     localIndex const ei  =  m_elementIndices[iconn][k];
 
-    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][0];
+    sumOfTrans += coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
   }
-
 
   localIndex k[2];
   localIndex connectionIndex = 0;
@@ -414,8 +404,8 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       dWeight_dVar1[connectionIndex][0] =    m_meanPermCoefficient * dHarmonic_dvar1[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[0];
       dWeight_dVar1[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar1[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar1[1] );
 
-      real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0];
-      real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0];
+      real64 const dt0_dvar2 = m_weights[iconn][0] * dCoeff_dVar2[er0][esr0][ei0][0][0][0];
+      real64 const dt1_dvar2 = m_weights[iconn][1] * dCoeff_dVar2[er1][esr1][ei1][0][0][0];
 
       real64 dHarmonic_dvar2[2];
       dHarmonic_dvar2[0] = ( dt0_dvar2 * t1 * sumOfTrans - dt0_dvar2 * t0 * t1 ) / ( sumOfTrans * sumOfTrans );
@@ -425,14 +415,113 @@ inline void SurfaceElementStencilWrapper::computeWeights( localIndex iconn,
       dArithmetic_dvar2[0] = 0.25 * dt0_dvar2;
       dArithmetic_dvar2[1] = 0.25 * dt1_dvar2;
 
-      dWeight_dVar2[connectionIndex][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
-      dWeight_dVar2[connectionIndex][1] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
+      dWeight_dVar2[connectionIndex][0][0] =   ( m_meanPermCoefficient * dHarmonic_dvar2[0] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[0] );
+      dWeight_dVar2[connectionIndex][1][0] = -( m_meanPermCoefficient * dHarmonic_dvar2[1] + (1 - m_meanPermCoefficient) * dArithmetic_dvar2[1] );
 
       connectionIndex++;
     }
   }
 }
 
+GEOSX_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  computeWeights( localIndex iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficientMultiplier,
+                  R1Tensor const & gravityVector,
+                  real64 (& weight)[maxNumConnections][2] ) const
+{
+  // TODO: this should become star-delta method
+  real64 sumOfTrans = 0.0;
+  for( localIndex k=0; k<numPointsInFlux( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    real64 const mult = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k], gravityVector ) ) > MULTIPLIER_THRESHOLD )
+      ? coefficientMultiplier[er][esr][ei][0][1] : coefficientMultiplier[er][esr][ei][0][0];
+
+    sumOfTrans += mult * coefficient[er][esr][ei][0][0] * m_weights[iconn][k];
+  }
+
+
+  localIndex k[2];
+  localIndex connectionIndex = 0;
+  for( k[0]=0; k[0]<numPointsInFlux( iconn ); ++k[0] )
+  {
+    for( k[1]=k[0]+1; k[1]<numPointsInFlux( iconn ); ++k[1] )
+    {
+      localIndex const er0  =  m_elementRegionIndices[iconn][k[0]];
+      localIndex const esr0 =  m_elementSubRegionIndices[iconn][k[0]];
+      localIndex const ei0  =  m_elementIndices[iconn][k[0]];
+
+      localIndex const er1  =  m_elementRegionIndices[iconn][k[1]];
+      localIndex const esr1 =  m_elementSubRegionIndices[iconn][k[1]];
+      localIndex const ei1  =  m_elementIndices[iconn][k[1]];
+
+      real64 const mult0 = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k[0]], gravityVector ) ) > MULTIPLIER_THRESHOLD )
+  ? coefficientMultiplier[er0][esr0][ei0][0][1] : coefficientMultiplier[er0][esr0][ei0][0][0];
+      real64 const mult1 = ( LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k[1]], gravityVector ) ) > MULTIPLIER_THRESHOLD )
+  ? coefficientMultiplier[er1][esr1][ei1][0][1] : coefficientMultiplier[er1][esr1][ei1][0][0];
+
+      real64 const t0 = mult0 * m_weights[iconn][0] * coefficient[er0][esr0][ei0][0][0];
+      real64 const t1 = mult1 * m_weights[iconn][1] * coefficient[er1][esr1][ei1][0][0];
+
+      real64 const harmonicWeight   = t0*t1 / sumOfTrans;
+      real64 const arithmeticWeight = 0.25 * (t0+t1);
+
+      real64 const value = m_meanPermCoefficient * harmonicWeight + (1 - m_meanPermCoefficient) * arithmeticWeight;
+
+      weight[connectionIndex][0] = value;
+      weight[connectionIndex][1] = -value;
+
+      connectionIndex++;
+    }
+  }
+}
+
+GEOSX_HOST_DEVICE
+inline void
+SurfaceElementStencilWrapper::
+  computeWeights( localIndex iconn,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient1,
+                  CoefficientAccessor< arrayView3d< real64 const > > const & coefficient1Multiplier,
+                  CoefficientAccessor< arrayView1d< real64 const > > const & coefficient2,
+                  R1Tensor const & unitGravityVector,
+                  real64 ( & weight1 )[maxNumPointsInFlux],
+                  real64 ( & weight2 )[maxNumPointsInFlux],
+                  real64 ( & geometricWeight )[maxNumPointsInFlux] ) const
+{
+  real64 sumOfGeometricWeights = 0.0;
+
+  for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
+  {
+    localIndex const er  =  m_elementRegionIndices[iconn][k];
+    localIndex const esr =  m_elementSubRegionIndices[iconn][k];
+    localIndex const ei  =  m_elementIndices[iconn][k];
+
+    real64 const cellToEdgeDistance = LvArray::tensorOps::l2Norm< 3 >( m_cellCenterToEdgeCenters[iconn][k] );
+    real64 const edgeLength = m_weights[iconn][k] * cellToEdgeDistance;
+    real64 const edgeToFaceDownDistance = -LvArray::tensorOps::AiBi< 3 >( m_cellCenterToEdgeCenters[iconn][k], unitGravityVector )
+                                          * edgeLength / cellToEdgeDistance;
+
+    real64 const mult = ( LvArray::math::abs( edgeToFaceDownDistance ) > MULTIPLIER_THRESHOLD )
+      ? coefficient1Multiplier[er][esr][ei][0][1] : coefficient1Multiplier[er][esr][ei][0][0];
+
+    weight1[k] = mult * coefficient1[er][esr][ei][0][0] * m_weights[iconn][k];
+    weight2[k] = coefficient2[er][esr][ei] * edgeToFaceDownDistance;
+
+    geometricWeight[k] = m_weights[iconn][k] / 12.0;
+    sumOfGeometricWeights += geometricWeight[k];
+  }
+
+  for( localIndex k = 0; k < numPointsInFlux( iconn ); ++k )
+  {
+    geometricWeight[k] /= sumOfGeometricWeights;
+  }
+}
 
 
 } /* namespace geosx */

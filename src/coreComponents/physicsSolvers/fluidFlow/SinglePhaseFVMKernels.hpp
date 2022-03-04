@@ -19,21 +19,33 @@
 #ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEFVMKERNELS_HPP
 
+
 #include "common/DataTypes.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
+#include "constitutive/fluid/SlurryFluidBase.hpp"
+#include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
+#include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "fieldSpecification/AquiferBoundaryCondition.hpp"
 #include "finiteVolume/BoundaryStencil.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FluxKernelsHelper.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/SinglePhaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 namespace geosx
 {
 
-namespace SinglePhaseFVMKernels
+namespace singlePhaseFVMKernels
 {
+using namespace constitutive;
 
-using namespace FluxKernelsHelper;
+using namespace fluxKernelsHelper;
 
 /******************************** FluxKernel ********************************/
 
@@ -48,6 +60,37 @@ struct FluxKernel
    */
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  using SinglePhaseFlowAccessors =
+    StencilAccessors< extrinsicMeshData::ghostRank,
+                      extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::gravityCoefficient,
+                      extrinsicMeshData::flow::mobility,
+                      extrinsicMeshData::flow::dMobility_dPressure >;
+
+  using SinglePhaseFluidAccessors =
+    StencilMaterialAccessors< SingleFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+
+  using SlurryFluidAccessors =
+    StencilMaterialAccessors< SlurryFluidBase,
+                              extrinsicMeshData::singlefluid::density,
+                              extrinsicMeshData::singlefluid::dDensity_dPressure >;
+
+  using PermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure >;
+
+  using ProppantPermeabilityAccessors =
+    StencilMaterialAccessors< PermeabilityBase,
+                              extrinsicMeshData::permeability::permeability,
+                              extrinsicMeshData::permeability::dPerm_dPressure,
+                              extrinsicMeshData::permeability::dPerm_dDispJump,
+                              extrinsicMeshData::permeability::permeabilityMultiplier >;
+
 
   /**
    * @brief launches the kernel to assemble the flux contributions to the linear system.
@@ -64,8 +107,6 @@ struct FluxKernel
    * @param[in] dMob_dPres The derivative of mobility wrt pressure in each element
    * @param[in] permeability
    * @param[in] dPerm_dPres The derivative of permeability wrt pressure in each element
-   * @param[in] transTMultiplier
-   * @param[in] gravityVector
    * @param[out] localMatrix The linear system matrix
    * @param[out] localRhs The linear system residual
    */
@@ -85,8 +126,6 @@ struct FluxKernel
           ElementViewConst< arrayView1d< real64 const > > const & dMob_dPres,
           ElementViewConst< arrayView3d< real64 const > > const & permeability,
           ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
-          ElementViewConst< arrayView2d< real64 const > > const & GEOSX_UNUSED_PARAM( transTMultiplier ),
-          R1Tensor const & GEOSX_UNUSED_PARAM ( gravityVector ),
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
   {
@@ -94,8 +133,8 @@ struct FluxKernel
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sesri = stencilWrapper.getElementSubRegionIndices();
     typename STENCILWRAPPER_TYPE::IndexContainerViewConstType const & sei = stencilWrapper.getElementIndices();
 
-    constexpr localIndex MAX_NUM_ELEMS     = STENCILWRAPPER_TYPE::NUM_POINT_IN_FLUX;
-    constexpr localIndex MAX_STENCIL_SIZE  = STENCILWRAPPER_TYPE::MAX_STENCIL_SIZE;
+    constexpr localIndex maxNumElems = STENCILWRAPPER_TYPE::maxNumPointsInFlux;
+    constexpr localIndex maxStencilSize = STENCILWRAPPER_TYPE::maxStencilSize;
 
     forAll< parallelDevicePolicy<> >( stencilWrapper.size(), [stencilWrapper, dt, rankOffset, dofNumber, ghostRank,
                                                               pres, dPres, gravCoef, dens, dDens_dPres, mob,
@@ -106,13 +145,14 @@ struct FluxKernel
       localIndex const numFluxElems = stencilWrapper.numPointsInFlux( iconn );
 
       // working arrays
-      stackArray1d< globalIndex, MAX_NUM_ELEMS > dofColIndices( stencilSize );
-      stackArray1d< real64, MAX_NUM_ELEMS > localFlux( numFluxElems );
-      stackArray2d< real64, MAX_NUM_ELEMS * MAX_STENCIL_SIZE > localFluxJacobian( numFluxElems, stencilSize );
+      stackArray1d< globalIndex, maxNumElems > dofColIndices( stencilSize );
+      stackArray1d< real64, maxNumElems > localFlux( numFluxElems );
+      stackArray2d< real64, maxNumElems * maxStencilSize > localFluxJacobian( numFluxElems, stencilSize );
+
 
       // compute transmissibility
-      real64 transmissibility[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
-      real64 dTrans_dPres[STENCILWRAPPER_TYPE::MAX_NUM_OF_CONNECTIONS][2];
+      real64 transmissibility[STENCILWRAPPER_TYPE::maxNumConnections][2];
+      real64 dTrans_dPres[STENCILWRAPPER_TYPE::maxNumConnections][2];
 
       stencilWrapper.computeWeights( iconn,
                                      permeability,
@@ -172,15 +212,15 @@ struct FluxKernel
    *
    *
    */
-  template< localIndex MAX_NUM_OF_CONNECTIONS >
+  template< localIndex maxNumConnections >
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const numFluxElems,
            arraySlice1d< localIndex const > const & seri,
            arraySlice1d< localIndex const > const & sesri,
            arraySlice1d< localIndex const > const & sei,
-           real64 const (&transmissibility)[MAX_NUM_OF_CONNECTIONS][2],
-           real64 const (&dTrans_dPres)[MAX_NUM_OF_CONNECTIONS][2],
+           real64 const (&transmissibility)[maxNumConnections][2],
+           real64 const (&dTrans_dPres)[maxNumConnections][2],
            ElementViewConst< arrayView1d< real64 const > > const & pres,
            ElementViewConst< arrayView1d< real64 const > > const & dPres,
            ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -249,7 +289,8 @@ struct FaceDirichletBCKernel
   static void compute( arraySlice1d< localIndex const > const & seri,
                        arraySlice1d< localIndex const > const & sesri,
                        arraySlice1d< localIndex const > const & sefi,
-                       arraySlice1d< real64 const > const & trans,
+                       real64 const trans,
+                       real64 const dTrans_dPres,
                        ElementViewConst< arrayView1d< real64 const > > const & pres,
                        ElementViewConst< arrayView1d< real64 const > > const & dPres,
                        ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -265,7 +306,7 @@ struct FaceDirichletBCKernel
                        real64 & dFlux_dP )
   {
     using Order = BoundaryStencil::Order;
-    localIndex constexpr numElems = BoundaryStencil::NUM_POINT_IN_FLUX;
+    localIndex constexpr numElems = BoundaryStencil::maxNumPointsInFlux;
 
     stackArray1d< real64, numElems > mobility( numElems );
     stackArray1d< real64, numElems > dMobility_dP( numElems );
@@ -280,7 +321,7 @@ struct FaceDirichletBCKernel
     fluidWrapper.compute( presFace[kf], faceDens, faceVisc );
 
     mobility[Order::ELEM] = mob[er][esr][ei];
-    SinglePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
+    singlePhaseBaseKernels::MobilityKernel::compute( faceDens, faceVisc, mobility[Order::FACE] );
 
     dMobility_dP[Order::ELEM] = dMob_dPres[er][esr][ei];
     dMobility_dP[Order::FACE] = 0.0;
@@ -290,26 +331,27 @@ struct FaceDirichletBCKernel
     real64 const dDens_dP = 0.5 * dDens_dPres[er][esr][ei][0];
 
     // Evaluate potential difference
-    real64 const potDif = trans[ Order::ELEM ] * ( pres[er][esr][ei] + dPres[er][esr][ei] - densMean * gravCoef[er][esr][ei] )
-                          + trans[ Order::FACE ] * ( presFace[kf] - densMean * gravCoefFace[kf] );
+    real64 const potDif = (pres[er][esr][ei] + dPres[er][esr][ei] - presFace[kf])
+                          - densMean * (gravCoef[er][esr][ei] - gravCoefFace[kf]);
+    real64 const dPotDif_dP = 1.0 - dDens_dP * gravCoef[er][esr][ei];
 
-    real64 const dPotDif_dP = trans[ Order::ELEM ] * ( 1.0 - dDens_dP * gravCoef[er][esr][ei] );
+    real64 const f = trans * potDif;
+    real64 const dF_dP = trans * dPotDif_dP + dTrans_dPres * potDif;
 
     // Upwind mobility
     localIndex const k_up = ( potDif >= 0 ) ? Order::ELEM : Order::FACE;
 
-    flux = dt * mobility[k_up] * potDif;
-    dFlux_dP = dt * ( mobility[k_up] * dPotDif_dP + dMobility_dP[k_up] * potDif );
+    flux = dt * mobility[k_up] * f;
+    dFlux_dP = dt * ( mobility[k_up] * dF_dP + dMobility_dP[k_up] * f );
   }
 
   template< typename FLUID_WRAPPER >
-  static void launch( BoundaryStencil::IndexContainerViewConstType const & seri,
-                      BoundaryStencil::IndexContainerViewConstType const & sesri,
-                      BoundaryStencil::IndexContainerViewConstType const & sefi,
-                      BoundaryStencil::WeightContainerViewConstType const & trans,
+  static void launch( BoundaryStencilWrapper const & stencil,
                       ElementViewConst< arrayView1d< integer const > > const & ghostRank,
                       ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
                       globalIndex const rankOffset,
+                      ElementViewConst< arrayView3d< real64 const > > const & perm,
+                      ElementViewConst< arrayView3d< real64 const > > const & dPerm_dPres,
                       ElementViewConst< arrayView1d< real64 const > > const & pres,
                       ElementViewConst< arrayView1d< real64 const > > const & dPres,
                       ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
@@ -324,14 +366,28 @@ struct FaceDirichletBCKernel
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
   {
+    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+
     forAll< parallelDevicePolicy<> >( seri.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
+      localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
+      localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );
+      localIndex const ei  = sefi( iconn, BoundaryStencil::Order::ELEM );
+
+      real64 trans;
+      real64 dTrans_dPerm[3];
+      stencil.computeWeights( iconn, perm, trans, dTrans_dPerm );
+      real64 const dTrans_dPres = LvArray::tensorOps::AiBi< 3 >( dTrans_dPerm, dPerm_dPres[er][esr][ei][0] );
+
       real64 flux, fluxJacobian;
 
       compute( seri[iconn],
                sesri[iconn],
                sefi[iconn],
-               trans[iconn],
+               trans,
+               dTrans_dPres,
                pres,
                dPres,
                gravCoef,
@@ -346,10 +402,6 @@ struct FaceDirichletBCKernel
                flux,
                fluxJacobian );
 
-      localIndex const er  = seri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const esr = sesri( iconn, BoundaryStencil::Order::ELEM );
-      localIndex const ei  = sefi( iconn, BoundaryStencil::Order::ELEM );
-
       if( ghostRank[er][esr][ei] < 0 )
       {
         // Add to global residual/jacobian
@@ -363,7 +415,123 @@ struct FaceDirichletBCKernel
   }
 };
 
-} // namespace SinglePhaseFVMKernels
+/******************************** AquiferBCKernel ********************************/
+
+/**
+ * @brief Functions to assemble aquifer boundary condition contributions to residual and Jacobian
+ */
+struct AquiferBCKernel
+{
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+  GEOSX_HOST_DEVICE
+  static void
+  compute( real64 const & aquiferVolFlux,
+           real64 const & dAquiferVolFlux_dPres,
+           real64 const & aquiferDens,
+           real64 const & dens,
+           real64 const & dDens_dPres,
+           real64 const & dt,
+           real64 & localFlux,
+           real64 & localFluxJacobian )
+  {
+    if( aquiferVolFlux > 0 ) // aquifer is upstream
+    {
+      localFlux -= dt * aquiferVolFlux * aquiferDens;
+      localFluxJacobian -= dt * dAquiferVolFlux_dPres * aquiferDens;
+    }
+    else // reservoir is upstream
+    {
+      localFlux -= dt * aquiferVolFlux * dens;
+      localFluxJacobian -= dt * (dAquiferVolFlux_dPres * dens + aquiferVolFlux * dDens_dPres);
+    }
+  }
+
+  static void
+  launch( BoundaryStencil const & stencil,
+          globalIndex const rankOffset,
+          ElementViewConst< arrayView1d< globalIndex const > > const & dofNumber,
+          ElementViewConst< arrayView1d< integer const > > const & ghostRank,
+          AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+          real64 const & aquiferDens,
+          ElementViewConst< arrayView1d< real64 const > > const & pres,
+          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+          ElementViewConst< arrayView2d< real64 const > > const & dens,
+          ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
+          real64 const & timeAtBeginningOfStep,
+          real64 const & dt,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs )
+  {
+    using Order = BoundaryStencil::Order;
+
+    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+    BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
+
+    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+
+      // working variables
+      real64 localFlux = 0.0;
+      real64 localFluxJacobian = 0.0;
+
+      localIndex const er  = seri( iconn, Order::ELEM );
+      localIndex const esr = sesri( iconn, Order::ELEM );
+      localIndex const ei  = sefi( iconn, Order::ELEM );
+      real64 const areaFraction = weight( iconn, Order::ELEM );
+
+      // compute the aquifer influx rate using the pressure influence function and the aquifer props
+      real64 dAquiferVolFlux_dPres = 0.0;
+      real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
+                                                              dt,
+                                                              pres[er][esr][ei],
+                                                              dPres[er][esr][ei],
+                                                              gravCoef[er][esr][ei],
+                                                              areaFraction,
+                                                              dAquiferVolFlux_dPres );
+
+      // compute the phase/component aquifer flux
+      AquiferBCKernel::compute( aquiferVolFlux,
+                                dAquiferVolFlux_dPres,
+                                aquiferDens,
+                                dens[er][esr][ei][0],
+                                dDens_dPres[er][esr][ei][0],
+                                dt,
+                                localFlux,
+                                localFluxJacobian );
+
+      // Add to residual/jacobian
+      if( ghostRank[er][esr][ei] < 0 )
+      {
+        globalIndex const globalRow = dofNumber[er][esr][ei];
+        localIndex const localRow = LvArray::integerConversion< localIndex >( globalRow - rankOffset );
+        GEOSX_ASSERT_GE( localRow, 0 );
+        GEOSX_ASSERT_GT( localMatrix.numRows(), localRow );
+
+        RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[localRow], localFlux );
+        localMatrix.addToRow< parallelDeviceAtomic >( localRow,
+                                                      &dofNumber[er][esr][ei],
+                                                      &localFluxJacobian,
+                                                      1 );
+      }
+    } );
+  }
+
+};
+
+
+} // namespace singlePhaseFVMKernels
 
 } // namespace geosx
 

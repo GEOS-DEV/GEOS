@@ -65,189 +65,235 @@ void NodeManager::resize( localIndex const newSize )
 }
 
 
-void NodeManager::setEdgeMaps( EdgeManager const & edgeManager )
+void NodeManager::constructGlobalToLocalMap( CellBlockManagerABC const & cellBlockManager )
 {
-  GEOSX_MARK_FUNCTION;
-
-  arrayView2d< localIndex const > const edgeToNodeMap = edgeManager.nodeList();
-  localIndex const numEdges = edgeToNodeMap.size( 0 );
-  localIndex const numNodes = size();
-
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, edgeManager.maxEdgesPerNode() );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
-
-  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
-  {
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 1 ), edgeID );
-    totalNodeEdges += 2;
-  } );
-
-  // Resize the node to edge map.
-  m_toEdgesRelation.resize( 0 );
-
-  // Reserve space for the number of current nodes plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  m_toEdgesRelation.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
-  m_toEdgesRelation.reserveValues( valuesToReserve );
-
-  // Append the individual sets.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
-  }
-
-  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation.toView();
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex * const edges = toEdgesTemp[ nodeID ];
-    localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
-    localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
-    toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
-  } );
-
-  m_toEdgesRelation.setRelatedObject( edgeManager );
+  m_localToGlobalMap = cellBlockManager.getNodeLocalToGlobal();
+  ObjectManagerBase::constructGlobalToLocalMap();
 }
 
-
-void NodeManager::setFaceMaps( FaceManager const & faceManager )
+/**
+ * @brief Populates the node to element region and node to element subregion mappings.
+ * @param [in] elementRegionMgr The ElementRegionManager associated with this mesh level. Regions and subregions come from it.
+ * @param [in] n2e The node to element maps.
+ * @param [in,out] n2er The face to element region map.
+ * @param [in,out] n2esr The face to element subregion map.
+ *
+ * @warning The @p n2e, @p n2er and @p n2esr need to be allocated at the correct dimensions, but need to be empty.
+ */
+void populateRegions( ElementRegionManager const & elementRegionMgr,
+                      ArrayOfArraysView< localIndex const > const & n2e,
+                      ArrayOfArraysView< localIndex > const & n2er,
+                      ArrayOfArraysView< localIndex > const & n2esr )
 {
-  GEOSX_MARK_FUNCTION;
+  GEOSX_ERROR_IF_NE( n2e.size(), n2er.size() );
+  GEOSX_ERROR_IF_NE( n2e.size(), n2esr.size() );
 
-  ArrayOfArraysView< localIndex const > const & faceToNodes = faceManager.nodeList().toViewConst();
-  localIndex const numFaces = faceToNodes.size();
-  localIndex const numNodes = size();
+  // There is an implicit convention in the (n2e, n2er, n2esr) triplet.
+  // The node to element mapping (n2e) binds node indices to multiple element indices (like `n -> (e0, e1,...)`).
+  // The node to regions (n2r) and sub-regions (n2sr) respectively bind
+  // node indices to the regions/sub-regions: `n -> (er0, er1)` and `n -> (esr0, esr1)`.
+  //
+  // It is assumed in the code that triplets obtained at indices 0, 1,... of all these relations,
+  // (respectively `(e0, er0, esr0)`, `(e1, er1, esr1)`,...) are consistent:
+  // `e0` should belong to both `er0` and `esr0`.
+  //
+  // But in some configuration (multi-regions, multi-subregions, parallel computing, ghost cells),
+  // it may happen that a same element index appear multiple times in a same entry of the node to elements mapping.
+  // For example `n0 -> (e0, e1, e2, e0)` where `e0` appears twice.
+  // These duplicated elements will in fact belong to multiple regions/sub-regions.
+  // This implies a specific care when filling the nodes to regions and sub-regions mappings.
+  //
+  // Thus, the algorithm is the following.
+  //
+  // For each sub-region of each region, we consider each node of each element.
+  // We list all the elements connected to this node.
+  // Then we take the first element that has not already been inserted in the mappings
+  // (we check if the value is still -1), and we insert it using the `er` and `esr` values,
+  // before moving to another node.
+  //
+  // The same node index with the same elements will eventually come back during the iterative process.
+  // But this time with another region/sub-region combination.
+  //
+  // It must be noted that we can take the duplicated elements in any order,
+  // as long as the insertions are consistent!
 
-  ArrayOfArrays< localIndex > toFacesTemp( numNodes, faceManager.maxFacesPerNode() );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeFaces = 0;
+  // The algorithm is equivalent to the algorithm described
+  // in the `populateRegions` in the `FaceManager.cpp` file.
+  // Instead of nodes, we'll have faces.
+  //
+  // Since the algorithm is quite short, and because of slight variations
+  // (e.g. the different allocation between faces and nodes implementation),
+  // I considered acceptable to duplicate it a bit.
+  // This is surely disputable.
 
-  forAll< parallelHostPolicy >( numFaces, [&]( localIndex const faceID )
+  // This function `f` will be applied on every sub-region.
+  auto f = [&n2e, &n2er, &n2esr]( localIndex er,
+                                  localIndex esr,
+                                  ElementRegionBase const &,
+                                  CellElementSubRegion const & subRegion ) -> void
   {
-    localIndex const numFaceNodes = faceToNodes.sizeOfArray( faceID );
-    totalNodeFaces += numFaceNodes;
-    for( localIndex a = 0; a < numFaceNodes; ++a )
+    for( localIndex iElement = 0; iElement < subRegion.size(); ++iElement )
     {
-      toFacesTemp.emplaceBackAtomic< parallelHostAtomic >( faceToNodes( faceID, a ), faceID );
+      for( localIndex iNodeLoc = 0; iNodeLoc < subRegion.numNodesPerElement(); ++iNodeLoc )
+      {
+        // iNodeLoc is the node index in the referential of each cell (0 to 7 for a cube, e.g.).
+        // While iNode is the global index of the node.
+        localIndex const & iNode = subRegion.nodeList( iElement, iNodeLoc );
+
+        // A node may be attached to `numElementsLoc` elements.
+        localIndex const numElementsLoc = n2e[iNode].size();
+        for( localIndex iElementLoc = 0; iElementLoc < numElementsLoc; ++iElementLoc )
+        {
+          // We only consider the elements that match the mapping.
+          if( n2e( iNode, iElementLoc ) != iElement )
+          {
+            continue;
+          }
+
+          // This loop is a small hack to back insert/allocate dummy elements
+          // that will eventually be replaced by the correct values.
+          for( localIndex i = n2er[iNode].size(); i < iElementLoc + 1; ++i )
+          {
+            // By construction n2er and n2esr have the same size, so we use the same loop.
+            n2er.emplaceBack( iNode, -1 );
+            n2esr.emplaceBack( iNode, -1 );
+          }
+
+          // Here we fill the mapping iff it has not already been inserted.
+          if( n2er( iNode, iElementLoc ) < 0 or n2esr( iNode, iElementLoc ) < 0 )
+          {
+            n2er( iNode, iElementLoc ) = er;
+            n2esr( iNode, iElementLoc ) = esr;
+
+            // We only want to insert one unique index that has not been inserted,
+            // so we quit the loop on indices here.
+            break;
+          }
+        }
+      }
     }
-  } );
+  };
 
-  // Resize the node to face map.
-  m_toFacesRelation.resize( 0 );
-
-  // Reserve space for the number of nodes faces plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  m_toFacesRelation.reserve( entriesToReserve );
-
-  // Reserve space for the total number of node faces + extra space for existing nodes + even more space for new nodes.
-  localIndex const valuesToReserve = totalNodeFaces.get() + numNodes * FaceManager::nodeMapExtraSpacePerFace() * ( 1 + 2 * overAllocationFactor );
-  m_toFacesRelation.reserveValues( valuesToReserve );
-
-  // Append the individual arrays.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    m_toFacesRelation.appendSet( toFacesTemp.sizeOfArray( nodeID ) + getFaceMapOverallocation() );
-  }
-
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex * const faces = toFacesTemp[ nodeID ];
-    localIndex const numNodeFaces = toFacesTemp.sizeOfArray( nodeID );
-    localIndex const numUniqueFaces = LvArray::sortedArrayManipulation::makeSortedUnique( faces, faces + numNodeFaces );
-    m_toFacesRelation.insertIntoSet( nodeID, faces, faces + numUniqueFaces );
-  } );
-
-  m_toFacesRelation.setRelatedObject( faceManager );
+  elementRegionMgr.forElementSubRegionsComplete< CellElementSubRegion >( f );
 }
 
-
-void NodeManager::setElementMaps( ElementRegionManager const & elementRegionManager )
+void NodeManager::buildRegionMaps( ElementRegionManager const & elementRegionManager )
 {
   GEOSX_MARK_FUNCTION;
 
   ArrayOfArrays< localIndex > & toElementRegionList = m_toElements.m_toElementRegion;
   ArrayOfArrays< localIndex > & toElementSubRegionList = m_toElements.m_toElementSubRegion;
-  ArrayOfArrays< localIndex > & toElementList = m_toElements.m_toElementIndex;
+  ArrayOfArraysView< localIndex const > const & toElementList = m_toElements.m_toElementIndex.toViewConst();
   localIndex const numNodes = size();
-
-  // The number of elements attached to the each node.
-  array1d< localIndex > elemsPerNode( numNodes );
-
-  // The total number of elements, the sum of elemsPerNode.
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeElems = 0;
-
-  elementRegionManager.
-    forElementSubRegions< CellElementSubRegion >( [&elemsPerNode, &totalNodeElems]( CellElementSubRegion const & subRegion )
-  {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    forAll< parallelHostPolicy >( subRegion.size(), [&elemsPerNode, totalNodeElems, &elemToNodeMap, &subRegion] ( localIndex const k )
-    {
-      localIndex const numIndependedNodes = subRegion.numIndependentNodesPerElement();
-      totalNodeElems += numIndependedNodes;
-      for( localIndex a = 0; a < numIndependedNodes; ++a )
-      {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        RAJA::atomicInc< parallelHostAtomic >( &elemsPerNode[ nodeIndex ] );
-      }
-    } );
-  } );
 
   // Resize the node to elem map.
   toElementRegionList.resize( 0 );
   toElementSubRegionList.resize( 0 );
-  toElementList.resize( 0 );
+
+  // TODO Since there is a strong requirement that `toElementRegionList` and `toElementSubRegionList`
+  //      share the same capacities as `toElementList`, then it's should be interesting
+  //      to retrieve this information from `toElementList` instead.
 
   // Reserve space for the number of current faces plus some extra.
   double const overAllocationFactor = 0.3;
   localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
   toElementRegionList.reserve( entriesToReserve );
   toElementSubRegionList.reserve( entriesToReserve );
-  toElementList.reserve( entriesToReserve );
 
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeElems.get() + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  localIndex const valuesToReserve = numNodes + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
   toElementRegionList.reserveValues( valuesToReserve );
   toElementSubRegionList.reserveValues( valuesToReserve );
-  toElementList.reserveValues( valuesToReserve );
 
   // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
   for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
   {
     toElementRegionList.appendArray( 0 );
     toElementSubRegionList.appendArray( 0 );
-    toElementList.appendArray( 0 );
 
-    toElementRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementSubRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+    const localIndex numElementsPerNode = toElementList[nodeID].size() + getElemMapOverAllocation();
+    toElementRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
+    toElementSubRegionList.setCapacityOfArray( nodeID, numElementsPerNode );
   }
 
-  // Populate the element maps.
-  // Note that this can't be done in parallel because the three element lists must be in the same order.
-  // If this becomes a bottleneck create a temporary ArrayOfArrays of tuples and insert into that first then copy over.
-  elementRegionManager.
-    forElementSubRegionsComplete< CellElementSubRegion >( [&toElementRegionList, &toElementSubRegionList, &toElementList]
-                                                            ( localIndex const er, localIndex const esr, ElementRegionBase const &,
-                                                            CellElementSubRegion const & subRegion )
+  // Delegate the computation to a free function.
+  populateRegions( elementRegionManager,
+                   toElementList,
+                   toElementRegionList.toView(),
+                   toElementSubRegionList.toView() );
+}
+
+void NodeManager::buildSets( CellBlockManagerABC const & cellBlockManager,
+                             GeometricObjectManager const & geometries )
+{
+  // Let's first copy the sets from the cell block manager.
+  for( const auto & nameArray: cellBlockManager.getNodeSets() )
   {
-    arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemToNodeMap = subRegion.nodeList();
-    for( localIndex k = 0; k < subRegion.size(); ++k )
+    auto & array = m_sets.registerWrapper< SortedArray< localIndex > >( nameArray.first ).reference();
+    array = nameArray.second;
+  }
+
+  // Now let's copy them from the geometric objects.
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = this->referencePosition();
+  localIndex const numNodes = this->size();
+
+  geometries.forSubGroups< SimpleGeometricObjectBase >(
+    [&]( SimpleGeometricObjectBase const & object ) -> void
+  {
+    string const & name = object.getName();
+    SortedArray< localIndex > & targetSet = m_sets.registerWrapper< SortedArray< localIndex > >( name ).reference();
+    for( localIndex a = 0; a < numNodes; ++a )
     {
-      for( localIndex a=0; a<subRegion.numIndependentNodesPerElement(); ++a )
+      real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[a] );
+      if( object.isCoordInObject( nodeCoord ) )
       {
-        localIndex const nodeIndex = elemToNodeMap( k, a );
-        toElementRegionList.emplaceBack( nodeIndex, er );
-        toElementSubRegionList.emplaceBack( nodeIndex, esr );
-        toElementList.emplaceBack( nodeIndex, k );
+        targetSet.insert( a );
       }
     }
   } );
+}
 
-  this->m_toElements.setElementRegionManager( elementRegionManager );
+void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
+{
+  arrayView1d< integer const > const & isFaceOnDomainBoundary = faceManager.getDomainBoundaryIndicator();
+  arrayView1d< integer > const & isNodeOnDomainBoundary = getDomainBoundaryIndicator();
+  isNodeOnDomainBoundary.zero();
+
+  ArrayOfArraysView< localIndex const > const faceToNodes = faceManager.nodeList().toViewConst();
+
+  forAll< parallelHostPolicy >( faceManager.size(), [&]( localIndex const k )
+  {
+    if( isFaceOnDomainBoundary[k] == 1 )
+    {
+      localIndex const numNodes = faceToNodes.sizeOfArray( k );
+      for( localIndex a = 0; a < numNodes; ++a )
+      {
+        isNodeOnDomainBoundary[faceToNodes( k, a )] = 1;
+      }
+    }
+  } );
+}
+
+void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
+{
+  resize( cellBlockManager.numNodes() );
+
+  m_referencePosition = cellBlockManager.getNodesPositions();
+
+  m_toEdgesRelation.base() = cellBlockManager.getNodeToEdges();
+  m_toFacesRelation.base() = cellBlockManager.getNodeToFaces();
+
+  m_toElements.m_toElementIndex = cellBlockManager.getNodeToElements();
+}
+
+void NodeManager::setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
+                                                  FaceManager const & faceManager,
+                                                  ElementRegionManager const & elementRegionManager )
+{
+  m_toEdgesRelation.setRelatedObject( edgeManager );
+  m_toFacesRelation.setRelatedObject( faceManager );
+
+  m_toElements.setElementRegionManager( elementRegionManager );
 }
 
 

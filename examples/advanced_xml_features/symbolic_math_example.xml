@@ -45,10 +45,7 @@ XML Symbolic Math:
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }">
+      targetRegions="{ Region1 }">
       <LinearSolverParameters
         solverType="gmres"
         krylovTol="1.0e-12"/>
@@ -103,9 +100,7 @@ XML Symbolic Math:
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -113,7 +108,7 @@ XML Symbolic Math:
     <CellElementRegion
       name="Region1"
       cellBlocks="{ block1 }"
-      materialList="{ water, rock, rockPerm }"/>
+      materialList="{ water, rock }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -142,7 +137,7 @@ XML Symbolic Math:
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 2*$permeability$, 0.5*$permeability$, 1*$permeability$ }"/>
+      permeabilityComponents="{ `2*$permeability$`, `0.5*$permeability$`, `1*$permeability$` }"/>
   </Constitutive>
 
   <Outputs>
