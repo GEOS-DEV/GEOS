@@ -1,11 +1,15 @@
-import pygeosx
-
 import sys
-import os
-import numpy as np
 from seismicUtilities.acquisition import EQUISPACEDAcquisition
+from seismicUtilities.fwi import forward,                       \
+                                 backward,                      \
+                                 computeFullGradient,           \
+                                 computePartialGradient,        \
+                                 computePartialCostFunction,    \
+                                 computeFullCostFunction,       \
+                                 computeResidual
 from seismicUtilities.segy import exportToSegy
-from seismicUtilities.acoustic import updateSourceAndReceivers, setTimeVariables, print_group
+from seismicUtilities.AcousticSolver import AcousticSolver
+
 from mpi4py import MPI
 
 comm = MPI.COMM_WORLD
@@ -31,19 +35,15 @@ def main():
     #acquisition.limitedAperture(500)
     #acquisition.calculDt()
 
-
     maxTime = 2.0
     nbSeismo = 500
-    outputWaveFieldInterval = 10
+    outputWaveFieldInterval = 50
 
 
     result = acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm)
 
-
-
 def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
     #Loop over the shots
-    segyList = []
     ishot=0
     rank = comm.Get_rank()
 #========================================================
@@ -55,56 +55,30 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         dt = shot.dt
         dtSeismoTrace = maxTime/(nbSeismo - 1)
 
-        #Initialize GEOSX
-        if ishot == 0:
-            problem = pygeosx.initialize(rank, sys.argv)
-        else:
-            problem = pygeosx.reinit(sys.argv)
-        #Get solver, get hdf5 collection/outputs wrappers
-        acousticSolver = problem.get_group("/Solvers/acousticSolver")
+        acousticSolver = AcousticSolver(sys.argv[2],
+                                        dt,
+                                        maxTime,
+                                        dtSeismoTrace)
 
-        #Set times variables
-        setTimeVariables(problem, maxTime, dt, dtSeismoTrace)
+        acousticSolver.initialize(rank)
 
+        acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
+        acousticSolver.apply_initial_conditions()
+
+        #Get view on pressure at receivers locations
 #===================================================
         #FORWARD
 #===================================================
+        residual = forward(acousticSolver, shot, outputWaveFieldInterval, rank)
 
-        #Get view on pressure at receivers locations
-        pressureAtReceivers = acousticSolver.get_wrapper("pressureNp1AtReceivers").value()
-
-        #update source and receivers positions
-        updateSourceAndReceivers(acousticSolver, shot.sources.source_list, shot.receivers.receivers_list)
-        pygeosx.apply_initial_conditions()
-
-        shot.flag = "In Progress"
-
-        time = 0.0
-        i = 0
-
-        if rank == 0 :
-            print("\nForward")
-
-        #Time loop
-        while time < maxTime:
-            if rank == 0:
-                print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", i+1)
-
-            #Execute one time step
-            acousticSolver.execute(time, dt)
-
-            time += dt
-            i += 1
-
-        #Export pressure at receivers to segy
-        pressure = np.array(pressureAtReceivers.to_numpy())
+        pressure = acousticSolver.getPressureAtReceivers()
         exportToSegy(table = pressure,
                      shot = shot,
                      filename = "seismo",
                      directory = "dataTest",
                      rank = rank)
 
-        pygeosx._finalize()
+    acousticSolver.finalize()
 
 if __name__ == "__main__":
     main()

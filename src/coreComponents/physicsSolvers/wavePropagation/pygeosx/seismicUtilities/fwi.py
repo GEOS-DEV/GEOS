@@ -5,142 +5,132 @@ import h5py
 import segyio
 
 
-def recomputeSourceAndReceivers(solver, sources, receivers):
-    updateSourceAndReceivers(solver, sources, receivers)
+def forward(solver, shot, outputWaveField, rank=0):
 
-    solver.reinit()
+    """Solves forward problem, and compute the residual and costFunction
 
+    Parameters
+    ----------
+    solver : AcousticSolver
+        AcousticSolver object
 
-def updateSourceAndReceivers( solver, sources_list=[], receivers_list=[] ):
-    src_pos_geosx = solver.get_wrapper("sourceCoordinates").value()
-    src_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
+    shot : Shot
+        Contains all informations on current shot
 
-    rcv_pos_geosx = solver.get_wrapper("receiverCoordinates").value()
-    rcv_pos_geosx.set_access_level(pygeosx.pylvarray.RESIZEABLE)
+    outputWaveField : int
+        Output interval for the Wavefield
 
+    rank : int
+        Process rank
 
-    src_pos_geosx.resize(len(sources_list))
-    if len(sources_list) == 0:
-        src_pos_geosx.to_numpy()[:] = np.zeros((0,3))
-    else:
-        src_pos = [source.coords for source in sources_list]
-        src_pos_geosx.to_numpy()[:] = src_pos[:]
-
-    rcv_pos_geosx.resize(len(receivers_list))
-    if len(receivers_list) == 0:
-        rcv_pos_geosx.to_numpy()[:] = np.zeros((0,3))
-    else:
-        rcv_pos = [receiver.coords for receiver in receivers_list]
-        rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]
-
-    solver.reinit()
-
-
-def updateSourceValue( solver, value ):
-    src_value = solver.get_wrapper("sourceValue").value()
-    src_value.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-    src_value.to_numpy()[:] = value[:]
-
-
-
-def resetWaveField(group):
-    group.get_wrapper("Solvers/acousticSolver/indexSeismoTrace").value()[0] = 0
-    nodeManagerPath = "domain/MeshBodies/mesh/meshLevels/Level0/nodeManager/"
-
-    pressure_nm1 = group.get_wrapper(nodeManagerPath + "pressure_nm1").value()
-    pressure_nm1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_n = group.get_wrapper(nodeManagerPath + "pressure_n").value()
-    pressure_n.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_np1 = group.get_wrapper(nodeManagerPath + "pressure_np1").value()
-    pressure_np1.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_geosx = group.get_wrapper("Solvers/acousticSolver/pressureNp1AtReceivers").value()
-    pressure_geosx.set_access_level(pygeosx.pylvarray.MODIFIABLE)
-
-    pressure_nm1.to_numpy()[:] = 0.0
-    pressure_n.to_numpy()[:]   = 0.0
-    pressure_np1.to_numpy()[:] = 0.0
-    pressure_geosx.to_numpy()[:] = 0.0
-
-
-
-def setTimeVariables(problem, maxTime, dt, dtSeismoTrace):
-    problem.get_wrapper("Events/maxTime").value()[0] = maxTime
-    problem.get_wrapper("Events/solverApplications/forceDt").value()[0] = dt
-    problem.get_wrapper("/Solvers/acousticSolver/dtSeismoTrace").value()[0] = dtSeismoTrace
-
-
-
-def forward(problem, solver, collections, outputs, shot, maxTime, outputWaveFieldInterval, rank=0):
-    gradDir = "partialGradient"
-    costDir = "partialCostFunction"
-
-    if rank == 0:
-        if os.path.exists(gradDir):
-            pass
-        else:
-            os.mkdir(gradDir)
-
-    #To be changed once GEOSX can output multiple variables in same HDF5 file
-    outputs[0].setOutputName(os.path.join(gradDir,"forwardWaveFieldNp1_"+shot.id))
-    outputs[1].setOutputName(os.path.join(gradDir,"forwardWaveFieldN_"+shot.id))
-    outputs[2].setOutputName(os.path.join(gradDir,"forwardWaveFieldNm1_"+shot.id))
-
-    #Get view on pressure at receivers locations
-    pressureAtReceivers = solver.get_wrapper("pressureNp1AtReceivers").value()
-
-    #update source and receivers positions
-    updateSourceAndReceivers(solver, shot.sources.source_list, shot.receivers.receivers_list)
-    pygeosx.apply_initial_conditions()
-
-    shot.flag = "In Progress"
-
-    time = 0.0
-    dt = shot.dt
-    i = 0
+    Return
+    ------
+    residual : array
+        Contains the residual between the simulation result and the real data
+    """
 
     if rank == 0 :
         print("\nForward")
 
+    costDir = "partialCostFunction"
+
     #Time loop
-    while time < maxTime:
+    time = 0.0
+    dt = solver.dt
+    cycle = 0
+    shot.flag = "In Progress"
+
+    while time < solver.maxTime:
         if rank == 0:
-            print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", i+1)
+            print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", cycle+1)
 
         #Execute one time step
-        solver.execute(time, dt)
+        solver.execute(time)
 
         time += dt
-        i += 1
+        cycle += 1
 
         #Collect/export waveField values to hdf5
-        if i % outputWaveFieldInterval == 0:
-            collections[0].collect(time, dt)
-            outputs[0].output(time, dt)
-
-            collections[1].collect(time, dt)
-            outputs[1].output(time, dt)
-
-            collections[2].collect(time, dt)
-            outputs[2].output(time, dt)
-
-    pressure = np.array(pressureAtReceivers.to_numpy())
+        if not cycle % outputWaveField:
+            if not rank:
+                print("Outputing Wavefield...")
+            solver.outputWaveField(time)
 
     #Residual computation
+    pressure = solver.getPressureAtReceivers()
     residualTemp = computeResidual("dataTest/seismo_Shot"+shot.id+".sgy", pressure)
-    residual = residualLinearInterpolation(residualTemp, maxTime, dt, dtSeismoTrace)
+    residual = residualLinearInterpolation(residualTemp, solver.maxTime, dt, solver.dtSeismo)
 
     if rank == 0:
         computePartialCostFunction(costDir, residualTemp, shot)
 
     #Reset waveField
-    resetWaveField(problem)
+    solver.resetWaveField()
 
+    return residual
+
+
+def backward(solver, shot, outputWaveField, rank=0):
+
+    """Solves backward problem
+
+    Parameters
+    ----------
+    solver : AcousticSolver
+        AcousticSolver object
+
+    shot : Shot
+        Contains all informations on current shot
+
+    outputWaveField : int
+        Output interval for the Wavefield
+
+    rank : int
+        Process rank
+    """
+
+    if rank == 0:
+        print("\nbackward")
+
+    #Reverse time loop
+    time = solver.maxTime
+    dt = solver.dt
+    cycle = int(solver.maxTime / dt)
+    while time > 0:
+        if rank == 0:
+            print("time = %.3fs," % time, "dt = %.4f," % dt, "iter =", cycle)
+
+        #Execute one time step backward
+        solver.execute(time)
+
+        #Collect/export waveField values to hdf5
+        if not cycle % outputWaveField:
+            if rank == 0:
+                print("Outputing Wavefield...")
+            solver.outputWaveField(time)
+
+        time -= dt
+        cycle -= 1
 
 
 def computeResidual(filename, data_obs):
+
+    """Compute the difference between the result of the forward problem and the real data
+
+    Parameters
+    ----------
+    filename : str
+        Path to the observed data file
+
+    data_obs : array
+        Simulated data
+
+    Return
+    ------
+    residual : array
+        Contains the residual between the simulated data and the observed data
+    """
+
     residual = np.zeros(data_obs.shape)
     with segyio.open(filename, 'r+', ignore_geometry=True) as f:
         for i in range(data_obs.shape[1]):
@@ -151,6 +141,29 @@ def computeResidual(filename, data_obs):
 
 
 def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
+
+    """Interpolate the residual for each simulation timestep
+
+    Parameters
+    ----------
+    rtemp : array
+        Residual at dtSeismoTrace timestep
+
+    maxTime : fload
+        End time of simulation
+
+    dt : float
+        Time step of simulation
+
+    dtSeismoTrace : float
+        Time step of output seismoTrace
+
+    Return
+    ------
+    residual : array
+        Contains the residual for each simulation time step
+    """
+
     r = np.zeros((int(maxTime/dt)+1, np.size(rtemp,1)))
     for i in range(np.size(rtemp,1)):
         r[:,i] = np.interp(np.linspace(0, maxTime, int(maxTime/dt)+1), np.linspace(0, maxTime, int(maxTime/dtSeismoTrace)+1), rtemp[:,i])
@@ -159,6 +172,21 @@ def residualLinearInterpolation(rtemp, maxTime, dt, dtSeismoTrace):
 
 
 def computePartialCostFunction(directory_in_str, residual, shot):
+
+    """Compute cost function for the current shot.
+
+    Parameters
+    ----------
+    directory_in_str : str
+        Path to the directory where to ouput result
+
+    residual : array
+        Contains value of residual
+
+    shot : Shot
+        Current shot
+    """
+
     if os.path.exists(directory_in_str):
         pass
     else:
@@ -177,6 +205,23 @@ def computePartialCostFunction(directory_in_str, residual, shot):
 
 
 def computeFullCostFunction(directory_in_str, acquisition):
+
+    """Compute the full cost function by summing all partial cost function
+
+    Parameters
+    ----------
+    directory_in_str : str
+        Path to the directory containing all partial cost functions value
+
+    acquisition : Acquisition
+        Contains informations on the full acquisition
+
+    Return
+    ------
+    fullCost : float
+        Sum of all partial cost functions values
+    """
+
     directory = os.fsencode(directory_in_str)
     nfiles = len(acquisition.shots)
 
@@ -200,6 +245,18 @@ def computeFullCostFunction(directory_in_str, acquisition):
 
 
 def computePartialGradient(directory_in_str, shot):
+
+    """Compute partial gradient for the current shot.
+
+    Parameters
+    ----------
+    directory_in_str : str
+        Path to the directory where to ouput result
+
+    shot : Shot
+        Current shot
+    """
+
     if os.path.exists(directory_in_str):
         pass
     else:
@@ -262,6 +319,18 @@ def computePartialGradient(directory_in_str, shot):
 
 
 def computeFullGradient(directory_in_str, acquisition):
+
+    """Compute the full gradient by summing all partial gradients
+
+    Parameters
+    ----------
+    directory_in_str : str
+        Path to the directory containing all partial gradients
+
+    acquisition : Acquisition
+        Contains informations on the full acquisition
+    """
+
     directory = os.fsencode(directory_in_str)
 
     limited_aperture_flag = acquisition.limited_aperture
@@ -354,15 +423,84 @@ def computeFullGradient(directory_in_str, acquisition):
 
 
 def armijoCondition(J, Jm, d, gradJ, alpha, k1=0.8):
+
+    """Armijo condition checking
+
+    Parameters
+    ----------
+    J : float
+        Value of the cost function
+
+    Jm : float
+        Value of the cost function for perturbed model
+
+    d : array
+        Descent direction
+
+    gradJ : array
+        Gradient of the cost function
+
+    alpha : float
+        Coefficient
+
+    k1 : float
+        Coefficient
+
+    Return
+    ------
+    success : bool
+        0 if test fails, 1 if it passes
+    """
+
     success = (Jm <= k1 * alpha * np.dot(d, gradJ))
     return success
 
 def goldsteinCondition(J, Jm, d, gradJ, alpha, k2=0.2):
+
+    """Armijo condition checking
+
+    Parameters
+    ----------
+    J : float
+        Value of the cost function
+
+    Jm : float
+        Value of the cost function for perturbed model
+
+    d : array
+        Descent direction
+
+    gradJ : array
+        Gradient of the cost function
+
+    alpha : float
+        Coefficient
+
+    k1 : float
+        Coefficient
+
+    Return
+    ------
+    success : bool
+        0 if test fails, 1 if it passes
+    """
+
     success = (Jm >= k2 * alpha * np.dot(d, gradJ))
     return success
 
 
 def descentDirection(gradJ, method="steepestDescent"):
+    """Compute the descent direction
+
+    Parameters
+    ----------
+    gradJ : array
+        Gradient of the cost function
+
+    method : str
+        Method to use for descent direction calculation
+    """
+
     if method == "steepestDescent":
         d = -gradJ
     else:
@@ -371,7 +509,7 @@ def descentDirection(gradJ, method="steepestDescent"):
     return d
 
 
-def linesearchDirectionacqs(J, gradJ, alpha, d, m, p1=1.5, p2=0.5):
+def linesearchDirection(J, gradJ, alpha, d, m, p1=1.5, p2=0.5):
     while True:
         m1 = m + alpha * d
         J1 = computeCostFunction(acqs, m1, client)
@@ -389,6 +527,8 @@ def linesearchDirectionacqs(J, gradJ, alpha, d, m, p1=1.5, p2=0.5):
 def updateModel(acqs, m):
     print("To be implemented")
 
+
+#==============================================================================================#
 
 
 def print_pressure(pressure, ishot):
