@@ -2404,7 +2404,7 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
                                                               bool printAll ) const
 {
 
-  array1d< localIndex > localCounter( 3 );
+  array1d< globalIndex > localCounter( 3 );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
