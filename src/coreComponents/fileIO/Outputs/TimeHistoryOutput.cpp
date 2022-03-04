@@ -14,6 +14,10 @@
 
 #include "TimeHistoryOutput.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyHistoryOutputType.hpp"
+#endif
+
 namespace geosx
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
@@ -130,6 +134,18 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
   }
 }
 
+void TimeHistoryOutput::setFileName( string const & root )
+{
+  m_filename = root;
+}
+
+void TimeHistoryOutput::reinit()
+{
+  m_recordCount = 0;
+  m_io.clear();
+  initializePostInitialConditionsPostSubGroups();
+}
+
 bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  real64 const GEOSX_UNUSED_PARAM( dt ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
@@ -160,6 +176,11 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
     th_io->compressInFile();
   }
 }
+
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * TimeHistoryOutput::getPythonType() const
+{ return python::getPyHistoryOutputType(); }
+#endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, string const &, Group * const )
 }

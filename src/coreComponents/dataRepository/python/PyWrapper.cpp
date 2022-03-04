@@ -18,7 +18,7 @@
 
 // Source includes
 #include "PyWrapper.hpp"
-#include "pygeosx.hpp"
+
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )

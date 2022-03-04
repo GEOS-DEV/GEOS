@@ -303,6 +303,14 @@ public:
     return *m_fieldSpecificationManager;
   }
 
+
+  /**
+   * @brief Returns the const EventManager.
+   * @return The const EventManager.
+   */
+  EventManager & getEventManager()
+  {return *m_eventManager;}
+
 protected:
   /**
    * @brief Post process the command line input
