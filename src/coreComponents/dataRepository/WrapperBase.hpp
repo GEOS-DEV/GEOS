@@ -265,6 +265,15 @@ public:
    */
   virtual localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
 
+  template< bool DO_PACK >
+  localIndex packTemplate( buffer_unit_type *& buffer,
+                           bool withMetadata,
+                           bool onDevice,
+                           parallelDeviceEvents & events ) const
+  {
+    return DO_PACK ? pack( buffer, withMetadata, onDevice, events ) : packSize( withMetadata, onDevice, events );
+  }
+
   /**
    * @brief For indexable types, pack selected indices of wrapped object into a buffer.
    * @param[in,out] buffer the binary buffer pointer, advanced upon completion
@@ -282,6 +291,16 @@ public:
                                   bool withMetadata,
                                   bool onDevice,
                                   parallelDeviceEvents & events ) const = 0;
+
+  template< bool DO_PACK >
+  localIndex packByIndexTemplate( buffer_unit_type * & buffer,
+                                  arrayView1d< localIndex const > const & packList,
+                                  bool withMetadata,
+                                  bool onDevice,
+                                  parallelDeviceEvents & events ) const
+  {
+    return DO_PACK ? packByIndex( buffer, packList, withMetadata, onDevice, events ) : packByIndexSize( packList, withMetadata, onDevice, events );
+  }
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.

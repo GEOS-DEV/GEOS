@@ -1403,6 +1403,14 @@ private:
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
+  template< bool DO_PACK >
+  localIndex packPrivate( buffer_unit_type * & buffer,
+                          string_array const & wrapperNames,
+                          arrayView1d< localIndex const > const & packList,
+                          integer const recursive,
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const;
+
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
   Group * m_parent = nullptr;
