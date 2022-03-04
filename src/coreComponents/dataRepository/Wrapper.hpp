@@ -814,9 +814,9 @@ public:
 private:
 
   /**
-   * @copydoc WrapperBase::pack
+   * @copydoc WrapperBase::packPrivate
    */
-  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packPrivate( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
@@ -839,9 +839,9 @@ private:
   }
 
   /**
-   * @copydoc WrapperBase::packByIndex
+   * @copydoc WrapperBase::packByIndexPrivate
    */
-  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packByIndexPrivate( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     if( sizedFromParent() == 1 )
@@ -871,9 +871,9 @@ private:
   }
 
   /**
-   * @copydoc WrapperBase::packSize
+   * @copydoc WrapperBase::packSizePrivate
    */
-  localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packSizePrivate( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * buffer = nullptr;
     localIndex packedSize = 0;
@@ -897,9 +897,9 @@ private:
   }
 
   /**
-   * @copydoc WrapperBase::packByIndexSize
+   * @copydoc WrapperBase::packByIndexSizePrivate
    */
-  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
   {
     localIndex packedSize = 0;
     buffer_unit_type * buffer = nullptr;

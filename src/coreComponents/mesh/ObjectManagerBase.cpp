@@ -319,7 +319,7 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
     {
       dataRepository::WrapperBase const & wrapper = this->getWrapperBase( wrapperName );
       packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
-      packedSize += wrapper.packByIndexTemplate< DOPACK >( buffer, packList, true, onDevice, events );
+      packedSize += wrapper.packByIndex< DOPACK >( buffer, packList, true, onDevice, events );
     }
   }
 

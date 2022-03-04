@@ -253,22 +253,22 @@ public:
   virtual bool isPackable( bool onDevice ) const = 0;
 
   template< bool DO_PACKING >
-  localIndex packTemplate( buffer_unit_type *& buffer,
-                           bool withMetadata,
-                           bool onDevice,
-                           parallelDeviceEvents & events ) const
+  localIndex pack( buffer_unit_type *& buffer,
+                   bool withMetadata,
+                   bool onDevice,
+                   parallelDeviceEvents & events ) const
   {
-    return DO_PACKING ? pack( buffer, withMetadata, onDevice, events ) : packSize( withMetadata, onDevice, events );
+    return DO_PACKING ? packPrivate( buffer, withMetadata, onDevice, events ) : packSizePrivate( withMetadata, onDevice, events );
   }
 
   template< bool DO_PACKING >
-  localIndex packByIndexTemplate( buffer_unit_type * & buffer,
-                                  arrayView1d< localIndex const > const & packList,
-                                  bool withMetadata,
-                                  bool onDevice,
-                                  parallelDeviceEvents & events ) const
+  localIndex packByIndex( buffer_unit_type *& buffer,
+                          arrayView1d< localIndex const > const & packList,
+                          bool withMetadata,
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const
   {
-    return DO_PACKING ? packByIndex( buffer, packList, withMetadata, onDevice, events ) : packByIndexSize( packList, withMetadata, onDevice, events );
+    return DO_PACKING ? packByIndexPrivate( buffer, packList, withMetadata, onDevice, events ) : packByIndexSizePrivate( packList, withMetadata, onDevice, events );
   }
 
   /**
@@ -626,7 +626,7 @@ private:
    *                         events are finalized )
    * @return               the number of @p buffer_unit_type units packed
    */
-  virtual localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
+  virtual localIndex packPrivate( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the entire wrapped object.
@@ -639,7 +639,7 @@ private:
    *                         events are finalized )
    * @return the number of @p buffer_unit_type units needed to pack
    */
-  virtual localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
+  virtual localIndex packSizePrivate( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
 
 
   /**
@@ -654,11 +654,11 @@ private:
    *                         events are finalized )
    * @return               the number of @p buffer_unit_type units packed
    */
-  virtual localIndex packByIndex( buffer_unit_type * & buffer,
-                                  arrayView1d< localIndex const > const & packList,
-                                  bool withMetadata,
-                                  bool onDevice,
-                                  parallelDeviceEvents & events ) const = 0;
+  virtual localIndex packByIndexPrivate( buffer_unit_type * & buffer,
+                                         arrayView1d< localIndex const > const & packList,
+                                         bool withMetadata,
+                                         bool onDevice,
+                                         parallelDeviceEvents & events ) const = 0;
 
   /**
    * @brief Get the buffer size needed to pack the selected indices wrapped object.
@@ -671,10 +671,10 @@ private:
    *                         events are finalized )
    * @return             the number of @p buffer_unit_type units needed to pack
    */
-  virtual localIndex packByIndexSize( arrayView1d< localIndex const > const & packList,
-                                      bool withMetadata,
-                                      bool onDevice,
-                                      parallelDeviceEvents & events ) const = 0;
+  virtual localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList,
+                                             bool withMetadata,
+                                             bool onDevice,
+                                             parallelDeviceEvents & events ) const = 0;
 };
 
 } /// namespace dataRepository

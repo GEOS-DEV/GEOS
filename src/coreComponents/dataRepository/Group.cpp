@@ -362,11 +362,11 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
     packedSize += bufferOps::Pack< DO_PACK >( buffer, wrapperName );
     if( packList.empty() )
     {
-      packedSize += wrapper.packTemplate< DO_PACK >( buffer, true, onDevice, events );
+      packedSize += wrapper.pack< DO_PACK >( buffer, true, onDevice, events );
     }
     else
     {
-      packedSize += wrapper.packByIndexTemplate< DO_PACK >( buffer, packList, true, onDevice, events );
+      packedSize += wrapper.packByIndex< DO_PACK >( buffer, packList, true, onDevice, events );
     }
   }
 
