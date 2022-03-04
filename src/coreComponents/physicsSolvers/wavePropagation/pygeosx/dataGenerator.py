@@ -43,7 +43,6 @@ def main():
     result = acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm)
 
 def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
-    #Loop over the shots
     ishot=0
     rank = comm.Get_rank()
 #========================================================
@@ -65,7 +64,6 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
         acousticSolver.apply_initial_conditions()
 
-        #Get view on pressure at receivers locations
 #===================================================
         #FORWARD
 #===================================================
