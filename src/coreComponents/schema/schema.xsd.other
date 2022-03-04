@@ -477,7 +477,7 @@
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-                <!--indexSeismoTrace => Count for output pressure at receivers-->
+		<!--indexSeismoTrace => Count for output pressure at receivers-->
 		<xsd:attribute name="indexSeismoTrace" type="localIndex" />
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
@@ -602,7 +602,6 @@
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
-<<<<<<< HEAD
 	<xsd:complexType name="LaplaceFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -613,8 +612,6 @@
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
 	</xsd:complexType>
-=======
->>>>>>> origin/develop
 	<xsd:complexType name="MultiphasePoromechanicsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -696,7 +693,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-<<<<<<< HEAD
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhasePoromechanicsLagrangianContactType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -707,8 +703,6 @@
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
 		<xsd:attribute name="meshTargets" type="geosx_mapBase&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, LvArray_Array&lt;std___cxx11_basic_string&lt;char, std_char_traits&lt;char&gt;, std_allocator&lt;char&gt; &gt;, 1, camp_int_seq&lt;long, 0l&gt;, long, LvArray_ChaiBuffer&gt;, std_integral_constant&lt;bool, true&gt; &gt;" />
-=======
->>>>>>> origin/develop
 	</xsd:complexType>
 	<xsd:complexType name="SinglePhaseProppantFVMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">

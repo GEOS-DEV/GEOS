@@ -1,9 +1,5 @@
 
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/develop
 ======================== ================================================================================================================================================================================================================================================================================================ ======================================== 
 Name                     Type                                                                                                                                                                                                                                                                                             Description                              
 ======================== ================================================================================================================================================================================================================================================================================================ ======================================== 
@@ -15,21 +11,5 @@ fieldName                string                                                 
 fractureStencil          geosx_SurfaceElementStencil                                                                                                                                                                                                                                                                      (no description available)               
 targetRegions            geosx_mapBase< std___cxx11_basic_string< char, std_char_traits< char >, std_allocator< char > >, LvArray_Array< std___cxx11_basic_string< char, std_char_traits< char >, std_allocator< char > >, 1, camp_int_seq< long, 0l >, long, LvArray_ChaiBuffer >, std_integral_constant< bool, true > > List of regions to build the stencil for 
 ======================== ================================================================================================================================================================================================================================================================================================ ======================================== 
-<<<<<<< HEAD
-=======
-======================== ==================================================================================================================================================== ======================================== 
-Name                     Type                                                                                                                                                 Description                              
-======================== ==================================================================================================================================================== ======================================== 
-cellStencil              geosx_CellElementStencilTPFA                                                                                                                         (no description available)               
-coefficientName          string                                                                                                                                               Name of coefficient field                
-edfmStencil              geosx_EmbeddedSurfaceToCellStencil                                                                                                                   (no description available)               
-faceElementToCellStencil geosx_FaceElementToCellStencil                                                                                                                       (no description available)               
-fieldName                string                                                                                                                                               Name of primary solution field           
-fractureStencil          geosx_SurfaceElementStencil                                                                                                                          (no description available)               
-targetRegions            geosx_mapBase< std_string, LvArray_Array< std_string, 1, camp_int_seq< long, 0l >, long, LvArray_ChaiBuffer >, std_integral_constant< bool, true > > List of regions to build the stencil for 
-======================== ==================================================================================================================================================== ======================================== 
->>>>>>> origin/develop
-=======
->>>>>>> origin/develop
 
 

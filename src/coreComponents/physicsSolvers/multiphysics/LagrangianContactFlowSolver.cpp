@@ -82,7 +82,11 @@ LagrangianContactFlowSolver::LagrangianContactFlowSolver( const std::string & na
 
 void LagrangianContactFlowSolver::registerDataOnMesh( Group & meshBodies )
 {
-  m_contactSolver->registerDataOnMesh( meshBodies );
+  //m_contactSolver->registerDataOnMesh( meshBodies );
+  if( m_contactSolver )
+  {
+    m_contactSolver->registerDataOnMesh( meshBodies );
+  }
 }
 
 void LagrangianContactFlowSolver::initializePreSubGroups()
