@@ -287,122 +287,6 @@ public:
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::pack
-  virtual
-  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
-    if( onDevice )
-    {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference(), events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference(), events );
-      }
-    }
-    else
-    {
-      packedSize += bufferOps::Pack< true >( buffer, *m_data );
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::packByIndex
-  virtual
-  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    localIndex packedSize = 0;
-    if( sizedFromParent() == 1 )
-    {
-      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList, events );
-        }
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackByIndex< true >( buffer, *m_data, packList );
-      }
-    }
-    else
-    {
-      GEOSX_LOG("COUCOU I was there 0");
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::packSize
-  virtual
-  localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    buffer_unit_type * buffer = nullptr;
-    localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
-    if( onDevice )
-    {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference(), events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference(), events );
-      }
-    }
-    else
-    {
-      packedSize += bufferOps::Pack< false >( buffer, *m_data );
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::packByIndexSize
-  virtual
-  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    localIndex packedSize = 0;
-    buffer_unit_type * buffer = nullptr;
-    if( sizedFromParent() == 1 )
-    {
-      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList, events );
-        }
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackByIndex< false >( buffer, *m_data, packList );
-      }
-    }
-    else
-    {
-      GEOSX_LOG("COUCOU I was there 1");
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpack
   virtual
   localIndex unpack( buffer_unit_type const * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
@@ -928,6 +812,124 @@ public:
 #endif
 
 private:
+
+  /**
+   * @copydoc WrapperBase::pack
+   */
+  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  {
+    localIndex packedSize = 0;
+    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
+    if( onDevice )
+    {
+      if( withMetadata )
+      {
+        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference(), events );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference(), events );
+      }
+    }
+    else
+    {
+      packedSize += bufferOps::Pack< true >( buffer, *m_data );
+    }
+    return packedSize;
+  }
+
+  /**
+   * @copydoc WrapperBase::packByIndex
+   */
+  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  {
+    localIndex packedSize = 0;
+    if( sizedFromParent() == 1 )
+    {
+      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
+      if( onDevice )
+      {
+        if( withMetadata )
+        {
+          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList, events );
+        }
+        else
+        {
+          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList, events );
+        }
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackByIndex< true >( buffer, *m_data, packList );
+      }
+    }
+    else
+    {
+      GEOSX_LOG("COUCOU I was there 0");
+    }
+    return packedSize;
+  }
+
+  /**
+   * @copydoc WrapperBase::packSize
+   */
+  localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  {
+    buffer_unit_type * buffer = nullptr;
+    localIndex packedSize = 0;
+    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
+    if( onDevice )
+    {
+      if( withMetadata )
+      {
+        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference(), events );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference(), events );
+      }
+    }
+    else
+    {
+      packedSize += bufferOps::Pack< false >( buffer, *m_data );
+    }
+    return packedSize;
+  }
+
+  /**
+   * @copydoc WrapperBase::packByIndexSize
+   */
+  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
+  {
+    localIndex packedSize = 0;
+    buffer_unit_type * buffer = nullptr;
+    if( sizedFromParent() == 1 )
+    {
+      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
+      if( onDevice )
+      {
+        if( withMetadata )
+        {
+          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList, events );
+        }
+        else
+        {
+          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList, events );
+        }
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackByIndex< false >( buffer, *m_data, packList );
+      }
+    }
+    else
+    {
+      GEOSX_LOG("COUCOU I was there 1");
+    }
+    return packedSize;
+  }
+
+
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
   bool m_ownsData;
@@ -943,22 +945,8 @@ private:
 };
 
 }
-} /* namespace geosx */
 
-//template< typename T >
-//int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
-//{
-//  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
-//  return TV_ttf_format_raw;
-//}
-//
-//template int TV_ttf_display_type( geosx::dataRepository::Wrapper<int> const * wrapper );
-//
-//template< typename T >
-//void geosx::dataRepository::Wrapper<T>::tvTemplateInstantiation()
-//{
-//  TV_ttf_display_type<T>(this);
-//}
+} // end of namespace geosx
 
 
 #endif /* GEOSX_DATAREPOSITORY_WRAPPER_HPP_ */
