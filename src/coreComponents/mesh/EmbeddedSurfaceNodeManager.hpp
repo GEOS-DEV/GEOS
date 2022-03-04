@@ -166,6 +166,11 @@ public:
   void appendNode( arraySlice1d< real64 const > const & pointCoord,
                    integer const & pointGhostRank );
 
+
+  /**
+   * @brief computes the number of nodes owned by this rank.
+   * @return the number of nodes owned by the rank
+   */
   localIndex numberOfOwnedNodes() const
   {
     localIndex numOfOwnedNodes = 0;
@@ -221,7 +226,7 @@ public:
                                        localIndex_array & packList );
 
   virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
+                                       array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 

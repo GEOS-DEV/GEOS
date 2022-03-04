@@ -32,7 +32,6 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -56,7 +55,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ }"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 

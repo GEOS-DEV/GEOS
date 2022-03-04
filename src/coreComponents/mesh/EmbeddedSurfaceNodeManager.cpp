@@ -431,7 +431,7 @@ localIndex EmbeddedSurfaceNodeManager::packUpDownMapsPrivate( buffer_unit_type *
 
 
 localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                                         localIndex_array & packList,
+                                                         array1d< localIndex > & packList,
                                                          bool const overwriteUpMaps,
                                                          bool const )
 {

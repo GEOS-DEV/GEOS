@@ -18,9 +18,7 @@
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
         directParallel="0"
-        solverType="gmres"
-        preconditionerType="amg"
-        amgAggresiveCoarseningLevels="1"
+        solverType="direct"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
