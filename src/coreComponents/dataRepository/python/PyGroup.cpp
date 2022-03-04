@@ -19,8 +19,7 @@
 
 // Source includes
 #include "PyGroup.hpp"
-#include "pygeosx.hpp"
-#include "PyWrapper.hpp"
+#include "PyGroupType.hpp"
 
 #define VERIFY_NON_NULL_SELF( self ) \
   PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr )
@@ -226,10 +225,10 @@ static constexpr char const * PyGroup_getWrapperDocString =
   "_______\n"
   "Wrapper\n"
   "    The wrapper at the relative path.";
+
 static PyObject * PyGroup_getWrapper( PyGroup * const self, PyObject * const args ) noexcept
 {
-  VERIFY_NON_NULL_SELF( self );
-  VERIFY_INITIALIZED( self );
+  PYTHON_ERROR_IF( self == nullptr, PyExc_RuntimeError, "Passed a nullptr as self.", nullptr );
 
   PyObject * unicodePath;
   PyObject * defaultReturnValue = nullptr;
@@ -309,7 +308,6 @@ static PyObject * PyGroup_register( PyGroup * const self, PyObject * const args 
 }
 
 
-
 BEGIN_ALLOW_DESIGNATED_INITIALIZERS
 
 static PyMethodDef PyGroup_methods[] = {
@@ -318,7 +316,7 @@ static PyMethodDef PyGroup_methods[] = {
   { "get_group", (PyCFunction) PyGroup_getGroup, METH_VARARGS, PyGroup_getGroupDocString },
   { "get_wrapper", (PyCFunction) PyGroup_getWrapper, METH_VARARGS, PyGroup_getWrapperDocString },
   { "register", (PyCFunction) PyGroup_register, METH_VARARGS, PyGroup_registerDocString },
-  { nullptr, nullptr, 0, nullptr } // Sentinel
+  { nullptr, nullptr, 0, nullptr }             /* Sentinel */
 };
 
 static PyTypeObject PyGroupType = {
@@ -338,8 +336,8 @@ END_ALLOW_DESIGNATED_INITIALIZERS
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 PyObject * createNewPyGroup( dataRepository::Group & group )
 {
-  // Create a new Group and set the dataRepository::Group it points to.
-  PyObject * const ret = PyObject_CallFunction( reinterpret_cast< PyObject * >( getPyGroupType() ), "" );
+  // Create a new Group or derived class depending on PythonType and set the dataRepository::Group it points to.
+  PyObject * const ret = PyObject_CallFunction( reinterpret_cast< PyObject * >( group.getPythonType() ), "" );
   PyGroup * const retGroup = reinterpret_cast< PyGroup * >( ret );
   if( retGroup == nullptr )
   {

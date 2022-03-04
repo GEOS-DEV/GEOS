@@ -30,7 +30,7 @@ set( fileIO_sources
      silo/SiloFile.cpp
      timeHistory/PackCollection.cpp
      timeHistory/TimeHistHDF.cpp
-   ) 
+   )
 
 set( dependencyList mesh constitutive silo hdf5 )
 
@@ -40,7 +40,7 @@ if( ENABLE_MPI )
   set( dependencyList ${dependencyList} mpi hdf5_interface )
   list( APPEND fileIO_headers coupling/ChomboCoupler.hpp Outputs/ChomboIO.hpp )
   list( APPEND fileIO_sources coupling/ChomboCoupler.cpp Outputs/ChomboIO.cpp )
-endif() 
+endif()
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
@@ -76,3 +76,7 @@ blt_add_library( NAME       fileIO
 target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX fileIO )
+
+if( ENABLE_PYGEOSX )
+  add_subdirectory( python )
+endif()

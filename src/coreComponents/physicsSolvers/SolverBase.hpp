@@ -617,7 +617,16 @@ public:
 
   virtual bool registerCallback( void * func, const std::type_info & funcType ) final override;
 
+  /**
+   * @brief Return PySolver type.
+   * @return Return PySolver type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const;
+#endif
+
 protected:
+
 
   static real64 eisenstatWalker( real64 const newNewtonNorm,
                                  real64 const oldNewtonNorm,
