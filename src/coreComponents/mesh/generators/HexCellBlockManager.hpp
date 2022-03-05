@@ -24,7 +24,6 @@
 
 #include "common/DataTypes.hpp"
 
-
 #include <cassert>
 
 
@@ -96,7 +95,7 @@ public:
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    * 
-   * //TODO Renaming: these are CellBlocks and not SubRegions
+   * // TODO Renaming: these are CellBlocks and not SubRegions
    */
   template< typename LAMBDA >
   void forElementSubRegions( LAMBDA lambda )
@@ -246,4 +245,4 @@ private:
 };
 
 }
-#endif /* GEOSX_MESH_CELLBLOCKMANAGER_H_ */
+#endif
