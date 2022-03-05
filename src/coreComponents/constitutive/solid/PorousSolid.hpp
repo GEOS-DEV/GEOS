@@ -88,6 +88,8 @@ public:
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const initialBiotCoefficient = biotCoefficient; // temporary
+    real64 const dGrainDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
+
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( fluidPressureOld + deltaFluidPressure ) + initialBiotCoefficient * initialFluidPressure );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
@@ -111,20 +113,20 @@ public:
     real64 const porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
 
     // Compute body force vector and its derivatives w.r.t. to
-    // volumetric strain and pressure. The following assumption
-    // are made at the moment:
-    // 1. dMixtureDens_dVolStrainIncrement is neglected,
-    // 2. grains are assumed incompressible
-    real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity + porosity * fluidDensity;
-    real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity + porosityInit * initialFluidDensity;
-    real64 const mixtureDensityIncrement = mixtureDensity - initialMixtureDensity;
-
-    real64 const dMixtureDens_dVolStrainIncrement = 0.0;
-    real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -solidDensity + fluidDensity )
-                                          + porosity * dFluidDensity_dPressure;
-
+    // volumetric strain and pressure.
     if( gravityAcceleration > 0.0 )
     {
+      real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity
+                                    + porosity * fluidDensity;
+      real64 const initialMixtureDensity = ( 1.0 - porosityInit ) * solidDensity
+                                           + porosityInit * initialFluidDensity;
+      real64 const mixtureDensityIncrement = mixtureDensity - initialMixtureDensity;
+
+      real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -solidDensity + fluidDensity );
+      real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -solidDensity + fluidDensity )
+                                            + ( 1.0 - porosity ) * dGrainDensity_dPressure
+                                            + porosity * dFluidDensity_dPressure;
+
       LvArray::tensorOps::scaledCopy< 3 >( bodyForceIncrement, gravityVector, mixtureDensityIncrement );
       LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dVolStrainIncrement, gravityVector, dMixtureDens_dVolStrainIncrement );
       LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dPressure, gravityVector, dMixtureDens_dPressure );
@@ -135,8 +137,6 @@ public:
     fluidMassContentIncrement = porosity * fluidDensity - porosityOld * fluidDensityOld;
     dFluidMassContent_dVolStrainIncrement = dPorosity_dVolStrain * fluidDensity;
     dFluidMassContent_dPressure = dPorosity_dPressure * fluidDensity + porosity * dFluidDensity_dPressure;
-
-    //
 
 // TODO uncomment once we start using permeability model in flow.
 //    m_permUpdate.updateFromPressureStrain( k,
@@ -166,6 +166,7 @@ public:
                                     arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & fluidPhaseCompFracOld,
                                     arraySlice3d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC -2 > const & dFluidPhaseCompFrac,
                                     arraySlice1d< real64 const, constitutive::multifluid::USD_PHASE - 2 > const & fluidPhaseMassDensity,
+                                    arraySlice2d< real64 const, constitutive::multifluid::USD_PHASE_DC - 2 > const & dFluidPhaseMassDensity,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturation,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & fluidPhaseSaturationOld,
                                     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dFluidPhaseSaturation_dPressure,
@@ -176,6 +177,7 @@ public:
                                     real64 ( & bodyForceIncrement )[3],
                                     real64 ( & dBodyForce_dVolStrainIncrement )[3],
                                     real64 ( & dBodyForce_dPressure )[3],
+                                    real64 ( & dBodyForce_dComponents )[3][NUM_MAX_COMPONENTS],
                                     real64 ( & componentMassContentIncrement )[NUM_MAX_COMPONENTS],
                                     real64 ( & dComponentMassContent_dVolStrainIncrement )[NUM_MAX_COMPONENTS],
                                     real64 ( & dComponentMassContent_dPressure )[NUM_MAX_COMPONENTS],
@@ -196,6 +198,8 @@ public:
 
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const initialBiotCoefficient = biotCoefficient; // temporary
+    real64 const dGrainDensity_dPressure = m_porosityUpdate.dGrainDensity_dPressure();
+
     LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( fluidPressureOld + deltaFluidPressure ) + initialBiotCoefficient * initialFluidPressure );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
@@ -214,7 +218,6 @@ public:
                                                   dPorosity_dPressure,
                                                   dPorosity_dVolStrain );
 
-    //real64 const
     real64 porosity = m_porosityUpdate.getPorosity( k, q );
     real64 const porosityOld = m_porosityUpdate.getOldPorosity( k, q );
     real64 const porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
@@ -224,31 +227,63 @@ public:
     // (  i) dMixtureDens_dVolStrain contribution is neglected
     // ( ii) grains are assumed incompressible
     // (iii) TODO add dMixtureDens_dPressure and dMixtureDens_dGlobalCompDensity
+
+    using Deriv = constitutive::multifluid::DerivativeOffset;
+
     if( gravityAcceleration > 0.0 )
     {
       // Compute mixture density
-      real64 mixtureDensityNew = fluidPhaseSaturation( 0 ) * fluidPhaseMassDensity( 0 );
-      for( localIndex i = 1; i < NP; ++i )
+      real64 fluidTotalMassDensity = fluidPhaseSaturation( 0 ) * fluidPhaseMassDensity( 0 );
+      real64 dFluidTotalMassDensity_dPressure = dFluidPhaseSaturation_dPressure( 0 ) * fluidPhaseMassDensity( 0 )
+                                                + fluidPhaseSaturation( 0 ) * dFluidPhaseDensity( 0, Deriv::dP );
+      for( integer i = 1; i < NP; ++i )
       {
-        mixtureDensityNew += fluidPhaseSaturation( i ) * fluidPhaseMassDensity( i );
+        fluidTotalMassDensity = fluidTotalMassDensity + fluidPhaseSaturation( i ) * fluidPhaseMassDensity( i );
+        dFluidTotalMassDensity_dPressure = dFluidTotalMassDensity_dPressure
+                                           + dFluidPhaseSaturation_dPressure( i ) * fluidPhaseMassDensity( i )
+                                           + fluidPhaseSaturation( i ) * dFluidPhaseDensity( i, Deriv::dP );
       }
-      mixtureDensityNew *= porosity;
-      mixtureDensityNew += ( 1.0 - porosity ) * solidDensity;
+      real64 dFluidTotalMassDensity_dComponents[NUM_MAX_COMPONENTS]{};
+      real64 dFluidPhaseMassDensity_dC[NUM_MAX_COMPONENTS];
+      for( integer ip = 0; ip < NP; ++ip )
+      {
+        applyChainRule( NC,
+                        dGlobalCompFraction_dGlobalCompDensity,
+                        dFluidPhaseMassDensity[ip],
+                        dFluidPhaseMassDensity_dC,
+                        Deriv::dC );
+        for( integer jc = 0; jc < NC; ++jc )
+        {
+          dFluidTotalMassDensity_dComponents[jc] = dFluidTotalMassDensity_dComponents[jc]
+                                                   + dFluidPhaseSaturation_dGlobalCompDensity( ip, jc ) * fluidPhaseMassDensity( ip )
+                                                   + fluidPhaseSaturation( ip ) * dFluidPhaseMassDensity_dC[jc];
+        }
+      }
+      LvArray::tensorOps::scale< NUM_MAX_COMPONENTS >( dFluidTotalMassDensity_dComponents, porosity );
 
-      real64 mixtureDensityInit = initialFluidTotalMassDensity * porosityInit;
-      mixtureDensityInit += ( 1.0 - porosityInit ) * solidDensity;
+      real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity
+                                    + porosity * fluidTotalMassDensity;
 
-      real64 const mixtureDensityIncrement = mixtureDensityNew - mixtureDensityInit;
+      real64 const mixtureDensityInit = ( 1.0 - porosityInit ) * solidDensity
+                                        + initialFluidTotalMassDensity * porosityInit;
+      real64 const mixtureDensityIncrement = mixtureDensity - mixtureDensityInit;
+
+      real64 const dMixtureDens_dVolStrainIncrement = dPorosity_dVolStrain * ( -solidDensity + fluidTotalMassDensity );
+
+      real64 const dMixtureDens_dPressure = dPorosity_dPressure * ( -solidDensity + fluidTotalMassDensity )
+                                            + ( 1.0 - porosity ) * dGrainDensity_dPressure
+                                            + porosity * dFluidTotalMassDensity_dPressure;
+
       LvArray::tensorOps::scaledCopy< 3 >( bodyForceIncrement, gravityVector, mixtureDensityIncrement );
+      LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dVolStrainIncrement, gravityVector, dMixtureDens_dVolStrainIncrement );
+      LvArray::tensorOps::scaledCopy< 3 >( dBodyForce_dPressure, gravityVector, dMixtureDens_dPressure );
+      LvArray::tensorOps::Rij_eq_AiBj< 3, NUM_MAX_COMPONENTS >( dBodyForce_dComponents, gravityVector, dFluidTotalMassDensity_dComponents );
 
-      GEOSX_UNUSED_VAR( dBodyForce_dVolStrainIncrement );
-      GEOSX_UNUSED_VAR( dBodyForce_dPressure );
     }
 
     // Compute component mass contents and derivatives w.r.t. to
     // volumetric strain, pressure and components
 
-    using Deriv = constitutive::multifluid::DerivativeOffset;
 
     // --- temporary work arrays
     real64 dPhaseAmount_dC[NUM_MAX_COMPONENTS];
@@ -279,7 +314,7 @@ public:
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * fluidPhaseSaturation( ip )
                               + fluidPhaseDensity( ip ) * dFluidPhaseSaturation_dGlobalCompDensity( ip, jc );
-        dPhaseAmount_dC[jc] *= porosity;
+        dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * porosity;
       }
 
       // ic - index of component whose conservation equation is assembled

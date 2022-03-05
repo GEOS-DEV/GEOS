@@ -347,10 +347,21 @@ public:
       dNdX,
       -detJxW );
 
-    // --- dBodyForce_dVoldStrain derivative neglected
+    if( m_gravityAcceleration > 0.0 )
+    {
+      BilinearFormUtilities::compute< displacementTestSpace,
+                                      displacementTrialSpace,
+                                      DifferentialOperator::Identity,
+                                      DifferentialOperator::Divergence >
+      (
+        stack.dLocalResidualMomentum_dDisplacement,
+        N,
+        dBodyForce_dVolStrainIncrement,
+        dNdX,
+        detJxW );
+    }
 
     // Compute local linear momentum balance residual derivatives with respect to pressure
-
     BilinearFormUtilities::compute< displacementTestSpace,
                                     pressureTrialSpace,
                                     DifferentialOperator::SymmetricGradient,

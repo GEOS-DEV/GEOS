@@ -171,6 +171,26 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
       }
     }
   }
+
+  template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&N)[numTestDOF/3],
+                       real64 const (&A)[3][numTrialDOF],
+                       real64 const & Np,
+                       real64 const weight )
+  {
+    GEOSX_UNUSED_VAR( Np );
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      for( int b = 0; b < numTrialDOF; ++b )
+      {
+        mat[a*3+0][b] = mat[a*3+0][b] + N[a] * A[0][b] * weight;
+        mat[a*3+1][b] = mat[a*3+1][b] + N[a] * A[1][b] * weight;
+        mat[a*3+2][b] = mat[a*3+2][b] + N[a] * A[2][b] * weight;
+      }
+    }
+  }
 };
 
 template<>
@@ -261,6 +281,39 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
     GEOSX_UNUSED_VAR( dNvdX );
     const_cast< DISCRETIZATION_OPS & >(A).template BTDB< numTestDOF/3 >( dNudX, weight, mat );
   }
+};
+
+template<>
+struct Helper< PDEUtilities::FunctionSpace::H1vector,
+               PDEUtilities::FunctionSpace::H1vector,
+               PDEUtilities::DifferentialOperator::Identity,
+               PDEUtilities::DifferentialOperator::Divergence >
+{
+  template< int numTestDOF, int numTrialDOF >
+  GEOSX_HOST_DEVICE
+  void static compute( real64 (& mat)[numTestDOF][numTrialDOF],
+                       real64 const (&Nv)[numTestDOF/3],
+                       real64 const (&A)[3],
+                       real64 const (&dNudX)[numTestDOF/3][3],
+                       real64 const weight )
+  {
+    for( int a = 0; a < numTestDOF/3; ++a )
+    {
+      for( int b = 0; b < numTrialDOF/3; ++b )
+      {
+        mat[a*3+0][b*3+0] = mat[a*3+0][b*3+0] + Nv[a] * A[0] * dNudX[b][0] * weight;
+        mat[a*3+0][b*3+1] = mat[a*3+0][b*3+1] + Nv[a] * A[0] * dNudX[b][1] * weight;
+        mat[a*3+0][b*3+2] = mat[a*3+0][b*3+2] + Nv[a] * A[0] * dNudX[b][2] * weight;
+        mat[a*3+1][b*3+0] = mat[a*3+1][b*3+0] + Nv[a] * A[1] * dNudX[b][0] * weight;
+        mat[a*3+1][b*3+1] = mat[a*3+1][b*3+1] + Nv[a] * A[1] * dNudX[b][1] * weight;
+        mat[a*3+1][b*3+2] = mat[a*3+1][b*3+2] + Nv[a] * A[1] * dNudX[b][2] * weight;
+        mat[a*3+2][b*3+0] = mat[a*3+2][b*3+0] + Nv[a] * A[2] * dNudX[b][0] * weight;
+        mat[a*3+2][b*3+1] = mat[a*3+2][b*3+1] + Nv[a] * A[2] * dNudX[b][1] * weight;
+        mat[a*3+2][b*3+2] = mat[a*3+2][b*3+2] + Nv[a] * A[2] * dNudX[b][2] * weight;
+      }
+    }
+  }
+
 };
 
 // Generic bilinear form template a(v,u)  = op1(V)^T * A * op2( U )
