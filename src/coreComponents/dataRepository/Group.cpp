@@ -16,6 +16,7 @@
 #include "Group.hpp"
 #include "ConduitRestart.hpp"
 #include "codingUtilities/StringUtilities.hpp"
+#include "codingUtilities/Utilities.hpp"
 #include "common/TimingMacros.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
@@ -328,45 +329,41 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
 
   packedSize += bufferOps::Pack< DO_PACK >( buffer, string( "Wrappers" ) );
 
-  std::vector< string > wrapperNamesForPacking;
-  // TODO if wrapperNames.size()==0, use the keys of m_wrappers as wrapper names. (use mapKeys when Sergey's fix is in).
-  // TODO refactor to remove duplication by use the template pattern.
+  // If `wrapperNames` is empty, then one takes all the available wrappers of this Group instance.
+  // If `tmp` is a convenience conversion from `array1d< string >` to `std::vector< string >`.
+  std::vector< string > const tmp( wrapperNames.begin(), wrapperNames.end() );
+  std::vector< string > const rawWrapperNames = wrapperNames.empty() ? mapKeys( m_wrappers ) : tmp;
 
-  if( wrapperNames.size() == 0 )
+  // `wrappers` are considered for packing if they match the size of this Group instance.
+  // A way to check this is to check the `wrapper.sizedFromParent()`.
+  std::vector< WrapperBase const * > wrappers;
+  for( string const & wrapperName: rawWrapperNames )
   {
-    for( auto const & wrapperPair: m_wrappers )
-    {
-      string const & wrapperName = wrapperPair.first;
-      WrapperBase const * wrapper = wrapperPair.second;
-
-      if( wrapper->sizedFromParent() )
-      { wrapperNamesForPacking.push_back( wrapperName ); }
-    }
-  }
-  else
-  {
-    for( auto const & wrapperName: wrapperNames )
+    if( hasWrapper( wrapperName ) )
     {
       WrapperBase const & wrapper = getWrapperBase( wrapperName );
 
       if( wrapper.sizedFromParent() )
-      { wrapperNamesForPacking.push_back( wrapperName ); }
-    }
-  }
-
-  packedSize += bufferOps::Pack< DO_PACK >( buffer, static_cast< int >(wrapperNamesForPacking.size()) );
-
-  for( auto const & wrapperName: wrapperNamesForPacking )
-  {
-    WrapperBase const & wrapper = getWrapperBase( wrapperName );
-    packedSize += bufferOps::Pack< DO_PACK >( buffer, wrapperName );
-    if( packList.empty() )
-    {
-      packedSize += wrapper.pack< DO_PACK >( buffer, true, onDevice, events );
+      { wrappers.push_back( &wrapper ); }
     }
     else
     {
-      packedSize += wrapper.packByIndex< DO_PACK >( buffer, packList, true, onDevice, events );
+      GEOSX_ERROR( "Wrapper " << wrapperName << " not found in Group " << getName() << "." );
+    }
+  }
+
+  // Now we pack the `wrappers`.
+  packedSize += bufferOps::Pack< DO_PACK >( buffer, static_cast< int >(wrappers.size()) );
+  for( WrapperBase const * wrapper: wrappers )
+  {
+    packedSize += bufferOps::Pack< DO_PACK >( buffer, wrapper->getName() );
+    if( packList.empty() )
+    {
+      packedSize += wrapper->pack< DO_PACK >( buffer, true, onDevice, events );
+    }
+    else
+    {
+      packedSize += wrapper->packByIndex< DO_PACK >( buffer, packList, true, onDevice, events );
     }
   }
 

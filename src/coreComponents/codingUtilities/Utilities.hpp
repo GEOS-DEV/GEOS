@@ -144,17 +144,17 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
 
 /**
  * @brief Construct a vector of map keys.
- * @tparam KEY map key type
- * @tparam VAL map value type
- * @tparam SORTED whether map is ordered or unordered
+ * @tparam MAP map type
  * @param map the map
  * @return a vector of keys
  */
-template< typename KEY, typename VAL, typename SORTED >
-std::vector< KEY > mapKeys( mapBase< KEY, VAL, SORTED > const & map )
+template< typename MAP >
+std::vector< typename MAP::key_type > mapKeys( MAP const & map )
 {
-  std::vector< KEY > keys;
-  std::transform( map.begin(), map.end(), std::back_inserter( keys ), [=]( auto const & p ){ return p.first; } );
+  std::vector< typename MAP::key_type > keys;
+  keys.reserve( map.size() );
+  std::transform( map.begin(), map.end(), std::back_inserter( keys ),
+                  [=]( auto const & p ) { return p.first; } );
   return keys;
 }
 
