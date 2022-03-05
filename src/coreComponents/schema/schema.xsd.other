@@ -476,7 +476,11 @@
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
 		<!--indexSeismoTrace => Count for output pressure at receivers-->
+<<<<<<< HEAD
 		<xsd:attribute name="indexSeismoTrace" type="integer" />
+=======
+		<xsd:attribute name="indexSeismoTrace" type="localIndex" />
+>>>>>>> origin/develop
 		<!--maxStableDt => Value of the Maximum Stable Timestep for this solver.-->
 		<xsd:attribute name="maxStableDt" type="real64" />
 		<!--meshTargets => MeshBody/Region combinations that the solver will be applied to.-->
