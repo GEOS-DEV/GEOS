@@ -2462,33 +2462,13 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
     } );
   } );
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-
-  array1d< globalIndex > globalCounter( 3*size );
-
-  // Everything is done on rank 0
-  MpiWrapper::gather( localCounter.data(),
-                      3,
-                      globalCounter.data(),
-                      3,
-                      0,
-                      MPI_COMM_GEOSX );
-
   array1d< globalIndex > totalCounter( 3 );
 
-  if( rank == 0 )
-  {
-    for( int r = 0; r < size; ++r )
-    {
-      // sum across all ranks
-      totalCounter[0] += globalCounter[3*r];
-      totalCounter[1] += globalCounter[3*r+1];
-      totalCounter[2] += globalCounter[3*r+2];
-    }
-  }
-
-  MpiWrapper::bcast( totalCounter.data(), 3, 0, MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( localCounter.data(),
+                         totalCounter.data(),
+                         3,
+                         MPI_SUM,
+                         MPI_COMM_GEOSX );
 
   numStick = totalCounter[0];
   numSlip  = totalCounter[1];
