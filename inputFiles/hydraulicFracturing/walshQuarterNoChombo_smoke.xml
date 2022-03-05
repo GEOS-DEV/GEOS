@@ -11,7 +11,7 @@
                   xCoords="{  0.0000000,  0.0010000 }"
                   yCoords="{  0.0000000,  0.0075000, 0.0075800, 0.0150000 }"
                   zCoords="{ -0.0075000, -0.0012500, 0.0012500, 0.0075000 }"
-                  nx="{1}"
+                  nx="{10}"
                   ny="{7, 2, 7}"
                   nz="{7, 3, 7}"
                   cellBlockNames="{cb1,  cb1, cb1,
@@ -68,11 +68,12 @@
       fractureRegion="Fracture"
       targetRegions="{Domain, void}"
       nodeBasedSIF="1"
-      rockToughness="3.0e6">
+      rockToughness="3.0e6"
+      mpiCommOrder="1">
     </SurfaceGenerator>
   </Solvers>
   
-   <Events maxTime="10.0">
+   <Events maxTime="0.001">
     <SoloEvent
       name="preFracture"
       target="/Solvers/SurfaceGen"/>
@@ -95,8 +96,8 @@
                    target="/Outputs/siloOutput" />
 
     <PeriodicEvent name="restarts"
-                   timeFrequency="100"
-                   targetExactTimestep="0"
+                   timeFrequency="0.0005"
+                   targetExactTimestep="1"
                    target="/Outputs/sidreRestart" />
   </Events>
   
