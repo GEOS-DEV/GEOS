@@ -28,31 +28,36 @@ namespace compositionalMultiphaseUtilities
 {
 
 /**
- * @brief Shifts all elements one position ahead and replaces the first element
- * with the sum of all elements in each block of the input block one-dimensional
- * array of values.
+ * @brief In each block, shift the elements from 0 to numRowsToShift-1 one position ahead and replaces the first element
+ * with the sum of all elements from 0 to numRowsToShift-1 of the input block one-dimensional array of values.
  *
  * @tparam VEC type of one-dimensional array of values
- * @param N block size
- * @param NB number of blocks
+ * @param numRowsToShift number of rows to shift in each block
+ * @param numRowsInBlock block size
+ * @param numBlocks number of blocks
  * @param v block one-dimensional array of values
+ *
+ * @detail numRowsToShift is different from numRowsInBlock if there is an equation that we do *not* want to
+ * modify, like the energy flux for thermal simulations. In that specific case, numRowsToShift
+ * is set to numRowsInBlock-1 to make sure that we don't modify the last row of each block (the energy flux)
  */
 template< typename VEC >
 GEOSX_HOST_DEVICE
-void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const N,
-                                                                integer const NB,
+void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const numRowsToShift,
+                                                                integer const numRowsInBlock,
+                                                                integer const numBlocks,
                                                                 VEC && v )
 {
-  for( integer i = 0; i < NB; ++i )
+  for( integer i = 0; i < numBlocks; ++i )
   {
-    integer const ind = i * N + N - 1;
+    integer const ind = i * numRowsInBlock + numRowsToShift - 1;
     real64 tmp = v[ind];
-    for( int j = ind - 1; j >= i * N; --j )
+    for( int j = ind - 1; j >= i * numRowsInBlock; --j )
     {
       v[j+1] = v[j];
       tmp += v[j];
     }
-    v[i*N] = tmp;
+    v[i*numRowsInBlock] = tmp;
   }
 }
 
@@ -61,56 +66,62 @@ void shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( integer const N,
  * with the sum of all elements in the input one-dimensional array of values.
  *
  * @tparam VEC type of one-dimensional array of values
- * @param N vector size
+ * @param numRows vector size
  * @param v one-dimensional array of values
  */
 template< typename VEC >
 GEOSX_HOST_DEVICE
-void shiftElementsAheadByOneAndReplaceFirstElementWithSum( integer const N,
+void shiftElementsAheadByOneAndReplaceFirstElementWithSum( integer const numRows,
                                                            VEC && v )
 {
-  shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( N, 1, v );
+  shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numRows, numRows, 1, v );
 }
 
 /**
- * @brief Shifts all rows one position ahead and replaces the first row
- * with the sum of all rows in each block of the input block row
+ * @brief In each block, shift the elements from 0 to numRowsToShift-1, shifts all rows one position ahead
+ * and replaces the first row with the sum of all rows from 0 to numRowsToShift-1 of the input block row
  * two-dimensional array of values.
  *
  * @tparam MATRIX type of two-dimensional array of values
  * @tparam VEC type of one-dimensional array of values
- * @param M block number of rows
- * @param N block number of columns
- * @param NB number of row blocks
+ * @param numRowsToShift number of rows to shift in each block
+ * @param numRowsInBlock block number of rows
+ * @param numColsInBlock block number of columns
+ * @param numBlocks number of row blocks
  * @param mat block row two-dimensional array of values
- * @param work one-dimensional working array of values of size N
+ * @param work one-dimensional working array of values of size numColsInBlock
+ *
+ * @detail numRowsToShift is different from numRowsInBlock if there is an equation that we do *not* want to
+ * modify, like the energy flux for thermal simulations. In that specific case, numRowsToShift
+ * is set to numRowsInBlock-1 to make sure that we don't modify the last row of each block (the energy flux)
  */
 template< typename MATRIX, typename VEC >
 GEOSX_HOST_DEVICE
-void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const M,
-                                                              integer const N,
-                                                              integer const NB,
+void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsToShift,
+                                                              integer const numRowsInBlock,
+                                                              integer const numColsInBlock,
+                                                              integer const numBlocks,
                                                               MATRIX && mat,
                                                               VEC && work )
 {
-  for( integer k = 0; k < NB; ++k )
+  for( integer k = 0; k < numBlocks; ++k )
   {
-    integer const ind = k * M + M - 1;
-    for( integer j = 0; j < N; ++j )
+    integer const ind = k * numRowsInBlock + numRowsToShift - 1;
+    for( integer j = 0; j < numColsInBlock; ++j )
     {
       work[j] = mat[ind][j];
     }
-    for( integer i = ind - 1; i >= k * M; --i )
+    for( integer i = ind - 1; i >= k * numRowsInBlock; --i )
     {
-      for( integer j = 0; j < N; ++j )
+      for( integer j = 0; j < numColsInBlock; ++j )
       {
         mat[i+1][j] = mat[i][j];
         work[j] += mat[i][j];
       }
     }
-    for( integer j = 0; j < N; ++j )
+    for( integer j = 0; j < numColsInBlock; ++j )
     {
-      mat[k*M][j] = work[j];
+      mat[k*numRowsInBlock][j] = work[j];
     }
   }
 }
@@ -122,19 +133,19 @@ void shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const M,
  *
  * @tparam MATRIX type of two-dimensional array of values
  * @tparam VEC type of one-dimensional array of values
- * @param M number of rows
- * @param N number of columns
+ * @param numRowsInBlock number of rows
+ * @param numColsInBlock number of columns
  * @param mat block row two-dimensional array of values
- * @param work one-dimensional working array of values of size N
+ * @param work one-dimensional working array of values of size numColsInBlock
  */
 template< typename MATRIX, typename VEC >
 GEOSX_HOST_DEVICE
-void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const M,
-                                                         integer const N,
+void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const numRowsInBlock,
+                                                         integer const numColsInBlock,
                                                          MATRIX && mat,
                                                          VEC && work )
 {
-  shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( M, N, 1, mat, work );
+  shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numRowsInBlock, numRowsInBlock, numColsInBlock, 1, mat, work );
 }
 
 } // namespace compositionalMultiphaseUtilities

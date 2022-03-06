@@ -348,6 +348,7 @@ public:
 
     arraySlice2d< real64 > dCompFlux_dTSlice = stack.dCompFlux_dT.toSlice();
 
+    // I did not find another way to pass the stack.energyFlux to the lambda...
     real64 * energyFluxPtr = &(stack.energyFlux);
     arraySlice1d< real64 > dEnergyFlux_dPSlice = stack.dEnergyFlux_dP.toSlice();
     arraySlice1d< real64 > dEnergyFlux_dTSlice = stack.dEnergyFlux_dT.toSlice();
@@ -361,7 +362,7 @@ public:
     // Computing dCompFlux_dT and the enthalpyFlux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [=] GEOSX_HOST_DEVICE ( localIndex const ip,
+    Base::computeFlux( iconn, stack, [=] GEOSX_HOST_DEVICE ( integer const ip,
                                                              localIndex const k_up,
                                                              localIndex const er_up,
                                                              localIndex const esr_up,

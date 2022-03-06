@@ -849,9 +849,9 @@ public:
 
     // Apply equation/variable change transformation(s)
     stackArray1d< real64, maxStencilSize * numDof > work( stack.stencilSize * numDof );
-    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numDof*stack.stencilSize, stack.numFluxElems,
+    shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( numComp, numEqn, numDof*stack.stencilSize, stack.numFluxElems,
                                                              stack.localFluxJacobian, work );
-    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.numFluxElems,
+    shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( numComp, numEqn, stack.numFluxElems,
                                                                stack.localFlux );
 
     // add contribution to residual and jacobian into:

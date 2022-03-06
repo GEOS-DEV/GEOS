@@ -277,10 +277,11 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
+    // I did not find another way to pass the stack.localResidual to the lambda
     real64 * localResidualPtr = stack.localResidual;
     real64 ( *localJacobianPtr )[numDof] = stack.localJacobian;
 
-    Base::computeAccumulation( ei, stack, [=] GEOSX_HOST_DEVICE ( localIndex const ip,
+    Base::computeAccumulation( ei, stack, [=] GEOSX_HOST_DEVICE ( integer const ip,
                                                                   real64 const & phaseAmountNew,
                                                                   real64 const & phaseAmountOld,
                                                                   real64 const & dPhaseAmount_dP,

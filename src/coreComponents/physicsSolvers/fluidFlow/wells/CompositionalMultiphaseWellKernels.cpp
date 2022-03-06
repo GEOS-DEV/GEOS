@@ -482,9 +482,9 @@ FluxKernel::
 
       // Apply equation/variable change transformation(s)
       real64 work[NC+1]{};
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, 2, localFluxJacobian_dRate, work );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, 2, localFlux );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, 1, 2, localFluxJacobian_dRate, work );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
 
       for( integer i = 0; i < 2*NC; ++i )
       {
