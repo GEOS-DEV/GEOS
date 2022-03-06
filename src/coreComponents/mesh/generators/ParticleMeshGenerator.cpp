@@ -215,6 +215,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   // Distribute particle information to particle blocks
   map < std::string, std::vector<int> > indexMap; // This will keep track of the indices of particleData associated with each particle block. It's built in the loop that checks for which particles belong to a block.
+  map < std::string, int > sizeMap; // This keeps track of the size of each particle block so we can resize the ParticleRegions later
   for( auto & particleBlockName : m_blockNames )
   {
     ParticleBlock & particleBlock = particleBlockManager.getParticleBlock( particleBlockName );
@@ -234,13 +235,13 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         indexMap[particleBlockName].push_back(i);
       }
     }
-
+    sizeMap[particleBlock.getName()] = np;
     particleBlock.resize(np);
     //std::cout << "Particle block " << particleBlock.getName() << " contains " << particleBlock.size() << " particles." << std::endl;
 
-    array2d< real64 > const & particleCenter = particleBlock.getParticleCenters();
-    array2d< real64 > const & particleVelocity = particleBlock.getParticleVelocities();
-    array1d< real64 > const & particleVolume = particleBlock.getParticleVolumes();
+    array2d< real64 > particleCenter(np,3);
+    array2d< real64 > particleVelocity(np,3);
+    array1d< real64 > particleVolume(np);
 
     // Assign particle data to the appropriate block.
     std::vector<int> & indices = indexMap[particleBlockName];
@@ -284,7 +285,24 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Increment index
       index++;
     }
+    particleBlock.setParticleCenter(particleCenter);
+    particleBlock.setParticleVelocity(particleVelocity);
+    particleBlock.setParticleVolume(particleVolume);
   } // loop over particle blocks
+
+  // Resize particle regions
+  particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
+  {
+    string_array particleBlockNames = particleRegion.getParticleBlockNames();
+    std::string material = particleRegion.getMaterialList()[0]; // We will assume that the material list for a region contains only one material since MPM will only be doing single phase mechanics for now
+    int size = 0;
+    for(auto i=0; i<particleBlockNames.size(); i++)
+    {
+      size += sizeMap[particleBlockNames[i]];
+    }
+    particleRegion.resize(size);
+    GEOSX_LOG_RANK_0("Particle region " << particleRegion.getName() << " contains " << size << " particles.");
+  } );
 
   GEOSX_LOG_RANK_0( "Total number of particles: " << particleManager.size() );
 }

@@ -81,16 +81,25 @@ public:
   ParticleType getParticleType() const override
   { return m_particleType; }
 
-  array2d< real64 > getParticleCenters() const
+  array2d< real64 > getParticleCenter() const override
   { return m_particleCenter; }
 
-  array2d< real64 > getParticleVelocities() const
+  void setParticleCenter(array2d< real64 > const particleCenter) override
+  { m_particleCenter = particleCenter; }
+
+  array2d< real64 > getParticleVelocity() const override
   { return m_particleVelocity; }
 
-  array1d< real64 > getParticleVolumes() const
+  void setParticleVelocity(array2d< real64 > const particleVelocity) override
+    { m_particleVelocity = particleVelocity; }
+
+  array1d< real64 > getParticleVolume() const override
   { return m_particleVolume; }
 
-  bool hasRVectors() const
+  void setParticleVolume(array1d< real64 > const particleVolume) override
+    { m_particleVolume = particleVolume; }
+
+  bool hasRVectors() const override
   { return m_hasRVectors; }
 
   localIndex numParticles() const override

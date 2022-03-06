@@ -140,6 +140,24 @@ getVtkPoints( NodeManager const & nodeManager )
 }
 
 /**
+ * @brief Gets the particle coordinates as a VTK Object from @p particleManager
+ * @param[in] particleManager the ParticleManager associated with the domain being written
+ * @return a VTK object storing all particle coordinates
+ */
+vtkSmartPointer< vtkPoints >
+getVtkPoints( ParticleRegion const & particleRegion )
+{
+  vtkSmartPointer< vtkPoints > points = vtkPoints::New();
+  points->SetNumberOfPoints( particleRegion.size() );
+  array2d< real64 > const coord = particleRegion.getParticleCoordinates();
+  for( localIndex v = 0; v < particleRegion.size(); v++ )
+  {
+    points->SetPoint( v, coord[v][0], coord[v][1], coord[v][2] );
+  }
+  return points;
+}
+
+/**
  * @brief Gets the cell connectivities and the vertices coordinates as VTK objects for a specific WellElementSubRegion.
  * @param[in] subRegion the WellElementSubRegion to be output
  * @param[in] nodeManager the NodeManager associated with the DomainPartition being written.
@@ -719,6 +737,27 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
   } );
 }
 
+
+void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
+                                                       ParticleManager const & particleManager) const
+{
+  particleManager.forParticleRegions< ParticleRegion >( [&]( ParticleRegion const & region )
+  {
+    if( region.getNumberOfParticles< ParticleSubRegion >() != 0 )
+    {
+      vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
+      auto VTKPoints = getVtkPoints( region );
+      ug->SetPoints( VTKPoints );
+//      auto VTKCells = getVtkCells( region );
+//      ug->SetCells( VTKCells.first.data(), VTKCells.second );
+//      writeTimestamp( *ug, time );
+//      writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
+//      writeNodeFields( nodeManager, *ug->GetPointData() );
+      writeUnstructuredGrid( time, region.getName(), *ug );
+    }
+  } );
+}
+
 /**
  * @brief Writes a VTM file for the time-step \p time.
  * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
@@ -842,6 +881,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
     writeCellElementRegions( time, elemManager, nodeManager );
     writeWellElementRegions( time, elemManager, nodeManager );
     writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager );
+    writeParticleRegions( time, particleManager );
     writeVtmFile( time, meshBodyName, elemManager, particleManager, vtmWriter );
   }
 
