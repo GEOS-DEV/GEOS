@@ -103,8 +103,9 @@ public:
 
   virtual void generateMesh( Group & particleBlocks ) override;
 
-
   ///@}
+
+  array2d< real64 > getParticleCoordinates() const;
 
   /**
    * @brief A struct to serve as a container for variable strings and keys.

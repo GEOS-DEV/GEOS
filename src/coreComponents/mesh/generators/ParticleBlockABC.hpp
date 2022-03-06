@@ -57,6 +57,20 @@ public:
    */
   virtual ParticleType getParticleType() const = 0;
 
+  virtual array2d< real64 > getParticleCenter() const = 0;
+
+  virtual void setParticleCenter(array2d< real64 > const particleCenter) = 0;
+
+  virtual array2d< real64 > getParticleVelocity() const = 0;
+
+  virtual void setParticleVelocity(array2d< real64 > const particleVelocity) = 0;
+
+  virtual array1d< real64 > getParticleVolume() const = 0;
+
+  virtual void setParticleVolume(array1d< real64 > const particleVolume) = 0;
+
+  virtual bool hasRVectors() const = 0;
+
   /**
    * @brief Get the number of particles.
    * @return number of particles in the particle block

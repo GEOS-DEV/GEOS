@@ -41,11 +41,16 @@ ParticleSubRegion::~ParticleSubRegion()
   // Left blank
 }
 
-void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock )
+void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock ) // Input type changed from ParticleBlockABC to ParticleBlock, fine for now
 {
   // Defines the (unique) particle type of this cell particle region,
   // and its associated number of nodes, edges, faces.
   m_particleType = particleBlock.getParticleType();
+  m_particleCenter = particleBlock.getParticleCenter();
+  m_particleVelocity = particleBlock.getParticleVelocity();
+  m_particleVolume = particleBlock.getParticleVolume();
+  m_hasRVectors = particleBlock.hasRVectors();
+
 
   // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
   // before calling the `ParticleSubRegion::resize` in order to keep the first dimension.

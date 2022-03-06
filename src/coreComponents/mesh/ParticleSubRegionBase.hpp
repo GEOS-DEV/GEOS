@@ -94,8 +94,8 @@ public:
   { m_hasRVectors = hasRVectors; }
 
   /**
-   * @brief Get the center of each element in this subregion.
-   * @return an arrayView1d of const element centers
+   * @brief Get the center of each particle in this subregion.
+   * @return an arrayView1d of const particle centers
    */
   arrayView2d< real64 const > getParticleCenter() const
   { return m_particleCenter; }
@@ -103,14 +103,33 @@ public:
   /**
    * @copydoc getParticleCenter() const
    */
-  arrayView2d< real64 > getParticleCenter()
+  array2d< real64 > getParticleCenter()
   { return m_particleCenter; }
 
   /**
-   * @brief Get the volume of each element in this subregion.
-   * @return an arrayView1d of const element volumes
+   * @brief Get the velocity of each particle in this subregion.
+   * @return an arrayView1d of const particle velocities
+   */
+  arrayView2d< real64 const > getParticleVelocity() const
+  { return m_particleVelocity; }
+
+  /**
+   * @copydoc getParticleVelocity() const
+   */
+  array2d< real64 > getParticleVelocity()
+  { return m_particleVelocity; }
+
+  /**
+   * @brief Get the volume of each particle in this subregion.
+   * @return an arrayView1d of const particle volumes
    */
   arrayView1d< real64 const > getParticleVolume() const
+  { return m_particleVolume; }
+
+  /**
+   * @copydoc getParticleVolume() const
+   */
+  array1d< real64 > getParticleVolume()
   { return m_particleVolume; }
 
   /**
@@ -168,6 +187,8 @@ public:
   {
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
+    /// @return String key for the member level field for the particle center.
+        static constexpr char const * particleVelocityString() { return "particleVelocity"; }
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
   };

@@ -30,6 +30,7 @@ namespace geosx
 
 class DomainPartition;
 class ElementRegionBase;
+class ParticleRegionBase;
 class EmbeddedSurfaceNodeManager;
 class ElementRegionManager;
 class NodeManager;
@@ -166,6 +167,15 @@ private:
                                    ElementRegionManager const & elemManager,
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
+
+  /**
+   * @brief Writes the files for all the ParticleRegions.
+   * @details There will be one file written per ParticleRegion and per rank.
+   * @param[in] time the time-step
+   * @param[in] particleManager the ParticleManager containing the ParticleElementRegions to be output
+   */
+  void writeParticleRegions( real64 time,
+                             ParticleManager const & particleManager) const;
 
   /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
