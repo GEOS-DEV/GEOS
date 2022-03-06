@@ -26,10 +26,9 @@
 
 #include <cassert>
 
-
 namespace geosx
 {
-
+  
 class HexMeshConnectivityBuilder;
 
 /**
@@ -147,10 +146,6 @@ public:
 
     /**
    * @brief Compute all possible maps and more
-   * 
-   * TODO The goal is lazy computing
-   * We might however need an initialization function for some 
-   * mandatory pre-computation
    */
   void buildMaps();
 
@@ -215,8 +210,6 @@ private:
    */
   localIndex numCellBlocks() const
   { return this->getCellBlocks().numSubGroups(); }
-
-
 
 private:
   HexMeshConnectivityBuilder * m_theOneWhoDoesTheJob;
