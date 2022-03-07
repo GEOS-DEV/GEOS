@@ -254,78 +254,58 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
-
   localIndex const numPackedIndices = packList.size();
   packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
   if( numPackedIndices > 0 )
   {
-    std::set< string > wrapperNamesForPacking;
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
-
+    // If `wrapperNames` is empty we fall back on all the wrappers actually registered in the instance.
+    std::set< string > tmpWrapperNames;
     if( wrapperNames.empty() )
     {
-      wrapperNamesForPacking = mapKeys< decltype( wrappers() ), std::set< string > >( wrappers() );
-      std::set< string > exclusion = getPackingExclusionList();
-
-      for( localIndex k = 0; k < this->wrappers().size(); ++k )
-      {
-        string const & wrapperName = wrappers().values()[k].first;
-        WrapperBase const * wrapper = wrappers().values()[k].second;
-        if( not wrapper->sizedFromParent() )
-        {
-          exclusion.insert( wrapperName );
-        }
-      }
-
-      for( string const & e: exclusion )
-      {
-        wrapperNamesForPacking.erase( e );
-      }
+      tmpWrapperNames = mapKeys< decltype( wrappers() ), std::set< string > >( wrappers() );
     }
     else
     {
-//      SortedArray< localIndex > exclusionList;
-//      viewPackingExclusionList( exclusionList );
-//      std::vector< string > excludedWrapperNames;
-//
-//      for( localIndex k=0; k<this->wrappers().size(); ++k )
-//      {
-//        if( exclusionList.count( k ) != 0 )
-//        {
-//          string const & wrapperName = wrappers().values()[k].first;
-////          WrapperBase const * wrapper = wrappers().values()[k].second;
-//          excludedWrapperNames.push_back( wrapperName );
-//        }
-//      }
-//
-//      for( string const & wrapperName: wrapperNames )
-//      {
-//        if( std::find( excludedWrapperNames.begin(), excludedWrapperNames.end(), wrapperName ) != excludedWrapperNames.end() )
-//        {
-//          GEOSX_LOG("COUCOU excludedWrapperNames contains : " << wrapperName);
-//        }
-//      }
+      std::copy( wrapperNames.begin(), wrapperNames.end(), std::inserter( tmpWrapperNames, tmpWrapperNames.end() ) );
+    }
 
-      // So we do not respect the `exclusionList` here? I could find no occurrence of the pattern so let's replace and document.
-//      wrapperNamesForPacking = wrapperNames;
-      for( auto const & wrapperName : wrapperNames )
+    // We remove all the wrappers which names in the `exclusion` list.
+    std::set< string > wrapperNamesWithoutExclusions;
+    std::set< string > const exclusion = getPackingExclusionList();
+    std::set_difference(tmpWrapperNames.cbegin(), tmpWrapperNames.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( wrapperNamesWithoutExclusions, wrapperNamesWithoutExclusions.end() ));
+
+    // Now we build the final list.
+    // No packing by index is allowed if the registered wrapper
+    // does not share the size of the owning group.
+    // Hence, the sufficient condition of `sizedFromParent` to keep the wrapper.
+    std::set< string > wrapperNamesFinal;
+    for( string const & wrapperName: wrapperNamesWithoutExclusions )
+    {
+      if( this->hasWrapper( wrapperName ) )
       {
-        if( this->hasWrapper( wrapperName ) ) // TODO double check
-        {
-          WrapperBase const & wrapper = getWrapperBase( wrapperName );
+        WrapperBase const & wrapper = getWrapperBase( wrapperName );
 
-          if( wrapper.sizedFromParent() )
-          { wrapperNamesForPacking.insert( wrapperName ); }
-        }
+        if( wrapper.sizedFromParent() )
+        { wrapperNamesFinal.insert( wrapperName ); }
       }
     }
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperNamesForPacking.size() );
-    for( auto const & wrapperName: wrapperNamesForPacking )
+    // TODO We cannot rely on `wrapper.getName()` to get the key (they can be different).
+    //      Plus additional refactoring should be done by using `Group::packPrivate`
+    //      that duplicates the following pack code.
+    std::vector< std::pair< string, WrapperBase const * > > wrappers;
+    for( string const & wrapperName: wrapperNamesFinal )
     {
-      dataRepository::WrapperBase const & wrapper = this->getWrapperBase( wrapperName );
-      packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
-      packedSize += wrapper.packByIndex< DOPACK >( buffer, packList, true, onDevice, events );
+      WrapperBase const & wrapper = getWrapperBase( wrapperName );
+      wrappers.emplace_back( wrapperName, &wrapper );
+    }
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, wrappers.size() );
+    for( auto const & nameToWrapper: wrappers )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, nameToWrapper.first );
+      packedSize += nameToWrapper.second->packByIndex< DOPACK >( buffer, packList, true, onDevice, events );
     }
   }
 
@@ -344,7 +324,6 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-
 
 
 localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
@@ -376,10 +355,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      if( wrapperName != "nullptr" ) // This should now be useless.
-      {
-        unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
-      }
+      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
     }
   }
 
