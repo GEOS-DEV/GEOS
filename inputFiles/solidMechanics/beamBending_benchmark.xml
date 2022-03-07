@@ -16,15 +16,16 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Region2 }"
-      >
+      logLevel="1">
       <!-- SPHINX_SolidMechanicsSolverEnd -->
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="8"/>
       <LinearSolverParameters
         solverType="gmres"
-        krylovTol="1.0e-12"
-        preconditionerType="amg"/>
+        krylovTol="1.0e-6"
+        preconditionerType="amg"
+        logLevel="0"/>
     </SolidMechanicsLagrangianSSLE>
   </Solvers>
 

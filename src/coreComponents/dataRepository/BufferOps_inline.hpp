@@ -531,7 +531,7 @@ UnpackArray( buffer_unit_type const * & buffer,
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
-               ArrayView< T, NDIM, USD > & var,
+               ArrayView< T, NDIM, USD > const & var,
                const T_indices & indices )
 {
   localIndex strides[NDIM];
