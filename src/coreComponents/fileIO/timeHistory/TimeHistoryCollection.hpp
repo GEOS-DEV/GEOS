@@ -189,7 +189,7 @@ public:
    * @return Return PyHistoryCollection type.
    */
 #if defined(GEOSX_USE_PYGEOSX)
-  virtual PyTypeObject * getPythonType() const
+  virtual PyTypeObject * getPythonType() const override
   { return python::getPyHistoryCollectionType(); }
 #endif
 

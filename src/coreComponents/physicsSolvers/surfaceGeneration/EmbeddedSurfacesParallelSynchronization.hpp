@@ -31,17 +31,13 @@ struct ModifiedObjectLists;
 namespace embeddedSurfacesParallelSynchronization
 {
 
-void synchronizeNewSurfaces( MeshLevel & mesh,
-                             std::vector< NeighborCommunicator > & neighbors,
-                             NewObjectLists & newObjects,
-                             int const mpiCommOrder );
-
-void synchronizeFracturedElements( MeshLevel & mesh,
-                                   std::vector< NeighborCommunicator > & neighbors,
-                                   string const fractureRegionName );
-
+void sychronizeTopology( MeshLevel & mesh,
+                         std::vector< NeighborCommunicator > & neighbors,
+                         NewObjectLists & newObjects,
+                         int const mpiCommOrder,
+                         string const fractureRegionName );
 }
 
-} /* namespace lvarray */
+} /* namespace geosx */
 
 #endif /* GEOSX_PHYSICSSOLVERS_SURFACEGENERATION_EMBEDDEDSURFACESPARALLELSYNCHRONIZATION_HPP_ */
