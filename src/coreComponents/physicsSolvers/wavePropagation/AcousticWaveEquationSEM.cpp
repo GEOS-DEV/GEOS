@@ -544,11 +544,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     std::map< string, string_array > fieldNames;
     fieldNames["node"].emplace_back( "pressure_np1" );
 
-//    CommunicationTools & syncFields = CommunicationTools::getInstance();
-//    syncFields.synchronizeFields( fieldNames,
-//                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-//                                  domain.getNeighbors(),
-//                                  true );
+    CommunicationTools & syncFields = CommunicationTools::getInstance();
+    syncFields.synchronizeFields( fieldNames,
+                                  mesh,
+                                  domain.getNeighbors(),
+                                  true );
 
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {

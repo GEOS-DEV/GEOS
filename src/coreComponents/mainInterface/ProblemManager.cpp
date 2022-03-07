@@ -554,9 +554,9 @@ void ProblemManager::generateMesh()
 
     FaceManager & faceManager = mesh.getFaceManager();
     EdgeManager & edgeManager = mesh.getEdgeManager();
-//    Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-//    integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-//    domain.setupCommunications( useNonblockingMPI );
+    Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+    integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+    domain.setupCommunications( useNonblockingMPI );
     faceManager.setIsExternal();
     edgeManager.setIsExternal( faceManager );
   }
@@ -694,7 +694,8 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
     elemManager.generateMesh( cellBlockManager );
     nodeManager.setGeometricalRelations( cellBlockManager );
     edgeManager.setGeometricalRelations( cellBlockManager );
-    faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
+    faceManager.setGeometricalRelations( cellBlockManager,
+                                         nodeManager );
     nodeManager.constructGlobalToLocalMap( cellBlockManager );
     // Edge, face and element region managers rely on the sets provided by the node manager.
     // This is why `nodeManager.buildSets` is called first.

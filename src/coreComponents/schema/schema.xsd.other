@@ -338,21 +338,18 @@
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalWellType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="Perforation" type="PerforationType" />
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="PerforationType" />
 	<xsd:complexType name="InternalWellboreType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 		<!--nx => Number of elements in the x-direction within each mesh block-->
@@ -366,7 +363,6 @@
 	</xsd:complexType>
 	<xsd:complexType name="PAMELAMeshGeneratorType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellManager" type="cellManagerType" />
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
@@ -1679,18 +1675,12 @@
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="cellManagerType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="cellBlocks" type="cellBlocksType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="cellBlocksType" />
 	<xsd:complexType name="meshLevelsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="Level0" type="Level0Type" />
+			<xsd:element name="baseDiscretization" type="baseDiscretizationType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="Level0Type">
+	<xsd:complexType name="baseDiscretizationType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />

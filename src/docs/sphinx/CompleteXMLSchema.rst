@@ -1489,13 +1489,6 @@ Datastructure: LaplaceVEM
 .. include:: ../../coreComponents/schema/docs/LaplaceVEM_other.rst
 
 
-.. _DATASTRUCTURE_Level0:
-
-Datastructure: Level0
-=====================
-.. include:: ../../coreComponents/schema/docs/Level0_other.rst
-
-
 .. _DATASTRUCTURE_LinearSolverParameters:
 
 Datastructure: LinearSolverParameters
@@ -1993,18 +1986,11 @@ Datastructure: WellElementRegionuniqueSubRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
 
 
-.. _DATASTRUCTURE_cellBlocks:
+.. _DATASTRUCTURE_baseDiscretization:
 
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
+Datastructure: baseDiscretization
+=================================
+.. include:: ../../coreComponents/schema/docs/baseDiscretization_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:
