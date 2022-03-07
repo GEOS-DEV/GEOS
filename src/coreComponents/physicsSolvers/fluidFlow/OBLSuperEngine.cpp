@@ -18,15 +18,10 @@
 
 #include "OBLSuperEngine.hpp"
 
-#include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
-#include "common/TimingMacros.hpp"
-#include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
-#include "fieldSpecification/SourceFluxBoundaryCondition.hpp"
  #include "finiteVolume/FiniteVolumeManager.hpp"
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
@@ -38,6 +33,10 @@
 
 namespace geosx
 {
+
+using namespace dataRepository;
+using namespace constitutive;
+using namespace OBLSuperEngineKernels;
 
 namespace
 {
@@ -58,11 +57,6 @@ MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOper
   }
 }
 }
-
-using namespace dataRepository;
-using namespace constitutive;
-//using namespace CompositionalMultiphaseFVMKernels;
-using namespace OBLSuperEngineKernels;
 
 OBLSuperEngine::OBLSuperEngine( const string & name,
                                 Group * const parent )
@@ -184,7 +178,7 @@ void OBLSuperEngine::implicitStepComplete( real64 const & time,
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         pres[ei] += dPres[ei];
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           compFrac[ei][ic] += dCompFrac[ei][ic];
         }
@@ -206,10 +200,12 @@ void OBLSuperEngine::postProcessInput()
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
 
-  GEOSX_ERROR_IF_GT_MSG( m_maxCompFracChange, 1.0,
-                         "The maximum absolute change in component fraction must smaller or equal to 1.0" );
-  GEOSX_ERROR_IF_LT_MSG( m_maxCompFracChange, 0.0,
-                         "The maximum absolute change in component fraction must larger or equal to 0.0" );
+  GEOSX_THROW_IF_GT_MSG( m_maxCompFracChange, 1.0,
+                         GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be greater than 1.0", m_maxCompFracChange ),
+                         InputError );
+  GEOSX_THROW_IF_LT_MSG( m_maxCompFracChange, 0.0,
+                         GEOSX_FMT( "The maximum absolute change in component fraction is set to {}, while it must not be lesser than 0.0", m_maxCompFracChange ),
+                         InputError );
 
   m_OBLOperatorsTable = makeOBLOperatorsTable( m_OBLOperatorsTableFile, FunctionManager::getInstance());
 
@@ -219,11 +215,13 @@ void OBLSuperEngine::postProcessInput()
 
   m_numOBLOperators = COMPUTE_NUM_OPS( m_numPhases, m_numComponents, m_enableEnergyBalance );
 
-  GEOSX_ERROR_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->getNumDims(),
-                         "The number of degrees of freedom per element used in solver and table should match" );
+  GEOSX_THROW_IF_NE_MSG( m_numDofPerCell, m_OBLOperatorsTable->getNumDims(),
+                         GEOSX_FMT( "The number of degrees of freedom per element used in solver - {} - and in operator table - {} - should match", m_numDofPerCell, m_OBLOperatorsTable->getNumDims()),
+                         InputError );
 
-  GEOSX_ERROR_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->getNumOps(),
-                         "The number of operators per element used in solver and table should match" );
+  GEOSX_THROW_IF_NE_MSG( m_numOBLOperators, m_OBLOperatorsTable->getNumOps(),
+                         GEOSX_FMT( "The number of operators per element used in solver - {} - and in operator table - {} - should match", m_numOBLOperators, m_OBLOperatorsTable->getNumOps()),
+                         InputError );
 
 }
 
@@ -274,12 +272,19 @@ void OBLSuperEngine::registerDataOnMesh( Group & meshBodies )
       // to be able to pass the view to OBLOperatorsKernel
       subRegion.registerExtrinsicData< deltaGlobalCompFraction >( getName() ).
         reference().resizeDimension< 1 >( m_numComponents );
-
-      subRegion.registerExtrinsicData< referencePoreVolume >( getName() );
+      // in principle, referencePorosity could be used directly from solid model,
+      // but was duplicated to remove dependency on solid
       subRegion.registerExtrinsicData< referencePorosity >( getName() );
+
+      // referencePoreVolume and referenceRockVolume are introduced for the sake of performance:
+      // this way the multiplication of constant arrays (e.g., referencePorosity and volume) every Newton step is avoided
+      subRegion.registerExtrinsicData< referencePoreVolume >( getName() );
       subRegion.registerExtrinsicData< referenceRockVolume >( getName() );
 
       // thermal rock properties (again, register in any case)
+      // it is not possible to use specificHeatCapacity from solid model here, because specificHeatCapacity includes several quantities,
+      // which are split in OBL framework: constant rock volume and,
+      // hidden inside operator - therefore variable - rock compressibility and rock energy
       subRegion.registerExtrinsicData< rockVolumetricHeatCapacity >( getName() );
       subRegion.registerExtrinsicData< rockThermalConductivity >( getName() );
       subRegion.registerExtrinsicData< rockKineticRateFactor >( getName() );
@@ -335,7 +340,9 @@ real64 OBLSuperEngine::calculateResidualNorm( DomainPartition const & domain,
                                                                    OBLVals,
                                                                    subRegionResidualNorm );
         if( localResidualNorm < subRegionResidualNorm )
+        {
           localResidualNorm = subRegionResidualNorm;
+        }
       }
       else
       {
@@ -407,7 +414,7 @@ real64 OBLSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
         {
           real64 lastCompFracChange = 0.0;
           // process NC-1 components first (they have explicit solution)
-          for( localIndex ic = 0; ic < NC - 1; ++ic )
+          for( integer ic = 0; ic < NC - 1; ++ic )
           {
             localIndex const lid = dofNumber[ei] + ic + 1 - rankOffset;
 
@@ -505,22 +512,27 @@ void OBLSuperEngine::applySystemSolution( DofManager const & dofManager,
 
   MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
-  DofManager::CompMask compFracMask( m_numDofPerCell, 1, m_numComponents );
+  std::map< string, string_array > fieldNames;
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
                                extrinsicMeshData::flow::deltaPressure::key(),
                                scalingFactor,
                                pressureMask );
-
-  dofManager.addVectorToField( localSolution,
-                               viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::deltaGlobalCompFraction::key(),
-                               scalingFactor,
-                               compFracMask );
-  std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompFraction::key() );
+
+  if( m_numComponents > 1 )
+  {
+    DofManager::CompMask compFracMask( m_numDofPerCell, 1, m_numComponents );
+
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 extrinsicMeshData::flow::deltaGlobalCompFraction::key(),
+                                 scalingFactor,
+                                 compFracMask );
+    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompFraction::key() );
+
+  }
 
   if( m_enableEnergyBalance )
   {
@@ -532,7 +544,6 @@ void OBLSuperEngine::applySystemSolution( DofManager const & dofManager,
                                  temperatureMask );
     fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
   }
-
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
@@ -572,7 +583,9 @@ void OBLSuperEngine::initializePostInitialConditionsPreSubGroups()
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] >= 0 )
+        {
           return;
+        }
 
         referencePoreVolume[ei] = volume[ei] * refPorosity[ei];
         referencePorosity[ei] = refPorosity[ei];
@@ -761,9 +774,6 @@ void OBLSuperEngine::applyBoundaryConditions( real64 const time_n,
 
   // apply pressure boundary conditions.
   applyDirichletBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
-
-  // apply flux boundary conditions
-  applySourceFluxBC( time_n, dt, dofManager, domain, localMatrix.toViewConstSizes(), localRhs.toView() );
 }
 
 namespace internal
@@ -775,113 +785,20 @@ string const bcLogMessage = string( "OBLSuperEngine {}: at time {}s, " )
                             + string( "\nNote that if this number is equal to zero for all subRegions, the boundary condition will not be applied on this element set." );
 }
 
-void OBLSuperEngine::applySourceFluxBC( real64 const time,
-                                        real64 const dt,
-                                        DofManager const & dofManager,
-                                        DomainPartition & domain,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) const
-{
-  GEOSX_MARK_FUNCTION;
-
-  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
-  string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
-
-  fsManager.apply( time + dt,
-                   domain,
-                   "ElementRegions",
-                   FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & subRegion,
-                        string const & )
-  {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-    {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time+dt, SourceFluxBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-    }
-
-    arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-    arrayView1d< integer const > const ghostRank =
-      subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-    // Step 1: get the values of the source boundary condition that need to be added to the rhs
-    // We don't use FieldSpecificationBase::applyConditionToSystem here because we want to account for the row permutation used in the
-    // compositional solvers
-
-    array1d< globalIndex > dofArray( targetSet.size() );
-    array1d< real64 > rhsContributionArray( targetSet.size() );
-    arrayView1d< real64 > rhsContributionArrayView = rhsContributionArray.toView();
-    localIndex const rankOffset = dofManager.rankOffset();
-
-    // note that the dofArray will not be used after this step (simpler to use dofNumber instead)
-    fs.computeRhsContribution< FieldSpecificationAdd,
-                               parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                         time + dt,
-                                                         dt,
-                                                         subRegion,
-                                                         dofNumber,
-                                                         rankOffset,
-                                                         localMatrix,
-                                                         dofArray.toView(),
-                                                         rhsContributionArrayView,
-                                                         [] GEOSX_HOST_DEVICE ( localIndex const )
-    {
-      return 0.0;
-    } );
-
-    // Step 2: we are ready to add the right-hand side contributions, taking into account our equation layout
-
-    integer const fluidComponentId = fs.getComponent();
-    integer const numFluidComponents = m_numComponents;
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
-                                                         rankOffset,
-                                                         ghostRank,
-                                                         fluidComponentId,
-                                                         numFluidComponents,
-                                                         dofNumber,
-                                                         rhsContributionArrayView,
-                                                         localRhs] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      // we need to filter out ghosts here, because targetSet may contain them
-      localIndex const ei = targetSet[a];
-      if( ghostRank[ei] >= 0 )
-      {
-        return;
-      }
-
-      // for all "fluid components", we add the value to the total mass balance equation
-      globalIndex const totalMassBalanceRow = dofNumber[ei] - rankOffset;
-      localRhs[totalMassBalanceRow] += rhsContributionArrayView[a];
-
-      // for all "fluid components" except the last one, we add the value to the component mass balance equation (shifted appropriately)
-      if( fluidComponentId < numFluidComponents - 1 )
-      {
-        globalIndex const compMassBalanceRow = totalMassBalanceRow + fluidComponentId + 1;   // component mass bal equations are shifted
-        localRhs[compMassBalanceRow] += rhsContributionArrayView[a];
-      }
-    } );
-
-  } );
-}
-
 namespace
 {
 
 bool validateDirichletBC( DomainPartition & domain,
                           integer const numComp,
+                          integer const enableEnergyBalance,
                           real64 const time )
 {
-  constexpr integer MAX_NC = OBLSuperEngine::MAX_NUM_COMPONENTS;
+  constexpr integer MAX_NC = OBLSuperEngine::MAX_NUM_COMPONENTS + 1; // +1 is for energy component
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;   // map to check consistent application of BC
   bool bcConsistent = true;
+  integer const numCompWithEnergy = numComp + enableEnergyBalance;
 
   // 1. Check pressure Dirichlet BCs
   fsManager.apply( time,
@@ -904,7 +821,7 @@ bool validateDirichletBC( DomainPartition & domain,
       bcConsistent = false;
       GEOSX_WARNING( GEOSX_FMT( "Conflicting pressure boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
     }
-    subRegionSetMap[setName].setNumComp( numComp );
+    subRegionSetMap[setName].setNumComp( numCompWithEnergy );
   } );
 
   // 2. Check composition BC (global component fraction)
@@ -945,6 +862,41 @@ bool validateDirichletBC( DomainPartition & domain,
     compMask.set( comp );
   } );
 
+  if( enableEnergyBalance )
+  {
+    // 3. Check temperature Dirichlet BCs
+    fsManager.apply( time,
+                     domain,
+                     "ElementRegions",
+                     extrinsicMeshData::flow::temperature::key(),
+                     [&]( FieldSpecificationBase const &,
+                          string const & setName,
+                          SortedArrayView< localIndex const > const &,
+                          Group & subRegion,
+                          string const & )
+    {
+      // 1.0. Check whether pressure has already been applied to this set
+      string const & subRegionName = subRegion.getName();
+      string const & regionName = subRegion.getParent().getParent().getName();
+
+      auto & subRegionSetMap = bcStatusMap[regionName][subRegionName];
+      if( subRegionSetMap.count( setName ) == 0 )
+      {
+        bcConsistent = false;
+        GEOSX_WARNING( GEOSX_FMT( "Pressure boundary condition not prescribed on set {}/{}/{}", regionName, subRegionName, setName ) );
+      }
+
+      ComponentMask< MAX_NC > & compMask = subRegionSetMap[setName];
+      // if energy balance is enabled, energy is the last component in the mask
+      if( compMask[numComp] )
+      {
+        bcConsistent = false;
+        GEOSX_WARNING( GEOSX_FMT( "Conflicting temperature boundary conditions on set {}/{}/{}", regionName, subRegionName, setName ) );
+      }
+      compMask.set( numComp );
+    } );
+  }
+
   // 2.3 Check consistency between composition BC applied to sets
   for( auto const & regionEntry : bcStatusMap )
   {
@@ -984,7 +936,7 @@ void OBLSuperEngine::applyDirichletBC( real64 const time,
   // Only validate BC at the beginning of Newton loop
   if( m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
   {
-    bool const bcConsistent = validateDirichletBC( domain, m_numComponents, time + dt );
+    bool const bcConsistent = validateDirichletBC( domain, m_numComponents, m_enableEnergyBalance, time + dt );
     GEOSX_ERROR_IF( !bcConsistent, GEOSX_FMT( "CompositionalMultiphaseBase {}: inconsistent boundary conditions", getName() ) );
   }
 
@@ -1125,7 +1077,7 @@ void OBLSuperEngine::applyDirichletBC( real64 const time,
       localRhs[localRow] = rhsValue;
 
       // 3.2. For each component (but the last), apply target global component fraction value
-      for( localIndex ic = 0; ic < numComp - 1; ++ic )
+      for( integer ic = 0; ic < numComp - 1; ++ic )
       {
         FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
                                                     rankOffset,
@@ -1186,7 +1138,7 @@ void OBLSuperEngine::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
   //   {
   //     if( ghostRank[ei] < 0 )
   //     {
-  //       for( localIndex ic = 0; ic < numComp; ++ic )
+  //       for( integer ic = 0; ic < numComp; ++ic )
   //       {
   //         real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
   //         if( newDens < minValueForDivision )
@@ -1231,9 +1183,6 @@ void OBLSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
           subRegion.template getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaTemperature::key() );
         dTemp.zero();
       }
-
-      // update porosity and permeability
-      updatePorosityAndPermeability( subRegion );
 
       // update operator values
       updateOBLOperators( subRegion );

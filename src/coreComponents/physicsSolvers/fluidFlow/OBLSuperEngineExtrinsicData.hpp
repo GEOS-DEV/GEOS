@@ -33,11 +33,7 @@ namespace extrinsicMeshData
 namespace flow
 {
 
-//using array2dLayoutPhase = array2d< real64, compflow::LAYOUT_PHASE >;
-//using array3dLayoutPhase_dC = array3d< real64, compflow::LAYOUT_PHASE_DC >;
 using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
-//using array3dLayoutComp_dC = array3d< real64, compflow::LAYOUT_COMP_DC >;
-//using array3dLayoutPhaseComp = array3d< real64, compflow::LAYOUT_PHASE_COMP >;
 using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
 using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
 
