@@ -166,26 +166,6 @@ public:
   void appendNode( arraySlice1d< real64 const > const & pointCoord,
                    integer const & pointGhostRank );
 
-
-  /**
-   * @brief computes the number of nodes owned by this rank.
-   * @return the number of nodes owned by the rank
-   */
-  localIndex numberOfOwnedNodes() const
-  {
-    localIndex numOfOwnedNodes = 0;
-
-    for( localIndex in = 0; in < size(); in++ )
-    {
-      if( m_ghostRank[ in ] < 0 )
-      {
-        numOfOwnedNodes++;
-      }
-    }
-
-    return numOfOwnedNodes;
-  }
-
   /**
    * @name Packing methods
    */

@@ -93,10 +93,10 @@ public:
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
                           EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
-                          arrayView1d< globalIndex const > const & uDofNumber,
+                          arrayView1d< globalIndex const > const uDofNumber,
                           globalIndex const rankOffset,
-                          CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                          arrayView1d< real64 > const & inputRhs,
+                          CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                          arrayView1d< real64 > const inputRhs,
                           real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
@@ -236,10 +236,10 @@ public:
 /// The factory used to construct a QuasiStatic kernel.
 using EFEMStaticCondensationFactory = finiteElement::KernelFactory< EFEMStaticCondensation,
                                                                     EmbeddedSurfaceSubRegion &,
-                                                                    arrayView1d< globalIndex const > const &,
+                                                                    arrayView1d< globalIndex const > const,
                                                                     globalIndex const,
-                                                                    CRSMatrixView< real64, globalIndex const > const &,
-                                                                    arrayView1d< real64 > const &,
+                                                                    CRSMatrixView< real64, globalIndex const > const,
+                                                                    arrayView1d< real64 > const,
                                                                     real64 const (&) [3] >;
 
 } // namespace SolidMechanicsEFEMKernels
