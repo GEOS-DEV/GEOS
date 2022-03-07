@@ -102,6 +102,7 @@ protected:
   /// Derivative of viscosity w.r.t. pressure
   arrayView2d< real64 > m_dVisc_dPres;
 //END_SPHINX_INCLUDE_01
+//START_SPHINX_INCLUDE_02
 private:
 
   /**
@@ -142,6 +143,7 @@ private:
                        real64 const pressure ) const = 0;
 
 };
+//END_SPHINX_INCLUDE_02
 
 /**
  * @brief Base class for single-phase fluid models.
