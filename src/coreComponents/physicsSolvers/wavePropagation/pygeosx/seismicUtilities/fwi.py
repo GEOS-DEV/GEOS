@@ -490,6 +490,7 @@ def goldsteinCondition(J, Jm, d, gradJ, alpha, k2=0.2):
 
 
 def descentDirection(gradJ, method="steepestDescent"):
+
     """Compute the descent direction
 
     Parameters

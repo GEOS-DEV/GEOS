@@ -162,7 +162,7 @@ class AcousticSolver:
         self.geosx.get_wrapper("/Solvers/"+self.name+"/dtSeismoTrace").value()[0] = self.dtSeismo
 
 
-    def updateOutputsName(self, list_of_output):
+    def updateOutputsName(self, list_of_output, reinit=False):
 
         """Overwrite GEOSX hdf5 Outputs paths that have been read in the XML.
 
@@ -170,6 +170,9 @@ class AcousticSolver:
         ----------
         list_of_output : list
             List of string path
+
+        reinit : bool
+            Perform reinitialization or not. Must be set to True if called after apply_initial_conditions()
         """
 
         if not len(self.outputs):
@@ -182,7 +185,8 @@ class AcousticSolver:
                     os.system("mkdir -p " + list_of_output[i])
 
                 self.outputs[i].setOutputName(list_of_output[i])
-                self.outputs[i].reinit()
+                if reinit:
+                    self.outputs[i].reinit()
 
 
     def updateSourceAndReceivers(self, sources_list=[], receivers_list=[]):

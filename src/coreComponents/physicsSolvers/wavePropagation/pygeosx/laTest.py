@@ -80,11 +80,12 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
 #==================================================
         #BACKWARD
 #==================================================
-        solver.updateSourceAndReceivers(source_list = shot.receivers.receivers_list)
-        solver.updateSourceValue(residual)
+        acousticSolver.updateSourceAndReceivers(sources_list = shot.receivers.receivers_list)
+        acousticSolver.updateSourceValue(residual)
         acousticSolver.updateOutputsName([gradDir+"/backwardWaveFieldNp1_"+shot.id,
                                           gradDir+"/backwardWaveFieldN_"+shot.id,
-                                          gradDir+"/backwardWaveFieldNm1_"+shot.id])
+                                          gradDir+"/backwardWaveFieldNm1_"+shot.id],
+                                         True)
 
         backward(acousticSolver, shot, outputWaveFieldInterval, rank)
 
@@ -105,6 +106,7 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
 #==================================================
         #FULL GRADIENT
 #==================================================
+    costDir = "partialCostFunction"
     if rank==0:
         fullCostFunction = computeFullCostFunction(costDir, acquisition)
         computeFullGradient(gradDir, acquisition)
