@@ -27,6 +27,7 @@
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
 
+
 #include <iostream>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
@@ -1331,6 +1332,19 @@ public:
   integer getLogLevel() const { return m_logLevel; }
   ///@}
 
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() {}
+
+  /**
+   * @brief Return PyGroup type.
+   * @return Return PyGroup type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const;
+#endif
+
 protected:
 
   /**
@@ -1376,6 +1390,8 @@ protected:
    */
   virtual void postRestartInitialization()
   {}
+
+
 
   ///@}
 

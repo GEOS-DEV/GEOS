@@ -18,6 +18,10 @@
 #include "codingUtilities/StringUtilities.hpp"
 #include "common/TimingMacros.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "python/PyGroupType.hpp"
+#endif
+
 namespace geosx
 {
 namespace dataRepository
@@ -640,6 +644,10 @@ localIndex Group::getSubGroupIndex( keyType const & key) const
   return getSubGroups().getIndex( key );
 }
 
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * Group::getPythonType() const
+{ return geosx::python::getPyGroupType(); }
+#endif
 
 } /* end namespace dataRepository */
 } /* end namespace geosx  */

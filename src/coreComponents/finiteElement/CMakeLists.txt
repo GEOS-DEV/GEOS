@@ -13,6 +13,8 @@ set( finiteElement_headers
      elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp
      elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp
      elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp
+     elementFormulations/ConformingVirtualElementOrder1.hpp
+     elementFormulations/ConformingVirtualElementOrder1_impl.hpp
      elementFormulations/LagrangeBasis1.hpp
      elementFormulations/LagrangeBasis2.hpp
      elementFormulations/LagrangeBasis3GL.hpp

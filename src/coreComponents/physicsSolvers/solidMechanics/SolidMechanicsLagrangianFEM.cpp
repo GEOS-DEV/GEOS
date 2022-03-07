@@ -297,7 +297,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   real64 rval = 0;
   if( m_strainTheory==0 )
   {
-    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
+    auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
@@ -309,7 +309,7 @@ real64 SolidMechanicsLagrangianFEM::explicitKernelDispatch( MeshLevel & mesh,
   }
   else if( m_strainTheory==1 )
   {
-    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
+    auto kernelFactory = solidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
     rval = finiteElement::
              regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                            constitutive::SolidBase,
@@ -570,12 +570,12 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
 
     //3: v^{n+1/2} = v^{n} + a^{n} dt/2
-    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt/2 );
+    solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt / 2 );
 
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
     //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
-    SolidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
+    solidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
     fsManager.applyFieldValue( time_n + dt,
                                domain, "nodeManager",
@@ -617,7 +617,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                             string( viewKeyStruct::elemsAttachedToSendOrReceiveNodesString() ) );
 
     // apply this over a set
-    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
+    solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
@@ -635,7 +635,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
                             string( viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() ) );
 
     // apply this over a set
-    SolidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
+    solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
 
     // this includes  a device sync after launching all the unpacking kernels
@@ -941,7 +941,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
 
       finiteElement::
         fillSparsity< FaceElementSubRegion,
-                      SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
+                      solidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
                                                                          allFaceElementRegions,
                                                                          this->getDiscretizationName(),
                                                                          dofNumber,
@@ -951,7 +951,7 @@ void SolidMechanicsLagrangianFEM::setupSystem( DomainPartition & domain,
     }
     finiteElement::
       fillSparsity< CellElementSubRegion,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
+                    solidMechanicsLagrangianFEMKernels::QuasiStatic >( mesh,
                                                                        regionNames,
                                                                        this->getDiscretizationName(),
                                                                        dofNumber,
@@ -983,7 +983,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   {
     GEOSX_UNUSED_VAR( dt );
     assemblyLaunch< constitutive::SolidBase,
-                    SolidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
+                    solidMechanicsLagrangianFEMKernels::QuasiStaticFactory >( domain,
                                                                               dofManager,
                                                                               localMatrix,
                                                                               localRhs );
@@ -991,7 +991,7 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
   else if( m_timeIntegrationOption == TimeIntegrationOption::ImplicitDynamic )
   {
     assemblyLaunch< constitutive::SolidBase,
-                    SolidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
+                    solidMechanicsLagrangianFEMKernels::ImplicitNewmarkFactory >( domain,
                                                                                   dofManager,
                                                                                   localMatrix,
                                                                                   localRhs,

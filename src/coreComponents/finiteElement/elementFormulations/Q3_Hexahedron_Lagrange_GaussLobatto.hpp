@@ -95,6 +95,9 @@ public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = LagrangeBasis3GL::TensorProduct3D::numSupportPoints;
 
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
+
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 64;
 
@@ -110,10 +113,42 @@ public:
     return numQuadraturePoints;
   }
 
+  /**
+   * @brief Get the number of quadrature points.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @return The number of quadrature points.
+   */
+  GEOSX_HOST_DEVICE
+  static localIndex getNumQuadraturePoints( StackVariables const & stack )
+  {
+    GEOSX_UNUSED_VAR( stack );
+    return numQuadraturePoints;
+  }
+
+
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
+
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
+  /**
+   * @brief Get the number of support points.
+   * @param stack Object that holds stack variables.
+   * @return The number of support points.
+   */
+  GEOSX_HOST_DEVICE
+  static localIndex getNumSupportPoints( StackVariables const & stack )
+  {
+    GEOSX_UNUSED_VAR( stack );
+    return numNodes;
+  }
+
 
   GEOSX_HOST_DEVICE
   static void calcN( real64 const (& coords)[3],
@@ -311,7 +346,6 @@ private:
 //
 //  constexpr static short dpsi0 = -1;
 //  constexpr static short dpsi1 = 1;
-
 
   /**
    * @brief Applies a function inside a generic loop in over the tensor product

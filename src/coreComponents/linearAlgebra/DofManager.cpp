@@ -678,8 +678,8 @@ void DofManager::setSparsityPatternFromStencil( SparsityPatternView< globalIndex
     coupling.stencils->forAllStencils( mesh, [&]( auto const & stencil )
     {
       using StenciType = typename std::decay< decltype( stencil ) >::type;
-      constexpr localIndex maxNumFluxElems = StenciType::NUM_POINT_IN_FLUX;
-      constexpr localIndex maxStencilSize = StenciType::MAX_STENCIL_SIZE;
+      constexpr localIndex maxNumFluxElems = StenciType::maxNumPointsInFlux;
+      constexpr localIndex maxStencilSize = StenciType::maxStencilSize;
 
       typename StenciType::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
       typename StenciType::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();

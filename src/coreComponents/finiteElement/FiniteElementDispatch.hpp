@@ -20,6 +20,7 @@
 #define GEOSX_FINITEELEMENT_FINITEELEMENTDISPATCH_HPP_
 
 
+#include "elementFormulations/ConformingVirtualElementOrder1.hpp"
 #include "elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
 #include "elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
 #include "elementFormulations/H1_QuadrilateralFace_Lagrange1_GaussLegendre2.hpp"
@@ -27,7 +28,6 @@
 #include "elementFormulations/H1_TriangleFace_Lagrange1_Gauss1.hpp"
 #include "elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "elementFormulations/Q3_Hexahedron_Lagrange_GaussLobatto.hpp"
-
 #include "LvArray/src/system.hpp"
 
 
@@ -62,6 +62,24 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr5 );
   }
+#ifdef GEOSX_DISPATCH_VEM
+  else if( auto const * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 const * >(&input) ) // VEM on Tetrahedron
+  {
+    lambda( *ptr6 );
+  }
+  else if( auto const * const ptr7 = dynamic_cast< H1_Pyramid_VEM_Gauss1 const * >(&input) ) // VEM on Pyramid
+  {
+    lambda( *ptr7 );
+  }
+  else if( auto const * const ptr8 = dynamic_cast< H1_Wedge_VEM_Gauss1 const * >(&input) ) // VEM on Prism / Wedge
+  {
+    lambda( *ptr8 );
+  }
+  else if( auto const * const ptr9 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 const * >(&input) ) // VEM on Hexahedron
+  {
+    lambda( *ptr9 );
+  }
+#endif
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<typeid(input).name() );
@@ -94,6 +112,24 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr5 );
   }
+#ifdef GEOSX_DISPATCH_VEM
+  else if( auto * const ptr6 = dynamic_cast< H1_Tetrahedron_VEM_Gauss1 * >(&input) ) // VEM on Tetrahedron
+  {
+    lambda( *ptr6 );
+  }
+  else if( auto * const ptr7 = dynamic_cast< H1_Pyramid_VEM_Gauss1 * >(&input) ) // VEM on Pyramid
+  {
+    lambda( *ptr7 );
+  }
+  else if( auto * const ptr8 = dynamic_cast< H1_Wedge_VEM_Gauss1 * >(&input) ) // VEM on Prism / Wedge
+  {
+    lambda( *ptr8 );
+  }
+  else if( auto * const ptr9 = dynamic_cast< H1_Hexahedron_VEM_Gauss1 * >(&input) ) // VEM on Hexahedron
+  {
+    lambda( *ptr9 );
+  }
+#endif
   else
   {
     GEOSX_ERROR( "finiteElement::dispatch3D() is not implemented for input of "<<LvArray::system::demangleType( &input ) );

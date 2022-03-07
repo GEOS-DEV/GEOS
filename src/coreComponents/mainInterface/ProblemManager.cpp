@@ -12,6 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
+#define GEOSX_DISPATCH_VEM /// enables VEM in FiniteElementDispatch
+
 // Source includes
 #include "ProblemManager.hpp"
 #include "GeosxState.hpp"
@@ -764,6 +766,8 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
       {
         NodeManager & nodeManager = meshLevel.getNodeManager();
         ElementRegionManager & elemManager = meshLevel.getElemManager();
+        FaceManager const & faceManager = meshLevel.getFaceManager();
+        EdgeManager const & edgeManager = meshLevel.getEdgeManager();
         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
 
         for( auto const & regionName : regionNames )
@@ -786,10 +790,18 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                                            [&] ( auto & finiteElement )
                 {
                   using FE_TYPE = std::remove_const_t< TYPEOFREF( finiteElement ) >;
+                  using SUBREGION_TYPE = TYPEOFREF( subRegion );
+
+                  typename FE_TYPE::template MeshData< SUBREGION_TYPE > meshData;
+                  finiteElement::FiniteElementBase::initialize< FE_TYPE, SUBREGION_TYPE >( nodeManager,
+                                                                                           edgeManager,
+                                                                                           faceManager,
+                                                                                           subRegion,
+                                                                                           meshData );
 
                   localIndex const numQuadraturePoints = FE_TYPE::numQuadraturePoints;
 
-                  //feDiscretization->calculateShapeFunctionGradients( X, &subRegion, finiteElement );
+//                  feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                               regionName,

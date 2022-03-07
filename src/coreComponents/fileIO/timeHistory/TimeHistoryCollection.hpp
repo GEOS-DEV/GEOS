@@ -24,6 +24,10 @@
 #include "events/tasks/TaskBase.hpp"
 #include "mesh/DomainPartition.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyHistoryCollectionType.hpp"
+#endif
+
 #include <functional>
 
 namespace geosx
@@ -179,6 +183,15 @@ public:
    * @param domain The DomainPartition of the problem.
    */
   virtual void updateSetsIndices ( DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Return PyHistoryCollection type.
+   * @return Return PyHistoryCollection type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override
+  { return python::getPyHistoryCollectionType(); }
+#endif
 
 protected:
 

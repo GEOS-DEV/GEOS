@@ -92,6 +92,12 @@ public:
     return numNodes;
   }
 
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
   /**
    * @brief Get the number of support points.
    * @param stack Object that holds stack variables.
@@ -112,11 +118,12 @@ public:
    * @param cellSubRegion The cell sub-region for which the element has to be initialized.
    * @param meshData MeshData struct to be filled.
    */
+  template< typename SUBREGION_TYPE >
   static void fillMeshData( NodeManager const & nodeManager,
                             EdgeManager const & edgeManager,
                             FaceManager const & faceManager,
-                            CellElementSubRegion const & cellSubRegion,
-                            MeshData & meshData );
+                            SUBREGION_TYPE const & cellSubRegion,
+                            MeshData< SUBREGION_TYPE > & meshData );
 
   /**
    * @brief Empty setup method.
@@ -124,10 +131,11 @@ public:
    * @param meshData MeshData struct filled by @ref fillMeshData.
    * @param stack Object that holds stack variables.
    */
+  template< typename SUBREGION_TYPE >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void setupStack( localIndex const & cellIndex,
-                          MeshData const & meshData,
+                          MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
 
   GEOSX_HOST_DEVICE
@@ -373,20 +381,22 @@ private:
 
 /// @cond Doxygen_Suppress
 
+template< typename SUBREGION_TYPE >
 GEOSX_FORCE_INLINE
 void H1_Wedge_Lagrange1_Gauss6::
   fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                 EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
-                CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
-                MeshData & GEOSX_UNUSED_PARAM( meshData ) )
+                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData ) )
 {}
 
+template< typename SUBREGION_TYPE >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Wedge_Lagrange1_Gauss6::
   setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
-              MeshData const & GEOSX_UNUSED_PARAM( meshData ),
+              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
               StackVariables & GEOSX_UNUSED_PARAM( stack ) )
 {}
 

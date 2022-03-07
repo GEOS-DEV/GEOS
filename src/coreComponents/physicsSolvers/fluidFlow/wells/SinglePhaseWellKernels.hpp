@@ -31,7 +31,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseWellKernels
+namespace singlePhaseWellKernels
 {
 
 // tag to access well and reservoir elements in perforation rates computation
@@ -68,15 +68,15 @@ struct RowOffset
 struct ControlEquationHelper
 {
 
-  using ROFFSET = SinglePhaseWellKernels::RowOffset;
-  using COFFSET = SinglePhaseWellKernels::ColOffset;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
 
   // add an epsilon to the checks to avoid control changes due to tiny pressure/rate updates
   static constexpr real64 EPS = 1e-15;
 
   GEOSX_HOST_DEVICE
   static void
-  switchControl( WellControls::Type const & wellType,
+  switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
                  real64 const & targetRate,
@@ -107,9 +107,9 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  using ROFFSET = SinglePhaseWellKernels::RowOffset;
-  using COFFSET = SinglePhaseWellKernels::ColOffset;
-  using TAG = SinglePhaseWellKernels::ElemTag;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+  using TAG = singlePhaseWellKernels::ElemTag;
 
   static void
   launch( localIndex const size,
@@ -130,9 +130,9 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  using ROFFSET = SinglePhaseWellKernels::RowOffset;
-  using COFFSET = SinglePhaseWellKernels::ColOffset;
-  using TAG = SinglePhaseWellKernels::ElemTag;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
+  using TAG = singlePhaseWellKernels::ElemTag;
 
   static localIndex
   launch( localIndex const size,
@@ -159,7 +159,7 @@ struct PressureRelationKernel
 struct PerforationKernel
 {
 
-  using TAG = SinglePhaseWellKernels::SubRegionTag;
+  using TAG = singlePhaseWellKernels::SubRegionTag;
 
   using SinglePhaseFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::pressure,
@@ -233,8 +233,8 @@ struct PerforationKernel
 struct AccumulationKernel
 {
 
-  using ROFFSET = SinglePhaseWellKernels::RowOffset;
-  using COFFSET = SinglePhaseWellKernels::ColOffset;
+  using ROFFSET = singlePhaseWellKernels::RowOffset;
+  using COFFSET = singlePhaseWellKernels::ColOffset;
 
   static void
   launch( localIndex const size,
@@ -337,7 +337,7 @@ struct ResidualNormKernel
         for( localIndex idof = 0; idof < 2; ++idof )
         {
           real64 normalizer = 0.0;
-          if( idof == SinglePhaseWellKernels::RowOffset::CONTROL )
+          if( idof == singlePhaseWellKernels::RowOffset::CONTROL )
           {
             // for the top well element, normalize using the current control
             if( isLocallyOwned && iwelem == iwelemControl )
@@ -408,7 +408,7 @@ struct SolutionCheckKernel
   }
 };
 
-} // end namespace SinglePhaseWellKernels
+} // end namespace singlePhaseWellKernels
 
 } // end namespace geosx
 
