@@ -9,16 +9,20 @@ Contributing
 
    GitWorkflow.rst
 
-   developingOnDocker.rst
-
    Sphinx.rst
 
    Doxygen.rst
 
    UnitTests.rst
 
+   InputFiles.rst
+
    IntegratedTests.rst
 
    Benchmarks.rst
 
    Caliper.rst
+
+   UsingDocker.rst
+
+   InstallWin.rst

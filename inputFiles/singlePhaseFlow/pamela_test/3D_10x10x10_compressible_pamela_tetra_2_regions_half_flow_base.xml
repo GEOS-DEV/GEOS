@@ -1,0 +1,108 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, -9.81 }">
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Bot }">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-10"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+  <Geometry>
+    <Box
+      name="midplane"
+      xMin="{ -0.1, -0.1, 4.9 }"
+      xMax="{ 10.1, 10.1, 5.1 }"/>
+  </Geometry>
+
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="singlePhaseTPFA"
+      />
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Top"
+      cellBlocks="{ Top_TETRA }"
+      materialList="{ }"/>
+
+    <CellElementRegion
+      name="Bot"
+      cellBlocks="{ Bottom_TETRA }"
+      materialList="{ water, rock }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <CompressibleSinglePhaseFluid
+      name="water"
+      defaultDensity="1000"
+      defaultViscosity="0.001"
+      referencePressure="1e6"
+      compressibility="1e-9"
+      viscosibility="0.0"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.05"
+      referencePressure="1.0e6"
+      compressibility="1.0e-9"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 2.0e-14, 2.0e-14, 2.0e-14 }"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="BotPorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Bot/Bottom_TETRA"
+      fieldName="rockPorosity_referencePorosity"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="BotInitialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Bot/Bottom_TETRA"
+      fieldName="pressure"
+      scale="1e6"/>
+
+    <FieldSpecification
+      name="MidplanePressure"
+      setNames="{ midplane }"
+      objectPath="faceManager"
+      fieldName="pressure"
+      scale="2e6"/>
+  </FieldSpecifications>
+
+  <Outputs>
+    <Silo
+      name="siloOutput"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+</Problem>

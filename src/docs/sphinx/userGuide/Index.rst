@@ -15,6 +15,8 @@ Welcome to the GEOSX user guide.
 
    /coreComponents/constitutive/docs/Constitutive
 
+   /coreComponents/fieldSpecification/docs/FieldSpecification
+   
    /coreComponents/events/docs/EventManager
 
    /coreComponents/events/docs/TasksManager
@@ -28,7 +30,5 @@ Welcome to the GEOSX user guide.
    /coreComponents/mesh/mpiCommunications/docs/SpatialPartition.rst
 
    /coreComponents/fileIO/doc/Outputs.rst
-
-   /coreComponents/python/modules/geosx_xml_tools_package/geosx_xml_tools/geosx_xml_tools_documentation
 
    /pygeosx/pygeosx_documentation.rst

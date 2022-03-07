@@ -1,10 +1,9 @@
 
 
-========== ======= =========================== 
-Name       Type    Description                 
-========== ======= =========================== 
-meshLevels integer (no description available)  
-Level0     node    :ref:`DATASTRUCTURE_Level0` 
-========== ======= =========================== 
+========== ==== =============================== 
+Name       Type Description                     
+========== ==== =============================== 
+meshLevels node :ref:`DATASTRUCTURE_meshLevels` 
+========== ==== =============================== 
 
 

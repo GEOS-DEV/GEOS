@@ -1,0 +1,82 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./DeviatedPoroElasticWellbore_Drilling_base.xml"/>
+  </Included>
+
+  <!-- SPHINX_WellboreMesh -->
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 0.1, 4 }"
+      theta="{ 0, 180 }"
+      zCoords="{ -1, 1 }"
+      nr="{ 30 }"
+      nt="{ 80 }"
+      nz="{ 10 }"
+      trajectory="{ { -1.0, 0.0, -1.0 },
+                    {  1.0, 0.0,  1.0 } }"
+      autoSpaceRadialElems="{ 1 }"
+      useCartesianOuterBoundary="0"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+  <!-- SPHINX_WellboreMeshEnd -->
+
+  <!-- SPHINX_Gravity -->
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <!-- SPHINX_GravityEnd -->
+
+    <!-- SPHINX_PoroelasticSolver -->
+    <SinglePhasePoromechanics
+      name="poroSolve"
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Omega }">
+      <!-- SPHINX_PoroelasticSolverEnd -->
+      <NonlinearSolverParameters
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        logLevel="2"/>
+    </SinglePhasePoromechanics>
+
+    <!-- SPHINX_SolidMechanicsSolver -->
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      logLevel="0"
+      targetRegions="{ Omega }"
+      >
+      <!-- SPHINX_SolidMechanicsSolverEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="40"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        directParallel="0"
+        logLevel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <!-- SPHINX_SinglePhaseFVM -->
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      logLevel="1"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Omega }">
+      <!-- SPHINX_SinglePhaseFVMEnd -->
+      <NonlinearSolverParameters
+        newtonTol="1.0e-6"
+        newtonMaxIter="8"/>
+      <LinearSolverParameters
+        solverType="gmres"
+        krylovTol="1.0e-8"
+        logLevel="2"/>
+    </SinglePhaseFVM>
+  </Solvers>
+
+</Problem>

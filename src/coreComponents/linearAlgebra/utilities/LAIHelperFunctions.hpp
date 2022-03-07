@@ -32,6 +32,27 @@ namespace LAIHelperFunctions
 {
 
 /**
+ * @brief Create an identity matrix.
+ * @tparam MATRIX type of matrix
+ * @param n local size of the square identity matrix
+ * @param comm MPI communicator
+ * @param mat the output matrix
+ */
+template< typename MATRIX >
+void makeIdentity( localIndex const n,
+                   MPI_Comm const & comm,
+                   MATRIX & mat )
+{
+  mat.createWithLocalSize( n, 1, comm );
+  mat.open();
+  for( globalIndex i = mat.ilower(); i < mat.iupper(); ++i )
+  {
+    mat.insert( i, i, 1.0 );
+  }
+  mat.close();
+}
+
+/**
  * @brief Create a permutation matrix for a given nodal variable.
  * @tparam     MATRIX            the parallel matrix type
  * @param[in]  nodeManager       the node manager
@@ -102,7 +123,7 @@ void createPermutationMatrix( ElementRegionManager const & elemManager,
   {
     if( elementSubRegion.hasWrapper( dofKey ) )
     {
-      numLocalRows += elementSubRegion.getNumberOfLocalIndices();
+      numLocalRows += elementSubRegion.getNumberOfLocalIndices() * nDofPerCell;
     }
   } );
   permutationMatrix.createWithLocalSize( numLocalRows, numLocalRows, 1, MPI_COMM_GEOSX );
@@ -121,7 +142,7 @@ void createPermutationMatrix( ElementRegionManager const & elemManager,
         for( int d = 0; d < nDofPerCell; ++d )
         {
           globalIndex const rowIndex    = localToGlobal[k] * nDofPerCell + d;
-          globalIndex const columnIndex = dofNumber[k] * nDofPerCell + d;
+          globalIndex const columnIndex = dofNumber[k] + d;
           permutationMatrix.insert( rowIndex, columnIndex, 1.0 );
         }
       }
@@ -144,7 +165,7 @@ VECTOR permuteVector( VECTOR const & vector,
                       MATRIX const & permutationMatrix )
 {
   VECTOR permutedVector;
-  permutedVector.createWithLocalSize( vector.localSize(), MPI_COMM_GEOSX );
+  permutedVector.create( vector.localSize(), permutationMatrix.comm() );
   permutationMatrix.apply( vector, permutedVector );
   return permutedVector;
 }
@@ -161,6 +182,7 @@ MATRIX permuteMatrix( MATRIX const & matrix,
 {
   MATRIX permutedMatrix;
   matrix.multiplyRARt( permutationMatrix, permutedMatrix );
+  return matrix;
 }
 
 /**
@@ -177,54 +199,7 @@ MATRIX permuteMatrix( MATRIX const & matrix,
 {
   MATRIX permutedMatrix;
   matrix.multiplyRAP( permutationMatrixLeft, permutationMatrixRight, permutedMatrix );
-}
-
-/**
- * @brief Apply a separate component approximation (filter) to a matrix.
- * @tparam MATRIX the type of matrices
- * @param src         the source matrix
- * @param dst         the target (filtered) matrix
- * @param dofsPerNode number of degrees-of-freedom per node
- */
-template< typename MATRIX >
-void separateComponentFilter( MATRIX const & src,
-                              MATRIX & dst,
-                              const localIndex dofsPerNode )
-{
-  GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR_IF( dofsPerNode < 2, "Function requires dofsPerNode > 1" );
-
-  const localIndex localRows  = src.numLocalRows();
-  const localIndex maxEntries = src.maxRowLength();
-  const localIndex maxDstEntries = maxEntries / dofsPerNode;
-
-  CRSMatrix< real64 > tempMat;
-  tempMat.resize( localRows, src.numGlobalCols(), maxDstEntries );
-
-  array1d< globalIndex > const srcIndices( maxEntries );
-  array1d< real64 > const srcValues( maxEntries );
-
-  for( globalIndex r = 0; r < localRows; ++r )
-  {
-    globalIndex const row = r + src.ilower();
-    globalIndex const rowComponent = row % dofsPerNode;
-    localIndex const rowLength = src.globalRowLength( row );
-
-    src.getRowCopy( row, srcIndices, srcValues );
-
-    for( localIndex c = 0; c < rowLength; ++c )
-    {
-      globalIndex const col = srcIndices( c );
-      globalIndex const colComponent = col % dofsPerNode;
-      if( rowComponent == colComponent )
-      {
-        tempMat.insertNonZero( r, col, srcValues( c ) );
-      }
-    }
-  }
-
-  dst.create( tempMat.toViewConst(), MPI_COMM_GEOSX );
-  dst.setDofManager( src.dofManager() );
+  return matrix;
 }
 
 /**
@@ -244,7 +219,7 @@ void computeRigidBodyModes( MeshLevel const & mesh,
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   localIndex numComponents = 0;
-  array1d< globalIndex > globalNodeList;
+  array1d< localIndex > globalNodeList;
   for( localIndex k = 0; k < LvArray::integerConversion< localIndex >( selection.size() ); ++k )
   {
     if( dofManager.location( selection[k] ) == DofManager::Location::Node )
@@ -260,12 +235,13 @@ void computeRigidBodyModes( MeshLevel const & mesh,
       {
         if( dofNumber[i] >= globalOffset && ( dofNumber[i] - globalOffset ) < numLocalDofs )
         {
-          globalNodeList.emplace_back( ( dofNumber[i]-globalOffset )/numComponentsField );
+          globalNodeList.emplace_back( LvArray::integerConversion< localIndex >( dofNumber[i] - globalOffset ) / numComponentsField );
         }
       }
     }
   }
   localIndex const numNodes = globalNodeList.size();
+  arrayView1d< localIndex const > globalNodeListView = globalNodeList.toViewConst();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition = nodeManager.referencePosition();
 
@@ -273,81 +249,93 @@ void computeRigidBodyModes( MeshLevel const & mesh,
   rigidBodyModes.resize( numRidigBodyModes );
   for( localIndex k = 0; k < numComponents; ++k )
   {
-    rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-    rigidBodyModes[k].open();
-    for( localIndex i = 0; i < numNodes; ++i )
+    rigidBodyModes[k].create( numNodes * numComponents, MPI_COMM_GEOSX );
+    arrayView1d< real64 > const values = rigidBodyModes[k].open();
+    forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
     {
-      rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+k ), 1.0 );
-    }
+      values[numComponents * i + k] = 1.0;
+    } );
     rigidBodyModes[k].close();
-    rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+    rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
   }
   switch( numComponents )
   {
     case 2:
     {
       localIndex const k = 2;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), -nodePosition[globalNodeList[i]][1] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), +nodePosition[globalNodeList[i]][0] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 0] = -nodePosition[globalNodeListView[i]][1];
+          values[numComponents * i + 1] = +nodePosition[globalNodeListView[i]][0];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
       break;
     }
     case 3:
     {
       localIndex k = 3;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), +nodePosition[globalNodeList[i]][1] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), -nodePosition[globalNodeList[i]][0] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 0] = +nodePosition[globalNodeListView[i]][1];
+          values[numComponents * i + 1] = -nodePosition[globalNodeListView[i]][0];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+1 ), -nodePosition[globalNodeList[i]][2] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+2 ), +nodePosition[globalNodeList[i]][1] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 1] = -nodePosition[globalNodeListView[i]][2];
+          values[numComponents * i + 2] = +nodePosition[globalNodeListView[i]][1];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
 
       ++k;
-      rigidBodyModes[k].createWithLocalSize( numNodes*numComponents, MPI_COMM_GEOSX );
-      rigidBodyModes[k].open();
-      for( localIndex i = 0; i < numNodes; ++i )
+      rigidBodyModes[k].create( numNodes*numComponents, MPI_COMM_GEOSX );
       {
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+0 ), +nodePosition[globalNodeList[i]][2] );
-        rigidBodyModes[k].set( rigidBodyModes[k].getGlobalRowID( numComponents*i+2 ), -nodePosition[globalNodeList[i]][0] );
+        arrayView1d< real64 > const values = rigidBodyModes[k].open();
+        forAll< parallelHostPolicy >( numNodes, [=]( localIndex const i )
+        {
+          values[numComponents * i + 0] = +nodePosition[globalNodeListView[i]][2];
+          values[numComponents * i + 2] = -nodePosition[globalNodeListView[i]][0];
+        } );
+        rigidBodyModes[k].close();
       }
-      rigidBodyModes[k].close();
+
       for( localIndex j = 0; j < k; ++j )
       {
         rigidBodyModes[k].axpy( -rigidBodyModes[k].dot( rigidBodyModes[j] ), rigidBodyModes[j] );
       }
-      rigidBodyModes[k].scale( 1.0/rigidBodyModes[k].norm2() );
+      rigidBodyModes[k].scale( 1.0 / rigidBodyModes[k].norm2() );
       break;
     }
     default:

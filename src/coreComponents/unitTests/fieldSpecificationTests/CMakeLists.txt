@@ -3,6 +3,8 @@
 #
 
 set( gtest_geosx_tests
+     testAquiferBoundaryCondition.cpp
+     testFieldSpecificationsEnums.cpp
      testRecursiveFieldApplication.cpp
    )
 
@@ -17,6 +19,10 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if ( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 #

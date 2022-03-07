@@ -74,8 +74,8 @@ public:
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual real64
@@ -126,16 +126,12 @@ public:
                         real64 const & dt,
                         DomainPartition & domain ) override;
 
-  template< typename POLICY >
-  void accumulationLaunch( localIndex const targetIndex,
-                           CellElementSubRegion const & subRegion,
+  void accumulationLaunch( CellElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
 
-  template< typename POLICY >
-  void accumulationLaunch( localIndex const targetIndex,
-                           SurfaceElementSubRegion const & subRegion,
+  void accumulationLaunch( SurfaceElementSubRegion const & subRegion,
                            DofManager const & dofManager,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs );
@@ -152,7 +148,6 @@ public:
    * @param localMatrix the system matrix
    * @param localRhs the system right-hand side vector
    */
-  template< typename POLICY >
   void assembleAccumulationTerms( DomainPartition & domain,
                                   DofManager const & dofManager,
                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -213,6 +208,15 @@ public:
                               arrayView1d< real64 > const & localRhs,
                               CRSMatrixView< real64, localIndex const > const & dR_dAper ) = 0;
 
+  /**
+   * @brief Function to perform the Application of Dirichlet type BC's
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
   void
   applyDirichletBC( real64 const time_n,
                     real64 const dt,
@@ -221,6 +225,15 @@ public:
                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
                     arrayView1d< real64 > const & localRhs ) const;
 
+  /**
+   * @brief Apply source flux boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param domain the domain
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
   void
   applySourceFluxBC( real64 const time_n,
                      real64 const dt,
@@ -229,60 +242,85 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const;
 
+  /**
+   * @brief Apply aquifer boundary conditions to the system
+   * @param time current time
+   * @param dt time step
+   * @param domain the domain
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param localMatrix local system matrix
+   * @param localRhs local system right-hand side vector
+   */
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const = 0;
 
-  virtual void updateState ( DomainPartition & domain ) override final;
+  virtual void
+  updateState ( DomainPartition & domain ) override final;
 
   /**
    * @brief Function to update all constitutive state and dependent variables
    * @param dataGroup group that contains the fields
    */
-  void updateFluidState( Group & subRegion, localIndex const targetIndex ) const;
+  void
+  updateFluidState( ObjectManagerBase & subRegion ) const;
 
 
   /**
    * @brief Function to update all constitutive models
    * @param dataGroup group that contains the fields
    */
-  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const;
+  virtual void
+  updateFluidModel( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Function to update fluid mobility
    * @param dataGroup group that contains the fields
    */
-  void updateMobility( Group & dataGroup, localIndex const targetIndex ) const;
-
-  struct viewKeyStruct : FlowSolverBase::viewKeyStruct
-  {
-    // used for face-based BC
-    static constexpr char const * facePressureString() { return "facePressure"; }
-
-    // intermediate fields
-    static constexpr char const * mobilityString() { return "mobility"; }
-    static constexpr char const * dMobility_dPressureString() { return "dMobility_dPressure"; }
-
-    // backup fields
-    static constexpr char const * densityOldString() { return "densityOld"; }
-    static constexpr char const * transTMultString() { return "transTMult"; }
-  };
+  void
+  updateMobility( ObjectManagerBase & dataGroup ) const;
 
   /**
    * @brief Setup stored views into domain data for the current step
    */
-  virtual void resetViews( MeshLevel & mesh ) override;
 
   virtual void initializePreSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   /**
+   * @brief Compute the hydrostatic equilibrium using the compositions and temperature input tables
+   */
+  void computeHydrostaticEquilibrium();
+
+  /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term
    * @param mesh the mesh to operate on
    */
-  void backupFields( MeshLevel & mesh ) const;
+  void
+  backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const;
 
 protected:
 
-  virtual void validateFluidModels( DomainPartition const & domain ) const;
+  /**
+   * @brief Checks constitutive models for consistency
+   * @param[in] domain the domain partition
+   */
+  virtual void
+  validateFluidModels( DomainPartition & domain ) const;
+
+  /**
+   * @brief Initialize the aquifer boundary condition (gravity vector, water phase index)
+   */
+  void
+  initializeAquiferBC() const;
+
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
 
   /**
    * @brief Structure holding views into fluid properties used by the base solver.
@@ -294,7 +332,7 @@ protected:
     arrayView2d< real64 const > const visc;        ///< viscosity
     arrayView2d< real64 const > const dVisc_dPres; ///< derivative of viscosity w.r.t. pressure
     real64 const defaultDensity;                     ///< default density to use for new elements
-    real64 const defaulViscosity;                    ///< default vi to use for new elements
+    real64 const defaultViscosity;                    ///< default vi to use for new elements
   };
 
   /**
@@ -310,24 +348,8 @@ protected:
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const;
 
 
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_pressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaPressure;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_deltaVolume;
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_mobility;
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > m_dMobility_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_density;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dDens_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_viscosity;
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_dVisc_dPres;
-
-  ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > m_transTMultiplier;
-
 private:
-
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager );
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 

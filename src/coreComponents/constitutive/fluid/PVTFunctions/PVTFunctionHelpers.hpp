@@ -127,6 +127,9 @@ public:
   real64 const & getPressure( localIndex i ) const { return coords[coordType::PRES][i]; }
   real64 const & getTemperature( localIndex i ) const { return coords[coordType::TEMP][i]; }
 
+  array1d< real64 > const & getPressures( ) const { return coords[coordType::PRES]; }
+  array1d< real64 > const & getTemperatures(  ) const { return coords[coordType::TEMP]; }
+
   array1d< array1d< real64 > > const & getCoords() const { return coords; }
 
 private:
@@ -155,17 +158,18 @@ template< typename InputRange, typename ExpectedRange >
 inline integer
 findName( InputRange const & input,
           ExpectedRange const & expected,
-          string const & attribute = {} )
+          string const & attribute )
 {
   using std::begin;
   using std::end;
   auto const it = std::find_first_of( begin( input ), end( input ), begin( expected ), end( expected ) );
   GEOSX_THROW_IF( it == end( input ),
-                  "Name " << *begin( expected ) << " not found" << ( attribute.empty() ? "" : " in " + attribute ) << ".\n" <<
-                  "Expected one of: " << stringutilities::join( begin( expected ), end( expected ), ", " ) << ".\n" <<
-                  "Input provided: " << stringutilities::join( begin( input ), end( input ) )  << '.',
+                  GEOSX_FMT( "Name '{}' not found in `{}`.\nExpected one of: {}.\nInput provided: {}.",
+                             *begin( expected ), attribute,
+                             stringutilities::join( begin( expected ), end( expected ), ", " ),
+                             stringutilities::join( begin( input ), end( input ) ) ),
                   InputError );
-  return std::distance( begin( input ), it );
+  return static_cast< integer >( std::distance( begin( input ), it ) );
 }
 
 /**

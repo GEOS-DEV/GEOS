@@ -213,15 +213,18 @@ public:
 
     /// @return Mass creation string.
     constexpr static char const * creationMassString() { return "creationMass"; }
+
+    /// @return embedded surface element to parent plane string.
+    constexpr static char const * surfaceElementToParentPlaneString() { return "surfaceElementToParentPlane"; }
   };
+
+protected:
 
   /// Map between the surface elements and the cells
   FixedToManyElementRelation m_surfaceElementsToCells;
 
   /// Unmapped surface elements to nodes map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInToNodes;
-
-protected:
 
   /// list of nodes
   NodeMapType m_toNodesRelation;

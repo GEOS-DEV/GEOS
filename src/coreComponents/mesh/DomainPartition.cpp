@@ -45,7 +45,6 @@ DomainPartition::DomainPartition( string const & name,
 
   registerGroup( groupKeys.meshBodies );
   registerGroup< constitutive::ConstitutiveManager >( groupKeys.constitutiveManager );
-  registerGroup< CellBlockManager >( keys::cellManager );
 }
 
 
@@ -75,74 +74,6 @@ void DomainPartition::initializationOrder( string_array & order )
   }
 }
 
-
-void DomainPartition::generateSets()
-{
-  GEOSX_MARK_FUNCTION;
-
-  MeshLevel & mesh = this->getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager const & nodeManager = mesh.getNodeManager();
-
-  dataRepository::Group const & nodeSets = nodeManager.sets();
-
-  map< string, array1d< bool > > nodeInSet; // map to contain indicator of whether a node is in a set.
-  string_array setNames; // just a holder for the names of the sets
-
-  // loop over all wrappers and fill the nodeIndSet arrays for each set
-  for( auto & wrapper : nodeSets.wrappers() )
-  {
-    string const & name = wrapper.second->getName();
-    nodeInSet[name].resize( nodeManager.size() );
-    nodeInSet[name].setValues< serialPolicy >( false );
-
-    if( nodeSets.hasWrapper( name ) )
-    {
-      setNames.emplace_back( name );
-      SortedArrayView< localIndex const > const & set = nodeSets.getReference< SortedArray< localIndex > >( name );
-      for( localIndex const a : set )
-      {
-        nodeInSet[name][a] = true;
-      }
-    }
-  }
-
-
-  ElementRegionManager & elementRegionManager = mesh.getElemManager();
-  elementRegionManager.forElementSubRegions( [&]( auto & subRegion )
-  {
-    dataRepository::Group & elementSets = subRegion.sets();
-
-    auto const & elemToNodeMap = subRegion.nodeList();
-
-    for( string const & setName : setNames )
-    {
-      arrayView1d< bool const > const nodeInCurSet = nodeInSet[setName];
-
-      SortedArray< localIndex > & targetSet = elementSets.registerWrapper< SortedArray< localIndex > >( setName ).reference();
-      for( localIndex k = 0; k < subRegion.size(); ++k )
-      {
-        localIndex const numNodes = subRegion.numNodesPerElement( k );
-
-        localIndex elementInSet = true;
-        for( localIndex i = 0; i < numNodes; ++i )
-        {
-          if( !nodeInCurSet( elemToNodeMap[ k ][ i ] ) )
-          {
-            elementInSet = false;
-            break;
-          }
-        }
-
-        if( elementInSet )
-        {
-          targetSet.insert( k );
-        }
-      }
-    }
-  } );
-}
-
-
 void DomainPartition::setupCommunications( bool use_nonblocking )
 {
   GEOSX_MARK_FUNCTION;
@@ -157,13 +88,13 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
     MPI_Comm cartcomm;
     {
       int reorder = 0;
-      MPI_Cart_create( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
+      MpiWrapper::cartCreate( MPI_COMM_GEOSX, 3, partition.m_Partitions.data(), partition.m_Periodic.data(), reorder, &cartcomm );
       GEOSX_ERROR_IF( cartcomm == MPI_COMM_NULL, "Fail to run MPI_Cart_create and establish communications" );
     }
     int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
     int nsdof = 3;
 
-    MPI_Cart_coords( cartcomm, rank, nsdof, partition.m_coords.data());
+    MpiWrapper::cartCoords( cartcomm, rank, nsdof, partition.m_coords.data() );
 
     int ncoords[3];
     addNeighbors( 0, cartcomm, ncoords );
@@ -269,9 +200,9 @@ void DomainPartition::addNeighbors( const unsigned int idim,
         break;
       }
     }
-    if( !me )
+    int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
+    if( !me && !std::any_of( m_neighbors.begin(), m_neighbors.end(), [=]( NeighborCommunicator const & nn ) { return nn.neighborRank( ) == neighborRank; } ) )
     {
-      int const neighborRank = MpiWrapper::cartRank( cartcomm, ncoords );
       m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
     }
   }

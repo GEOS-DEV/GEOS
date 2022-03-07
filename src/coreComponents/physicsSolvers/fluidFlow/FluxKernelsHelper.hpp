@@ -21,13 +21,14 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "finiteVolume/BoundaryStencil.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/ElementRegionManager.hpp"
 
 namespace geosx
 {
 
-namespace FluxKernelsHelper
+namespace fluxKernelsHelper
 {
 
 template< typename VIEWTYPE >
@@ -124,8 +125,68 @@ void computeSinglePhaseFlux( localIndex const ( &seri )[2],
   }
 }
 
+/******************************** AquiferBCKernel ********************************/
 
-} // namespace FluxKernelsHelper
+/**
+ * @brief Function to sum the aquiferBC fluxes (as later save them) at the end of the time step
+ * This function is applicable for both single-phase and multiphase flow
+ */
+struct AquiferBCKernel
+{
+
+  /**
+   * @brief The type for element-based data. Consists entirely of ArrayView's.
+   *
+   * Can be converted from ElementRegionManager::ElementViewConstAccessor
+   * by calling .toView() or .toViewConst() on an accessor instance
+   */
+  template< typename VIEWTYPE >
+  using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
+
+
+  static real64
+  sumFluxes( BoundaryStencil const & stencil,
+             AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
+             ElementViewConst< arrayView1d< real64 const > > const & pres,
+             ElementViewConst< arrayView1d< real64 const > > const & dPres,
+             ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
+             real64 const & timeAtBeginningOfStep,
+             real64 const & dt )
+  {
+    using Order = BoundaryStencil::Order;
+
+    BoundaryStencil::IndexContainerViewConstType const & seri = stencil.getElementRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
+    BoundaryStencil::IndexContainerViewConstType const & sefi = stencil.getElementIndices();
+    BoundaryStencil::WeightContainerViewConstType const & weight = stencil.getWeights();
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > targetSetSumFluxes( 0.0 );
+
+    forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
+    {
+      localIndex const er  = seri( iconn, Order::ELEM );
+      localIndex const esr = sesri( iconn, Order::ELEM );
+      localIndex const ei  = sefi( iconn, Order::ELEM );
+      real64 const areaFraction = weight( iconn, Order::ELEM );
+
+      // compute the aquifer influx rate using the pressure influence function and the aquifer props
+      real64 dAquiferVolFlux_dPres = 0.0;
+      real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
+                                                              dt,
+                                                              pres[er][esr][ei],
+                                                              dPres[er][esr][ei],
+                                                              gravCoef[er][esr][ei],
+                                                              areaFraction,
+                                                              dAquiferVolFlux_dPres );
+      targetSetSumFluxes += aquiferVolFlux;
+    } );
+    return targetSetSumFluxes.get();
+  }
+
+};
+
+
+} // namespace fluxKernelsHelper
 
 } // namespace geosx
 

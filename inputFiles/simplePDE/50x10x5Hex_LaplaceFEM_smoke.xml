@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./Laplace_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 50 }"
+      ny="{ 10 }"
+      nz="{ 5 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+</Problem>

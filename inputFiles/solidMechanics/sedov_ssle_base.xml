@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File
+      name="./sedov_base.xml"/>
+  </Included>
+
+
+  <Solvers>
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      cflFactor="0.25"
+      discretization="FE1"
+      targetRegions="{ Region2 }"/>
+  </Solvers>
+</Problem>

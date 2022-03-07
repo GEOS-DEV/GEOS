@@ -21,16 +21,25 @@
 namespace geosx
 {
 
-FaceElementToCellStencil::FaceElementToCellStencil():
-  StencilBase< FaceElementToCellStencil_Traits, FaceElementToCellStencil >()
+FaceElementToCellStencil::FaceElementToCellStencil()
+  : StencilBase()
 {
   m_faceNormal.resize( 0, 3 );
   m_cellToFaceVec.resize( 0, 3 );
 }
 
+void FaceElementToCellStencil::reserve( localIndex const size )
+{
+  StencilBase::reserve( size );
+
+  m_faceNormal.reserve( 3 * size );
+  m_cellToFaceVec.reserve( 3 * size );
+  m_transMultiplier.reserve( size );
+}
+
 void FaceElementToCellStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< FaceElementToCellStencil_Traits, FaceElementToCellStencil >::move( space );
+  StencilBase::move( space );
 }
 
 void FaceElementToCellStencil::add( localIndex const numPts,
@@ -74,5 +83,30 @@ void FaceElementToCellStencil::addVectors( real64 const & transMultiplier,
   LvArray::tensorOps::copy< 3 >( m_cellToFaceVec[oldSize], cellToFaceVec );
 }
 
+FaceElementToCellStencil::KernelWrapper
+FaceElementToCellStencil::createKernelWrapper() const
+{
+  return { m_elementRegionIndices,
+           m_elementSubRegionIndices,
+           m_elementIndices,
+           m_weights,
+           m_faceNormal,
+           m_cellToFaceVec,
+           m_transMultiplier };
+}
+
+FaceElementToCellStencilWrapper::
+  FaceElementToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
+                                   IndexContainerType const & elementSubRegionIndices,
+                                   IndexContainerType const & elementIndices,
+                                   WeightContainerType const & weights,
+                                   arrayView2d< real64 > const & faceNormal,
+                                   arrayView2d< real64 > const & cellToFaceVec,
+                                   arrayView1d< real64 > const & transMultiplier )
+  : StencilWrapperBase( elementRegionIndices, elementSubRegionIndices, elementIndices, weights ),
+  m_faceNormal( faceNormal ),
+  m_cellToFaceVec( cellToFaceVec ),
+  m_transMultiplier( transMultiplier )
+{}
 
 } /* namespace geosx */

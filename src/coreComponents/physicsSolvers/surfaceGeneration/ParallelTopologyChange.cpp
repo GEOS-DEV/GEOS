@@ -494,6 +494,7 @@ void packNewModifiedObjectsToGhosts( NeighborCommunicator * const neighbor,
     {
       FaceElementSubRegion::FaceMapType const & faceList = subRegion.faceList();
       localIndex_array & elemGhostsToSend = subRegion.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
+      elemGhostsToSend.move( LvArray::MemorySpace::host );
       for( localIndex const & k : receivedObjects.newElements.at( {er, esr} ) )
       {
         if( faceGhostsToSendSet.count( faceList( k, 0 ) ) )
@@ -780,7 +781,7 @@ void updateConnectorsToFaceElems( std::set< localIndex > const & newFaceElements
 
 }
 
-void ParallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
+void parallelTopologyChange::synchronizeTopologyChange( MeshLevel * const mesh,
                                                         std::vector< NeighborCommunicator > & neighbors,
                                                         ModifiedObjectLists & modifiedObjects,
                                                         ModifiedObjectLists & receivedObjects,

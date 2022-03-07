@@ -1,0 +1,23 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./FieldCaseTutorial3_base.xml" />
+  </Included>
+
+  <Mesh>
+    <PAMELAMeshGenerator name="SyntheticMesh"
+                         file="synthetic.msh" />
+  </Mesh>
+
+  <Events maxTime="100.0e6">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="10.0e6"
+                   target="/Solvers/SinglePhaseFlow" />
+
+    <PeriodicEvent name="outputs"
+                   timeFrequency="10.0e6"
+                   target="/Outputs/reservoir_with_properties" />
+  </Events>
+
+</Problem>

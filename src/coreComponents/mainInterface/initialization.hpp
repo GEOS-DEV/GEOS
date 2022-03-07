@@ -21,8 +21,6 @@
 namespace geosx
 {
 
-
-
 /**
  * @brief Parse the command line options and populate @p commandLineOptions with the results.
  * @param argc The number of command line arguments.
@@ -45,6 +43,12 @@ std::unique_ptr< CommandLineOptions > basicSetup( int argc, char * argv[], bool 
  * @brief Perform the basic GEOSX cleanup.
  */
 void basicCleanup();
+
+/**
+ * @brief Get GEOSX version.
+ * @return The full version string.
+ */
+string getVersion();
 
 } // namespace geosx
 

@@ -53,8 +53,8 @@ public:
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual void
@@ -126,12 +126,15 @@ public:
 
     constexpr static char const * deltaDispJumpString() { return "deltaDisplacementJump"; }
 
+    constexpr static char const * oldDispJumpString()  { return "oldDisplacementJump"; }
+
     constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
 
     constexpr static char const * fractureTractionString() { return "fractureTraction"; }
 
     constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
 
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
   };
 
   string const & getContactRelationName() const { return m_contactRelationName; }
@@ -150,6 +153,9 @@ protected:
 
 private:
 
+  void updateJump( DofManager const & dofManager,
+                   DomainPartition & domain );
+
   /// Solid mechanics solver name
   string m_solidSolverName;
 
@@ -161,6 +167,9 @@ private:
 
   /// contact relation name string
   string m_contactRelationName;
+
+  /// decide whether to use static condensation or not
+  integer m_useStaticCondensation;
 };
 
 

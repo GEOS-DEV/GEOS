@@ -25,7 +25,7 @@ This example is based on the XML file located at
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+  inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
 
 The XML file considered here follows the typical structure of the GEOSX input files:
 
@@ -77,7 +77,7 @@ with the multigrid reduction (MGR) preconditioner (``preconditionerType="mgr"``)
 .. note::
    To use the linear solver options of this example, you need to ensure that GEOSX is configured to use the Hypre linear solver package.
 	
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->
@@ -94,7 +94,7 @@ illustrated in the previous examples.
 The mesh dimensions and cell sizes are chosen to be those specified in the SPE10 test case, but are limited to the two bottom layers.
 The mesh description must be done in meters.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_MESH_END -->
@@ -110,7 +110,7 @@ To mimic the setup of the original SPE10 test case, we place a source term in th
 The specification of the boundary conditions applied to the selected mesh cells is done in the **FieldSpecifications** block of the XML file
 using the names of the boxes defined here.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_GEOMETRY_END -->
@@ -128,7 +128,7 @@ The periodic event named ``solverApplications`` triggers the application of the 
 This event must point to the solver by name.
 In this example, the name of the solver is ``compflow`` and was defined in the **Solvers** block.
 The time step is initialized using the ``initialDt`` attribute of the flow solver.
-Then, if the solver converges in more than a certain number of nonlinear iterations (by default, 40% of the
+Then, if the solver converges in less than a certain number of nonlinear iterations (by default, 40% of the
 maximum number of nonlinear iterations), the time step will be increased until it reaches the maximum
 time step size specified with ``maxEventDt``. 
 If the time step fails, the time step will be cut. The parameters defining the time stepping strategy
@@ -146,7 +146,7 @@ inside the **Output** XML section, as documented at the end of this example (her
 
 More information about events can be found at :ref:`EventManager`.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->
@@ -167,7 +167,7 @@ TPFA is currently the only numerical scheme that can be used with a flow solver 
 **CompositionalMultiphaseFVM**.
 
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
@@ -186,10 +186,10 @@ to the hexahedral mesh defined internally.
 
 The **CellElementRegion** must also point to the constitutive models that are used to update
 the dynamic rock and fluid properties in the cells of the reservoir mesh.
-The names ``fluid``, ``rockPorosity``, ``rockPerm`` and ``relperm`` used for this in the ``materialList``
+The names ``fluid``, ``rock``, and ``relperm`` used for this in the ``materialList``
 correspond to the attribute ``name`` of the **Constitutive** block.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
@@ -236,7 +236,7 @@ We remind the reader that the attribute ``name`` of the constitutive models defi
 must be used in the **ElementRegions** and **Solvers** XML blocks to point the element
 regions and the physics solvers to their respective constitutive models.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
@@ -274,7 +274,7 @@ This is done to mimic a pressure-controlled well (before breakthrough).
 To specify the source term, we use a **SourceFlux**  block to impose a fixed mass
 injection rate of component 1 (water) to mimic a rate-controlled well.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
@@ -291,7 +291,7 @@ Output
 In this section, we request an output of the results in VTK format.
 Note that the name defined here must match the names used in the **Events** XML block to define the output frequency.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/fluidFlow/benchmarks/SPE10/dead_oil_spe10_layers_84_85.xml
+.. literalinclude::  ../../../../../inputFiles/compositionalMultiphaseFlow/benchmarks/SPE10/deadOilSpe10Layers84_85_base_iterative.xml
   :language: xml
   :start-after: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS -->
   :end-before: <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS_END -->

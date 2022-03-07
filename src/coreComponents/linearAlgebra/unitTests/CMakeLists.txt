@@ -1,4 +1,5 @@
 set( serial_tests
+     LinearSolverParametersEnums
      BlasLapack
      ComponentMask )
 
@@ -14,6 +15,10 @@ set( dependencyList gtest linearAlgebra )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 foreach(test_name ${serial_tests})

@@ -1,0 +1,264 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS -->
+  <Solvers>
+
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ reservoir }"      
+      temperature="300"
+      useMass="1"
+      initialDt="1e3"
+      maxCompFractionChange="0.1"
+      computeCFLNumbers="1">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-4"
+        newtonMaxIter="40"
+        maxTimeStepCuts="10"
+        lineSearchAction="None"/>
+      <LinearSolverParameters
+        solverType="direct"
+        directParallel="0"/>
+    </CompositionalMultiphaseFVM>
+
+  </Solvers>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_SOLVERS_END -->  
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS -->  
+  <Events
+    maxTime="8e7">
+
+   <PeriodicEvent
+      name="outputs"
+      timeFrequency="4e7"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"/>
+    
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="1e6"  
+      target="/Solvers/compflow"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="4e7"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+    
+  </Events>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_EVENTS_END -->  
+
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS -->  
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_NUMERICAL_METHODS_END -->
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS -->
+  <ElementRegions>
+    <CellElementRegion
+      name="reservoir"
+      cellBlocks="{ block }"
+      materialList="{ fluid, rock, relperm }"/>
+  </ElementRegions>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_ELEMENT_REGIONS_END -->
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE -->
+  <Constitutive>
+
+    <DeadOilFluid
+      name="fluid"
+      phaseNames="{ oil, water }"
+      surfaceDensities="{ 800.0, 1022.0 }"
+      componentMolarWeight="{ 114e-3, 18e-3 }"
+      hydrocarbonFormationVolFactorTableNames="{ B_o_table }"
+      hydrocarbonViscosityTableNames="{ visc_o_table }"
+      waterReferencePressure="30600000.1"
+      waterFormationVolumeFactor="1.03"
+      waterCompressibility="0.00000000041"
+      waterViscosity="0.0003"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.1"
+      referencePressure="1.0e7"
+      compressibility="1e-10"/>
+
+    <BrooksCoreyRelativePermeability
+      name="relperm"
+      phaseNames="{ oil, water }"
+      phaseMinVolumeFraction="{ 0.0, 0.0 }"
+      phaseRelPermExponent="{ 2.0, 2.0 }"
+      phaseRelPermMaxValue="{ 1.0, 1.0 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-18 }"/>
+    
+  </Constitutive>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_CONSTITUTIVE_END -->
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS -->  
+  <FieldSpecifications>
+    <FieldSpecification
+      name="permx"
+      component="0"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="rockPerm_permeability"
+      functionName="permxFunc"
+      scale="9.869233e-16"/>
+    <FieldSpecification
+      name="permy"
+      component="1"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="rockPerm_permeability"
+      functionName="permyFunc"
+      scale="9.869233e-16"/>
+    <FieldSpecification
+      name="permz"
+      component="2"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="rockPerm_permeability"
+      functionName="permzFunc"
+      scale="9.869233e-16"/>
+
+    <FieldSpecification
+      name="referencePorosity"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="rockPorosity_referencePorosity"
+      functionName="poroFunc"
+      scale="1.0"/>
+
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="pressure"
+      scale="4.1369e+7"/>
+    <FieldSpecification
+      name="initialComposition_oil"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.9999"/>
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.0001"/>
+    
+    <SourceFlux
+      name="sourceTerm"
+      objectPath="ElementRegions/reservoir/block"
+      scale="-0.07279"
+      component="1"
+      setNames="{ source }"/>
+
+    <FieldSpecification
+      name="sinkPressure"
+      setNames="{ sink1, sink2, sink3, sink4 }"         
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="pressure"
+      scale="2.7579e+7"/>
+    <FieldSpecification
+      name="sinkComposition_oil"
+      setNames="{ sink1, sink2, sink3, sink4 }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.9999"/>
+    <FieldSpecification
+      name="sinkComposition_water"
+      setNames="{ sink1, sink2, sink3, sink4 }"
+      objectPath="ElementRegions/reservoir/block"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.0001"/>
+
+  </FieldSpecifications>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FIELD_SPECS_END -->
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FUNCTIONS -->  
+  <Functions>
+    <TableFunction 
+      name="permxFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="permx.geos"
+      interpolation="linear" />
+    <TableFunction 
+      name="permyFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="permy.geos"
+      interpolation="linear" />
+    <TableFunction 
+      name="permzFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="permz.geos"
+      interpolation="linear" />
+    <TableFunction 
+      name="poroFunc"
+      inputVarNames="{elementCenter}"
+      coordinateFiles="{xlin.geos,ylin.geos,zlin.geos}"
+      voxelFile="poro.geos"
+      interpolation="linear" />
+
+    <TableFunction
+      name="B_o_table"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="B_o_pvdo.txt"
+      interpolation="linear"/>
+
+    <TableFunction
+      name="visc_o_table"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="visc_pvdo.txt"
+      interpolation="linear"/>
+    
+  </Functions>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_FUNCTIONS_END -->    
+
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS -->    
+  <Outputs>
+    <VTK
+      name="vtkOutput"/>
+    
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+  <!-- SPHINX_TUT_DEAD_OIL_BOTTOM_SPE10_OUTPUTS_END -->      
+  
+</Problem>

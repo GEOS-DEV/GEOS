@@ -31,7 +31,6 @@ set( dataRepository_sources
      ConduitRestart.cpp
      ExecutableGroup.cpp
      Group.cpp
-     Wrapper.cpp
      WrapperBase.cpp
      xmlWrapper.cpp
    )
@@ -44,7 +43,9 @@ endif()
 
 if( ENABLE_PYGEOSX )
   set( dependencyList ${dependencyList} pylvarray )
+  add_subdirectory( python )
 endif()
+
 
 blt_add_library( NAME       dataRepository
                  SOURCES    ${dataRepository_sources}

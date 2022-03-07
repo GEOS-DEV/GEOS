@@ -21,7 +21,9 @@
 #include "EdgeManager.hpp"
 #include "ToElementRelation.hpp"
 #include "BufferOps.hpp"
+#include "mesh/ExtrinsicMeshData.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/MpiWrapper.hpp"
 #include "ElementRegionManager.hpp"
 
 namespace geosx
@@ -65,7 +67,7 @@ void EmbeddedSurfaceNodeManager::setEdgeMaps( EdgeManager const & embSurfEdgeMan
   localIndex const numEdges = edgeToNodeMap.size( 0 );
   localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, embSurfEdgeManager.maxEdgesPerNode() );
+  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, EdgeManager::maxEdgesPerNode() );
   RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
 
   forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
@@ -203,13 +205,10 @@ void EmbeddedSurfaceNodeManager::compressRelationMaps()
 void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const & pointCoord,
                                              integer const & pointGhostRank )
 {
-  if( pointGhostRank < 0 )
-  {
-    localIndex nodeIndex =  this->size();
-    this->resize( nodeIndex + 1 );
-    LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
-    m_ghostRank[ nodeIndex ] = pointGhostRank;
-  }
+  localIndex nodeIndex =  this->size();
+  this->resize( nodeIndex + 1 );
+  LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
+  m_ghostRank[ nodeIndex ] = pointGhostRank;
 }
 
 void EmbeddedSurfaceNodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
@@ -220,6 +219,187 @@ void EmbeddedSurfaceNodeManager::viewPackingExclusionList( SortedArray< localInd
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
   exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
 }
+
+
+localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const
+{
+  buffer_unit_type * junk = nullptr;
+  return packNewNodesGlobalMapsPrivate< false >( junk, packList );
+}
+
+localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMaps( buffer_unit_type * & buffer,
+                                                               arrayView1d< localIndex const > const & packList ) const
+{
+  return packNewNodesGlobalMapsPrivate< true >( buffer, packList );
+}
+
+template< bool DOPACK >
+localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
+                                                                      arrayView1d< localIndex const > const & packList ) const
+{
+  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
+
+  // this doesn't link without the string()...no idea why.
+  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
+
+  localIndex const numPackedIndices = packList.size();
+  packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
+
+  if( numPackedIndices > 0 )
+  {
+    // We pack 3 things:
+    // 1. the global indices
+    globalIndex_array globalIndices;
+    globalIndices.resize( numPackedIndices );
+    // 2. the ghostRank
+    array1d< integer > ghostRanks;
+    ghostRanks.resize( numPackedIndices );
+    for( localIndex a=0; a<numPackedIndices; ++a )
+    {
+      globalIndices[a] = this->m_localToGlobalMap[packList[a]];
+      ghostRanks[a]= this->m_ghostRank[ packList[a] ];
+    }
+    packedSize += bufferOps::Pack< DOPACK >( buffer, globalIndices );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, ghostRanks );
+
+    // 3. the referencePosition
+    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = this->referencePosition();
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::referencePositionString() ) );
+    packedSize += bufferOps::PackByIndex< DOPACK >( buffer, referencePosition, packList );
+  }
+
+  return packedSize;
+}
+
+
+localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_type const * & buffer,
+                                                                 localIndex_array & packList )
+{
+  GEOSX_MARK_FUNCTION;
+
+  localIndex unpackedSize = 0;
+  string groupName;
+  unpackedSize += bufferOps::Unpack( buffer, groupName );
+  GEOSX_ERROR_IF( groupName != this->getName(), "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): group names do not match" );
+
+  string localToGlobalString;
+  unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::Unpack(): label incorrect" );
+
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+  int sendingRank;
+  unpackedSize += bufferOps::Unpack( buffer, sendingRank );
+
+  localIndex numUnpackedIndices;
+  unpackedSize += bufferOps::Unpack( buffer, numUnpackedIndices );
+
+  if( numUnpackedIndices > 0 )
+  {
+    localIndex_array unpackedLocalIndices;
+    unpackedLocalIndices.resize( numUnpackedIndices );
+
+    globalIndex_array globalIndices;
+    unpackedSize += bufferOps::Unpack( buffer, globalIndices );
+
+    array1d< integer > ghostRankOnSendingRank;
+    unpackedSize += bufferOps::Unpack( buffer, ghostRankOnSendingRank );
+
+    // Unpack referencePosition
+    localIndex_array indicesOnBuffer( numUnpackedIndices );
+    for( localIndex i = 0; i < numUnpackedIndices; i++ )
+    {
+      indicesOnBuffer[i] = i;
+    }
+    array2d< real64, nodes::REFERENCE_POSITION_PERM > referencePositionData( 0, 3 );
+    referencePositionData.resize( numUnpackedIndices );
+    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & referencePosition = referencePositionData.toView();
+    string referencePositionString;
+    unpackedSize += bufferOps::Unpack( buffer, referencePositionString );
+    GEOSX_ERROR_IF( referencePositionString != viewKeyStruct::referencePositionString(), "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): label incorrect" );
+    unpackedSize += bufferOps::UnpackByIndex( buffer, referencePosition, indicesOnBuffer );
+
+    localIndex numNewIndices = 0;
+    globalIndex_array newGlobalIndices;
+    newGlobalIndices.reserve( numUnpackedIndices );
+    array1d< integer > ghostRank;
+    ghostRank.reserve( numUnpackedIndices );
+    localIndex const oldSize = this->size();
+    for( localIndex a = 0; a < numUnpackedIndices; ++a )
+    {
+      // check to see if the node already exists by comparing the coordinates by checking for the global
+      localIndex nodeIndexOnThisRank = -1;
+      real64 nodeCoord[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( referencePosition[a] );
+      nodeExistsOnThisRank( nodeCoord, nodeIndexOnThisRank );
+      if( nodeIndexOnThisRank > -1 )
+      {
+        if( m_ghostRank[nodeIndexOnThisRank] == sendingRank )
+        {
+          // object already exists on this rank and it's a ghost
+          unpackedLocalIndices( a ) = nodeIndexOnThisRank;
+
+          globalIndex const globalIndexOnthisRank = m_localToGlobalMap[ nodeIndexOnThisRank ];
+
+          m_localToGlobalMap[ nodeIndexOnThisRank ] = globalIndices( a );
+
+          //modify global to local map
+          m_globalToLocalMap.erase( globalIndexOnthisRank );
+          m_globalToLocalMap.insert( {globalIndices( a ), nodeIndexOnThisRank} );
+
+        }
+      }
+      else
+      {
+        // object does not exist on this domain
+        const localIndex newLocalIndex = oldSize + numNewIndices;
+
+        // add the global index of the new object to the globalToLocal map
+        m_globalToLocalMap[ globalIndices[a] ] = newLocalIndex;
+
+        unpackedLocalIndices( a ) = newLocalIndex;
+
+        newGlobalIndices.emplace_back( globalIndices[a] );
+
+        if( ghostRankOnSendingRank[a] == rank )
+        {
+          ghostRank.emplace_back( -1 );
+        }
+        else
+        {
+          ghostRank.emplace_back( rank );
+        }
+
+        ++numNewIndices;
+
+        GEOSX_ERROR_IF( packList.size() != 0,
+                        "EmbeddedSurfaceNodeManager::unpackGlobalMaps(): packList specified, "
+                        "but a new globalIndex is unpacked" );
+      }
+    }
+
+    ///
+
+    // figure out new size of object container, and resize it
+    const localIndex newSize = oldSize + numNewIndices;
+    this->resize( newSize );
+
+    // add the new indices to the maps.
+    for( int a=0; a<numNewIndices; ++a )
+    {
+      localIndex const b = oldSize + a;
+      m_localToGlobalMap[b] = newGlobalIndices( a );
+      m_ghostRank[b] = ghostRank( a );
+    }
+
+
+    packList = unpackedLocalIndices;
+  }
+
+  return unpackedSize;
+}
+
 
 localIndex EmbeddedSurfaceNodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
@@ -251,7 +431,7 @@ localIndex EmbeddedSurfaceNodeManager::packUpDownMapsPrivate( buffer_unit_type *
 
 
 localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                                         localIndex_array & packList,
+                                                         array1d< localIndex > & packList,
                                                          bool const overwriteUpMaps,
                                                          bool const )
 {
@@ -268,6 +448,21 @@ localIndex EmbeddedSurfaceNodeManager::unpackUpDownMaps( buffer_unit_type const 
                                      overwriteUpMaps );
 
   return unPackedSize;
+}
+
+void EmbeddedSurfaceNodeManager::nodeExistsOnThisRank( real64 const (&nodeCoord)[3],
+                                                       localIndex & nodeIndexOnThisRank ) const
+{
+  for( localIndex a=0; a<size(); a++ )
+  {
+    real64 const tolerance = 100.0 * std::numeric_limits< real64 >::epsilon();
+    real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( m_referencePosition[a] );
+    LvArray::tensorOps::subtract< 3 >( distance, nodeCoord );
+    if( LvArray::tensorOps::l2Norm< 3 >( distance ) < tolerance )
+    {
+      nodeIndexOnThisRank = a;
+    }
+  }
 }
 
 

@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File
+      name="./kgdBase_C3D6_base.xml"/>
+  </Included>
+
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <Hydrofracture
+      name="hydrofracture"
+      solidSolverName="lagsolve"
+      fluidSolverName="SinglePhaseFlow"
+      surfaceGeneratorName="SurfaceGen"
+      couplingTypeOption="FIM"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Fracture }"
+      contactRelationName="fractureContact">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-5"
+        newtonMaxIter="50"
+        lineSearchMaxCuts="10"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </Hydrofracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="lagsolve"
+      timeIntegrationOption="QuasiStatic"
+      discretization="FE1"
+      targetRegions="{ Domain, Fracture }"
+      contactRelationName="fractureContact"/>
+
+    <SinglePhaseFVM
+      name="SinglePhaseFlow"
+      discretization="singlePhaseTPFA"
+      targetRegions="{ Fracture }"/>
+
+    <SurfaceGenerator
+      name="SurfaceGen"
+      targetRegions="{ Domain }"
+      
+      rockToughness="0.707e7"
+      nodeBasedSIF="1"
+      mpiCommOrder="1"/>
+  </Solvers>
+</Problem>

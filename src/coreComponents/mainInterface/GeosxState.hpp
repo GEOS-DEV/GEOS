@@ -99,7 +99,7 @@ public:
    * @details Loads in the restart file if applicable, and allocates the ProblemManager.
    * @post After this call @c getState() is @c State::UNINITIALIZED.
    */
-  GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOptions );
+  explicit GeosxState( std::unique_ptr< CommandLineOptions > && commandLineOptions );
 
   /**
    * @brief Destructor.

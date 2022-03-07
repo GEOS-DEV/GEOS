@@ -3,10 +3,12 @@
 #
 set( fieldSpecification_headers
      DirichletBoundaryCondition.hpp
+     EquilibriumInitialCondition.hpp     
      FieldSpecificationBase.hpp
      FieldSpecificationManager.hpp
      SourceFluxBoundaryCondition.hpp
      TractionBoundaryCondition.hpp
+     AquiferBoundaryCondition.hpp
    )
 
 #
@@ -14,10 +16,12 @@ set( fieldSpecification_headers
 #
 set( fieldSpecification_sources
      DirichletBoundaryCondition.cpp
+     EquilibriumInitialCondition.cpp          
      FieldSpecificationBase.cpp
      FieldSpecificationManager.cpp
      SourceFluxBoundaryCondition.cpp
      TractionBoundaryCondition.cpp
+     AquiferBoundaryCondition.cpp
    )
 
 set( dependencyList functions linearAlgebra )

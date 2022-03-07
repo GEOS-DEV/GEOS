@@ -256,7 +256,7 @@ A typical one may look like:
   # detect host and name the configuration file
   site_name(HOST_NAME)
   set(CONFIG_NAME "your-platform" CACHE PATH "")
-  message( "CONFIG_NAME = ${CONFIG_NAME}" )
+  message("CONFIG_NAME = ${CONFIG_NAME}")
 
   # set paths to C, C++, and Fortran compilers. Note that while GEOSX does not contain any Fortran code,
   # some of the third-party libraries do contain Fortran code. Thus a Fortran compiler must be specified.
@@ -269,15 +269,15 @@ A typical one may look like:
   # Note that the MPI compilers are wrappers around standard serial compilers.
   # Therefore, the MPI compilers must wrap the appropriate serial compilers specified
   # in CMAKE_C_COMPILER, CMAKE_CXX_COMPILER, and CMAKE_Fortran_COMPILER.
-  set(ENABLE_MPI ON CACHE PATH "")
+  set(ENABLE_MPI ON CACHE BOOL "")
   set(MPI_C_COMPILER "/usr/local/bin/mpicc" CACHE PATH "")
   set(MPI_CXX_COMPILER "/usr/local/bin/mpicxx" CACHE PATH "")
   set(MPI_Fortran_COMPILER "/usr/local/bin/mpifort" CACHE PATH "")
   set(MPIEXEC "/usr/local/bin/mpirun" CACHE PATH "")
 
   # disable CUDA and OpenMP
-  set(CUDA_ENABLED "OFF" CACHE PATH "" FORCE)
-  set(ENABLE_OPENMP "OFF" CACHE PATH "" FORCE)
+  set(CUDA_ENABLED OFF CACHE BOOL "" FORCE)
+  set(ENABLE_OPENMP OFF CACHE BOOL "" FORCE)
 
   # enable PAMELA and PVTPackage
   set(ENABLE_PAMELA ON CACHE BOOL "" FORCE)
@@ -285,6 +285,11 @@ A typical one may look like:
 
   # enable tests
   set(ENABLE_GTEST_DEATH_TESTS ON CACHE BOOL "" FORCE )
+  
+  # define the path to your compiled installation directory
+  set(GEOSX_TPL_DIR "/path/to/your/TPL/installation/dir" CACHE PATH "")
+  # let GEOSX define some third party libraries information for you
+  include(${CMAKE_CURRENT_LIST_DIR}/tpls.cmake)
 
 The various ``set()`` commands are used to set environment variables that control the build.
 You will see in the above example that we set the C++ compiler to ``/user/bin/clang++`` and so forth.
@@ -331,9 +336,21 @@ Again, the ``config-build.py`` sets up cmake for you, so the process is very sim
    make -j4
    make install
 
-Here, the parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
+The host-config file is the place to set all relevant configuration options.  
+Note that the path to the previously installed third party libraries is typically specified within this file.  
+An alternative is to set the path ``GEOSX_TPL_DIR`` via a cmake command line option, e.g. 
+
+.. code-block:: sh
+
+   python scripts/config-build.py -hc host-configs/your-platform.cmake -bt Release -D GEOSX_TPL_DIR=/full/path/to/thirdPartyLibs
+
+We highly recommend using full paths, rather than relative paths, whenever possible.
+The parallel ``make -j 4`` will use four processes for compilation, which can substantially speed up the build if you have a multi-processor machine.
 You can adjust this value to match the number of processors available on your machine.
 The ``make install`` command then installs GEOSX to a default location unless otherwise specified.
+
+
+
 If all goes well, a ``geosx`` executable should now be available:
 
 .. code-block:: sh
