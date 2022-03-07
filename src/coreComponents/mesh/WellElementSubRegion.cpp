@@ -857,10 +857,11 @@ bool WellElementSubRegion::isLocallyOwned() const
   return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOSX );
 }
 
-void WellElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > WellElementSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( viewKeyStruct::nodeListString() );
+  return result;
 }
 
 localIndex WellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const

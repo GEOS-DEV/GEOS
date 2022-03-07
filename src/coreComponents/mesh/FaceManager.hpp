@@ -220,7 +220,7 @@ public:
    * @brief Create an array listing all excluded local face indices values.
    * @param [in,out] exclusionList Sorted array with excluded local faces indices
    */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  std::set< string > getPackingExclusionList() const override;
 
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.

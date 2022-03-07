@@ -380,15 +380,15 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-void EmbeddedSurfaceSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > EmbeddedSurfaceSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
-  //exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceWithGhostNodesString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::surfaceElementsToCellRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellIndexString() } );
+  return result;
 }
 
 } /* namespace geosx */

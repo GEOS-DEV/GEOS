@@ -121,7 +121,7 @@ public:
    * Note that data will be inserted into @p exclusionList
    * and that data previously present in @p exclusionList may remain.
    */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const;
+  virtual std::set< string > getPackingExclusionList() const;
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.

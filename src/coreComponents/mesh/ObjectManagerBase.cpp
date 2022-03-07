@@ -259,21 +259,27 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
   if( numPackedIndices > 0 )
   {
+    std::set< string > wrapperNamesForPacking;
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
 
-    std::vector< string > wrapperNamesForPacking;
     if( wrapperNames.empty() )
     {
-      SortedArray< localIndex > exclusionList;
-      viewPackingExclusionList( exclusionList );
-      for( localIndex k=0; k<this->wrappers().size(); ++k )
+      wrapperNamesForPacking = mapKeys< decltype( wrappers() ), std::set< string > >( wrappers() );
+      std::set< string > exclusion = getPackingExclusionList();
+
+      for( localIndex k = 0; k < this->wrappers().size(); ++k )
       {
         string const & wrapperName = wrappers().values()[k].first;
         WrapperBase const * wrapper = wrappers().values()[k].second;
-        if( exclusionList.count( k ) == 0 and wrapper->sizedFromParent() )
+        if( not wrapper->sizedFromParent() )
         {
-          wrapperNamesForPacking.push_back( wrapperName );
+          exclusion.insert( wrapperName );
         }
+      }
+
+      for( string const & e: exclusion )
+      {
+        wrapperNamesForPacking.erase( e );
       }
     }
     else
@@ -309,7 +315,7 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
           WrapperBase const & wrapper = getWrapperBase( wrapperName );
 
           if( wrapper.sizedFromParent() )
-          { wrapperNamesForPacking.push_back( wrapperName ); }
+          { wrapperNamesForPacking.insert( wrapperName ); }
         }
       }
     }
@@ -741,17 +747,14 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 }
 
 
-
-void ObjectManagerBase::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > ObjectManagerBase::getPackingExclusionList() const
 {
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::ghostRankString() ));
-  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ParentIndex::key() ));
-  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ChildIndex::key() ));
-
+  return { viewKeyStruct::localToGlobalMapString(),
+           viewKeyStruct::globalToLocalMapString(),
+           viewKeyStruct::ghostRankString(),
+           extrinsicMeshData::ParentIndex::key(),
+           extrinsicMeshData::ChildIndex::key() };
 }
-
 
 localIndex ObjectManagerBase::getNumberOfGhosts() const
 {

@@ -94,13 +94,15 @@ void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
   m_fracturedCells.insert( cellElemIndex );
 }
 
-void CellElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+
+std::set< string > CellElementSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString()  ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString()  ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString()  ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::toEmbSurfString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::toEmbSurfString() } );
+  return result;
 }
 
 
