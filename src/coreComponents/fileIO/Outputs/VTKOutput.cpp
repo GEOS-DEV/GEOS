@@ -48,7 +48,7 @@ VTKOutput::VTKOutput( string const & name,
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( m_writeBinaryData ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Output the data in binary format.  Valid options: ``" + EnumStrings< vtk::VTKOutputMode >::concat( "``, ``" ) + "``");
+    setDescription( "Output data format.  Valid options: ``" + EnumStrings< vtk::VTKOutputMode >::concat( "``, ``" ) + "``");
 
   registerWrapper( viewKeysStruct::outputRegionTypeString, &m_outputRegionType ).
     setApplyDefaultValue( m_outputRegionType ).
