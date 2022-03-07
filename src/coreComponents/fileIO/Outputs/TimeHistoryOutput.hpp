@@ -110,7 +110,7 @@ public:
    * @return Return PyHistoryOutput type.
    */
 #if defined(GEOSX_USE_PYGEOSX)
-  virtual PyTypeObject * getPythonType() const;
+  virtual PyTypeObject * getPythonType() const override;
 #endif
 
 private:
