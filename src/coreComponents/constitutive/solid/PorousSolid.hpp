@@ -223,11 +223,6 @@ public:
     real64 const porosityInit = m_porosityUpdate.getInitialPorosity( k, q );
 
     // Compute body force vector.
-    // No derivatives computed. Current assumptions:
-    // (  i) dMixtureDens_dVolStrain contribution is neglected
-    // ( ii) grains are assumed incompressible
-    // (iii) TODO add dMixtureDens_dPressure and dMixtureDens_dGlobalCompDensity
-
     using Deriv = constitutive::multifluid::DerivativeOffset;
 
     if( gravityAcceleration > 0.0 )
@@ -280,10 +275,6 @@ public:
       LvArray::tensorOps::Rij_eq_AiBj< 3, NUM_MAX_COMPONENTS >( dBodyForce_dComponents, gravityVector, dFluidTotalMassDensity_dComponents );
 
     }
-
-    // Compute component mass contents and derivatives w.r.t. to
-    // volumetric strain, pressure and components
-
 
     // --- temporary work arrays
     real64 dPhaseAmount_dC[NUM_MAX_COMPONENTS];
