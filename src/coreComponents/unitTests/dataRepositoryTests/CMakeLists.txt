@@ -12,11 +12,11 @@ set( dataRepository_tests
 
 set( dependencyList gtest )
 
-if ( GEOSX_BUILD_SHARED_LIBS )
-  set (dependencyList ${dependencyList} geosx_core )
-else()
-  set (dependencyList ${dependencyList} ${geosx_core_libs} )
-endif()
+#if ( GEOSX_BUILD_SHARED_LIBS )
+#  set (dependencyList ${dependencyList} geosx_core )
+#else()
+#  set (dependencyList ${dependencyList} ${geosx_core_libs} )
+#endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

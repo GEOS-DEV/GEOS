@@ -11,7 +11,7 @@ set( parallel_tests
 
 set( nranks 2 )
 
-set( dependencyList gtest linearAlgebra )
+set( dependencyList gtest )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

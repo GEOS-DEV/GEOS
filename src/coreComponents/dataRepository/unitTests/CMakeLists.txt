@@ -9,7 +9,7 @@ set( dataRepository_tests
      testBufferOps.cpp
    )
 
-set( dependencyList gtest dataRepository )
+set( dependencyList gtest )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

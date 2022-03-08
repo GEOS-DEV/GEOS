@@ -11,7 +11,7 @@ set( gtest_geosx_tests
      testPropertyConversions.cpp
    )
 
-set( dependencyList gtest constitutive )
+set( dependencyList gtest )
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

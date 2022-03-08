@@ -12,7 +12,7 @@ set(testSources
     testH1_TriangleFace_Lagrange1_Gauss1.cpp
    )
 
-set( dependencyList gtest finiteElement)
+set( dependencyList gtest)
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
