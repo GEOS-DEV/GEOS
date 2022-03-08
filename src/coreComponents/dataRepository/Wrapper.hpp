@@ -322,34 +322,29 @@ public:
   localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
     localIndex unpackedSize = 0;
-    if( sizedFromParent()==1 )
+
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+    }
+    if( onDevice )
     {
       if( withMetadata )
       {
-        string name;
-        unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-      }
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-        }
-        else
-        {
-          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-        }
+        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
       }
       else
       {
-        unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
       }
     }
     else
     {
-      GEOSX_LOG("COUCOU I was there 2");
+      unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
     }
+
     return unpackedSize;
   }
 
@@ -437,14 +432,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override
   {
-    if( sizedFromParent() )
-    {
-      copy_wrapper::copy( reference(), sourceIndex, destIndex );
-    }
-    else
-    {
-      GEOSX_LOG("COUCOU I was there copy");
-    }
+    copy_wrapper::copy( reference(), sourceIndex, destIndex );
   }
 
 
@@ -848,30 +836,25 @@ private:
                                   parallelDeviceEvents & events ) const
   {
     localIndex packedSize = 0;
-    if( sizedFromParent() == 1 )
+
+    if( withMetadata )
+    { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
+    if( onDevice )
     {
       if( withMetadata )
-      { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
-      if( onDevice )
       {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
-        }
+        packedSize += wrapperHelpers::PackByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
       }
       else
       {
-        packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
+        packedSize += wrapperHelpers::PackDataByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
       }
     }
     else
     {
-      GEOSX_LOG( "COUCOU I was there 0" );
+      packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
     }
+
     return packedSize;
   }
 
