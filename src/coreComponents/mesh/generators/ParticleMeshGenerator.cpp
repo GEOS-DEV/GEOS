@@ -291,6 +291,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   } // loop over particle blocks
 
   // Resize particle regions
+  int numParticlesCheck = 0;
   particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
@@ -300,9 +301,11 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     {
       size += sizeMap[particleBlockNames[i]];
     }
+    numParticlesCheck += size;
     particleRegion.resize(size);
     GEOSX_LOG_RANK_0("Particle region " << particleRegion.getName() << " contains " << size << " particles.");
   } );
+  GEOSX_ERROR_IF(numParticlesCheck != numParticles, "Inconsistency detected between MPM particle file and GEOSX input file! Check if you've correctly allocated all particle blocks.");
 
   GEOSX_LOG_RANK_0( "Total number of particles: " << particleManager.size() );
 }

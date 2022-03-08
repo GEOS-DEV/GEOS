@@ -292,9 +292,8 @@ void SolidMechanicsMPM::initializePreSubGroups()
     if(meshBody.m_hasParticles) // Only particle regions will hold actual materials. Background grid currently holds a null material so that the input file parser doesn't complain, but we don't need to actually do anything with it.
     {
       ParticleManager & particleManager = meshLevel.getParticleManager();
-      particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames,
-                                                                         [&]( localIndex const,
-                                                                              ParticleSubRegion & subRegion )
+      particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames, [&]( localIndex const,
+                                                                                    ParticleSubRegion & subRegion )
       {
         string & solidMaterialName = subRegion.getReference<string>( viewKeyStruct::solidMaterialNamesString() );
         solidMaterialName = SolverBase::getConstitutiveName<SolidBase>( subRegion );
@@ -378,7 +377,7 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   }
   else
   {
-    GEOSX_LOG_RANK_0( "MPM solver only currently supports explicit time stepping!" );
+    GEOSX_ERROR( "MPM solver only currently supports explicit time stepping!" );
   }
 
   return dtReturn;
@@ -393,9 +392,21 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
+  // Get node and particle managers. ***** We implicitly assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
+  MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
+  MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
+  ParticleManager & particleManager = meshBody1.m_hasParticles ? meshBody1.getMeshLevel(0).getParticleManager() : meshBody2.getMeshLevel(0).getParticleManager();
+  NodeManager & nodeManager = !meshBody1.m_hasParticles ? meshBody1.getMeshLevel(0).getNodeManager() : meshBody2.getMeshLevel(0).getNodeManager();
 
-
+  // Loop over particles
+  particleManager.forParticleRegions( [&]( auto & particleRegion )
+  {
+    particleRegion.forParticleSubRegions( [&]( ParticleSubRegion & particleSubRegion )
+    {
+      array2d< real64 > particleCenter = particleSubRegion.getParticleCenter();
+    } );
+  } );
 
   return dt;
 }
