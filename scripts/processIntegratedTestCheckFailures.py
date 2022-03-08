@@ -71,6 +71,8 @@ for fileName in findFiles(directory, extension):
 
                 
                 for j in range(1,numTrailingLines+1):
+                    if i+j >= len(lines):
+                        break
                     matchBlock += '  ' + lines[i+j]
                     if ('********************************************************************************' in lines[i+j]):
                         break

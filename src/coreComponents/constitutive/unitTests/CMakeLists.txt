@@ -3,10 +3,11 @@
 #
 
 set( gtest_geosx_tests
-     testModifiedCamClay.cpp
      testDamageUtilities.cpp
      testDruckerPrager.cpp
      testElasticIsotropic.cpp
+     testModifiedCamClay.cpp
+     testParticleFluidEnums.cpp
      testPropertyConversions.cpp
    )
 
@@ -14,6 +15,10 @@ set( dependencyList gtest constitutive )
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 #
@@ -32,5 +37,3 @@ foreach(test ${gtest_geosx_tests})
                 )
 
 endforeach()
-
-

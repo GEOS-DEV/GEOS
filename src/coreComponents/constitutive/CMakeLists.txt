@@ -24,11 +24,12 @@ set( constitutive_headers
      fluid/BlackOilFluidBase.hpp	
      fluid/BlackOilFluid.hpp
      fluid/CompressibleSinglePhaseFluid.hpp
+     fluid/CO2BrineFluid.hpp          
      fluid/DeadOilFluid.hpp
      fluid/MultiFluidBase.hpp
      fluid/MultiFluidUtils.hpp
      fluid/MultiFluidExtrinsicData.hpp
-     fluid/MultiPhaseMultiComponentFluid.hpp
+     fluid/PhaseModel.hpp
      fluid/PVTDriver.hpp
      fluid/PVTOData.hpp
      fluid/PVTFunctions/PhillipsBrineDensity.hpp
@@ -38,7 +39,8 @@ set( constitutive_headers
      fluid/PVTFunctions/CO2Solubility.hpp
      fluid/PVTFunctions/FenghourCO2Viscosity.hpp
      fluid/PVTFunctions/FlashModelBase.hpp
-     fluid/PVTFunctions/PVTFunctionBase.hpp
+     fluid/PVTFunctions/PVTFunctionBase.hpp 
+     fluid/PVTFunctions/NoOpPVTFunction.hpp    
      fluid/PVTFunctions/PVTFunctionHelpers.hpp
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
      fluid/PVTFunctions/BrineEnthalpy.hpp
@@ -69,9 +71,11 @@ set( constitutive_headers
      relativePermeability/BrooksCoreyBakerRelativePermeability.hpp
      relativePermeability/BrooksCoreyRelativePermeability.hpp
      relativePermeability/RelativePermeabilityBase.hpp 
-     relativePermeability/RelativePermeabilityExtrinsicData.hpp    
+     relativePermeability/RelativePermeabilityExtrinsicData.hpp
      relativePermeability/RelativePermeabilityInterpolators.hpp
      relativePermeability/TableRelativePermeability.hpp
+     relativePermeability/TableRelativePermeabilityHelpers.hpp
+     relativePermeability/TableRelativePermeabilityHysteresis.hpp     
      relativePermeability/VanGenuchtenBakerRelativePermeability.hpp
      relativePermeability/layouts.hpp
      relativePermeability/relativePermeabilitySelector.hpp
@@ -129,11 +133,11 @@ set( constitutive_sources
      contact/CoulombContact.cpp
      contact/FrictionlessContact.cpp
      fluid/CompressibleSinglePhaseFluid.cpp
+     fluid/CO2BrineFluid.cpp     
      fluid/BlackOilFluidBase.cpp
      fluid/BlackOilFluid.cpp
      fluid/DeadOilFluid.cpp
      fluid/MultiFluidBase.cpp
-     fluid/MultiPhaseMultiComponentFluid.cpp
      fluid/PVTDriver.cpp
      fluid/PVTOData.cpp
      fluid/PVTFunctions/PhillipsBrineDensity.cpp
@@ -164,7 +168,9 @@ set( constitutive_sources
      relativePermeability/BrooksCoreyBakerRelativePermeability.cpp
      relativePermeability/BrooksCoreyRelativePermeability.cpp
      relativePermeability/RelativePermeabilityBase.cpp
-     relativePermeability/TableRelativePermeability.cpp        
+     relativePermeability/TableRelativePermeability.cpp
+     relativePermeability/TableRelativePermeabilityHelpers.cpp     
+     relativePermeability/TableRelativePermeabilityHysteresis.cpp
      relativePermeability/VanGenuchtenBakerRelativePermeability.cpp
      solid/CompressibleSolid.cpp
      solid/CoupledSolidBase.cpp
@@ -193,7 +199,7 @@ set( constitutive_sources
      thermalConductivity/VolumeWeightedThermalConductivity.cpp     
    )
 
-set( dependencyList events dataRepository functions )
+set( dependencyList events dataRepository functions)
 
 if( ENABLE_PVTPackage )
     set( constitutive_headers

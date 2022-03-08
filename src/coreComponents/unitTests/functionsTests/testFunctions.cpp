@@ -885,6 +885,21 @@ TEST( FunctionTests, MultivariableTableFromFile )
   testMutivariableFunction< nDims, nOps >( table_h, testCoordinates, testExpectedValues, testExpectedDerivatives );
 }
 
+
+// The `ENUM_STRING` implementation relies on consistency between the order of the `enum`,
+// and the order of the `string` array provided. Since this consistency is not enforced, it can be corrupted anytime.
+// This unit test aims at preventing from this implicit relationship to bring a bug.
+TEST( TableFunctionEnums, InterpolationType )
+{
+  using EnumType = TableFunction::InterpolationType;
+
+  ASSERT_EQ( "linear", toString( EnumType::Linear ) );
+  ASSERT_EQ( "nearest", toString( EnumType::Nearest ) );
+  ASSERT_EQ( "upper", toString( EnumType::Upper ) );
+  ASSERT_EQ( "lower", toString( EnumType::Lower ) );
+}
+
+
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );

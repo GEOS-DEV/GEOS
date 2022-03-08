@@ -4,8 +4,9 @@
 
 
 set( gtest_geosx_tests
-     testNeighborCommunicator.cpp
+     testMeshEnums.cpp
      testMeshGeneration.cpp
+     testNeighborCommunicator.cpp
      )
 
 set( gtest_geosx_mpi_tests
@@ -42,6 +43,10 @@ endif()
 
 if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
+endif()
+
+if ( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 #

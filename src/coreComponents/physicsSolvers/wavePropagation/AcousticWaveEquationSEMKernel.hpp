@@ -87,6 +87,47 @@ struct PrecomputeSourceAndReceiverKernel
     return false;
   }
 
+
+  GEOSX_HOST_DEVICE
+  static real64
+  evaluateRicker( real64 const & time_n,
+                  real64 const & f0,
+                  localIndex const & order )
+  {
+    real64 const o_tpeak = 1.0/f0;
+    real64 pulse = 0.0;
+    if((time_n <= -0.9*o_tpeak) || (time_n >= 2.9*o_tpeak))
+    {
+      return pulse;
+    }
+
+    constexpr real64 pi = M_PI;
+    real64 const lam = (f0*pi)*(f0*pi);
+
+    switch( order )
+    {
+      case 2:
+      {
+        pulse = 2.0*lam*(2.0*lam*(time_n-o_tpeak)*(time_n-o_tpeak)-1.0)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+      }
+      break;
+      case 1:
+      {
+        pulse = -2.0*lam*(time_n-o_tpeak)*exp( -lam*(time_n-o_tpeak)*(time_n-o_tpeak));
+      }
+      break;
+      case 0:
+      {
+        pulse = -(time_n-o_tpeak)*exp( -2*lam*(time_n-o_tpeak)*(time_n-o_tpeak) );
+      }
+      break;
+      default:
+        GEOSX_ERROR( "This option is not supported yet, rickerOrder must be 0, 1 or 2" );
+    }
+
+    return pulse;
+  }
+
   /**
    * @brief Launches the precomputation of the source and receiver terms
    * @tparam EXEC_POLICY execution policy
@@ -123,7 +164,11 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 const > const receiverCoordinates,
           arrayView1d< localIndex > const receiverIsLocal,
           arrayView2d< localIndex > const receiverNodeIds,
-          arrayView2d< real64 > const receiverConstants )
+          arrayView2d< real64 > const receiverConstants,
+          arrayView2d< real64 > const sourceValue,
+          real64 const dt,
+          real64 const timeSourceFrequency,
+          localIndex const rickerOrder )
   {
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -162,6 +207,12 @@ struct PrecomputeSourceAndReceiverKernel
             {
               sourceNodeIds[isrc][a] = elemsToNodes[k][a];
               sourceConstants[isrc][a] = Ntest[a];
+            }
+
+            for( localIndex cycle = 0; cycle < sourceValue.size( 0 ); ++cycle )
+            {
+              real64 const time = cycle*dt;
+              sourceValue[cycle][isrc] = evaluateRicker( time, timeSourceFrequency, rickerOrder );
             }
           }
         }
@@ -203,6 +254,7 @@ struct PrecomputeSourceAndReceiverKernel
           }
         }
       } // end loop over receivers
+
     } );
 
   }
@@ -364,9 +416,10 @@ public:
                                           1,
                                           1 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;

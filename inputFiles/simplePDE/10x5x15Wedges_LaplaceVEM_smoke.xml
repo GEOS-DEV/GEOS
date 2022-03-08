@@ -1,0 +1,31 @@
+<?xml version="1.0" ?>
+
+<Problem>
+
+  <Included>
+    <File name="./Laplace_base.xml"/>
+  </Included>
+
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D6 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 10 }"
+      ny="{ 5 }"
+      nz="{ 15 }"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"
+        useVirtualElements="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+</Problem>

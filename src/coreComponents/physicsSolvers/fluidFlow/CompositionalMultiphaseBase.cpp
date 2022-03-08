@@ -58,8 +58,8 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
-  m_capPressureFlag( 0 ),
-  m_thermalFlag( 0 ),
+  m_hasCapPressure( 0 ),
+  m_isThermal( 0 ),
   m_maxCompFracChange( 1.0 ),
   m_minScalingFactor( 0.01 ),
   m_allowCompDensChopping( 1 )
@@ -130,7 +130,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
       string const capPresName = getConstitutiveName< CapillaryPressureBase >( subRegion );
       if( !capPresName.empty() )
       {
-        m_capPressureFlag = true;
+        m_hasCapPressure = true;
       }
     } );
   } );
@@ -156,7 +156,7 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
     {
       {
 
-        if( m_capPressureFlag )
+        if( m_hasCapPressure )
         {
 
           subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
@@ -266,7 +266,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                   InputError );
 
 
-  if( m_capPressureFlag )
+  if( m_hasCapPressure )
   {
     string & capPressureName = subRegion.registerWrapper< string >( viewKeyStruct::capPressureNamesString() ).
                                  setPlotLevel( PlotLevel::NOPLOT ).
@@ -280,7 +280,7 @@ void CompositionalMultiphaseBase::setConstitutiveNames( ElementSubRegionBase & s
                     InputError );
   }
 
-  if( m_thermalFlag )
+  if( m_isThermal )
   {
     string & thermalConductivityName = subRegion.registerWrapper< string >( viewKeyStruct::thermalConductivityNamesString() ).
                                          setPlotLevel( PlotLevel::NOPLOT ).
@@ -309,7 +309,7 @@ void compareMultiphaseModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & rhs )
                          GEOSX_FMT( "Mismatch in number of phases between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
-  for( localIndex ip = 0; ip < lhs.numFluidPhases(); ++ip )
+  for( integer ip = 0; ip < lhs.numFluidPhases(); ++ip )
   {
     GEOSX_THROW_IF_NE_MSG( lhs.phaseNames()[ip], rhs.phaseNames()[ip],
                            GEOSX_FMT( "Mismatch in phase names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
@@ -324,7 +324,7 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
                          GEOSX_FMT( "Mismatch in number of components between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
                          InputError );
 
-  for( localIndex ic = 0; ic < lhs.numFluidComponents(); ++ic )
+  for( integer ic = 0; ic < lhs.numFluidComponents(); ++ic )
   {
     GEOSX_THROW_IF_NE_MSG( lhs.componentNames()[ic], rhs.componentNames()[ic],
                            GEOSX_FMT( "Mismatch in component names between constitutive models {} and {}", lhs.getName(), rhs.getName() ),
@@ -359,7 +359,7 @@ void CompositionalMultiphaseBase::initializeAquiferBC( ConstitutiveManager const
                            "Mismatch in number of components between constitutive model "
                            << fluid0.getName() << " and the water phase composition in aquifer " << bc.getName() );
 
-    for( localIndex ic = 0; ic < fluid0.numFluidComponents(); ++ic )
+    for( integer ic = 0; ic < fluid0.numFluidComponents(); ++ic )
     {
       GEOSX_ERROR_IF_NE_MSG( fluid0.componentNames()[ic], aquiferWaterPhaseCompNames[ic],
                              "Mismatch in component names between constitutive model "
@@ -377,8 +377,9 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
   ConstitutiveManager const & cm = domain.getConstitutiveManager();
 
   // 1. Validate various models against each other (must have same phases and components)
+  validateConstitutiveModels( domain );
 
-  // 3. Set the value of temperature
+  // 2. Set the value of temperature
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
@@ -395,6 +396,63 @@ void CompositionalMultiphaseBase::initializePreSubGroups()
 
   // 3. Initialize and validate the aquifer boundary condition
   initializeAquiferBC( cm );
+}
+
+void CompositionalMultiphaseBase::validateConstitutiveModels( DomainPartition const & domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+  MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
+
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase const & subRegion )
+    {
+
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      compareMultiphaseModels( fluid, referenceFluid );
+      compareMulticomponentModels( fluid, referenceFluid );
+
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      {
+        bool const isFluidModelThermal = castedFluid.isThermal();
+        GEOSX_THROW_IF( m_isThermal && !isFluidModelThermal,
+                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in the solver, but the fluid model `{}` is incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
+                        InputError );
+        GEOSX_THROW_IF( !m_isThermal && isFluidModelThermal,
+                        GEOSX_FMT( "CompositionalMultiphaseBase {}: the thermal option is enabled in fluid model `{}`, but the solver options are incompatible with the thermal option",
+                                   getName(), fluid.getName() ),
+                        InputError );
+      } );
+
+      string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
+      compareMultiphaseModels( relPerm, referenceFluid );
+
+      if( m_hasCapPressure )
+      {
+        string const & capPressureName = subRegion.getReference< string >( viewKeyStruct::capPressureNamesString() );
+        CapillaryPressureBase const & capPressure = getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
+        compareMultiphaseModels( capPressure, referenceFluid );
+      }
+
+      if( m_isThermal )
+      {
+        string const & thermalConductivityName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
+        ThermalConductivityBase const & conductivity = getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
+        compareMultiphaseModels( conductivity, referenceFluid );
+      }
+    } );
+  } );
+
 }
 
 void CompositionalMultiphaseBase::updateComponentFraction( ObjectManagerBase & dataGroup ) const
@@ -457,8 +515,8 @@ void CompositionalMultiphaseBase::updateRelPermModel( ObjectManagerBase & dataGr
   arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
     dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
 
-  string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
-  RelativePermeabilityBase & relPerm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
+  string const & relPermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
+  RelativePermeabilityBase & relPerm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relPermName );
 
   constitutive::constitutiveUpdatePassThru( relPerm, [&] ( auto & castedRelPerm )
   {
@@ -474,7 +532,7 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
 {
   GEOSX_MARK_FUNCTION;
 
-  if( m_capPressureFlag )
+  if( m_hasCapPressure )
   {
     arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
       dataGroup.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
@@ -538,7 +596,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         compDens[ei][ic] = totalDens[ei][0] * compFrac[ei][ic];
       }
@@ -552,18 +610,49 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
                                               SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                            auto & subRegion )
   {
-    // 4. Update dependent state quantities
-    // Note that the order used below is important, as some constitutive models are initialized with values from other constitutive models
+    // 4. Initialize/update dependent state quantities
 
-    // 4.1 First, we update the porosity and permeability, and save the porosity into the "old porosity"
+    // 4.1 Update the constitutive models that only depend on
+    //      - the primary variables
+    //      - the fluid constitutive quantities (as they have already been updated)
+    // We postpone the other constitutive models for now
     updatePorosityAndPermeability( subRegion );
+    updatePhaseVolumeFraction( subRegion );
+
+    // Now, we initialize and update each constitutive model one by one
+
+    // 4.2 Save the computed porosity into the old porosity
+    //
+    // Note:
+    // - This must be called after updatePorosityAndPermeability
+    // - This step depends on porosity
     string const & solidName = subRegion.template getReference< string >( viewKeyStruct::solidNamesString() );
     CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
     porousMaterial.initializeState();
 
-    // 4.2 Then, we initialize the capillary pressure model (which can depend on porosity and permeability)
-    // note: this **must** be called after the porosity update, and **before** calling updateCapPressureModel
-    if( m_capPressureFlag )
+    // 4.3 Initialize/update the relative permeability model using the initial phase volume fraction
+    //     This is needed to handle relative permeability hysteresis
+    //
+    // Note:
+    // - This must be called after updatePhaseVolumeFraction
+    // - This step depends on phaseVolFraction
+
+    // initialized phase volume fraction
+    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+      subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+
+    string const & relpermName = subRegion.template getReference< string >( viewKeyStruct::relPermNamesString() );
+    RelativePermeabilityBase & relPermMaterial =
+      getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
+    relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
+    updateRelPermModel( subRegion );
+
+    // 4.4 Then, we initialize/update the capillary pressure model
+    //
+    // Note:
+    // - This must be called after updatePorosityAndPermeability
+    // - This step depends on porosity and permeability
+    if( m_hasCapPressure )
     {
       // initialized porosity
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
@@ -577,31 +666,33 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       string const & capPressureName = subRegion.template getReference< string >( viewKeyStruct::capPressureNamesString() );
       CapillaryPressureBase const & capPressureMaterial =
         getConstitutiveModel< CapillaryPressureBase >( subRegion, capPressureName );
-      capPressureMaterial.initializeRockState( porosity, permeability );
+      capPressureMaterial.initializeRockState( porosity, permeability ); // this needs to happen before calling updateCapPressureModel
+      updateCapPressureModel( subRegion );
     }
 
-    // 4.3 Then, we call the remaining constitutive models to perform the updates
-    updatePhaseVolumeFraction( subRegion );
-    updateRelPermModel( subRegion );
+    // 4.5 Update the phase mobility
+    //
+    // Note:
+    // - This must be called after updateRelPermModel
+    // - This step depends phaseRelPerm
     updatePhaseMobility( subRegion );
-    updateCapPressureModel( subRegion );
-    // thermal conductivity is explicitly, so no update here
 
-    // 4.4 Finally, we initialize the thermal conductivity (which can depend on porosity and phase volume fraction)
-    if( m_thermalFlag )
+    // 4.6 Finally, we initialize the thermal conductivity
+    //
+    // Note:
+    // - This must be called after updatePorosityAndPermeability and updatePhaseVolumeFraction
+    // - This step depends on porosity and phaseVolFraction
+    // - Energy balance is not supported yet, so the following flag is always false for now
+    if( m_isThermal )
     {
       // initialized porosity
       arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
-      // initialized phase volume fraction
-      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-        subRegion.template getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-
       string const & thermalConductivityName = subRegion.template getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-
       ThermalConductivityBase const & conductivityMaterial =
         getConstitutiveModel< ThermalConductivityBase >( subRegion, thermalConductivityName );
       conductivityMaterial.initializeRockFluidState( porosity, phaseVolFrac );
+      // note that there is nothing to update here because thermal conductivity is explicit for now
     }
 
   } );
@@ -628,7 +719,7 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
     {
       initPres[ei] = pres[ei];
       initTotalMassDens[ei][0] = 0.0;
-      for( localIndex ip = 0; ip < numPhase; ++ip )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
         initTotalMassDens[ei][0] += phaseVolFrac[ei][ip] * phaseMassDens[ei][0][ip];
       }
@@ -745,7 +836,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
     array1d< TableFunction::KernelWrapper > compFracTableWrappers;
     arrayView1d< string const > compFracTableNames = fs.getComponentFractionVsElevationTableNames();
-    for( localIndex ic = 0; ic < numComps; ++ic )
+    for( integer ic = 0; ic < numComps; ++ic )
     {
       TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( compFracTableNames[ic] );
       compFracTableWrappers.emplace_back( compFracTable.createKernelWrapper() );
@@ -772,7 +863,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                     "Mismatch in number of components between constitutive model "
                     << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
                     InputError );
-    for( localIndex ic = 0; ic < fluid.numFluidComponents(); ++ic )
+    for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
     {
       GEOSX_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
                       "Mismatch in component names between constitutive model "
@@ -868,7 +959,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
 
       pres[k] = presTableWrapper.compute( &elevation );
       temp[k] = tempTableWrapper.compute( &elevation );
-      for( localIndex ic = 0; ic < numComps; ++ic )
+      for( integer ic = 0; ic < numComps; ++ic )
       {
         compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
       }
@@ -978,13 +1069,13 @@ void CompositionalMultiphaseBase::backupFields( MeshLevel & mesh,
       if( elemGhostRank[ei] >= 0 )
         return;
 
-      for( localIndex ip = 0; ip < numPhase; ++ip )
+      for( integer ip = 0; ip < numPhase; ++ip )
       {
         phaseDensOld[ei][ip] = phaseDens[ei][0][ip];
         phaseVolFracOld[ei][ip] = phaseVolFrac[ei][ip];
         phaseMobOld[ei][ip] = phaseMob[ei][ip];
 
-        for( localIndex ic = 0; ic < numComp; ++ic )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
           phaseCompFracOld[ei][ip][ic] = phaseCompFrac[ei][0][ip][ic];
         }
@@ -1430,7 +1521,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
       localRhs[localRow] = rhsValue;
 
       // 3.2. For each component, apply target global density value
-      for( localIndex ic = 0; ic < numComp; ++ic )
+      for( integer ic = 0; ic < numComp; ++ic )
       {
         FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
                                                     rankOffset,
@@ -1483,7 +1574,7 @@ void CompositionalMultiphaseBase::chopNegativeDensities( DomainPartition & domai
       {
         if( ghostRank[ei] < 0 )
         {
-          for( localIndex ic = 0; ic < numComp; ++ic )
+          for( integer ic = 0; ic < numComp; ++ic )
           {
             real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
             if( newDens < minDensForDivision )
@@ -1532,6 +1623,7 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
 {
   integer const numComp = m_numComponents;
 
+  // Step 1: save the converged aquifer state
   // note: we have to save the aquifer state **before** updating the pressure,
   // otherwise the aquifer flux is saved with the wrong pressure time level
   saveAquiferConvergedState( time, dt, domain );
@@ -1565,13 +1657,22 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         }
       } );
 
+      // Step 3: save the converged solid state
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & porousMaterial = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
       porousMaterial.saveConvergedState();
 
-      // Step 4: if capillary pressure is supported, send the converged porosity and permeability to the capillary pressure model
+      // Step 4: save converged state for the relperm model to handle hysteresis
+      arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+      string const & relPermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase & relPermMaterial =
+        getConstitutiveModel< RelativePermeabilityBase >( subRegion, relPermName );
+      relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac );
+
+      // Step 5: if capillary pressure is supported, send the converged porosity and permeability to the capillary pressure model
       // note: this is needed when the capillary pressure depends on porosity and permeability (Leverett J-function for instance)
-      if( m_capPressureFlag )
+      if( m_hasCapPressure )
       {
         arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
@@ -1586,22 +1687,17 @@ void CompositionalMultiphaseBase::implicitStepComplete( real64 const & time,
         capPressureMaterial.saveConvergedRockState( porosity, permeability );
       }
 
-      // Step 5: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model
+      // Step 6: if the thermal option is on, send the converged porosity and phase volume fraction to the thermal conductivity model
       // note: this is needed because the phaseVolFrac-weighted thermal conductivity treats phaseVolumeFraction explicitly for now
-      if( m_thermalFlag )
+      if( m_isThermal )
       {
         arrayView2d< real64 const > const porosity = porousMaterial.getPorosity();
 
-        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-
         string const & thermName = subRegion.getReference< string >( viewKeyStruct::thermalConductivityNamesString() );
-
         ThermalConductivityBase const & thermalConductivityMaterial =
           getConstitutiveModel< ThermalConductivityBase >( subRegion, thermName );
         thermalConductivityMaterial.saveConvergedRockFluidState( porosity, phaseVolFrac );
       }
-
     } );
   } );
 }
