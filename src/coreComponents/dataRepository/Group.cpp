@@ -65,6 +65,7 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
 WrapperBase & Group::registerWrapper( string const & name,
                                       std::unique_ptr< WrapperBase > wrapper )
 {
+  GEOSX_ERROR_IF( name != wrapper->getName(), "Internal error! Key wrapper name \"" << name << "\" does not match its real name \"" << wrapper->getName() << "\"." );
   return *m_wrappers.insert( name, wrapper.release(), true );
 }
 
