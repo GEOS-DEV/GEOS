@@ -544,7 +544,7 @@ void TriaxialDriver::compareWithBaseline()
 
       if( col < ITER ) // only compare "real" data columns
       {
-        error = fabs( m_table[row][col]-value ) / ( fabs( value )+1 );
+        error = fabs( m_table[row][col]-value ) / ( fabs( value )+1e-12 );
         GEOSX_THROW_IF( error > m_baselineTol, "Results do not match baseline at data row " << row+1
                                                                                             << " (row " << row+10 << " with header)"
                                                                                             << " and column " << col+1, std::runtime_error );

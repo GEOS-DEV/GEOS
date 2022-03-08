@@ -379,9 +379,9 @@ CompositionalMultiphaseFluid< VISCOSITY_MODEL >::KernelWrapper::
 
   m_viscosity.compute( pressure,
                        temperature,
-                       phaseMassDensity.value.toSliceConst(),
-                       phaseCompFraction.value.toSliceConst(),
-                       phaseViscosity.value );
+                       phaseMassDensity,
+                       phaseCompFraction,
+                       phaseViscosity );
 
   // 4. if mass variables used instead of molar, perform the conversion
   if( m_useMass )
