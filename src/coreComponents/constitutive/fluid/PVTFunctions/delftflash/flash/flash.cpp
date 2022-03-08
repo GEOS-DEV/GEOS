@@ -4,77 +4,222 @@
 #include <vector>
 #include <chrono>
 
-#include "ssi.h"
 #include "flash.h"
-#include "../phase-correlations/eos.h"
 #include "../phase-correlations/phase.h"
-#include "../global/misc.h"
 #include "../global/global.h"
 
 using namespace std;
 
-void Flash::getIndices(std::vector<std::string> components, std::vector<std::string> phases) {
-	ci = std::vector<int>(NC);
-	for (int i = 0; i < NC; i++) {
-		ci[i] = searchString(Composition::components, Composition::compsize, components[i]); // finds index of each component for correlations
+Flash::Flash(std::vector<std::string> species, std::unordered_map<std::string, std::string> eos_) {
+	// Split components from ions
+	separateIons(species);
+
+	eos = eos_;
+	f = std::vector<double>(NC);
+	for (int i = 0; i < NC; i++) 
+	{ 
+		if (components[i] == "H2O") 
+		{ 
+			H2O_idx = i; 
+		}
 	}
-	pi = std::vector<int>(NP);
-	for (int j = 0; j < NP; j++) {
-		pi[j] = searchString(Composition::phases, Composition::phasesize, phases[j]); // finds index of each phase for correlations
+}
+
+void Flash::separateIons(std::vector<std::string> species) {
+	// check if ions present in components vector
+	int ns = species.size();
+	for (int i = 0; i < ns; i++)
+	{
+		if (CompProp::species_type[species[i]] == 'i')
+		{	
+			ions.push_back(species[i]);
+		}
+		else
+		{
+			components.push_back(species[i]);
+		}
+	}
+	NC = components.size();
+	NI = ions.size();
+	return;
+}
+
+void Flash::normalizeIons(std::vector<double> zc) {
+	// If ions are present, normalize mole fractions and store ion mole fractions for molality
+	if (NI > 0)
+	{
+		z = std::vector<double>(NC);
+		z_i = std::vector<double>(NI);
+		zi = 0;
+		for (int i = 0; i < NI; i++)
+		{
+			z_i[i] = zc[NC + i];
+			zi += z_i[i];
+		}
+		for (int i = 0; i < NC; i++)
+		{
+			z[i] = zc[i] / (1-zi);
+		}
+	}
+	else
+	{
+		z = zc;
+	}
+
+	return;
+}
+
+void Flash::renormalizeIons() {
+	// If ions are present, re-normalize the phase fractions and phase compositions to include ions in Aq phase
+	if (NI > 0)
+	{	
+		int NS = NC + NI;
+		std::vector<double> x_(NP*NS, 0.);
+		std::vector<double> f_(NS, 0.);
+		for (int j = 0; j < NP; j++)
+		{
+			// 1. Regard salt as separate phase, normalize other phase fractions for this
+			V[j] *= (1-zi);
+			
+			// 2. Copy phase composition from flash results
+			for (int i = 0; i < NC; i++)
+			{
+				x_[j*NS + i] = x[j*NC + i];
+			}
+
+			// 3. Modify Aq phase V and x
+			if (phases[j] == "Aq")
+			{
+				// 3a. Add salt fraction to Aq phase fraction
+				V[j] += zi;
+				
+				// 3b. Calculate phase mole fraction of salt components
+				double xi = 0;
+				for (int i = 0; i < NI; i++)
+				{
+					x_[j*NS + NC + i] = z_i[i] / V[j];
+					xi += z_i[i] / V[j];
+				}
+				// 3c. Normalize other components
+				for (int i = 0; i < NC; i++)
+				{
+					x_[j*NS + i] *= (1-xi);
+					f_[i] = f[i];
+				}
+			}
+		}
+		x = x_;
+		f = f_;
 	}
 	return;
 }
 
-std::vector<std::string> Flash::getPhases() {
-	std::vector<std::string> phases(NP);
-	for (int j = 0; j < NP; j++) {
-		phases[j] = Composition::phases[pi[j]];
+void Flash::calculateMolality() {
+	// Calculate molality of ions
+	if (NI > 0)
+	{
+		m_i = std::vector<double>(NI, 0.);
+		for (int i = 0; i < NI; i++)
+		{
+			double z_H2O = V[Aq_idx] * phaseVector[Aq_idx].x_j[H2O_idx] * (1-zi);  // mole fraction of aqueous H2O
+			m_i[i] = 55.509 * z_i[i] / z_H2O;
+		}
 	}
-	
-	return phases;
+
+	phaseVector[Aq_idx].eos->setMolality(m_i);
+
+	return;
 }
 
-bool SSIFlash::runFlash(double pres, double Temp, std::vector<double> zc, std::vector<std::string> comp, std::vector<std::string> ph, std::vector<int> phase_eos) {
-	p = pres; T = Temp; z = zc; eos = phase_eos;
-	NC = comp.size(); NP = ph.size();
-	getIndices(comp, ph); // finds ci and pi indices for components and phases used in correlations
-	
-	// Run NP flash
-	SSI ssi(p, T, z, ci, pi, eos); // Runs recursive multi-stage SSI
-	V = ssi.npFlash();
-	NP = V.size();
-	x = ssi.getx();
-	pi = ssi.getpi();
-	std::vector<std::string> phases = getPhases();
-	
-	return true;
+bool Flash::checkConvergence() {
+    double tolerance{ 1E-4 };
+	double df;
+	for (int i = 0; i < NC; i++) 
+	{
+		for (int j = 0; j < (NP - 1); j++) 
+		{
+			for (int jj = j + 1; jj < NP; jj++) 
+			{
+				df = abs((phaseVector[j].f[i] - phaseVector[jj].f[i]) / phaseVector[j].f[i]); // relative fugacity difference
+				if (df > tolerance) 
+				{
+					return false; // some fugacity has not yet converged
+				}
+			}
+		}
+	}
+	return true; // all fugacities converged within tolerance
 }
 
-bool SSIHydrateFlash::runFlash(double pres, double Temp, std::vector<double> zc, std::vector<std::string> comp, std::vector<std::string> ph, std::vector<int> phase_eos) { // flash with kinetic hydrate
-	p = pres; T = Temp; z = zc; eos = phase_eos;
-	NC = comp.size(); NP = ph.size();
-	getIndices(comp, ph); // finds indices for components and phases used in correlations
-	
-	// First run regular non-hydrate flash
-	SSI ssi(p, T, z, ci, pi, eos); // Runs recursive multi-stage SSI
-	V = ssi.npFlash();
-	NP = V.size();
-	x = ssi.getx();
-	pi = ssi.getpi();
-	f = ssi.getf();
-	water_index = std::distance(ci.begin(), std::find(ci.begin(), ci.end(), 0));
-	
-	std::vector<std::string> phases = getPhases();
+std::vector<std::string> Flash::checkPositivePhases() {
+	int phaseSum = 0;
+    for (int j = 0; j < NP; j++) 
+	{ 
+		if (V[j] > 0) 
+		{ 
+			phaseSum++; 
+		}
+	}
 
-	// Then calculate fugacity of water in the hydrate phase 
-	H_phases = std::vector<bool>(1, false);
-	f_wH = std::vector<double>(1);
+    if (phaseSum == NP) 
+	{ 
+		return phases; 
+	}
+    else if (phaseSum > 1) 
+	{
+        std::vector<std::string> positivePhases(phaseSum);
+        int k = 0;
+        for (int j = 0; j < NP; j++) 
+		{
+            if (V[j] > 0) 
+			{
+                positivePhases[k] = phases[j];
+                k++;
+            }
+        }
+        return positivePhases;
+    }
+	else 
+	{ 
+		return singlePhase(z); 
+	}
+}
 
-	Hydrate sI(ci, 3);
-	sI.init(p, T);
-	sI.hydrateFugacity(T, f);
-	f_wH[0] = sI.getfH();
-	x_H = sI.getx();
+std::vector<std::string> Flash::singlePhase(std::vector<double> z) {
+	std::vector<std::string> positivePhase(1);
+	for (int j = 0; j < NP; j++) 
+	{
+		if (V[j] > 0) 
+		{
+			positivePhase[0] = phases[j];
+
+			calculateMolality();
+			std::vector<double> phi = phaseVector[j].eos->fugacityCoefficient(z);
+			for (int i = 0; i < NC; i++) 
+			{
+				phaseVector[j].x_j[i] = z[i];
+				phaseVector[j].f[i] = phi[i] * phaseVector[j].x_j[i] * p;
+				f[i] = phaseVector[j].f[i];
+			}
+			x = z;
+
+			if (NI > 0)
+			{
+				// If ions are present, and single phase Aq (?), include 
+				std::vector<double> x_(NC + NI);
+				for (int i = 0; i < NC; i++)
+				{
+					x_[i] = x[i]*(1-zi);
+				}
+				for (int i = 0; i < NI; i++)
+				{
+					x_[NC + i] = z_i[i];
+				}
+				x = x_;
+			}
+		}
+	}
+	V = {1.};
 	
-	return true;
+	return positivePhase;
 }

@@ -62,7 +62,6 @@ set( constitutive_headers
      fluid/slurryFluidSelector.hpp
      fluid/PVTFunctions/delftflash/flash/flash.h 
      fluid/PVTFunctions/delftflash/flash/rr.h 
-     fluid/PVTFunctions/delftflash/flash/ssi.h
      fluid/PVTFunctions/delftflash/phase-correlations/eos.h 
      fluid/PVTFunctions/delftflash/phase-correlations/phase.h
      fluid/PVTFunctions/delftflash/global/global.h
@@ -171,9 +170,9 @@ set( constitutive_sources
      fluid/PVTFunctions/delftflash/flash/ssi.cpp
      fluid/PVTFunctions/delftflash/phase-correlations/eos_aq1.cpp 
      fluid/PVTFunctions/delftflash/phase-correlations/eos_aq2.cpp 
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_aq3.cpp 
      fluid/PVTFunctions/delftflash/phase-correlations/eos_hydrate.cpp 
-     fluid/PVTFunctions/delftflash/phase-correlations/eos_pr.cpp 
-     fluid/PVTFunctions/delftflash/phase-correlations/eos_srk.cpp
+     fluid/PVTFunctions/delftflash/phase-correlations/eos_cubic.cpp
      fluid/PVTFunctions/delftflash/phase-correlations/k_initial.cpp 
      fluid/PVTFunctions/delftflash/phase-correlations/phase.cpp
      fluid/PVTFunctions/delftflash/global/global.cpp 

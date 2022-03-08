@@ -4,7 +4,7 @@
 
 #include "rr.h"
 #include "../global/misc.h"
-#include "Eigen/Dense"
+#include <Eigen/Dense>
 
 using namespace std;
 using namespace Eigen;
@@ -23,16 +23,20 @@ RR::RR(std::vector<double> z_, std::vector<double> K_) {
 std::vector<double> RR::getx(std::vector<double> V) {
 	std::vector<double> x(NP*NC);
 
-	for (int i = 0; i < NC; i++) {
+	for (int i = 0; i < NC; i++) 
+	{
 		double m_i = 1;
-		for (int k = 1; k < NP; k++) {
+		for (int k = 1; k < NP; k++) 
+		{
 			m_i += V[k] * (K[(k-1)*NC + i] - 1);
 		}
 		x[i] = z[i] / m_i;
 	}
 
-	for (int j = 1; j < NP; j++) {
-		for (int i = 0; i < NC; i++) {
+	for (int j = 1; j < NP; j++) 
+	{
+		for (int i = 0; i < NC; i++) 
+		{
 			x[j*NC + i] = K[(j-1)*NC + i] * x[i];
 		}
 	}
@@ -46,20 +50,27 @@ bool RR::bounded() {
 	// Dm_i[i, k] = K[i, k] - 1
 	// u_j[j] = [1, 1, ..., sum((K[j, k] - 1)/(1-K[j, np-1]))]
 
-	std::vector<double> Dm_i(NP-1, 0.); std::vector<double> u_j(NP-1, 1.);
+	std::vector<double> Dm_i(NP-1, 0.); 
+	std::vector<double> u_j(NP-1, 1.);
 	std::vector<double> gij(NC*NC, 0.);
-	for (int i = 0; i < NC; i++) {
-		for (int k = 0; k < NP-1; k++) {
+	for (int i = 0; i < NC; i++) 
+	{
+		for (int k = 0; k < NP-1; k++) 
+		{
 			Dm_i[k] = K[k*NC + i] - 1;
 		}
-		for (int j = 0; j < NC; j++) {
-			if (NP > 2) {
+		for (int j = 0; j < NC; j++) 
+		{
+			if (NP > 2) 
+			{
 				u_j[NP-2] = 0;
-				for (int k = 0; k < NP-2; k++) {
+				for (int k = 0; k < NP-2; k++) 
+				{
 					u_j[NP-2] += (K[k*NC + j] - 1)/(1-K[(NP-2)*NC + j]);
 				}
 			}
-			for (int k = 0; k < NP-1; k++) {
+			for (int k = 0; k < NP-1; k++) 
+			{
 				gij[i*NC + j] += Dm_i[k]*u_j[k];
 			}
 		}
@@ -67,16 +78,23 @@ bool RR::bounded() {
 
 	// Check if there exist j, k such that gji*gki < 0 for i = 0, ..., NC-1
 	std::vector<bool> gi(NC, false);
-	for (int i = 0; i < NC; i++) {
-		for (int j = 0; j < NC; j++) {
-			for (int k = 0; k < NC; k++) {
-				if (gij[j*NC+i] * gij[k*NC+i] < 0) {
+	for (int i = 0; i < NC; i++) 
+	{
+		for (int j = 0; j < NC; j++) 
+		{
+			for (int k = 0; k < NC; k++) 
+			{
+				if (gij[j*NC+i] * gij[k*NC+i] < 0) 
+				{
 					gi[i] = true;
 					k = NC; j = NC; // go to next i in loop
 				}
 			}
 		}
-		if (gi[i] == false) { return false; } // there exist no j, k such that gji*gki < 0 for this i, so region is not bounded -> exit loop
+		if (gi[i] == false) 
+		{ 
+			return false;  // there exist no j, k such that gji*gki < 0 for this i, so region is not bounded -> exit loop
+		}
 	}
 
 	return true;
@@ -99,20 +117,32 @@ std::vector<double> RR::V_limits(std::vector<double> V_j, int J) {
 	Eigen::MatrixXd A(J, J);
 	Eigen::VectorXd b(J);
 	Eigen::VectorXd v(J);
-	for (int j = 0; j < J; j++) { b(j) = -1; }
+	for (int j = 0; j < J; j++) 
+	{ 
+		b(j) = -1; 
+	}
 
 	int index;  // index i from combination
-	for (int i = 0; i < ni; i++) {
+	for (int i = 0; i < ni; i++) 
+	{ 
 		// Fill matrix A for combination of m_i's
-		for (int j = 0; j < J; j++) {
+		for (int j = 0; j < J; j++) 
+		{
 			index = c.getIndex(i, j); // index returns component j for i-th combination
-			for (int k = 0; k < J; k++) {  // loop over phase k to fill row j
+			for (int k = 0; k < J; k++) 
+			{  
+				// loop over phase k to fill row j
 				A(j, k) = K[k*NC + index] - 1; // A_jk = K_jk-1
 			}
-			for (int k = J; k < NP-1; k++) { b(j) -= V_j[k]*(K[k*NC + index] - 1); } // if V_j+ are known
+			for (int k = J; k < NP-1; k++) { 
+				b(j) -= V_j[k]*(K[k*NC + index] - 1);  // if V_j+ are known
+			}
 		}
 		v = A.partialPivLu().solve(b);  // with LU factorization
-		for (int j = 0; j < J; j++) { intersections[J*i + j] = v(j); b(j) = -1; } 
+		for (int j = 0; j < J; j++) { 
+			intersections[J*i + j] = v(j); 
+			b(j) = -1; 
+		} 
 	}
 
 	// If all but the three intersecting lines for m_i(v) > 0, then this intersection is a cornerpoint of the domain for V
@@ -120,33 +150,51 @@ std::vector<double> RR::V_limits(std::vector<double> V_j, int J) {
 	std::vector<double> Vlim(2*J);
 	std::vector<double> m_i;
 	int count_corners = 0;
-	for (int i = 0; i < ni; i++) {
+	for (int i = 0; i < ni; i++) 
+	{
 		m_i = std::vector<double>(NC, 1.); // value of m_i's at the ni intersections = 1 + sum((K_kj-1)*v_j)
-		for (int k = 0; k < NC; k++) {
-			for (int j = 0; j < J; j++) {
+		for (int k = 0; k < NC; k++) 
+		{
+			for (int j = 0; j < J; j++) 
+			{
 				m_i[k] += intersections[J*i + j] * (K[j*NC + k]-1); // += v_j*(K_kj-1)
 			}
-			for (int j = J; j < NP-1; j++) {
+			for (int j = J; j < NP-1; j++) 
+			{
 				m_i[k] += V_j[j] * (K[j*NC + k]-1);
 			}
 		}
 		// Count the number of m_i's > 0
 		int count = 0;
-		for (int k = 0; k < NC; k++) { if (m_i[k] > 1E-16) { count++; } }
-		if (count >= NC-J) { 
+		for (int k = 0; k < NC; k++) 
+		{ 
+			if (m_i[k] > 1E-16) 
+			{ 
+				count++; 
+			} 
+		}
+		if (count >= NC-J) 
+		{ 
 			count_corners++;
-			for (int j = 0; j < J; j++) {
+			for (int j = 0; j < J; j++) 
+			{
 				// v_j, min
 				if (( intersections[J*i + j] < Vlim[2*j] ) || (count_corners == 1))
-				{ Vlim[2*j] = intersections[J*i + j]; }
+				{ 
+					Vlim[2*j] = intersections[J*i + j]; 
+				}
 				// v_j, max
 				if (( intersections[J*i + j] > Vlim[2*j+1] ) || (count_corners == 1))
-				{ Vlim[2*j+1] = intersections[J*i + j]; }
+				{ 
+					Vlim[2*j+1] = intersections[J*i + j];
+				}
 			}
 		}
 	}
-	// cout << Vlim[0] << " " << Vlim[1] << endl;
-	if (count_corners - J < 1) { cout << "Not enough corner points found: unable to calculate limits in J dimensions" << endl; }
+	if (count_corners - J < 1) 
+	{ 
+		cout << "Not enough corner points found: unable to calculate limits in J dimensions" << endl;
+	}
 
 	return Vlim;
 }
@@ -155,9 +203,11 @@ std::vector<double> RR::f_df1(std::vector<double> V_j, int J) {
 	std::vector<double> F(2, 0.);
 
 	double m_i;
-    for (int i = 0; i < NC; i++) {
+    for (int i = 0; i < NC; i++) 
+	{
 		m_i = 1;
-		for (int k = 0; k < NP-1; k++) {
+		for (int k = 0; k < NP-1; k++) 
+		{
 			m_i += V_j[k] * (K[k*NC + i] - 1);
 		}
 		F[0] += z[i] * (1 - K[J*NC + i]) / m_i; // f_j
@@ -271,9 +321,17 @@ std::vector<double> RRbn::solveRR(std::vector<double> K_) {
 	
 	// Latest K-values
 	K = K_;
-	for (int j = 1; j < NP; j++) { for (int i = 0; i < NC; i++) { 
-		if (K[(j-1)*NC + i] < std::numeric_limits<double>::epsilon()) { cout << "K-value below epsilon" << endl; K[(j-1)*NC + i] = std::numeric_limits<double>::epsilon(); }
-	}}
+	for (int j = 1; j < NP; j++) 
+	{ 
+		for (int i = 0; i < NC; i++) 
+		{ 
+			if (K[(j-1)*NC + i] < std::numeric_limits<double>::epsilon()) 
+			{ 
+				cout << "K-value below epsilon" << endl; 
+				K[(j-1)*NC + i] = std::numeric_limits<double>::epsilon(); 
+			}
+		}
+	}
 
 	// Output vector, contains all NP values of V
 	std::vector<double> V(NP);
@@ -281,7 +339,8 @@ std::vector<double> RRbn::solveRR(std::vector<double> K_) {
 	// Check if domain is bounded: admissible K-values (gji*gki<0)
 	// If not admissible, give error ##
 	admissible = bounded();
-	if (!admissible) { 
+	if (!admissible) 
+	{ 
 		cout << "Inadmissible K-values: region is not bounded" << endl;
 		return V;
 	}
@@ -298,7 +357,10 @@ std::vector<double> RRbn::solveRR(std::vector<double> K_) {
 
     // Update V
     V[0] = 1.;
-	for (int j = 1; j < NP; j++) { V[j] = v[j - 1]; V[0] -= V[j]; }
+	for (int j = 1; j < NP; j++) 
+	{ 
+		V[j] = v[j - 1]; V[0] -= V[j]; 
+	}
 
 	return V;
 }
@@ -307,16 +369,21 @@ void RRbn::rrLoop(int J) {
 	// This function recursively calculates the value of v[J] for which f_j[v] = 0
 	// It is repeated until |f_j[v]| < eps
 	// If f_j for j-1 has not yet converged, the function moves down one level to find [v_j-]
-	while (!converged[J]) {
+	while (!converged[J]) 
+	{
 		// If j > 0, then move down one level (j - 1)
-		if (J > 0) {
+		if (J > 0) 
+		{
 			// Guess V_mid for all j- phases
 			std::vector<double> Vlim = V_limits(v, J); // Calculate Vmin and Vmax of j - based on values for V_mid[j+]
 			v_min[J-1] = Vlim[2*(J-1)];
 			v_max[J-1] = Vlim[2*(J-1) + 1];
 
 			// if previous v[j] is out of bounds, recalculate v_mid[j]. Will save iterations if not necessary
-			if (!(v_min[J-1] < v[J-1]) || !(v[J-1] < v_max[J-1])) { v[J-1] = (v_min[J-1] + v_max[J-1]) / 2; }
+			if (!(v_min[J-1] < v[J-1]) || !(v[J-1] < v_max[J-1])) 
+			{ 
+				v[J-1] = (v_min[J-1] + v_max[J-1]) / 2; 
+			}
 			
 			converged[J-1] = false;
 
@@ -328,25 +395,34 @@ void RRbn::rrLoop(int J) {
 		double fdf = f[J] / df;
 
 		// if f[J] < 0 -> f[J] = 0 is above v[J], update v_min[J] to v[J]
-		if (f[J] < 0) {
+		if (f[J] < 0) 
+		{
 			v_min[J] = v[J];
-			if (v[J] - fdf > v_max[J]) {
+			if (v[J] - fdf > v_max[J]) 
+			{
 				// cout << "Correction applied, upper limit" << endl;
 				v[J] = (v[J] + v_max[J]) / 2;
 			}
-			else {
+			else 
+			{
 				v[J] -= fdf;
 			}
-		} else { // else, f[J] > 0 -> f[J] = 0 is below v[J], update v_max[J] to v[J]
+		} 
+		else 
+		{ // else, f[J] > 0 -> f[J] = 0 is below v[J], update v_max[J] to v[J]
 			v_max[J] = v[J];
-			if (v[J] - fdf < v_min[J]) {
+			if (v[J] - fdf < v_min[J]) 
+			{
 				// cout << "Correction applied, lower limit" << endl;
 				v[J] = (v[J] + v_min[J]) / 2;
-			} else {
+			} 
+			else 
+			{
 				v[J] -= fdf;
 			}
 		}
-		if (abs(f[J]) < eps) {
+		if (abs(f[J]) < eps)
+		{
 			converged[J] = true;
 			return;
 		}

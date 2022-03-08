@@ -1,5 +1,4 @@
 #pragma once
-#include <complex>
 #include <vector>
 #include <iostream>
 
@@ -17,7 +16,6 @@ private:
     void unique_combinations(std::vector<int> temp, int start, int end, int index);
 };
 
-std::vector<std::complex<double>> cubic_roots(double a, double b, double c, double d);
 int searchString(std::vector<std::string> A, int size, std::string target);
 
 int factorial(int n);

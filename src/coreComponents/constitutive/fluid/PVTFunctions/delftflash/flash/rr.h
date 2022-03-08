@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+
 class RR {
 protected:
     int NP, NC;
