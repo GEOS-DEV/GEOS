@@ -336,7 +336,7 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
 
   // `wrappers` are considered for packing if they match the size of this Group instance.
   // A way to check this is to check the `wrapper.sizedFromParent()`.
-  std::vector< WrapperBase const * > wrappers;
+  std::vector< std::pair< string, WrapperBase const * > > wrappers; // TODO We cannot rely on `wrapper.getName()` to get the key (they can be different).
   for( string const & wrapperName: rawWrapperNames )
   {
     if( hasWrapper( wrapperName ) )
@@ -344,7 +344,7 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
       WrapperBase const & wrapper = getWrapperBase( wrapperName );
 
       if( wrapper.sizedFromParent() )
-      { wrappers.push_back( &wrapper ); }
+      { wrappers.emplace_back( wrapperName, &wrapper ); }
     }
     else
     {
@@ -354,16 +354,16 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
 
   // Now we pack the `wrappers`.
   packedSize += bufferOps::Pack< DO_PACK >( buffer, static_cast< int >(wrappers.size()) );
-  for( WrapperBase const * wrapper: wrappers )
+  for( auto const & nameToWrapper: wrappers )
   {
-    packedSize += bufferOps::Pack< DO_PACK >( buffer, wrapper->getName() );
+    packedSize += bufferOps::Pack< DO_PACK >( buffer, nameToWrapper.first );
     if( packList.empty() )
     {
-      packedSize += wrapper->pack< DO_PACK >( buffer, true, onDevice, events );
+      packedSize += nameToWrapper.second->pack< DO_PACK >( buffer, true, onDevice, events );
     }
     else
     {
-      packedSize += wrapper->packByIndex< DO_PACK >( buffer, packList, true, onDevice, events );
+      packedSize += nameToWrapper.second->packByIndex< DO_PACK >( buffer, packList, true, onDevice, events );
     }
   }
 
