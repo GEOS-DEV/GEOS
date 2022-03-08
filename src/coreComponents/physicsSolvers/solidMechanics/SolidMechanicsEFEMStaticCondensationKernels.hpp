@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 TotalEnergies
+ * Copyright (c) 2018-2020 Total, S.A
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,8 +17,8 @@
  * @file SolidMechanicsEFEMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMSTATICCONDENSATIONKERNELS_HPP_
+#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMSTATICCONDENSATIONKERNELS_HPP_
 
 #include "SolidMechanicsEFEMKernelsBase.hpp"
 
@@ -40,7 +40,7 @@ namespace solidMechanicsEFEMKernels
 template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
-class EFEM :
+class EFEMStaticCondensation :
   public EFEMKernelsBase< SUBREGION_TYPE,
                           CONSTITUTIVE_TYPE,
                           FE_TYPE >
@@ -51,9 +51,8 @@ public:
                                 CONSTITUTIVE_TYPE,
                                 FE_TYPE >;
 
-  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
-  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
-  /// will be the actual number of nodes per element.
+  /// Number of nodes per element...which is equal to the
+  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
   static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
@@ -69,7 +68,7 @@ public:
   using Base::m_X;
   using Base::m_disp;
   using Base::m_uhat;
-  using Base:: m_w;
+  using Base::m_w;
   using Base::m_tractionVec;
   using Base::m_dTraction_dJump;
   using Base::m_nVec;
@@ -81,26 +80,24 @@ public:
   using Base::m_fracturedElems;
   using Base::m_cellsToEmbeddedSurfaces;
 
-
   /**
    * @brief Constructor
    * @copydoc geosx::finiteElement::ImplicitKernelBase::ImplicitKernelBase
    * @param inputGravityVector The gravity vector.
    */
-  EFEM( NodeManager const & nodeManager,
-        EdgeManager const & edgeManager,
-        FaceManager const & faceManager,
-        localIndex const targetRegionIndex,
-        SUBREGION_TYPE const & elementSubRegion,
-        FE_TYPE const & finiteElementSpace,
-        CONSTITUTIVE_TYPE & inputConstitutiveType,
-        EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
-        arrayView1d< globalIndex const > const uDofNumber,
-        arrayView1d< globalIndex const > const wDofNumber,
-        globalIndex const rankOffset,
-        CRSMatrixView< real64, globalIndex const > const inputMatrix,
-        arrayView1d< real64 > const inputRhs,
-        real64 const (&inputGravityVector)[3] ):
+  EFEMStaticCondensation( NodeManager const & nodeManager,
+                          EdgeManager const & edgeManager,
+                          FaceManager const & faceManager,
+                          localIndex const targetRegionIndex,
+                          SUBREGION_TYPE const & elementSubRegion,
+                          FE_TYPE const & finiteElementSpace,
+                          CONSTITUTIVE_TYPE & inputConstitutiveType,
+                          EmbeddedSurfaceSubRegion & embeddedSurfSubRegion,
+                          arrayView1d< globalIndex const > const uDofNumber,
+                          globalIndex const rankOffset,
+                          CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                          arrayView1d< real64 > const inputRhs,
+                          real64 const (&inputGravityVector)[3] ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -113,8 +110,7 @@ public:
           rankOffset,
           inputMatrix,
           inputRhs,
-          inputGravityVector ),
-    m_wDofNumber( wDofNumber )
+          inputGravityVector )
   {}
 
   //***************************************************************************
@@ -122,30 +118,8 @@ public:
    * @copydoc finiteElement::KernelBase::StackVariables
    */
   struct StackVariables : public Base::StackVariables
-  {
-public:
-
-    /// The number of jump dofs per element.
-    static constexpr int numWdofs = 3;
-
-    /**
-     * Default constructor
-     */
-    GEOSX_HOST_DEVICE
-    StackVariables():
-      Base::StackVariables(),
-            jumpEqnRowIndices{ 0 },
-      jumpColIndices{ 0 }
-    {}
-
-    /// C-array storage for the element local row degrees of freedom.
-    globalIndex jumpEqnRowIndices[numWdofs];
-
-    /// C-array storage for the element local column degrees of freedom.
-    globalIndex jumpColIndices[numWdofs];
-  };
+  {};
   //***************************************************************************
-
 
   /**
    * @copydoc ::geosx::finiteElement::KernelBase::kernelLaunch
@@ -161,6 +135,7 @@ public:
   {
     return Base::template kernelLaunch< POLICY, KERNEL_TYPE >( numElems, kernelComponent );
   }
+
 
   /**
    * @brief Copy global values from primary field to a local stack array.
@@ -190,9 +165,6 @@ public:
 
     for( int i=0; i<3; ++i )
     {
-      // need to grab the index.
-      stack.jumpEqnRowIndices[i] = m_wDofNumber[embSurfIndex] + i - m_dofRankOffset;
-      stack.jumpColIndices[i]    = m_wDofNumber[embSurfIndex] + i;
       stack.wLocal[ i ] = m_w[ embSurfIndex ][i];
       stack.tractionVec[ i ] = m_tractionVec[ embSurfIndex ][i] * m_surfaceArea[embSurfIndex];
       for( int ii=0; ii < 3; ++ii )
@@ -219,9 +191,27 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< 3, nUdof >( stack.localRw, stack.localKwu, stack.uLocal );
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localRu, stack.localKuw, stack.wLocal );
 
-    // Add traction contribution
+    // Add traction contribution tranction
     LvArray::tensorOps::scaledAdd< 3 >( stack.localRw, stack.tractionVec, -1 );
     LvArray::tensorOps::scaledAdd< 3, 3 >( stack.localKww, stack.dTractiondw, -1 );
+
+    // Apply static condensation
+    real64 localJacobian[nUdof][nUdof];
+
+    real64 InvKww[3][3];
+    LvArray::tensorOps::invert< 3 >( InvKww, stack.localKww );
+
+    // Residual (Ru -= Kuw * Inv(Kww)Rw)
+    real64 KuwInvKww[nUdof][3], Ruw[nUdof];
+    LvArray::tensorOps::Rij_eq_AikBkj< nUdof, 3, 3 >( KuwInvKww, stack.localKuw, InvKww );
+    LvArray::tensorOps::Ri_eq_AijBj< nUdof, 3 >( Ruw, KuwInvKww, stack.localRw );
+    LvArray::tensorOps::scaledAdd< nUdof >( stack.localRu, Ruw, -1 );
+
+    // Jacobian to add to Kuu block  ( Kuu -= Kuw * Inv(Kww) * Kwu )
+    real64 InvKwwKwu[3][nUdof];
+    LvArray::tensorOps::Rij_eq_AikBkj< 3, nUdof, 3 >( InvKwwKwu, InvKww, stack.localKwu );
+    LvArray::tensorOps::Rij_eq_AikBkj< nUdof, nUdof, 3 >( localJacobian, stack.localKuw, InvKwwKwu );
+    LvArray::tensorOps::scale< nUdof, nUdof >( localJacobian, -1 );
 
     for( localIndex i = 0; i < nUdof; ++i )
     {
@@ -231,89 +221,30 @@ public:
       RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRu[i] );
 
       m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.jumpColIndices,
-                                                                              stack.localKuw[i],
-                                                                              3 );
-
-    }
-
-    for( localIndex i=0; i < 3; ++i )
-    {
-      localIndex const dof = LvArray::integerConversion< localIndex >( stack.jumpEqnRowIndices[ i ] );
-
-      if( dof < 0 || dof >= m_matrix.numRows() ) continue;
-
-      RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[dof], stack.localRw[i] );
-
-      // fill in matrix
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
-                                                                              stack.jumpColIndices,
-                                                                              stack.localKww[i],
-                                                                              3 );
-
-      m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                               stack.dispColIndices,
-                                                                              stack.localKwu[i],
-                                                                              numNodesPerElem*3 );
-    }
+                                                                              localJacobian[i],
+                                                                              nUdof );
 
+    }
 
     return maxForce;
 
   }
 
-protected:
-
-  arrayView1d< globalIndex const > const m_wDofNumber;
-
 };
 
 /// The factory used to construct a QuasiStatic kernel.
-using EFEMFactory = finiteElement::KernelFactory< EFEM,
-                                                  EmbeddedSurfaceSubRegion &,
-                                                  arrayView1d< globalIndex const > const,
-                                                  arrayView1d< globalIndex const > const,
-                                                  globalIndex const,
-                                                  CRSMatrixView< real64, globalIndex const > const,
-                                                  arrayView1d< real64 > const,
-                                                  real64 const (&) [3] >;
-/**
- * @brief A struct to update fracture traction
- */
-struct StateUpdateKernel
-{
+using EFEMStaticCondensationFactory = finiteElement::KernelFactory< EFEMStaticCondensation,
+                                                                    EmbeddedSurfaceSubRegion &,
+                                                                    arrayView1d< globalIndex const > const,
+                                                                    globalIndex const,
+                                                                    CRSMatrixView< real64, globalIndex const > const,
+                                                                    arrayView1d< real64 > const,
+                                                                    real64 const (&) [3] >;
 
-  /**
-   * @brief Launch the kernel function doing fracture traction updates
-   * @tparam POLICY the type of policy used in the kernel launch
-   * @tparam CONTACT_WRAPPER the type of contact wrapper doing the fracture traction updates
-   * @param[in] size the size of the subregion
-   * @param[in] contactWrapper the wrapper implementing the contact relationship
-   * @param[in] jump the displacement jump
-   * @param[out] fractureTraction the fracture traction
-   * @param[out] dFractureTraction_dJump the derivative of the fracture traction wrt displacement jump
-   */
-  template< typename POLICY, typename CONTACT_WRAPPER >
-  static void
-  launch( localIndex const size,
-          CONTACT_WRAPPER const & contactWrapper,
-          arrayView2d< real64 const > const & oldJump,
-          arrayView2d< real64 const > const & jump,
-          arrayView2d< real64 > const & fractureTraction,
-          arrayView3d< real64 > const & dFractureTraction_dJump )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      contactWrapper.computeTraction( k, oldJump[k], jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
-    } );
-  }
-
-};
-
-
-} // namespace solidMechanicsEFEMKernels
+} // namespace SolidMechanicsEFEMKernels
 
 } // namespace geosx
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELS_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMSTATICCONDENSATIONKERNELS_HPP_ */
