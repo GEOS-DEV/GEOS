@@ -822,13 +822,13 @@ public:
   static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
 
   /// Maximum number of elements at the face
-  static constexpr localIndex maxNumElems = STENCILWRAPPER::NUM_POINT_IN_FLUX;
+  static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
 
   /// Maximum number of connections at the face
-  static constexpr localIndex maxNumConns = STENCILWRAPPER::MAX_NUM_OF_CONNECTIONS;
+  static constexpr localIndex maxNumConns = STENCILWRAPPER::maxNumConnections;
 
   /// Maximum number of points in the stencil
-  static constexpr localIndex maxStencilSize = STENCILWRAPPER::MAX_STENCIL_SIZE;
+  static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
   /**
    * @brief Constructor for the kernel interface

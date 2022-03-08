@@ -743,7 +743,7 @@ void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
 
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
-      typename TYPEOFREF( stencil ) ::StencilWrapper stencilWrapper = stencil.createStencilWrapper();
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       FaceBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numPhases,

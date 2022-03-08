@@ -632,11 +632,12 @@ public:
 
   // transmissibility in DARTS is the same as in Eclipse (Metric):
   // T = c * (k * A) / d, where c is Darcy constant, k is permeability [mD], A is area [m2] and d is distance [m]
-  // Darcy constant takes care of unit translation (from SI to Metric), it includes conversion of [s]->[day], [cp->Pa * s], [Pa]->[bar] and [mD->m2]:
+  // Darcy constant takes care of unit translation (from SI to Metric), it includes conversion of [s]->[day], [cp->Pa * s], [Pa]->[bar] and
+  // [mD->m2]:
   // c = 1e3 [cp]/[Pa*s] * (9.869233e-16) [m2]/[mD] * 86400 [day]/[s] * 1e5 [bar]/[Pa] = 0.008527017312
   // For already forgotten reasons, that constant in DARTS is taken as c[DARTS] = 0.00852671467191601
   // In GEOSX, there is no need in such conversion, as all units are already SI.
-  // Therefore, to transform transmissibility in GEOSX to one expected in DARTS, 
+  // Therefore, to transform transmissibility in GEOSX to one expected in DARTS,
   // we need to multiply it by the same Darcy constant, but without permeability translation factor:
   // T[DARTS] = T[GEOSX] * c[DARTS] / 9.869233e-16 = T[GEOSX] * 8639693349945.239
 
@@ -813,13 +814,13 @@ public:
   static constexpr integer PORO_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3 + 2 * numPhases;
 
   /// Maximum number of elements at the face
-  static constexpr localIndex maxNumElems = STENCILWRAPPER::NUM_POINT_IN_FLUX;
+  static constexpr localIndex maxNumElems = STENCILWRAPPER::maxNumPointsInFlux;
 
   /// Maximum number of connections at the face
-  static constexpr localIndex maxNumConns = STENCILWRAPPER::MAX_NUM_OF_CONNECTIONS;
+  static constexpr localIndex maxNumConns = STENCILWRAPPER::maxNumConnections;
 
   /// Maximum number of points in the stencil
-  static constexpr localIndex maxStencilSize = STENCILWRAPPER::MAX_STENCIL_SIZE;
+  static constexpr localIndex maxStencilSize = STENCILWRAPPER::maxStencilSize;
 
   /**
    * @brief Constructor for the kernel interface

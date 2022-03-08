@@ -128,18 +128,18 @@ public:
                        real64 ( &weight )[maxNumConnections][2],
                        real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
 
-/**
- * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
- * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
- * here, conductivity is a part of operator and connot be used directly as a coefficient
- * @param[in] iconn connection index
- * @param[out] weight view weights
- * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
- */
+  /**
+   * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
+   * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
+   * here, conductivity is a part of operator and connot be used directly as a coefficient
+   * @param[in] iconn connection index
+   * @param[out] weight view weights
+   * @param[out] dWeight_dVar derivative of the weigths w.r.t to the variable
+   */
   GEOSX_HOST_DEVICE
   void computeWeights( localIndex iconn,
-                       real64 ( &weight )[MAX_NUM_OF_CONNECTIONS][2],
-                       real64 ( &dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const;
+                       real64 ( &weight )[maxNumConnections][2],
+                       real64 ( &dWeight_dVar )[maxNumConnections][2] ) const;
 
 
   /**
@@ -359,8 +359,8 @@ GEOSX_HOST_DEVICE
 inline void
 SurfaceElementStencilWrapper::
   computeWeights( localIndex iconn,
-                  real64 ( & weight )[MAX_NUM_OF_CONNECTIONS][2],
-                  real64 ( & dWeight_dVar )[MAX_NUM_OF_CONNECTIONS][2] ) const
+                  real64 ( & weight )[maxNumConnections][2],
+                  real64 ( & dWeight_dVar )[maxNumConnections][2] ) const
 {
 
   real64 sumOfTrans = 0.0;
