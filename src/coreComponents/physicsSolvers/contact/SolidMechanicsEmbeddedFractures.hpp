@@ -105,6 +105,8 @@ public:
   struct viewKeyStruct : ContactSolverBase::viewKeyStruct
   {
     constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
+
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
   };
 
   void applyTractionBC( real64 const time_n,
@@ -120,6 +122,13 @@ protected:
 
   virtual void postProcessInput() override final;
 
+private:
+
+  void updateJump( DofManager const & dofManager,
+                   DomainPartition & domain );
+
+  /// decide whether to use static condensation or not
+  integer m_useStaticCondensation;
 };
 
 

@@ -21,6 +21,10 @@
 #include "mesh/DomainPartition.hpp"
 #include "math/interpolation/Interpolation.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "python/PySolverType.hpp"
+#endif
+
 namespace geosx
 {
 
@@ -833,7 +837,7 @@ real64 SolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
                                  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::ExplicitStep called!. Should be overridden." );
+  GEOSX_THROW( "SolverBase::ExplicitStep called!. Should be overridden.", std::runtime_error );
   return 0;
 }
 
@@ -841,7 +845,7 @@ void SolverBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
-  GEOSX_ERROR( "SolverBase::ImplicitStepSetup called!. Should be overridden." );
+  GEOSX_THROW( "SolverBase::ImplicitStepSetup called!. Should be overridden.", std::runtime_error );
 }
 
 void SolverBase::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domain ),
@@ -1099,5 +1103,9 @@ R1Tensor const SolverBase::gravityVector() const
   return rval;
 }
 
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * SolverBase::getPythonType() const
+{ return python::getPySolverType(); }
+#endif
 
 } // namespace geosx
