@@ -770,6 +770,7 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject an owning pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
   Wrapper< T > & registerWrapper( string const & name, std::unique_ptr< T > newObject );
@@ -780,6 +781,7 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
   Wrapper< T > & registerWrapper( string const & name,
@@ -787,12 +789,10 @@ public:
 
   /**
    * @brief Register and take ownership of an existing Wrapper.
-   * @param name The name of the wrapper to use as a string key
    * @param wrapper A pointer to the an existing wrapper.
    * @return An un-typed pointer to the newly registered/created wrapper
    */
-  WrapperBase & registerWrapper( string const & name,
-                                 std::unique_ptr< WrapperBase > wrapper );
+  WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > wrapper );
 
   /**
    * @brief Removes a Wrapper from this group.
@@ -1492,6 +1492,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
+  static_assert( not std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
@@ -1508,6 +1509,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
+  static_assert( not std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, newObject ),
                      true );

@@ -588,7 +588,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
         if( wrapper.getPlotLevel() <= m_plotLevel )
         {
           string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
-          subReg.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, subReg ) );
+          subReg.registerWrapper( wrapper.averageOverSecondDim( fieldName, subReg ) );
           materialFields.insert( fieldName );
         }
       } );
