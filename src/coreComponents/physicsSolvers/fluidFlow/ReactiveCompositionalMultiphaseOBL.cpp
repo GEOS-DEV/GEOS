@@ -13,10 +13,10 @@
  */
 
 /**
- * @file OBLSuperEngine.cpp
+ * @file ReactiveCompositionalMultiphaseOBL.cpp
  */
 
-#include "OBLSuperEngine.hpp"
+#include "ReactiveCompositionalMultiphaseOBL.hpp"
 
 #include "constitutive/solid/CoupledSolidBase.hpp"
 #include "dataRepository/Group.hpp"
@@ -26,9 +26,9 @@
 #include "finiteVolume/FluxApproximationBase.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
-#include "physicsSolvers/fluidFlow/OBLSuperEngineExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/OBLSuperEngineKernels.hpp"
+#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLKernels.hpp"
 
 
 namespace geosx
@@ -36,7 +36,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace OBLSuperEngineKernels;
+using namespace ReactiveCompositionalMultiphaseOBLKernels;
 
 namespace
 {
@@ -58,8 +58,8 @@ MultivariableTableFunction const * makeOBLOperatorsTable( string const & OBLOper
 }
 }
 
-OBLSuperEngine::OBLSuperEngine( const string & name,
-                                Group * const parent )
+ReactiveCompositionalMultiphaseOBL::ReactiveCompositionalMultiphaseOBL( const string & name,
+                                                                        Group * const parent )
   :
   FlowSolverBase( name, parent ),
   m_numPhases( 0 ),
@@ -115,7 +115,7 @@ OBLSuperEngine::OBLSuperEngine( const string & name,
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::compositionalMultiphaseFVM;
 }
 
-void OBLSuperEngine::initializePreSubGroups()
+void ReactiveCompositionalMultiphaseOBL::initializePreSubGroups()
 {
   FlowSolverBase::initializePreSubGroups();
 
@@ -124,13 +124,13 @@ void OBLSuperEngine::initializePreSubGroups()
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   if( !fvManager.hasGroup< FluxApproximationBase >( m_discretizationName ) )
   {
-    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with OBLSuperEngine" );
+    GEOSX_ERROR( "A discretization deriving from FluxApproximationBase must be selected with ReactiveCompositionalMultiphaseOBL" );
   }
 
 }
 
-void OBLSuperEngine::setupDofs( DomainPartition const & domain,
-                                DofManager & dofManager ) const
+void ReactiveCompositionalMultiphaseOBL::setupDofs( DomainPartition const & domain,
+                                                    DofManager & dofManager ) const
 {
   dofManager.addField( viewKeyStruct::elemDofFieldString(),
                        DofManager::Location::Elem,
@@ -144,9 +144,9 @@ void OBLSuperEngine::setupDofs( DomainPartition const & domain,
 }
 
 
-void OBLSuperEngine::implicitStepComplete( real64 const & time,
-                                           real64 const & dt,
-                                           DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::implicitStepComplete( real64 const & time,
+                                                               real64 const & dt,
+                                                               DomainPartition & domain )
 {
   GEOSX_UNUSED_VAR( time );
   GEOSX_UNUSED_VAR( dt );
@@ -195,7 +195,7 @@ void OBLSuperEngine::implicitStepComplete( real64 const & time,
   } );
 }
 
-void OBLSuperEngine::postProcessInput()
+void ReactiveCompositionalMultiphaseOBL::postProcessInput()
 {
   // need to override to skip the check for fluidModel, which is enabled in FlowSolverBase
   SolverBase::postProcessInput();
@@ -225,7 +225,7 @@ void OBLSuperEngine::postProcessInput()
 
 }
 
-void OBLSuperEngine::registerDataOnMesh( Group & meshBodies )
+void ReactiveCompositionalMultiphaseOBL::registerDataOnMesh( Group & meshBodies )
 {
   using namespace extrinsicMeshData::flow;
   // 1. Call base class method
@@ -299,9 +299,9 @@ void OBLSuperEngine::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-real64 OBLSuperEngine::calculateResidualNorm( DomainPartition const & domain,
-                                              DofManager const & dofManager,
-                                              arrayView1d< real64 const > const & localRhs )
+real64 ReactiveCompositionalMultiphaseOBL::calculateResidualNorm( DomainPartition const & domain,
+                                                                  DofManager const & dofManager,
+                                                                  arrayView1d< real64 const > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
   GEOSX_UNUSED_VAR( localRhs );
@@ -373,9 +373,9 @@ real64 OBLSuperEngine::calculateResidualNorm( DomainPartition const & domain,
 }
 
 
-real64 OBLSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
-                                                 DofManager const & dofManager,
-                                                 arrayView1d< real64 const > const & localSolution )
+real64 ReactiveCompositionalMultiphaseOBL::scalingForSystemSolution( DomainPartition const & domain,
+                                                                     DofManager const & dofManager,
+                                                                     arrayView1d< real64 const > const & localSolution )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -386,7 +386,7 @@ real64 OBLSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
     return 1.0;
   }
 
-  real64 constexpr eps = OBLSuperEngineKernels::minValueForDivision;
+  real64 constexpr eps = ReactiveCompositionalMultiphaseOBLKernels::minValueForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
@@ -446,10 +446,10 @@ real64 OBLSuperEngine::scalingForSystemSolution( DomainPartition const & domain,
   return LvArray::math::max( MpiWrapper::min( scalingFactor, MPI_COMM_GEOSX ), m_minScalingFactor );
 }
 
-bool OBLSuperEngine::checkSystemSolution( DomainPartition const & domain,
-                                          DofManager const & dofManager,
-                                          arrayView1d< real64 const > const & localSolution,
-                                          real64 const scalingFactor )
+bool ReactiveCompositionalMultiphaseOBL::checkSystemSolution( DomainPartition const & domain,
+                                                              DofManager const & dofManager,
+                                                              arrayView1d< real64 const > const & localSolution,
+                                                              real64 const scalingFactor )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -503,10 +503,10 @@ bool OBLSuperEngine::checkSystemSolution( DomainPartition const & domain,
   return MpiWrapper::min( localCheck, MPI_COMM_GEOSX );
 }
 
-void OBLSuperEngine::applySystemSolution( DofManager const & dofManager,
-                                          arrayView1d< real64 const > const & localSolution,
-                                          real64 const scalingFactor,
-                                          DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::applySystemSolution( DofManager const & dofManager,
+                                                              arrayView1d< real64 const > const & localSolution,
+                                                              real64 const scalingFactor,
+                                                              DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -548,7 +548,7 @@ void OBLSuperEngine::applySystemSolution( DofManager const & dofManager,
   CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
 }
 
-void OBLSuperEngine::initializePostInitialConditionsPreSubGroups()
+void ReactiveCompositionalMultiphaseOBL::initializePostInitialConditionsPreSubGroups()
 {
   GEOSX_MARK_FUNCTION;
 
@@ -597,10 +597,10 @@ void OBLSuperEngine::initializePostInitialConditionsPreSubGroups()
 }
 
 
-real64 OBLSuperEngine::solverStep( real64 const & time_n,
-                                   real64 const & dt,
-                                   integer const cycleNumber,
-                                   DomainPartition & domain )
+real64 ReactiveCompositionalMultiphaseOBL::solverStep( real64 const & time_n,
+                                                       real64 const & dt,
+                                                       integer const cycleNumber,
+                                                       DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -624,8 +624,8 @@ real64 OBLSuperEngine::solverStep( real64 const & time_n,
   return dt_return;
 }
 
-void OBLSuperEngine::backupFields( MeshLevel & mesh,
-                                   arrayView1d< string const > const & regionNames ) const
+void ReactiveCompositionalMultiphaseOBL::backupFields( MeshLevel & mesh,
+                                                       arrayView1d< string const > const & regionNames ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -645,9 +645,9 @@ void OBLSuperEngine::backupFields( MeshLevel & mesh,
 }
 
 void
-OBLSuperEngine::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                   real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                   DomainPartition & domain )
+ReactiveCompositionalMultiphaseOBL::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                                       real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                                       DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
@@ -662,12 +662,12 @@ OBLSuperEngine::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
   } );
 }
 
-void OBLSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
-                                     real64 const dt,
-                                     DomainPartition & domain,
-                                     DofManager const & dofManager,
-                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                     arrayView1d< real64 > const & localRhs )
+void ReactiveCompositionalMultiphaseOBL::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                                         real64 const dt,
+                                                         DomainPartition & domain,
+                                                         DofManager const & dofManager,
+                                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                         arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -686,11 +686,11 @@ void OBLSuperEngine::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 }
 
-void OBLSuperEngine::assembleAccumulationTerms( real64 const dt,
-                                                DomainPartition & domain,
-                                                DofManager const & dofManager,
-                                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                arrayView1d< real64 > const & localRhs ) const
+void ReactiveCompositionalMultiphaseOBL::assembleAccumulationTerms( real64 const dt,
+                                                                    DomainPartition & domain,
+                                                                    DofManager const & dofManager,
+                                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                    arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -720,11 +720,11 @@ void OBLSuperEngine::assembleAccumulationTerms( real64 const dt,
   } );
 }
 
-void OBLSuperEngine::assembleFluxTerms( real64 const dt,
-                                        DomainPartition const & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) const
+void ReactiveCompositionalMultiphaseOBL::assembleFluxTerms( real64 const dt,
+                                                            DomainPartition const & domain,
+                                                            DofManager const & dofManager,
+                                                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                            arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -763,12 +763,12 @@ void OBLSuperEngine::assembleFluxTerms( real64 const dt,
 }
 
 
-void OBLSuperEngine::applyBoundaryConditions( real64 const time_n,
-                                              real64 const dt,
-                                              DomainPartition & domain,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              arrayView1d< real64 > const & localRhs )
+void ReactiveCompositionalMultiphaseOBL::applyBoundaryConditions( real64 const time_n,
+                                                                  real64 const dt,
+                                                                  DomainPartition & domain,
+                                                                  DofManager const & dofManager,
+                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -778,7 +778,7 @@ void OBLSuperEngine::applyBoundaryConditions( real64 const time_n,
 
 namespace internal
 {
-string const bcLogMessage = string( "OBLSuperEngine {}: at time {}s, " )
+string const bcLogMessage = string( "ReactiveCompositionalMultiphaseOBL {}: at time {}s, " )
                             + string( "the <{}> boundary condition '{}' is applied to the element set '{}' in subRegion '{}'. " )
                             + string( "\nThe scale of this boundary condition is {} and multiplies the value of the provided function (if any). " )
                             + string( "\nThe total number of target elements (including ghost elements) is {}. " )
@@ -793,7 +793,7 @@ bool validateDirichletBC( DomainPartition & domain,
                           integer const enableEnergyBalance,
                           real64 const time )
 {
-  constexpr integer MAX_NC = OBLSuperEngine::MAX_NUM_COMPONENTS + 1; // +1 is for energy component
+  constexpr integer MAX_NC = ReactiveCompositionalMultiphaseOBL::MAX_NUM_COMPONENTS + 1; // +1 is for energy component
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   map< string, map< string, map< string, ComponentMask< MAX_NC > > > > bcStatusMap;   // map to check consistent application of BC
@@ -924,12 +924,12 @@ bool validateDirichletBC( DomainPartition & domain,
 }
 
 
-void OBLSuperEngine::applyDirichletBC( real64 const time,
-                                       real64 const dt,
-                                       DofManager const & dofManager,
-                                       DomainPartition & domain,
-                                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                       arrayView1d< real64 > const & localRhs ) const
+void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
+                                                           real64 const dt,
+                                                           DofManager const & dofManager,
+                                                           DomainPartition & domain,
+                                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                           arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1103,10 +1103,10 @@ void OBLSuperEngine::applyDirichletBC( real64 const time,
   } );
 }
 
-void OBLSuperEngine::solveSystem( DofManager const & dofManager,
-                                  ParallelMatrix & matrix,
-                                  ParallelVector & rhs,
-                                  ParallelVector & solution )
+void ReactiveCompositionalMultiphaseOBL::solveSystem( DofManager const & dofManager,
+                                                      ParallelMatrix & matrix,
+                                                      ParallelVector & rhs,
+                                                      ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1117,7 +1117,7 @@ void OBLSuperEngine::solveSystem( DofManager const & dofManager,
 }
 
 // to be changed into enforceOBLLimits - to chop all primary variables to be within OBL discretization space
-void OBLSuperEngine::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
 {
   GEOSX_UNUSED_VAR( domain );
   // GEOSX_MARK_FUNCTION;
@@ -1151,7 +1151,7 @@ void OBLSuperEngine::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
   // } );
 }
 
-void OBLSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1191,7 +1191,7 @@ void OBLSuperEngine::resetStateToBeginningOfStep( DomainPartition & domain )
   } );
 }
 
-void OBLSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
+void ReactiveCompositionalMultiphaseOBL::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1205,7 +1205,7 @@ void OBLSuperEngine::updateOBLOperators( ObjectManagerBase & dataGroup ) const
 }
 
 
-void OBLSuperEngine::updateState( DomainPartition & domain )
+void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
 {
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
@@ -1227,6 +1227,6 @@ void OBLSuperEngine::updateState( DomainPartition & domain )
 
 
 //START_SPHINX_INCLUDE_01
-REGISTER_CATALOG_ENTRY( SolverBase, OBLSuperEngine, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( SolverBase, ReactiveCompositionalMultiphaseOBL, string const &, Group * const )
 //END_SPHINX_INCLUDE_01
 }// namespace geosx

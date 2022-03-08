@@ -547,13 +547,6 @@ Element: NumericalMethods
 .. include:: ../../coreComponents/schema/docs/NumericalMethods.rst
 
 
-.. _XML_OBLSuperEngine:
-
-Element: OBLSuperEngine
-=======================
-.. include:: ../../coreComponents/schema/docs/OBLSuperEngine.rst
-
-
 .. _XML_Outputs:
 
 Element: Outputs
@@ -734,6 +727,13 @@ Element: ProppantTransport
 Element: Python
 ===============
 .. include:: ../../coreComponents/schema/docs/Python.rst
+
+
+.. _XML_ReactiveCompositionalMultiphaseOBL:
+
+Element: ReactiveCompositionalMultiphaseOBL
+===========================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL.rst
 
 
 .. _XML_Restart:
@@ -1573,13 +1573,6 @@ Datastructure: NumericalMethods
 .. include:: ../../coreComponents/schema/docs/NumericalMethods_other.rst
 
 
-.. _DATASTRUCTURE_OBLSuperEngine:
-
-Datastructure: OBLSuperEngine
-=============================
-.. include:: ../../coreComponents/schema/docs/OBLSuperEngine_other.rst
-
-
 .. _DATASTRUCTURE_Outputs:
 
 Datastructure: Outputs
@@ -1760,6 +1753,13 @@ Datastructure: ProppantTransport
 Datastructure: Python
 =====================
 .. include:: ../../coreComponents/schema/docs/Python_other.rst
+
+
+.. _DATASTRUCTURE_ReactiveCompositionalMultiphaseOBL:
+
+Datastructure: ReactiveCompositionalMultiphaseOBL
+=================================================
+.. include:: ../../coreComponents/schema/docs/ReactiveCompositionalMultiphaseOBL_other.rst
 
 
 .. _DATASTRUCTURE_Restart:

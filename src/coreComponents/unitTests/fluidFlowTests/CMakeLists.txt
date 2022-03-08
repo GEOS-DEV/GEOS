@@ -25,7 +25,7 @@ if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp
           testCompMultiphaseFlowHybrid.cpp
-          testOBLSuperEngine.cpp )
+          testReactiveCompositionalMultiphaseOBL.cpp )
 
     set( dependencyList ${dependencyList} PVTPackage )
 endif()

@@ -13,23 +13,22 @@
  */
 
 /**
- * @file OBLSuperEngineKernels.hpp
+ * @file ReactiveCompositionalMultiphaseOBLKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINEKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "constitutive/solid/CoupledSolidBase.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "functions/MultivariableTableFunctionKernels.hpp"
 #include "mesh/ElementSubRegionBase.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "mesh/utilities/MeshMapUtilities.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/OBLSuperEngineExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/ReactiveCompositionalMultiphaseOBLExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 
 
@@ -37,7 +36,7 @@
 namespace geosx
 {
 
-namespace OBLSuperEngineKernels
+namespace ReactiveCompositionalMultiphaseOBLKernels
 {
 
 using namespace constitutive;
@@ -631,16 +630,18 @@ public:
 
   static constexpr real64 secondsToDaysMult = 1.0 / (60 * 60 * 24);
 
-  // this conversion unit was obtained empirically: permeability in DARTS was set to 1 mD, and in GEOSX - to 9.869233e-16 m2
-  // then the resulting transmissibility in DARTS was devided by that in GEOSX to obtain transUnitMult
-  // transmissibility in DARTS is D * mu / (K * A * dT * dP)
-  // and is expected to have units of [m] * [cp] / ([md] * [m2] * [day] * [bar])
-  // if transmissibility in GEOSX reflects same quantities, and is computed using CI units,
-  // then the conversion should be
-  // T[DARTS] = T[GEOSX] * 1e3 [cp]/[Pa*s] / ( 1 / (9.869233e-16) [md]/[m2]) * 1 / 86400 [day]/[s] * 1 / 1e5 [bar]/[Pa]) =
-  // = T[GEOSX] * 9.869233 * 86400 * e(3 - 16 + 5) = T[GEOSX] * 0,008527017, while 0,008527017 is exactly the Darcy constant from Eclipse
+  // transmissibility in DARTS is the same as in Eclipse (Metric):
+  // T = c * (k * A) / d, where c is Darcy constant, k is permeability [mD], A is area [m2] and d is distance [m]
+  // Darcy constant takes care of unit translation (from SI to Metric), it includes conversion of [s]->[day], [cp->Pa * s], [Pa]->[bar] and [mD->m2]:
+  // c = 1e3 [cp]/[Pa*s] * (9.869233e-16) [m2]/[mD] * 86400 [day]/[s] * 1e5 [bar]/[Pa] = 0.008527017312
+  // For already forgotten reasons, that constant in DARTS is taken as c[DARTS] = 0.00852671467191601
+  // In GEOSX, there is no need in such conversion, as all units are already SI.
+  // Therefore, to transform transmissibility in GEOSX to one expected in DARTS, 
+  // we need to multiply it by the same Darcy constant, but without permeability translation factor:
+  // T[DARTS] = T[GEOSX] * c[DARTS] / 9.869233e-16 = T[GEOSX] * 8639693349945.239
 
   static constexpr real64 transUnitMult = 8639693349945.239;
+  static constexpr real64 transDUnitMult = 0.00852671467191601;
 
   /**
    * @brief The type for element-based data. Consists entirely of ArrayView's.
@@ -968,7 +969,7 @@ public:
     // single gravity coefficient and transimissibility values correspond to the current connection
     real64 const gravCoef = m_gravCoef[erI][esrI][eiI] - m_gravCoef[erJ][esrJ][eiJ];
     real64 const trans = stack.transmissibility[0][0] * transUnitMult;
-    real64 const transD = stack.diffusiveTransmissibility[0][0];
+    real64 const transD = stack.diffusiveTransmissibility[0][0] * transDUnitMult;
 
 
     real64 transMult = 1;
@@ -1409,9 +1410,9 @@ struct SolutionCheckKernel
 
 };
 
-} // namespace OBLSuperEngineKernels
+} // namespace ReactiveCompositionalMultiphaseOBLKernels
 
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINEKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBLKERNELS_HPP

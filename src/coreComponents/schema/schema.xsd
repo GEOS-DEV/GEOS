@@ -1054,10 +1054,10 @@ the relative residual norm satisfies:
 			<xsd:element name="LaplaceFEM" type="LaplaceFEMType" />
 			<xsd:element name="LaplaceVEM" type="LaplaceVEMType" />
 			<xsd:element name="MultiphasePoromechanics" type="MultiphasePoromechanicsType" />
-			<xsd:element name="OBLSuperEngine" type="OBLSuperEngineType" />
 			<xsd:element name="PhaseFieldDamageFEM" type="PhaseFieldDamageFEMType" />
 			<xsd:element name="PhaseFieldFracture" type="PhaseFieldFractureType" />
 			<xsd:element name="ProppantTransport" type="ProppantTransportType" />
+			<xsd:element name="ReactiveCompositionalMultiphaseOBL" type="ReactiveCompositionalMultiphaseOBLType" />
 			<xsd:element name="SinglePhaseFVM" type="SinglePhaseFVMType" />
 			<xsd:element name="SinglePhaseHybridFVM" type="SinglePhaseHybridFVMType" />
 			<xsd:element name="SinglePhasePoromechanics" type="SinglePhasePoromechanicsType" />
@@ -1438,46 +1438,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="OBLSuperEngineType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
-			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
-		</xsd:choice>
-		<!--OBLOperatorsTableFile => File containing OBL operator values-->
-		<xsd:attribute name="OBLOperatorsTableFile" type="string" use="required" />
-		<!--allowLocalOBLChopping => Allow keeping solution within OBL limits-->
-		<xsd:attribute name="allowLocalOBLChopping" type="integer" default="1" />
-		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
-		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--componentNames => List of component names-->
-		<xsd:attribute name="componentNames" type="string_array" default="{}" />
-		<!--discretization => Name of discretization object to use for this solver.-->
-		<xsd:attribute name="discretization" type="string" use="required" />
-		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
-		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
-		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
-		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
-		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
-		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
-		<!--logLevel => Log level-->
-		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
-		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
-		<!--numComponents => Number of components-->
-		<xsd:attribute name="numComponents" type="integer" use="required" />
-		<!--numPhases => Number of phases-->
-		<xsd:attribute name="numPhases" type="integer" use="required" />
-		<!--phaseNames => List of fluid phases-->
-		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
-		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
-		<xsd:attribute name="targetRegions" type="string_array" use="required" />
-		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
-		<xsd:attribute name="transMultExp" type="real64" default="1" />
-		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
-		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
-		<!--name => A name is required for any non-unique nodes-->
-		<xsd:attribute name="name" type="string" use="required" />
-	</xsd:complexType>
 	<xsd:complexType name="PhaseFieldDamageFEMType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
@@ -1566,6 +1526,46 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
 		<!--updateProppantPacking => Flag that enables/disables proppant-packing update-->
 		<xsd:attribute name="updateProppantPacking" type="integer" default="0" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ReactiveCompositionalMultiphaseOBLType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
+			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
+		</xsd:choice>
+		<!--OBLOperatorsTableFile => File containing OBL operator values-->
+		<xsd:attribute name="OBLOperatorsTableFile" type="string" use="required" />
+		<!--allowLocalOBLChopping => Allow keeping solution within OBL limits-->
+		<xsd:attribute name="allowLocalOBLChopping" type="integer" default="1" />
+		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
+		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
+		<!--componentNames => List of component names-->
+		<xsd:attribute name="componentNames" type="string_array" default="{}" />
+		<!--discretization => Name of discretization object to use for this solver.-->
+		<xsd:attribute name="discretization" type="string" use="required" />
+		<!--enableEnergyBalance => Enable energy balance calculation and temperature degree of freedom-->
+		<xsd:attribute name="enableEnergyBalance" type="integer" use="required" />
+		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
+		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
+		<!--inputFluxEstimate => Initial estimate of the input flux used only for residual scaling. This should be essentially equivalent to the input flux * dt.-->
+		<xsd:attribute name="inputFluxEstimate" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxCompFractionChange => Maximum (absolute) change in a component fraction between two Newton iterations-->
+		<xsd:attribute name="maxCompFractionChange" type="real64" default="1" />
+		<!--numComponents => Number of components-->
+		<xsd:attribute name="numComponents" type="integer" use="required" />
+		<!--numPhases => Number of phases-->
+		<xsd:attribute name="numPhases" type="integer" use="required" />
+		<!--phaseNames => List of fluid phases-->
+		<xsd:attribute name="phaseNames" type="string_array" default="{}" />
+		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
+		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--transMultExp => Exponent of dynamic transmissibility multiplier-->
+		<xsd:attribute name="transMultExp" type="real64" default="1" />
+		<!--useDARTSL2Norm => Use L2 norm calculation similar to one used DARTS-->
+		<xsd:attribute name="useDARTSL2Norm" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>

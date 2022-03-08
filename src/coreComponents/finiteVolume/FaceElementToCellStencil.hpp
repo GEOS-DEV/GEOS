@@ -145,8 +145,8 @@ public:
                        real64 ( &dWeight_dVar )[1][2] ) const;
 
   /**
-  * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
-   * Used in OBLSuperEngine solver for thermal transmissibility computation: 
+   * @brief Compute weigths and derivatives w.r.t to one variable without coefficient
+   * Used in ReactiveCompositionalMultiphaseOBL solver for thermal transmissibility computation:
    * here, conductivity is a part of operator and connot be used directly as a coefficient
    * @param[in] iconn connection index
    * @param[out] weight view weights

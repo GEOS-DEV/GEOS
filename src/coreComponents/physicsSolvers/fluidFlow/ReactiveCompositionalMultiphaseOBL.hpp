@@ -13,11 +13,11 @@
  */
 
 /**
- * @file OBLSuperEngine.hpp
+ * @file ReactiveCompositionalMultiphaseOBL.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINE_HPP_
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
 
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "functions/MultivariableTableFunction.hpp"
@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /**
- * @class OBLSuperEngine
+ * @class ReactiveCompositionalMultiphaseOBL
  * - A compositional multiphase thermal reactive solver based on OBL linearization approach (https://doi.org/10.1016/j.petrol.2017.08.009)
  * - Analogouos to Super Engine in DARTS reservoir simulator (https://darts.citg.tudelft.nl/)
  * - Takes into account diffusion, capillarity, kinetic and equilibrium reactions, precipitation/dissolution using only cell-centered
@@ -39,10 +39,10 @@ namespace geosx
  * discretization:
  *    only 3-5 components with 32-64 points is now viable. Adative MultivariableTableFunction with sparse storage will allow for much more
  * refined OBL parametrizations
- * - Does not use any fluid model, and solid models are only needed to get initial porosity, and (re-)compute transissibilities.
+ * - Does not use any fluid model, and solid models are only needed to get initial porosity
  */
 //START_SPHINX_INCLUDE_00
-class OBLSuperEngine : public FlowSolverBase
+class ReactiveCompositionalMultiphaseOBL : public FlowSolverBase
 {
 //END_SPHINX_INCLUDE_00
 public:
@@ -60,35 +60,35 @@ public:
    * @param name the name of this instantiation of Group in the repository
    * @param parent the parent group of this instantiation of Group
    */
-  OBLSuperEngine( const string & name,
-                  Group * const parent );
+  ReactiveCompositionalMultiphaseOBL( const string & name,
+                                      Group * const parent );
 
   /// deleted default constructor
-  OBLSuperEngine() = delete;
+  ReactiveCompositionalMultiphaseOBL() = delete;
 
   /// deleted copy constructor
-  OBLSuperEngine( OBLSuperEngine const & ) = delete;
+  ReactiveCompositionalMultiphaseOBL( ReactiveCompositionalMultiphaseOBL const & ) = delete;
 
   /// default move constructor
-  OBLSuperEngine( OBLSuperEngine && ) = default;
+  ReactiveCompositionalMultiphaseOBL( ReactiveCompositionalMultiphaseOBL && ) = default;
 
   /// deleted assignment operator
-  OBLSuperEngine & operator=( OBLSuperEngine const & ) = delete;
+  ReactiveCompositionalMultiphaseOBL & operator=( ReactiveCompositionalMultiphaseOBL const & ) = delete;
 
   /// deleted move operator
-  OBLSuperEngine & operator=( OBLSuperEngine && ) = delete;
+  ReactiveCompositionalMultiphaseOBL & operator=( ReactiveCompositionalMultiphaseOBL && ) = delete;
 
   /**
    * @brief default destructor
    */
-  virtual ~OBLSuperEngine() override = default;
+  virtual ~ReactiveCompositionalMultiphaseOBL() override = default;
 
 //START_SPHINX_INCLUDE_01
   /**
    * @brief name of the solver in the object catalog
    * @return string that contains the catalog name to generate a new object through the object catalog.
    */
-  static string catalogName() { return "OBLSuperEngine"; }
+  static string catalogName() { return "ReactiveCompositionalMultiphaseOBL"; }
 
   /**
    * @brief Getter for the fluid component names
@@ -343,4 +343,4 @@ protected:
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_OBLSUPERENGINE_HPP_
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_REACTIVECOMPOSITIONALMULTIPHASEOBL_HPP_
