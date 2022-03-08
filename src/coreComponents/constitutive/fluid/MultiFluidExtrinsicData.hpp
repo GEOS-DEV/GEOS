@@ -46,29 +46,13 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseFraction,
                            WRITE_AND_READ,
                            "Phase fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseFraction_dPressure,
-                           "dPhaseFraction_dPressure",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase fraction with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseFraction_dTemperature,
-                           "dPhaseFraction_dTemperature",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase fraction with respect to temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseFraction_dGlobalCompFraction,
-                           "dPhaseFraction_dGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseFraction,
+                           "dPhaseFraction",
                            array4dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase fraction with respect to global component fraction" );
+                           "Derivative of phase fraction with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseDensity,
                            "phaseDensity",
@@ -78,29 +62,13 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseDensity,
                            WRITE_AND_READ,
                            "Phase density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseDensity_dPressure,
-                           "dPhaseDensity_dPressure",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase density with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseDensity_dTemperature,
-                           "dPhaseDensity_dTemperature",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase density with respect to temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseDensity_dGlobalCompFraction,
-                           "dPhaseDensity_dGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseDensity,
+                           "dPhaseDensity",
                            array4dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase density with respect to global component fraction" );
+                           "Derivative of phase density with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseMassDensity,
                            "phaseMassDensity",
@@ -110,29 +78,13 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseMassDensity,
                            WRITE_AND_READ,
                            "Phase mass density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseMassDensity_dPressure,
-                           "dPhaseMassDensity_dPressure",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase mass density with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseMassDensity_dTemperature,
-                           "dPhaseMassDensity_dTemperature",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase mass density with respect to temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseMassDensity_dGlobalCompFraction,
-                           "dPhaseMassDensity_dGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseMassDensity,
+                           "dPhaseMassDensity",
                            array4dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase mass density with respect to global component fraction" );
+                           "Derivative of phase mass density with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseViscosity,
                            "phaseViscosity",
@@ -142,29 +94,45 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseViscosity,
                            WRITE_AND_READ,
                            "Phase viscosity" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseViscosity_dPressure,
-                           "dPhaseViscosity_dPressure",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase viscosity with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseViscosity_dTemperature,
-                           "dPhaseViscosity_dTemperature",
-                           array3dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase viscosity with respect to temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseViscosity_dGlobalCompFraction,
-                           "dPhaseViscosity_dGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseViscosity,
+                           "dPhaseViscosity",
                            array4dLayoutPhase_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase viscosity with respect to global component fraction" );
+                           "Derivative of phase viscosity with respect to pressure, temperature, and global component fractions" );
+
+EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy,
+                           "phaseEnthalpy",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT, // default behavior overridden by thermal models
+                           NO_WRITE,
+                           "Phase enthalpy" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseEnthalpy,
+                           "dPhaseEnthalpy",
+                           array4dLayoutPhase_dC,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions" );
+
+EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy,
+                           "phaseInternalEnergy",
+                           array3dLayoutPhase,
+                           0,
+                           NOPLOT, // default behavior overridden by thermal models
+                           NO_WRITE,
+                           "Phase internal energy" );
+
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy,
+                           "dPhaseInternalEnergy",
+                           array4dLayoutPhase_dC,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fraction" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            "phaseCompFraction",
@@ -174,29 +142,13 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            WRITE_AND_READ,
                            "Phase component fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseCompFraction_dPressure,
-                           "dPhaseCompFraction_dPressure",
-                           array4dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase component fraction with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseCompFraction_dTemperature,
-                           "dPhaseCompFraction_dTemperature",
-                           array4dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of phase component fraction with respect to temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dPhaseCompFraction_dGlobalCompFraction,
-                           "dPhaseCompFraction_dGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseCompFraction,
+                           "dPhaseCompFraction",
                            array5dLayoutPhaseComp_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase component fraction with respect to global component fraction" );
+                           "Derivative of phase component fraction with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( totalDensity,
                            "totalDensity",
@@ -214,29 +166,13 @@ EXTRINSIC_MESH_DATA_TRAIT( initialTotalMassDensity,
                            WRITE_AND_READ,
                            "Initial total mass density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity_dPressure,
-                           "dTotalDensity_dPressure",
-                           array2dLayoutFluid,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of total density with respect to pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity_dTemperature,
-                           "dTotalDensity_dTemperature",
-                           array2dLayoutFluid,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Derivative of total density with respect to temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity_dGlobalCompFraction,
-                           "dTotalDensity_dGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( dTotalDensity,
+                           "dTotalDensity",
                            array3dLayoutFluid_dC,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of total density with respect to global component fraction" );
+                           "Derivative of total density with respect to pressure, temperature, and global component fractions" );
 
 
 }

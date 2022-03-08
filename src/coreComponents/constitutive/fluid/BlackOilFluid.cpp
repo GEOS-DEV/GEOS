@@ -73,7 +73,7 @@ void BlackOilFluid::readInputDataFromPVTFiles()
   fillWaterData( data );
 
   // gas data
-  fillHydrocarbonData( PT::GAS, boTables.getGasTable() );
+  fillHydrocarbonData( m_phaseOrder[PT::GAS], boTables.getGasTable() );
 
   // for the Black-Oil model, the oil PVT is treated differently from gas
   fillPVTOData( boTables.getOilTable(),
@@ -109,7 +109,6 @@ void BlackOilFluid::fillPVTOData( array1d< array1d< real64 > > const & oilTable,
   // (standard) format of oilTable:
   // if oilTable.size() == 4 (saturated case):   Rs, bubble point pressure, Bo, viscosity
   // if ollTable.size() == 3 (unsaturated case):     unsaturated pressure,  Bo, viscosity
-
 
   // Step 1: count the number of saturated points by looping through oilTable, and resize tables accordingly
 
@@ -497,6 +496,8 @@ BlackOilFluid::KernelWrapper::
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
                  PhaseProp::ViewType phaseViscosity,
+                 PhaseProp::ViewType phaseEnthalpy,
+                 PhaseProp::ViewType phaseInternalEnergy,
                  PhaseComp::ViewType phaseCompFraction,
                  FluidProp::ViewType totalDensity )
   : BlackOilFluidBase::KernelWrapper( std::move( phaseTypes ),
@@ -512,6 +513,8 @@ BlackOilFluid::KernelWrapper::
                                       std::move( phaseDensity ),
                                       std::move( phaseMassDensity ),
                                       std::move( phaseViscosity ),
+                                      std::move( phaseEnthalpy ),
+                                      std::move( phaseInternalEnergy ),
                                       std::move( phaseCompFraction ),
                                       std::move( totalDensity ) ),
   m_PVTOView( PVTO.createKernelWrapper() )
@@ -534,6 +537,8 @@ BlackOilFluid::createKernelWrapper()
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
                         m_phaseViscosity.toView(),
+                        m_phaseEnthalpy.toView(),
+                        m_phaseInternalEnergy.toView(),
                         m_phaseCompFraction.toView(),
                         m_totalDensity.toView() );
 }

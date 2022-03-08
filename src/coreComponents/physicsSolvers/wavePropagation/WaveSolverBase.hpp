@@ -57,7 +57,6 @@ public:
     static constexpr char const * outputSeismoTraceString() { return "outputSeismoTrace"; }
     static constexpr char const * dtSeismoTraceString() { return "dtSeismoTrace"; }
     static constexpr char const * indexSeismoTraceString() { return "indexSeismoTrace"; }
-
   };
 
   /**
@@ -125,7 +124,7 @@ protected:
   /// Flag that indicates the order of the Ricker to be used, order 2 by default
   localIndex m_rickerOrder;
 
-  /// Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise
+  /// Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise
   localIndex m_outputSeismoTrace;
 
   /// Time step for seismoTrace output
