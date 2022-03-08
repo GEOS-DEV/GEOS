@@ -801,6 +801,18 @@ public:
 
 private:
 
+  /**
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
   template< bool DO_PACKING >
   localIndex packTemplate( buffer_unit_type *& buffer,
                            bool withMetadata,
@@ -828,6 +840,19 @@ private:
     return packedSize;
   }
 
+  /**
+   * @brief Concrete implementation of the packing by index method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] packList The element we want packed. If empty, no element will be packed.
+   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
   template< bool DO_PACKING >
   localIndex packByIndexTemplate( buffer_unit_type *& buffer,
                                   arrayView1d< localIndex const > const & packList,

@@ -115,11 +115,8 @@ public:
   localIndex unpackSets( buffer_unit_type const * & buffer );
 
   /**
-   * @brief Inserts in @p exclusionList the data that shall not be packed.
-   * @param[in,out] exclusionList Will receive the wrapper indices of the data that should not be packed.
-   *
-   * Note that data will be inserted into @p exclusionList
-   * and that data previously present in @p exclusionList may remain.
+   * @brief Gets the wrapper names that should not be packed.
+   * @return The set of names.
    */
   virtual std::set< string > getPackingExclusionList() const;
 

@@ -1403,6 +1403,20 @@ private:
 
   Group const & getBaseGroupByPath( string const & path ) const;
 
+  /**
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] wrapperNames The names of the wrapper to be packed. If empty, all the wrappers will be packed.
+   * @param[in] packList The element we want packed. If empty, all the elements will be packed.
+   * @param[in] recursive Recursive pack or not.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
   template< bool DO_PACK >
   localIndex packPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,

@@ -216,10 +216,6 @@ public:
 
   ///@{
 
-  /**
-   * @brief Create an array listing all excluded local face indices values.
-   * @param [in,out] exclusionList Sorted array with excluded local faces indices
-   */
   std::set< string > getPackingExclusionList() const override;
 
   /**
