@@ -7,6 +7,7 @@ from seismicUtilities.fwi import forward,                       \
                                  computePartialCostFunction,    \
                                  computeFullCostFunction,       \
                                  computeResidual
+from seismicUtilities.fwi import print_group
 from seismicUtilities.AcousticSolver import AcousticSolver
 
 from mpi4py import MPI
@@ -68,7 +69,6 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
 
         acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
         acousticSolver.apply_initial_conditions()
-
         #Get view on pressure at receivers locations
         pressureAtReceivers = acousticSolver.getPressureAtReceivers()
 

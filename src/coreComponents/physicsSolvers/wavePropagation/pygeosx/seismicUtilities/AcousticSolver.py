@@ -3,6 +3,7 @@ import numpy as np
 import os
 import xml.etree.ElementTree as ET
 import sys
+from seismicUtilities.fwi import print_group
 
 class AcousticSolver:
     def __init__(self,
@@ -136,6 +137,11 @@ class AcousticSolver:
         self.updateTimeVariables()
 
 
+    def reinitSolver(self):
+
+        self.solver.reinit()
+
+
     def apply_initial_conditions(self):
 
         """Second initialization of GEOSX.
@@ -223,7 +229,7 @@ class AcousticSolver:
             rcv_pos = [receiver.coords for receiver in receivers_list]
             rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]
 
-        self.solver.reinit()
+        #self.solver.reinit()
 
 
     def updateSourceValue(self, value):
@@ -239,6 +245,21 @@ class AcousticSolver:
         src_value = self.solver.get_wrapper("sourceValue").value()
         src_value.set_access_level(pygeosx.pylvarray.MODIFIABLE)
         src_value.to_numpy()[:] = value[:]
+
+
+    def updateVelocityModel(self, vel):
+
+        """Update velocity value in GEOSX.
+
+        Parameters
+        ----------
+        vel : float
+            Value for velocity
+        """
+
+        velocity = self.solver.get_wrapper("/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region/elementSubRegions/cb/mediumVelocity").value()
+        velocity.set_access_level(pygeosx.pylvarray.MODIFIABLE)
+        velocity.to_numpy()[:] = vel
 
 
     def resetWaveField(self):
@@ -307,3 +328,26 @@ class AcousticSolver:
 
         pressureAtReceivers = self.solver.get_wrapper("pressureNp1AtReceivers").value()
         return pressureAtReceivers.to_numpy()
+
+
+    def getGroup(self, path):
+
+        group = self.solver.get_group(path)
+        return group
+
+    def getWrapper(self, path):
+        wrapper = self.solver.get_wrapper(path)
+        return wrapper
+
+    def printGeosx(self):
+
+        print_group(self.geosx)
+
+
+    def printSolver(self):
+
+        print_group(self.solver)
+
+    def printGroup(self, path):
+
+        print_group(self.solver.get_group(path))

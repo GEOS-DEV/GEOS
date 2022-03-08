@@ -84,15 +84,8 @@ WaveSolverBase::~WaveSolverBase()
 
 void WaveSolverBase::reinit()
 {
-  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-
   postProcessInput();
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
-  {
-    precomputeSourceAndReceiverTerm( mesh, regionNames );
-  } );
+  initializePostInitialConditionsPreSubGroups();
 }
 
 void WaveSolverBase::initializePreSubGroups()
