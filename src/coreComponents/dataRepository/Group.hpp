@@ -1492,7 +1492,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
-  static_assert( not std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
+  static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
@@ -1509,7 +1509,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
-  static_assert( not std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
+  static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, newObject ),
                      true );
