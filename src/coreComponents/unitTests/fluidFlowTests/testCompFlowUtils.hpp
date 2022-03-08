@@ -17,15 +17,22 @@
 
 #include "codingUtilities/UnitTestUtilities.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
+#include "constitutive/fluid/MultiFluidBase.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {
 
 namespace testing
 {
+
+using namespace geosx::constitutive;
+using namespace geosx::constitutive::multifluid;
 
 void checkDerivative( real64 const valueEps,
                       real64 const value,
@@ -211,6 +218,574 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   problemManager.problemSetup();
   problemManager.applyInitialConditions();
 }
+
+void testCompositionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
+                                          DomainPartition & domain,
+                                          real64 const perturbParameter,
+                                          real64 const relTol )
+{
+  integer const numComp = solver.numFluidComponents();
+
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+    {
+      SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
+
+      string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseBase::viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+      arrayView1d< string const > const & components = fluid.componentNames();
+
+      arrayView2d< real64, compflow::USD_COMP > & compDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+
+      arrayView2d< real64, compflow::USD_COMP > & dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+
+      arrayView2d< real64, compflow::USD_COMP > & compFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
+
+      arrayView3d< real64, compflow::USD_COMP_DC > & dCompFrac_dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >();
+
+      // reset the solver state to zero out variable updates
+      solver.resetStateToBeginningOfStep( domain );
+
+      // make a copy of unperturbed values of component fractions
+      array2d< real64, compflow::LAYOUT_COMP > compFracOrig( subRegion.size(), numComp );
+      compFracOrig.setValues< serialPolicy >( compFrac );
+
+      // update component density and check derivatives
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+        solver.resetStateToBeginningOfStep( domain );
+
+        // perturb a single component density in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
+          dCompDens[ei][jc] = dRho;
+        } );
+
+        // recompute component fractions
+        solver.updateComponentFraction( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          auto dZ_dRho = invertLayout( dCompFrac_dCompDens[ei].toSliceConst(), numComp, numComp );
+          string var = "compDens[" + components[jc] + "]";
+
+          checkDerivative( compFrac[ei].toSliceConst(),
+                           compFracOrig[ei].toSliceConst(),
+                           dZ_dRho[jc].toSliceConst(),
+                           dCompDens[ei][jc],
+                           relTol,
+                           "compFrac",
+                           var,
+                           components );
+        } );
+      }
+    } );
+  } );
+}
+
+void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & solver,
+                                                  DomainPartition & domain,
+                                                  bool const isThermal,
+                                                  real64 const perturbParameter,
+                                                  real64 const relTol )
+{
+  integer const numComp = solver.numFluidComponents();
+  integer const numPhase = solver.numFluidPhases();
+
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+    {
+      SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
+
+      string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+      arrayView1d< string const > const & components = fluid.componentNames();
+      arrayView1d< string const > const & phases = fluid.phaseNames();
+
+      arrayView1d< real64 > & pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+
+      arrayView1d< real64 > & dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+
+      arrayView2d< real64, compflow::USD_COMP > & compDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+
+      arrayView2d< real64, compflow::USD_COMP > & dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+
+      arrayView2d< real64, compflow::USD_PHASE > & phaseVolFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
+
+      arrayView2d< real64, compflow::USD_PHASE > & dPhaseVolFrac_dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >();
+
+      arrayView3d< real64, compflow::USD_PHASE_DC > & dPhaseVolFrac_dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >();
+
+      // reset the solver state to zero out variable updates
+      solver.resetStateToBeginningOfStep( domain );
+
+      // make a copy of unperturbed values of component fractions
+      array2d< real64, compflow::LAYOUT_PHASE > phaseVolFracOrig( subRegion.size(), numPhase );
+      phaseVolFracOrig.setValues< serialPolicy >( phaseVolFrac );
+
+      // Step 1: update pressure and check derivatives
+
+      {
+        // perturb pressure in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+          dPres[ei] = dP;
+        } );
+
+        // recompute component fractions
+        solver.updateFluidState( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          checkDerivative( phaseVolFrac[ei].toSliceConst(),
+                           phaseVolFracOrig[ei].toSliceConst(),
+                           dPhaseVolFrac_dPres[ei].toSliceConst(),
+                           dPres[ei],
+                           relTol,
+                           "phaseVolFrac",
+                           "Pres",
+                           phases );
+        } );
+      }
+
+      // Step 2: update component density and check derivatives
+
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+        solver.resetStateToBeginningOfStep( domain );
+
+        // perturb a single component density in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
+          dCompDens[ei][jc] = dRho;
+        } );
+
+        // recompute component fractions
+        solver.updateFluidState( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          auto dS_dRho = invertLayout( dPhaseVolFrac_dCompDens[ei].toSliceConst(), numPhase, numComp );
+          string var = "compDens[" + components[jc] + "]";
+
+          checkDerivative( phaseVolFrac[ei].toSliceConst(),
+                           phaseVolFracOrig[ei].toSliceConst(),
+                           dS_dRho[jc].toSliceConst(),
+                           dCompDens[ei][jc],
+                           relTol,
+                           "phaseVolFrac",
+                           var,
+                           phases );
+        } );
+      }
+
+      // Step 3: update temperature and check derivatives
+
+      if( isThermal )
+      {
+        arrayView1d< real64 > & temp =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+
+        arrayView1d< real64 > & dTemp =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+
+        arrayView2d< real64, compflow::USD_PHASE > & dPhaseVolFrac_dTemp =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >();
+
+        // perturb pressure in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
+          dTemp[ei] = dT;
+        } );
+
+        // recompute component fractions
+        solver.updateFluidState( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=, &phaseVolFracOrig] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          checkDerivative( phaseVolFrac[ei].toSliceConst(),
+                           phaseVolFracOrig[ei].toSliceConst(),
+                           dPhaseVolFrac_dTemp[ei].toSliceConst(),
+                           dTemp[ei],
+                           relTol,
+                           "phaseVolFrac",
+                           "Temp",
+                           phases );
+        } );
+      }
+
+    } );
+  } );
+}
+
+void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
+                                            DomainPartition & domain,
+                                            bool const isThermal,
+                                            real64 const perturbParameter,
+                                            real64 const relTol )
+{
+  integer const numComp = solver.numFluidComponents();
+  integer const numPhase = solver.numFluidPhases();
+
+  solver.forMeshTargets( domain.getMeshBodies(),
+                         [&]( string const,
+                              MeshLevel & mesh,
+                              arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elementRegionManager = mesh.getElemManager();
+    elementRegionManager.forElementSubRegions( regionNames,
+                                               [&]( localIndex const,
+                                                    ElementSubRegionBase & subRegion )
+    {
+      SCOPED_TRACE( subRegion.getParent().getParent().getName() + "/" + subRegion.getName() );
+
+      string const & fluidName = subRegion.getReference< string >( CompositionalMultiphaseFVM::viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = subRegion.getConstitutiveModel< MultiFluidBase >( fluidName );
+      arrayView1d< string const > const & components = fluid.componentNames();
+      arrayView1d< string const > const & phases = fluid.phaseNames();
+
+      arrayView1d< real64 > & pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+
+      arrayView1d< real64 > & dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+
+      arrayView2d< real64, compflow::USD_COMP > & compDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+
+      arrayView2d< real64, compflow::USD_COMP > & dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+
+      arrayView2d< real64, compflow::USD_PHASE > & phaseMob =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseMobility >();
+
+      arrayView2d< real64, compflow::USD_PHASE > & dPhaseMob_dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dPressure >();
+
+      arrayView3d< real64, compflow::USD_PHASE_DC > & dPhaseMob_dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dGlobalCompDensity >();
+
+      // reset the solver state to zero out variable updates
+      solver.resetStateToBeginningOfStep( domain );
+
+      // make a copy of unperturbed values of component fractions
+      array2d< real64, compflow::LAYOUT_PHASE > phaseMobOrig( subRegion.size(), numPhase );
+      phaseMobOrig.setValues< serialPolicy >( phaseMob );
+
+      // Step 1: update pressure and check derivatives
+
+      {
+        // perturb pressure in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+          dPres[ei] = dP;
+        } );
+
+        // recompute component fractions
+        solver.updateFluidState( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=, &phaseMobOrig] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          checkDerivative( phaseMob[ei].toSliceConst(),
+                           phaseMobOrig[ei].toSliceConst(),
+                           dPhaseMob_dPres[ei].toSliceConst(),
+                           dPres[ei],
+                           relTol,
+                           "phaseMob",
+                           "Pres",
+                           phases );
+        } );
+      }
+
+      // Step 2: update component density and check derivatives
+
+      for( integer jc = 0; jc < numComp; ++jc )
+      {
+        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+        solver.resetStateToBeginningOfStep( domain );
+
+        // perturb a single component density in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dRho = perturbParameter * ( compDens[ei][jc] + perturbParameter );
+          dCompDens[ei][jc] = dRho;
+        } );
+
+        // recompute component fractions
+        solver.updateFluidState( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=, &phaseMobOrig] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          auto dS_dRho = invertLayout( dPhaseMob_dCompDens[ei].toSliceConst(), numPhase, numComp );
+          string var = "compDens[" + components[jc] + "]";
+
+          checkDerivative( phaseMob[ei].toSliceConst(),
+                           phaseMobOrig[ei].toSliceConst(),
+                           dS_dRho[jc].toSliceConst(),
+                           dCompDens[ei][jc],
+                           relTol,
+                           "phaseMob",
+                           var,
+                           phases );
+        } );
+      }
+
+      // Step 3: update temperature and check derivatives
+
+      if( isThermal )
+      {
+        arrayView1d< real64 > & temp =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+
+        arrayView1d< real64 > & dTemp =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+
+        arrayView2d< real64, compflow::USD_PHASE > & dPhaseMob_dTemp =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >();
+
+        // perturb pressure in each cell
+        forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
+        {
+          real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
+          dTemp[ei] = dT;
+        } );
+
+        // recompute component fractions
+        solver.updateFluidState( subRegion );
+
+        // check values in each cell
+        forAll< serialPolicy >( subRegion.size(), [=, &phaseMobOrig] ( localIndex const ei )
+        {
+          SCOPED_TRACE( "Element " + std::to_string( ei ) );
+
+          checkDerivative( phaseMob[ei].toSliceConst(),
+                           phaseMobOrig[ei].toSliceConst(),
+                           dPhaseMob_dTemp[ei].toSliceConst(),
+                           dTemp[ei],
+                           relTol,
+                           "phaseMob",
+                           "Temp",
+                           phases );
+        } );
+      }
+
+    } );
+  } );
+}
+
+template< typename COMPOSITIONAL_SOLVER, typename LAMBDA >
+void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
+                                        DomainPartition & domain,
+                                        bool const isThermal,
+                                        real64 const perturbParameter,
+                                        arrayView1d< real64 > residual,
+                                        arrayView1d< real64 > residualOrig,
+                                        CRSMatrixView< real64, globalIndex > jacobian,
+                                        CRSMatrixView< real64, globalIndex > jacobianFD,
+                                        LAMBDA assembleFunction )
+{
+  integer const numComp = solver.numFluidComponents();
+
+  DofManager const & dofManager = solver.getDofManager();
+  string const elemDofKey = dofManager.getKey( COMPOSITIONAL_SOLVER::viewKeyStruct::elemDofFieldString() );
+
+  solver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                       MeshLevel & mesh,
+                                                       arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames,
+                                                [&]( localIndex const,
+                                                     ElementSubRegionBase & subRegion )
+    {
+      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
+      arrayView1d< globalIndex const > const & elemDofNumber =
+        subRegion.getReference< array1d< globalIndex > >( elemDofKey );
+
+      arrayView1d< real64 const > const & pres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
+      pres.move( LvArray::MemorySpace::host, false );
+
+      arrayView1d< real64 > const & dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+
+      arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
+      compDens.move( LvArray::MemorySpace::host, false );
+
+      arrayView2d< real64, compflow::USD_COMP > const & dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
+
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
+      {
+        if( elemGhostRank[ei] >= 0 )
+        {
+          continue;
+        }
+
+        real64 totalDensity = 0.0;
+        for( integer ic = 0; ic < numComp; ++ic )
+        {
+          totalDensity += compDens[ei][ic];
+        }
+
+        // Step 1: compute numerical derivatives wrt pressure
+
+        {
+          solver.resetStateToBeginningOfStep( domain );
+
+          real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
+          dPres.move( LvArray::MemorySpace::host, true );
+          dPres[ei] = dP;
+#if defined(GEOSX_USE_CUDA)
+          dPres.move( LvArray::MemorySpace::cuda, false );
+#endif
+
+
+          mesh.getElemManager().forElementSubRegions( regionNames,
+                                                      [&]( localIndex const,
+                                                           ElementSubRegionBase & subRegion2 )
+          {
+            solver.updateFluidState( subRegion2 );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 elemDofNumber[ei],
+                                 dP,
+                                 jacobianFD.toViewConstSizes() );
+        }
+
+        // Step 2: compute numerical derivatives wrt component densities
+
+        for( integer jc = 0; jc < numComp; ++jc )
+        {
+          solver.resetStateToBeginningOfStep( domain );
+
+          real64 const dRho = perturbParameter * totalDensity;
+          dCompDens.move( LvArray::MemorySpace::host, true );
+          dCompDens[ei][jc] = dRho;
+#if defined(GEOSX_USE_CUDA)
+          dCompDens.move( LvArray::MemorySpace::cuda, false );
+#endif
+
+
+          mesh.getElemManager().forElementSubRegions( regionNames,
+                                                      [&]( localIndex const,
+                                                           ElementSubRegionBase & subRegion2 )
+          {
+            solver.updateFluidState( subRegion2 );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 elemDofNumber[ei] + jc + 1,
+                                 dRho,
+                                 jacobianFD.toViewConstSizes() );
+        }
+
+        // Step 3: compute numerical derivatives wrt temperature
+
+        if( isThermal )
+        {
+          arrayView1d< real64 const > const & temp =
+            subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+          temp.move( LvArray::MemorySpace::host, false );
+
+          arrayView1d< real64 > const & dTemp =
+            subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+
+          solver.resetStateToBeginningOfStep( domain );
+
+          real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
+          dTemp.move( LvArray::MemorySpace::host, true );
+          dTemp[ei] = dT;
+#if defined(GEOSX_USE_CUDA)
+          dTemp.move( LvArray::MemorySpace::cuda, false );
+#endif
+
+
+          mesh.getElemManager().forElementSubRegions( regionNames,
+                                                      [&]( localIndex const,
+                                                           ElementSubRegionBase & subRegion2 )
+          {
+            solver.updateFluidState( subRegion2 );
+          } );
+
+          residual.zero();
+          jacobian.zero();
+          assembleFunction( jacobian.toViewConstSizes(), residual.toView() );
+
+          fillNumericalJacobian( residual.toViewConst(),
+                                 residualOrig.toViewConst(),
+                                 elemDofNumber[ei] + numComp + 1,
+                                 dT,
+                                 jacobianFD.toViewConstSizes() );
+
+        }
+
+      }
+    } );
+  } );
+}
+
 
 } // namespace testing
 
