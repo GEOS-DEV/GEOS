@@ -1002,14 +1002,14 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                   dt );
   }
 
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    //std::cout<< localMatrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout<< localRhs;
-  }
+//  if( getLogLevel() >= 2 )
+//  {
+//    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+//    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+//    //std::cout<< localMatrix;
+//    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+//    std::cout<< localRhs;
+//  }
 }
 
 void
