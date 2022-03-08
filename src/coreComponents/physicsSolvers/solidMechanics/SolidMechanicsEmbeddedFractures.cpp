@@ -18,8 +18,8 @@
 
 #include "SolidMechanicsEmbeddedFractures.hpp"
 
-#include "SolidMechanicsEFEMKernels.hpp"
 #include "common/TimingMacros.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "constitutive/contact/ContactSelector.hpp"
 #include "constitutive/solid/ElasticIsotropic.hpp"
@@ -30,7 +30,9 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 
 namespace geosx
 {
@@ -43,7 +45,8 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_fractureRegionName(),
-  m_solidSolver( nullptr )
+  m_solidSolver( nullptr ),
+  m_useStaticCondensation()
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -57,9 +60,13 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
+  registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Defines whether to use static condensation or not." );
+
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
-
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -70,6 +77,21 @@ SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
 void SolidMechanicsEmbeddedFractures::postProcessInput()
 {
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
+
+  LinearSolverParameters & linParams = m_linearSolverParameters.get();
+  linParams.dofsPerNode = 3;
+
+  if( m_useStaticCondensation )
+  {
+    linParams.isSymmetric = true;
+    linParams.amg.separateComponents = true;
+  }
+  else
+  {
+    linParams.mgr.strategy = LinearSolverParameters::MGR::StrategyType::solidMechanicsEmbeddedFractures;
+    linParams.mgr.separateComponents = true;
+    linParams.mgr.displacementFieldName = keys::TotalDisplacement;
+  }
 }
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -211,32 +233,34 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
   m_solidSolver->setupDofs( domain, dofManager );
 
-  map< string, array1d< string > > meshTargets;
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
-                                                MeshLevel const & meshLevel,
-                                                arrayView1d< string const > const & regionNames )
+  if( !m_useStaticCondensation )
   {
-    array1d< string > regions;
-    ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
-    elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
-                                                                    [&]( localIndex const,
-                                                                         SurfaceElementRegion const & region )
+    map< string, array1d< string > > meshTargets;
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const & meshBodyName,
+                                                  MeshLevel const & meshLevel,
+                                                  arrayView1d< string const > const & regionNames )
     {
-      regions.emplace_back( region.getName() );
+      array1d< string > regions;
+      ElementRegionManager const & elementRegionManager = meshLevel.getElemManager();
+      elementRegionManager.forElementRegions< SurfaceElementRegion >( regionNames,
+                                                                      [&]( localIndex const,
+                                                                           SurfaceElementRegion const & region )
+      {
+        regions.emplace_back( region.getName() );
+      } );
+      meshTargets[meshBodyName] = std::move( regions );
     } );
-    meshTargets[meshBodyName] = std::move( regions );
-  } );
 
-  dofManager.addField( viewKeyStruct::dispJumpString(),
-                       DofManager::Location::Elem,
-                       3,
-                       meshTargets );
+    dofManager.addField( viewKeyStruct::dispJumpString(),
+                         DofManager::Location::Elem,
+                         3,
+                         meshTargets );
 
-  dofManager.addCoupling( viewKeyStruct::dispJumpString(),
-                          viewKeyStruct::dispJumpString(),
-                          DofManager::Connector::Elem );
+    dofManager.addCoupling( viewKeyStruct::dispJumpString(),
+                            viewKeyStruct::dispJumpString(),
+                            DofManager::Connector::Elem );
+  }
 }
-
 void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
                                                    DofManager & dofManager,
                                                    CRSMatrix< real64, globalIndex > & localMatrix,
@@ -246,49 +270,57 @@ void SolidMechanicsEmbeddedFractures::setupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( setSparsity );
-
-  dofManager.setDomain( domain );
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  // Set the sparsity pattern without the Kwu and Kuw blocks.
-  SparsityPattern< globalIndex > patternDiag;
-  dofManager.setSparsityPattern( patternDiag );
-
-  // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternDiag.numRows() );
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  if( !m_useStaticCondensation )
   {
-    rowLengths[localRow] = patternDiag.numNonZeros( localRow );
+
+    GEOSX_UNUSED_VAR( setSparsity );
+
+    dofManager.setDomain( domain );
+    setupDofs( domain, dofManager );
+    dofManager.reorderByRank();
+
+    // Set the sparsity pattern without the Kwu and Kuw blocks.
+    SparsityPattern< globalIndex > patternDiag;
+    dofManager.setSparsityPattern( patternDiag );
+
+    // Get the original row lengths (diagonal blocks only)
+    array1d< localIndex > rowLengths( patternDiag.numRows() );
+    for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+    {
+      rowLengths[localRow] = patternDiag.numNonZeros( localRow );
+    }
+
+    // Add the number of nonzeros induced by coupling
+    addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
+
+    // Create a new pattern with enough capacity for coupled matrix
+    SparsityPattern< globalIndex > pattern;
+    pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
+
+    // Copy the original nonzeros
+    for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+    {
+      globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
+      pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    }
+
+    // Add the nonzeros from coupling
+    addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
+
+    // Finally, steal the pattern into a CRS matrix
+    localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
+    localMatrix.setName( this->getName() + "/localMatrix" );
+
+    rhs.setName( this->getName() + "/rhs" );
+    rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+    solution.setName( this->getName() + "/solution" );
+    solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
   }
-
-  // Add the number of nonzeros induced by coupling
-  addCouplingNumNonzeros( domain, dofManager, rowLengths.toView() );
-
-  // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternDiag.numRows(), patternDiag.numColumns(), rowLengths.data() );
-
-  // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternDiag.numRows(); ++localRow )
+  else
   {
-    globalIndex const * cols = patternDiag.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternDiag.numNonZeros( localRow ) );
+    m_solidSolver->setupSystem( domain, dofManager, localMatrix, rhs, solution, setSparsity );
   }
-
-  // Add the nonzeros from coupling
-  addCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  // Finally, steal the pattern into a CRS matrix
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/localMatrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( dofManager.numLocalDofs(), MPI_COMM_GEOSX );
 }
 
 void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
@@ -315,37 +347,64 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
                                                 arrayView1d< string const > const & regionNames )
   {
     NodeManager const & nodeManager = mesh.getNodeManager();
-    ElementRegionManager const & elemManager = mesh.getElemManager();
-    SurfaceElementRegion const & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
-    EmbeddedSurfaceSubRegion const & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
     string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
 
     arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
-    arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-    solidMechanicsEFEMKernels::QuasiStaticFactory kernelFactory( subRegion,
-                                                                 dispDofNumber,
-                                                                 jumpDofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 gravityVectorData );
+    if( !m_useStaticCondensation )
+    {
+      string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+      arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
-    real64 maxTraction = finiteElement::
-                           regionBasedKernelApplication
-                         < parallelDevicePolicy< 32 >,
-                           constitutive::SolidBase,
-                           CellElementSubRegion >( mesh,
-                                                   regionNames,
-                                                   m_solidSolver->getDiscretizationName(),
-                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
-                                                   kernelFactory );
+      solidMechanicsEFEMKernels::EFEMFactory kernelFactory( subRegion,
+                                                            dispDofNumber,
+                                                            jumpDofNumber,
+                                                            dofManager.rankOffset(),
+                                                            localMatrix,
+                                                            localRhs,
+                                                            gravityVectorData );
 
-    GEOSX_UNUSED_VAR( maxTraction );
+      real64 maxTraction = finiteElement::
+                             regionBasedKernelApplication
+                           < parallelDevicePolicy< 32 >,
+                             constitutive::SolidBase,
+                             CellElementSubRegion >( mesh,
+                                                     regionNames,
+                                                     m_solidSolver->getDiscretizationName(),
+                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                     kernelFactory );
+
+      GEOSX_UNUSED_VAR( maxTraction );
+
+    }
+    else
+    {
+      solidMechanicsEFEMKernels::EFEMStaticCondensationFactory kernelFactory( subRegion,
+                                                                              dispDofNumber,
+                                                                              dofManager.rankOffset(),
+                                                                              localMatrix,
+                                                                              localRhs,
+                                                                              gravityVectorData );
+      real64 maxTraction = finiteElement::
+                             regionBasedKernelApplication
+                           < parallelDevicePolicy< 32 >,
+                             constitutive::SolidBase,
+                             CellElementSubRegion >( mesh,
+                                                     regionNames,
+                                                     m_solidSolver->getDiscretizationName(),
+                                                     SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                     kernelFactory );
+
+      GEOSX_UNUSED_VAR( maxTraction );
+
+
+    }
 
   } );
 }
@@ -563,78 +622,88 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
   // Matrix residual
   real64 const solidResidualNorm = m_solidSolver->calculateResidualNorm( domain, dofManager, localRhs );
 
-  RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
-
-  // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
-  // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
-  real64 globalResidualNorm[2] = {0, 0};
-
-  // Fracture residual
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel const & mesh,
-                                                arrayView1d< string const > const & regionNames )
+  if( !m_useStaticCondensation )
   {
+
     string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
-    mesh.getElemManager().forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
-                                                                                              EmbeddedSurfaceSubRegion const & subRegion )
-    {
-      arrayView1d< globalIndex const > const &
-      dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+    RAJA::ReduceSum< parallelDeviceReduce, real64 > localSum( 0.0 );
 
-      forAll< parallelDevicePolicy<> >( subRegion.size(),
-                                        [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
+    // globalResidualNorm[0]: the sum of all the local sum(rhs^2).
+    // globalResidualNorm[1]: max of max force of each rank. Basically max force globally
+    real64 globalResidualNorm[2] = {0, 0};
+
+    // Fracture residual
+    forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                  MeshLevel const & mesh,
+                                                  arrayView1d< string const > const & regionNames )
+    {
+      mesh.getElemManager().forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
+                                                                                                EmbeddedSurfaceSubRegion const & subRegion )
       {
-        if( ghostRank[k] < 0 )
+        arrayView1d< globalIndex const > const &
+        dofNumber = subRegion.getReference< array1d< globalIndex > >( jumpDofKey );
+        arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+
+        forAll< parallelDevicePolicy<> >( subRegion.size(),
+                                          [localRhs, localSum, dofNumber, rankOffset, ghostRank] GEOSX_HOST_DEVICE ( localIndex const k )
         {
-          localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
-          for( localIndex i = 0; i < 3; ++i )
+          if( ghostRank[k] < 0 )
           {
-            localSum += localRhs[localRow + i] * localRhs[localRow + i];
+            localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[k] - rankOffset );
+            for( localIndex i = 0; i < 3; ++i )
+            {
+              localSum += localRhs[localRow + i] * localRhs[localRow + i];
+            }
           }
-        }
+        } );
+
       } );
+
+      real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
+
+
+      int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
+      int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
+      array1d< real64 > globalValues( numRanks * 2 );
+
+      // Everything is done on rank 0
+      MpiWrapper::gather( localResidualNorm,
+                          2,
+                          globalValues.data(),
+                          2,
+                          0,
+                          MPI_COMM_GEOSX );
+
+      if( rank==0 )
+      {
+        for( int r=0; r<numRanks; ++r )
+        {
+          // sum/max across all ranks
+          globalResidualNorm[0] += globalValues[r*2];
+          globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
+        }
+      }
+
+      MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
     } );
 
-    real64 const localResidualNorm[2] = { localSum.get(), m_solidSolver->getMaxForce() };
+    real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
+    // time-step when maxForce = 0;
 
-    int const rank     = MpiWrapper::commRank( MPI_COMM_GEOSX );
-    int const numRanks = MpiWrapper::commSize( MPI_COMM_GEOSX );
-    array1d< real64 > globalValues( numRanks * 2 );
-
-    // Everything is done on rank 0
-    MpiWrapper::gather( localResidualNorm,
-                        2,
-                        globalValues.data(),
-                        2,
-                        0,
-                        MPI_COMM_GEOSX );
-
-    if( rank==0 )
+    if( getLogLevel() >= 1 && logger::internal::rank==0 )
     {
-      for( int r=0; r<numRanks; ++r )
-      {
-        // sum/max across all ranks
-        globalResidualNorm[0] += globalValues[r*2];
-        globalResidualNorm[1] = std::max( globalResidualNorm[1], globalValues[r*2+1] );
-      }
+      std::cout << GEOSX_FMT( "( RFracture ) = ( {:4.2e} ) ; ", fractureResidualNorm );
     }
 
-    MpiWrapper::bcast( globalResidualNorm, 2, 0, MPI_COMM_GEOSX );
-  } );
-
-  real64 const fractureResidualNorm = sqrt( globalResidualNorm[0] )/(globalResidualNorm[1]+1);  // the + 1 is for the first
-  // time-step when maxForce = 0;
-
-  if( getLogLevel() >= 1 && logger::internal::rank==0 )
-  {
-    std::cout << GEOSX_FMT( "( RFracture ) = ( {:4.2e} ) ; ", fractureResidualNorm );
+    return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
   }
-
-  return sqrt( solidResidualNorm * solidResidualNorm + fractureResidualNorm * fractureResidualNorm );
+  else
+  {
+    return solidResidualNorm;
+  }
 }
 
 void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & dofManager,
@@ -649,9 +718,16 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                       scalingFactor,
                                       domain );
 
-  dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
+  if( !m_useStaticCondensation )
+  {
+    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
 
-  dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
+  }
+  else
+  {
+    updateJump( dofManager, domain );
+  }
 
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -665,6 +741,48 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
+  } );
+}
+
+void SolidMechanicsEmbeddedFractures::updateJump( DofManager const & dofManager,
+                                                  DomainPartition & domain )
+{
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
+    EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
+
+    string const dispDofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+
+    arrayView1d< globalIndex const > const dispDofNumber = nodeManager.getReference< globalIndex_array >( dispDofKey );
+
+    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+
+    CRSMatrix< real64, globalIndex >  voidMatrix;
+    array1d< real64 > voidRhs;
+
+    solidMechanicsEFEMKernels::EFEMJumpUpdateFactory kernelFactory( subRegion,
+                                                                    dispDofNumber,
+                                                                    dofManager.rankOffset(),
+                                                                    voidMatrix.toViewConstSizes(),
+                                                                    voidRhs.toView(),
+                                                                    gravityVectorData );
+
+    real64 maxTraction = finiteElement::
+                           regionBasedKernelApplication
+                         < parallelDevicePolicy< 32 >,
+                           constitutive::SolidBase,
+                           CellElementSubRegion >( mesh,
+                                                   regionNames,
+                                                   m_solidSolver->getDiscretizationName(),
+                                                   SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString(),
+                                                   kernelFactory );
+
+    GEOSX_UNUSED_VAR( maxTraction );
   } );
 }
 
