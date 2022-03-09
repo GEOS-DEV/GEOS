@@ -201,6 +201,11 @@ using CO2BrineEzrokhiFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBri
                                                             PVTProps::SpanWagnerCO2Density,
                                                             PVTProps::FenghourCO2Viscosity,
                                                             PVTProps::CO2Solubility >;
+using CO2BrineEzrokhiFluidDelft = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
+                                                            PVTProps::EzrokhiBrineViscosity,
+                                                            PVTProps::SpanWagnerCO2Density,
+                                                            PVTProps::FenghourCO2Viscosity,
+                                                            PVTProps::CO2SolubilityDelft >;
 
 template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE

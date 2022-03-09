@@ -45,7 +45,8 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrinePhillipsFluidDelft,
-                               CO2BrineEzrokhiFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineEzrokhiFluid,
+                               CO2BrineEzrokhiFluidDelft >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -59,7 +60,8 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
 #endif
                                CO2BrinePhillipsFluid,
                                CO2BrinePhillipsFluidDelft,
-                               CO2BrineEzrokhiFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineEzrokhiFluid,
+                               CO2BrineEzrokhiFluidDelft >::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

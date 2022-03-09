@@ -619,7 +619,7 @@ CO2SolubilityDelftUpdate::doflash(real64 const & pressure, real64 const & temper
                                   std::vector<real64> & phaseFraction,
                                   std::vector<std::vector<real64> > & phaseCompFraction, int &phase_state) const
 {
-   std::vector<std::string> comp{"CO2", "H2O"};
+  std::vector<std::string> comp{"CO2", "H2O"};
   // std::vector<std::string> comp{"CO2", "H2O"};
   std::vector<std::string> ph{"Aq", "V"};
 

@@ -65,6 +65,16 @@ template<> class
 public:
   static string name() { return "CO2BrineEzrokhiFluid"; }
 };
+template<> class
+  TwoPhaseCatalogNames< PVTProps::EzrokhiBrineDensity,
+                        PVTProps::EzrokhiBrineViscosity,
+                        PVTProps::SpanWagnerCO2Density,
+                        PVTProps::FenghourCO2Viscosity,
+                        PVTProps::CO2SolubilityDelft >
+{
+public:
+  static string name() { return "CO2BrineEzrokhiFluidDelft"; }
+};
 } // end namespace
 
 // provide a definition for catalogName()
@@ -294,10 +304,17 @@ template class MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
                                               PVTProps::SpanWagnerCO2Density,
                                               PVTProps::FenghourCO2Viscosity,
                                               PVTProps::CO2Solubility >;
+                                              
+template class MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBrineDensity,
+                                              PVTProps::EzrokhiBrineViscosity,
+                                              PVTProps::SpanWagnerCO2Density,
+                                              PVTProps::FenghourCO2Viscosity,
+                                              PVTProps::CO2SolubilityDelft >;                                              
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrinePhillipsFluid, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrinePhillipsFluidDelft, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineEzrokhiFluid, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrineEzrokhiFluidDelft, string const &, Group * const )
 
 } //namespace constitutive
 
