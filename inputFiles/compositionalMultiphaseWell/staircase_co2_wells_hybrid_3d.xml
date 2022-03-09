@@ -58,6 +58,8 @@
     <VTKMesh
       name="mesh1"
       file="staircase3d_tet.vtu"
+      fieldsToImport="{ FluidComposition }"
+      fieldNamesInGEOSX="{ globalCompFraction }"
       logLevel="1"/>
 
     <InternalWell
