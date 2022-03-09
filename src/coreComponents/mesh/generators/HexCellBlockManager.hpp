@@ -118,7 +118,7 @@ public:
   }
 
   localIndex numNodes() const override
-  { return m_nodesPositions.size(); }
+  { return m_numNodes; }
 
   localIndex numEdges() const override
   { return m_numEdges; }
@@ -215,6 +215,7 @@ private:
   HexMeshConnectivityBuilder * m_theOneWhoDoesTheJob;
 
   // The numbers of things we are dealing with 
+  localIndex m_numNodes = 0;
   localIndex m_numEdges = 0;
   localIndex m_numFaces = 0;
   localIndex m_numElements = 0;

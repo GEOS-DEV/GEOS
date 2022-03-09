@@ -19,6 +19,7 @@
 #include "VTKMeshGenerator.hpp"
 
 #include "CellBlockManager.hpp"
+#include "HexCellBlockManager.hpp"
 
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
@@ -230,11 +231,14 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  * @return the global length of the mesh (diagonal of the bounding box)
  */
-double writeMeshNodes( CellBlockManager & cellBlockManager,
+double writeMeshNodes( HexCellBlockManager & cellBlockManager,
                        vtkSmartPointer< vtkUnstructuredGrid > mesh )
 {
   cellBlockManager.setNumNodes( mesh->GetNumberOfPoints() );
   arrayView1d< globalIndex > const & nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
+
+
+  std::cout<< " VTK nb points " << mesh->GetNumberOfPoints() << std::endl;
 
   // Writing the points
   GEOSX_ERROR_IF( mesh->GetNumberOfPoints() == 0, "Mesh is empty, aborting" );
@@ -793,7 +797,7 @@ void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                       std::map< int, std::vector< vtkIdType > > const & regionsTetra,
                       std::map< int, std::vector< vtkIdType > > const & regionsWedges,
                       std::map< int, std::vector< vtkIdType > > const & regionsPyramids,
-                      CellBlockManager & cellBlockManager )
+                      HexCellBlockManager & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
   auto fct = [&]( VTKCellType vtkType, std::map< int, std::vector< vtkIdType > > const & regionIdToCellIds ) -> void
@@ -830,7 +834,7 @@ void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
  */
 void buildSurfaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                     std::map< int, std::vector< vtkIdType > > const & surfacesIdsToCellsIds,
-                    CellBlockManager & cellBlockManager )
+                    HexCellBlockManager & cellBlockManager )
 {
   std::map< string, SortedArray< localIndex > > & nodeSets = cellBlockManager.getNodeSets();
 
@@ -870,17 +874,24 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
 
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  meshBody.registerGroup< MeshLevel >( string( "Level0" ) );
+  meshBody.getMeshLevels().registerGroup< MeshLevel >( "Level0" );
 
-  CellBlockManager & cellBlockManager = domain.registerGroup< CellBlockManager >( keys::cellManager );
+  //CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
+  // Ongoing test 
+  // TODO: Modify CellBlockManagerABC so that it has the basic functions used by the MeshGenerator
+  // The class CellBlockManager should not be a type for functions here
+  HexCellBlockManager & cellBlockManager = meshBody.registerGroup< HexCellBlockManager >( keys::cellManager );
+  
+  
   double const globalLength = writeMeshNodes( cellBlockManager, m_vtkMesh );
   meshBody.setGlobalLengthScale( globalLength );
 
   // TODO Check that the neighbor information set is bulletproof
   domain.getMetisNeighborList() = computeMPINeighborRanks( cuts );
 
-  std::map< int, std::vector< vtkIdType > > const surfacesIdsToCellsIds = buildRegionToCellsAndFaces( m_vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
+  std::map< int, std::vector< vtkIdType > > const 
+  surfacesIdsToCellsIds = buildRegionToCellsAndFaces( m_vtkMesh, m_regionsHex, m_regionsTetra, m_regionsWedges, m_regionsPyramids );
 
   m_importableArrays = findImportableArrays( m_vtkMesh );
 
