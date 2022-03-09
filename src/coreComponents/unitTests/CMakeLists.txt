@@ -1,3 +1,7 @@
+if( ENABLE_PYGEOSX )
+  set( extraComponentsLinkList pygroup pyfileIO pysolver )
+endif()
+
 add_subdirectory( xmlTests )
 add_subdirectory( virtualElementTests )
 add_subdirectory( linearAlgebraTests )
