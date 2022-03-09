@@ -47,7 +47,7 @@ public:
    * @return The number as an integer.
    */
   static constexpr int maxEdgesPerNode()
-  { return 200; }
+  { return 6; }
 
   /**
    * @brief Extra space for node to edges mapping.
