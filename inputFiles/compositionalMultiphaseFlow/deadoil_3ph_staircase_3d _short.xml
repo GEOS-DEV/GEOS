@@ -1,0 +1,310 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
+  <Solvers>
+    <CompositionalMultiphaseFVM
+      name="compflow"
+      logLevel="1"
+      discretization="fluidTPFA"
+      targetRegions="{ Channel }"
+      maxCompFractionChange="0.3"
+      temperature="300">
+      <NonlinearSolverParameters
+        newtonTol="1.0e-10"
+        newtonMaxIter="15"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </CompositionalMultiphaseFVM>
+  </Solvers>
+
+  <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_MESH_BLOCK -->
+  <Mesh>
+    <InternalMesh
+      name="mesh"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 5, 10 }"
+      yCoords="{ 0, 5, 10 }"
+      zCoords="{ 0, 2.5, 5, 7.5, 10 }"
+      nx="{ 5, 5 }"
+      ny="{ 5, 5 }"
+      nz="{ 3, 3, 3, 3 }"
+      cellBlockNames="{ b00, b01, b02, b03, b04, b05, b06, b07, b08, b09, b10, b11, b12, b13, b14, b15 }"/>
+  </Mesh>
+
+  <!-- END_SPHINX_INCLUDE_MESH_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_GEOM_BLOCK -->
+  <Geometry>
+    <Box
+      name="source"
+      xMin="{ 8.99, -0.01, 7.49 }"
+      xMax="{ 10.01, 1.01, 10.01 }"/>
+
+    <Box
+      name="sink"
+      xMin="{ 8.99, -0.01, -0.01 }"
+      xMax="{ 10.01, 1.01, 2.51 }"/>
+  </Geometry>
+
+  <!-- END_SPHINX_INCLUDE_GEOM_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_EVENTS_BLOCK -->
+  <!-- <Events
+    maxTime="1e4">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e4"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      forceDt="1e4"
+      endTime="1e4"
+      target="/Solvers/compflow"/> -->
+
+  <Events
+    maxTime="1e5">
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e7"
+      target="/Outputs/siloOutput"/>
+
+    <PeriodicEvent
+      name="solverApplications1"
+      forceDt="1e4"
+      endTime="1e5"
+      target="/Solvers/compflow"/>
+
+    <!-- <PeriodicEvent
+      name="solverApplications2"
+      forceDt="1e6"
+      beginTime="1e6"
+      endTime="1e7"
+      target="/Solvers/compflow"/>
+
+    <PeriodicEvent
+      name="solverApplications3"
+      forceDt="1e7"
+      beginTime="1e7"
+      target="/Solvers/compflow"/> -->
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e8"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <!-- END_SPHINX_INCLUDE_EVENTS_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_ELEMREG_BLOCK -->
+  <ElementRegions>
+    <CellElementRegion
+      name="Channel"
+      cellBlocks="{ b08, b00, b01, b05, b06, b14, b15, b11 }"
+      materialList="{ fluid, rock, relperm }"/>
+
+    <CellElementRegion
+      name="Barrier"
+      cellBlocks="{ b04, b12, b13, b09, b10, b02, b03, b07 }"
+      materialList="{ }"/>
+  </ElementRegions>
+
+  <!-- END_SPHINX_INCLUDE_ELEMREG_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_NUMMET_BLOCK -->
+  <NumericalMethods>
+    <FiniteVolume>
+      <TwoPointFluxApproximation
+        name="fluidTPFA"/>
+    </FiniteVolume>
+  </NumericalMethods>
+
+  <!-- END_SPHINX_INCLUDE_NUMMET_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_CONST_BLOCK -->
+  <Constitutive>
+    <DeadOilFluid
+      name="fluid"
+      phaseNames="{ gas, water, oil }"
+      surfaceDensities="{ 0.9907, 1022.0, 800.0 }"
+      componentMolarWeight="{ 16e-3, 18e-3, 114e-3 }"
+      hydrocarbonFormationVolFactorTableNames="{ B_g_table, B_o_table }"
+      hydrocarbonViscosityTableNames="{ visc_g_table, visc_o_table }"
+      waterReferencePressure="30600000.1"
+      waterFormationVolumeFactor="1.03"
+      waterCompressibility="0.00000000041"
+      waterViscosity="0.0003"/>
+
+    <CompressibleSolidConstantPermeability
+      name="rock"
+      solidModelName="nullSolid"
+      porosityModelName="rockPorosity"
+      permeabilityModelName="rockPerm"/>
+
+    <NullModel
+      name="nullSolid"/>
+
+    <PressurePorosity
+      name="rockPorosity"
+      defaultReferencePorosity="0.2"
+      referencePressure="0.0"
+      compressibility="1.0e-9"/>
+
+    <BrooksCoreyBakerRelativePermeability
+      name="relperm"
+      phaseNames="{ gas, water, oil }"
+      phaseMinVolumeFraction="{ 0.05, 0.05, 0.05 }"
+      waterOilRelPermExponent="{ 2.5, 1.5 }"
+      waterOilRelPermMaxValue="{ 0.8, 0.9 }"
+      gasOilRelPermExponent="{ 3, 3 }"
+      gasOilRelPermMaxValue="{ 0.4, 0.9 }"/>
+
+    <ConstantPermeability
+      name="rockPerm"
+      permeabilityComponents="{ 1.0e-16, 1.0e-16, 1.0e-16 }"/>
+  </Constitutive>
+
+  <!-- END_SPHINX_INCLUDE_CONST_BLOCK -->
+  <!-- START_SPHINX_INCLUDE_PERM_BLOCK -->
+  <FieldSpecifications>
+    <!-- END_SPHINX_INCLUDE_PERM_BLOCK -->
+    <!-- Initial pressure: ~50 bar -->
+    <!-- START_SPHINX_INCLUDE_INIT_BLOCK -->
+    <FieldSpecification
+      name="initialPressure"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Channel"
+      fieldName="pressure"
+      scale="5e6"/>
+
+    <!-- Initial composition: no water, only heavy hydrocarbon components and N2 -->
+    <FieldSpecification
+      name="initialComposition_oil"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.2"/>
+
+    <FieldSpecification
+      name="initialComposition_gas"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.05"/>
+
+    <FieldSpecification
+      name="initialComposition_water"
+      initialCondition="1"
+      setNames="{ all }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.75"/>
+
+    <!-- END_SPHINX_INCLUDE_INIT_BLOCK -->
+    <!-- START_SPHINX_INCLUDE_BC_BLOCK -->
+    <!-- Injection pressure: ~100 bar -->
+    <FieldSpecification
+      name="sourceTermPressure"
+      objectPath="ElementRegions/Channel"
+      fieldName="pressure"
+      scale="1e7"
+      setNames="{ source }"/>
+
+    <!-- Injection stream: mostly water -->
+    <FieldSpecification
+      name="sourceTermComposition_oil"
+      setNames="{ source }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.01"/>
+
+    <FieldSpecification
+      name="sourceTermComposition_gas"
+      setNames="{ source }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.01"/>
+
+    <FieldSpecification
+      name="sourceTermComposition_water"
+      setNames="{ source }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.98"/>
+
+    <!-- Production pressure: ~50 bar, -->
+    <FieldSpecification
+      name="sinkTerm"
+      objectPath="ElementRegions/Channel"
+      fieldName="pressure"
+      scale="5e6"
+      setNames="{ sink }"/>
+
+    <!-- Production stream: same as initial (should not matter due to upwinding) -->
+    <FieldSpecification
+      name="sinkTermComposition_oil"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="0"
+      scale="0.6"/>
+
+    <FieldSpecification
+      name="sinkTermComposition_gas"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="1"
+      scale="0.399"/>
+
+    <FieldSpecification
+      name="sinkTermComposition_water"
+      setNames="{ sink }"
+      objectPath="ElementRegions/Channel"
+      fieldName="globalCompFraction"
+      component="2"
+      scale="0.001"/>
+  </FieldSpecifications>
+
+  <!-- END_SPHINX_INCLUDE_BC_BLOCK -->
+  <Functions>
+    <TableFunction
+      name="B_o_table"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="B_o_pvdo.txt"/>
+
+    <TableFunction
+      name="visc_o_table"
+      coordinateFiles="{ pres_pvdo.txt }"
+      voxelFile="visc_pvdo.txt"/>
+
+    <TableFunction
+      name="B_g_table"
+      coordinateFiles="{ pres_pvdg.txt }"
+      voxelFile="B_g_pvdg.txt"/>
+
+    <TableFunction
+      name="visc_g_table"
+      coordinateFiles="{ pres_pvdg.txt }"
+      voxelFile="visc_pvdg.txt"/>
+  </Functions>
+
+  <!-- START_SPHINX_INCLUDE_OUTPUT_BLOCK -->
+  <Outputs>
+    <Silo
+      name="siloOutput"
+      plotLevel="3"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <!-- END_SPHINX_INCLUDE_OUTPUT_BLOCK -->
+</Problem>

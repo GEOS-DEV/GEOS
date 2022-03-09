@@ -1215,9 +1215,6 @@ void ReactiveCompositionalMultiphaseOBL::updateState( DomainPartition & domain )
                                                 SurfaceElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                              auto & subRegion )
     {
-      // update porosity and permeability
-      updatePorosityAndPermeability( subRegion );
-
       // update operator values
       updateOBLOperators( subRegion );
     } );
