@@ -17,8 +17,7 @@
  */
 #include "ReactiveMultiFluid.hpp"
 
-#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
-#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
+
 
 namespace geosx
 {
@@ -283,8 +282,8 @@ ReactiveMultiFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
 
 // explicit instantiation of the model template; unfortunately we can't use the aliases for this
 template class ReactiveMultiFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                              PVTProps::CO2Solubility >;
+                                   PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+                                   PVTProps::CO2Solubility >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, ReactiveCO2BrinePhillipsFluid, string const &, Group * const )
 } //namespace constitutive

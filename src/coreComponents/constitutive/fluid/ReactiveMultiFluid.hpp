@@ -19,10 +19,17 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_REACTIVEMULTIFLUID_HPP_
 #define GEOSX_CONSTITUTIVE_FLUID_REACTIVEMULTIFLUID_HPP_
 
+
 #include "codingUtilities/EnumStrings.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
 #include "constitutive/fluid/MultiFluidUtils.hpp"
 #include "constitutive/fluid/PhaseModel.hpp"
+#include "constitutive/fluid/PVTFunctions/CO2Solubility.hpp"
+#include "constitutive/fluid/PVTFunctions/FenghourCO2Viscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/NoOpPVTFunction.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineDensity.hpp"
+#include "constitutive/fluid/PVTFunctions/PhillipsBrineViscosity.hpp"
+#include "constitutive/fluid/PVTFunctions/SpanWagnerCO2Density.hpp"
 
 
 #include <memory>
@@ -119,7 +126,6 @@ private:
     /// Index of the gas phase
     integer m_p2Index;
 
-
     /// Brine constitutive kernel wrappers
     typename PHASE1::KernelWrapper m_phase1;
 
@@ -185,6 +191,12 @@ private:
   std::unique_ptr< FLASH > m_flash;
 
 };
+
+// these aliases are useful in constitutive dispatch
+using ReactiveCO2BrinePhillipsFluid =
+  ReactiveMultiFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+                      PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+                      PVTProps::CO2Solubility >;
 
 template< typename PHASE1, typename PHASE2, typename FLASH >
 GEOSX_HOST_DEVICE
@@ -381,6 +393,15 @@ ReactiveMultiFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
 }
+
+
+/// Declare strings associated with enumeration values
+/// Needed for now, because we don't use the catalogNames for input (yet)
+ENUM_STRINGS( ReactiveCO2BrinePhillipsFluid::SubModelInputNames,
+              "DensityFun",
+              "ViscosityFun",
+              "EnthalpyFun",
+              "InternalEnergyFun" );
 
 } // namespace constitutive
 
