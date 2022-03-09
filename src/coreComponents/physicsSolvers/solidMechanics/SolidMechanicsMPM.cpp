@@ -408,6 +408,34 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     } );
   } );
 
+  // Loop over nodes
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X = nodeManager.referencePosition();
+  std::vector<double> xMin{DBL_MAX,DBL_MAX,DBL_MAX}, xMax{DBL_MIN,DBL_MIN,DBL_MIN}, domainL{0.0,0.0,0.0};
+
+  for(int i=0; i<X.size()/3; i++)
+  {
+    for(int j=0; j<3; j++)
+    {
+      xMin[j] = std::fmin(xMin[j],X[i][j]);
+      xMax[j] = std::fmax(xMin[j],X[i][j]);
+      domainL[j] = xMax[j] - xMin[j];
+    }
+  }
+
+  // Loop over particles
+  particleManager.forParticleRegions( [&]( auto & region )
+  {
+    region.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    {
+      array2d< real64 > particleCenter = subRegion.getParticleCenter();
+      for(int i=0; i<subRegion.size(); i++)
+      {
+        particleCenter[i][0] += 0.15708*cos(0.314159*(time_n + 0.5));
+      }
+      subRegion.setParticleCenter(particleCenter);
+    } );
+  } );
+
   return dt;
 }
 
