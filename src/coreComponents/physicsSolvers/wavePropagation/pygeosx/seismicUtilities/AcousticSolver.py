@@ -229,7 +229,7 @@ class AcousticSolver:
             rcv_pos = [receiver.coords for receiver in receivers_list]
             rcv_pos_geosx.to_numpy()[:] = rcv_pos[:]
 
-        #self.solver.reinit()
+        self.solver.reinit()
 
 
     def updateSourceValue(self, value):

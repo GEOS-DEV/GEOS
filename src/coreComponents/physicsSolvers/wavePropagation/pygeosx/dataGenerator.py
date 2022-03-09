@@ -40,7 +40,7 @@ def main():
     outputWaveFieldInterval = 50
 
 
-    result = acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm)
+    acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm)
 
 def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
     ishot=0
@@ -60,13 +60,13 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
                                         dtSeismoTrace)
 
         acousticSolver.initialize(rank)
-
-        acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
         acousticSolver.apply_initial_conditions()
 
+        acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
 #===================================================
         #FORWARD
 #===================================================
+
         residual = forward(acousticSolver, shot, outputWaveFieldInterval, rank)
 
         pressure = acousticSolver.getPressureAtReceivers()

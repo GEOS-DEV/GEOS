@@ -337,6 +337,7 @@ def computeFullGradient(directory_in_str, acquisition):
     nfiles = len(acquisition.shots)
 
     n=0
+    filename = ""
     while True:
         file_list = os.listdir(directory)
         if len(file_list) != 0:
@@ -348,11 +349,14 @@ def computeFullGradient(directory_in_str, acquisition):
         else:
             continue
 
+    totalNodes = (acquisition.nx+1)*(acquisition.ny+1)*(acquisition.nz+1)
     h5F = h5py.File("fullGradient.hdf5", "w")
-    h5F.create_dataset("fullGradient", data = h5p["partialGradient"], dtype='d', chunks=True, maxshape=(None,))
-    h5F.create_dataset("ReferencePosition", data = h5p["ReferencePosition"], chunks=True, maxshape=(None, 3))
+    h5F.create_dataset("fullGradient", data = np.zeros(totalNodes), dtype='d', chunks=True, maxshape=(totalNodes,))
+    h5F.create_dataset("ReferencePosition", data = np.zeros(totalNodes), chunks=True, maxshape=(totalNodes, 3))
     h5F.create_dataset("Time", data = h5p["Time"])
     keysF = list(h5F.keys())
+
+    shotInd = int(os.path.join(directory_in_str, filename).rsplit('.', 1)[0][-3::])
 
     h5p.close()
     os.remove(os.path.join(directory_in_str,filename))

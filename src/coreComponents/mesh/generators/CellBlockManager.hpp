@@ -53,7 +53,7 @@ public:
    * @return The number as an integer.
    */
   static constexpr int maxFacesPerNode()
-  { return 200; }
+  { return 4; }
 
   /**
    * @brief Extra space for node to faces mapping.

@@ -203,6 +203,10 @@ class Acquisition:
         y_nb_cells = int(internal_mesh['ny'].replace('{','').replace('}',''))
         z_nb_cells = int(internal_mesh['nz'].replace('{','').replace('}',''))
 
+        self.nx = x_nb_cells
+        self.ny = y_nb_cells
+        self.nz = z_nb_cells
+
         x_cells_boundary = np.append(np.arange(xCoords[0], xCoords[1], (xCoords[1]-xCoords[0])/x_nb_cells), xCoords[1])
         y_cells_boundary = np.append(np.arange(yCoords[0], yCoords[1], (yCoords[1]-yCoords[0])/y_nb_cells), yCoords[1])
         z_cells_boundary = np.append(np.arange(zCoords[0], zCoords[1], (zCoords[1]-zCoords[0])/z_nb_cells), zCoords[1])
