@@ -783,8 +783,8 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
                                                                                             regionName,
                                                                                             subRegion.getName() ) ];
-                localIndex const numQuadraturePoints = subRegion.size(); // The number of quadrature points is equal to the number of particles in a given subregion
-                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints ); // Not sure why this max is here
+                localIndex const numQuadraturePoints = 1; // Particles always have 1 quadrature point
+                numQuadraturePointsInList = std::max( numQuadraturePointsInList, numQuadraturePoints );
               } );
             }
           }

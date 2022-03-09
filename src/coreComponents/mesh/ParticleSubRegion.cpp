@@ -41,7 +41,7 @@ ParticleSubRegion::~ParticleSubRegion()
   // Left blank
 }
 
-void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock ) // Input type changed from ParticleBlockABC to ParticleBlock, fine for now
+void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock )
 {
   // Defines the (unique) particle type of this cell particle region,
   // and its associated number of nodes, edges, faces.
