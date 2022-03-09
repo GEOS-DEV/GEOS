@@ -29,8 +29,8 @@ namespace BilinearFormUtilities
 
 template< PDEUtilities::FunctionSpace V,
           PDEUtilities::FunctionSpace U,
-          PDEUtilities::DifferentialOperator OpV,
-          PDEUtilities::DifferentialOperator OpU >
+          PDEUtilities::DifferentialOperator OP_V,
+          PDEUtilities::DifferentialOperator OP_U >
 struct Helper
 {};
 
@@ -317,39 +317,56 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
 };
 
 /**
- * @brief Generic bilinear form template.
- * @tparam  V
- * @tparam  U
- * @tparam  OpV
- * @tparam  OpU
- * @tparam  MATRIX
- * @tparam  V_SPACE_OPV_BASIS_VALUES
- * @tparam  BILINEAR_FORM_MATRIX
- * @tparam  U_SPACE_OPU_BASIS_VALUES
+ * @brief Generic bilinear form template to assemble elemental matrices.
  *
- * a(v,u) = op1(V)^T * A * op2( U )
+ * This function compute the elemental matrix for a grid cell \f$ \Omega^e \f$
+ * with entries defined by the bilinear form
  *
+ * \f[
+ *   \int_{\Omega^e}
+ *     \texttt{OP}_V ( v^h ) \; \cdot \;
+ *     \mathsf{T}  \; \cdot \;
+ *     \texttt{OP}_U ( u^h ) \;
+ *     \mathrm{d}\Omega
+ * \f]
  *
+ * where \f$ v^h \f$ and \f$ u^h \f$ are finite element functions belonging to
+ * the test (@p V) and  trial (@p U) space, respectively, \f$ \texttt{OP}_V \f$
+ * and \f$ \texttt{OP}_U \f$ denote differential operators (zero- or
+ * first-order) applied to the test and trial function, respectively, and
+ * \f$ \mathsf{T} \f$ indicates a tensor.
  *
-   // V = matrix storing test space basis
-   // U = matrix storing trial space basis
+ * @tparam V Test function space.
+ * @tparam U Trial function space.
+ * @tparam OP_V Differential operator applied to functions in @p V.
+ * @tparam OP_U Differential operator applied to functions in @p U.
+ * @tparam MATRIX Derived matrix type.
+ * @tparam FE_VALUES_V Derived test shape function values or derivatives type.
+ * @tparam TENSOR Derived tensor type.
+ * @tparam FE_VALUES_U Derived trial shape function values or derivatives type.
+ * @param matrix The elemental matrix.
+ * @param feValuesV Test shape function values or derivatives.
+ * @param tensor The tensor defining the bilinear form.
+ * @param feValuesU Trial shape function values or derivatives.
+ * @param weight Quadrature weight.
+ *
  */
 template< PDEUtilities::FunctionSpace V,
           PDEUtilities::FunctionSpace U,
-          PDEUtilities::DifferentialOperator OpV,
-          PDEUtilities::DifferentialOperator OpU,
+          PDEUtilities::DifferentialOperator OP_V,
+          PDEUtilities::DifferentialOperator OP_U,
           typename MATRIX,
-          typename V_SPACE_OPV_BASIS_VALUES,
-          typename BILINEAR_FORM_MATRIX,
-          typename U_SPACE_OPU_BASIS_VALUES >
+          typename FE_VALUES_V,
+          typename TENSOR,
+          typename FE_VALUES_U >
 GEOSX_HOST_DEVICE
-static void compute( MATRIX && mat,
-                     V_SPACE_OPV_BASIS_VALUES const & v,
-                     BILINEAR_FORM_MATRIX const & A,
-                     U_SPACE_OPU_BASIS_VALUES const & u,
+static void compute( MATRIX && matrix,
+                     FE_VALUES_V const & feValuesV,
+                     TENSOR const & tensor,
+                     FE_VALUES_U const & feValuesU,
                      real64 const weight )
 {
-  Helper< V, U, OpV, OpU >::compute( mat, v, A, u, weight );
+  Helper< V, U, OP_V, OP_U >::compute( matrix, feValuesV, tensor, feValuesU, weight );
 }
 
 } // namespace BilinearFormUtilities

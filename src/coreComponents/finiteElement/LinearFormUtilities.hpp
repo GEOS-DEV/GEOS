@@ -28,7 +28,7 @@ namespace LinearFormUtilities
 {
 
 template< PDEUtilities::FunctionSpace V,
-          PDEUtilities::DifferentialOperator OpV >
+          PDEUtilities::DifferentialOperator OP_V >
 struct Helper
 {};
 
@@ -138,20 +138,47 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
   }
 };
 
-// Generic linear form template f(v)  = op1(V)^T * A
-// V = matrix storing test space basis
+/**
+ * @brief Generic linear form template to assemble elemental vectors.
+ *
+ * This function computes the elemental vector for a grid cell \f$ \Omega^e \f$
+ * with entries defined by the linear form
+ *
+ * \f[
+ *   \int_{\Omega^e}
+ *     \texttt{OP}_V ( v^h ) \; \cdot \;
+ *     \mathsf{T}  \;
+ *     \mathrm{d}\Omega
+ * \f]
+ *
+ * where \f$ v^h \f$ is a finite element function belonging to
+ * the test space (@p V), \f$ \texttt{OP}_V \f$ denotes a differential
+ * operator (zero- or first-order) applied to the test function, and
+ * \f$ \mathsf{T} \f$ indicates a tensor.
+ *
+ * @tparam V Test function space.
+ * @tparam OP_V Differential operator applied to functions in @p V.
+ * @tparam VECTOR Derived vector type.
+ * @tparam FE_VALUES_V Derived test shape function values or derivatives type.
+ * @tparam TENSOR Derived tensor type.
+ * @param vector The elemental vector.
+ * @param feValuesV Test shape function values or derivatives.
+ * @param tensor The tensor defining the linear form.
+ * @param weight Quadrature weight.
+ *
+ */
 template< PDEUtilities::FunctionSpace V,
-          PDEUtilities::DifferentialOperator OpV,
+          PDEUtilities::DifferentialOperator OP_V,
           typename VECTOR,
-          typename V_SPACE_OPV_BASIS_VALUES,
+          typename FE_VALUES_V,
           typename TENSOR >
 GEOSX_HOST_DEVICE
-static void compute( VECTOR && vec,
-                     V_SPACE_OPV_BASIS_VALUES const & v,
-                     TENSOR const & A,
+static void compute( VECTOR && vector,
+                     FE_VALUES_V const & feValuesV,
+                     TENSOR const & tensor,
                      real64 const weight )
 {
-  Helper< V, OpV >::compute( vec, v, A, weight );
+  Helper< V, OP_V >::compute( vector, feValuesV, tensor, weight );
 }
 
 } // namespace LinearFormUtilities

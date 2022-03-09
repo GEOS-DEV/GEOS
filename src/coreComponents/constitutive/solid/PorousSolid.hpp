@@ -78,15 +78,15 @@ public:
                                      DiscretizationOps & stiffness ) const
   {
     // Compute total stress increment and its derivative
-    totalStressHelper( k,
-                       q,
-                       initialFluidPressure,
-                       fluidPressureOld,
-                       deltaFluidPressure,
-                       strainIncrement,
-                       totalStress,
-                       dTotalStress_dPressure,
-                       stiffness );
+    computeTotalStress( k,
+                        q,
+                        initialFluidPressure,
+                        fluidPressureOld,
+                        deltaFluidPressure,
+                        strainIncrement,
+                        totalStress,
+                        dTotalStress_dPressure,
+                        stiffness );
 
     // Compute porosity and its derivatives
     real64 porosity;
@@ -94,15 +94,15 @@ public:
     real64 porosityInit;
     real64 dPorosity_dVolStrain;
     real64 dPorosity_dPressure;
-    porosityHelper( k,
-                    q,
-                    deltaFluidPressure,
-                    strainIncrement,
-                    porosity,
-                    porosityOld,
-                    porosityInit,
-                    dPorosity_dVolStrain,
-                    dPorosity_dPressure );
+    computePorosity( k,
+                     q,
+                     deltaFluidPressure,
+                     strainIncrement,
+                     porosity,
+                     porosityOld,
+                     porosityInit,
+                     dPorosity_dVolStrain,
+                     dPorosity_dPressure );
 
     // Compute body force vector and its derivatives
     if( gravityAcceleration > 0.0 )
@@ -176,15 +176,15 @@ public:
                                     real64 (& dPoreVolumeConstraint_dComponents )[1][NUM_MAX_COMPONENTS] ) const
   {
     // Compute total stress increment and its derivatives
-    totalStressHelper( k,
-                       q,
-                       initialFluidPressure,
-                       fluidPressureOld,
-                       deltaFluidPressure,
-                       strainIncrement,
-                       totalStress,
-                       dTotalStress_dPressure,
-                       stiffness );
+    computeTotalStress( k,
+                        q,
+                        initialFluidPressure,
+                        fluidPressureOld,
+                        deltaFluidPressure,
+                        strainIncrement,
+                        totalStress,
+                        dTotalStress_dPressure,
+                        stiffness );
 
     // Compute porosity and its derivatives
     real64 porosity;
@@ -192,15 +192,15 @@ public:
     real64 porosityInit;
     real64 dPorosity_dVolStrain;
     real64 dPorosity_dPressure;
-    porosityHelper( k,
-                    q,
-                    deltaFluidPressure,
-                    strainIncrement,
-                    porosity,
-                    porosityOld,
-                    porosityInit,
-                    dPorosity_dVolStrain,
-                    dPorosity_dPressure );
+    computePorosity( k,
+                     q,
+                     deltaFluidPressure,
+                     strainIncrement,
+                     porosity,
+                     porosityOld,
+                     porosityInit,
+                     dPorosity_dVolStrain,
+                     dPorosity_dPressure );
 
     // Compute body force and its derivative
     using Deriv = constitutive::multifluid::DerivativeOffset;
@@ -441,15 +441,15 @@ private:
   }
 
   GEOSX_HOST_DEVICE
-  void porosityHelper( localIndex const k,
-                       localIndex const q,
-                       real64 const & deltaFluidPressure,
-                       real64 const ( &strainIncrement )[6],
-                       real64 & porosity,
-                       real64 & porosityOld,
-                       real64 & porosityInit,
-                       real64 & dPorosity_dVolStrain,
-                       real64 & dPorosity_dPressure ) const
+  void computePorosity( localIndex const k,
+                        localIndex const q,
+                        real64 const & deltaFluidPressure,
+                        real64 const ( &strainIncrement )[6],
+                        real64 & porosity,
+                        real64 & porosityOld,
+                        real64 & porosityInit,
+                        real64 & dPorosity_dVolStrain,
+                        real64 & dPorosity_dPressure ) const
   {
     m_porosityUpdate.updateFromPressureAndStrain( k,
                                                   q,
@@ -464,15 +464,15 @@ private:
   }
 
   GEOSX_HOST_DEVICE
-  void totalStressHelper( localIndex const k,
-                          localIndex const q,
-                          real64 const & initialFluidPressure,
-                          real64 const & fluidPressureOld,
-                          real64 const & deltaFluidPressure,
-                          real64 const ( &strainIncrement )[6],
-                          real64 ( & totalStress )[6],
-                          real64 ( & dTotalStress_dPressure )[6],
-                          DiscretizationOps & stiffness ) const
+  void computeTotalStress( localIndex const k,
+                           localIndex const q,
+                           real64 const & initialFluidPressure,
+                           real64 const & fluidPressureOld,
+                           real64 const & deltaFluidPressure,
+                           real64 const ( &strainIncrement )[6],
+                           real64 ( & totalStress )[6],
+                           real64 ( & dTotalStress_dPressure )[6],
+                           DiscretizationOps & stiffness ) const
   {
     // Compute total stress increment and its derivative w.r.t. pressure
     m_solidUpdate.smallStrainUpdate( k,
