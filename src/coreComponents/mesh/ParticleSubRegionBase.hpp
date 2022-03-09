@@ -107,6 +107,12 @@ public:
   { return m_particleCenter; }
 
   /**
+   * @brief Set the center of each particle in this subregion.
+   */
+  void setParticleCenter( array2d< real64 > particleCenter )
+  { m_particleCenter = particleCenter; }
+
+  /**
    * @brief Get the velocity of each particle in this subregion.
    * @return an arrayView1d of const particle velocities
    */
