@@ -430,6 +430,7 @@ public:
   real64 complete( localIndex const k,
                    StackVariables & stack ) const
   {
+//    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace
     GEOSX_UNUSED_VAR( k );
     real64 maxForce = 0;
 

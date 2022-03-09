@@ -316,9 +316,24 @@ struct Helper< PDEUtilities::FunctionSpace::H1vector,
 
 };
 
-// Generic bilinear form template a(v,u)  = op1(V)^T * A * op2( U )
-// V = matrix storing test space basis
-// U = matrix storing trial space basis
+/**
+ * @brief Generic bilinear form template.
+ * @tparam  V
+ * @tparam  U
+ * @tparam  OpV
+ * @tparam  OpU
+ * @tparam  MATRIX
+ * @tparam  V_SPACE_OPV_BASIS_VALUES
+ * @tparam  BILINEAR_FORM_MATRIX
+ * @tparam  U_SPACE_OPU_BASIS_VALUES
+ *
+ * a(v,u) = op1(V)^T * A * op2( U )
+ *
+ *
+ *
+   // V = matrix storing test space basis
+   // U = matrix storing trial space basis
+ */
 template< PDEUtilities::FunctionSpace V,
           PDEUtilities::FunctionSpace U,
           PDEUtilities::DifferentialOperator OpV,

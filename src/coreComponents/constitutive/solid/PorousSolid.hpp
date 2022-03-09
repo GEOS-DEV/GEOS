@@ -107,18 +107,18 @@ public:
     // Compute body force vector and its derivatives
     if( gravityAcceleration > 0.0 )
     {
-      bodyForceHelper( solidDensity,
-                       initialFluidDensity,
-                       fluidDensity,
-                       dFluidDensity_dPressure,
-                       porosityInit,
-                       porosity,
-                       dPorosity_dVolStrain,
-                       dPorosity_dPressure,
-                       gravityVector,
-                       bodyForceIncrement,
-                       dBodyForce_dVolStrainIncrement,
-                       dBodyForce_dPressure );
+      computeBodyForce( solidDensity,
+                        initialFluidDensity,
+                        fluidDensity,
+                        dFluidDensity_dPressure,
+                        porosityInit,
+                        porosity,
+                        dPorosity_dVolStrain,
+                        dPorosity_dPressure,
+                        gravityVector,
+                        bodyForceIncrement,
+                        dBodyForce_dVolStrainIncrement,
+                        dBodyForce_dPressure );
     }
 
     // Compute fluid mass contents and  its derivatives
@@ -236,20 +236,20 @@ public:
       }
       LvArray::tensorOps::scale< NUM_MAX_COMPONENTS >( dFluidTotalMassDensity_dComponents, porosity );
 
-      bodyForceHelper( solidDensity,
-                       initialFluidTotalMassDensity,
-                       fluidTotalMassDensity,
-                       dFluidTotalMassDensity_dPressure,
-                       dFluidTotalMassDensity_dComponents,
-                       porosityInit,
-                       porosity,
-                       dPorosity_dVolStrain,
-                       dPorosity_dPressure,
-                       gravityVector,
-                       bodyForceIncrement,
-                       dBodyForce_dVolStrainIncrement,
-                       dBodyForce_dPressure,
-                       dBodyForce_dComponents );
+      computeBodyForce( solidDensity,
+                        initialFluidTotalMassDensity,
+                        fluidTotalMassDensity,
+                        dFluidTotalMassDensity_dPressure,
+                        dFluidTotalMassDensity_dComponents,
+                        porosityInit,
+                        porosity,
+                        dPorosity_dVolStrain,
+                        dPorosity_dPressure,
+                        gravityVector,
+                        bodyForceIncrement,
+                        dBodyForce_dVolStrainIncrement,
+                        dBodyForce_dPressure,
+                        dBodyForce_dComponents );
     }
 
     // Compute component mass contents and their derivatives
@@ -263,7 +263,7 @@ public:
     LvArray::tensorOps::fill< NUM_MAX_COMPONENTS >( dComponentMassContent_dPressure, 0.0 );
     LvArray::tensorOps::fill< NUM_MAX_COMPONENTS, NUM_MAX_COMPONENTS >( dComponentMassContent_dComponents, 0.0 );
 
-    for( localIndex ip = 0; ip < NP; ++ip )
+    for( integer ip = 0; ip < NP; ++ip )
     {
       real64 const phaseAmount    = porosity    * fluidPhaseSaturation( ip )    * fluidPhaseDensity( ip );
       real64 const phaseAmountOld = porosityOld * fluidPhaseSaturationOld( ip ) * fluidPhaseDensityOld( ip );
@@ -279,7 +279,7 @@ public:
                       dPhaseAmount_dC,
                       Deriv::dC );
 
-      for( localIndex jc = 0; jc < NC; ++jc )
+      for( integer jc = 0; jc < NC; ++jc )
       {
         dPhaseAmount_dC[jc] = dPhaseAmount_dC[jc] * fluidPhaseSaturation( ip )
                               + fluidPhaseDensity( ip ) * dFluidPhaseSaturation_dGlobalCompDensity( ip, jc );
@@ -288,7 +288,7 @@ public:
 
       // ic - index of component whose conservation equation is assembled
       // (i.e. row number in local matrix)
-      for( localIndex ic = 0; ic < NC; ++ic )
+      for( integer ic = 0; ic < NC; ++ic )
       {
         componentMassContentIncrement[ic] = componentMassContentIncrement[ic]
                                             + phaseAmount * fluidPhaseCompFrac( ip, ic )
@@ -309,7 +309,7 @@ public:
                         dPhaseCompFrac_dC,
                         Deriv::dC );
 
-        for( localIndex jc = 0; jc < NC; ++jc )
+        for( integer jc = 0; jc < NC; ++jc )
         {
           dComponentMassContent_dComponents[ic][jc] = dComponentMassContent_dComponents[ic][jc]
                                                       + dPhaseCompFrac_dC[jc] * phaseAmount
@@ -322,14 +322,14 @@ public:
     poreVolumeConstraint = 1.0;
     dPoreVolumeConstraint_dPressure = 0.0;
     LvArray::tensorOps::fill< 1, NUM_MAX_COMPONENTS >( dPoreVolumeConstraint_dComponents, 0.0 );
-    for( localIndex ip = 0; ip < NP; ++ip )
+    for( integer ip = 0; ip < NP; ++ip )
     {
       poreVolumeConstraint = poreVolumeConstraint - fluidPhaseSaturation( ip );
       dPoreVolumeConstraint_dPressure = dPoreVolumeConstraint_dPressure
                                         - dFluidPhaseSaturation_dPressure( ip ) * porosity
                                         - dPorosity_dPressure * fluidPhaseSaturation( ip );
 
-      for( localIndex jc = 0; jc < NC; ++jc )
+      for( integer jc = 0; jc < NC; ++jc )
       {
         dPoreVolumeConstraint_dComponents[0][jc] = dPoreVolumeConstraint_dComponents[0][jc]
                                                    - dFluidPhaseSaturation_dGlobalCompDensity( ip, jc )  * porosity;
@@ -378,18 +378,18 @@ private:
   }
 
   GEOSX_HOST_DEVICE
-  void bodyForceHelper( real64 const & solidDensity,
-                        real64 const & initialFluidDensity,
-                        real64 const & fluidDensity,
-                        real64 const & dFluidDensity_dPressure,
-                        real64 const & porosityInit,
-                        real64 const & porosity,
-                        real64 const & dPorosity_dVolStrain,
-                        real64 const & dPorosity_dPressure,
-                        real64 const ( &gravityVector )[3],
-                        real64 ( & bodyForceIncrement )[3],
-                        real64 ( & dBodyForce_dVolStrainIncrement )[3],
-                        real64 ( & dBodyForce_dPressure )[3] ) const
+  void computeBodyForce( real64 const & solidDensity,
+                         real64 const & initialFluidDensity,
+                         real64 const & fluidDensity,
+                         real64 const & dFluidDensity_dPressure,
+                         real64 const & porosityInit,
+                         real64 const & porosity,
+                         real64 const & dPorosity_dVolStrain,
+                         real64 const & dPorosity_dPressure,
+                         real64 const ( &gravityVector )[3],
+                         real64 ( & bodyForceIncrement )[3],
+                         real64 ( & dBodyForce_dVolStrainIncrement )[3],
+                         real64 ( & dBodyForce_dPressure )[3] ) const
   {
     real64 const mixtureDensity = ( 1.0 - porosity ) * solidDensity
                                   + porosity * fluidDensity;
@@ -409,33 +409,33 @@ private:
 
   template< int NUM_MAX_COMPONENTS >
   GEOSX_HOST_DEVICE
-  void bodyForceHelper( real64 const & solidDensity,
-                        real64 const & initialFluidTotalMassDensity,
-                        real64 const & fluidTotalMassDensity,
-                        real64 const & dFluidTotalMassDensity_dPressure,
-                        real64 const ( &dFluidTotalMassDensity_dComponents)[NUM_MAX_COMPONENTS],
-                        real64 const & porosityInit,
-                        real64 const & porosity,
-                        real64 const & dPorosity_dVolStrain,
-                        real64 const & dPorosity_dPressure,
-                        real64 const ( &gravityVector )[3],
-                        real64 ( & bodyForceIncrement )[3],
-                        real64 ( & dBodyForce_dVolStrainIncrement )[3],
-                        real64 ( & dBodyForce_dPressure )[3],
-                        real64 ( & dBodyForce_dComponents )[3][NUM_MAX_COMPONENTS] ) const
+  void computeBodyForce( real64 const & solidDensity,
+                         real64 const & initialFluidTotalMassDensity,
+                         real64 const & fluidTotalMassDensity,
+                         real64 const & dFluidTotalMassDensity_dPressure,
+                         real64 const ( &dFluidTotalMassDensity_dComponents)[NUM_MAX_COMPONENTS],
+                         real64 const & porosityInit,
+                         real64 const & porosity,
+                         real64 const & dPorosity_dVolStrain,
+                         real64 const & dPorosity_dPressure,
+                         real64 const ( &gravityVector )[3],
+                         real64 ( & bodyForceIncrement )[3],
+                         real64 ( & dBodyForce_dVolStrainIncrement )[3],
+                         real64 ( & dBodyForce_dPressure )[3],
+                         real64 ( & dBodyForce_dComponents )[3][NUM_MAX_COMPONENTS] ) const
   {
-    bodyForceHelper( solidDensity,
-                     initialFluidTotalMassDensity,
-                     fluidTotalMassDensity,
-                     dFluidTotalMassDensity_dPressure,
-                     porosityInit,
-                     porosity,
-                     dPorosity_dVolStrain,
-                     dPorosity_dPressure,
-                     gravityVector,
-                     bodyForceIncrement,
-                     dBodyForce_dVolStrainIncrement,
-                     dBodyForce_dPressure );
+    computeBodyForce( solidDensity,
+                      initialFluidTotalMassDensity,
+                      fluidTotalMassDensity,
+                      dFluidTotalMassDensity_dPressure,
+                      porosityInit,
+                      porosity,
+                      dPorosity_dVolStrain,
+                      dPorosity_dPressure,
+                      gravityVector,
+                      bodyForceIncrement,
+                      dBodyForce_dVolStrainIncrement,
+                      dBodyForce_dPressure );
 
     LvArray::tensorOps::Rij_eq_AiBj< 3, NUM_MAX_COMPONENTS >( dBodyForce_dComponents, gravityVector, dFluidTotalMassDensity_dComponents );
   }

@@ -284,7 +284,6 @@ public:
     constexpr FunctionSpace displacementTrialSpace = FE_TYPE::template getFunctionSpace< numDofPerTrialSupportPoint >();
     constexpr FunctionSpace displacementTestSpace = displacementTrialSpace;
     constexpr FunctionSpace pressureTrialSpace = FunctionSpace::P0;
-//    constexpr FunctionSpace pressureTestSpace = pressureTrialSpace;
 
     localIndex const NC = m_numComponents;
     localIndex const NP = m_numPhases;
@@ -539,9 +538,6 @@ public:
 
     real64 maxForce = 0;
 
-    CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.dLocalResidualMomentum_dDisplacement );
-
-    //int nFlowDof = m_numComponents + 1;
     constexpr int nUDof = numNodesPerElem * numDofPerTestSupportPoint;
 
     // Apply equation/variable change transformation(s)
@@ -577,7 +573,7 @@ public:
       }
     }
 
-    localIndex dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
+    localIndex const dof = LvArray::integerConversion< localIndex >( stack.localPressureDofIndex[0] - m_dofRankOffset );
     if( 0 <= dof && dof < m_matrix.numRows() )
     {
       for( localIndex i = 0; i < m_numComponents; ++i )
@@ -596,23 +592,18 @@ public:
                                                     m_numComponents );
         RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+i], stack.localResidualMass[i] );
       }
-    }
 
-    dof = dof + m_numComponents;
-    if( 0 <= dof && dof < m_matrix.numRows() )
-    {
-
-      m_matrix.template addToRow< serialAtomic >( dof,
+      m_matrix.template addToRow< serialAtomic >( dof + m_numComponents,
                                                   stack.localPressureDofIndex,
                                                   stack.dLocalPoreVolumeConstraint_dPressure[0],
                                                   1 );
 
-      m_matrix.template addToRow< serialAtomic >( dof,
+      m_matrix.template addToRow< serialAtomic >( dof + m_numComponents,
                                                   stack.localComponentDofIndices,
                                                   stack.dLocalPoreVolumeConstraint_dComponents[0],
                                                   m_numComponents );
 
-      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localPoreVolumeConstraint[0] );
+      RAJA::atomicAdd< serialAtomic >( &m_rhs[dof+m_numComponents], stack.localPoreVolumeConstraint[0] );
     }
 
     return maxForce;
