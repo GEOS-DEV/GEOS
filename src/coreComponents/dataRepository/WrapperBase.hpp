@@ -265,7 +265,7 @@ public:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex pack( buffer_unit_type *& buffer,
+  localIndex pack( buffer_unit_type * & buffer,
                    bool withMetadata,
                    bool onDevice,
                    parallelDeviceEvents & events ) const
@@ -287,7 +287,7 @@ public:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packByIndex( buffer_unit_type *& buffer,
+  localIndex packByIndex( buffer_unit_type * & buffer,
                           arrayView1d< localIndex const > const & packList,
                           bool withMetadata,
                           bool onDevice,

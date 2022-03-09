@@ -330,13 +330,15 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DO_PACK >( buffer, string( "Wrappers" ) );
 
   // If `wrapperNames` is empty, then one takes all the available wrappers of this Group instance.
-  // If `tmp` is a convenience conversion from `array1d< string >` to `std::vector< string >`.
+  // Here `tmp` is a convenience conversion from `array1d< string >` to `std::vector< string >`
+  // for I need the same type everywhere.
   std::vector< string > const tmp( wrapperNames.begin(), wrapperNames.end() );
   std::vector< string > const rawWrapperNames = wrapperNames.empty() ? mapKeys( m_wrappers ) : tmp;
 
   // `wrappers` are considered for packing if they match the size of this Group instance.
-  // A way to check this is to check the `wrapper.sizedFromParent()`.
-  std::vector< std::pair< string, WrapperBase const * > > wrappers; // TODO We cannot rely on `wrapper.getName()` to get the key (they can be different).
+  // A way to check this is to check the sufficient (but not necessary...) condition `wrapper.sizedFromParent()`.
+  // TODO We cannot rely on `wrapper.getName()` to get the key (they can be different).
+  std::vector< std::pair< string, WrapperBase const * > > wrappers;
   for( string const & wrapperName: rawWrapperNames )
   {
     if( hasWrapper( wrapperName ) )
@@ -344,7 +346,9 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
       WrapperBase const & wrapper = getWrapperBase( wrapperName );
 
       if( wrapper.sizedFromParent() )
-      { wrappers.emplace_back( wrapperName, &wrapper ); }
+      {
+        wrappers.emplace_back( wrapperName, &wrapper );
+      }
     }
     else
     {

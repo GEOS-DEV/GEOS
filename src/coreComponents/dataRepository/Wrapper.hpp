@@ -814,12 +814,13 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packTemplate( buffer_unit_type *& buffer,
+  localIndex packTemplate( buffer_unit_type * & buffer,
                            bool withMetadata,
                            bool onDevice,
                            parallelDeviceEvents & events ) const
   {
     localIndex packedSize = 0;
+
     if( withMetadata )
     { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
     if( onDevice )
@@ -837,6 +838,7 @@ private:
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
     }
+
     return packedSize;
   }
 
@@ -854,7 +856,7 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packByIndexTemplate( buffer_unit_type *& buffer,
+  localIndex packByIndexTemplate( buffer_unit_type * & buffer,
                                   arrayView1d< localIndex const > const & packList,
                                   bool withMetadata,
                                   bool onDevice,

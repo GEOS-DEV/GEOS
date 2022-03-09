@@ -142,19 +142,18 @@ VAL findOption( mapBase< KEY, VAL, SORTED > const & map,
   return iter->second;
 }
 
- /**
-  * @brief Extract the keys from the given map.
-  * @tparam MAP Type of the considered map.
-  * @tparam R Type of the container holding the keys.
-  * @param[in] map The map from which keys will be extracted.
-  * @return The container with the keys.
-  */
+/**
+ * @brief Extract the keys from the given map.
+ * @tparam MAP Type of the considered map.
+ * @tparam R Type of the container holding the keys.
+ * @param[in] map The map from which keys will be extracted.
+ * @return The container with the keys.
+ */
 template< typename MAP, typename R = std::vector< typename MAP::key_type > >
 R mapKeys( MAP const & map )
 {
   R keys;
-  std::transform( map.begin(), map.end(), std::inserter( keys, keys.end() ),
-                  [=]( auto const & p ) { return p.first; } );
+  std::transform( map.begin(), map.end(), std::inserter( keys, keys.end() ), []( auto const & p ) { return p.first; } );
   return keys;
 }
 

@@ -269,15 +269,15 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
       std::copy( wrapperNames.begin(), wrapperNames.end(), std::inserter( tmpWrapperNames, tmpWrapperNames.end() ) );
     }
 
-    // We remove all the wrappers which names in the `exclusion` list.
+    // We remove all the wrappers which names are in the `exclusion` list.
     std::set< string > wrapperNamesWithoutExclusions;
     std::set< string > const exclusion = getPackingExclusionList();
-    std::set_difference(tmpWrapperNames.cbegin(), tmpWrapperNames.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( wrapperNamesWithoutExclusions, wrapperNamesWithoutExclusions.end() ));
+    std::set_difference( tmpWrapperNames.cbegin(), tmpWrapperNames.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( wrapperNamesWithoutExclusions, wrapperNamesWithoutExclusions.end() ) );
 
     // Now we build the final list.
     // No packing by index is allowed if the registered wrapper
     // does not share the size of the owning group.
-    // Hence, the sufficient condition of `sizedFromParent` to keep the wrapper.
+    // Hence, the sufficient (but not necessary...) condition on `wrapper.sizedFromParent()`.
     std::set< string > wrapperNamesFinal;
     for( string const & wrapperName: wrapperNamesWithoutExclusions )
     {
@@ -286,7 +286,9 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
         WrapperBase const & wrapper = getWrapperBase( wrapperName );
 
         if( wrapper.sizedFromParent() )
-        { wrapperNamesFinal.insert( wrapperName ); }
+        {
+          wrapperNamesFinal.insert( wrapperName );
+        }
       }
     }
 
