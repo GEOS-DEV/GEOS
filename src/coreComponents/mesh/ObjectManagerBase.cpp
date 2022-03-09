@@ -262,7 +262,7 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
     std::set< string > tmpWrapperNames;
     if( wrapperNames.empty() )
     {
-      tmpWrapperNames = mapKeys< decltype( wrappers() ), std::set< string > >( wrappers() );
+      tmpWrapperNames = mapKeys< std::set >( wrappers() );
     }
     else
     {
