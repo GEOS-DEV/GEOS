@@ -103,7 +103,7 @@ public:
   /**
    * @copydoc getParticleCenter() const
    */
-  array2d< real64 > getParticleCenter()
+  arrayView2d< real64 > getParticleCenter()
   { return m_particleCenter; }
 
   /**

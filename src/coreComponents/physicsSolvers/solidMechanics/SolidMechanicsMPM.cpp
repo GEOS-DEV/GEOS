@@ -399,15 +399,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   ParticleManager & particleManager = meshBody1.m_hasParticles ? meshBody1.getMeshLevel(0).getParticleManager() : meshBody2.getMeshLevel(0).getParticleManager();
   NodeManager & nodeManager = !meshBody1.m_hasParticles ? meshBody1.getMeshLevel(0).getNodeManager() : meshBody2.getMeshLevel(0).getNodeManager();
 
-  // Loop over particles
-  particleManager.forParticleRegions( [&]( auto & particleRegion )
-  {
-    particleRegion.forParticleSubRegions( [&]( ParticleSubRegion & particleSubRegion )
-    {
-      array2d< real64 > particleCenter = particleSubRegion.getParticleCenter();
-    } );
-  } );
-
   // Loop over nodes
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X = nodeManager.referencePosition();
   std::vector<double> xMin{DBL_MAX,DBL_MAX,DBL_MAX}, xMax{DBL_MIN,DBL_MIN,DBL_MIN}, domainL{0.0,0.0,0.0};
@@ -427,12 +418,19 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     region.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
     {
-      array2d< real64 > particleCenter = subRegion.getParticleCenter();
+      arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
       for(int i=0; i<subRegion.size(); i++)
       {
         particleCenter[i][0] += 0.15708*cos(0.314159*(time_n + 0.5));
+//        intArray nodes = getNodes(particle);
+//        realArray weights = getWeights(particle);
+//        for(nodes : node)
+//        {
+//          momentum(node) += particle contribution;
+//        }
       }
-      subRegion.setParticleCenter(particleCenter);
+      // forall with policy - use atomics to avoid race conditions
+      // use array2d's 2nd template argument like node.referencePosition()
     } );
   } );
 
