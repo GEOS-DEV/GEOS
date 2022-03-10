@@ -1,3 +1,5 @@
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
+
 if( ENABLE_PYGEOSX )
   set( extraComponentsLinkList pygroup pyfileIO pysolver )
 endif()
