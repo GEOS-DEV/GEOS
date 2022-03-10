@@ -357,9 +357,9 @@ real64 SolidMechanicsMPM::explicitKernelDispatch( MeshLevel & mesh,
 
 
 real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
-                                                real64 const & dt,
-                                                const int cycleNumber,
-                                                DomainPartition & domain )
+                                      real64 const & dt,
+                                      const int cycleNumber,
+                                      DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
@@ -392,24 +392,46 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
   #define USE_PHYSICS_LOOP
 
+  // Constitutive manager
+  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+
   // Get node and particle managers. ***** We implicitly assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
+
   MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
   MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
-  ParticleManager & particleManager = meshBody1.m_hasParticles ? meshBody1.getMeshLevel(0).getParticleManager() : meshBody2.getMeshLevel(0).getParticleManager();
-  NodeManager & nodeManager = !meshBody1.m_hasParticles ? meshBody1.getMeshLevel(0).getNodeManager() : meshBody2.getMeshLevel(0).getNodeManager();
+  MeshBody & particles = meshBody1.m_hasParticles ? meshBody1 : meshBody2;
+  MeshBody & grid = !meshBody1.m_hasParticles ? meshBody1 : meshBody2;
 
-  // Loop over nodes
+  ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
+  NodeManager & nodeManager = grid.getMeshLevel(0).getNodeManager();
+
+  // Get nodal positions
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X = nodeManager.referencePosition();
-  std::vector<double> xMin{DBL_MAX,DBL_MAX,DBL_MAX}, xMax{DBL_MIN,DBL_MIN,DBL_MIN}, domainL{0.0,0.0,0.0};
 
+  // Get domain extent
+  std::vector<real64> xMin{DBL_MAX,DBL_MAX,DBL_MAX}, xMax{DBL_MIN,DBL_MIN,DBL_MIN}, domainL{0.0,0.0,0.0};
   for(int i=0; i<X.size()/3; i++)
   {
     for(int j=0; j<3; j++)
     {
       xMin[j] = std::fmin(xMin[j],X[i][j]);
-      xMax[j] = std::fmax(xMin[j],X[i][j]);
+      xMax[j] = std::fmax(xMax[j],X[i][j]);
       domainL[j] = xMax[j] - xMin[j];
+    }
+  }
+
+  // Get element size
+  std::vector<real64> hEl{DBL_MAX,DBL_MAX,DBL_MAX};
+  for(int i=0; i<X.size()/3; i++)
+  {
+    for(int j=0; j<3; j++)
+    {
+      real64 test = X[i][j] - xMin[j]; // By definition, this should always be positive
+      if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
+      {
+        hEl[j] = std::fmin(test,hEl[j]);
+      }
     }
   }
 
@@ -429,9 +451,22 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 //          momentum(node) += particle contribution;
 //        }
       }
-      // forall with policy - use atomics to avoid race conditions
-      // use array2d's 2nd template argument like node.referencePosition()
     } );
+  } );
+
+  // Calculate stable time step
+  real64 wavespeed;
+  real64 length = std::fmin(hEl[0],std::fmin(hEl[1],hEl[2]));
+
+  arrayView1d< string const > const & regionNames = m_meshTargets[particles.getName()];
+  ParticleManager::ConstitutiveRelationAccessor< ConstitutiveBase >
+  constitutiveRelations = particleManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+  particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames,
+                                                              [&]( localIndex const,
+                                                                   ParticleSubRegion & subRegion )
+  {
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
   } );
 
   return dt;
