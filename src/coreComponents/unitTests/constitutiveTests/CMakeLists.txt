@@ -50,9 +50,6 @@ if ( ENABLE_PYGEOSX )
   set( dependencyList ${dependencyList} ${extraComponentsLinkList} Python3::Python Python3::NumPy pylvarray )
 endif()
 
-message(STATUS "***trest constitutive deps: ${dependencyList}" )
-
-
 #
 # Add gtest C++ based tests
 #

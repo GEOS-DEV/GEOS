@@ -27,8 +27,6 @@ if ( ENABLE_PYGEOSX )
   set( dependencyList ${dependencyList} ${extraComponentsLinkList} python3:python pylvarray)
 endif()
 
-message(STATUS "*****deplist: ${dependencyList}")
-
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
 
