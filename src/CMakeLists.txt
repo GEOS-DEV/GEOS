@@ -103,8 +103,6 @@ else()
   set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
 endif()
 
-set(ENABLE_PYGEOSX ON CACHE BOOL "")
-
 if( ENABLE_PYGEOSX )
   set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver )
 endif()

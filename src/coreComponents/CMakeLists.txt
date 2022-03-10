@@ -66,7 +66,7 @@ if( ENABLE_MPI )
 endif()
 
 if( ENABLE_PYGEOSX )
-  set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver )
+	set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver Python3::Python Python3::NumPy pylvarray )
 endif()
 
 if( GEOSX_BUILD_SHARED_LIBS )
