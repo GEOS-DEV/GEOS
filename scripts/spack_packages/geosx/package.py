@@ -81,7 +81,7 @@ class Geosx(CMakePackage, CudaPackage):
     # variant('tests', default=True, description='Build tests')
     # variant('benchmarks', default=False, description='Build benchmarks')
     # variant('examples', default=False, description='Build examples')
-    # variant('docs', default=False, description='Build docs')
+    variant('docs', default=False, description='Build docs')
     # variant('addr2line', default=True,
     #         description='Build support for addr2line.')
 
@@ -112,14 +112,14 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # IO
     #
-    depends_on('hdf5@1.10.5: +shared +pic +mpi', when='~vtk')
+    depends_on('hdf5@1.10.5: +shared +mpi')
 
     depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
 
-    depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi ~zlib')
+    depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi')
 
     depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~callpath ~libpfm ~gotcha ~sampler', when='+caliper')
+    depends_on('caliper@2.4: +shared +adiak +mpi ~libpfm ~gotcha ~sampler', when='+caliper')
 
     depends_on('pugixml@1.8: +shared')
 
@@ -140,18 +140,15 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('superlu-dist +int64 +openmp +shared', when='~petsc')
     depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
 
-    depends_on('suite-sparse@5.8.1: +pic +openmp +amd +camd +colamd +ccolamd +cholmod +umfpack', when='+suite-sparse')
-    depends_on('suite-sparse +blas-no-underscore', when='%gcc +suite-sparse +essl')
+    depends_on('suite-sparse@5.8.1: +pic +openmp', when='+suite-sparse')
 
     trilinos_build_options = '~fortran +openmp +shared'
-    trilinos_tpls = '~boost ~glm ~gtest ~hdf5 ~hypre ~matio ~metis +mpi ~mumps ~netcdf ~suite-sparse'
-    trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +teuchos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
+    trilinos_tpls = '~boost ~gtest ~hdf5 ~hypre +mpi ~mumps ~suite-sparse'
+    trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
     depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
-    depends_on('trilinos +blas_lowercase_no_underscore', when='+trilinos +essl')
-    # depends_on('trilinos +force-new-lapack', when='+trilinos +essl')
 
     depends_on('hypre@2.23.0geosx +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
-    depends_on('hypre@2.23.0geosx +cuda +shared +superlu-dist +mpi +openmp +unified-memory +cusparse', when='+hypre-cuda')
+    depends_on('hypre@2.23.0geosx +cuda +shared +superlu-dist +mpi +openmp +unified-memory', when='+hypre-cuda')
  
     petsc_build_options = '+shared +mpi'
     petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
@@ -161,8 +158,8 @@ class Geosx(CMakePackage, CudaPackage):
     # Python
     #
     depends_on('python +shared +pic', when='+pygeosx')
-    depends_on('py-numpy@1.19: +blas +lapack +force-parallel-build', when='+pygeosx')
-    depends_on('py-scipy@1.5.2: +force-parallel-build', when='+pygeosx')
+    depends_on('py-numpy@1.19: +blas +lapack', when='+pygeosx')
+    depends_on('py-scipy@1.5.2:', when='+pygeosx')
     depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
     depends_on('py-pip', when='+pygeosx')
 
