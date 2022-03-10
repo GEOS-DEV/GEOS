@@ -431,14 +431,17 @@ void testPhaseVolumeFractionNumericalDerivatives( CompositionalMultiphaseFVM & s
         arrayView2d< real64, compflow::USD_PHASE > const dPhaseVolFrac_dTemp =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >();
 
-        // perturb pressure in each cell
+        // reset the solver state to zero out variable updates
+        solver.resetStateToBeginningOfStep( domain );
+
+        // perturb temperature in each cell
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
           dTemp[ei] = dT;
         } );
 
-        // recompute component fractions
+        // recompute all fluid properties
         solver.updateFluidState( subRegion );
 
         // check values in each cell
@@ -591,9 +594,12 @@ void testPhaseMobilityNumericalDerivatives( CompositionalMultiphaseFVM & solver,
           subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
 
         arrayView2d< real64, compflow::USD_PHASE > const dPhaseMob_dTemp =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >();
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseMobility_dTemperature >();
 
-        // perturb pressure in each cell
+        // reset the solver state to zero out variable updates (resetting the whole domain is overkill...)
+        solver.resetStateToBeginningOfStep( domain );
+
+        // perturb temperature in each cell
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dT = perturbParameter * ( temp[ei] + perturbParameter );
@@ -761,13 +767,9 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
           dTemp.move( LvArray::MemorySpace::cuda, false );
 #endif
 
-
-          mesh.getElemManager().forElementSubRegions( regionNames,
-                                                      [&]( localIndex const,
-                                                           ElementSubRegionBase & subRegion2 )
-          {
-            solver.updateFluidState( subRegion2 );
-          } );
+          // here, we make sure that rock internal energy is updated
+          // in other words, a call to updateFluidState would not work
+          solver.updateState( domain );
 
           residual.zero();
           jacobian.zero();
