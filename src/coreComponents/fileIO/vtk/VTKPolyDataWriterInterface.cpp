@@ -720,7 +720,7 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   {
     if( mpiRank == 0 )
     {
-      if ( !vtmWriter.hasBlock( region.getCatalogName() ) )
+      if( !vtmWriter.hasBlock( region.getCatalogName() ) )
       {
         vtmWriter.addBlock( region.getCatalogName() );
       }
@@ -739,17 +739,17 @@ void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
   };
 
   // Output each of the region types
-  if ( ( m_outputRegionType == VTKRegionTypes::CELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  if( ( m_outputRegionType == VTKRegionTypes::CELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
   {
     elemManager.forElementRegions< CellElementRegion >( addRegion );
   }
 
-  if ( ( m_outputRegionType == VTKRegionTypes::WELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  if( ( m_outputRegionType == VTKRegionTypes::WELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
   {
     elemManager.forElementRegions< WellElementRegion >( addRegion );
   }
 
-  if ( ( m_outputRegionType == VTKRegionTypes::SURFACE ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  if( ( m_outputRegionType == VTKRegionTypes::SURFACE ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
   {
     elemManager.forElementRegions< SurfaceElementRegion >( addRegion );
   }

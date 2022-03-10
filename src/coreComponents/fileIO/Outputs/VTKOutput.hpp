@@ -90,7 +90,7 @@ private:
 
   /// VTK output mode
   vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;
-  
+
   /// VTK output region filter
   vtk::VTKRegionTypes m_outputRegionType = vtk::VTKRegionTypes::ALL;
 
