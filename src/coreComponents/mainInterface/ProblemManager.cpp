@@ -827,7 +827,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
             for( auto & materialName : materialList )
             {
               constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
-              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
+              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points per element." );
             }
           }
           else
@@ -860,7 +860,7 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
             for( auto & materialName : materialList )
             {
               constitutiveManager.hangConstitutiveRelation( materialName, &particleSubRegion, quadratureSize );
-              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
+              GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points per particle." );
             }
           }
           else
