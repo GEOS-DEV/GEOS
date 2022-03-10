@@ -761,17 +761,17 @@ public:
       }
     }
 
+    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
+    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
+    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
+
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
     stack.localResidual[numComp] = stack.poreVolumeNew * oneMinusPhaseVolFracSum;
-    for( integer idof = 0; idof < numComp+1; ++idof )
+    for( integer idof = 0; idof < numDof; ++idof )
     {
       stack.localJacobian[numComp][idof] *= stack.poreVolumeNew;
     }
     stack.localJacobian[numComp][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
-
-    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
-    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
   }
 
   /**

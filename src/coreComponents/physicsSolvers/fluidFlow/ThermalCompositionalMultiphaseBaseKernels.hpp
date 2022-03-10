@@ -379,7 +379,7 @@ public:
   void complete( localIndex const ei,
                  StackVariables & stack ) const
   {
-    // Step 1: assemble the component mass balance equations
+    // Step 1: assemble the component mass balance equations and volume balance equations
     Base::complete( ei, stack );
 
     // Step 2: assemble the energy equation
