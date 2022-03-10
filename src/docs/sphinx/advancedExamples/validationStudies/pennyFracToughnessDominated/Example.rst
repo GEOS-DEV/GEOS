@@ -2,7 +2,7 @@
 
 
 ###########################################################
-Toughness-Storage Dominated Penny Shaped Hydraulic Fracture
+Toughness-Storage-Dominated Penny Shaped Hydraulic Fracture
 ###########################################################
 
 

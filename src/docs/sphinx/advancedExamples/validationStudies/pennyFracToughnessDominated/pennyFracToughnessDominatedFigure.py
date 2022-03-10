@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
 
-class Penny_toughnessDonimated:
+class Penny_toughnessStorageDominated:
     def __init__(self, E, nu, KIC, mu, Q0, t):
         Ep = E / ( 1.0 - nu**2.0 )
         Kp = 8.0 / np.sqrt( 2.0 * np.pi ) * KIC
@@ -60,11 +60,11 @@ def main():
 
     t = np.arange(0.0, tMax, 0.01*tMax)
 
-    pennyFrac = Penny_toughnessDonimated ( E, nu, KIC, mu, Q0, t )
+    pennyFrac = Penny_toughnessStorageDominated ( E, nu, KIC, mu, Q0, t )
     fracRadius, inletAperture , inletPressure = pennyFrac.analyticalSolution()
 
     # Load GEOSX results
-    t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("zeroViscosity_timehist.txt", skiprows=1, unpack=True)
+    t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
     Radius_sim = (fracArea_sim/np.pi)**0.5
 
     # Visulization
