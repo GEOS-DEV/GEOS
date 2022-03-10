@@ -16,8 +16,10 @@ if ( ENABLE_CUDA )
 endif()
 
 if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pygroup pyfileIO pysolver )
+  set( dependencyList ${dependencyList} pygroup pyfileIO pysolver Python3::Python Python3::NumPy pylvarray  )
 endif()
+message(STATUS "!!!!!!!!!!!! testWrapper dep list ${dependencyList}" )
+message(STATUS "!!!!!!!!!!!! testWrapper pygeosx true ? ${ENABLE_PYGEOSX}" )
 
 #
 # Add gtest C++ based tests

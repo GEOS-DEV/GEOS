@@ -47,8 +47,10 @@ if( ENABLE_CUDA )
 endif()
 
 if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} ${extraComponentsLinkList} )
+  set( dependencyList ${dependencyList} ${extraComponentsLinkList} python3:python pylvarray )
 endif()
+
+message(STATUS "***trest constitutive deps: ${dependencyList}" )
 
 
 #

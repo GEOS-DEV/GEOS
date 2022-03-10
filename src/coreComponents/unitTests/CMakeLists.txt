@@ -1,8 +1,10 @@
 set(ENABLE_PYGEOSX ON CACHE BOOL "")
 
 if( ENABLE_PYGEOSX )
-  set( extraComponentsLinkList pygroup pyfileIO pysolver )
+  set( extraComponentsLinkList pygroup pyfileIO pysolver Python3::Python Python3::NumPy pylvarray  )
 endif()
+
+message(STATUS "extracomponentslinklist: ${extraComponentsLinkList}")
 
 add_subdirectory( xmlTests )
 add_subdirectory( virtualElementTests )
