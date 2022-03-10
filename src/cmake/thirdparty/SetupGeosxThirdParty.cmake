@@ -615,6 +615,7 @@ endif()
 ################################
 # Python
 ################################
+set(ENABLE_PYGEOSX ON CACHE BOOL "")
 if(ENABLE_PYGEOSX)
     message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     find_package(Python3 REQUIRED
