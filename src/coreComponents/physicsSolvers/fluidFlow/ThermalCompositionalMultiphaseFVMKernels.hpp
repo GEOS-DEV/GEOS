@@ -243,14 +243,14 @@ public:
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
    * @param[in] stencilWrapper reference to the stencil wrapper
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessor
-   * @param[in] thermalCompFlowAccessors
-   * @param[in] multiFluidAccessor
-   * @param[in] thermalMultiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
-   * @param[in] thermalConductivityAccessors
+   * @param[in] dofNumberAccessor accessor for the dofs numbers
+   * @param[in] compFlowAccessor accessor for wrappers registered by the solver
+   * @param[in] thermalCompFlowAccessors accessor for *thermal* wrappers registered by the solver
+   * @param[in] multiFluidAccessor accessor for wrappers registered by the multifluid model
+   * @param[in] thermalMultiFluidAccessors accessor for *thermal* wrappers registered by the multifluid model
+   * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
+   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
+   * @param[in] thermalConductivityAccessors accessor for wrappers registered by the thermal conductivity model
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector
@@ -357,9 +357,9 @@ public:
     // ***********************************************
     // First, we call the base computeFlux to compute:
     //  1) compFlux and its derivatives (including derivatives wrt temperature),
-    //  2) enthalpyFlux and its derivatives (including derivatives wrt temperature
+    //  2) enthalpy part of energyFlux  and its derivatives (including derivatives wrt temperature)
     //
-    // Computing dCompFlux_dT and the enthalpyFlux requires quantities already computed in the base computeFlux,
+    // Computing dCompFlux_dT and the enthalpy flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
     Base::computeFlux( iconn, stack, [=] GEOSX_HOST_DEVICE ( integer const ip,
@@ -499,13 +499,18 @@ public:
 
     // *****************************************************
     // Computation of the conduction term in the energy flux
+    // Note that the phase enthalpy term in the energy was computed above
     // Note that this term is computed using an explicit treatment of conductivity for now
+
     // Step 1: compute the thermal transmissibilities at this face
+    // Below, the thermal conductivity used to compute (explicitly) the thermal conducivity
+    // To avoid modifying the signature of the "computeWeights" function for now, we pass m_thermalConductivity twice
+    // TODO: modify computeWeights to accomodate explicit coefficients
     m_stencilWrapper.computeWeights( iconn,
                                      m_thermalConductivity,
-                                     m_thermalConductivity, // unused for now
+                                     m_thermalConductivity, // we have to pass something here, so we just use thermal conductivity
                                      stack.thermalTransmissibility,
-                                     stack.dTrans_dPres ); // unused for now
+                                     stack.dTrans_dPres ); // again, we have to pass something here, but this is unused for now
 
     // Step 2: compute temperature difference at the interface
     for( integer i = 0; i < stack.stencilSize; ++i )

@@ -606,25 +606,22 @@ void CompositionalMultiphaseBase::updateCapPressureModel( ObjectManagerBase & da
 
 void CompositionalMultiphaseBase::updateSolidInternalEnergyModel( ObjectManagerBase & dataGroup ) const
 {
-  if( m_isThermal )
-  {
-    arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
-    arrayView1d< real64 const > const dTemp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
+  arrayView1d< real64 const > const temp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::temperature >();
+  arrayView1d< real64 const > const dTemp = dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >();
 
-    string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
-    SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
+  string const & solidInternalEnergyName = dataGroup.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+  SolidInternalEnergy & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( dataGroup, solidInternalEnergyName );
 
-    SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
+  SolidInternalEnergy::KernelWrapper solidInternalEnergyWrapper = solidInternalEnergy.createKernelUpdates();
 
-    // TODO: this should go somewhere, handle the case of flow in fracture, etc
+  // TODO: this should go somewhere, handle the case of flow in fracture, etc
 
-    thermalCompositionalMultiphaseBaseKernels::
-      SolidInternalEnergyUpdateKernel::
-      launch< parallelDevicePolicy<> >( dataGroup.size(),
-                                        solidInternalEnergyWrapper,
-                                        temp,
-                                        dTemp );
-  }
+  thermalCompositionalMultiphaseBaseKernels::
+    SolidInternalEnergyUpdateKernel::
+    launch< parallelDevicePolicy<> >( dataGroup.size(),
+                                      solidInternalEnergyWrapper,
+                                      temp,
+                                      dTemp );
 }
 
 void CompositionalMultiphaseBase::updateFluidState( ObjectManagerBase & subRegion ) const
@@ -1831,11 +1828,16 @@ void CompositionalMultiphaseBase::resetStateToBeginningOfStep( DomainPartition &
         dTemp.zero();
       }
 
-      // update porosity, permeability, and solid internal energy
+      // update porosity, permeability
       updatePorosityAndPermeability( subRegion );
-      updateSolidInternalEnergyModel( subRegion );
       // update all fluid properties
       updateFluidState( subRegion );
+      // for thermal simulations, update solid internal energy
+      if( m_isThermal )
+      {
+        updateSolidInternalEnergyModel( subRegion );
+      }
+
     } );
   } );
 }
@@ -1950,9 +1952,13 @@ void CompositionalMultiphaseBase::updateState( DomainPartition & domain )
     {
       // update porosity, permeability, and solid internal energy
       updatePorosityAndPermeability( subRegion );
-      updateSolidInternalEnergyModel( subRegion );
       // update all fluid properties
       updateFluidState( subRegion );
+      // for thermal, update solid internal energy
+      if( m_isThermal )
+      {
+        updateSolidInternalEnergyModel( subRegion );
+      }
     } );
   } );
 }

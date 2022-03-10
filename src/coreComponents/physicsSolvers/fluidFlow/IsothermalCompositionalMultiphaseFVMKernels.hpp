@@ -314,11 +314,11 @@ public:
    * @param[in] numPhases the number of fluid phases
    * @param[in] rankOffset the offset of my MPI rank
    * @param[in] hasCapPressure flag specifying whether capillary pressure is used or not
-   * @param[in] dofNumberAccessor
-   * @param[in] compFlowAccessors
-   * @param[in] multiFluidAccessors
-   * @param[in] capPressureAccessors
-   * @param[in] permeabilityAccessors
+   * @param[in] dofNumberAccessor accessor for the dof numbers
+   * @param[in] compFlowAccessors accessor for wrappers registered by the solver
+   * @param[in] multiFluidAccessors accessor for wrappers registered by the multifluid model
+   * @param[in] capPressureAccessors accessor for wrappers registered by the cap pressure model
+   * @param[in] permeabilityAccessors accessor for wrappers registered by the permeability model
    * @param[in] dt time step size
    * @param[inout] localMatrix the local CRS matrix
    * @param[inout] localRhs the local right-hand side vector

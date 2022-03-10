@@ -40,6 +40,22 @@ namespace compositionalMultiphaseUtilities
  * @detail numRowsToShift is different from numRowsInBlock if there is an equation that we do *not* want to
  * modify, like the energy flux for thermal simulations. In that specific case, numRowsToShift
  * is set to numRowsInBlock-1 to make sure that we don't modify the last row of each block (the energy flux)
+ *
+ * Let's consider the following blocks arising when computing the localFlux in the thermal compositional solver (for two-component flow)
+ *
+ *
+ *    (mass_comp_1)_1       \
+ *    (mass_comp_2)_1       |=> block 1
+ *    (energy)_1            /
+ *
+ *    (mass_comp_1)_2       \
+ *    (mass_comp_2)_2       |=> block 2
+ *    (energy)_2            /
+ *
+ * In this case:
+ *      - numRowsToShift = 2
+ *      - numRowsInBlock = 3
+ *      - numBlocks = 2
  */
 template< typename VEC >
 GEOSX_HOST_DEVICE
@@ -94,6 +110,25 @@ void shiftElementsAheadByOneAndReplaceFirstElementWithSum( integer const numRows
  * @detail numRowsToShift is different from numRowsInBlock if there is an equation that we do *not* want to
  * modify, like the energy flux for thermal simulations. In that specific case, numRowsToShift
  * is set to numRowsInBlock-1 to make sure that we don't modify the last row of each block (the energy flux)
+ *
+ * Let's consider the following blocks arising when computing the localFluxJacobian in the thermal compositional solver (for two-component
+ * flow)
+ *
+ *                       p    \rho_1   \rho_2   T
+ *    (mass_comp_1)_1    .       .       .      .       \
+ *    (mass_comp_2)_1    .       .       .      .       |=> block 1
+ *    (energy)_1         .       .       .      .       /
+ *
+ *    (mass_comp_1)_2    .       .       .      .       \
+ *    (mass_comp_2)_2    .       .       .      .       |=> block 2
+ *    (energy)_2         .       .       .      .       /
+ *
+ * In this case:
+ *      - numRowsToShift = 2
+ *      - numRowsInBlock = 3
+ *      - numColsInBlock = 4
+ *      - numBlocks = 2
+ *
  */
 template< typename MATRIX, typename VEC >
 GEOSX_HOST_DEVICE

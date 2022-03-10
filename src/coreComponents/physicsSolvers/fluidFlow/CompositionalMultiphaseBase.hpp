@@ -168,13 +168,13 @@ public:
    * @brief Getter for the number of fluid components (species)
    * @return the number of components
    */
-  localIndex numFluidComponents() const { return m_numComponents; }
+  integer numFluidComponents() const { return m_numComponents; }
 
   /**
    * @brief Getter for the number of fluid phases
    * @return the number of phases
    */
-  localIndex numFluidPhases() const { return m_numPhases; }
+  integer numFluidPhases() const { return m_numPhases; }
 
   /**
    * @brief Getter for the name of the reference fluid model name
