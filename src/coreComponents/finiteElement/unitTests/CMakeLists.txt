@@ -19,7 +19,7 @@ if ( ENABLE_CUDA )
 endif()
 
 if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pygeosx )
+  set( dependencyList ${dependencyList} pygroup pyfileIO pysolver )
 endif()
 
 #
