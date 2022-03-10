@@ -17,8 +17,8 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pygroup pyfileIO pysolver )
+if( ENABLE_PYGEOSX )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 foreach(test_name ${serial_tests})
