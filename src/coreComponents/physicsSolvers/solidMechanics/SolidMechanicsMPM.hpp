@@ -111,6 +111,16 @@ public:
 
   /**@}*/
 
+  /**
+   * This method is called when its host event is triggered
+   */
+  virtual bool execute( real64 const time_n,
+                        real64 const dt,
+                        integer const cycleNumber,
+                        integer const eventCounter,
+                        real64 const eventProgress,
+                        DomainPartition & domain ) override;
+
 
   template< typename CONSTITUTIVE_BASE,
             typename KERNEL_WRAPPER,
@@ -199,6 +209,14 @@ public:
     return m_rigidBodyModes;
   }
 
+  std::vector<int> getNodes(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                            std::string const & particleType);
+
+  std::vector<int> getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                              std::string const & particleType);
+
+  void initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X);
+
 protected:
   virtual void postProcessInput() override final;
 
@@ -217,6 +235,13 @@ protected:
   integer m_strainTheory = 0;
   string m_contactRelationName;
   MPI_iCommData m_iComm;
+
+  std::vector<real64> m_hx{DBL_MAX,DBL_MAX,DBL_MAX}; // Grid spacing in x-y-z
+  std::vector<real64> m_xMin{DBL_MAX,DBL_MAX,DBL_MAX}; // Minimum grid coordinate
+  std::vector<real64> m_xMax{DBL_MIN,DBL_MIN,DBL_MIN}; // Maximum grid coordinate
+  std::vector<real64> m_domainL{0.0,0.0,0.0}; // Length of each edge of grid
+  std::vector<int> m_nEl{0,0,0}; // Number of elements in each grid direction
+  std::vector<std::vector<std::vector<int>>> m_ijkMap;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;

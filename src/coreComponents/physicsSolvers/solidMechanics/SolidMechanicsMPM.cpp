@@ -354,7 +354,22 @@ real64 SolidMechanicsMPM::explicitKernelDispatch( MeshLevel & mesh,
   return rval;
 }
 
+bool SolidMechanicsMPM::execute( real64 const time_n,
+                                 real64 const dt,
+                                 integer const cycleNumber,
+                                 integer const GEOSX_UNUSED_PARAM( eventCounter ),
+                                 real64 const GEOSX_UNUSED_PARAM( eventProgress ),
+                                 DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
 
+  m_nextDt = solverStep( time_n,
+                         dt,
+                         cycleNumber,
+                         domain );
+
+  return false;
+}
 
 real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
                                       real64 const & dt,
@@ -383,14 +398,67 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
+void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X)
+{
+  // Get domain extent
+  for(int i=0; i<X.size()/3; i++)
+  {
+    for(int j=0; j<3; j++)
+    {
+      m_xMin[j] = std::fmin(m_xMin[j],X[i][j]);
+      m_xMax[j] = std::fmax(m_xMax[j],X[i][j]);
+      m_domainL[j] = m_xMax[j] - m_xMin[j];
+    }
+  }
+
+  // Get element size
+  for(int i=0; i<X.size()/3; i++)
+  {
+    for(int j=0; j<3; j++)
+    {
+      real64 test = X[i][j] - m_xMin[j]; // By definition, this should always be positive
+      if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
+      {
+        m_hx[j] = std::fmin(test,m_hx[j]);
+      }
+    }
+  }
+
+  // Get number of elements in each direction
+  for(int i=0; i<3; i++)
+  {
+      m_nEl[i] = std::round(m_domainL[i]/m_hx[i]);
+  }
+
+  // Create element map
+  m_ijkMap.resize( m_nEl[0] + 1 );
+  for( int i = 0 ; i <= m_nEl[0] ; i++ )
+  {
+    m_ijkMap[i].resize( m_nEl[1] + 1 );
+    for( int j = 0 ; j <= m_nEl[1] ; j++ )
+    {
+      m_ijkMap[i][j].resize( m_nEl[2] + 1 );
+    }
+  }
+  for( int ii = 0 ; ii < X.size()/3 ; ii++ )
+  {
+    int i = std::round( ( X[ii][0] - m_xMin[0] ) / m_hx[0] ) ;
+    int j = std::round( ( X[ii][1] - m_xMin[1] ) / m_hx[1] ) ;
+    int k = std::round( ( X[ii][2] - m_xMin[2] ) / m_hx[2] ) ;
+    m_ijkMap[i][j][k] = ii;
+  }
+}
+
 real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                         real64 const & dt,
-                                        const int GEOSX_UNUSED_PARAM( cycleNumber ),
+                                        const int cycleNumber,
                                         DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
   #define USE_PHYSICS_LOOP
+
+
 
   // Constitutive manager
   ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
@@ -409,30 +477,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Get nodal positions
   arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X = nodeManager.referencePosition();
 
-  // Get domain extent
-  std::vector<real64> xMin{DBL_MAX,DBL_MAX,DBL_MAX}, xMax{DBL_MIN,DBL_MIN,DBL_MIN}, domainL{0.0,0.0,0.0};
-  for(int i=0; i<X.size()/3; i++)
+  // At time step zero, perform initialization calculations
+  if(cycleNumber == 0)
   {
-    for(int j=0; j<3; j++)
-    {
-      xMin[j] = std::fmin(xMin[j],X[i][j]);
-      xMax[j] = std::fmax(xMax[j],X[i][j]);
-      domainL[j] = xMax[j] - xMin[j];
-    }
-  }
-
-  // Get element size
-  std::vector<real64> hEl{DBL_MAX,DBL_MAX,DBL_MAX};
-  for(int i=0; i<X.size()/3; i++)
-  {
-    for(int j=0; j<3; j++)
-    {
-      real64 test = X[i][j] - xMin[j]; // By definition, this should always be positive
-      if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
-      {
-        hEl[j] = std::fmin(test,hEl[j]);
-      }
-    }
+    initialize(X);
   }
 
   // Loop over particles
@@ -443,7 +491,13 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
       for(int i=0; i<subRegion.size(); i++)
       {
-        particleCenter[i][0] += 0.15708*cos(0.314159*(time_n + 0.5));
+        LvArray::ArraySlice<double, 1, 0, long> const & p_x = particleCenter[i];
+
+        // The cellID construction should be out here since it can be passed to both getNodes and getWeights
+
+        std::vector<int> nodeIDs = getNodes(p_x, EnumStrings< ParticleType >::toString( subRegion.getParticleType() ));
+        std::vector<real64> weights = getWeights(p_x, EnumStrings< ParticleType >::toString( subRegion.getParticleType() ));
+
 //        intArray nodes = getNodes(particle);
 //        realArray weights = getWeights(particle);
 //        for(nodes : node)
@@ -455,21 +509,67 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   } );
 
   // Calculate stable time step
-  real64 wavespeed;
-  real64 length = std::fmin(hEl[0],std::fmin(hEl[1],hEl[2]));
+  real64 wavespeed = 0.0;
+  real64 length = std::fmin(m_hx[0],std::fmin(m_hx[1],m_hx[2]));
 
-  arrayView1d< string const > const & regionNames = m_meshTargets[particles.getName()];
-  ParticleManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = particleManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
-  particleManager.forParticleSubRegions< ParticleSubRegion >( regionNames,
-                                                              [&]( localIndex const,
-                                                                   ParticleSubRegion & subRegion )
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
-    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
+    arrayView2d< real64 > const rho = constitutiveRelation.getDensity();
+    arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
+    arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
+    for(int i=0; i<constitutiveRelation.size(); i++)
+    {
+      wavespeed = std::max(wavespeed,sqrt((k[i]+(4.0/3.0)*g[i])/rho[i][0]));
+    }
   } );
 
-  return dt;
+  return m_cflFactor*length/wavespeed;
+}
+
+std::vector<int> SolidMechanicsMPM::getNodes(LvArray::ArraySlice<double, 1, 0, long> const & p_x, std::string const & particleType)
+{
+  std::vector<int> nodeIDs;
+
+  if(particleType == "SinglePoint" || particleType == "CPDI") // Obviously wrong, will fix later. TODO: Also, I feel like I shouldn't have to check this for each particle. Do I make a separate function for each particle type? Surely there's a good way to do this.
+  {
+    std::vector<int> cellID(3);
+    for(int i=0; i<3; i++)
+    {
+      cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
+    }
+    for(int i=0; i<2; i++)
+    {
+      for(int j=0; j<2; j++)
+      {
+        for(int k=0; k<2; k++)
+        {
+          nodeIDs.push_back(m_ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k]);
+        }
+      }
+    }
+  }
+
+  return nodeIDs;
+}
+
+std::vector<int> SolidMechanicsMPM::getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x, std::string const & particleType)
+{
+  std::vector<real64> weights;
+
+  if(particleType == "SinglePoint" || particleType == "CPDI") // Obviously wrong, will fix later. TODO: Also, I feel like I shouldn't have to check this for each particle. Do I make a separate function for each particle type? Surely there's a good way to do this.
+  {
+    std::vector<real64> cellID(3);
+
+    for(int i=0; i<3; i++)
+    {
+      cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
+    }
+    int corner = m_ijkMap[cellID[0]][cellID[1]][cellID[2]];
+  }
+
+  return weights;
 }
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
