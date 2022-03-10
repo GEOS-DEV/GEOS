@@ -8,7 +8,7 @@ Toughness-Storage Dominated Penny Shaped Hydraulic Fracture
 
 **Context**
 
-In this example, we simulate the growth of a radial hydraulic fracture in toughness-storage dominated regime, a classic benchmark in hydraulic fracturing. The developed fracture is characterized as a planar fracture with an elliptical cross section in the direction perpendicular to the fracture plane and circular fracture tip. This problem is solved using the hydrofracture solver in GEOSX and the modelling predictions on the temporal evolutions of the fracture characteristics (length, aperture and pressure) are verified against the analytical solutions `(Savitski and Detournay, 2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__. 
+In this example, we simulate the growth of a radial hydraulic fracture in toughness-storage-dominated regime, a classic benchmark in hydraulic fracturing. The developed fracture is characterized as a planar fracture with an elliptical cross-section perpendicular to the fracture plane and a circular fracture tip. This problem is solved using the hydrofracture solver in GEOSX. The modeling predictions on the temporal evolutions of the fracture characteristics (length, aperture, and pressure) are verified against the analytical solutions `(Savitski and Detournay, 2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__. 
 
 
 **Input file**
@@ -35,11 +35,11 @@ A python script for post-processing the simulation results is also prepared:
 Description of the case
 ------------------------------------------------------------------
 
-We model a radial fracture emerging from a point source and forming a perfect circular shape in an infinite, isotropic, and homogenous elastic domain. As with the KGD problem, the presented GEOSX models are simplified with the necessary assumptions used to solve radial fracture problem in toughness-storage dominated propagation regime. For toughness-dominated fractures, more work is spent to split the intact rock than that applied to move the fracturing fluid. Storage-dominated propagation occurs, if most of the fracturing fluid is contained within the propagating fracture. In this analysis, incompressible fluid with ultra-low viscosity (:math:`0.001 cp`) and medium rock toughness (:math:`3.0 MPa { \sqrt{m} }`) are specified in GEOSX models. In addition, impermeable fracture surface is assumed to eliminate the effect of fluid leakoff. In this way, the GEOSX simulations represent cases within the valid range of the toughness-storage dominated assumptions. 
+We model a radial fracture emerging from a point source and forming a perfect circular shape in an infinite, isotropic, and homogenous elastic domain. As with the KGD problem, we simplify the model to a radial fracture in a toughness-storage-dominated propagation regime. For toughness-dominated fractures, more work is spent on splitting the intact rock than on moving the fracturing fluid. Storage-dominated propagation occurs if most of the fracturing fluid is contained within the propagating fracture. In this analysis, incompressible fluid with ultra-low viscosity (:math:`0.001 cp`) and medium rock toughness (:math:`3.0 MPa { \sqrt{m} }`) are specified. In addition, an impermeable fracture surface is assumed to eliminate the effect of fluid leak-off. This way, the GEOSX simulations represent cases within the valid range of the toughness-storage-dominated assumptions. 
 
-In this model, the injected fluid flows within the fracture, which is governed by the lubrication equation resulting from the mass conservation and the Poiseuille law. Fracture is propagating with the creation of new surface if the stress intensity factor exceeds rock toughness :math:`K_{IC}`. Considering the geometric symmetry, the simulation is reduced to quarter scale to save computational cost. For verification purposes, a plane strain deformation is considered in the numerical model. 
+In this model, the injected fluid within the fracture follows the lubrication equation resulting from mass conservation and Poiseuille's law. The fracture propagates by creating new surfaces if the stress intensity factor exceeds the local rock toughness :math:`K_{IC}`. By symmetry, the simulation is reduced to a quarter-scale to save computational cost. For verification purposes, a plane strain deformation is considered in the numerical model. 
 
-In this example, we set up and solve a hydraulic fracture model to obtain the temporal solutions of the fracture radius :math:`R`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point for the penny shaped fracture developed in toughness-storage dominated regime. These numerical predictions are then compared with the corresponding asymptotic solutions `(Savitski and Detournay, 2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__:
+In this example, we set up and solve a hydraulic fracture model to obtain the temporal solutions of the fracture radius :math:`R`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point for the penny-shaped fracture developed in this toughness-storage-dominated regime. The numerical predictions from GEOSX are then compared with the corresponding asymptotic solutions `(Savitski and Detournay, 2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__:
 
 .. math:: R(t) = 0.8546 (\frac{ E_p^2 Q_0^2 t^2 }{ K_p^2 })^{ 1/5 }
 
@@ -51,7 +51,7 @@ where the plane modulus :math:`E_p` is related to Young's modulus :math:`E` and 
 
 .. math:: E_p = \frac{ E }{ 1-\nu^2 }
 
-The term :math:`K_p` is proportional to rock toughness :math:`K_{IC}`:
+The term :math:`K_p` is proportional to the rock toughness :math:`K_{IC}`:
 
 .. math:: K_p = \frac{ 8 }{ \sqrt{2 \pi} } K_{IC}
  
@@ -81,7 +81,7 @@ The structured mesh contains 80 x 80 x 60 eight-node brick elements in the x, y,
 Such eight-node hexahedral elements are defined as ``C3D8`` elementTypes, and their collection forms a mesh
 with one group of cell blocks named here ``cb1``. Local refinement is performed for the elements in the vicinity of the fracture plane. 
 
-Note that the domain size in the direction perpendicular to the fracture plane, i.e. z-axis, must be at least ten times of the final fracture radius to minimize the boundary effect. 
+Note that the domain size in the direction perpendicular to the fracture plane, i.e. z-axis, must be at least ten times of the final fracture radius to minimize possible boundary effects. 
 
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_benchmark.xml
@@ -135,7 +135,7 @@ Three elementary solvers are combined in the solver ``Hydrofracture`` to model t
   :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
 
 
-- The solver ``SurfaceGenerator`` defines the fracture region and rock toughness ``rockToughness="3.0e6"``. With ``nodeBasedSIF="1"``, node-based Stress Intensity Factor (SIF) calculation is chosen for the fracture propagation criterion. 
+- The solver ``SurfaceGenerator`` defines the fracture region and rock toughness ``rockToughness="3.0e6"``. With ``nodeBasedSIF="1"``, a node-based Stress Intensity Factor (SIF) calculation is chosen for the fracture propagation criterion. 
 
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_benchmark.xml
@@ -148,8 +148,9 @@ Three elementary solvers are combined in the solver ``Hydrofracture`` to model t
 Constitutive laws
 ------------------------------
 
-For this problem, a homogeneous and isotropic domain with one solid material is assumed, and its mechanical properties and associated fluid rheology are specified in the ``Constitutive`` section. 
-``ElasticIsotropic`` model is used to describe the mechanical behavior of ``rock``, when subjected to fluid injection. The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the response of ``water`` upon fracture propagation.
+For this problem, a homogeneous and isotropic domain with one solid material is assumed. Its mechanical properties and associated fluid rheology are specified in the ``Constitutive`` section. 
+``ElasticIsotropic`` model is used to describe the mechanical behavior of ``rock`` when subjected to fluid injection.
+The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the response of ``water`` upon fracture propagation.
 
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_base.xml
@@ -171,8 +172,8 @@ The next step is to specify fields, including:
   - The boundary conditions: fluid injection rates and the constraints of the outer boundaries have to be set.
 
 In this example, a mass injection rate ``SourceFlux`` (``scale="-6.625"``) is applied at the surfaces of the initial fracture. Only one fourth of the total injection rate is defined in this boundary condition because only a quarter of the fracture is modeled (the problem is symmetric). The value given for ``scale`` is :math:`Q_0 \rho_f/4` (not :math:`Q_0 /4`). 
-All the outer boundaries are subjected to roller constraints. 
-These boundary conditions are set up through the ``FieldSpecifications`` section.
+All the outer boundaries are subject to roller constraints. 
+These boundary conditions are set through the ``FieldSpecifications`` section.
 
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated_base.xml
@@ -216,7 +217,7 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=4
    Simulation result of :math:`\sigma_{zz}` at :math:`t=400 s`
 
  
-The figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis. The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, which confirms the accuracy of GEOSX simulations. 
+The figure below compares the asymptotic solutions (curves) and the GEOSX simulation results (markers) for this analysis. The time history plots of fracture radius, fracture aperture and fluid pressure at the point source match the asymptotic solutions, confirming the accuracy of GEOSX simulations. 
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/pennyFracToughnessDominated/pennyFracToughnessDominatedFigure.py
 
