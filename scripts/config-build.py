@@ -197,7 +197,6 @@ cmakeline += " -C %s" % cachefile
 # Add build type (opt or debug)
 cmakeline += " -DCMAKE_BUILD_TYPE=" + args.buildtype
 # Set install dir
-cmakeline += " -DENABLE_PYGEOSX=TRUE"
 
 if not args.noinstall:
     cmakeline += " -DCMAKE_INSTALL_PREFIX=%s" % installpath
