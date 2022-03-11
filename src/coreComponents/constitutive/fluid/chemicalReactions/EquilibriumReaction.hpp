@@ -51,7 +51,6 @@ public:
                              integer const phaseGasIndex,
                              integer const phaseLiquidIndex )
     : ReactionBaseUpdate( componentMolarWeight ),
-    m_EquilibriumReactionTable( EquilibriumReactionTable.createKernelWrapper() ),
     m_CO2Index( CO2Index ),
     m_waterIndex( waterIndex ),
     m_phaseGasIndex( phaseGasIndex ),
@@ -74,16 +73,10 @@ public:
                 PhaseProp::SliceType const phaseFraction,
                 PhaseComp::SliceType const phaseCompFraction ) const;
 
-  virtual void move( LvArray::MemorySpace const space, bool const touch ) override
-  {
-    ReactionBaseUpdate::move( space, touch );
-    m_EquilibriumReactionTable.move( space, touch );
-  }
-
 protected:
 
-  /// Table with CO2 solubility tabulated as a function (P,T)
-  TableFunction::KernelWrapper m_EquilibriumReactionTable;
+  /// ReactionRate
+  arrayView1d<real64> m_reactionRate;
 
   /// Index of the CO2 phase
   integer m_CO2Index;
@@ -124,7 +117,7 @@ public:
 
 private:
 
-  m_array1d< real64 >
+  m_array1d< real64 > m_reactionRate;
 
 };
 
@@ -136,7 +129,9 @@ EquilibriumReactionUpdate::compute( real64 const & pressure,
                                     arraySlice1d< real64 const, USD1 > const & compFraction,
                                     arraySlice1d< real64, USD2 > const & phaseFraction,
                                     arraySlice2d< real64, USD3 > const & phaseCompFraction ) const
-{}
+{
+ // Jaisree: let's start by filling this function to solve for the equilibrium reaction. 
+}
 
 template< int USD1 >
 GEOSX_HOST_DEVICE
