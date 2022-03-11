@@ -100,65 +100,62 @@ class Geosx(CMakePackage, CudaPackage):
     #
     # Performance portability
     #
-    depends_on('raja@0.12.1 +openmp +shared ~examples ~exercises')
-    depends_on('raja +cuda', when='+cuda')
+    depends_on('raja@0.12.1+openmp+shared~examples~exercises')
+    depends_on('raja+cuda', when='+cuda')
 
     depends_on('umpire@4.1.2 ~c +shared +openmp ~examples')
-    depends_on('umpire +cuda', when='+cuda')
+    depends_on('umpire+cuda', when='+cuda')
 
-    depends_on('chai@2.2.2 +shared +raja ~benchmarks ~examples')
-    depends_on('chai@2.2.2 +cuda', when='+cuda')
+    depends_on('chai@2.2.2+shared+raja~benchmarks~examples')
+    depends_on('chai@2.2.2+cuda', when='+cuda')
 
     #
     # IO
     #
-    depends_on('hdf5@1.10.5: +shared +mpi')
+    depends_on('hdf5@1.10.5')
 
-    depends_on('conduit@0.5.0 +shared ~test ~fortran +mpi +hdf5 ~hdf5_compat')
+    depends_on('conduit@0.5.0~test~fortran~hdf5_compat')
 
-    depends_on('silo@4.10: ~fortran +shared ~silex +pic +mpi')
+    depends_on('silo@4.10.2~fortran')
 
-    depends_on('adiak@0.2: +mpi +shared', when='+caliper')
-    depends_on('caliper@2.4: +shared +adiak +mpi ~libpfm ~gotcha ~sampler', when='+caliper')
+    depends_on('adiak@0.2.1', when='+caliper')
+    depends_on('caliper@2.4~gotcha~sampler', when='+caliper')
 
-    depends_on('pugixml@1.8: +shared')
+    depends_on('pugixml@1.8.1')
 
-    depends_on('fmt@8.0.1: cxxstd=14 +pic')
+    depends_on('fmt@8.0.1 cxxstd=14')
     depends_on('vtk@9.0.3')
 
     #
     # Math
     #
-    depends_on('intel-mkl +shared ~ilp64', when='+mkl')
+    depends_on('intel-mkl', when='+mkl')
 
-    # depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
+    depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
+    
+    depends_on('parmetis@4.0.3+int64')
 
-    depends_on('parmetis@4.0.3: +shared +int64')
+    depends_on('superlu-dist+int64+openmp', when='~petsc')
+    depends_on('superlu-dist@6.3.0+int64+openmp', when='+petsc')
 
     depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')
 
-    depends_on('superlu-dist +int64 +openmp +shared', when='~petsc')
-    depends_on('superlu-dist@6.3.0 +int64 +openmp +shared', when='+petsc')
+    depends_on('suite-sparse@5.10.1+openmp', when='+suite-sparse')
 
-    depends_on('suite-sparse@5.8.1: +pic +openmp', when='+suite-sparse')
+    trilinos_build_options = '~fortran+openmp'
+    trilinos_packages = '+stk+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado'
+    depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
-    trilinos_build_options = '~fortran +openmp +shared'
-    trilinos_tpls = '~boost ~gtest ~hdf5 ~hypre +mpi ~mumps ~suite-sparse'
-    trilinos_packages = '+amesos +aztec +epetra +epetraext +ifpack +kokkos +ml +stk +stratimikos +tpetra ~amesos2 ~anasazi ~belos ~exodus ~ifpack2 ~muelu ~sacado ~zoltan ~zoltan2'
-    depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_tpls + trilinos_packages, when='+trilinos')
-
-    depends_on('hypre@2.23.0geosx +shared +superlu-dist +mixedint +mpi +openmp', when='+hypre')
-    depends_on('hypre@2.23.0geosx +cuda +shared +superlu-dist +mpi +openmp +unified-memory', when='+hypre-cuda')
+    depends_on('hypre@2.23.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre')
+    depends_on('hypre@2.23.0geosx+cuda+shared+superlu-dist+mpi+openmp+unified-memory', when='+hypre-cuda')
  
-    petsc_build_options = '+shared +mpi'
-    petsc_tpls = '+metis ~hdf5 ~hypre +superlu-dist +int64'
-    depends_on('petsc@3.13.0: ' + petsc_build_options + petsc_tpls, when='+petsc')
+    depends_on('petsc@3.13.0~hdf5~hypre+superlu-dist+int64', when='+petsc')
 
     #
     # Python
     #
-    depends_on('python +shared +pic', when='+pygeosx')
-    depends_on('py-numpy@1.19: +blas +lapack', when='+pygeosx')
+    depends_on('python+shared +pic', when='+pygeosx')
+    depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
     depends_on('py-scipy@1.5.2:', when='+pygeosx')
     depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
     depends_on('py-pip', when='+pygeosx')

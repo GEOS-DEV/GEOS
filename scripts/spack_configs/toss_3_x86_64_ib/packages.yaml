@@ -1,6 +1,6 @@
 packages:
   all:
-    target: [default]
+    target: [ivybridge]
     compiler: [gcc, clang, intel]
     providers:
       mpi: [mvapich2]
@@ -12,9 +12,9 @@ packages:
   mvapich2:
     buildable: False
     externals:
-      - spec: mvapich2@2.3 %gcc@8.3.1
+      - spec: mvapich2@2.3%gcc@8.3.1
         prefix: /usr/tce/packages/mvapich2/mvapich2-2.3-gcc-8.3.1/
-      - spec: mvapich2@2.3 %clang@10.0.1
+      - spec: mvapich2@2.3%clang@10.0.1
         prefix:  /usr/tce/packages/mvapich2/mvapich2-2.3-clang-10.0.1
 
   intel-mkl:
