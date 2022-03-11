@@ -4,6 +4,7 @@
 #pragma once
 //#if defined(__GNUC__)
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#pragma GCC diagnostic ignored "-Wshadow"
 //#endif
 class EoS
 {

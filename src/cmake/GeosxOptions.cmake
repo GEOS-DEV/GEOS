@@ -107,11 +107,13 @@ message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
-                                 GNU   "-Wcast-align -Wcast-qual"
-                                 CLANG "-Wcast-align -Wcast-qual"
+                                 GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
+                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
+                                 GNU "-Wno-unused-parameter -Wno-unused-variable"
+                                 CLANG "-Wno-unused-parameter -Wno-unused-variable -fstandalone-debug"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR GEOSX_NINJA_FLAGS

@@ -516,25 +516,25 @@ CO2SolubilityDelftUpdate::compute( real64 const & pressure,
     }    
     // Feed
     {
-      for( int ic = 0; ic < nc; ic++)
+      for( int icder = 0; icder < nc; icder++)
       {
-        real64 dz = sqrtPrecision * ( std::fabs( compFraction[ic] ) + sqrtPrecision );
-        if( compFraction[ic] + dz > 1 )
+        real64 dz = sqrtPrecision * ( std::fabs( compFraction[icder] ) + sqrtPrecision );
+        if( compFraction[icder] + dz > 1 )
         {
           dz = -dz;
         }
         std::vector< real64 > newFeed(nc, 0.);
         for (int ic = 0; ic < nc; ic++)
           newFeed[ic] = compFraction[ic];
-        newFeed[ic] += dz;
+        newFeed[icder] += dz;
         newFeed = Normalize( newFeed );
         doflash(pressure, temperature, newFeed, phaseFractionDelft_der, phaseCompFractionDelft_der, phase_state_delft_der);
         for (int ip = 0; ip < np; ip++)
         {
-          phaseFraction.derivs[ip][Deriv::dC + ic] = (phaseFractionDelft_der[ip] - phaseFractionDelft[ip])/dz;
+          phaseFraction.derivs[ip][Deriv::dC + icder] = (phaseFractionDelft_der[ip] - phaseFractionDelft[ip])/dz;
           for (int ic2 = 0; ic2 < nc; ic2++)
           {
-            phaseCompFraction.derivs[ip][ic2][Deriv::dC + ic] = (phaseCompFractionDelft_der[ip][ic2] - phaseCompFractionDelft[ip][ic2])/dz;
+            phaseCompFraction.derivs[ip][ic2][Deriv::dC + icder] = (phaseCompFractionDelft_der[ip][ic2] - phaseCompFractionDelft[ip][ic2])/dz;
           }
         }
       

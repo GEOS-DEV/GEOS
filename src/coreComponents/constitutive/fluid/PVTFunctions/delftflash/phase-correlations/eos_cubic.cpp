@@ -6,7 +6,7 @@
 
 #include "eos.h"
 #include "../global/global.h"
-
+#pragma GCC diagnostic ignored "-Wfloat-equal"
 using namespace std;
 
 void TwoParCubic::parameters(double p_, double T_) {

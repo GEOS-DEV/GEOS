@@ -58,7 +58,7 @@ Properties::Properties(std::vector<std::string> comp, std::string ph, std::strin
 	}
 	
 	eos = setEoS(components, eos_);
-};
+}
 
 // std::vector<double> ComponentProp::get(std::string prop) {
 // 	std::vector<double> properties(NC);
