@@ -59,10 +59,13 @@ class Geosx(CMakePackage, CudaPackage):
 
     # SPHINX_BEGIN_VARIANTS
 
+    # COMMENT OUT START
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
-    variant('mkl', default=False, description='Use the Intel MKL library.')
-    variant('essl', default=False, description='Use the IBM ESSL library.')
+        #These shouldn't be here; defined in packages.yaml,not here
+    # depends_on('intel-mkl', when='+mkl')
+    # variant('mkl', default=False, description='Use the Intel MKL library.')
+    # variant('essl', default=False, description='Use the IBM ESSL library.')
     variant('suite-sparse', default=True, description='Build SuiteSparse support.')
     variant('trilinos', default=True, description='Build Trilinos support.')
     variant('hypre', default=True, description='Build HYPRE support.')
@@ -74,7 +77,8 @@ class Geosx(CMakePackage, CudaPackage):
             description='Linear algebra interface.',
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
-    variant('pygeosx', default=False, description='Build the GEOSX python interface.')
+    # variant('pygeosx', default=False, description='Build the GEOSX python interface.')
+    # COMMENT OUT END
 
     # SPHINX_END_VARIANTS
 
@@ -97,21 +101,22 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('blas')
     depends_on('lapack')
 
-    #
-    # Performance portability
-    #
-    depends_on('raja@0.12.1+openmp+shared~examples~exercises')
+    # #
+    # # Performance portability
+    # #
+    depends_on('raja@0.12.1+openmp~examples~exercises')
     depends_on('raja+cuda', when='+cuda')
 
-    depends_on('umpire@4.1.2 ~c +shared +openmp ~examples')
+    depends_on('umpire@4.1.2~c+openmp~examples')
     depends_on('umpire+cuda', when='+cuda')
 
-    depends_on('chai@2.2.2+shared+raja~benchmarks~examples')
+    depends_on('chai@2.2.2+openmp~benchmarks~examples')
     depends_on('chai@2.2.2+cuda', when='+cuda')
 
-    #
-    # IO
-    #
+    # #
+    # # IO
+    # #
+
     depends_on('hdf5@1.10.5')
 
     depends_on('conduit@0.5.0~test~fortran~hdf5_compat')
@@ -126,17 +131,16 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('fmt@8.0.1 cxxstd=14')
     depends_on('vtk@9.0.3')
 
-    #
-    # Math
-    #
-    depends_on('intel-mkl', when='+mkl')
+    # #
+    # # Math
+    # #
 
-    depends_on('essl~ilp64+cuda threads=openmp', when='+essl')
-    
+    # depends_on('essl~ilp64+cuda threads=openmp', when='+essl')
+
     depends_on('parmetis@4.0.3+int64')
 
-    depends_on('superlu-dist+int64+openmp', when='~petsc')
-    depends_on('superlu-dist@6.3.0+int64+openmp', when='+petsc')
+    # depends_on('superlu-dist+int64+openmp', when='~petsc')
+    depends_on('superlu-dist@6.3.0+int64+openmp')
 
     depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')
 
@@ -149,35 +153,39 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('hypre@2.23.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre')
     depends_on('hypre@2.23.0geosx+cuda+shared+superlu-dist+mpi+openmp+unified-memory', when='+hypre-cuda')
  
-    depends_on('petsc@3.13.0~hdf5~hypre+superlu-dist+int64', when='+petsc')
+    depends_on('petsc@3.13.0~hdf5~hypre+int64', when='+petsc')
 
-    #
-    # Python
-    #
-    depends_on('python+shared +pic', when='+pygeosx')
-    depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
-    depends_on('py-scipy@1.5.2:', when='+pygeosx')
-    depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
-    depends_on('py-pip', when='+pygeosx')
+# COMMENT OUT START
+    # #
+    # # Python
+    # #
+    # depends_on('python+shared +pic', when='+pygeosx')
+    # depends_on('py-numpy@1.19:+blas+lapack', when='+pygeosx')
+    # depends_on('py-scipy@1.5.2:', when='+pygeosx')
+    # depends_on('py-mpi4py@3.0.3:', when='+pygeosx')
+    # depends_on('py-pip', when='+pygeosx')
 
-    #
-    # Dev tools
-    #
-    depends_on('uncrustify@0.70geosx')
+    # #
+    # # Dev tools
+    # #
+    # depends_on('uncrustify@0.70geosx')
 
-    #
-    # Documentation
-    #
-    depends_on('doxygen@1.8.13:', when='+docs', type='build')
-    depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
+    # #
+    # # Documentation
+    # #
+    # depends_on('doxygen@1.8.13:', when='+docs', type='build')
+    # depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
 
-    # SPHINX_END_DEPENDS
+    # # SPHINX_END_DEPENDS
 
-    #
-    # Conflicts
-    #
-    conflicts('+mkl +essl', msg='Cannot use both MKL and ESSL.')
-    conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
+    # #
+    # # Conflicts
+    # #
+
+    # This should not be here
+    # conflicts('+mkl +essl', msg='Cannot use both MKL and ESSL.')
+    # conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
+    # COMMENT OUT END
 
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
     conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
