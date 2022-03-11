@@ -1322,6 +1322,8 @@ struct ResidualDARTSL2NormKernel
                       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLOperatorValues,
                       real64 & localResidualNorm )
   {
+    real64 constexpr eps = minValueForDivision;
+
     for( integer idof = 0; idof < numDofs; ++idof )
     {
       RAJA::ReduceSum< REDUCE_POLICY, real64 > localResSum( 0.0 ), localNormSum( 0.0 );
@@ -1337,7 +1339,8 @@ struct ResidualDARTSL2NormKernel
         }
       } );
 
-      real64 const norm = sqrt( localResSum.get() / localNormSum.get());
+      real64 const normalizer = ( localNormSum.get() > eps ) ? localNormSum.get() : eps;
+      real64 const norm = sqrt( localResSum.get() / normalizer );
       if( localResidualNorm < norm )
       {
         localResidualNorm = norm;

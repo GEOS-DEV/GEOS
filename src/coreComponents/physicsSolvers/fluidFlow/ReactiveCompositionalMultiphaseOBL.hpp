@@ -315,7 +315,7 @@ protected:
   integer m_numOBLOperators;
 
   /// OBL operators table file (if OBL physics becomes consitutive, multiple regions will be supported )
-  string m_OBLOperatorsTableFile;
+  Path m_OBLOperatorsTableFile;
 
   /// OBL operators table function tabulated vs all primary variables
   MultivariableTableFunction const * m_OBLOperatorsTable;
