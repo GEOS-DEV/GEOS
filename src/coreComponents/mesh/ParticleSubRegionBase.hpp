@@ -122,7 +122,7 @@ public:
   /**
    * @copydoc getParticleVelocity() const
    */
-  array2d< real64 > getParticleVelocity()
+  arrayView2d< real64 > getParticleVelocity()
   { return m_particleVelocity; }
 
   /**
@@ -135,8 +135,22 @@ public:
   /**
    * @copydoc getParticleVolume() const
    */
-  array1d< real64 > getParticleVolume()
+  arrayView1d< real64 > getParticleVolume()
   { return m_particleVolume; }
+
+  /**
+   * @brief Get the mass of each particle in this subregion.
+   * @return an arrayView1d of const particle masses
+   */
+  arrayView1d< real64 const > getParticleMass() const
+  { return m_particleMass; }
+
+  /**
+   * @copydoc getParticleMass() const
+   */
+  arrayView1d< real64 > getParticleMass()
+  { return m_particleMass; }
+
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.
@@ -225,6 +239,9 @@ protected:
 
   /// Member level field for the particle volume.
   array1d< real64 > m_particleVolume;
+
+  /// Member level field for the particle mass.
+  array1d< real64 > m_particleMass;
 
   /// Type of particles in this subregion.
   ParticleType m_particleType;
