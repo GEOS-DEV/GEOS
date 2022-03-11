@@ -65,10 +65,6 @@ if( ENABLE_MPI )
   set( extraComponentsLinkList ${extraComponentsLinkList} mpi )
 endif()
 
-if( ENABLE_PYGEOSX )
-	set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver Python3::Python Python3::NumPy pylvarray )
-endif()
-
 if( GEOSX_BUILD_SHARED_LIBS )
   set( GEOSX_BUILD_SHARED_BOOL TRUE CACHE BOOL "" )
   set( CSL_TYPE SHARED )
