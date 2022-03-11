@@ -968,7 +968,8 @@ public:
     arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDersJ = m_OBLOperatorDerivatives[erJ][esrJ][eiJ];
 
     // single gravity coefficient and transimissibility values correspond to the current connection
-    real64 const gravCoef = m_gravCoef[erI][esrI][eiI] - m_gravCoef[erJ][esrJ][eiJ];
+    // we need to apply pascal -> bar conversion to gravity coefficient, the same way as in DARTS
+    real64 const gravCoef = (m_gravCoef[erI][esrI][eiI] - m_gravCoef[erJ][esrJ][eiJ]) * pascalToBarMult;
     real64 const trans = stack.transmissibility[0][0] * transUnitMult;
     real64 const transD = stack.diffusiveTransmissibility[0][0] * transDUnitMult;
 
@@ -991,7 +992,9 @@ public:
       transMult = pow( poroAverage, m_transMultExp );
     }
 
-    real64 const pDiff = m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI] - m_dPres[erI][esrI][eiI];
+
+    // apply [Pa]->[bar] conversion
+    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI] - m_dPres[erI][esrI][eiI]) * pascalToBarMult;
 
 
     // [2] fill offdiagonal part + contribute to diagonal, only fluid part is considered in energy equation
@@ -1002,7 +1005,9 @@ public:
       real64 const averageDensity = (OBLValsI[GRAV_OP + p] + OBLValsJ[GRAV_OP + p]) / 2;
 
       // p = 1 means oil phase, it's reference phase. pw=po-pcow, pg=po-(-pcog).
-      real64 const phasePDiff = (pDiff + averageDensity * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p]) * pascalToBarMult;
+
+      real64 const phasePDiff = pDiff + averageDensity * gravCoef - OBLValsJ[PC_OP + p] + OBLValsI[PC_OP + p];
+
       // note: pressure conversion factor is only applied for RHS and not for Jacobian:
       // instead we postpone it till all the derivatives are fully formed, and only then apply the factor only once in 'complete' function
       // scaling the whole system might be even better solution (every pressure column needs to be multiplied by pascalToBarMult)

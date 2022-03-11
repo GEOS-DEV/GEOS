@@ -102,7 +102,7 @@ EXTRINSIC_MESH_DATA_TRAIT( referenceRockVolume,
                            "Reference volume of rock" );
 
 EXTRINSIC_MESH_DATA_TRAIT( rockVolumetricHeatCapacity,
-                           "specificHeatCapacity",
+                           "rockVolumetricHeatCapacity",
                            array1d< real64 >,
                            0,
                            NOPLOT,
