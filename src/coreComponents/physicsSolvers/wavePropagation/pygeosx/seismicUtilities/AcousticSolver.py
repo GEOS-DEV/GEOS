@@ -168,7 +168,7 @@ class AcousticSolver:
         self.geosx.get_wrapper("/Solvers/"+self.name+"/dtSeismoTrace").value()[0] = self.dtSeismo
 
 
-    def updateOutputsName(self, list_of_output, reinit=False):
+    def updateOutputsName(self, directory, filenames, reinit=False):
 
         """Overwrite GEOSX hdf5 Outputs paths that have been read in the XML.
 
@@ -184,13 +184,13 @@ class AcousticSolver:
         if not len(self.outputs):
             raise ValueError("No Outputs specified in XML.")
         else:
-            for i in range(len(list_of_output)):
-                if os.path.exists(os.path.dirname(list_of_output[i])):
+            for i in range(len(filenames)):
+                if os.path.exists(directory):
                     pass
                 else:
-                    os.system("mkdir -p " + list_of_output[i])
+                    os.system("mkdir -p " + directory)
 
-                self.outputs[i].setOutputName(list_of_output[i])
+                self.outputs[i].setOutputName(os.path.join(directory, filenames[i]))
                 if reinit:
                     self.outputs[i].reinit()
 
@@ -253,8 +253,8 @@ class AcousticSolver:
 
         Parameters
         ----------
-        vel : float
-            Value for velocity
+        vel : float/array
+            Value(s) for velocity field
         """
 
         velocity = self.solver.get_wrapper("/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region/elementSubRegions/cb/mediumVelocity").value()

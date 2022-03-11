@@ -5,7 +5,7 @@ import h5py
 import segyio
 
 
-def forward(solver, shot, outputWaveField, rank=0):
+def forward(solver, shot, outputWaveField, residual_flag=False, datafile=None, rank=0):
 
     """Solves forward problem, and compute the residual and costFunction
 
@@ -23,11 +23,16 @@ def forward(solver, shot, outputWaveField, rank=0):
     rank : int
         Process rank
 
+
     Return
     ------
     residual : array
         Contains the residual between the simulation result and the real data
     """
+
+    if residual_flag:
+        if datafile is None:
+            raise ValueError("If 'residual_flag' is set to True, you must sepecify 'datafile' for residual computation.")
 
     if rank == 0 :
         print("\nForward")
@@ -56,13 +61,15 @@ def forward(solver, shot, outputWaveField, rank=0):
                 print("Outputing Wavefield...")
             solver.outputWaveField(time)
 
+    residual = 0
     #Residual computation
-    pressure = solver.getPressureAtReceivers()
-    residualTemp = computeResidual("dataTest/seismo_Shot"+shot.id+".sgy", pressure)
-    residual = residualLinearInterpolation(residualTemp, solver.maxTime, dt, solver.dtSeismo)
+    if residual_flag:
+        pressure = solver.getPressureAtReceivers()
+        residualTemp = computeResidual(datafile, pressure)
+        residual = residualLinearInterpolation(residualTemp, solver.maxTime, dt, solver.dtSeismo)
 
-    if rank == 0:
-        computePartialCostFunction(costDir, residualTemp, shot)
+        if rank == 0:
+            computePartialCostFunction(costDir, residualTemp, shot)
 
     #Reset waveField
     solver.resetWaveField()
@@ -336,68 +343,52 @@ def computeFullGradient(directory_in_str, acquisition):
     limited_aperture_flag = acquisition.limited_aperture
     nfiles = len(acquisition.shots)
 
-    n=0
-    filename = ""
-    while True:
-        file_list = os.listdir(directory)
-        if len(file_list) != 0:
-            filename = os.fsdecode(file_list[0])
-            h5p = h5py.File(os.path.join(directory_in_str,filename), "r")
-            keys = list(h5p.keys())
-            n += 1
-            break
-        else:
-            continue
-
     totalNodes = (acquisition.nx+1)*(acquisition.ny+1)*(acquisition.nz+1)
+
     h5F = h5py.File("fullGradient.hdf5", "w")
     h5F.create_dataset("fullGradient", data = np.zeros(totalNodes), dtype='d', chunks=True, maxshape=(totalNodes,))
-    h5F.create_dataset("ReferencePosition", data = np.zeros(totalNodes), chunks=True, maxshape=(totalNodes, 3))
-    h5F.create_dataset("Time", data = h5p["Time"])
-    keysF = list(h5F.keys())
+    h5F.create_dataset("ReferencePosition", data = np.zeros((totalNodes, 3)), chunks=True, maxshape=(totalNodes, 3))
+    h5F.create_dataset("Time", data = np.zeros(1), chunks=True, maxshape=(None,))
 
-    shotInd = int(os.path.join(directory_in_str, filename).rsplit('.', 1)[0][-3::])
-
-    h5p.close()
-    os.remove(os.path.join(directory_in_str,filename))
-
+    n=0
     while True:
         file_list = os.listdir(directory)
         if n == nfiles:
             break
         elif len(file_list) > 0:
-            for file in os.listdir(directory):
+            for file in file_list:
                 filename = os.fsdecode(file)
                 if filename.startswith("partialGradient"):
                     h5p = h5py.File(os.path.join(directory_in_str, filename), 'r')
                     keysp = list(h5p.keys())
-                    print(h5p["ReferencePosition"][:], "\n")
 
                     if limited_aperture_flag:
-                        indp = 0
-                        ind = []
-                        for coordsp in h5p["ReferencePosition"]:
-                            indF = 0
-                            flag = 0
-                            for coordsF in h5F["ReferencePosition"]:
-                                if not any(coordsF - coordsp):
-                                    h5F["fullGradient"][indF] += h5p["partialGradient"][indp]
-                                    flag = 1
-                                    break
-                                indF += 1
-                            if flag == 0:
-                                ind.append(indp)
-                            indp += 1
+                        shotInd = int(os.path.join(directory_in_str, filename).rsplit('.', 1)[0][-3::]) - 1
+                        shot = acquisition.shots[shotInd]
 
-                        if len(ind) > 0:
-                            h5F["fullGradient"].resize(h5F["fullGradient"].shape[0] + len(ind), axis=0)
-                            h5F["fullGradient"][-len(ind):] = h5p["partialGradient"][ind]
+                        cx = (shot.boundary[0][1] - shot.boundary[0][0])/shot.nx
+                        cy = (shot.boundary[1][1] - shot.boundary[1][0])/shot.ny
+                        cz = (shot.boundary[2][1] - shot.boundary[2][0])/shot.nz
 
-                            h5F["ReferencePosition"].resize(h5F["ReferencePosition"].shape[0] + len(ind), axis=0)
-                            h5F["ReferencePosition"][-len(ind):] = h5p["ReferencePosition"][ind]
+
+                        for i in range(h5p["ReferencePosition"].shape[0]):
+                            coord = h5p["ReferencePosition"][i]
+
+                            xi = int(coord[0]/cx)
+                            yi = int(coord[1]/cy)
+                            zi = int(coord[2]/cz)
+
+                            ind = zi + yi*(acquisition.nz+1) + xi*(acquisition.nz+1)*(acquisition.ny+1)
+
+                            h5F["fullGradient"][ind] += h5p["partialGradient"][i]
+                            h5F["ReferencePosition"][ind] = coord
 
                     else:
                         h5F["fullGradient"][:] += h5p["partialGradient"][:]
+
+                    if n == 0:
+                       h5F["Time"].resize(h5p["Time"].shape[0], axis=0)
+                    h5F["Time"][:] = h5p["Time"][:,0]
 
                     h5p.close()
                     os.remove(os.path.join(directory_in_str,filename))
@@ -407,17 +398,6 @@ def computeFullGradient(directory_in_str, acquisition):
 
         else:
             continue
-
-    ind = np.lexsort((h5F["ReferencePosition"][:, 2], h5F["ReferencePosition"][:, 1], h5F["ReferencePosition"][:, 0]))
-
-    tempPos = np.zeros( h5F["ReferencePosition"].shape)
-    tempVal = np.zeros( h5F["fullGradient"].shape)
-    for i in range(len(ind)):
-        tempPos[i] = h5F["ReferencePosition"][ind[i]]
-        tempVal[i] = h5F["fullGradient"][ind[i]]
-
-    h5F["ReferencePosition"][:] = tempPos[:]
-    h5F["fullGradient"][:] = tempVal[:]
 
     h5F.close()
     os.rmdir(directory_in_str)

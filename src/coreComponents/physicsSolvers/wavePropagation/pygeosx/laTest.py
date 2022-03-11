@@ -32,7 +32,7 @@ def main():
                                         receivers_depth = 49)
 
     acquisition.add_xml(sys.argv[2])
-    #acquisition.limitedAperture(500)
+    acquisition.limitedAperture(2000)
     #acquisition.calculDt()
 
     maxTime = 2.0
@@ -63,29 +63,31 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         acousticSolver.initialize(rank)
 
         gradDir = "partialGradient"
-        acousticSolver.updateOutputsName([gradDir+"/forwardWaveFieldNp1_"+shot.id,
-                                          gradDir+"/forwardWaveFieldN_"+shot.id,
-                                          gradDir+"/forwardWaveFieldNm1_"+shot.id])
+        acousticSolver.updateOutputsName(directory=gradDir,
+                                         filenames=["forwardWaveFieldNp1_"+shot.id,
+                                                    "forwardWaveFieldN_"+shot.id,
+                                                    "forwardWaveFieldNm1_"+shot.id],)
 
-        acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
         acousticSolver.apply_initial_conditions()
+        acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
         #Get view on pressure at receivers locations
         pressureAtReceivers = acousticSolver.getPressureAtReceivers()
 
 #===================================================
         #FORWARD
 #===================================================
-        residual = forward(acousticSolver, shot, outputWaveFieldInterval, rank)
+        residual = forward(acousticSolver, shot, outputWaveFieldInterval, residual_flag=True, datafile="dataTest/seismo_Shot"+shot.id+".sgy", rank=rank)
 
 #==================================================
         #BACKWARD
 #==================================================
         acousticSolver.updateSourceAndReceivers(sources_list = shot.receivers.receivers_list)
         acousticSolver.updateSourceValue(residual)
-        acousticSolver.updateOutputsName([gradDir+"/backwardWaveFieldNp1_"+shot.id,
-                                          gradDir+"/backwardWaveFieldN_"+shot.id,
-                                          gradDir+"/backwardWaveFieldNm1_"+shot.id],
-                                         True)
+        acousticSolver.updateOutputsName(directory=gradDir,
+                                         filenames=["backwardWaveFieldNp1_"+shot.id,
+                                                    "backwardWaveFieldN_"+shot.id,
+                                                    "backwardWaveFieldNm1_"+shot.id],
+                                         reinit=True)
 
         backward(acousticSolver, shot, outputWaveFieldInterval, rank)
 

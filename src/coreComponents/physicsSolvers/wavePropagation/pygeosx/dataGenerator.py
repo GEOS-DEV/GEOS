@@ -67,7 +67,7 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         #FORWARD
 #===================================================
 
-        residual = forward(acousticSolver, shot, outputWaveFieldInterval, rank)
+        residual = forward(acousticSolver, shot, outputWaveFieldInterval, rank=rank)
 
         pressure = acousticSolver.getPressureAtReceivers()
         exportToSegy(table = pressure,
