@@ -98,7 +98,7 @@ public:
 
   /**
    * @brief Set the output region type
-   * @param[in] output region type to be set
+   * @param[in] regionType output region type to be set
    */
   void setOutputRegionType( VTKRegionTypes regionType )
   {
