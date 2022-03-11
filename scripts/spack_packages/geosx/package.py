@@ -131,7 +131,7 @@ class Geosx(CMakePackage, CudaPackage):
     #
     depends_on('intel-mkl', when='+mkl')
 
-    depends_on('essl ~ilp64 threads=openmp +lapack +cuda', when='+essl')
+    depends_on('essl~ilp64+cuda threads=openmp', when='+essl')
     
     depends_on('parmetis@4.0.3+int64')
 
@@ -180,7 +180,8 @@ class Geosx(CMakePackage, CudaPackage):
     conflicts('+essl ~cuda', msg='Cannot use ESSL without CUDA.')
 
     conflicts('~trilinos lai=trilinos', msg='To use Trilinos as the Linear Algebra Interface you must build it.')
-    conflicts('~hypre ~hypre-cuda lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
+    conflicts('~hypre lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
+    conflicts('~hypre-cuda lai=hypre', msg='To use HYPRE as the Linear Algebra Interface you must build it.')
     conflicts('~petsc lai=petsc', msg='To use PETSc as the Linear Algebra Interface you must build it.')
 
     conflicts('+hypre +hypre-cuda', msg='Only one of the two can be used at a time.')
