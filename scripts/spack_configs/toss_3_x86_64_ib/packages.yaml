@@ -92,3 +92,8 @@ packages:
     externals:
       - spec: automake@1.13.4
         prefix: /usr
+  libtool:
+    buildable: False
+    externals:
+      - spec: libtool@2.4.2
+        prefix: /usr

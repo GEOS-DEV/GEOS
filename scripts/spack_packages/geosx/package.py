@@ -119,7 +119,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('hdf5@1.10.5')
 
-    depends_on('conduit@0.5.0~test~fortran~hdf5_compat')
+    depends_on('conduit@0.7.2~test~fortran~hdf5_compat')
 
     depends_on('silo@4.10.2~fortran')
 
