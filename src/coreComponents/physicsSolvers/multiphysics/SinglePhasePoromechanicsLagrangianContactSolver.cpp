@@ -49,7 +49,7 @@ using namespace constitutive;
 using namespace interpolation;
 
 SinglePhasePoromechanicsLagrangianContactSolver::SinglePhasePoromechanicsLagrangianContactSolver( const string & name,
-                                                                Group * const parent ):
+                                                                                                  Group * const parent ):
   SinglePhasePoromechanicsSolver( name, parent ),
   m_contactSolverName()
 {
@@ -72,7 +72,7 @@ SinglePhasePoromechanicsLagrangianContactSolver::SinglePhasePoromechanicsLagrang
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition const & domain,
-                                                DofManager & dofManager ) const
+                                                                 DofManager & dofManager ) const
 {
   GEOSX_MARK_FUNCTION;
   //m_contactFlowSolver->setupDofs( domain, dofManager );
@@ -83,7 +83,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   dofManager.addField( keys::TotalDisplacement,
                        DofManager::Location::Node,
                        3,
-		       m_meshTargets );
+                       m_meshTargets );
 
   dofManager.addCoupling( keys::TotalDisplacement,
                           keys::TotalDisplacement,
@@ -111,17 +111,17 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   dofManager.addField( LagrangianContactSolver::viewKeyStruct::tractionString(),
                        DofManager::Location::Elem,
                        3,
-		       meshTargets );
+                       meshTargets );
 //                       fractureRegions );
   dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
                           LagrangianContactSolver::viewKeyStruct::tractionString(),
                           DofManager::Connector::Face,
-			  meshTargets );
+                          meshTargets );
 //                          fractureRegions );
   dofManager.addCoupling( keys::TotalDisplacement,
                           LagrangianContactSolver::viewKeyStruct::tractionString(),
                           DofManager::Connector::Elem,
-			  meshTargets );
+                          meshTargets );
 //                          fractureRegions );
 
   m_flowSolver->setupDofs( domain, dofManager );
@@ -140,11 +140,11 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartition & domain,
-                                                  DofManager & dofManager,
-                                                  CRSMatrix< real64, globalIndex > & localMatrix,
-                                                  ParallelVector & rhs,
-                                                  ParallelVector & solution,
-                                                  bool const setSparsity )
+                                                                   DofManager & dofManager,
+                                                                   CRSMatrix< real64, globalIndex > & localMatrix,
+                                                                   ParallelVector & rhs,
+                                                                   ParallelVector & solution,
+                                                                   bool const setSparsity )
 {
   if( m_precond )
   {
@@ -167,8 +167,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartiti
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepSetup( real64 const & time_n,
-                                                        real64 const & dt,
-                                                        DomainPartition & domain )
+                                                                         real64 const & dt,
+                                                                         DomainPartition & domain )
 {
   m_contactSolver->implicitStepSetup( time_n, dt, domain );
   m_flowSolver->implicitStepSetup( time_n, dt, domain );
@@ -176,17 +176,17 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepSetup( real64 
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real64 const & time_n,
-                                                           real64 const & dt,
-                                                           DomainPartition & domain )
+                                                                            real64 const & dt,
+                                                                            DomainPartition & domain )
 {
   m_contactSolver->implicitStepComplete( time_n, dt, domain );
   m_flowSolver->implicitStepComplete( time_n, dt, domain );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-		                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & regionNames )
   {
-    
+
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< ElementSubRegionBase >( regionNames,
@@ -207,19 +207,19 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
         if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
         {
           arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-          double * max_pres = std::max_element(pres.begin(), pres.end());
-          GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max pres {:15.6e}", * max_pres ) );
-          double * min_pres = std::min_element(pres.begin(), pres.end());
-          GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min pres {:15.6e}", * min_pres ) );
+          double * max_pres = std::max_element( pres.begin(), pres.end());
+          GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max pres {:15.6e}", *max_pres ) );
+          double * min_pres = std::min_element( pres.begin(), pres.end());
+          GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min pres {:15.6e}", *min_pres ) );
         }
       } );
     } );
     // displacement
     NodeManager & nodeManager = mesh.getNodeManager();
-    arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
-    double * min_disp = std::min_element(disp.begin(), disp.end());
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", * min_disp ) );
-  
+    arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+    double * min_disp = std::min_element( disp.begin(), disp.end());
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", *min_disp ) );
+
     real64 const totalFlux = m_flowSolver->computeFluxFaceDirichlet( time_n, dt, domain );
     GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- total flux through Dirichlet faces {:15.6e}", totalFlux ) );
     // end Laura
@@ -257,9 +257,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::resetStateToBeginningOfSte
 }
 
 real64 SinglePhasePoromechanicsLagrangianContactSolver::solverStep( real64 const & time_n,
-                                                   real64 const & dt,
-                                                   int const cycleNumber,
-                                                   DomainPartition & domain )
+                                                                    real64 const & dt,
+                                                                    int const cycleNumber,
+                                                                    DomainPartition & domain )
 {
   real64 dt_return = dt;
 
@@ -279,9 +279,9 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::solverStep( real64 const
 }
 
 real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( real64 const & time_n,
-                                                           real64 const & dt,
-                                                           integer const cycleNumber,
-                                                           DomainPartition & domain )
+                                                                               real64 const & dt,
+                                                                               integer const cycleNumber,
+                                                                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   // dt may be cut during the course of this step, so we are keeping a local
@@ -401,7 +401,7 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
         }
 
         // if the residual norm is less than the Newton tolerance we denote that we have
-        // converged and break from the Newton loop immediately. 
+        // converged and break from the Newton loop immediately.
         if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
         {
           isNewtonConverged = true;
@@ -560,15 +560,15 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
 }
 
 bool SinglePhasePoromechanicsLagrangianContactSolver::lineSearch( real64 const & time_n,
-                                              real64 const & dt,
-                                              integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                              DomainPartition & domain,
-                                              DofManager const & dofManager,
-                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                              ParallelVector & rhs,
-                                              ParallelVector & solution,
-                                              real64 const scaleFactor,
-                                              real64 & lastResidual )
+                                                                  real64 const & dt,
+                                                                  integer const GEOSX_UNUSED_PARAM( cycleNumber ),
+                                                                  DomainPartition & domain,
+                                                                  DofManager const & dofManager,
+                                                                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                  ParallelVector & rhs,
+                                                                  ParallelVector & solution,
+                                                                  real64 const scaleFactor,
+                                                                  real64 & lastResidual )
 {
   bool lineSearchSuccess = true;
 
@@ -672,11 +672,11 @@ bool SinglePhasePoromechanicsLagrangianContactSolver::lineSearch( real64 const &
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 const time_n,
-                                                     real64 const dt,
-                                                     DomainPartition & domain,
-                                                     DofManager const & dofManager,
-                                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                     arrayView1d< real64 > const & localRhs )
+                                                                      real64 const dt,
+                                                                      DomainPartition & domain,
+                                                                      DofManager const & dofManager,
+                                                                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                      arrayView1d< real64 > const & localRhs )
 {
 
   GEOSX_MARK_FUNCTION;
@@ -685,8 +685,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
   // TODO: synchronizeFractureState ?
+  m_contactSolver->synchronizeFractureState( domain );
 
-  // MeshLevel & mesh = domain.getMeshBodies().getGroup< MeshBody >( 0 ).getMeshLevel( 0 );
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -698,71 +698,70 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
 
     string const pDofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
+    // TODO TMP to be used if no coupling terms are assembled
+    //GEOSX_UNUSED_VAR( regionNames );
+    //m_contactSolver->assembleSystem( time_n, dt, domain, dofManager, localMatrix, localRhs );
+
     m_contactSolver->assembleForceResidualDerivativeWrtTraction( domain, dofManager, localMatrix, localRhs );
     m_contactSolver->assembleTractionResidualDerivativeWrtDisplacementAndTraction( domain, dofManager, localMatrix, localRhs );
     m_contactSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
 
+    m_contactFlowSolver->getRefDerivativeFluxResidual_dAperture()->zero();
     m_contactFlowSolver->updateOpeningForFlow( domain );
 
-//  ElementRegionManager const & elemManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-//  string_array fractureRegions;
-//  elemManager.forElementRegions< SurfaceElementRegion >( [&]( SurfaceElementRegion const & elementRegion )
-//  {
-//    fractureRegions.emplace_back( elementRegion.getName() );
-//  } );
-  
-    m_flowSolver->assembleHydrofracFluxTerms( time_n,
-                                              dt,
-                                              domain,
-                                              dofManager,
-                                              localMatrix,
-                                              localRhs,
-                                              m_contactFlowSolver->getDerivativeFluxResidual_dAperture() );
-//                                            TODO: come indicare in che regioni assemblare in contributo?
-  
     m_contactFlowSolver->assembleForceResidualDerivativeWrtPressure( domain, dofManager, localMatrix, localRhs );
     m_contactFlowSolver->assembleFluidMassResidualDerivativeWrtDisplacement( domain, dofManager, localMatrix, localRhs );
-    m_contactFlowSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
-  
-    m_contactFlowSolver->getRefDerivativeFluxResidual_dAperture()->zero();
-  
+    // No need for stabilization
+    //m_contactFlowSolver->assembleStabilization( domain, dofManager, localMatrix, localRhs );
+
     real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
-  
+
     poromechanicsKernels::SinglePhaseKernelFactory kernelFactory( dispDofNumber,
-                                                                pDofKey,
-                                                                dofManager.rankOffset(),
-                                                                localMatrix,
-                                                                localRhs,
-                                                                gravityVectorData,
-      							        FlowSolverBase::viewKeyStruct::fluidNamesString() );
-  
-    // Cell-based contributions
+                                                                  pDofKey,
+                                                                  dofManager.rankOffset(),
+                                                                  localMatrix,
+                                                                  localRhs,
+                                                                  gravityVectorData,
+                                                                  FlowSolverBase::viewKeyStruct::fluidNamesString() );
+
+    // Cell-based contributions: coupling terms (u/p)
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy< 32 >,
                                     constitutive::PorousSolidBase,
                                     CellElementSubRegion >( mesh,
-                                                            regionNames, //(),
+                                                            regionNames,
                                                             this->getDiscretizationName(),
-      						            viewKeyStruct::porousMaterialNamesString(),
-//                                                          porousMaterialNames(),
+                                                            viewKeyStruct::porousMaterialNamesString(),
                                                             kernelFactory );
-    
-    m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
-                                                domain,
-                                                dofManager,
-                                                localMatrix,
-                                                localRhs,
-                                                dofManager.getKey( extrinsicMeshData::flow::pressure::key() ) );
 
   } );
+
+  // Transmissibility 3D/2D
+  // FIXME: changes in assembleHydrofracFluxTerms to be checked
+  m_flowSolver->assembleHydrofracFluxTerms( time_n,
+                                            dt,
+                                            domain,
+                                            dofManager,
+                                            localMatrix,
+                                            localRhs,
+                                            m_contactFlowSolver->getDerivativeFluxResidual_dAperture() );
+
+  // Assemble transmissibility entries
+  m_flowSolver->assemblePoroelasticFluxTerms( time_n, dt,
+                                              domain,
+                                              dofManager,
+                                              localMatrix,
+                                              localRhs,
+                                              dofManager.getKey( extrinsicMeshData::flow::pressure::key() ) );
+
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::applyBoundaryConditions( real64 const time_n,
-                                                              real64 const dt,
-                                                              DomainPartition & domain,
-                                                              DofManager const & dofManager,
-                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                              arrayView1d< real64 > const & localRhs )
+                                                                               real64 const dt,
+                                                                               DomainPartition & domain,
+                                                                               DofManager const & dofManager,
+                                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                                               arrayView1d< real64 > const & localRhs )
 {
   m_contactSolver->applyBoundaryConditions( time_n, dt,
                                             domain,
@@ -782,8 +781,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::applyBoundaryConditions( r
 }
 
 real64 SinglePhasePoromechanicsLagrangianContactSolver::calculateResidualNorm( DomainPartition const & domain,
-                                                              DofManager const & dofManager,
-                                                              arrayView1d< real64 const > const & localRhs )
+                                                                               DofManager const & dofManager,
+                                                                               arrayView1d< real64 const > const & localRhs )
 {
   // compute norm of momentum balance residual equations
   real64 const momementumResidualNorm = m_contactSolver->calculateResidualNorm( domain, dofManager, localRhs );
@@ -830,9 +829,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner()
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::solveSystem( DofManager const & dofManager,
-                                                  ParallelMatrix & matrix,
-                                                  ParallelVector & rhs,
-                                                  ParallelVector & solution )
+                                                                   ParallelMatrix & matrix,
+                                                                   ParallelVector & rhs,
+                                                                   ParallelVector & solution )
 {
   SinglePhasePoromechanicsSolver::solveSystem( dofManager, matrix, rhs, solution );
 
@@ -851,26 +850,26 @@ void SinglePhasePoromechanicsLagrangianContactSolver::solveSystem( DofManager co
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::applySystemSolution( DofManager const & dofManager,
-                                                          arrayView1d< real64 const > const & localSolution,
-                                                          real64 const scalingFactor,
-                                                          DomainPartition & domain )
+                                                                           arrayView1d< real64 const > const & localSolution,
+                                                                           real64 const scalingFactor,
+                                                                           DomainPartition & domain )
 {
   /*
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = mesh.getElemManager();
-  elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion & region )
-  {
-    region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-    {
+     MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+     ElementRegionManager & elemManager = mesh.getElemManager();
+     elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion & region )
+     {
+     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+     {
       if( subRegion.hasWrapper( SinglePhaseBase::viewKeyStruct::pressureString() ) )
       {
         arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() );
         arrayView1d< real64 > dpres = subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() );
         std::cout << "pres0 " << pres[0] << " " << dpres[0] << std::endl;
       }
-    } );
-  } );
-  */
+     } );
+     } );
+   */
 
   // update displacement field
   m_contactSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );

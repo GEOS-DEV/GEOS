@@ -401,7 +401,8 @@ void SinglePhaseFVM< BASE >::assembleHydrofracFluxTerms( real64 const GEOSX_UNUS
     ElementRegionManager::ElementViewAccessor< arrayView4d< real64 const > > dPerm_dDispJump =
       elemManager.constructMaterialArrayViewAccessor< PermeabilityBase, real64, 4 >( extrinsicMeshData::permeability::dPerm_dDispJump::key() );
 
-    fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    //fluxApprox.forStencils< CellElementStencilTPFA, SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
+    fluxApprox.forStencils< SurfaceElementStencil, FaceElementToCellStencil >( mesh, [&]( auto & stencil )
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
