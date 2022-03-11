@@ -46,10 +46,6 @@ if( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} ${extraComponentsLinkList} Python3::Python Python3::NumPy pylvarray )
-endif()
-
 #
 # Add gtest C++ based tests
 #

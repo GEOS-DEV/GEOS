@@ -17,10 +17,6 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if ( ENABLE_PYGEOSX )
-	set( dependencyList ${dependencyList} pygroup pyfileIO pysolver Python3::Python Python3::NumPy pylvarray)
-endif()
-
 foreach(test_name ${serial_tests})
   set( exec_name test${test_name} )
   blt_add_executable( NAME ${exec_name}
