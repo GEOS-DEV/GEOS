@@ -134,6 +134,8 @@ private:
 
     // Flash kernel wrapper
     typename FLASH::KernelWrapper m_flash;
+
+    KineticReaction m_reaction;
   };
 
   virtual integer getWaterPhaseIndex() const override final;
@@ -402,6 +404,7 @@ ENUM_STRINGS( ReactiveCO2BrinePhillipsFluid::SubModelInputNames,
               "ViscosityFun",
               "EnthalpyFun",
               "InternalEnergyFun" );
+
 
 } // namespace constitutive
 
