@@ -103,11 +103,6 @@ else()
   set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
 endif()
 
-if( ENABLE_PYGEOSX )
-	set( pythonDependencies Python3::Python Python3::NumPy pylvarray)
-endif()
-
-
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
