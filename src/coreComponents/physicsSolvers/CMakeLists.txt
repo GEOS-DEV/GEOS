@@ -134,9 +134,9 @@ set( physicsSolvers_sources
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
 if( ENABLE_PYGEOSX )
-	set( physicsSolvers_headers ${physicsSolvers_headers} python/PySolver.hpp python/PySolverType.hpp ) 
-	set( physicsSolvers_sources ${physicsSolvers_sources} python/PySolver.cpp ) 
-        set( dependencyList ${dependencyList} Python3::Python )
+  set( physicsSolvers_headers ${physicsSolvers_headers} python/PySolver.hpp python/PySolverType.hpp ) 
+  set( physicsSolvers_sources ${physicsSolvers_sources} python/PySolver.cpp ) 
+  set( dependencyList ${dependencyList} Python3::Python )
 endif()
 
 if ( ENABLE_CUDA )
