@@ -494,23 +494,32 @@ def descentDirection(gradJ, method="steepestDescent"):
     return d
 
 
-def linesearchDirection(J, gradJ, alpha, d, m, p1=1.5, p2=0.5):
+def linesearchDirection(solver, acquisition, outputWaveField, J, gradJ, alpha, d, m, p1=1.5, p2=0.5, rank=0):
     while True:
-        m1 = m + alpha * d
-        J1 = computeCostFunction(acqs, m1, client)
-        succesArmijo = armijoCondition(J, J1, gradJ, alpha)
+        solver.updateVelocityModel(m + alpha * d)
+        residuals=[]
+        for shot in acquisition:
+            residuals.append( forward(solver,
+                                      shot,
+                                      outputWaveField,
+                                      residual_flag=True,
+                                      datafile="dataTest/seismo_Shot"+shot.id+".sgy",
+                                      rank=rank)
+            )
+
+        Jup = computeFullCostFunction("partialCostFunction", acquisition)
+        succesArmijo = armijoCondition(J, Jup, gradJ, alpha)
         if succesArmijo:
-            succesGoldstein = goldsteinCondition(J, J1, gradJ, alpha)
+            succesGoldstein = goldsteinCondition(J, Jup, gradJ, alpha)
             if succesGoldstein:
-                return m1
+                return residual
             else:
+                solver.updateVelocityModel(m)
                 alpha*=p1
         else:
+            solver.updateVelocityModel(m)
             alpha*=p2
 
-
-def updateModel(acqs, m):
-    print("To be implemented")
 
 
 #==============================================================================================#

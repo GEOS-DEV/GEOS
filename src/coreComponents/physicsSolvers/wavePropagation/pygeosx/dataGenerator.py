@@ -54,14 +54,22 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         dt = shot.dt
         dtSeismoTrace = maxTime/(nbSeismo - 1)
 
-        acousticSolver = AcousticSolver(sys.argv[2],
-                                        dt,
-                                        maxTime,
-                                        dtSeismoTrace)
+        if ishot == 0:
+            acousticSolver = AcousticSolver(sys.argv[2],
+                                            dt,
+                                            maxTime,
+                                            dtSeismoTrace)
 
-        acousticSolver.initialize(rank)
+            acousticSolver.initialize(rank)
+        else:
+            acousticSolver = AcousticSolver(sys.argv[2],
+                                            dt,
+                                            maxTime,
+                                            dtSeismoTrace)
+
+            acousticSolver.reinitialize()
+
         acousticSolver.apply_initial_conditions()
-
         acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
 #===================================================
         #FORWARD
@@ -75,6 +83,8 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
                      filename = "seismo",
                      directory = "dataTest",
                      rank = rank)
+
+        ishot += 1
 
     acousticSolver.finalize()
 

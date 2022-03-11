@@ -111,7 +111,7 @@ class AcousticSolver:
         self.updateTimeVariables()
 
 
-    def reinit(self, rank=0):
+    def reinitialize(self):
 
         """First initialization of GEOSX.
         Must be used only if you have already run GEOSX once
@@ -122,7 +122,7 @@ class AcousticSolver:
             Process rank
         """
 
-        self.geosx = pygeosx.reinit(rank)
+        self.geosx = pygeosx.reinit(sys.argv)
 
         self.solver = self.geosx.get_group("/Solvers/"+self.name)
         self.collections = []
@@ -261,6 +261,8 @@ class AcousticSolver:
         velocity.set_access_level(pygeosx.pylvarray.MODIFIABLE)
         velocity.to_numpy()[:] = vel
 
+        self.solver.reinit()
+
 
     def resetWaveField(self):
 
@@ -328,6 +330,19 @@ class AcousticSolver:
 
         pressureAtReceivers = self.solver.get_wrapper("pressureNp1AtReceivers").value()
         return pressureAtReceivers.to_numpy()
+
+    def getVelocityModel(self):
+
+        """Get the velocity values
+
+        Return
+        ------
+        velocity : Numpy Array
+            Array containing the velocity values
+        """
+
+        velocity = self.solver.get_wrapper("/domain/MeshBodies/mesh/meshLevels/Level0/ElementRegions/elementRegionsGroup/Region/elementSubRegions/cb/mediumVelocity").value()
+        return velocity.to_numpy()
 
 
     def getGroup(self, path):

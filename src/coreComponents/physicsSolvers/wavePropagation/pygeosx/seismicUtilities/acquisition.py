@@ -146,13 +146,9 @@ class Acquisition:
                 yCoords = [float(yCoords_str_list[0]), float(yCoords_str_list[1])]
                 zCoords = [float(zCoords_str_list[0]), float(zCoords_str_list[1])]
 
-                x_nb_cells = int(internal_mesh['nx'].replace('{','').replace('}',''))
-                y_nb_cells = int(internal_mesh['ny'].replace('{','').replace('}',''))
-                z_nb_cells = int(internal_mesh['nz'].replace('{','').replace('}',''))
-
-                x = (xCoords[1] - xCoords[0])/x_nb_cells
-                y = (yCoords[1] - yCoords[0])/y_nb_cells
-                z = (zCoords[1] - zCoords[0])/z_nb_cells
+                x = (xCoords[1] - xCoords[0])/self.nx
+                y = (yCoords[1] - yCoords[0])/self.ny
+                z = (zCoords[1] - zCoords[0])/self.nz
 
                 minRadius = min(x/2, y/2, z/2)
 
@@ -366,13 +362,13 @@ class Acquisition:
 
         internal_mesh = [elem.attrib for elem in root.iter('InternalMesh')][0]
 
-        x_nb_cells = int(internal_mesh['nx'].replace('{','').replace('}',''))
-        y_nb_cells = int(internal_mesh['ny'].replace('{','').replace('}',''))
-        z_nb_cells = int(internal_mesh['nz'].replace('{','').replace('}',''))
+        x_str_list = internal_mesh['nx'].replace('{','').replace('}','').split(',')
+        y_str_list = internal_mesh['ny'].replace('{','').replace('}','').split(',')
+        z_str_list = internal_mesh['nz'].replace('{','').replace('}','').split(',')
 
-        self.nx = x_nb_cells
-        self.ny = y_nb_cells
-        self.nz = z_nb_cells
+        self.nx = sum([int(s) for s in x_str_list])
+        self.ny = sum([int(s) for s in y_str_list])
+        self.nz = sum([int(s) for s in z_str_list])
 
         for shot in self.shots:
             shot.xml = xmlfile

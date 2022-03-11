@@ -7,7 +7,6 @@ from seismicUtilities.fwi import forward,                       \
                                  computePartialCostFunction,    \
                                  computeFullCostFunction,       \
                                  computeResidual
-from seismicUtilities.fwi import print_group
 from seismicUtilities.AcousticSolver import AcousticSolver
 
 from mpi4py import MPI
@@ -32,7 +31,7 @@ def main():
                                         receivers_depth = 49)
 
     acquisition.add_xml(sys.argv[2])
-    acquisition.limitedAperture(2000)
+    #acquisition.limitedAperture(2000)
     #acquisition.calculDt()
 
     maxTime = 2.0
@@ -55,12 +54,21 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
         dt = shot.dt
         dtSeismoTrace = maxTime/(nbSeismo - 1)
 
-        acousticSolver = AcousticSolver(sys.argv[2],
-                                        dt,
-                                        maxTime,
-                                        dtSeismoTrace)
+        if ishot == 0:
+            acousticSolver = AcousticSolver(sys.argv[2],
+                                            dt,
+                                            maxTime,
+                                            dtSeismoTrace)
 
-        acousticSolver.initialize(rank)
+            acousticSolver.initialize(rank)
+
+        else:
+            acousticSolver = AcousticSolver(sys.argv[2],
+                                            dt,
+                                            maxTime,
+                                            dtSeismoTrace)
+
+            acousticSolver.reinitialize()
 
         gradDir = "partialGradient"
         acousticSolver.updateOutputsName(directory=gradDir,
@@ -68,7 +76,9 @@ def acousticShot(maxTime, nbSeismo, outputWaveFieldInterval, acquisition, comm):
                                                     "forwardWaveFieldN_"+shot.id,
                                                     "forwardWaveFieldNm1_"+shot.id],)
 
+
         acousticSolver.apply_initial_conditions()
+
         acousticSolver.updateSourceAndReceivers(shot.sources.source_list, shot.receivers.receivers_list)
         #Get view on pressure at receivers locations
         pressureAtReceivers = acousticSolver.getPressureAtReceivers()
