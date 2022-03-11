@@ -246,7 +246,7 @@
       name="vtkOutput"
       plotFileRoot="PoroElastic_embedded"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="restartOutput"/>

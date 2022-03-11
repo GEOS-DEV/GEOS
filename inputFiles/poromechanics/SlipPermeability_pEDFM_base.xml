@@ -250,7 +250,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="binary"/>
 
     <TimeHistory
       name="timeHistoryOutput"
