@@ -269,7 +269,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I
     }
     else // Particle field registration
     {
-      std::cout << "Registering particle fields" << std::endl;
+      std::cout << "Registering particle fields, I guess" << std::endl;
     }
 
   } );
@@ -313,46 +313,46 @@ void SolidMechanicsMPM::initializePreSubGroups()
 
 
 
-template< typename ... PARAMS >
-real64 SolidMechanicsMPM::explicitKernelDispatch( MeshLevel & mesh,
-                                                  arrayView1d< string const > const & targetRegions,
-                                                  string const & finiteElementName,
-                                                  real64 const dt,
-                                                  std::string const & elementListName )
-{
-  GEOSX_MARK_FUNCTION;
-  real64 rval = 0;
-  if( m_strainTheory==0 )
-  {
-    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
-    rval = finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                           constitutive::SolidBase,
-                                           CellElementSubRegion >( mesh,
-                                                                   targetRegions,
-                                                                   finiteElementName,
-                                                                   viewKeyStruct::solidMaterialNamesString(),
-                                                                   kernelFactory );
-  }
-  else if( m_strainTheory==1 )
-  {
-    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
-    rval = finiteElement::
-             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                           constitutive::SolidBase,
-                                           CellElementSubRegion >( mesh,
-                                                                   targetRegions,
-                                                                   finiteElementName,
-                                                                   viewKeyStruct::solidMaterialNamesString(),
-                                                                   kernelFactory );
-  }
-  else
-  {
-    GEOSX_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
-  }
-
-  return rval;
-}
+//template< typename ... PARAMS >
+//real64 SolidMechanicsMPM::explicitKernelDispatch( MeshLevel & mesh,
+//                                                  arrayView1d< string const > const & targetRegions,
+//                                                  string const & finiteElementName,
+//                                                  real64 const dt,
+//                                                  std::string const & elementListName )
+//{
+//  GEOSX_MARK_FUNCTION;
+//  real64 rval = 0;
+//  if( m_strainTheory==0 )
+//  {
+//    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitSmallStrainFactory( dt, elementListName );
+//    rval = finiteElement::
+//             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+//                                           constitutive::SolidBase,
+//                                           CellElementSubRegion >( mesh,
+//                                                                   targetRegions,
+//                                                                   finiteElementName,
+//                                                                   viewKeyStruct::solidMaterialNamesString(),
+//                                                                   kernelFactory );
+//  }
+//  else if( m_strainTheory==1 )
+//  {
+//    auto kernelFactory = SolidMechanicsLagrangianFEMKernels::ExplicitFiniteStrainFactory( dt, elementListName );
+//    rval = finiteElement::
+//             regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+//                                           constitutive::SolidBase,
+//                                           CellElementSubRegion >( mesh,
+//                                                                   targetRegions,
+//                                                                   finiteElementName,
+//                                                                   viewKeyStruct::solidMaterialNamesString(),
+//                                                                   kernelFactory );
+//  }
+//  else
+//  {
+//    GEOSX_ERROR( "Invalid option for strain theory (0 = infinitesimal strain, 1 = finite strain" );
+//  }
+//
+//  return rval;
+//}
 
 bool SolidMechanicsMPM::execute( real64 const time_n,
                                  real64 const dt,
@@ -398,25 +398,25 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X)
+void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X, ParticleManager & particleManager)
 {
   // Get domain extent
-  for(int i=0; i<X.size()/3; i++)
+  for(int i=0; i<g_X.size()/3; i++)
   {
     for(int j=0; j<3; j++)
     {
-      m_xMin[j] = std::fmin(m_xMin[j],X[i][j]);
-      m_xMax[j] = std::fmax(m_xMax[j],X[i][j]);
+      m_xMin[j] = std::fmin(m_xMin[j],g_X[i][j]);
+      m_xMax[j] = std::fmax(m_xMax[j],g_X[i][j]);
       m_domainL[j] = m_xMax[j] - m_xMin[j];
     }
   }
 
   // Get element size
-  for(int i=0; i<X.size()/3; i++)
+  for(int i=0; i<g_X.size()/3; i++)
   {
     for(int j=0; j<3; j++)
     {
-      real64 test = X[i][j] - m_xMin[j]; // By definition, this should always be positive
+      real64 test = g_X[i][j] - m_xMin[j]; // By definition, this should always be positive
       if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
       {
         m_hx[j] = std::fmin(test,m_hx[j]);
@@ -440,16 +440,30 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
       m_ijkMap[i][j].resize( m_nEl[2] + 1 );
     }
   }
-  for( int ii = 0 ; ii < X.size()/3 ; ii++ )
+  for( int ii = 0 ; ii < g_X.size()/3 ; ii++ )
   {
-    int i = std::round( ( X[ii][0] - m_xMin[0] ) / m_hx[0] ) ;
-    int j = std::round( ( X[ii][1] - m_xMin[1] ) / m_hx[1] ) ;
-    int k = std::round( ( X[ii][2] - m_xMin[2] ) / m_hx[2] ) ;
+    int i = std::round( ( g_X[ii][0] - m_xMin[0] ) / m_hx[0] ) ;
+    int j = std::round( ( g_X[ii][1] - m_xMin[1] ) / m_hx[1] ) ;
+    int k = std::round( ( g_X[ii][2] - m_xMin[2] ) / m_hx[2] ) ;
     m_ijkMap[i][j][k] = ii;
   }
+
+  // Set particle masses based on their volume and density
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
+    arrayView2d< real64 > const particleDensity = constitutiveRelation.getDensity(); // 2d array because there's a density for each quadrature point, we just access with [particle][0]
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
+    for(int i=0; i<subRegion.size(); i++)
+    {
+      particleMass[i] = particleDensity[i][0]*particleVolume[i]; // TODO: This should probably be done in ParticleMeshGenerator...
+    }
+  } );
 }
 
-real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
+real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n),
                                         real64 const & dt,
                                         const int cycleNumber,
                                         DomainPartition & domain )
@@ -459,9 +473,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   #define USE_PHYSICS_LOOP
 
 
-
   // Constitutive manager
-  ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+  //ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
+
 
   // Get node and particle managers. ***** We implicitly assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
@@ -474,39 +488,139 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
   NodeManager & nodeManager = grid.getMeshLevel(0).getNodeManager();
 
-  // Get nodal positions
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X = nodeManager.referencePosition();
+
+  // Get nodal fields
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & g_X = nodeManager.referencePosition();
+  arrayView2d< real64, nodes::VELOCITY_USD > & g_V = nodeManager.velocity(); // Velocity, initially overloaded to be momentum
+  arrayView2d< real64, nodes::ACCELERATION_USD > & g_A = nodeManager.acceleration(); // Acceleration, initially overloaded to be internal force
+  arrayView1d< real64 > & g_M = nodeManager.getReference< array1d< real64 > >( keys::Mass );
+
+
+  // Zero out nodal fields
+  g_V.zero();
+  g_A.zero();
+  g_M.zero();
+
 
   // At time step zero, perform initialization calculations
   if(cycleNumber == 0)
   {
-    initialize(X);
+    initialize(g_X, particleManager);
   }
 
-  // Loop over particles
-  particleManager.forParticleRegions( [&]( auto & region )
+
+  // Particle to grid interpolation
+  real64 totalParticleMass = 0.0;
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
-    region.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+    arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
+    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
+    arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
+    //arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+
+    for(int p=0; p<subRegion.size(); p++)
     {
-      arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
-      for(int i=0; i<subRegion.size(); i++)
+      auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, long>
+      auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, long>
+      real64 const & p_m = particleMass[p];
+      totalParticleMass += p_m;
+
+      // Get particle cell ID
+      std::vector<int> cellID(3);
+      for(int i=0; i<3; i++)
       {
-        LvArray::ArraySlice<double, 1, 0, long> const & p_x = particleCenter[i];
-
-        // The cellID construction should be out here since it can be passed to both getNodes and getWeights
-
-        std::vector<int> nodeIDs = getNodes(p_x, EnumStrings< ParticleType >::toString( subRegion.getParticleType() ));
-        std::vector<real64> weights = getWeights(p_x, EnumStrings< ParticleType >::toString( subRegion.getParticleType() ));
-
-//        intArray nodes = getNodes(particle);
-//        realArray weights = getWeights(particle);
-//        for(nodes : node)
-//        {
-//          momentum(node) += particle contribution;
-//        }
+        cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
       }
-    } );
-  } );
+
+      // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
+      // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
+      std::vector<int> nodeIDs = getNodes(cellID);
+      std::vector<real64> weights = getWeights(p_x, cellID, g_X);
+//      if(cycleNumber==0)
+//      {
+//        for(size_t i=0; i<nodeIDs.size(); i++)
+//        {
+//          std::cout << "Node: " << nodeIDs[i] << ", Weight: " << weights[i] << "\t";
+//        }
+//        std::cout << std::endl;
+//      }
+
+      // Update grid values
+      for(size_t i=0; i<nodeIDs.size(); i++)
+      {
+        int g = nodeIDs[i];
+        g_M[g] += p_m*weights[i];
+        for(int j = 0; j<3; j++)
+        {
+          g_V[g][j] += p_m*p_v[j]*weights[i];
+        }
+      }
+
+    } // particle loop
+  } ); // subregion loop
+  //std::cout << "Total particle mass: " << totalParticleMass << std::endl;
+
+
+  // Grid update
+  real64 totalGridMass = 0.0;
+  for(int i=0; i<nodeManager.size(); i++)
+  {
+    totalGridMass += g_M[i];
+
+    if(g_M[i] > 1.0e-12) // small mass threshold
+    {
+      for(int j=0; j<3; j++)
+      {
+        g_A[i][j] /= g_M[i]; // g_A holds the nodal forces before this update, divide by mass to obtain acceleration
+        g_V[i][j] /= g_M[i]; // g_V holds the nodal momenta before this update, divide by mass to obtain velocity
+        g_V[i][j] += g_A[i][j]*dt;
+      }
+    }
+  }
+  //std::cout << "Total grid mass: " << totalGridMass << std::endl;
+
+
+  // Grid to particle interpolation
+  particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
+  {
+    arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
+    arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
+    //arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+
+    // Particle loop
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      auto const & p_x = particleCenter[p];
+      auto const & p_v = particleVelocity[p];
+
+      // Get particle cell ID - TODO: can this be a member of subRegion so we don't have to recalculate it?
+      std::vector<int> cellID(3);
+      for(int i=0; i<3; i++)
+      {
+        cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
+      }
+
+      // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
+      // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
+      std::vector<int> nodeIDs = getNodes(cellID);
+      std::vector<real64> weights = getWeights(p_x, cellID, g_X);
+
+      // Particle-to-grid map
+      for(size_t i=0; i<nodeIDs.size(); i++)
+      {
+        int g = nodeIDs[i];
+        for(int j = 0; j<3; j++)
+        {
+          p_x[j] += g_V[g][j]*dt*weights[i];
+          p_v[j] += g_A[g][j]*dt*weights[i];
+        }
+      }
+
+    } // particle loop
+  } ); // subregion loop
+
+
+
 
   // Calculate stable time step
   real64 wavespeed = 0.0;
@@ -528,25 +642,17 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   return m_cflFactor*length/wavespeed;
 }
 
-std::vector<int> SolidMechanicsMPM::getNodes(LvArray::ArraySlice<double, 1, 0, long> const & p_x, std::string const & particleType)
+std::vector<int> SolidMechanicsMPM::getNodes(std::vector<int> const & cellID)
 {
   std::vector<int> nodeIDs;
 
-  if(particleType == "SinglePoint" || particleType == "CPDI") // Obviously wrong, will fix later. TODO: Also, I feel like I shouldn't have to check this for each particle. Do I make a separate function for each particle type? Surely there's a good way to do this.
+  for(int i=0; i<2; i++)
   {
-    std::vector<int> cellID(3);
-    for(int i=0; i<3; i++)
+    for(int j=0; j<2; j++)
     {
-      cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
-    }
-    for(int i=0; i<2; i++)
-    {
-      for(int j=0; j<2; j++)
+      for(int k=0; k<2; k++)
       {
-        for(int k=0; k<2; k++)
-        {
-          nodeIDs.push_back(m_ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k]);
-        }
+        nodeIDs.push_back(m_ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k]);
       }
     }
   }
@@ -554,19 +660,30 @@ std::vector<int> SolidMechanicsMPM::getNodes(LvArray::ArraySlice<double, 1, 0, l
   return nodeIDs;
 }
 
-std::vector<int> SolidMechanicsMPM::getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x, std::string const & particleType)
+std::vector<real64> SolidMechanicsMPM::getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                                                  std::vector<int> const & cellID,
+                                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X)
 {
   std::vector<real64> weights;
 
-  if(particleType == "SinglePoint" || particleType == "CPDI") // Obviously wrong, will fix later. TODO: Also, I feel like I shouldn't have to check this for each particle. Do I make a separate function for each particle type? Surely there's a good way to do this.
-  {
-    std::vector<real64> cellID(3);
+  int corner = m_ijkMap[cellID[0]][cellID[1]][cellID[2]];
+  auto corner_x = g_X[corner];
+  real64 xRel = (p_x[0] - corner_x[0])/m_hx[0];
+  real64 yRel = (p_x[1] - corner_x[1])/m_hx[1];
+  real64 zRel = (p_x[2] - corner_x[2])/m_hx[2];
 
-    for(int i=0; i<3; i++)
+  for(int i=0; i<2; i++)
+  {
+    real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
+    for(int j=0; j<2; j++)
     {
-      cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
+      real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
+      for(int k=0; k<2; k++)
+      {
+        real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
+        weights.push_back(xWeight*yWeight*zWeight);
+      }
     }
-    int corner = m_ijkMap[cellID[0]][cellID[1]][cellID[2]];
   }
 
   return weights;
