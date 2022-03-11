@@ -209,13 +209,14 @@ public:
     return m_rigidBodyModes;
   }
 
-  std::vector<int> getNodes(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
-                            std::string const & particleType);
+  std::vector<int> getNodes(std::vector<int> const & cellID);
 
-  std::vector<int> getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
-                              std::string const & particleType);
+  std::vector<real64> getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                                 std::vector<int> const & cellID,
+                                 arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X);
 
-  void initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > & X);
+  void initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X,
+                  ParticleManager & particleManager);
 
 protected:
   virtual void postProcessInput() override final;

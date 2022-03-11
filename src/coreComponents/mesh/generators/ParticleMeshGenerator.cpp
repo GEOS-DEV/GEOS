@@ -77,7 +77,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   ParticleBlockManager & particleBlockManager = meshBody.registerGroup< ParticleBlockManager >( keys::particleManager );
 
-  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  //SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
   // This should probably handled elsewhere:
   int aa = 0;

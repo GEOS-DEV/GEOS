@@ -49,6 +49,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleCenter = particleBlock.getParticleCenter();
   m_particleVelocity = particleBlock.getParticleVelocity();
   m_particleVolume = particleBlock.getParticleVolume();
+  m_particleMass.resize(particleBlock.size());
   m_hasRVectors = particleBlock.hasRVectors();
 
 
@@ -89,14 +90,14 @@ localIndex ParticleSubRegion::packUpDownMapsSize( arrayView1d< localIndex const 
 
 
 localIndex ParticleSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
-                                                 arrayView1d< localIndex const > const & packList ) const
+                                              arrayView1d< localIndex const > const & packList ) const
 {
   return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
 template< bool DOPACK >
-localIndex ParticleSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                        arrayView1d< localIndex const > const & packList ) const
+localIndex ParticleSubRegion::packUpDownMapsPrivate( buffer_unit_type * & GEOSX_UNUSED_PARAM(buffer),
+                                                     arrayView1d< localIndex const > const & GEOSX_UNUSED_PARAM(packList) ) const
 {
 
 //  arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
@@ -132,8 +133,8 @@ localIndex ParticleSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer
   return packedSize;
 }
 
-localIndex ParticleSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                                   localIndex_array & packList,
+localIndex ParticleSubRegion::unpackUpDownMaps( buffer_unit_type const * & GEOSX_UNUSED_PARAM(buffer),
+                                                   localIndex_array & GEOSX_UNUSED_PARAM(packList),
                                                    bool const GEOSX_UNUSED_PARAM( overwriteUpMaps ),
                                                    bool const GEOSX_UNUSED_PARAM( overwriteDownMaps ) )
 {
