@@ -76,6 +76,7 @@
     <Coulomb
       name="fractureMaterial"
       cohesion="0.0"
+      apertureTableName=""
       frictionCoefficient="0.577350269189626"/>
   </Constitutive>
 
