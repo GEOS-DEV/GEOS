@@ -76,7 +76,7 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::DomainPartition & domain = self->group->getGroup< DomainPartition >( keys::domain ); 
+  geosx::DomainPartition & domain = self->group->getGroup< DomainPartition >( keys::domain );
 
   int cycleNumber = int(time/dt);
 
