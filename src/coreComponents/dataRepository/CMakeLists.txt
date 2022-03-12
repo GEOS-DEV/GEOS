@@ -48,7 +48,7 @@ if( ENABLE_PYGEOSX )
 	python/PyWrapper.hpp )
   list( APPEND dataRepository_sources
 	python/PyGroup.cpp 
-	python/PyWrapper.cpp )
+	python/PyWrapper.cpp ) 
   list( APPEND dependencyList Python3::Python )  
 endif()
 

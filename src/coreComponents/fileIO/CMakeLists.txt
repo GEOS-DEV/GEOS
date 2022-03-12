@@ -40,7 +40,7 @@ if( ENABLE_PYGEOSX )
   list( APPEND fileIO_sources 
         python/PyHistoryCollection.cpp 
         python/PyHistoryOutput.cpp )
-list( APPEND dependencyList Python3::Python )
+  list( APPEND dependencyList Python3::Python ) 
 endif()
 
 

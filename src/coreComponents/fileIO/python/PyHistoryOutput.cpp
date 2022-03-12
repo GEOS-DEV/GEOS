@@ -3,8 +3,6 @@
 
 // Source includes
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
-#include "mainInterface/GeosxState.hpp"
-#include "mainInterface/ProblemManager.hpp"
 
 #include "PyHistoryOutputType.hpp"
 #include "dataRepository/python/PyGroupType.hpp"
@@ -19,7 +17,7 @@
 
 namespace geosx
 {
-
+using namespace dataRepository;
 namespace python
 {
 
@@ -82,8 +80,7 @@ static PyObject * output( PyHistoryOutput * self, PyObject * args )
     return nullptr;
   }
 
-  geosx::GeosxState * g_state = &getGlobalState();
-  geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
+  geosx::DomainPartition & domain = self->group->getGroup< DomainPartition >( keys::domain ); 
 
   int cycleNumber = int(time/dt);
   try

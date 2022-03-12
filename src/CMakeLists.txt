@@ -157,7 +157,9 @@ blt_add_executable( NAME geosx
 				 )
 			     endif()
 
-
+if( ENABLE_PYGEOSX )
+  add_subdirectory( pygeosx )
+endif()
 
 if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
@@ -170,6 +172,3 @@ install( DIRECTORY ../examples/
 install( DIRECTORY ../scripts/
          DESTINATION scripts )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( pygeosx )
-endif()
