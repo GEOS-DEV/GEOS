@@ -570,7 +570,6 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
   GEOSX_MARK_FUNCTION;
 
   integer const numComp = m_numComponents;
-  integer const numPhase = m_numPhases;
 
   // 1. Compute hydrostatic equilibrium in the regions for which corresponding field specification tag has been specified
   computeHydrostaticEquilibrium();
@@ -632,6 +631,8 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
     // 4.3 Initialize/update the relative permeability model using the initial phase volume fraction
     //     This is needed to handle relative permeability hysteresis
+    //     Also, initialize the fluid model (to compute the initial total mass density, needed to compute the body force increment in
+    // coupled simulations)
     //
     // Note:
     // - This must be called after updatePhaseVolumeFraction
@@ -646,6 +647,10 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
       getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
     relPermMaterial.saveConvergedPhaseVolFractionState( phaseVolFrac ); // this needs to happen before calling updateRelPermModel
     updateRelPermModel( subRegion );
+
+    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
+    MultiFluidBase & fluidMaterial = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+    fluidMaterial.initializeState( phaseVolFrac );
 
     // 4.4 Then, we initialize/update the capillary pressure model
     //
@@ -697,32 +702,17 @@ void CompositionalMultiphaseBase::initializeFluidState( MeshLevel & mesh,
 
   } );
 
-  // 5. Save initial pressure and total mass density (needed by the poromechanics solvers)
+  // 5. Save initial pressure (needed by the poromechanics solvers)
   //    Specifically, the initial pressure is used to compute a deltaPressure = currentPres - initPres in the total stress
-  //    And the initial total mass density is used to compute a deltaBodyForce
   mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                 ElementSubRegionBase & subRegion )
   {
     arrayView1d< real64 const > const pres = subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 > const initPres = subRegion.getExtrinsicData< extrinsicMeshData::flow::initialPressure >();
-    arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac =
-      subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >();
-
-
-    string const & fluidName = subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-    arrayView3d< real64 const, multifluid::USD_PHASE > const phaseMassDens = fluid.phaseMassDensity();
-    arrayView2d< real64, multifluid::USD_FLUID > const initTotalMassDens =
-      fluid.getReference< extrinsicMeshData::multifluid::initialTotalMassDensity::type >( extrinsicMeshData::multifluid::initialTotalMassDensity::key() );
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
       initPres[ei] = pres[ei];
-      initTotalMassDens[ei][0] = 0.0;
-      for( integer ip = 0; ip < numPhase; ++ip )
-      {
-        initTotalMassDens[ei][0] += phaseVolFrac[ei][ip] * phaseMassDens[ei][0][ip];
-      }
     } );
   } );
 }
