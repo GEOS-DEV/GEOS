@@ -66,7 +66,8 @@ public:
 
   // ------ CellBlock management functions
 
-  // TODO Think about putting these at the ABC level? Or we cannot inherit the Group related stuff properly?  
+  // TODO Think about putting these at the ABC level? 
+  // Or can we not inherit the Group related stuff properly?  
   /**
    * @brief Get cell block by name.
    * @param[in] name Name of the cell block.
@@ -128,23 +129,23 @@ public:
 
   localIndex numElements() const
   { return m_numElements; }
-  
-  array2d< geosx::localIndex >     getEdgeToNodes() override; 
-  ArrayOfSets< geosx::localIndex > getEdgeToFaces() override; 
 
-  ArrayOfArrays< localIndex >        getFaceToNodes() override;
-  ArrayOfArrays< geosx::localIndex > getFaceToEdges() override;
+  array2d<geosx::localIndex> getEdgeToNodes() override;
+  ArrayOfSets<geosx::localIndex> getEdgeToFaces() override;
 
-  // TODO We have a problem - where are the Element index valid ? 
-  array2d< localIndex >              getFaceToElements() override;
+  ArrayOfArrays<localIndex> getFaceToNodes() override;
+  ArrayOfArrays<geosx::localIndex> getFaceToEdges() override;
 
-  ArrayOfSets< localIndex >   getNodeToEdges() override;
-  ArrayOfSets< localIndex >   getNodeToFaces() override;
-  
-  // TODO We have a problem - where are the Element index valid ? 
-  ArrayOfArrays< localIndex > getNodeToElements() override;
+  // TODO We have a problem - where are the Element index valid ?
+  array2d<localIndex> getFaceToElements() override;
 
-    /**
+  ArrayOfSets<localIndex> getNodeToEdges() override;
+  ArrayOfSets<localIndex> getNodeToFaces() override;
+
+  // TODO We have a problem - where are the Element index valid ?
+  ArrayOfArrays<localIndex> getNodeToElements() override;
+
+  /**
    * @brief Compute all possible maps and more
    */
   void buildMaps();
