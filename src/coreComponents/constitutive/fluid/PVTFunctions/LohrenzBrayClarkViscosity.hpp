@@ -82,32 +82,41 @@ public:
     // Estimate phase viscosity (in cp) at dilute gas conditions using the 
     // Herning and Zipperer [1936] mixture rule.  Store in final phaseViscosity array.
 
-    // todo: dPV_dT and dPV_dPC
-
-    for( localIndex p=0; p<numPhases; ++p )
+    for( integer p=0; p<numPhases; ++p )
     {
-      real64 A = 0;
+      real64 A = 0, dA_dT = 0;
       real64 B = 0; 
-      for( localIndex c=0; c<numComponents; ++c)
+
+      for( integer c=0; c<numComponents; ++c)
       {
         A += phaseComposition.value[p][c] * sqrt(m_componentMolarWeight[c]) * componentDiluteViscosity[c];
         B += phaseComposition.value[p][c] * sqrt(m_componentMolarWeight[c]);
+        dA_dT += phaseComposition.value[p][c] * sqrt(m_componentMolarWeight[c]) * dComponentDiluteViscosity_dTemperature[c];
       }
+
       phaseViscosity.value[p] = A/B;
+      phaseViscosity.derivs[p][Deriv::dP] = 0;
+      phaseViscosity.derivs[p][Deriv::dT] = dA_dT/B;
+
+      for( integer c=0; c<numComponents; ++c)
+      {
+        phaseViscosity.derivs[p][Deriv::dC+c] = sqrt(m_componentMolarWeight[c]) * componentDiluteViscosity[c] / B - A * sqrt(m_componentMolarWeight[c]) / (B * B);
+      }
     }
 
     // Estimate phase viscosity at given conditions using LBC [1964] correlation.
     // This is an additional term added to the dilute gas estimate above.
 
-    for( localIndex p=0; p<numPhases; ++p )
+    for( integer p=0; p<numPhases; ++p )
     {
       // compute phase pseudo properties via Kay's mixing rule
+
       real64 phaseCriticalTemperature = 0;
       real64 phaseCriticalPressure = 0;
       real64 phaseCriticalVolume = 0;
       real64 phaseMolarWeight = 0;
 
-      for( localIndex c=0; c<numComponents; ++c)
+      for( integer c=0; c<numComponents; ++c)
       {
         phaseCriticalTemperature += phaseComposition.value[p][c] * m_componentCriticalTemperature[c];
         phaseCriticalPressure    += phaseComposition.value[p][c] * m_componentCriticalPressure[c];
@@ -116,34 +125,105 @@ public:
       }
 
       // compute LBC polynomial
+
       real64 reducedDensity = phaseDensity.value[p] * phaseCriticalVolume / phaseMolarWeight;
-      real64 phaseChi = chiParameter( phaseCriticalTemperature, phaseCriticalPressure, phaseMolarWeight );
+      real64 inversePhaseChi, dInversePhaseChi_dPc, dInversePhaseChi_dTc, dInversePhaseChi_dMw;
 
-      real64 polynomial = 0.1023 
-                          + 0.023364*reducedDensity 
-                          + 0.058533*pow(reducedDensity,2) 
-                          - 0.040758*pow(reducedDensity,3) 
-                          + 0.0093324*pow(reducedDensity,4);
+      inverseChiParameter( phaseCriticalTemperature, 
+                           phaseCriticalPressure, 
+                           phaseMolarWeight,
+                           inversePhaseChi, 
+                           dInversePhaseChi_dPc, 
+                           dInversePhaseChi_dTc, 
+                           dInversePhaseChi_dMw );
 
-      // compute and scale final phase viscosity
-      phaseViscosity.value[p] += (pow(polynomial,4)-1e-4) / phaseChi;
-      phaseViscosity.value[p] *= 1e-3; // convert centipoise to pascal.seconds
+      real64 polynomialOne = 0.1023 
+                             + 0.023364*reducedDensity 
+                             + 0.058533*pow(reducedDensity,2) 
+                             - 0.040758*pow(reducedDensity,3) 
+                             + 0.0093324*pow(reducedDensity,4);
+
+      real64 polynomialTwo = pow(polynomialOne,4)-1e-4;
+
+      // add polynomial contribution to dilute term to get final phase viscosity
+
+      phaseViscosity.value[p] += polynomialTwo * inversePhaseChi;
+
+      // get derivatives, noting phaseDensity is a function of (pressure, temperature, composition)
+      // and inversePhaseChi is a function of composition.
+      // these derivatives are *added* to the ones already present from the dilute terms above.
+
+      real64 dPolynomialTwo_dDensity  = 4*pow(polynomialOne,3);
+             dPolynomialTwo_dDensity *= 0.023364 
+                                        + 2*0.058533*reducedDensity 
+                                        - 3*0.040758*pow(reducedDensity,2) 
+                                        + 4*0.0093324*pow(reducedDensity,3);
+             dPolynomialTwo_dDensity *= phaseCriticalVolume / phaseMolarWeight;
+
+      real64 dViscosity_dDensity = dPolynomialTwo_dDensity * inversePhaseChi;
+
+      phaseViscosity.derivs[p][Deriv::dP] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dP];
+      phaseViscosity.derivs[p][Deriv::dT] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dT];
+
+      for( integer c=0; c<numComponents; ++c)
+      {
+        phaseViscosity.derivs[p][Deriv::dC+c] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dC+c];
+        phaseViscosity.derivs[p][Deriv::dC+c] += polynomialTwo * dInversePhaseChi_dPc * m_componentCriticalPressure[c];
+        phaseViscosity.derivs[p][Deriv::dC+c] += polynomialTwo * dInversePhaseChi_dTc * m_componentCriticalTemperature[c];
+        phaseViscosity.derivs[p][Deriv::dC+c] += polynomialTwo * dInversePhaseChi_dMw * m_componentMolarWeight[c];
+      }
+
+      // scale centipoise to pascal.seconds
+
+      phaseViscosity.value[p] *= 1e-3; 
+      for( integer k=0; k<phaseViscosity.derivs[p].size(); ++k)
+      {
+        phaseViscosity.derivs[p][k] *= 1e-3;
+      }
     }
   }
 
 
-  /// Compute "chi" parameter (viscosity-reducing parameter) from [ST 1961, LBC 1964].
+  /// Compute "1/chi" parameter (inverse of the viscosity-reducing parameter) from [ST 1961, LBC 1964].
   /// Using units of (K, atm, amu).
+  /// This version returns value and derivatives.
   GEOSX_HOST_DEVICE
-  real64 chiParameter( real64 const criticalTemperature, 
-                       real64 const criticalPressure, 
-                       real64 const molarWeight ) const
+  void inverseChiParameter( real64 const criticalTemperature, 
+                            real64 const criticalPressure, 
+                            real64 const molarWeight,
+                            real64 & value,
+                            real64 & derivP,
+                            real64 & derivT,
+                            real64 & derivM) const
   {
-    real64 T = pow( criticalTemperature, 1.0/6.0 );
-    real64 M = pow( 1000 * molarWeight, 0.5 ); // note: kg/mol to atomic mass units
-    real64 P = pow( criticalPressure / 101325., 2.0/3.0 ); // note: pascal to atm conversion
-    return T/(M*P);
+    real64 T  = pow( criticalTemperature, 1.0/6.0 );
+    real64 dT = (1.0/6.0) * pow( criticalTemperature, -5.0/6.0 );
+
+    real64 M  = sqrt( 1000*molarWeight ); // note: kg/mol to atomic mass units
+    real64 dM = 5 * sqrt(10) / sqrt( molarWeight );
+
+    real64 P  = pow( criticalPressure / 101325., 2.0/3.0 ); // note: pascal to atm conversion
+    real64 dP = pow( 101325, -2.0/3.0 ) * pow( criticalPressure, -1.0/3.0 );
+
+    value  = M*P/T;
+    derivP = M*dP/T;
+    derivT = -M*P*dT/(T*T);
+    derivM = dM*P/T;
   }
+
+
+  /// Compute "1/chi" parameter (inverse of the viscosity-reducing parameter) from [ST 1961, LBC 1964].
+  /// This version returns only the value, without derivatives.
+  GEOSX_HOST_DEVICE
+  real64 inverseChiParameter( real64 const criticalTemperature, 
+                              real64 const criticalPressure, 
+                              real64 const molarWeight) const
+  {
+    real64 value, discard;
+    inverseChiParameter( criticalTemperature, criticalPressure, molarWeight, value, discard, discard, discard );
+    return value;
+  }
+
 
   /// Estimate pure component properties at dilute-gas conditions (pressure near atmospheric) using
   /// Stiel and Thodos [1961] correlation: https://doi.org/10.1002/aic.690070416.
@@ -156,10 +236,10 @@ public:
                                         array1d<real64> & componentDiluteViscosity,
                                         array1d<real64> & dComponentDiluteViscosity_dTemperature ) const
   {
-    for(localIndex c=0; c<numComponents; ++c)
+    for(integer c=0; c<numComponents; ++c)
     {
       real64 reducedTemperature = temperature / m_componentCriticalTemperature[c];
-      real64 componentChi = chiParameter( m_componentCriticalTemperature[c], m_componentCriticalPressure[c], m_componentMolarWeight[c] );
+      real64 inverseComponentChi = inverseChiParameter( m_componentCriticalTemperature[c], m_componentCriticalPressure[c], m_componentMolarWeight[c] );
 
       if( m_componentMolarWeight[c] < 2.1e-3) // hydrogen correlation, Stiel & Thodos, 1961, Eq. 12
       {
@@ -168,33 +248,16 @@ public:
       }
       else if( reducedTemperature <= 1.5 ) // nonpolar gas correlation at low temp, Eq. 9
       {
-        componentDiluteViscosity[c] = 34e-5 * pow( reducedTemperature, 0.94 ) / componentChi;
-        dComponentDiluteViscosity_dTemperature[c] = 34e-5 * 0.94 * pow( reducedTemperature, -0.06) / ( componentChi * m_componentCriticalTemperature[c] );
+        componentDiluteViscosity[c] = 34e-5 * pow( reducedTemperature, 0.94 ) * inverseComponentChi;
+        dComponentDiluteViscosity_dTemperature[c] = 34e-5 * 0.94 * pow( reducedTemperature, -0.06) * inverseComponentChi / m_componentCriticalTemperature[c];
       }
       else // nonpolar gas correlation at high temp, Eq. 10
       {
-        componentDiluteViscosity[c] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 ) / componentChi;
-        dComponentDiluteViscosity_dTemperature[c] = 17.78e-5 * 4.58 * 0.625 * pow( 4.58*reducedTemperature-1.67, -0.375) / ( componentChi * m_componentCriticalTemperature[c] );
+        componentDiluteViscosity[c] = 17.78e-5 * pow( 4.58*reducedTemperature-1.67, 0.625 ) * inverseComponentChi;
+        dComponentDiluteViscosity_dTemperature[c] = 17.78e-5 * 4.58 * 0.625 * pow( 4.58*reducedTemperature-1.67, -0.375) * inverseComponentChi / m_componentCriticalTemperature[c];
       }
     }
   }
-
-
-  /*
-  template< int USD1, int USD2, int USD3, int USD4 >
-  GEOSX_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const & temperature,
-                arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
-                real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
-                bool useMass ) const;
-  */
 
 protected:
 

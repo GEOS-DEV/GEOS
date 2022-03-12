@@ -77,6 +77,7 @@ protected:
   using PhaseProp = MultiFluidVar< real64, 3, multifluid::LAYOUT_PHASE, multifluid::LAYOUT_PHASE_DC >;
   using PhaseComp = MultiFluidVar< real64, 4, multifluid::LAYOUT_PHASE_COMP, multifluid::LAYOUT_PHASE_COMP_DC >;
   using FluidProp = MultiFluidVar< real64, 2, multifluid::LAYOUT_FLUID, multifluid::LAYOUT_FLUID_DC >;
+  using Deriv = multifluid::DerivativeOffset;
 
   /// ArrayView storing the component molar weights
   arrayView1d< real64 const > m_componentMolarWeight;
