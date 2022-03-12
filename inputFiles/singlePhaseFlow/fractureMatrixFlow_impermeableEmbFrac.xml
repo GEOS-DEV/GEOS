@@ -197,7 +197,7 @@
       name="vtkOutput"
       plotFileRoot="impermFractureAndMatrixFlow"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="sidreRestart"/>
