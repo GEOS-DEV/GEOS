@@ -139,7 +139,7 @@ if( ENABLE_PYGEOSX )
 	python/PySolverType.hpp ) 
   list( APPEND physicsSolvers_sources
 	python/PySolver.cpp ) 
-  list( APPEND dependencyList Python3::Python )
+  list( APPEND dependencyList Python3::Python pylvarray )
 endif()
 
 if ( ENABLE_CUDA )

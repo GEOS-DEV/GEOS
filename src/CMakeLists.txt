@@ -158,7 +158,7 @@ blt_add_executable( NAME geosx
 			     endif()
 
 if( ENABLE_PYGEOSX )
-  add_subdirectory( pygeosx )
+   add_subdirectory( pygeosx )
 endif()
 
 if( SPHINX_FOUND )

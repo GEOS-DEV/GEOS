@@ -49,7 +49,7 @@ if( ENABLE_PYGEOSX )
   list( APPEND dataRepository_sources
 	python/PyGroup.cpp 
 	python/PyWrapper.cpp ) 
-  list( APPEND dependencyList Python3::Python )  
+  list( APPEND dependencyList Python3::Python pylvarray )  
 endif()
 
 
