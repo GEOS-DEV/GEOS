@@ -21,4 +21,6 @@ The main code components are described here.
 
    ./fem_link
 
+   ./constitutiveModels_link
+
    ./AddingNewSolver
