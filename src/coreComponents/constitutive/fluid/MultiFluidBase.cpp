@@ -173,6 +173,28 @@ void MultiFluidBase::postProcessInput()
   setLabels();
 }
 
+void MultiFluidBase::initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const
+{
+  localIndex const numElem = m_initialTotalMassDensity.size( 0 );
+  localIndex const numGauss = m_initialTotalMassDensity.size( 1 );
+  integer const numPhase = m_phaseMassDensity.value.size( 2 );
+
+  PhaseProp::ViewTypeConst const phaseMassDensity = m_phaseMassDensity.toViewConst();
+  arrayView2d< real64, multifluid::USD_FLUID > const totalMassDensity = m_initialTotalMassDensity.toView();
+
+  forAll< parallelDevicePolicy<> >( numElem, [=] GEOSX_HOST_DEVICE ( localIndex const k )
+  {
+    for( localIndex q = 0; q < numGauss; ++q )
+    {
+      totalMassDensity[k][q] = 0.0;
+      for( integer ip = 0; ip < numPhase; ++ip )
+      {
+        totalMassDensity[k][q] += phaseVolFraction[k][ip] * phaseMassDensity.value[k][q][ip];
+      }
+    }
+  } );
+}
+
 } // namespace constitutive
 
 } // namespace geosx
