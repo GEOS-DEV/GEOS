@@ -219,7 +219,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <TimeHistory
       name="tractionOutput"
