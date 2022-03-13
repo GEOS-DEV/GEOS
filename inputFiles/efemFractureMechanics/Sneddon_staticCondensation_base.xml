@@ -13,7 +13,7 @@
       logLevel="1"
       useStaticCondensation="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-5"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -27,8 +27,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      />
+      targetRegions="{ Domain }"/>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
