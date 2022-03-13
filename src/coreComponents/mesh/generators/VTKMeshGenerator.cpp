@@ -231,7 +231,7 @@ vtkSmartPointer< vtkUnstructuredGrid > redistributeMesh( vtkUnstructuredGrid & l
  * @param[in] mesh the vtkUnstructuredGrid that is loaded
  * @return the global length of the mesh (diagonal of the bounding box)
  */
-double writeMeshNodes( HexCellBlockManager & cellBlockManager,
+double writeMeshNodes( CellBlockManagerBase & cellBlockManager,
                        vtkSmartPointer< vtkUnstructuredGrid > mesh )
 {
   cellBlockManager.setNumNodes( mesh->GetNumberOfPoints() );
@@ -797,7 +797,7 @@ void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                       std::map< int, std::vector< vtkIdType > > const & regionsTetra,
                       std::map< int, std::vector< vtkIdType > > const & regionsWedges,
                       std::map< int, std::vector< vtkIdType > > const & regionsPyramids,
-                      HexCellBlockManager & cellBlockManager )
+                      CellBlockManagerBase & cellBlockManager )
 {
   // Creates a new cell block for each region and for each type of cell.
   auto fct = [&]( VTKCellType vtkType, std::map< int, std::vector< vtkIdType > > const & regionIdToCellIds ) -> void
@@ -834,7 +834,7 @@ void buildCellBlocks( vtkSmartPointer< vtkUnstructuredGrid > mesh,
  */
 void buildSurfaces( vtkSmartPointer< vtkUnstructuredGrid > mesh,
                     std::map< int, std::vector< vtkIdType > > const & surfacesIdsToCellsIds,
-                    HexCellBlockManager & cellBlockManager )
+                    CellBlockManagerBase & cellBlockManager )
 {
   std::map< string, SortedArray< localIndex > > & nodeSets = cellBlockManager.getNodeSets();
 

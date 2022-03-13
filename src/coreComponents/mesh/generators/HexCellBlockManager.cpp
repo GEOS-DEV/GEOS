@@ -1139,10 +1139,10 @@ bool HexMeshConnectivityBuilder::debuggingComputeAllMaps()
 
 HexCellBlockManager::HexCellBlockManager(string const &name, 
                                          dataRepository::Group *const parent) 
-  :CellBlockManagerABC(name, parent),
-   m_nodesPositions(0, 3)
+  :CellBlockManagerBase(name, parent)
+  //, m_nodesPositions(0, 3)
 {
-  this->registerGroup<dataRepository::Group>(viewKeyStruct::cellBlocks());
+ // this->registerGroup<dataRepository::Group>(viewKeyStruct::cellBlocks());
   m_theOneWhoDoesTheJob = new HexMeshConnectivityBuilder();
 }
 
@@ -1150,23 +1150,6 @@ HexCellBlockManager::~HexCellBlockManager()
 {
   delete m_theOneWhoDoesTheJob;
   m_theOneWhoDoesTheJob = nullptr;
-}
-
-void HexCellBlockManager::resize(integer_array const &numElements,
-                                 string_array const &regionNames)
-{
-  localIndex const numRegions = LvArray::integerConversion<localIndex>(regionNames.size());
-  for (localIndex reg = 0; reg < numRegions; ++reg)
-  {
-    this->getCellBlock(regionNames[reg]).resize(numElements[reg]);
-  }
-}
-
-dataRepository::Group *HexCellBlockManager::createChild(
-  string const &GEOSX_UNUSED_PARAM(childKey), 
-  string const &GEOSX_UNUSED_PARAM(childName))
-{
-  return nullptr;
 }
 
 array2d<localIndex> HexCellBlockManager::getEdgeToNodes()
@@ -1221,14 +1204,5 @@ void HexCellBlockManager::buildMaps()
   return ;
 }
 
-void HexCellBlockManager::setNumNodes(localIndex numNodes)
-{
-  std::cout << "coucou c'est moi " << std::endl;
-  m_numNodes = numNodes;
-  m_nodesPositions.resize(numNodes);
-  // TODO why is this allocated here and filled somewhere else?
-  m_nodeLocalToGlobal.resize(numNodes);
-  m_nodeLocalToGlobal.setValues<serialPolicy>(-1);
-}
 
 } // namespace geosx

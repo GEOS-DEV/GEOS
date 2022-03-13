@@ -32,6 +32,7 @@ set( mesh_headers
      generators/CellBlockABC.hpp
      generators/CellBlockManager.hpp
      generators/CellBlockManagerABC.hpp
+     generators/CellBlockManagerBase.hpp
      generators/HexCellBlockManager.hpp
      generators/CellBlockUtilities.hpp
      generators/InternalMeshGenerator.hpp
