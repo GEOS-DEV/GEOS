@@ -126,8 +126,8 @@ public:
   { return m_particleVelocity; }
 
   /**
-   * @brief Get the volume of each particle in this subregion.
-   * @return an arrayView1d of const particle volumes
+   * @brief Get the current volume of each particle in this subregion.
+   * @return an arrayView1d of const current particle volumes
    */
   arrayView1d< real64 const > getParticleVolume() const
   { return m_particleVolume; }
@@ -137,6 +137,19 @@ public:
    */
   arrayView1d< real64 > getParticleVolume()
   { return m_particleVolume; }
+
+  /**
+   * @brief Get the initial volume of each particle in this subregion.
+   * @return an arrayView1d of const initial particle volumes
+   */
+  arrayView1d< real64 const > getParticleVolume0() const
+  { return m_particleVolume0; }
+
+  /**
+   * @copydoc getParticleVolume() const
+   */
+  arrayView1d< real64 > getParticleVolume0()
+  { return m_particleVolume0; }
 
   /**
    * @brief Get the mass of each particle in this subregion.
@@ -150,6 +163,19 @@ public:
    */
   arrayView1d< real64 > getParticleMass()
   { return m_particleMass; }
+
+  /**
+   * @brief Get the deformation gradient of each particle in this subregion.
+   * @return an arrayView3d of const particle deformation gradients
+   */
+  arrayView3d< real64 const > getParticleDeformationGradient() const
+  { return m_particleDeformationGradient; }
+
+  /**
+   * @copydoc getParticleDeformationGradient() const
+   */
+  arrayView3d< real64 > getParticleDeformationGradient()
+  { return m_particleDeformationGradient; }
 
 
   /**
@@ -237,11 +263,17 @@ protected:
   /// Member level field for the particle velocity.
   array2d< real64 > m_particleVelocity;
 
-  /// Member level field for the particle volume.
+  /// Member level field for the current particle volume.
   array1d< real64 > m_particleVolume;
+
+  /// Member level field for the initial particle volume.
+  array1d< real64 > m_particleVolume0;
 
   /// Member level field for the particle mass.
   array1d< real64 > m_particleMass;
+
+  /// Member level field for the particle deformation gradient.
+  array3d< real64 > m_particleDeformationGradient;
 
   /// Type of particles in this subregion.
   ParticleType m_particleType;

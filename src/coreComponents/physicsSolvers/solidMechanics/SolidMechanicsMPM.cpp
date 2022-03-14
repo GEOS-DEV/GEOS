@@ -448,19 +448,47 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
     m_ijkMap[i][j][k] = ii;
   }
 
-  // Set particle masses based on their volume and density
+  // Set particle masses based on their volume and density. Set stress to zero. Set deformation gradient to identity;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
     arrayView2d< real64 > const particleDensity = constitutiveRelation.getDensity(); // 2d array because there's a density for each quadrature point, we just access with [particle][0]
+    arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
+
+    // mass
     for(int i=0; i<subRegion.size(); i++)
     {
       particleMass[i] = particleDensity[i][0]*particleVolume[i]; // TODO: This should probably be done in ParticleMeshGenerator...
     }
+
+    // stress
+    particleStress.zero();
+
+    // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner
+    for(int p=0; p<subRegion.size(); p++)
+    {
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          if(i==j)
+          {
+            particleDeformationGradient[p][i][j] = 1.0;
+          }
+          else
+          {
+            particleDeformationGradient[p][i][j] = 0.0;
+          }
+        }
+      }
+    }
+
   } );
+
 }
 
 real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n),
@@ -510,20 +538,28 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
 
 
   // Particle to grid interpolation
-  real64 totalParticleMass = 0.0;
   particleManager.forParticleSubRegions( [&]( ParticleSubRegion & subRegion )
   {
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
     arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
-    //arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName );
+    arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
+    if(cycleNumber ==0)
+    {
+      particleStress.zero(); // Zero out particle stress on first time step
+    }
 
     for(int p=0; p<subRegion.size(); p++)
     {
       auto const & p_x = particleCenter[p]; // auto = LvArray::ArraySlice<double, 1, 0, long>
       auto const & p_v = particleVelocity[p]; // auto = LvArray::ArraySlice<double, 1, 0, long>
       real64 const & p_m = particleMass[p];
-      totalParticleMass += p_m;
+      real64 const & p_Vol = particleVolume[p];
+      auto const & p_stress = particleStress[p][0];
 
       // Get particle cell ID
       std::vector<int> cellID(3);
@@ -535,38 +571,32 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
       // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
       // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
       std::vector<int> nodeIDs = getNodes(cellID);
-      std::vector<real64> weights = getWeights(p_x, cellID, g_X);
-//      if(cycleNumber==0)
-//      {
-//        for(size_t i=0; i<nodeIDs.size(); i++)
-//        {
-//          std::cout << "Node: " << nodeIDs[i] << ", Weight: " << weights[i] << "\t";
-//        }
-//        std::cout << std::endl;
-//      }
+      std::vector<real64> weights = getWeights(p_x, cellID, g_X); // returns shape function value for each node
+      std::vector< std::vector<real64> > gradWeights = getGradWeights(p_x, cellID, g_X); // 1st index = direction, 2nd index = node
 
       // Update grid values
       for(size_t i=0; i<nodeIDs.size(); i++)
       {
         int g = nodeIDs[i];
         g_M[g] += p_m*weights[i];
-        for(int j = 0; j<3; j++)
+        for(int j=0; j<3; j++)
         {
           g_V[g][j] += p_m*p_v[j]*weights[i];
+          for(int k=0; k<3; k++)
+          {
+            int voigt = m_voigtMap[k][j];
+            g_A[g][j] -= p_stress[voigt]*gradWeights[k][i]*p_Vol;
+          }
         }
       }
 
     } // particle loop
   } ); // subregion loop
-  //std::cout << "Total particle mass: " << totalParticleMass << std::endl;
 
 
   // Grid update
-  real64 totalGridMass = 0.0;
   for(int i=0; i<nodeManager.size(); i++)
   {
-    totalGridMass += g_M[i];
-
     if(g_M[i] > 1.0e-12) // small mass threshold
     {
       for(int j=0; j<3; j++)
@@ -577,7 +607,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
       }
     }
   }
-  //std::cout << "Total grid mass: " << totalGridMass << std::endl;
 
 
   // Grid to particle interpolation
@@ -585,41 +614,164 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
   {
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
-    //arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
+    arrayView1d< real64 > const particleVolume0 = subRegion.getParticleVolume0();
+    arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
+
+    string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
+    ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // again, limiting to elastic isotropic for now
+    arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
+    arrayView1d< real64 > const shearModulus = constitutiveRelation.shearModulus();
+    arrayView1d< real64 > const bulkModulus = constitutiveRelation.bulkModulus();
 
     // Particle loop
     for(int p=0; p<subRegion.size(); p++)
     {
       auto const & p_x = particleCenter[p];
       auto const & p_v = particleVelocity[p];
+      real64 & p_Vol = particleVolume[p];
+      real64 const & p_Vol0 = particleVolume0[p];
+      auto const & p_F = particleDeformationGradient[p];
+      auto const & p_stress = particleStress[p][0];
+      real64 p_L[3][3] = { {0} }; // Velocity gradient
+      real64 p_FOld[3][3] = { {0} }; // Old particle F
+      real64 EG[3][3] = { {0} }; // Green-Lagrange Strain
+      real64 PK2[3][3] = { {0} }; // 2nd Piola-Kirchhoff Stress
+      real64 sigTemp[3][3] = { {0} }; // Temporary stress-like object
+      real64 detF = 0.0; // Material Jacobian
+
 
       // Get particle cell ID - TODO: can this be a member of subRegion so we don't have to recalculate it?
       std::vector<int> cellID(3);
       for(int i=0; i<3; i++)
       {
         cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
+        for(int j=0; j<3; j++)
+        {
+          p_FOld[i][j] = p_F[i][j]; // Abusing this loop a bit to store the old particle F
+        }
       }
 
       // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
       // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
       std::vector<int> nodeIDs = getNodes(cellID);
       std::vector<real64> weights = getWeights(p_x, cellID, g_X);
+      std::vector< std::vector<real64> > gradWeights = getGradWeights(p_x, cellID, g_X);
 
       // Particle-to-grid map
       for(size_t i=0; i<nodeIDs.size(); i++)
       {
         int g = nodeIDs[i];
-        for(int j = 0; j<3; j++)
+        for(int j=0; j<3; j++)
         {
           p_x[j] += g_V[g][j]*dt*weights[i];
-          p_v[j] += g_A[g][j]*dt*weights[i];
+          p_v[j] += g_A[g][j]*dt*weights[i]; // FLIP
+          for(int k=0; k<3; k++)
+          {
+            p_L[j][k] += g_V[g][j]*gradWeights[k][i];
+          }
+        }
+      }
+//      for(int i=0; i<3; i++)
+//      {
+//        for(int j=0; j<3; j++)
+//        {
+//          std::cout << p_L[i][j] << ", ";
+//        }
+//        std::cout << std::endl;
+//      }
+
+      // Particle kinematic update - TODO: surely there's a nicer way to do this
+      // Add identity tensor to velocity gradient
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          if(i==j)
+            p_L[i][j] = p_L[i][j]*dt + 1.0;
+          else
+            p_L[i][j] *= dt;
         }
       }
 
+      // Get new F
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          p_F[i][j] = p_L[i][0]*p_FOld[0][j] + p_L[i][1]*p_FOld[1][j] + p_L[i][2]*p_FOld[2][j]; // matrix multiply
+        }
+      }
+
+      // Get det(F), update volume
+      detF = -p_F[0][2]*p_F[1][1]*p_F[2][0] + p_F[0][1]*p_F[1][2]*p_F[2][0] + p_F[0][2]*p_F[1][0]*p_F[2][1] - p_F[0][0]*p_F[1][2]*p_F[2][1] - p_F[0][1]*p_F[1][0]*p_F[2][2] + p_F[0][0]*p_F[1][1]*p_F[2][2];
+      p_Vol = p_Vol0*detF;
+
+
+      // Particle constitutive update - Elastic Isotropic model doesn't have a hyperelastic update yet (waiting on strain and stress measure confirmation?) so we implement our own - St. Venant-Kirchhoff
+      // Get Green-Lagrange strain
+      for(int i=0; i<3; i++)
+      {
+       for(int j=0; j<3; j++)
+       {
+         if(i == j)
+         {
+           EG[i][j] = (p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j]) - 1.0;
+         }
+         else
+         {
+           EG[i][j] = p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j];
+         }
+         EG[i][j] *= 0.5;
+         //std::cout << EG[i][j] << "\t";
+       }
+       //std::cout << std::endl;
+      }
+
+      // Get PK2 stress
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          if(i == j)
+          {
+            real64 lambda = bulkModulus[p] - (2.0/3.0)*shearModulus[p];
+            PK2[i][j] = lambda*(EG[0][0] + EG[1][1] + EG[2][2]) + 2*shearModulus[p]*EG[i][j];
+          }
+          else
+          {
+            PK2[i][j] = 2*shearModulus[p]*EG[i][j];
+          }
+          //std::cout << PK2[i][j] << "\t";
+        }
+        //std::cout << std::endl;
+      }
+
+      // Partially convert to Cauchy stress
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          sigTemp[i][j] = (p_F[i][0]*PK2[0][j] + p_F[i][1]*PK2[1][j] + p_F[i][2]*PK2[2][j])/detF;
+          //std::cout << sigTemp[i][j] << "\t";
+        }
+        //std::cout << std::endl;
+      }
+
+      // Finish conversion to Cauchy stress
+      for(int i=0; i<3; i++)
+      {
+        for(int j=i; j<3; j++) // symmetric update, yes this works, I checked it
+        {
+          int voigt = m_voigtMap[i][j];
+          //std::cout << "i: " << i << ", j:" << j << ", Voigt: " << voigt << std::endl;
+          p_stress[voigt] = sigTemp[i][0]*p_F[j][0] + sigTemp[i][1]*p_F[j][1] + sigTemp[i][2]*p_F[j][2];
+        }
+      }
+      //std::cout << p_stress[0] << ", " << p_stress[1] << ", " << p_stress[2] << ", " << p_stress[3] << ", " << p_stress[4] << ", " << p_stress[5] << std::endl;
+
     } // particle loop
   } ); // subregion loop
-
-
 
 
   // Calculate stable time step
@@ -633,9 +785,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
     arrayView2d< real64 > const rho = constitutiveRelation.getDensity();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
-    for(int i=0; i<constitutiveRelation.size(); i++)
+    for(int p=0; p<subRegion.size(); p++)
     {
-      wavespeed = std::max(wavespeed,sqrt((k[i]+(4.0/3.0)*g[i])/rho[i][0]));
+      wavespeed = std::max(wavespeed,sqrt((k[p]+(4.0/3.0)*g[p])/rho[p][0]));
     }
   } );
 
@@ -687,6 +839,41 @@ std::vector<real64> SolidMechanicsMPM::getWeights(LvArray::ArraySlice<double, 1,
   }
 
   return weights;
+}
+
+std::vector< std::vector<real64> > SolidMechanicsMPM::getGradWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                                                                     std::vector<int> const & cellID,
+                                                                     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X)
+{
+  std::vector< std::vector<real64> > gradWeights;
+  gradWeights.resize(3);
+
+  int corner = m_ijkMap[cellID[0]][cellID[1]][cellID[2]];
+  auto corner_x = g_X[corner];
+  real64 xRel = (p_x[0] - corner_x[0])/m_hx[0];
+  real64 yRel = (p_x[1] - corner_x[1])/m_hx[1];
+  real64 zRel = (p_x[2] - corner_x[2])/m_hx[2];
+
+  for(int i=0; i<2; i++)
+  {
+    real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
+    real64 dxWeight = i/m_hx[0] - (1-i)/m_hx[0];
+    for(int j=0; j<2; j++)
+    {
+      real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
+      real64 dyWeight = j/m_hx[1] - (1-j)/m_hx[1];
+      for(int k=0; k<2; k++)
+      {
+        real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
+        real64 dzWeight = k/m_hx[2] - (1-k)/m_hx[2];
+        gradWeights[0].push_back(dxWeight*yWeight*zWeight);
+        gradWeights[1].push_back(xWeight*dyWeight*zWeight);
+        gradWeights[2].push_back(xWeight*yWeight*dzWeight);
+      }
+    }
+  }
+
+  return gradWeights;
 }
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
