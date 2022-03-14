@@ -46,7 +46,8 @@ VTKPolyDataWriterInterface::VTKPolyDataWriterInterface( string name ):
   m_pvd( m_outputName + ".pvd" ),
   m_plotLevel( PlotLevel::LEVEL_1 ),
   m_previousCycle( -1 ),
-  m_outputMode( VTKOutputMode::BINARY )
+  m_outputMode( VTKOutputMode::BINARY ),
+  m_outputRegionType( VTKRegionTypes::ALL )
 {}
 
 static string paddedRank( MPI_Comm const & comm, int const rank = -1 )
@@ -767,6 +768,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
 }
 
 void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
+                                                          integer const cycle,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
 {
@@ -782,12 +784,13 @@ void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
       writeTimestamp( *ug, time );
       writeElementFields< CellElementSubRegion >( region, *ug->GetCellData() );
       writeNodeFields( nodeManager, *ug->GetPointData() );
-      writeUnstructuredGrid( time, region.getName(), *ug );
+      writeUnstructuredGrid( cycle, region.getName(), *ug );
     }
   } );
 }
 
 void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
+                                                          integer const cycle,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
 {
@@ -798,12 +801,14 @@ void VTKPolyDataWriterInterface::writeWellElementRegions( real64 const time,
     auto const VTKWell = getWell( subRegion, nodeManager );
     ug->SetPoints( VTKWell.first );
     ug->SetCells( VTK_LINE, VTKWell.second );
+    writeTimestamp( *ug, time );
     writeElementFields< WellElementSubRegion >( region, *ug->GetCellData() );
-    writeUnstructuredGrid( time, region.getName(), *ug );
+    writeUnstructuredGrid( cycle, region.getName(), *ug );
   } );
 }
 
 void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
+                                                             integer const cycle,
                                                              ElementRegionManager const & elemManager,
                                                              NodeManager const & nodeManager,
                                                              EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const
@@ -843,46 +848,55 @@ void VTKPolyDataWriterInterface::writeSurfaceElementRegions( real64 const time,
       }
       writeElementFields< FaceElementSubRegion >( region, *ug->GetCellData() );
     }
-    writeUnstructuredGrid( time, region.getName(), *ug );
+    writeTimestamp( *ug, time );
+    writeUnstructuredGrid( cycle, region.getName(), *ug );
   } );
 }
 
-/**
- * @brief Writes a VTM file for the time-step \p time.
- * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
- * @param[in] time the time-step
- * @param[in] elemManager the ElementRegionManager containing all the regions to be output and referred to in the VTM file
- * @param[in] vtmWriter a writer specialized for the VTM file format
- */
-void writeVtmFile( real64 const time,
-                   ElementRegionManager const & elemManager,
-                   VTKVTMWriter const & vtmWriter )
+
+void VTKPolyDataWriterInterface::writeVtmFile( integer const cycle,
+                                               ElementRegionManager const & elemManager,
+                                               VTKVTMWriter const & vtmWriter ) const
 {
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  auto writeSubBlocks = [&]( ElementRegionBase const & region )
+  auto addRegion = [&]( ElementRegionBase const & region )
   {
+    if( mpiRank == 0 )
+    {
+      if( !vtmWriter.hasBlock( region.getCatalogName() ) )
+      {
+        vtmWriter.addBlock( region.getCatalogName() );
+      }
+    }
+
     std::vector< localIndex > const nbElemsInRegion = gatherNbElementsInRegion( region, MPI_COMM_GEOSX );
     vtmWriter.addSubBlock( region.getCatalogName(), region.getName() );
     for( int i = 0; i < mpiSize; i++ )
     {
-      if( mpiRank == 0 && nbElemsInRegion[i] > 0 )
+      if( mpiRank == 0 )
       {
-        string const dataSetFile = std::to_string( time ) + "/" + paddedRank( MPI_COMM_GEOSX, i ) + "_" + region.getName() + ".vtu";
+        string const dataSetFile = GEOSX_FMT( "{:06d}/{}_{}.vtu", cycle, paddedRank( MPI_COMM_GEOSX, i ), region.getName() );
         vtmWriter.addDataToSubBlock( region.getCatalogName(), region.getName(), dataSetFile, i );
       }
     }
   };
-  if( mpiRank == 0 )
+
+  // Output each of the region types
+  if( ( m_outputRegionType == VTKRegionTypes::CELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
   {
-    vtmWriter.addBlock( CellElementRegion::catalogName() );
-    vtmWriter.addBlock( WellElementRegion::catalogName() );
-    vtmWriter.addBlock( SurfaceElementRegion::catalogName() );
+    elemManager.forElementRegions< CellElementRegion >( addRegion );
   }
 
-  elemManager.forElementRegions< CellElementRegion >( writeSubBlocks );
-  elemManager.forElementRegions< WellElementRegion >( writeSubBlocks );
-  elemManager.forElementRegions< SurfaceElementRegion >( writeSubBlocks );
+  if( ( m_outputRegionType == VTKRegionTypes::WELL ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  {
+    elemManager.forElementRegions< WellElementRegion >( addRegion );
+  }
+
+  if( ( m_outputRegionType == VTKRegionTypes::SURFACE ) || ( m_outputRegionType == VTKRegionTypes::ALL ) )
+  {
+    elemManager.forElementRegions< SurfaceElementRegion >( addRegion );
+  }
 
   if( mpiRank == 0 )
   {
@@ -890,15 +904,15 @@ void writeVtmFile( real64 const time,
   }
 }
 
-void VTKPolyDataWriterInterface::writeUnstructuredGrid( real64 const time,
+void VTKPolyDataWriterInterface::writeUnstructuredGrid( integer const cycle,
                                                         string const & name,
                                                         vtkUnstructuredGrid & ug ) const
 {
-  string const timeStepSubFolder = joinPath( m_outputDir, VTKPolyDataWriterInterface::getTimeStepSubFolder( time ) );
+  string const cycleSubFolder = joinPath( m_outputDir, getCycleSubFolder( cycle ) );
   vtkSmartPointer< vtkXMLUnstructuredGridWriter > const vtuWriter = vtkXMLUnstructuredGridWriter::New();
   vtuWriter->SetInputData( &ug );
   string const vtuFileName = paddedRank( MPI_COMM_GEOSX ) + "_" + name + ".vtu";
-  string const vtuFilePath = joinPath( timeStepSubFolder, vtuFileName );
+  string const vtuFilePath = joinPath( cycleSubFolder, vtuFileName );
   vtuWriter->SetFileName( vtuFilePath.c_str() );
   if( m_outputMode == VTKOutputMode::BINARY )
   {
@@ -911,9 +925,9 @@ void VTKPolyDataWriterInterface::writeUnstructuredGrid( real64 const time,
   vtuWriter->Write();
 }
 
-string VTKPolyDataWriterInterface::getTimeStepSubFolder( real64 const time ) const
+string VTKPolyDataWriterInterface::getCycleSubFolder( integer const cycle ) const
 {
-  return joinPath( m_outputName, std::to_string( time ) );
+  return joinPath( m_outputName, GEOSX_FMT( "{:06d}", cycle ) );
 }
 
 void VTKPolyDataWriterInterface::write( real64 const time,
@@ -926,7 +940,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   LvArray::system::FloatingPointExceptionGuard guard;
 #endif
 
-  string const stepSubFolder = getTimeStepSubFolder( time );
+  string const stepSubFolder = getCycleSubFolder( cycle );
   if( MpiWrapper::commRank( MPI_COMM_GEOSX ) == 0 )
   {
     if( m_previousCycle == -1 )
@@ -948,7 +962,7 @@ void VTKPolyDataWriterInterface::write( real64 const time,
 
   string const vtmName = stepSubFolder + ".vtm";
   VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );
-  writeVtmFile( time, elemManager, vtmWriter );
+  writeVtmFile( cycle, elemManager, vtmWriter );
 
   if( cycle != m_previousCycle )
   {

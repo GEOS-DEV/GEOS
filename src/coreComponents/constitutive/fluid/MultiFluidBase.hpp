@@ -163,6 +163,12 @@ public:
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseInternalEnergy() const
   { return m_phaseInternalEnergy.derivs; }
 
+  /**
+   * @brief Save the initial total mass density
+   * @param[in] phaseVolFraction an array containing the initial phase volume fractions
+   */
+  virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
+
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * componentNamesString() { return "componentNames"; }
