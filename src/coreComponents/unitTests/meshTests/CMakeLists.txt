@@ -46,7 +46,7 @@ if( ENABLE_CUDA )
 endif()
 
 if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} ${extraComponentsLinkList} )
+  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 #
