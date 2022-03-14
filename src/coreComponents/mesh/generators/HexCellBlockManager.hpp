@@ -21,28 +21,34 @@
 
 #include "mesh/generators/CellBlockManagerBase.hpp"
 
-#include "common/DataTypes.hpp"
-
-#include <cassert>
 
 namespace geosx
 {
   
-class HexMeshConnectivityBuilder;
+class MeshConnectivityBuilder;
 
 /**
  * @class HexCellBlockManager
- * @brief The HexCellBlockManager specializes CellBlockManagerBase for full hexahedral meshes  
+ * @brief The HexCellBlockManager specializes CellBlockManagerBase 
+ * with a lazy computation strategy and NO overallocation.
+ * 
+ * Only implemented for hexahedral meshes.
  * The hexahedral mesh may be structured or unstructured.
+ * 
+ * TODO Implement for other type of cells the MeshConnectivityBuilder
+ * This class should not be modified 
+ * 
+ * POTENTIAL ISSUE Where are the Element indices valid in the maps NodeToElements
+ * and FaceToElements? In the CellBlock? 
+ * 
  */
 class HexCellBlockManager : public CellBlockManagerBase
 {
 public:
-
   /**
    * @brief Constructor for HexCellBlockManager object.
-   * @param name name of this instantiation of HexCellBlockManager
-   * @param parent pointer to the parent Group of this instantiation of HexCellBlockManager
+   * @param name name of this instantiation of CellBlockManagerBase
+   * @param parent pointer to the parent Group of this instantiation of CellBlockManagerBase
    */
   HexCellBlockManager( string const & name, Group * const parent );
   HexCellBlockManager( const HexCellBlockManager & ) = delete;
@@ -58,32 +64,33 @@ public:
   localIndex numElements() const
   { return m_numElements; }
 
+  /**
+   * @brief Initialize the mapping computations 
+   * @details Does not build the maps.
+   * Computations are done lazily when calling getters.
+   * 
+   * MUST be called before any call to the getters
+   */
+  void buildMaps() override;
+
   array2d<geosx::localIndex> getEdgeToNodes() override;
   ArrayOfSets<geosx::localIndex> getEdgeToFaces() override;
-
   ArrayOfArrays<localIndex> getFaceToNodes() override;
   ArrayOfArrays<geosx::localIndex> getFaceToEdges() override;
-
-  // TODO We have a problem - where are the Element index valid ?
   array2d<localIndex> getFaceToElements() override;
-
   ArrayOfSets<localIndex> getNodeToEdges() override;
   ArrayOfSets<localIndex> getNodeToFaces() override;
-
-  // TODO We have a problem - where are the Element index valid ?
   ArrayOfArrays<localIndex> getNodeToElements() override;
 
-  /**
-   * @brief Compute all possible maps and more
-   */
-  void buildMaps();
-
 private:
-  HexMeshConnectivityBuilder * m_theOneWhoDoesTheJob;
+  /// Instance of the class that build the mappings
+  MeshConnectivityBuilder * m_theOneWhoDoesTheJob;
 
-  // The numbers of things we are dealing with 
+  /// Number of edges (no duplicates)
   localIndex m_numEdges = 0;
+  /// Number of faces (no duplicates)
   localIndex m_numFaces = 0;
+  /// Total number of cells in all managed CellBlocks (no duplicates)
   localIndex m_numElements = 0;
 };
 

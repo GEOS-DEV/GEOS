@@ -23,25 +23,9 @@ namespace geosx
 using namespace dataRepository;
 
 CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
-  CellBlockManagerABC( name, parent ),
-  m_nodesPositions( 0, 3 )
+  CellBlockManagerBase( name, parent )
 {
-  this->registerGroup< Group >( viewKeyStruct::cellBlocks() );
-}
-
-void CellBlockManager::resize( integer_array const & numElements,
-                               string_array const & regionNames )
-{
-  localIndex const numRegions = LvArray::integerConversion< localIndex >( regionNames.size());
-  for( localIndex reg=0; reg<numRegions; ++reg )
-  {
-    this->getCellBlock( regionNames[reg] ).resize( numElements[reg] );
-  }
-}
-
-Group * CellBlockManager::createChild( string const & GEOSX_UNUSED_PARAM( childKey ), string const & GEOSX_UNUSED_PARAM( childName ) )
-{
-  return nullptr;
+  // nothing
 }
 
 ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements()
@@ -636,31 +620,6 @@ array2d< localIndex > CellBlockManager::getFaceToElements()
   return m_faceToElements;
 }
 
-const Group & CellBlockManager::getCellBlocks() const
-{
-  return this->getGroup( viewKeyStruct::cellBlocks() );
-}
-
-Group & CellBlockManager::getCellBlocks()
-{
-  return this->getGroup( viewKeyStruct::cellBlocks() );
-}
-
-localIndex CellBlockManager::numNodes() const
-{
-  return m_numNodes;
-}
-
-localIndex CellBlockManager::numCellBlocks() const
-{
-  return this->getCellBlocks().numSubGroups();
-}
-
-const CellBlockABC & CellBlockManager::getCellBlock( localIndex iCellBlock ) const
-{
-  return this->getCellBlocks().getGroup< const CellBlockABC >( iCellBlock );
-}
-
 localIndex CellBlockManager::numFaces() const
 {
   return m_numFaces;
@@ -689,49 +648,6 @@ ArrayOfSets< localIndex > CellBlockManager::getNodeToEdges()
 localIndex CellBlockManager::numEdges() const
 {
   return m_numEdges;
-}
-
-CellBlock & CellBlockManager::registerCellBlock( string name )
-{
-  return this->getCellBlocks().registerGroup< CellBlock >( name );
-}
-
-array2d< real64, nodes::REFERENCE_POSITION_PERM > CellBlockManager::getNodesPositions() const
-{
-  return m_nodesPositions;
-}
-
-arrayView2d< real64, nodes::REFERENCE_POSITION_USD > CellBlockManager::getNodesPositions()
-{
-  return m_nodesPositions.toView();
-}
-
-void CellBlockManager::setNumNodes( localIndex numNodes )
-{
-  m_numNodes = numNodes;
-  m_nodesPositions.resize( m_numNodes );
-  m_nodeLocalToGlobal.resize( m_numNodes );
-  m_nodeLocalToGlobal.setValues< serialPolicy >( -1 );
-}
-
-array1d< globalIndex > CellBlockManager::getNodeLocalToGlobal() const
-{
-  return m_nodeLocalToGlobal;
-}
-
-arrayView1d< globalIndex > CellBlockManager::getNodeLocalToGlobal()
-{
-  return m_nodeLocalToGlobal.toView();
-}
-
-std::map< string, SortedArray< localIndex > > const & CellBlockManager::getNodeSets() const
-{
-  return m_nodeSets;
-}
-
-std::map< string, SortedArray< localIndex > > & CellBlockManager::getNodeSets()
-{
-  return m_nodeSets;
 }
 
 }

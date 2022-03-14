@@ -24,19 +24,20 @@ namespace geosx
 {
 
 /**
- * @brief Base class for a CellBlockManager for unstructured meshes
- * that manages a set of CellBlocks where the Nodes position and Elements are filled.
- * This class is derived to specialize the CellBlockManager per type of mesh
- * Hex - Tet (not implemented) - Hybrid (not implemented)
- * No overallocation
+ * @brief Base class for CellBlockManager on which the CellBlocks and Nodes are defined
+ * @details Gather the Group functionalities of the CellBlockManager implementations
+ * the CellBlock management functions as well as node access and filling
+ *  
+ * Overallocation is left to the derived classes if needed.
+ * Derived classes must implement the mappings access and computation.
  */
 class CellBlockManagerBase : public CellBlockManagerABC
 {
 public:
   /**
-   * @brief Constructor
+   * @brief Constructor  - The CellBlocks are registered
    * @param name The name of this Group.
-   * @param parent The parent Group.
+   * @param parent The parent Group
    */
   CellBlockManagerBase(string const &name, Group *const parent)
       : CellBlockManagerABC(name, parent),
@@ -47,7 +48,19 @@ public:
 
   virtual ~CellBlockManagerBase() = default;
 
-  // ------  Group functions  ----
+  // Functions that the derived classes must implement
+  virtual localIndex numEdges() const override = 0;
+  virtual localIndex numFaces() const override = 0;
+  virtual void buildMaps() = 0;
+  virtual ArrayOfSets<localIndex> getNodeToEdges() override = 0;
+  virtual ArrayOfSets<localIndex> getNodeToFaces() override = 0;
+  virtual ArrayOfArrays<localIndex> getNodeToElements() override  = 0;
+  virtual array2d<geosx::localIndex> getEdgeToNodes() override  = 0;
+  virtual ArrayOfSets<geosx::localIndex> getEdgeToFaces() override = 0;
+  virtual ArrayOfArrays<localIndex> getFaceToNodes() override = 0;
+  virtual ArrayOfArrays<geosx::localIndex> getFaceToEdges() override = 0;
+  virtual array2d<localIndex> getFaceToElements() override = 0;
+
   virtual Group *createChild(string const & GEOSX_UNUSED_PARAM( childKey ),
                              string const & GEOSX_UNUSED_PARAM( childName )) override
   {
@@ -71,10 +84,6 @@ public:
     }
   }
 
-  // ------ CellBlock management functions
-
-  // TODO Think about putting these at the ABC level?
-  // Or can we not inherit the Group related stuff properly?
   /**
    * @brief Get cell block by name.
    * @param[in] name Name of the cell block.
@@ -129,18 +138,6 @@ public:
     return m_numNodes;
   }
 
-  virtual localIndex numEdges() const override = 0;
-  virtual localIndex numFaces() const override = 0;
-
-  virtual ArrayOfSets<localIndex> getNodeToEdges() override = 0;
-  virtual ArrayOfSets<localIndex> getNodeToFaces() override = 0;
-  virtual ArrayOfArrays<localIndex> getNodeToElements() override  = 0;
-  virtual array2d<geosx::localIndex> getEdgeToNodes() override  = 0;
-  virtual ArrayOfSets<geosx::localIndex> getEdgeToFaces() override = 0;
-  virtual ArrayOfArrays<localIndex> getFaceToNodes() override = 0;
-  virtual ArrayOfArrays<geosx::localIndex> getFaceToEdges() override = 0;
-  virtual array2d<localIndex> getFaceToElements() override = 0;
-
   /**
    * @brief Defines the number of nodes and resizes some underlying arrays appropriately.
    * @param[in] numNodes The number of nodes.
@@ -150,20 +147,17 @@ public:
   // TODO Improve doc. Is it per domain, are there duplicated nodes because of subregions?
   void setNumNodes(localIndex numNodes) 
   {
-    std::cout << "coucou c'est moi je suis la base  " << std::endl;
     m_numNodes = numNodes;
     m_nodesPositions.resize(numNodes);
-    // TODO why is this allocated here and filled somewhere else?
     m_nodeLocalToGlobal.resize(numNodes);
     m_nodeLocalToGlobal.setValues<serialPolicy>(-1);
   }
 
-  // TODO What is the point of implementing the abstract accessor
-  // and having the same name for functions giving open-bar access
-
-  /**
+   /**
    * @brief Returns a view to the vector holding the nodes coordinates
    * @return The reference
+   *
+   * @note This is meant to be used as a values setter.
    */
   arrayView2d<real64, nodes::REFERENCE_POSITION_USD> getNodesPositions()
   {
@@ -180,6 +174,12 @@ public:
     return m_nodeLocalToGlobal;
   }
 
+  /**
+   * @brief Returns a view to the vector holding the node to global mapping.
+   * @return The reference
+   *
+   * @note This is meant to be used as a values setter.
+   */
   arrayView1d<globalIndex> getNodeLocalToGlobal()
   {
     return m_nodeLocalToGlobal.toView();
@@ -188,19 +188,22 @@ public:
   /**
    * @brief Returns a mutable reference to the node sets.
    * @return A reference to the mapping.
+   *
+   * The key of the map is the name of the set.
+   * While the values are sorted arrays which sizes are meant to be managed by the client code.
+   * This member function is meant to be used like a setter.
    */
-  std::map<string, SortedArray<localIndex>> &getNodeSets()
+  std::map<string, SortedArray<localIndex>> & getNodeSets()
   {
     return m_nodeSets;
   }
 
-  std::map<string, SortedArray<localIndex>> const &getNodeSets() const override
+  std::map<string, SortedArray<localIndex>> const & getNodeSets() const override
   {
     return m_nodeSets;
   }
 
 protected:
-  // TODO Can't these functions be only at the ABC level ?
   struct viewKeyStruct
   {
     /// Cell blocks key
@@ -218,6 +221,7 @@ protected:
 
   /**
    * @brief Returns the number of cells blocks
+   * @return Number of cell blocks
    */
   localIndex numCellBlocks() const
   {
@@ -225,24 +229,18 @@ protected:
   }
 
 protected:
+  /// Number of nodes
   localIndex m_numNodes = 0;
 
-  // The nodes that this HexCellBlockManager is responsible of
-  // with their global index in the full mesh
-  // Typically one CellBlockManager per MPI rank  (if unique MeshLevel and unique MeshBody?)
+  /// Nodes managed by CellBlockManager
   array2d<real64, nodes::REFERENCE_POSITION_PERM> m_nodesPositions;
 
-  // TODO Why is this allocated here - initialized to -1
-  // but not computed by this class
-  // before the transfer to NodeManager - SubElementRegionManager -
-
-  // This is filled by the MeshGenerators
+  /// Local to global node index mapping - Filled by the MeshGenerators
   array1d<globalIndex> m_nodeLocalToGlobal;
 
-  // TODO  What are these ?
-  // Who computes them ?
-  std::map<string, SortedArray<localIndex>> m_nodeSets;
+  /// Geometrical sets
+  std::map<string, SortedArray<localIndex>> m_nodeSets;  // Who fills this? What for?
 };
 
 }
-#endif // include guard
+#endif 
