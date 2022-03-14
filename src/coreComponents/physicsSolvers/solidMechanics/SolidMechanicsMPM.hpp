@@ -215,6 +215,10 @@ public:
                                  std::vector<int> const & cellID,
                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X);
 
+  std::vector< std::vector<real64> > getGradWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                                                    std::vector<int> const & cellID,
+                                                    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X);
+
   void initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X,
                   ParticleManager & particleManager);
 
@@ -243,6 +247,10 @@ protected:
   std::vector<real64> m_domainL{0.0,0.0,0.0}; // Length of each edge of grid
   std::vector<int> m_nEl{0,0,0}; // Number of elements in each grid direction
   std::vector<std::vector<std::vector<int>>> m_ijkMap;
+
+  std::vector< std::vector<int> > m_voigtMap = { {0, 5, 4},
+                                                 {5, 1, 3},
+                                                 {4, 3, 2} };
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
