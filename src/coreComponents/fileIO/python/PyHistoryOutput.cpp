@@ -17,7 +17,6 @@
 
 namespace geosx
 {
-using namespace dataRepository;
 namespace python
 {
 
