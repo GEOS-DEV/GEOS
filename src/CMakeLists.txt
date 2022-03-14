@@ -200,12 +200,3 @@ if( ENABLE_PYGEOSX )
   add_subdirectory( pygeosx )
 endif()
 
-blt_print_target_properties( TARGET hip )
-blt_print_target_properties( TARGET hip_runtime )
-
-blt_print_target_properties( TARGET blt::hip )
-blt_print_target_properties( TARGET blt::hip_runtime )
-
-blt_print_target_properties( TARGET geosx )
-#blt_print_target_properties( TARGET geosx_core )
-

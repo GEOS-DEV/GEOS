@@ -84,6 +84,29 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
                                  std::forward< LAMBDA >( body ) );
 }
 
+#elif defined(GESOX_USE_HIP)
+
+template< unsigned long BLOCK_SIZE = 0 >
+using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >
+
+template< unsigned long BLOCK_SIZE = 0 >
+using parallelDeviceAsyncPolicy = RAJA::hip_exec_async< BLOCK_SIZE >;
+
+using parallelDeviceStream = RAJA::resources::Hip;
+using parallelDeviceEvent = RAJA::resources::Event;
+
+using parallelDeviceReduce = RAJA::hip_reduce;
+using parallelDeviceAtomic = RAJA::hip_atomic;
+
+void RAJA_INLINE parallelDeviceSync() { RAJA::synchronize< RAJA::hip_synchronize >( ); }
+
+template< typename POLICY, typename RESOURCE, typename LAMBDA >
+RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && GEOSX_UNUSED_PARAM( stream ), const localIndex end, LAMBDA && body )
+{
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
+  return parallelDeviceEvent();
+}
+  
 #else
 
 template< unsigned long BLOCK_SIZE = 0 >
@@ -138,6 +161,15 @@ struct PolicyMap< RAJA::cuda_exec< BLOCK_SIZE > >
 {
   using atomic = RAJA::cuda_atomic;
   using reduce = RAJA::cuda_reduce;
+};
+#endif
+
+#if defined(GEOSX_USE_HIP)
+template< unsigned long BLOCK_SIZE >
+struct PolicyMap< RAJA::hip_exec< BLOCK_SIZE > >
+{
+  using atomic = RAJA::hip_atomic;
+  using reduce = RAJA::hip_reduce;
 };
 #endif
 }
