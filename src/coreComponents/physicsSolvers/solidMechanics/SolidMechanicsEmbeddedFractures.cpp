@@ -166,32 +166,32 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
       LvArray::tensorOps::copy< 3 >( oldDispJump[k], dispJump[k] );
     } );
 
-      // Laura print
-      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-      real64 maxNorm   = 0.0;
-      real64 Jmean = 0.0;
-      real64 area_slip = 0.0;
-      forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
+    // Laura print
+    arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
+    real64 maxNorm   = 0.0;
+    real64 Jmean = 0.0;
+    real64 area_slip = 0.0;
+    forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
+    {
+      real64 const normD = sqrt( dispJump[kfe][1]*dispJump[kfe][1]+dispJump[kfe][2]*dispJump[kfe][2] );
+      if( normD > maxNorm )
       {
-        real64 const normD = sqrt(dispJump[kfe][1]*dispJump[kfe][1]+dispJump[kfe][2]*dispJump[kfe][2]);
-        if( normD > maxNorm )
-        {
-          maxNorm = normD;
-        }
-        real64 const area = faceArea[kfe];
-        if( std::abs( normD ) > 1.e-4 )
-        {
-          area_slip += area;
-          Jmean += normD*area;
-        }
-      } );
-      if( std::abs( area_slip ) > 0 )
-      {
-        Jmean /= area_slip;
+        maxNorm = normD;
       }
-      GEOSX_LOG_RANK_0( GEOSX_FMT( " max disp jump {:15.6e}", maxNorm ) );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
-      // end Laura
+      real64 const area = faceArea[kfe];
+      if( std::abs( normD ) > 1.e-4 )
+      {
+        area_slip += area;
+        Jmean += normD*area;
+      }
+    } );
+    if( std::abs( area_slip ) > 0 )
+    {
+      Jmean /= area_slip;
+    }
+    GEOSX_LOG_RANK_0( GEOSX_FMT( " max disp jump {:15.6e}", maxNorm ) );
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
+    // end Laura
 
   } );
 }

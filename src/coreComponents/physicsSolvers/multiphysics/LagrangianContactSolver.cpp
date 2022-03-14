@@ -305,62 +305,62 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
           previousFractureState[kfe] = fractureState[kfe];
         } );
 
-      // Laura print
-      arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
-      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-      real64 maxNorm   = 0.0;
-      real64 maxNormFT = 0.0;
-      real64 maxNormFN = 0.0;
-      real64 Jmean = 0.0;
-      real64 FTmean = 0.0;
-      real64 FNmean = 0.0;
-      real64 sumarea = 0.0;
-      real64 area_slip = 0.0;
-      forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
-      {
-        real64 const normD = sqrt(dispJump[kfe][1]*dispJump[kfe][1]+dispJump[kfe][2]*dispJump[kfe][2]);
-        if( normD > maxNorm )
+        // Laura print
+        arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
+        arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
+        real64 maxNorm   = 0.0;
+        real64 maxNormFT = 0.0;
+        real64 maxNormFN = 0.0;
+        real64 Jmean = 0.0;
+        real64 FTmean = 0.0;
+        real64 FNmean = 0.0;
+        real64 sumarea = 0.0;
+        real64 area_slip = 0.0;
+        forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
         {
-          maxNorm = normD;
+          real64 const normD = sqrt( dispJump[kfe][1]*dispJump[kfe][1]+dispJump[kfe][2]*dispJump[kfe][2] );
+          if( normD > maxNorm )
+          {
+            maxNorm = normD;
+          }
+          real64 const normForceT = sqrt( traction[kfe][1]*traction[kfe][1]+traction[kfe][2]*traction[kfe][2] );
+          if( normForceT > maxNormFT )
+          {
+            maxNormFT = normForceT;
+          }
+          if( maxNormFN < std::abs( traction[kfe][0] ) )
+          {
+            maxNormFN = std::abs( traction[kfe][0] );
+          }
+          real64 const area = faceArea[kfe];
+          sumarea += area;
+          //if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
+          if( std::abs( normD ) > 1.e-4 )
+          {
+            area_slip += area;
+            Jmean += normD*area;
+          }
+          FTmean += normForceT*area;
+          FNmean += std::abs( traction[kfe][0] )*area;
+        } );
+        if( std::abs( area_slip ) > 0 )
+        {
+          Jmean /= area_slip;
         }
-        real64 const normForceT = sqrt(traction[kfe][1]*traction[kfe][1]+traction[kfe][2]*traction[kfe][2]);
-        if( normForceT > maxNormFT )
+        if( std::abs( sumarea ) > 0 )
         {
-          maxNormFT = normForceT;
+          FTmean /= sumarea;
+          FNmean /= sumarea;
         }
-        if( maxNormFN < std::abs(traction[kfe][0]) )
-        {
-          maxNormFN = std::abs(traction[kfe][0]);
-        }
-        real64 const area = faceArea[kfe];
-	sumarea += area;
-        //if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
-	if( std::abs( normD ) > 1.e-4 )
-        {
-	  area_slip += area;
-	  Jmean += normD*area;
-	}
-	FTmean += normForceT*area;
-	FNmean += std::abs(traction[kfe][0])*area;
-      } );
-      if( std::abs( area_slip ) > 0 )
-      {
-        Jmean /= area_slip;
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T {:15.6e}", maxNormFT ) );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N {:15.6e}", maxNormFN ) );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force T {:15.6e}", FTmean ) );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force N {:15.6e}", FNmean ) );
+        // end Laura
       }
-      if( std::abs( sumarea ) > 0 )
-      {
-        FTmean /= sumarea;
-        FNmean /= sumarea;
-      }
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T {:15.6e}", maxNormFT ) );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N {:15.6e}", maxNormFN ) );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force T {:15.6e}", FTmean ) );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force N {:15.6e}", FNmean ) );
-      // end Laura
-    }
-  } );
+    } );
 
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
     std::map< string, string_array > fieldNames;
@@ -1237,7 +1237,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
                                         globalResidualNorm[1],
                                         globalResidualNorm[2] ) );
   // return globalResidualNorm[2];
-  return res; 
+  return res;
 }
 
 void LagrangianContactSolver::createPreconditioner( DomainPartition const & domain )
@@ -2402,12 +2402,12 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
 
               if( originalFractureState != fractureState[kfe] )
               {
-		    std::cout << "element " << kfe << " traction: " << traction[kfe]
-                                                     << " previous state <"
-                                                     << ( originalFractureState )
-                                                     << "> current state <"
-                                                     << ( fractureState[kfe] )
-                                                     << ">\n";
+                std::cout << "element " << kfe << " traction: " << traction[kfe]
+                          << " previous state <"
+                          << ( originalFractureState )
+                          << "> current state <"
+                          << ( fractureState[kfe] )
+                          << ">\n";
                 //            GEOSX_LOG_LEVEL_BY_RANK( 3, "element " << kfe << " traction: " << traction[kfe]
                 //                                                   << " previous state <"
                 //                                                   << FractureStateToString( originalFractureState )

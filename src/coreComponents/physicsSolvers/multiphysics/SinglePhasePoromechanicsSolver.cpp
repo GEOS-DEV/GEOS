@@ -164,22 +164,22 @@ void SinglePhasePoromechanicsSolver::implicitStepComplete( real64 const & time_n
   // pressure
   ElementRegionManager & elemManager = mesh.getElemManager();
   elemManager.forElementRegions< CellElementRegion >( [&]( CellElementRegion & region )
-  { 
+  {
     region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
-    { 
+    {
       if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
-      { 
+      {
         arrayView1d< real64 > pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-        double * max_pres = std::max_element(pres.begin(), pres.end());
-        std::cout << "max pres " << * max_pres << std::endl;
+        double * max_pres = std::max_element( pres.begin(), pres.end());
+        std::cout << "max pres " << *max_pres << std::endl;
       }
     } );
   } );
   // displacement
   NodeManager & nodeManager = mesh.getNodeManager();
-  arrayView2d< real64 , nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
-  double * min_disp = std::min_element(disp.begin(), disp.end());
-  std::cout << "min disp " << * min_disp << std::endl;
+  arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
+  double * min_disp = std::min_element( disp.begin(), disp.end());
+  std::cout << "min disp " << *min_disp << std::endl;
   // end Laura
 
 }

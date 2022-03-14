@@ -53,7 +53,7 @@ public:
                                    real64 const & newHydraulicAperture ) const override final
   {
     GEOSX_UNUSED_VAR( q );
- 
+
     compute( oldHydraulicAperture,
              newHydraulicAperture,
              m_permeability[k][0],
