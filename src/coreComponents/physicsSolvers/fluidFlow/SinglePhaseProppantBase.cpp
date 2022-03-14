@@ -21,6 +21,7 @@
 
 #include "constitutive/ConstitutivePassThru.hpp"
 #include "constitutive/fluid/slurryFluidSelector.hpp"
+#include "constitutive/fluid/SingleFluidExtrinsicData.hpp"
 #include "constitutive/fluid/SlurryFluidExtrinsicData.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -64,14 +65,30 @@ SinglePhaseProppantBase::SinglePhaseProppantBase( const string & name,
 SinglePhaseProppantBase::~SinglePhaseProppantBase()
 {}
 
-void SinglePhaseProppantBase::validateFluidModels( DomainPartition const & domain ) const
+void SinglePhaseProppantBase::setConstitutiveNames( ElementSubRegionBase & subRegion ) const
+{
+  string & fluidMaterialName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+  fluidMaterialName = SolverBase::getConstitutiveName< SlurryFluidBase >( subRegion );
+  GEOSX_ERROR_IF( fluidMaterialName.empty(), GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ) );
+}
+
+void SinglePhaseProppantBase::validateFluidModels( DomainPartition & domain ) const
 {
   // Validate fluid models in regions
-  for( auto & mesh : domain.getMeshBodies().getSubGroups() )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
   {
-    MeshLevel const & meshLevel = dynamicCast< MeshBody const * >( mesh.second )->getMeshLevel( 0 );
-    validateModelMapping< SlurryFluidBase >( meshLevel.getElemManager(), m_fluidModelNames );
-  }
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
+    {
+      string & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      fluidName = getConstitutiveName< SlurryFluidBase >( subRegion );
+      GEOSX_THROW_IF( fluidName.empty(),
+                      GEOSX_FMT( "Fluid model not found on subregion {}", subRegion.getName() ),
+                      InputError );
+    } );
+  } );
 }
 
 SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const
@@ -81,11 +98,11 @@ SinglePhaseBase::FluidPropViews SinglePhaseProppantBase::getFluidProperties( con
            slurryFluid.dDensity_dPressure(),
            slurryFluid.viscosity(),
            slurryFluid.dViscosity_dPressure(),
-           slurryFluid.getExtrinsicData< extrinsicMeshData::slurryfluid::density >().getDefaultValue(),
-           slurryFluid.getExtrinsicData< extrinsicMeshData::slurryfluid::viscosity >().getDefaultValue() };
+           slurryFluid.getExtrinsicData< extrinsicMeshData::singlefluid::density >().getDefaultValue(),
+           slurryFluid.getExtrinsicData< extrinsicMeshData::singlefluid::viscosity >().getDefaultValue() };
 }
 
-void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex ) const
+void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -110,12 +127,13 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup, l
   arrayView1d< integer const > const isProppantBoundaryElement =
     dataGroup.getExtrinsicData< extrinsicMeshData::proppant::isProppantBoundary >();
 
-  SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, m_fluidModelNames[targetIndex] );
+  string const & fluidName = dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() );
+  SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, fluidName );
 
   constitutive::constitutiveUpdatePassThru( fluid, [&]( auto & castedFluid )
   {
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-    SinglePhaseProppantBaseKernels::FluidUpdateKernel::launch( fluidWrapper,
+    singlePhaseProppantBaseKernels::FluidUpdateKernel::launch( fluidWrapper,
                                                                pres,
                                                                dPres,
                                                                proppantConcentration,
@@ -127,8 +145,7 @@ void SinglePhaseProppantBase::updateFluidModel( ObjectManagerBase & dataGroup, l
 }
 
 
-void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion,
-                                                             localIndex const targetIndex ) const
+void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -140,7 +157,8 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
   arrayView1d< real64 const > const oldHydraulicAperture =
     subRegion.getExtrinsicData< extrinsicMeshData::flow::aperture0 >();
 
-  CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( m_solidModelNames[targetIndex] );
+  string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+  CoupledSolidBase & porousSolid = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
   constitutive::ConstitutivePassThru< ProppantSolid< ProppantPorosity, ProppantPermeability > >::execute( porousSolid, [=, &subRegion] ( auto & castedProppantSolid )
   {
@@ -151,6 +169,4 @@ void SinglePhaseProppantBase::updatePorosityAndPermeability( SurfaceElementSubRe
   } );
 
 }
-
-
 }

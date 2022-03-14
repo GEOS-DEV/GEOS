@@ -24,6 +24,7 @@
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellSolverBase.hpp"
 #include "constitutive/permeability/PermeabilityExtrinsicData.hpp"
+#include "constitutive/permeability/PermeabilityBase.hpp"
 
 namespace geosx
 {
@@ -70,22 +71,26 @@ void ReservoirSolverBase::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = meshLevel.getElemManager();
-
-  // loop over the wells
-  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & meshLevel,
+                                                arrayView1d< string const > const & regionNames )
   {
-    ElementRegionManager::ElementViewAccessor< arrayView3d< real64 const > > const permeability =
-      elemManager.constructMaterialExtrinsicAccessor< extrinsicMeshData::permeability::permeability >( m_flowSolver->targetRegionNames(),
-                                                                                                       m_flowSolver->permeabilityModelNames() );
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
-    PerforationData * const perforationData = subRegion.getPerforationData();
+    // loop over the wells
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                WellElementSubRegion & subRegion )
+    {
+      array1d< array1d< arrayView3d< real64 const > > > const permeability =
+        elemManager.constructMaterialExtrinsicAccessor< PermeabilityBase, extrinsicMeshData::permeability::permeability >();
 
-    // compute the Peaceman index (if not read from XML)
-    perforationData->computeWellTransmissibility( meshLevel, subRegion, permeability );
+
+      PerforationData * const perforationData = subRegion.getPerforationData();
+
+      // compute the Peaceman index (if not read from XML)
+      perforationData->computeWellTransmissibility( meshLevel, subRegion, permeability );
+    } );
   } );
-
   // bind the stored reservoir views to the current domain
   resetViews( domain );
 }
@@ -130,70 +135,74 @@ void ReservoirSolverBase::addCouplingNumNonzeros( DomainPartition & domain,
   localIndex const resNDOF = m_wellSolver->numDofPerResElement();
   localIndex const wellNDOF = m_wellSolver->numDofPerWellElement();
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager const & elemManager = meshLevel.getElemManager();
-
-  string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
-  string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resElemDofNumber =
-    elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & resElemGhostRank =
-    elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-
-  globalIndex const rankOffset = dofManager.rankOffset();
-  elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel const & meshLevel,
+                                                arrayView1d< string const > const & regionNames )
   {
-    PerforationData const * const perforationData = subRegion.getPerforationData();
+    ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
-    arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+    string const wellDofKey = dofManager.getKey( m_wellSolver->wellElementDofName() );
+    string const resDofKey = dofManager.getKey( m_wellSolver->resElementDofName() );
 
-    // get the well degrees of freedom and ghosting info
-    arrayView1d< globalIndex const > const & wellElemDofNumber =
-      subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const & resElemDofNumber =
+      elemManager.constructArrayViewAccessor< globalIndex, 1 >( resDofKey );
 
-    // get the well element indices corresponding to each perforation
-    arrayView1d< localIndex const > const & perfWellElemIndex =
-      perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< integer const > > const & resElemGhostRank =
+      elemManager.constructArrayViewAccessor< integer, 1 >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
 
-    // get the element region, subregion, index
-    arrayView1d< localIndex const > const & resElementRegion = perforationData->getMeshElements().m_toElementRegion;
-    arrayView1d< localIndex const > const & resElementSubRegion = perforationData->getMeshElements().m_toElementSubRegion;
-    arrayView1d< localIndex const > const & resElementIndex = perforationData->getMeshElements().m_toElementIndex;
-
-    // Loop over perforations and increase row lengths for reservoir and well elements accordingly
-    forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
+    globalIndex const rankOffset = dofManager.rankOffset();
+    elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const, WellElementSubRegion const & subRegion )
     {
-      // get the reservoir (sub)region and element indices
-      localIndex const er = resElementRegion[iperf];
-      localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei = resElementIndex[iperf];
-      localIndex const iwelem = perfWellElemIndex[iperf];
+      PerforationData const * const perforationData = subRegion.getPerforationData();
 
-      if( resElemGhostRank[er][esr][ei] < 0 )
+      arrayView1d< integer const > const & wellElemGhostRank = subRegion.ghostRank();
+
+      // get the well degrees of freedom and ghosting info
+      arrayView1d< globalIndex const > const & wellElemDofNumber =
+        subRegion.getReference< array1d< globalIndex > >( wellDofKey );
+
+      // get the well element indices corresponding to each perforation
+      arrayView1d< localIndex const > const & perfWellElemIndex =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+
+      // get the element region, subregion, index
+      arrayView1d< localIndex const > const & resElementRegion = perforationData->getMeshElements().m_toElementRegion;
+      arrayView1d< localIndex const > const & resElementSubRegion = perforationData->getMeshElements().m_toElementSubRegion;
+      arrayView1d< localIndex const > const & resElementIndex = perforationData->getMeshElements().m_toElementIndex;
+
+      // Loop over perforations and increase row lengths for reservoir and well elements accordingly
+      forAll< serialPolicy >( perforationData->size(), [=] ( localIndex const iperf )
       {
-        localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNDOF );
+        // get the reservoir (sub)region and element indices
+        localIndex const er = resElementRegion[iperf];
+        localIndex const esr = resElementSubRegion[iperf];
+        localIndex const ei = resElementIndex[iperf];
+        localIndex const iwelem = perfWellElemIndex[iperf];
 
-        for( localIndex idof = 0; idof < resNDOF; ++idof )
+        if( resElemGhostRank[er][esr][ei] < 0 )
         {
-          rowLengths[localRow + idof] += wellNDOF;
+          localIndex const localRow = LvArray::integerConversion< localIndex >( resElemDofNumber[er][esr][ei] - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GE( rowLengths.size(), localRow + resNDOF );
+
+          for( localIndex idof = 0; idof < resNDOF; ++idof )
+          {
+            rowLengths[localRow + idof] += wellNDOF;
+          }
         }
-      }
 
-      if( wellElemGhostRank[iwelem] < 0 )
-      {
-        localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
-        GEOSX_ASSERT_GE( localRow, 0 );
-        GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNDOF );
-
-        for( localIndex idof = 0; idof < wellNDOF; ++idof )
+        if( wellElemGhostRank[iwelem] < 0 )
         {
-          rowLengths[localRow + idof] += resNDOF;
+          localIndex const localRow = LvArray::integerConversion< localIndex >( wellElemDofNumber[iwelem] - rankOffset );
+          GEOSX_ASSERT_GE( localRow, 0 );
+          GEOSX_ASSERT_GE( rowLengths.size(), localRow + wellNDOF );
+
+          for( localIndex idof = 0; idof < wellNDOF; ++idof )
+          {
+            rowLengths[localRow + idof] += resNDOF;
+          }
         }
-      }
+      } );
     } );
   } );
 }
@@ -207,7 +216,7 @@ void ReservoirSolverBase::setupSystem( DomainPartition & domain,
 {
   GEOSX_MARK_FUNCTION;
 
-  dofManager.setMesh( domain.getMeshBody( 0 ).getMeshLevel( 0 ) );
+  dofManager.setDomain( domain );
 
   setupDofs( domain, dofManager );
   dofManager.reorderByRank();
@@ -401,8 +410,9 @@ real64 ReservoirSolverBase::scalingForSystemSolution( DomainPartition const & do
   real64 const flowScalingFactor = m_flowSolver->scalingForSystemSolution( domain, dofManager, localSolution );
   real64 const wellScalingFactor = m_wellSolver->scalingForSystemSolution( domain, dofManager, localSolution );
 
-  GEOSX_LOG_LEVEL_RANK_0( 2, "Scaling factor for the reservoir: " << flowScalingFactor
-                                                                  << "; for the well(s): " << wellScalingFactor );
+  GEOSX_LOG_LEVEL_RANK_0( 2, getName() << ": "
+                                       << "Scaling factor for the reservoir: " << flowScalingFactor
+                                       << "; for the well(s): " << wellScalingFactor );
 
   return LvArray::math::min( flowScalingFactor, wellScalingFactor );
 }

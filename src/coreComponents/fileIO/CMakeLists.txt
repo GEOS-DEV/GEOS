@@ -44,30 +44,18 @@ endif()
 
 if( ENABLE_VTK )
   list( APPEND fileIO_headers
-               vtk/VTKPVDWriter.hpp
-               vtk/VTKVTMWriter.hpp
-               vtk/VTKPolyDataWriterInterface.hpp
-               Outputs/VTKOutput.hpp )
-
+        vtk/VTKPVDWriter.hpp
+        vtk/VTKVTMWriter.hpp
+        vtk/VTKPolyDataWriterInterface.hpp
+        Outputs/VTKOutput.hpp
+        )
   list( APPEND fileIO_sources
-               vtk/VTKPVDWriter.cpp
-               vtk/VTKVTMWriter.cpp
-               vtk/VTKPolyDataWriterInterface.cpp
-               Outputs/VTKOutput.cpp )
-
-
-  list( APPEND dependencyList
-               VTK::CommonCore
-               VTK::CommonSystem
-               VTK::CommonMisc
-               VTK::IOCore
-               VTK::IOXML
-               VTK::expat
-               VTK::doubleconversion
-               VTK::lz4
-               VTK::lzma
-               VTK::zlib
-               VTK::loguru )
+        vtk/VTKPVDWriter.cpp
+        vtk/VTKVTMWriter.cpp
+        vtk/VTKPolyDataWriterInterface.cpp
+        Outputs/VTKOutput.cpp
+        )
+    list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
 endif()
 
 blt_add_library( NAME       fileIO

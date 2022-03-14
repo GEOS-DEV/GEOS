@@ -113,6 +113,16 @@ if( ENABLE_PAMELA )
     list( APPEND dependencyList PAMELA )
 endif()
 
+if( ENABLE_VTK )
+    message(STATUS "Adding VTKMeshGenerator sources and headers")
+    set( mesh_headers ${mesh_headers} generators/VTKMeshGenerator.hpp )                                                                                                                                         
+    set( mesh_sources ${mesh_sources} generators/VTKMeshGenerator.cpp)
+    set( dependencyList ${dependencyList} VTK::IOLegacy VTK::FiltersParallelDIY2 )
+    if( ENABLE_MPI )
+      set( dependencyList ${dependencyList} VTK::IOParallelXML VTK::ParallelMPI )
+    endif()
+endif()
+
 blt_add_library( NAME       mesh
                  SOURCES    ${mesh_sources}
                  HEADERS    ${mesh_headers}

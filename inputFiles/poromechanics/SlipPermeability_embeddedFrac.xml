@@ -10,7 +10,6 @@
       fracturesSolverName="fractureMechSolver"
       fluidSolverName="flowSolver"
       solidSolverName="matrixMechSolver"
-      porousMaterialNames="{ porousRock, fractureFilling }"
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -31,20 +30,15 @@
       name="matrixMechSolver"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      targetRegions="{ Domain }"/>
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain, Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ porousRock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracturePerm }"/>
+      targetRegions="{ Domain, Fracture }"/>
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"

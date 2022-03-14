@@ -820,7 +820,7 @@ createPythonObject( T & )
 
 #endif
 
-} // namespace WrapperHelpers
+} // namespace wrapperHelpers
 } // namespace dataRepository
 } // namespace geosx
 

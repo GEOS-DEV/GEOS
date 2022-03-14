@@ -11,7 +11,6 @@ set( subdirs
      fieldSpecification
      finiteElement
      finiteVolume
-     virtualElement
      discretizationMethods
      fileIO
      physicsSolvers
@@ -126,7 +125,3 @@ endif()
 
 add_subdirectory( unitTests )
 
-
-foreach( LIB ${coreLibs} )
-  blt_print_target_properties(TARGET ${LIB})
-endforeach()
