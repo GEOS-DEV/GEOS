@@ -55,10 +55,7 @@ if( ENABLE_VTK )
         vtk/VTKPolyDataWriterInterface.cpp
         Outputs/VTKOutput.cpp
         )
-  list( APPEND dependencyList
-        VTK::IOLegacy
-        VTK::IOXML
-        )
+    list( APPEND dependencyList VTK::IOLegacy VTK::IOXML )
 endif()
 
 blt_add_library( NAME       fileIO

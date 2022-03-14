@@ -656,10 +656,3 @@ option(GEOSX_LA_INTERFACE_${upper_LAI} "${upper_LAI} LA interface is selected" O
 
 message(STATUS "thirdPartyLibs = ${thirdPartyLibs}")
 
-
-foreach( TPL ${thirdPartyLibs} )
-  blt_print_target_properties(TARGET ${TPL})
-endforeach()
-
-
-

@@ -9,7 +9,6 @@ set( PREPROCESSOR_DEFINES ARRAY_BOUNDS_CHECK
                           MATHPRESSO
                           METIS
                           MPI
-                          OPENMP
                           CUDA
                           PARMETIS
                           PETSC
@@ -29,8 +28,20 @@ foreach( DEP in ${PREPROCESSOR_DEFINES} )
     if( ${DEP}_FOUND OR ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
         set( USE_${DEP} TRUE )
         set( GEOSX_USE_${DEP} TRUE )
+	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
     endif()
 endforeach()
+
+set( STRICT_PPD OPENMP )
+
+# only activate these options if they are ENABLED, not just if they're FOUND
+foreach( DEP in ${STRICT_PPD} )
+    if( ENABLE_${DEP} OR GEOSX_ENABLE_${DEP} )
+        set( USE_${DEP} TRUE )
+        set( GEOSX_USE_${DEP} TRUE )
+	message(STATUS "GEOSX_USE_${DEP} = ${GEOSX_USE_${DEP}}")
+    endif()
+endforeach( )
 
 set( GEOSX_CMAKE_BUILD_TYPE "\"${CMAKE_BUILD_TYPE}\"" )
 
