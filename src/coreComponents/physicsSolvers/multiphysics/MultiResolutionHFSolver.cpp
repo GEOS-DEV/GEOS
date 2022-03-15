@@ -105,6 +105,10 @@ void MultiResolutionHFSolver::resetStateToBeginningOfStep( DomainPartition & dom
 {
   m_globalSolver->resetStateToBeginningOfStep( domain );
   m_localSolver->resetStateToBeginningOfStep( domain );
+  //reset lists of dofs to empty to look up new boundary conditions for subproblem
+  m_dofListDisp = [];
+  m_fixedDispList = []; 
+  m_dofListDamage = [];
 }
 
 real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
@@ -117,12 +121,25 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
+//in the initial step and whenever the subproblem mesh moves, we must update the node map   
+void MultiResolutionHFSolver::updateNodeMap()
+{
+  for i in innerMesh //accessible through nodeManager
+    {
+      xi,yi,zi = getXiYiZi(); //get cartesian coordinates of node i
+      //sometimes, there is no outerMesh node at xi,yi,zi, in this case, we can just return -1 in the function below.
+      int N = getNodeNumberFromCoordinate(outerMesh, xi, yi, zi);
+      //WARNING: this function may need a tolerance, which should probably be proportional to element size
+      m_nodeMap[i] = N;
+    }  
+}
+
 //Andre - 03/15 - this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1. 
-  void MultiResolutionHFSolver::setInitialCrackDamageBCs()
+void MultiResolutionHFSolver::setInitialCrackDamageBCs()
 {
 
   //we need to zero the lists to erase data from previous step
-  this->eraseLists(); //maybe this can go inside resetToBeginningOfStep() 
+  //this->eraseLists(); //maybe this can go inside resetToBeginningOfStep() - already there! 
   for i=allNodesInPatch
     {
       Real64 dist_i = compute_dist_to_frac(i);
@@ -143,7 +160,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs()
 {
 
   //we need to zero the lists to erase data from previous step
-  this->eraseLists(); //maybe this can go inside resetToBeginningOfStep() 
+  //this->eraseLists(); //maybe this can go inside resetToBeginningOfStep - already there() 
   Real64 damage_threshold = 0.3;
   Array1d<Real64> uGlobal = retrieve_global_disp_field(); //pseudo code
   Array1d<Real64> allNodesInLocalBoundary = getNodeNumbersOfAllNodesInPatchBoundary();
@@ -160,7 +177,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs()
       m_dofListDisp.append(3*i-1); //uy
       m_dofListDisp.append(3*i);   //uz
       //apply the BC
-      int I = this->localToGlobalMap(i); // global node number associated to local node i
+      int I = m_nodeMap[i]; // global node number associated to local node i
       m_fixedDispList.append(uGlobal(3*I-2)); 
       m_fixedDispList.append(uGlobal(3*I-1));
       m_fixedDispList.append(uGlobal(3*I));
@@ -213,6 +230,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_P
     if( iter == 0 )
     {
       // reset the states of all slave solvers if any of them has been reset
+      //this is potentially a code duplication since resetStateToBeginningOfStep(domain) already calls the slaves
       localSolver.resetStateToBeginningOfStep( domain );
       globalSolver.resetStateToBeginningOfStep( domain );
       resetStateToBeginningOfStep( domain );
@@ -228,7 +246,8 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_P
 
     //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
     if (iter == 1){
-    Real64 dtUseless = localSolver.nonlinearImplicitStep(time_n,
+      this->updateNodeMap(); //this has to be done at every prop. step
+      Real64 dtUseless = localSolver.nonlinearImplicitStep(time_n,
 							 dtReturn,
 							 cycleNumber,
 							 domain );

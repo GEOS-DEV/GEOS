@@ -95,6 +95,8 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
+  virtual void updateNodeMap()
+
   virtual void setInitialCrackDamageBCs()
 
   virtual void prepareSubProblemBCs()
@@ -158,6 +160,9 @@ private:
   // list of displacement values to be prescribed in the subdomain boundary
   Array1d<Real64> m_fixedDispList;
   
+  // map that translate subproblem's node numbers to outer problem's node numbers
+  Array1d<int> m_nodeMap;
+
   // pointer to global efem solver
   SolidMechanicsEmbeddedFractures * m_globalSolver;
     
