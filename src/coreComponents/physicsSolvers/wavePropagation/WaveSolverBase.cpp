@@ -75,16 +75,6 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setInputFlag( InputFlags::FALSE ).
     setApplyDefaultValue( 0 ).
     setDescription( "Count for output pressure at receivers" );
-
-  registerWrapper( viewKeyStruct::dtSeismoTraceString(), &m_dtSeismoTrace ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Time step for output pressure at receivers" );
-
-  registerWrapper( viewKeyStruct::indexSeismoTraceString(), &m_indexSeismoTrace ).
-    setInputFlag( InputFlags::FALSE ).
-    setApplyDefaultValue( 0 ).
-    setDescription( "Count for output pressure at receivers" );
 }
 
 WaveSolverBase::~WaveSolverBase()
