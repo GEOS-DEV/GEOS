@@ -519,6 +519,13 @@ Element: ModifiedCamClay
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay.rst
 
 
+.. _XML_MultiResolutionHF:
+
+Element: MultiResolutionHF
+==========================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionHF.rst
+
+
 .. _XML_MultiphasePoromechanics:
 
 Element: MultiphasePoromechanics
@@ -1550,6 +1557,13 @@ Datastructure: MeshBodies
 Datastructure: ModifiedCamClay
 ==============================
 .. include:: ../../coreComponents/schema/docs/ModifiedCamClay_other.rst
+
+
+.. _DATASTRUCTURE_MultiResolutionHF:
+
+Datastructure: MultiResolutionHF
+================================
+.. include:: ../../coreComponents/schema/docs/MultiResolutionHF_other.rst
 
 
 .. _DATASTRUCTURE_MultiphasePoromechanics:

@@ -14,6 +14,7 @@ FlowProppantTransport                     node                 :ref:`XML_FlowPro
 Hydrofracture                             node                 :ref:`XML_Hydrofracture`                             
 LagrangianContact                         node                 :ref:`XML_LagrangianContact`                         
 LaplaceFEM                                node                 :ref:`XML_LaplaceFEM`                                
+MultiResolutionHF                         node                 :ref:`XML_MultiResolutionHF`                         
 MultiphasePoromechanics                   node                 :ref:`XML_MultiphasePoromechanics`                   
 PhaseFieldDamageFEM                       node                 :ref:`XML_PhaseFieldDamageFEM`                       
 PhaseFieldFracture                        node                 :ref:`XML_PhaseFieldFracture`                        
