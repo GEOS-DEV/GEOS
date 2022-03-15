@@ -48,12 +48,12 @@ VTKOutput::VTKOutput( string const & name,
   registerWrapper( viewKeysStruct::binaryString, &m_writeBinaryData ).
     setApplyDefaultValue( m_writeBinaryData ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Output data format.  Valid options: ``" + EnumStrings< vtk::VTKOutputMode >::concat( "``, ``" ) + "``");
+    setDescription( "Output data format.  Valid options: ``" + EnumStrings< vtk::VTKOutputMode >::concat( "``, ``" ) + "``" );
 
   registerWrapper( viewKeysStruct::outputRegionTypeString, &m_outputRegionType ).
     setApplyDefaultValue( m_outputRegionType ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Output region types.  Valid options: ``" + EnumStrings< vtk::VTKRegionTypes >::concat( "``, ``" ) + "``");
+    setDescription( "Output region types.  Valid options: ``" + EnumStrings< vtk::VTKRegionTypes >::concat( "``, ``" ) + "``" );
 }
 
 VTKOutput::~VTKOutput()
@@ -71,8 +71,8 @@ bool VTKOutput::execute( real64 const time_n,
                          real64 const GEOSX_UNUSED_PARAM ( eventProgress ),
                          DomainPartition & domain )
 {
-  m_writer.setOutputMode(m_writeBinaryData);
-  m_writer.setOutputRegionType(m_outputRegionType);
+  m_writer.setOutputMode( m_writeBinaryData );
+  m_writer.setOutputRegionType( m_outputRegionType );
   m_writer.setPlotLevel( m_plotLevel );
   m_writer.write( time_n, cycleNumber, domain );
 
