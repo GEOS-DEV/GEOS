@@ -115,35 +115,6 @@ void collectLocalAndBoundaryNodes( InternalWellGenerator const & wellGeometry,
 }
 
 /**
- * @brief Check if "location" is contained in reservoir element
- * @param[in] referencePosition the coordinates of the nodes
- * @param[in] elemsToFaces the map from element to faces
- * @param[in] facesToNodes the map from face to nodes
- * @param[in] elemCenter the coordinates of the element center
- * @param[in] location the target coordinates
- * @return true if "location" is contained in the reservoir element, false otherwise
- */
-bool isPointInsideElement( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const referencePosition,
-                           arraySlice1d< localIndex const > const elemsToFaces,
-                           ArrayOfArraysView< localIndex const > const facesToNodes,
-                           real64 const (&elemCenter)[3],
-                           real64 const (&location)[3] )
-{
-  bool isInsideElement = false;
-
-  // if the point is in the element, save the indices and stop the search
-  if( computationalGeometry::isPointInsidePolyhedron( referencePosition,
-                                                      elemsToFaces,
-                                                      facesToNodes,
-                                                      elemCenter,
-                                                      location ))
-  {
-    isInsideElement = true;
-  }
-  return isInsideElement;
-}
-
-/**
  * @brief Collect the nodes of reservoir element ei
  * @param[in] subRegion the subRegion of reservoir element ei
  * @param[in] ei the index of the reservoir element
@@ -241,11 +212,11 @@ bool visitNeighborElements( MeshLevel const & mesh,
 
         // perform the test to see if the point is in this reservoir element
         // if the point is in the resevoir element, save the indices and stop the search
-        if( isPointInsideElement( referencePosition,
-                                  elemsToFaces[eiLocal],
-                                  facesToNodes,
-                                  elemCenter,
-                                  location ) )
+        if( computationalGeometry::isPointInsidePolyhedron( referencePosition,
+                                                            elemsToFaces[eiLocal],
+                                                            facesToNodes,
+                                                            elemCenter,
+                                                            location ) )
         {
           erMatched  = er;
           esrMatched = esr;
