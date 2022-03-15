@@ -1743,11 +1743,150 @@
 		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 	</xsd:complexType>
-	<xsd:complexType name="elementRegionsGroupType" />
+	<xsd:complexType name="elementRegionsGroupType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="CellElementRegion" type="CellElementRegionType" />
+			<xsd:element name="SurfaceElementRegion" type="SurfaceElementRegionType" />
+			<xsd:element name="WellElementRegion" type="WellElementRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="CellElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
+	<xsd:complexType name="elementSubRegionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
 	<xsd:complexType name="neighborDataType" />
 	<xsd:complexType name="setsType">
 		<!--externalSet => (no description available)-->
 		<xsd:attribute name="externalSet" type="LvArray_SortedArray&lt;long, long, LvArray_ChaiBuffer&gt;" />
+	</xsd:complexType>
+	<xsd:complexType name="SurfaceElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+	</xsd:complexType>
+	<xsd:complexType name="WellElementRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--wellControlsName => (no description available)-->
+		<xsd:attribute name="wellControlsName" type="string" />
+		<!--wellGeneratorName => (no description available)-->
+		<xsd:attribute name="wellGeneratorName" type="string" />
+	</xsd:complexType>
+	<xsd:complexType name="WellElementRegionuniqueSubRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+			<xsd:element name="wellElementSubRegion" type="wellElementSubRegionType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--elementCenter => (no description available)-->
+		<xsd:attribute name="elementCenter" type="real64_array2d" />
+		<!--elementVolume => (no description available)-->
+		<xsd:attribute name="elementVolume" type="real64_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--nextWellElementIndex => (no description available)-->
+		<xsd:attribute name="nextWellElementIndex" type="localIndex_array" />
+		<!--nextWellElementIndexGlobal => (no description available)-->
+		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
+		<!--nodeList => (no description available)-->
+		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_ChaiBuffer&gt; &gt;" />
+		<!--numEdgesPerElement => (no description available)-->
+		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
+		<!--numFacesPerElement => (no description available)-->
+		<xsd:attribute name="numFacesPerElement" type="localIndex" />
+		<!--numNodesPerElement => (no description available)-->
+		<xsd:attribute name="numNodesPerElement" type="localIndex" />
+		<!--radius => (no description available)-->
+		<xsd:attribute name="radius" type="real64_array" />
+		<!--topRank => (no description available)-->
+		<xsd:attribute name="topRank" type="integer" />
+		<!--topWellElementIndex => (no description available)-->
+		<xsd:attribute name="topWellElementIndex" type="localIndex" />
+		<!--wellControlsName => (no description available)-->
+		<xsd:attribute name="wellControlsName" type="string" />
+	</xsd:complexType>
+	<xsd:complexType name="ConstitutiveModelsType" />
+	<xsd:complexType name="wellElementSubRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="neighborData" type="neighborDataType" />
+			<xsd:element name="sets" type="setsType" />
+		</xsd:choice>
+		<!--domainBoundaryIndicator => (no description available)-->
+		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
+		<!--ghostRank => (no description available)-->
+		<xsd:attribute name="ghostRank" type="integer_array" />
+		<!--globalToLocalMap => (no description available)-->
+		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
+		<!--isExternal => (no description available)-->
+		<xsd:attribute name="isExternal" type="integer_array" />
+		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
+		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
+		<!--location => (no description available)-->
+		<xsd:attribute name="location" type="real64_array2d" />
+		<!--numPerforationsGlobal => (no description available)-->
+		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
+		<!--reservoirElementIndex => (no description available)-->
+		<xsd:attribute name="reservoirElementIndex" type="localIndex_array" />
+		<!--reservoirElementRegion => (no description available)-->
+		<xsd:attribute name="reservoirElementRegion" type="localIndex_array" />
+		<!--reservoirElementSubregion => (no description available)-->
+		<xsd:attribute name="reservoirElementSubregion" type="localIndex_array" />
+		<!--wellElementIndex => (no description available)-->
+		<xsd:attribute name="wellElementIndex" type="localIndex_array" />
+		<!--wellTransmissibility => (no description available)-->
+		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
 	<xsd:complexType name="edgeManagerType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
@@ -1896,138 +2035,5 @@
 		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
 		<!--primaryField => Primary field variable-->
 		<xsd:attribute name="primaryField" type="real64_array" />
-	</xsd:complexType>
-	<xsd:complexType name="CellElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-	</xsd:complexType>
-	<xsd:complexType name="elementSubRegionsType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="WellElementRegionuniqueSubRegion" type="WellElementRegionuniqueSubRegionType" />
-		</xsd:choice>
-	</xsd:complexType>
-	<xsd:complexType name="SurfaceElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="elementSubRegions" type="elementSubRegionsType" />
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--wellControlsName => (no description available)-->
-		<xsd:attribute name="wellControlsName" type="string" />
-		<!--wellGeneratorName => (no description available)-->
-		<xsd:attribute name="wellGeneratorName" type="string" />
-	</xsd:complexType>
-	<xsd:complexType name="WellElementRegionuniqueSubRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="ConstitutiveModels" type="ConstitutiveModelsType" />
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
-			<xsd:element name="wellElementSubRegion" type="wellElementSubRegionType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--elementCenter => (no description available)-->
-		<xsd:attribute name="elementCenter" type="real64_array2d" />
-		<!--elementVolume => (no description available)-->
-		<xsd:attribute name="elementVolume" type="real64_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--nextWellElementIndex => (no description available)-->
-		<xsd:attribute name="nextWellElementIndex" type="localIndex_array" />
-		<!--nextWellElementIndexGlobal => (no description available)-->
-		<xsd:attribute name="nextWellElementIndexGlobal" type="localIndex_array" />
-		<!--nodeList => (no description available)-->
-		<xsd:attribute name="nodeList" type="geosx_InterObjectRelation&lt;LvArray_Array&lt;long, 2, camp_int_seq&lt;long, 0l, 1l&gt;, long, LvArray_ChaiBuffer&gt; &gt;" />
-		<!--numEdgesPerElement => (no description available)-->
-		<xsd:attribute name="numEdgesPerElement" type="localIndex" />
-		<!--numFacesPerElement => (no description available)-->
-		<xsd:attribute name="numFacesPerElement" type="localIndex" />
-		<!--numNodesPerElement => (no description available)-->
-		<xsd:attribute name="numNodesPerElement" type="localIndex" />
-		<!--radius => (no description available)-->
-		<xsd:attribute name="radius" type="real64_array" />
-		<!--topRank => (no description available)-->
-		<xsd:attribute name="topRank" type="integer" />
-		<!--topWellElementIndex => (no description available)-->
-		<xsd:attribute name="topWellElementIndex" type="localIndex" />
-		<!--wellControlsName => (no description available)-->
-		<xsd:attribute name="wellControlsName" type="string" />
-	</xsd:complexType>
-	<xsd:complexType name="ConstitutiveModelsType" />
-	<xsd:complexType name="wellElementSubRegionType">
-		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="neighborData" type="neighborDataType" />
-			<xsd:element name="sets" type="setsType" />
-		</xsd:choice>
-		<!--domainBoundaryIndicator => (no description available)-->
-		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
-		<!--ghostRank => (no description available)-->
-		<xsd:attribute name="ghostRank" type="integer_array" />
-		<!--globalToLocalMap => (no description available)-->
-		<xsd:attribute name="globalToLocalMap" type="geosx_mapBase&lt;long long, long, std_integral_constant&lt;bool, false&gt; &gt;" />
-		<!--isExternal => (no description available)-->
-		<xsd:attribute name="isExternal" type="integer_array" />
-		<!--localToGlobalMap => Array that contains a map from localIndex to globalIndex.-->
-		<xsd:attribute name="localToGlobalMap" type="globalIndex_array" />
-		<!--location => (no description available)-->
-		<xsd:attribute name="location" type="real64_array2d" />
-		<!--numPerforationsGlobal => (no description available)-->
-		<xsd:attribute name="numPerforationsGlobal" type="globalIndex" />
-		<!--reservoirElementIndex => (no description available)-->
-		<xsd:attribute name="reservoirElementIndex" type="localIndex_array" />
-		<!--reservoirElementRegion => (no description available)-->
-		<xsd:attribute name="reservoirElementRegion" type="localIndex_array" />
-		<!--reservoirElementSubregion => (no description available)-->
-		<xsd:attribute name="reservoirElementSubregion" type="localIndex_array" />
-		<!--wellElementIndex => (no description available)-->
-		<xsd:attribute name="wellElementIndex" type="localIndex_array" />
-		<!--wellTransmissibility => (no description available)-->
-		<xsd:attribute name="wellTransmissibility" type="real64_array" />
 	</xsd:complexType>
 </xsd:schema>

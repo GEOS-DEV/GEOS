@@ -23,10 +23,6 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} ${extraComponentsLinkList} )
-endif()
-
 foreach(test ${LAI_tests})
   get_filename_component( test_name ${test} NAME_WE )
 

@@ -49,6 +49,15 @@ public:
   void addBlock( string const & blockName ) const;
 
   /*!
+   * @brief Check to see if a block is present in the VTM file
+   * @details The first level of block is for the ElementRegion (\p blockName can
+   * be CellElementRegion, FaceElementRegion or WellElementREgion)
+   * @param[in] blockName Name of the block
+   * @return bool indicating whether the file contains a block
+   */
+  bool hasBlock( string const & blockName ) const;
+
+  /*!
    * @brief Add a subblock to the VTM file
    * @details The second level of block is for the different Regions
    * @param[in] blockName Name of the parent block
