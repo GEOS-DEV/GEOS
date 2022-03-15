@@ -136,7 +136,7 @@
     <TableFunction
       name="apertureTable"
       coordinates="{ -0.01, -1.0e-3, 0.0 }"
-      values="     { 0.005e-3, 0.01e-3, 0.02e-3 }"/>
+      values="{ 0.005e-3, 0.01e-3, 0.02e-3 }"/>
   </Functions>
 
   <!-- SPHINX_OUTPUT -->          
