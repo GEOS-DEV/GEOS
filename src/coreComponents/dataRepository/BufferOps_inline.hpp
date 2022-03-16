@@ -1088,7 +1088,7 @@ Pack( buffer_unit_type * & buffer,
     else
     {
       sizeOfPackedChars += Pack< DO_PACKING >( buffer,
-                                               localIndex( -1 ) );
+                                               globalIndex( -1 ) );
     }
   }
 
