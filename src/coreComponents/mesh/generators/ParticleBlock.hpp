@@ -99,6 +99,12 @@ public:
   void setParticleVolume(array1d< real64 > const particleVolume) override
     { m_particleVolume = particleVolume; }
 
+  array3d< real64 > getParticleRVectors() const override
+  { return m_particleRVectors; }
+
+  void setParticleRVectors(array3d< real64 > const particleRVectors) override
+    { m_particleRVectors = particleRVectors; }
+
   bool hasRVectors() const override
   { return m_hasRVectors; }
 
@@ -155,6 +161,9 @@ private:
 
   /// Bool flag for whether particles in this block have r-vectors defining its domain
   bool m_hasRVectors;
+
+  /// R-vectors
+  array3d< real64 > m_particleRVectors;
 
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {

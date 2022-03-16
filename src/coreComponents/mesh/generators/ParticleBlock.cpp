@@ -44,7 +44,7 @@ void ParticleBlock::setParticleType( ParticleType const particleType )
     case ParticleType::SinglePoint:
     {
       // Single Point
-      m_hasRVectors = false;
+      m_hasRVectors = true; // For visualization only
       break;
     }
     case ParticleType::CPDI:

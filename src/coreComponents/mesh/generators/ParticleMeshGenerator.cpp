@@ -242,6 +242,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     array2d< real64 > particleCenter(np,3);
     array2d< real64 > particleVelocity(np,3);
     array1d< real64 > particleVolume(np);
+    array3d< real64 > particleRVectors(np,3,3);
 
     // Assign particle data to the appropriate block.
     std::vector<int> & indices = indexMap[particleBlockName];
@@ -258,10 +259,20 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       particleVelocity[index][1] = particleData[particleType][i][4];
       particleVelocity[index][2] = particleData[particleType][i][5];
 
-      // Volume
+      // Volume and R-Vectors
       if(particleType == "SinglePoint") // I'm sure there's a better way to handle this case switching
       {
         particleVolume[index] = particleData[particleType][i][7];
+        double a = std::pow(particleVolume[index],1.0/3.0);
+        particleRVectors[index][0][0] = a;
+        particleRVectors[index][0][1] = 0.0;
+        particleRVectors[index][0][2] = 0.0;
+        particleRVectors[index][1][0] = 0.0;
+        particleRVectors[index][1][1] = a;
+        particleRVectors[index][1][2] = 0.0;
+        particleRVectors[index][2][0] = 0.0;
+        particleRVectors[index][2][1] = 0.0;
+        particleRVectors[index][2][2] = a;
       }
       else if(particleType == "CPDI")
       {
@@ -275,6 +286,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         x3 = particleData[particleType][i][13];
         y3 = particleData[particleType][i][14];
         z3 = particleData[particleType][i][15];
+        particleRVectors[index][0][0] = x1;
+        particleRVectors[index][0][1] = y1;
+        particleRVectors[index][0][2] = z1;
+        particleRVectors[index][1][0] = x2;
+        particleRVectors[index][1][1] = y2;
+        particleRVectors[index][1][2] = z2;
+        particleRVectors[index][2][0] = x3;
+        particleRVectors[index][2][1] = y3;
+        particleRVectors[index][2][2] = z3;
         particleVolume[index] = std::fabs(-(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3);
       }
       else
@@ -288,6 +308,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleCenter(particleCenter);
     particleBlock.setParticleVelocity(particleVelocity);
     particleBlock.setParticleVolume(particleVolume);
+    particleBlock.setParticleRVectors(particleRVectors);
   } // loop over particle blocks
 
   // Resize particle regions
