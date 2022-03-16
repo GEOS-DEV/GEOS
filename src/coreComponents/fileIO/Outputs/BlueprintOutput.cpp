@@ -291,7 +291,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
     if( wrapper.getPlotLevel() <= m_plotLevel && wrapper.sizedFromParent() )
     {
       string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
-      averagedConstitutiveData.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
+      averagedConstitutiveData.registerWrapper( wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
         .addBlueprintField( fields, fieldName, topology );
     }
   } );
