@@ -1,11 +1,11 @@
 # hostconfig for pangea3
 # module load cmake/3.18.2 gcc/8.3.0 cuda/11.3.0 smpi/10.3.0.1 openblas/0.3.8 lapack/3.9.0
 set(CONFIG_NAME "pangea3-gcc8.3-smpi-10.3.0.1" CACHE PATH "") 
-
-# Set up the tpls
-if (NOT DEFINED GEOSX_TPL_DIR)
-  message(FATAL_ERROR "You must set GEOSX_TPL_DIR with -D GEOSX_TPL_DIR=")
-endif ()
+if (NOT DEFINED ENV{GEOSX_TPL_DIR})
+  message(FATAL_ERROR "You must set GEOSX_TPL_DIR within your environement")
+else()
+  set(GEOSX_TPL_DIR $ENV{GEOSX_TPL_DIR})
+endif()
 
 if ((DEFINED ENV{CC}) AND (DEFINED ENV{CXX}) AND (DEFINED ENV{FC}))
   # C options
