@@ -142,7 +142,8 @@
       name="vtkOutput"
       plotFileRoot="SneddonRotated"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="ascii"/>
+
     <Restart
       name="restartOutput"/>
   </Outputs>

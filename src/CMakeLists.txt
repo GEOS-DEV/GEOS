@@ -155,13 +155,12 @@ blt_add_executable( NAME geosx
 
 			       add_custom_target( geosx_validate_all_xml_files
 				 ALL
-				 COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+				 COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
 				 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 				 DEPENDS geosx_update_rst_tables
 				 COMMENT "Validating all XML files in the repository against the schema"
 				 )
 			     endif()
-
 
 
 if( SPHINX_FOUND )
