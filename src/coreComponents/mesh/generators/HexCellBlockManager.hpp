@@ -55,15 +55,8 @@ public:
   HexCellBlockManager & operator=( const HexCellBlockManager & ) = delete;
   ~HexCellBlockManager() override;
 
-  localIndex numEdges() const override
-  { return m_numEdges; }
-
-  localIndex numFaces() const override
-  { return m_numFaces; }
-
-  localIndex numElements() const
-  { return m_numElements; }
-
+  localIndex numEdges() const override;
+  localIndex numFaces() const override;
   /**
    * @brief Initialize the mapping computations 
    * @details Does not build the maps.
@@ -85,13 +78,6 @@ public:
 private:
   /// Instance of the class that build the mappings
   MeshConnectivityBuilder * m_theOneWhoDoesTheJob;
-
-  /// Number of edges (no duplicates)
-  localIndex m_numEdges = 0;
-  /// Number of faces (no duplicates)
-  localIndex m_numFaces = 0;
-  /// Total number of cells in all managed CellBlocks (no duplicates)
-  localIndex m_numElements = 0;
 };
 
 }
