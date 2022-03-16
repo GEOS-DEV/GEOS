@@ -166,32 +166,55 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs()
 //damage field in the local domain (via node manager)
 //The function will read all this data and prepare a list of dofs and u values that will be used by the local solver to set
 //the boundary conditions 
-void MultiResolutionHFSolver::prepareSubProblemBCs()
+void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
+                                                    MeshLevel const & patch )
 {
+
+  // get list of nodes on the boundary of the patch
+  NodeManager const & patchNodeManager = patch.getNodeManager();
+  SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
+  arrayView1d< globalIndex const > const localToGlobalMap = patchNodeManager.localToGlobalMap();
+  arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference<array1d<real64>( "Damage" );
+
+
+
+  NodeManager const & baseNodeManager = base.getNodeManager();
+  arrayView1d<real64 const> const baseDisp = baseNodeManager.totalDisplacement();
+  unordered_map< globalIndex, localIndex > const & patchGlobalToLocalMap = baseNodeManager.globalToLocalMap();
 
   //we need to zero the lists to erase data from previous step
   //this->eraseLists(); //maybe this can go inside resetToBeginningOfStep - already there() 
-  Real64 damage_threshold = 0.3;
-  Array1d<Real64> uGlobal = retrieve_global_disp_field(); //pseudo code
-  Array1d<Real64> allNodesInLocalBoundary = getNodeNumbersOfAllNodesInPatchBoundary();
-  for i=allNodesInLocalBoundary
-    {
-      Real64 damage_at_i = retrieve_patch_damage_field_at_i();  
-      if damage_at_i > damage_threshold
+  real64 damage_threshold = 0.3;
+
+  m_dofListDisp.resize( patchExternalSet.size() );
+  m_fixedDispList.resize( patchExternalSet.size(), 3 );
+  localIndex count=0;
+  for( localIndex a : patchExternalSet )
+  {
+      if( patchDamage[a] < damage_threshold )
       {
-        //do nothing;
-	continue;
+        // NOTE: there needs to be a translation between patch and base mesh for the indices and values/weights.
+
+
+
+        //append dofs associated with node i
+        m_dofListDisp(count) = a;
+        localIndex const numBaseNodes = m_nodeMapIndices.sizeOfArray( a );
+        for( localIndex b=0; b<numBaseNodes; ++b )
+        {
+          localIndex const I = m_nodeMap[i]; // global node number associated to local node i
+          m_fixedDispList(count,0) += m_nodeMapWeights(a,b) * baseDisp(I,0);
+          m_fixedDispList(count,1) += m_nodeMapWeights(a,b) * baseDisp(I,1);
+          m_fixedDispList(count,2) += m_nodeMapWeights(a,b) * baseDisp(I,2);
+        }
+
+
+        ++count;
       }
-      //append dofs associated with node i
-      m_dofListDisp.append(3*i-2); //ux //here, we can have a dof or node list (node list is shorter but require translating node to dof later to
-      m_dofListDisp.append(3*i-1); //uy
-      m_dofListDisp.append(3*i);   //uz
-      //apply the BC
-      int I = m_nodeMap[i]; // global node number associated to local node i
-      m_fixedDispList.append(uGlobal(3*I-2)); 
-      m_fixedDispList.append(uGlobal(3*I-1));
-      m_fixedDispList.append(uGlobal(3*I));
-    } 
+    }
+
+  m_dofListDisp.resize( count );
+  m_fixedDispList.resize( count, 3 );
   
 }  
 

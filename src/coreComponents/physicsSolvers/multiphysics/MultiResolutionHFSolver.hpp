@@ -95,11 +95,12 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual void updateNodeMap()
+  virtual void updateNodeMap();
 
-  virtual void setInitialCrackDamageBCs()
+  virtual void setInitialCrackDamageBCs();
 
-  virtual void prepareSubProblemBCs()
+  virtual void prepareSubProblemBCs( MeshLevel const & base,
+                                     MeshLevel const & patch );
     
   virtual void setNextDt( real64 const & currentDt,
                           real64 & nextDt ) override;
@@ -159,13 +160,14 @@ private:
   Array1d<Real64> m_dofListDamage;
 
   // list of disp dofs to be fixed in the subdomain boundary
-  Array1d<Real64> m_dofListDisp;
+  array1d<localIndex> m_dofListDisp;
   
   // list of displacement values to be prescribed in the subdomain boundary
-  Array1d<Real64> m_fixedDispList;
+  array2d<real64> m_fixedDispList;
   
   // map that translate subproblem's node numbers to outer problem's node numbers
-  Array1d<int> m_nodeMap;
+  ArrayOfArrays<localIndex> m_nodeMapIndices;
+  ArrayOfArrays<real64> m_nodeMapWeights;
 
   // pointer to global efem solver
   SolidMechanicsEmbeddedFractures * m_globalSolver;
