@@ -51,7 +51,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleVolume = particleBlock.getParticleVolume();
   m_particleVolume0 = particleBlock.getParticleVolume();
   m_particleDeformationGradient.resize(particleBlock.size(),3,3);
-  m_RVectors.resize(particleBlock.size(),3,3);
+  m_particleRVectors = particleBlock.getParticleRVectors();
   m_particleMass.resize(particleBlock.size());
   m_hasRVectors = particleBlock.hasRVectors();
 

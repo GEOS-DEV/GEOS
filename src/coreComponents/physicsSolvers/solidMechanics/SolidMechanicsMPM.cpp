@@ -561,9 +561,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
       real64 const & p_Vol = particleVolume[p];
       auto const & p_stress = particleStress[p][0];
 
-      std::vector<int> nodeIDs; // = subRegion.getNodes(cellID, m_ijkMap);
-      std::vector<real64> weights; // = getWeights(p_x, cellID, g_X); // returns shape function value for each node
-      std::vector< std::vector<real64> > gradWeights; // = getGradWeights(p_x, cellID, g_X); // 1st index = direction, 2nd index = node
+      // Get interpolation kernel
+      std::vector<int> nodeIDs; // nodes that the particle maps to
+      std::vector<real64> weights; // shape function value for each node
+      std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
       subRegion.getAllWeights(p,
                               p_x,
@@ -633,14 +634,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
     arrayView1d< real64 > const shearModulus = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const bulkModulus = constitutiveRelation.bulkModulus();
 
-    // Particle loop
+    // Particle loop - we might be able to get rid of this someday and have everything happen via MPMParticleSubRegion methods
     for(int p=0; p<subRegion.size(); p++)
     {
       auto const & p_x = particleCenter[p];
       auto const & p_v = particleVelocity[p];
       real64 & p_Vol = particleVolume[p];
       real64 const & p_Vol0 = particleVolume0[p];
-      auto const & p_F = particleDeformationGradient[p];
+      auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, long>
       auto const & p_stress = particleStress[p][0];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
       real64 p_FOld[3][3] = { {0} }; // Old particle F
@@ -658,11 +659,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
         }
       }
 
-      // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
-      // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
-      std::vector<int> nodeIDs; // = subRegion.getNodes(cellID, m_ijkMap);
-      std::vector<real64> weights; // = getWeights(p_x, cellID, g_X);
-      std::vector< std::vector<real64> > gradWeights; // = getGradWeights(p_x, cellID, g_X);
+      // Get interpolation kernel
+      std::vector<int> nodeIDs; // nodes that the particle maps to
+      std::vector<real64> weights; // shape function value for each node
+      std::vector< std::vector<real64> > gradWeights; // shape function gradient value for each node; 1st index = direction, 2nd index = node
       gradWeights.resize(3);
       subRegion.getAllWeights(p,
                               p_x,
@@ -697,7 +697,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
 //        std::cout << std::endl;
 //      }
 
-      // Particle kinematic update - TODO: surely there's a nicer way to do this
+      // Particle kinematic update - TODO: surely there's a nicer way to do this with LvArray
       // Add identity tensor to velocity gradient
       for(int i=0; i<3; i++)
       {
@@ -719,10 +719,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
         }
       }
 
-      // Get det(F), update volume
+      // Get det(F), update volume and r-vectors
       detF = -p_F[0][2]*p_F[1][1]*p_F[2][0] + p_F[0][1]*p_F[1][2]*p_F[2][0] + p_F[0][2]*p_F[1][0]*p_F[2][1] - p_F[0][0]*p_F[1][2]*p_F[2][1] - p_F[0][1]*p_F[1][0]*p_F[2][2] + p_F[0][0]*p_F[1][1]*p_F[2][2];
       p_Vol = p_Vol0*detF;
-
+      subRegion.updateRVectors(p, p_F);
 
       // Particle constitutive update - Elastic Isotropic model doesn't have a hyperelastic update yet (waiting on strain and stress measure confirmation?) so we implement our own - St. Venant-Kirchhoff
       // Get Green-Lagrange strain

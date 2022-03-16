@@ -63,11 +63,23 @@ static int toVTKCellType( ElementType const elementType )
     case ElementType::Triangle:      return VTK_TRIANGLE;
     case ElementType::Quadrilateral: return VTK_QUAD;
     case ElementType::Polygon:       return VTK_POLYGON;
-    case ElementType::Tetrahedron:    return VTK_TETRA;
+    case ElementType::Tetrahedron:   return VTK_TETRA;
     case ElementType::Pyramid:       return VTK_PYRAMID;
     case ElementType::Prism:         return VTK_WEDGE;
     case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
     case ElementType::Polyhedron:    return VTK_POLYHEDRON;
+  }
+  return VTK_EMPTY_CELL;
+}
+
+static int toVTKCellType( ParticleType const particleType )
+{
+  switch( particleType )
+  {
+    case ParticleType::SinglePoint:  return VTK_HEXAHEDRON;
+    case ParticleType::CPDI:         return VTK_HEXAHEDRON;
+    case ParticleType::CPTI:         return VTK_TETRA;
+    case ParticleType::CPDI2:        return VTK_HEXAHEDRON;
   }
   return VTK_EMPTY_CELL;
 }

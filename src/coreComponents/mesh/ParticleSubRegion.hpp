@@ -80,6 +80,28 @@ public:
 
   ///@}
 
+  void updateRVectors(int const p, LvArray::ArraySlice<double, 2, 1, long> const & p_F)
+  {
+    if(m_hasRVectors)
+    {
+      real64 rTemp[3][3];
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          rTemp[i][j] = m_particleRVectors[p][i][j];
+        }
+      }
+      for(int i=0; i<3; i++)
+      {
+        for(int j=0; j<3; j++)
+        {
+          m_particleRVectors[p][i][j] = p_F[0][i]*rTemp[0][j] + p_F[1][i]*rTemp[1][j] + p_F[2][i]*rTemp[2][j];
+        }
+      }
+    }
+  }
+
   void getAllWeights(int const p,
                      LvArray::ArraySlice<double, 1, 0, long> const & p_x,
                      std::vector<real64> const & xMin,
@@ -123,7 +145,7 @@ public:
 //          int sign[3] = signs[cell];
 //          for(int i=0; i<3; i++)
 //          {
-//            real64 CPDIcorner = p_x[i] + sign[0]*m_RVectors[p][0][i] + sign[1]*m_RVectors[p][1][i] + sign[2]*m_RVectors[p][2][i];
+//            real64 CPDIcorner = p_x[i] + sign[0]*m_particleRVectors[p][0][i] + sign[1]*m_particleRVectors[p][1][i] + sign[2]*m_particleRVectors[p][2][i];
 //            cellID[cell][i] = std::floor((CPDIcorner - xMin[i])/hx[i]);
 //          }
 //        }
@@ -170,9 +192,9 @@ public:
 //        case ParticleType::CPDI:
 //        {
 //          int sign[3] = signs[cell];
-//          x = p_x[0] + sign[0]*m_RVectors[p][0][0] + sign[1]*m_RVectors[p][1][0] + sign[2]*m_RVectors[p][2][0];
-//          y = p_x[1] + sign[0]*m_RVectors[p][0][1] + sign[1]*m_RVectors[p][1][1] + sign[2]*m_RVectors[p][2][1];
-//          z = p_x[2] + sign[0]*m_RVectors[p][0][2] + sign[1]*m_RVectors[p][1][2] + sign[2]*m_RVectors[p][2][2];
+//          x = p_x[0] + sign[0]*m_particleRVectors[p][0][0] + sign[1]*m_particleRVectors[p][1][0] + sign[2]*m_particleRVectors[p][2][0];
+//          y = p_x[1] + sign[0]*m_particleRVectors[p][0][1] + sign[1]*m_particleRVectors[p][1][1] + sign[2]*m_particleRVectors[p][2][1];
+//          z = p_x[2] + sign[0]*m_particleRVectors[p][0][2] + sign[1]*m_particleRVectors[p][1][2] + sign[2]*m_particleRVectors[p][2][2];
 //          break;
 //        }
         default:
