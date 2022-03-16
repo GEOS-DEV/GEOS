@@ -45,9 +45,6 @@ EquilibriumReaction::EquilibriumReaction( string const & name,
                 componentNames,
                 componentMolarWeight )
 {
-  GEOSX_THROW_IF_NE_MSG( phaseNames.size(), 2,
-                         "The EquilibriumReaction model is a two-phase model",
-                         InputError );
 }
 
 EquilibriumReaction::KernelWrapper EquilibriumReaction::createKernelWrapper() const

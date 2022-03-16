@@ -21,10 +21,7 @@
 
 #include "ReactionBase.hpp"
 
-#include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "constitutive/fluid/layouts.hpp"
-#include "constitutive/fluid/MultiFluidUtils.hpp"
-#include "functions/TableFunction.hpp"
 
 namespace geosx
 {
