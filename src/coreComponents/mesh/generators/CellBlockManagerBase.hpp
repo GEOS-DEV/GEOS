@@ -35,7 +35,7 @@ class CellBlockManagerBase : public CellBlockManagerABC
 {
 public:
   /**
-   * @brief Constructor  - The CellBlocks are registered
+   * @brief Constructor  - The CellBlocks are registered by this class
    * @param name The name of this Group.
    * @param parent The parent Group
    */
@@ -52,14 +52,14 @@ public:
   virtual localIndex numEdges() const override = 0;
   virtual localIndex numFaces() const override = 0;
   virtual void buildMaps() = 0;
-  virtual ArrayOfSets<localIndex> getNodeToEdges() override = 0;
-  virtual ArrayOfSets<localIndex> getNodeToFaces() override = 0;
-  virtual ArrayOfArrays<localIndex> getNodeToElements() override  = 0;
-  virtual array2d<geosx::localIndex> getEdgeToNodes() override  = 0;
-  virtual ArrayOfSets<geosx::localIndex> getEdgeToFaces() override = 0;
-  virtual ArrayOfArrays<localIndex> getFaceToNodes() override = 0;
-  virtual ArrayOfArrays<geosx::localIndex> getFaceToEdges() override = 0;
-  virtual array2d<localIndex> getFaceToElements() override = 0;
+  virtual ArrayOfSets<localIndex> getNodeToEdges() const override = 0;
+  virtual ArrayOfSets<localIndex> getNodeToFaces() const override = 0;
+  virtual ArrayOfArrays<localIndex> getNodeToElements() const override  = 0;
+  virtual array2d<geosx::localIndex> getEdgeToNodes() const override  = 0;
+  virtual ArrayOfSets<geosx::localIndex> getEdgeToFaces() const override = 0;
+  virtual ArrayOfArrays<localIndex> getFaceToNodes() const override = 0;
+  virtual ArrayOfArrays<geosx::localIndex> getFaceToEdges() const override = 0;
+  virtual array2d<localIndex> getFaceToElements() const override = 0;
 
   virtual Group *createChild(string const & GEOSX_UNUSED_PARAM( childKey ),
                              string const & GEOSX_UNUSED_PARAM( childName )) override

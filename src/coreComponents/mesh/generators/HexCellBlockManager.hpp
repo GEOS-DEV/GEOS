@@ -66,14 +66,14 @@ public:
    */
   void buildMaps() override;
 
-  array2d<geosx::localIndex> getEdgeToNodes() override;
-  ArrayOfSets<geosx::localIndex> getEdgeToFaces() override;
-  ArrayOfArrays<localIndex> getFaceToNodes() override;
-  ArrayOfArrays<geosx::localIndex> getFaceToEdges() override;
-  array2d<localIndex> getFaceToElements() override;
-  ArrayOfSets<localIndex> getNodeToEdges() override;
-  ArrayOfSets<localIndex> getNodeToFaces() override;
-  ArrayOfArrays<localIndex> getNodeToElements() override;
+  array2d<geosx::localIndex> getEdgeToNodes() const override;
+  ArrayOfSets<geosx::localIndex> getEdgeToFaces() const override;
+  ArrayOfArrays<localIndex> getFaceToNodes() const override;
+  ArrayOfArrays<geosx::localIndex> getFaceToEdges() const override;
+  array2d<localIndex> getFaceToElements() const override;
+  ArrayOfSets<localIndex> getNodeToEdges() const override;
+  ArrayOfSets<localIndex> getNodeToFaces() const override;
+  ArrayOfArrays<localIndex> getNodeToElements() const override;
 
 private:
   /// Instance of the class that build the mappings

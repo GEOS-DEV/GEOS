@@ -65,21 +65,21 @@ public:
 
   localIndex numFaces() const override;
 
-  ArrayOfSets< localIndex > getNodeToEdges() override;
+  ArrayOfSets< localIndex > getNodeToEdges() const override;
 
-  ArrayOfSets< localIndex > getNodeToFaces() override;
+  ArrayOfSets< localIndex > getNodeToFaces() const override;
 
-  ArrayOfArrays< localIndex > getNodeToElements() override;
+  ArrayOfArrays< localIndex > getNodeToElements() const override;
 
-  array2d< geosx::localIndex > getEdgeToNodes() override;
+  array2d< geosx::localIndex > getEdgeToNodes() const override;
 
-  ArrayOfSets< geosx::localIndex > getEdgeToFaces() override;
+  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override;
 
-  ArrayOfArrays< localIndex > getFaceToNodes() override;
+  ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  ArrayOfArrays< geosx::localIndex > getFaceToEdges() override;
+  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override;
 
-  array2d< localIndex > getFaceToElements() override;
+  array2d< localIndex > getFaceToElements() const override;
 
   
   /**

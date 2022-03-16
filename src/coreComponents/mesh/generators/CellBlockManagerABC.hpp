@@ -128,13 +128,13 @@ public:
    * @brief Returns the node to edges mapping.
    * @return The one to many relationship.
    */
-  virtual ArrayOfSets< localIndex > getNodeToEdges() = 0;
+  virtual ArrayOfSets< localIndex > getNodeToEdges() const = 0;
 
   /**
    * @brief Returns the face to nodes mappings.
    * @return The one to many relationship.
    */
-  virtual ArrayOfSets< localIndex > getNodeToFaces() = 0;
+  virtual ArrayOfSets< localIndex > getNodeToFaces() const = 0;
 
   /**
    * @brief Returns the node to elements mapping.
@@ -142,31 +142,31 @@ public:
    *
    * @note The mapping is computed on the fly and returned. It is not stored in the instance.
    */
-  virtual ArrayOfArrays< localIndex > getNodeToElements() = 0;
+  virtual ArrayOfArrays< localIndex > getNodeToElements() const = 0;
 
   /**
    * @brief Returns the edge to nodes mapping.
    * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
    */
-  virtual array2d< geosx::localIndex > getEdgeToNodes() = 0;
+  virtual array2d< geosx::localIndex > getEdgeToNodes() const = 0;
 
   /**
    * @brief Returns the edge to faces mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfSets< geosx::localIndex > getEdgeToFaces() = 0;
+  virtual ArrayOfSets< geosx::localIndex > getEdgeToFaces() const = 0;
 
   /**
    * @brief Returns the face to nodes mapping.
    * @return The one to many relationship.
    */
-  virtual ArrayOfArrays< localIndex > getFaceToNodes() = 0;
+  virtual ArrayOfArrays< localIndex > getFaceToNodes() const = 0;
 
   /**
    * @brief Returns the face to edges mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfArrays< geosx::localIndex > getFaceToEdges() = 0;
+  virtual ArrayOfArrays< geosx::localIndex > getFaceToEdges() const = 0;
 
   /**
    * @brief Returns the face to elements mappings.
@@ -174,7 +174,7 @@ public:
    *
    * In case the face only belongs to one single element, the second value of the table is -1.
    */
-  virtual array2d< localIndex > getFaceToElements() = 0;
+  virtual array2d< localIndex > getFaceToElements() const = 0;
 
   /**
    * @brief The node to global mapping for nodes.

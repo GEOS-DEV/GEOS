@@ -1008,16 +1008,6 @@ bool HexMeshConnectivityBuilder::computeEdgesToFaces(ArrayOfSets<localIndex> & e
 // Allocation is managed by the CellBlock 
 bool HexMeshConnectivityBuilder::computeElementsToFacesOfCellBlocks() 
 {
-  // Debugging - I cannot check LvArrays contents - I do not understand it
-  std::vector < std::vector < std::vector <localIndex> > > store;
-  store.resize( nbCellBlocks() );
-  for (unsigned int i = 0; i < nbCellBlocks(); ++i)
-  {
-    store[i].resize(
-      getCellBlock(i).getElemToNodes().size(0), std::vector<localIndex>( Hex::nbFacets, -1 )
-    );
-  }
-
   for(unsigned int curFace = 0; curFace < m_uniqueFaces.size(); ++curFace)
   {
     LocalFaceIndex id = m_uniqueFaces[curFace];
@@ -1027,8 +1017,7 @@ bool HexMeshConnectivityBuilder::computeElementsToFacesOfCellBlocks()
     auto blockCell = getBlockCellFromManagerCell(c);
     assert( blockCell.second == c); // DEBUG TO REMOVE
 
-    store[blockCell.first][blockCell.second][face] = curFace;
-    // getCellBlock( blockCell.first ).setElementToFaces( blockCell.second, face, curFace );
+    getCellBlock( blockCell.first ).setElementToFaces( blockCell.second, face, curFace );
 
     LocalFaceIndex idNeighbor = m_allFacesToNeighbors[id];
     if( idNeighbor != -1)
@@ -1036,30 +1025,17 @@ bool HexMeshConnectivityBuilder::computeElementsToFacesOfCellBlocks()
       LocalCellIndex cNeighbor = idNeighbor / Hex::nbFacets;
       HexFacetIndex faceNeighbor = idNeighbor % Hex::nbFacets;
       auto blockCellNeighbor = getBlockCellFromManagerCell(cNeighbor) ;
-     // getCellBlock( blockCellNeighbor.first ).setElementToFaces( blockCellNeighbor.second, faceNeighbor, curFace );
-     store[blockCellNeighbor.first][blockCellNeighbor.second][faceNeighbor] = curFace;
+      getCellBlock( blockCellNeighbor.first ).setElementToFaces( blockCellNeighbor.second, faceNeighbor, curFace );
     }
   }
-
-  // DEBUG
-  print( store[0]);
 
   return true;
 }
 
 
+// Allocation is managed by the CellBlock 
 bool HexMeshConnectivityBuilder::computeElementsToEdgesOfCellBlocks() 
 {
-  // Debugging - I cannot check LvArrays contents - I do not understand it
-  std::vector < std::vector < std::vector <localIndex> > > store;
-  store.resize( nbCellBlocks() );
-  for (unsigned int i = 0; i < nbCellBlocks(); ++i)
-  {
-    store[i].resize(
-      getCellBlock(i).getElemToNodes().size(0), std::vector<localIndex>( Hex::nbEdges, -1 )
-    );
-  }
-
   for (unsigned int edgeIndex = 0; edgeIndex < m_uniqueEdges.size(); ++edgeIndex)
   {
     unsigned int last = (edgeIndex+1 < m_uniqueEdges.size()) ? m_uniqueEdges[edgeIndex+1] : m_allEdges.size();
@@ -1069,13 +1045,10 @@ bool HexMeshConnectivityBuilder::computeElementsToEdgesOfCellBlocks()
       LocalCellIndex c = id / Hex::nbEdges;
       HexEdgeIndex e = id % Hex::nbEdges;
       auto blockCell = getBlockCellFromManagerCell(c);
-      //getCellBlock(blockCell.first).setElementToEdges(blockCell.second, e, edgeIndex);
-      store[blockCell.first][blockCell.second][e] = edgeIndex;
+      getCellBlock(blockCell.first).setElementToEdges(blockCell.second, e, edgeIndex);
     }
   }
 
-  // DEBUG
-  print( store[0]);
   return true;
 }
 
@@ -1132,55 +1105,54 @@ localIndex HexCellBlockManager::numFaces() const
   return m_theOneWhoDoesTheJob->numFaces();
 }
 
-array2d<localIndex> HexCellBlockManager::getEdgeToNodes()
+array2d<localIndex> HexCellBlockManager::getEdgeToNodes() const
 {
   array2d<localIndex> result;
   m_theOneWhoDoesTheJob->computeEdgesToNodes( result );
   return result;
 }
 
-ArrayOfSets<localIndex> HexCellBlockManager::getEdgeToFaces()
+ArrayOfSets<localIndex> HexCellBlockManager::getEdgeToFaces() const
 {
   ArrayOfSets<localIndex> result;
   m_theOneWhoDoesTheJob->computeEdgesToFaces( result );
   return result;
 }
-ArrayOfArrays<localIndex> HexCellBlockManager::getFaceToNodes()
+ArrayOfArrays<localIndex> HexCellBlockManager::getFaceToNodes() const
 {
   ArrayOfArrays<localIndex> result;
   m_theOneWhoDoesTheJob->computeFacesToNodes( result );
   return result;
 }
-ArrayOfArrays<localIndex> HexCellBlockManager::getFaceToEdges()
+ArrayOfArrays<localIndex> HexCellBlockManager::getFaceToEdges() const
 {
   ArrayOfArrays<localIndex>  result;
   m_theOneWhoDoesTheJob->computeFacesToEdges( result );
   return result;
 }
-array2d<localIndex> HexCellBlockManager::getFaceToElements()
+array2d<localIndex> HexCellBlockManager::getFaceToElements() const
 {
     array2d<localIndex> result;
   m_theOneWhoDoesTheJob->computeFacesToElements( result );
   return result;
 }
-ArrayOfSets<localIndex> HexCellBlockManager::getNodeToEdges()
+ArrayOfSets<localIndex> HexCellBlockManager::getNodeToEdges() const
 {
   ArrayOfSets<localIndex> result;
   m_theOneWhoDoesTheJob->computeNodesToEdges( result );
   return result;
 }
-ArrayOfSets<localIndex> HexCellBlockManager::getNodeToFaces()
+ArrayOfSets<localIndex> HexCellBlockManager::getNodeToFaces() const
 {
   ArrayOfSets<localIndex> result;
   m_theOneWhoDoesTheJob->computeNodesToFaces( result );
   return result;
 }
-ArrayOfArrays<localIndex> HexCellBlockManager::getNodeToElements()
+ArrayOfArrays<localIndex> HexCellBlockManager::getNodeToElements() const
 {
   ArrayOfArrays<localIndex> result;
   m_theOneWhoDoesTheJob->computeNodesToElements( result );
   return result;
-
 }
 
 

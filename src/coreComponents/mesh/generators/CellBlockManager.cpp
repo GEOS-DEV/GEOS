@@ -28,7 +28,7 @@ CellBlockManager::CellBlockManager( string const & name, Group * const parent ):
   // nothing
 }
 
-ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements()
+ArrayOfArrays< localIndex > CellBlockManager::getNodeToElements() const
 {
   // The function works in three steps.
   // First finds the number of elements attached to each node.
@@ -563,12 +563,12 @@ void CellBlockManager::buildMaps()
   fillElementToEdgesOfCellBlocks( m_faceToEdges, this->getCellBlocks() );
 }
 
-ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes()
+ArrayOfArrays< localIndex > CellBlockManager::getFaceToNodes() const
 {
   return m_faceToNodes;
 }
 
-ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces()
+ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces() const
 {
   localIndex const numFaces = m_faceToNodes.size();
   ArrayOfArrays< localIndex > nodeToFacesTemp( m_numNodes, maxFacesPerNode() );
@@ -615,7 +615,7 @@ ArrayOfSets< localIndex > CellBlockManager::getNodeToFaces()
   return result;
 }
 
-array2d< localIndex > CellBlockManager::getFaceToElements()
+array2d< localIndex > CellBlockManager::getFaceToElements() const
 {
   return m_faceToElements;
 }
@@ -625,22 +625,22 @@ localIndex CellBlockManager::numFaces() const
   return m_numFaces;
 }
 
-ArrayOfSets< geosx::localIndex > CellBlockManager::getEdgeToFaces()
+ArrayOfSets< geosx::localIndex > CellBlockManager::getEdgeToFaces() const
 {
   return m_edgeToFaces;
 }
 
-array2d< geosx::localIndex > CellBlockManager::getEdgeToNodes()
+array2d< geosx::localIndex > CellBlockManager::getEdgeToNodes() const
 {
   return m_edgeToNodes;
 }
 
-ArrayOfArrays< geosx::localIndex > CellBlockManager::getFaceToEdges()
+ArrayOfArrays< geosx::localIndex > CellBlockManager::getFaceToEdges() const
 {
   return m_faceToEdges;
 }
 
-ArrayOfSets< localIndex > CellBlockManager::getNodeToEdges()
+ArrayOfSets< localIndex > CellBlockManager::getNodeToEdges() const
 {
   return m_nodeToEdges;
 }
