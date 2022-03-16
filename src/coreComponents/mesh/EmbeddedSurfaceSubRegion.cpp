@@ -137,14 +137,14 @@ void EmbeddedSurfaceSubRegion::computeConnectivityIndex( localIndex const k,
   m_connectivityIndex[k] = m_elementArea[ k ] / averageDistance;
 }
 
-bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellIndex,
-                                                       localIndex const subRegionIndex,
-                                                       localIndex const regionIndex,
-                                                       NodeManager const & nodeManager,
-                                                       EmbeddedSurfaceNodeManager & embSurfNodeManager,
-                                                       EdgeManager const & edgeManager,
-                                                       FixedOneToManyRelation const & cellToEdges,
-                                                       BoundedPlane const * fracture )
+bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex,
+                                                      localIndex const regionIndex,
+                                                      localIndex const subRegionIndex,
+                                                      NodeManager const & nodeManager,
+                                                      EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                                                      EdgeManager const & edgeManager,
+                                                      FixedOneToManyRelation const & cellToEdges,
+                                                      BoundedPlane const * fracture )
 {
   /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlane
    *
