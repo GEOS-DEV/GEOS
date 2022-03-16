@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <FieldSpecifications>
     <FieldSpecification
       name="xconstraint"
@@ -27,5 +26,4 @@
       scale="0.0"
       setNames="{ zneg, zpos }"/>
   </FieldSpecifications>
-
 </Problem>
