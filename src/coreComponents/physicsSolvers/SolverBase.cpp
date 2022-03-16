@@ -607,10 +607,8 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
     // Configuration loop
     for( configurationLoopIter = 0; configurationLoopIter < maxConfigurationIter; ++configurationLoopIter )
     {
-      if( getLogLevel() >= 1 )
-      {
-        outputConfigurationStatistics( domain );
-      }
+
+      outputConfigurationStatistics( domain );
 
       // keep residual from previous iteration in case we need to do a line search
       real64 lastResidual = 1e99;

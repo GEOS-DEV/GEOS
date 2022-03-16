@@ -239,15 +239,18 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
 
 void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & domain ) const
 {
-  globalIndex numStick = 0;
-  globalIndex numSlip  = 0;
-  globalIndex numOpen  = 0;
+  if( getLogLevel() >=1 )
+  {
+    globalIndex numStick = 0;
+    globalIndex numSlip  = 0;
+    globalIndex numOpen  = 0;
 
-  computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
+    computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
 
-  GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
-                               " stick: {:12} | slip:  {:12} | open:  {:12}",
-                               numStick, numSlip, numOpen ) );
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
+                                 " stick: {:12} | slip:  {:12} | open:  {:12}",
+                                 numStick, numSlip, numOpen ) );
+  }
 }
 
 void ContactSolverBase::applyBoundaryConditions( real64 const time,
