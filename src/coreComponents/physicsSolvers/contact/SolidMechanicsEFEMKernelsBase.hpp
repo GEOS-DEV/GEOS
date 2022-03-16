@@ -20,7 +20,7 @@
 #ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 #define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
-#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
 
 namespace geosx

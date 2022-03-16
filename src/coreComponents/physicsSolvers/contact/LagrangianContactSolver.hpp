@@ -152,7 +152,7 @@ private:
   void computeFaceDisplacementJump( DomainPartition & domain );
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
-                                
+
 public:
 
   bool setSimplestConfigurationState( DomainPartition & domain ) const override final;

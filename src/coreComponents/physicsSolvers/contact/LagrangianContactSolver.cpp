@@ -83,41 +83,41 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< FaceElementSubRegion >( regionNames, [&] ( localIndex const,
-                                                                                    SurfaceElementSubRegion & subRegion )
+                                                                                 SurfaceElementSubRegion & subRegion )
     {
-        subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the rotation matrices on the fracture." ).
-          reference().resizeDimension< 1, 2 >( 3, 3 );
+      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::rotationMatrixString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the rotation matrices on the fracture." ).
+        reference().resizeDimension< 1, 2 >( 3, 3 );
 
-        subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() ).
-          setApplyDefaultValue( 0.0 ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the traction increments on the fracture." ).
-          reference().resizeDimension< 1 >( 3 );
+      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaTractionString() ).
+        setApplyDefaultValue( 0.0 ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the traction increments on the fracture." ).
+        reference().resizeDimension< 1 >( 3 );
 
-        subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the normal traction tolerance." );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the normal traction tolerance." );
 
-        subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the normal displacement tolerance." );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::normalDisplacementToleranceString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the normal displacement tolerance." );
 
-        subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::slidingToleranceString() ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName()).
-          setDescription( "An array that holds the sliding tolerance." );
+      subRegion.registerWrapper< array1d< real64 > >( viewKeyStruct::slidingToleranceString() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName()).
+        setDescription( "An array that holds the sliding tolerance." );
 
-        // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
-        // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-        subRegion.registerWrapper< real64_array >( "pressure" ).
-          setPlotLevel( PlotLevel::NOPLOT ).
-          setRegisteringObjects( this->getName());
+      // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
+      // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
+      subRegion.registerWrapper< real64_array >( "pressure" ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName());
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();
