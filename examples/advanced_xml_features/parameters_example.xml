@@ -89,8 +89,7 @@ XML Units:
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        />
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

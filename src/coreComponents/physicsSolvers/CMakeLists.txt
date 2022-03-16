@@ -17,29 +17,29 @@ set( physicsSolvers_headers
      fluidFlow/FlowSolverBase.hpp
      fluidFlow/FlowSolverBaseExtrinsicData.hpp
      fluidFlow/FluxKernelsHelper.hpp
-     fluidFlow/HybridFVMHelperKernels.hpp          
+     fluidFlow/HybridFVMHelperKernels.hpp
      fluidFlow/proppantTransport/ProppantTransport.hpp
-     fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp     
+     fluidFlow/proppantTransport/ProppantTransportExtrinsicData.hpp
      fluidFlow/proppantTransport/ProppantTransportKernels.hpp
      fluidFlow/SinglePhaseBase.hpp
-     fluidFlow/SinglePhaseBaseExtrinsicData.hpp     
+     fluidFlow/SinglePhaseBaseExtrinsicData.hpp
      fluidFlow/SinglePhaseBaseKernels.hpp
      fluidFlow/SinglePhaseFVM.hpp
-     fluidFlow/SinglePhaseFVMKernels.hpp          
+     fluidFlow/SinglePhaseFVMKernels.hpp
      fluidFlow/SinglePhaseHybridFVM.hpp
-     fluidFlow/SinglePhaseHybridFVMKernels.hpp     
+     fluidFlow/SinglePhaseHybridFVMKernels.hpp
      fluidFlow/SinglePhaseProppantBase.hpp
      fluidFlow/SinglePhaseProppantBaseKernels.hpp
      fluidFlow/StencilAccessors.hpp
      fluidFlow/wells/CompositionalMultiphaseWell.hpp
-     fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp     
+     fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp
      fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp
      fluidFlow/wells/SinglePhaseWell.hpp
-     fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp     
-     fluidFlow/wells/SinglePhaseWellKernels.hpp     
+     fluidFlow/wells/SinglePhaseWellExtrinsicData.hpp
+     fluidFlow/wells/SinglePhaseWellKernels.hpp
      fluidFlow/wells/WellControls.hpp
      fluidFlow/wells/WellSolverBase.hpp
-     fluidFlow/wells/WellSolverBaseExtrinsicData.hpp     
+     fluidFlow/wells/WellSolverBaseExtrinsicData.hpp
      multiphysics/CompositionalMultiphaseReservoir.hpp
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
@@ -60,7 +60,9 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
+     solidMechanics/SolidMechanicsEFEMKernelsBase.hpp
      solidMechanics/SolidMechanicsEFEMKernels.hpp
+     solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp
      solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
      solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
@@ -97,10 +99,10 @@ set( physicsSolvers_sources
      fluidFlow/proppantTransport/ProppantTransportKernels.cpp
      fluidFlow/SinglePhaseBase.cpp
      fluidFlow/SinglePhaseFVM.cpp
-     fluidFlow/SinglePhaseHybridFVM.cpp     
-     fluidFlow/SinglePhaseProppantBase.cpp     
+     fluidFlow/SinglePhaseHybridFVM.cpp
+     fluidFlow/SinglePhaseProppantBase.cpp
      fluidFlow/wells/CompositionalMultiphaseWell.cpp
-     fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp     
+     fluidFlow/wells/CompositionalMultiphaseWellKernels.cpp
      fluidFlow/wells/SinglePhaseWell.cpp
      fluidFlow/wells/SinglePhaseWellKernels.cpp
      fluidFlow/wells/WellControls.cpp
@@ -149,3 +151,7 @@ if( externalComponentDeps )
 endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
+
+if( ENABLE_PYGEOSX )
+  add_subdirectory( python )
+endif()
