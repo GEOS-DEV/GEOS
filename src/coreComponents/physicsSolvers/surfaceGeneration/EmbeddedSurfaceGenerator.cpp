@@ -175,8 +175,8 @@ void EmbeddedSurfaceGenerator::initializePostSubGroups()
           if( isPositive * isNegative == 1 )
           {
             bool added = embeddedSurfaceSubRegion.addNewEmbeddedSurface( cellIndex,
-                                                                         esr,
                                                                          er,
+                                                                         esr,
                                                                          nodeManager,
                                                                          embSurfNodeManager,
                                                                          edgeManager,
