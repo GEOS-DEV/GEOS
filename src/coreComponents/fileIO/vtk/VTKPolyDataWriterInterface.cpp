@@ -956,9 +956,9 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   NodeManager const & nodeManager = meshLevel.getNodeManager();
   EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
   std::cout << MeshLevel::viewStructKeys::baseDiscretizationString() << std::endl;
-  writeCellElementRegions( time, elemManager, nodeManager );
-  writeWellElementRegions( time, elemManager, nodeManager );
-  writeSurfaceElementRegions( time, elemManager, nodeManager, embSurfNodeManager );
+  writeCellElementRegions( time, cycle, elemManager, nodeManager );
+  writeWellElementRegions( time, cycle, elemManager, nodeManager );
+  writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );
 
   string const vtmName = stepSubFolder + ".vtm";
   VTKVTMWriter vtmWriter( joinPath( m_outputDir, vtmName ) );

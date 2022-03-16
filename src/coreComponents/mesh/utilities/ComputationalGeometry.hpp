@@ -203,13 +203,17 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   LvArray::tensorOps::fill< 3 >( normal, 0 );
 
   GEOSX_ERROR_IF_LT( pointsIndices.size(), 2 );
-  int order = sqrt(pointsIndices.size()) -1; 
-  for( localIndex a=0; a<2; ++a )
+  //int order = sqrt(pointsIndices.size()) -1; 
+  //for( localIndex a=0; a<2; ++a )
+  for( localIndex a=0; a<(pointsIndices.size()-2); ++a )
   {
     real64 v1[ 3 ], v2[ 3 ], vc[ 3 ];
 
-    LvArray::tensorOps::copy< 3 >( v1, points[ pointsIndices[  a*pow(order,2)+order  ] ] );
-    LvArray::tensorOps::copy< 3 >( v2, points[ pointsIndices[ pow(order,2)+(a+1)*order ] ] );
+    //LvArray::tensorOps::copy< 3 >( v1, points[ pointsIndices[  a*pow(order,2)+order  ] ] );
+    //LvArray::tensorOps::copy< 3 >( v2, points[ pointsIndices[ pow(order,2)+(a+1)*order ] ] );
+    LvArray::tensorOps::copy< 3 >( v1, points[ pointsIndices[ a + 1 ] ] );
+    LvArray::tensorOps::copy< 3 >( v2, points[ pointsIndices[ a + 2 ] ] );
+    
     LvArray::tensorOps::copy< 3 >( vc, points[ pointsIndices[ 0 ] ] );
     LvArray::tensorOps::add< 3 >( vc, v1 );
     LvArray::tensorOps::add< 3 >( vc, v2 );
@@ -219,21 +223,20 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
 
     real64 triangleNormal[ 3 ];
     LvArray::tensorOps::crossProduct( triangleNormal, v1, v2 );
- 
     real64 const triangleArea = LvArray::tensorOps::l2Norm< 3 >( triangleNormal );
     //Quick fix for negative normals
-    if (triangleNormal[0]<0)
-    {
-      triangleNormal[0] = -triangleNormal[0];
-    }
-    if (triangleNormal[1]<0)
-    {
-      triangleNormal[1] = -triangleNormal[1];
-    }
-    if (triangleNormal[2]<0)
-    {
-      triangleNormal[2] = -triangleNormal[2];
-    }
+//    if (triangleNormal[0]<0)
+//    {
+//      triangleNormal[0] = -triangleNormal[0];
+//    }
+//    if (triangleNormal[1]<0)
+//    {
+//      triangleNormal[1] = -triangleNormal[1];
+//    }
+//    if (triangleNormal[2]<0)
+//    {
+//      triangleNormal[2] = -triangleNormal[2];
+//    }
     
 
     LvArray::tensorOps::add< 3 >( normal, triangleNormal );
@@ -243,7 +246,6 @@ real64 centroid_3DPolygon( arraySlice1d< localIndex const > const pointsIndices,
   }
   if( area > areaTolerance )
   {
-    
     LvArray::tensorOps::scale< 3 >( center, 1.0 / ( area * 3.0 ) );
     LvArray::tensorOps::normalize< 3 >( normal );
     area *= 0.5;
