@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <FieldSpecifications>
     <FieldSpecification
       name="v0"
@@ -20,5 +19,4 @@
       coordinateFiles="{ tables/time.txt }"
       voxelFile="tables/velocity.txt"/>
   </Functions>
-
 </Problem>

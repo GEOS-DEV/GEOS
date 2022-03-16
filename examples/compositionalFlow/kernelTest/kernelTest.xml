@@ -73,8 +73,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        />
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 

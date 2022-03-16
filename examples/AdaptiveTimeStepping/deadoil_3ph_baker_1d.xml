@@ -48,13 +48,11 @@
   <Events
     maxTime="1e3"
     logLevel="1">
-
     <PeriodicEvent
       name="solverApplications1"
       endTime="2e8"
       maxEventDt="1e8"
       target="/Solvers/compflow"/>
-
   </Events>
 
   <NumericalMethods>
@@ -212,5 +210,4 @@
       component="2"
       scale="0.001"/>
   </FieldSpecifications>
-
 </Problem>
