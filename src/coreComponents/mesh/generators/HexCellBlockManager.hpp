@@ -36,11 +36,10 @@ class MeshConnectivityBuilder;
  * The hexahedral mesh may be structured or unstructured.
  * 
  * TODO Implement for other type of cells the MeshConnectivityBuilder
- * This class should not be modified 
+ * It should not be necessary to modify this class.
  * 
- * POTENTIAL ISSUE Where are the Element indices valid in the maps NodeToElements
+ * POTENTIAL ISSUE: Where are the Element indices valid in the maps NodeToElements
  * and FaceToElements? In the CellBlock? 
- * 
  */
 class HexCellBlockManager : public CellBlockManagerBase
 {
@@ -62,7 +61,8 @@ public:
    * @details Does not build the maps.
    * Computations are done lazily when calling getters.
    * 
-   * MUST be called before any call to the getters
+   * @warning MUST be called before any other access to the number of edges / faces
+   * or any of the mappings
    */
   void buildMaps() override;
 
