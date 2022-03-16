@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
 <Problem>
-
   <Events>
     <PeriodicEvent
       name="outputs"
@@ -13,5 +12,4 @@
       name="siloOutput"
       childDirectory="sub"/>
   </Outputs>
-
 </Problem>
