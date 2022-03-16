@@ -17,9 +17,8 @@
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
-        solverType="gmres"
-        preconditionerType="amg"
-        amgAggresiveCoarseningLevels="1"
+        directParallel="0"
+        solverType="direct"
         logLevel="0"/>
     </SolidMechanicsEmbeddedFractures>
 
@@ -33,7 +32,6 @@
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="1"
@@ -57,7 +55,7 @@
     <SurfaceElementRegion
       name="Fracture"
       subRegionType="embeddedElement"
-      materialList="{ rock }"
+      materialList="{ fractureContact }"
       defaultAperture="1e-3"/>
   </ElementRegions>
 
@@ -116,6 +114,14 @@
       setNames="{ zneg }"/>
 
     <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      scale="0.0"
+      setNames="{ zneg, zpos }"/>
+
+    <FieldSpecification
       name="Traction"
       setNames="{ all }"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
@@ -130,13 +136,13 @@
       coordinates="{ -1.0e-3, 0.0 }"
       values="{ 1.0e-6, 1.0e-4 }"/>
   </Functions>
-      
+  
   <Outputs>
     <VTK
       name="vtkOutput"
       plotFileRoot="SneddonRotated"
       plotLevel="3"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <Restart
       name="restartOutput"/>

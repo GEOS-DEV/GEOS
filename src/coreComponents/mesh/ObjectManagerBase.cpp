@@ -538,12 +538,13 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
                                                      arrayView1d< localIndex const > const & packList,
                                                      integer const recursive ) const
 {
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
   localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
   // this doesn't link without the string()...no idea why.
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
@@ -599,17 +600,18 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
                                                 integer const recursive )
 {
   GEOSX_MARK_FUNCTION;
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match" );
+  string msg = "ObjectManagerBase::Unpack(): group names do not match as they are groupName = " + groupName + " and this->getName= " + this->getName();
+  GEOSX_ERROR_IF( groupName != this->getName(), msg );
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
   GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::Unpack(): label incorrect" );
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 

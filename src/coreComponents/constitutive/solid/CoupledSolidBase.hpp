@@ -128,12 +128,6 @@ public:
   arrayView2d< real64 const > const  getDinternalEnergy_dTemperature() const
   { return getSolidInternalEnergyModel().getDinternalEnergy_dTemperature(); }
 
-  /**
-   * @brief get the solid density
-   * return a constant arrayView2d to internalEnergy
-   */
-  arrayView2d< real64 const > const  getDensity() const
-  { return getBaseSolidModel().getDensity(); }
 
   /**
    * @brief initialize the constitutive models fields.
@@ -176,13 +170,6 @@ protected:
   string m_solidInternalEnergyModelName;
 
 private:
-
-  /**
-   * @brief get a SolidBase constant reference to the solid model
-   * return a constant SolidBase reference to the solid model
-   */
-  SolidBase const & getBaseSolidModel() const
-  { return this->getParent().template getGroup< SolidBase >( m_solidModelName ); }
 
   /**
    * @brief get a PorosityBase constant reference to the porosity model
