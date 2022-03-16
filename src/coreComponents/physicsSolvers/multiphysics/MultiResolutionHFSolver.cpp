@@ -54,6 +54,16 @@ MultiResolutionHFSolver::MultiResolutionHFSolver( const string & name,
   m_surfaceGenerator( nullptr ),
   m_maxNumResolves( 10 )
 {
+  registerWrapper( viewKeyStruct::globalSolverNameString(), &m_globalSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription(
+    "Name of the EFEM (SolidMechanicsEmbeddedFractures) solver to be used as the global solver in the MultiResolution scheme" );
+
+  registerWrapper( viewKeyStruct::localSolverNameString(), &m_localSolverName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription(
+    "Name of the Phase-Field (PhaseFieldFracture) solver to be used as local solver in the MultiResolution scheme" );
+
   registerWrapper( viewKeyStruct::surfaceGeneratorNameString(), &m_surfaceGeneratorName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the surface generator to use in the multiresolutionHF solver" );
@@ -387,7 +397,7 @@ void MultiResolutionHFSolver::setupSystem( DomainPartition & domain,
   //setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
 }
 
-
+//Andre - 03/16 - Does this function ever gets called?
 void MultiResolutionHFSolver::assembleSystem( real64 const time,
                                           real64 const dt,
                                           DomainPartition & domain,
@@ -412,6 +422,7 @@ void MultiResolutionHFSolver::assembleSystem( real64 const time,
                                  localRhs );
 }
 
+//Andre - 03/16 - Does this function ever gets called?
 void MultiResolutionHFSolver::applyBoundaryConditions( real64 const time,
                                                    real64 const dt,
                                                    DomainPartition & domain,
@@ -436,6 +447,7 @@ void MultiResolutionHFSolver::applyBoundaryConditions( real64 const time,
                                          localRhs );
 }
 
+//Andre - 03/16 - Does this function need to be implemented? It is just calling the base class function, which should be done automatically
 void
 MultiResolutionHFSolver::
   applySystemSolution( DofManager const & dofManager,

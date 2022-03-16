@@ -123,6 +123,10 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
+    constexpr static char const * globalSolverNameString() { return "globalSolverName"; }
+
+    constexpr static char const * localSolverNameString() { return "localSolverName"; }
+        
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * surfaceGeneratorNameString() { return "surfaceGeneratorName"; }
