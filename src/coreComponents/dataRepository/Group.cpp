@@ -63,10 +63,11 @@ Group::CatalogInterface::CatalogType & Group::getCatalog()
   return catalog;
 }
 
-WrapperBase & Group::registerWrapper( string const & name,
-                                      std::unique_ptr< WrapperBase > wrapper )
+WrapperBase & Group::registerWrapper( std::unique_ptr< WrapperBase > wrapper )
 {
-  return *m_wrappers.insert( name, wrapper.release(), true );
+  // Extract `wrapperName` first to prevent from UB call order in the `insert` call.
+  string const wrapperName = wrapper->getName();
+  return *m_wrappers.insert( wrapperName, wrapper.release(), true );
 }
 
 void Group::deregisterWrapper( string const & name )
