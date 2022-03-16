@@ -108,6 +108,7 @@ public:
   virtual ~Q3_Hexahedron_Lagrange_GaussLobatto() override
   {}
 
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
@@ -125,7 +126,7 @@ public:
     return numQuadraturePoints;
   }
 
-
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
