@@ -279,7 +279,7 @@ protected:
   ParticleType m_particleType;
 
   /// R-vectors
-  array3d< real64 > m_RVectors;
+  array3d< real64 > m_particleRVectors;
 };
 
 

@@ -69,6 +69,10 @@ public:
 
   virtual void setParticleVolume(array1d< real64 > const particleVolume) = 0;
 
+  virtual array3d< real64 > getParticleRVectors() const = 0;
+
+  virtual void setParticleRVectors(array3d< real64 > const particleRVectors) = 0;
+
   virtual bool hasRVectors() const = 0;
 
   /**
