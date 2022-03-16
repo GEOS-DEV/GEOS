@@ -193,6 +193,22 @@ public:
                            real64 const (&X)[numNodes][3],
                            real64 ( &gradN )[numNodes][3] );
 
+  /**
+   * @brief Calculate the shape functions derivatives wrt the physical
+   *   coordinates.
+   * @param q Index of the quadrature point.
+   * @param X Array containing the coordinates of the support points.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param gradN Array to contain the shape function derivatives for all
+   *   support points at the coordinates of the quadrature point @p q.
+   * @return The determinant of the parent/physical transformation matrix.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static real64 calcGradN( localIndex const q,
+                           real64 const (&X)[numNodes][3],
+                           StackVariables const & stack,
+                           real64 ( &gradN )[numNodes][3] );
 
   /**
    * @brief Calculate the integration weights for a quadrature point.
@@ -578,6 +594,17 @@ Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const  q,
 
   //return detJ * weight[qa] * weight[qb] * weight[qc];
   return detJ * weight;
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+real64 Q3_Hexahedron_Lagrange_GaussLobatto::
+  calcGradN( localIndex const q,
+             real64 const (&X)[numNodes][3],
+             StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+             real64 ( & gradN )[numNodes][3] )
+{
+  return calcGradN( q, X, gradN );
 }
 
 //*************************************************************************************************
