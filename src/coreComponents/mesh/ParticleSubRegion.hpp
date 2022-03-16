@@ -80,6 +80,173 @@ public:
 
   ///@}
 
+  void getAllWeights(int const p,
+                     LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                     std::vector<real64> const & xMin,
+                     std::vector<real64> const & hx,
+                     std::vector<std::vector<std::vector<int>>> const & ijkMap,
+                     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
+                     std::vector<int> & nodeIDs,
+                     std::vector<real64> & weights,
+                     std::vector< std::vector<real64> > & gradWeights)
+  {
+    // Sign mapping for CPDI - needs to be defined out here
+    int signs[8][3] = { { 1,  1,  1},
+                        { 1,  1, -1},
+                        { 1, -1,  1},
+                        { 1, -1, -1},
+                        {-1,  1,  1},
+                        {-1,  1, -1},
+                        {-1, -1,  1},
+                        {-1, -1, -1} };
+
+    // get cell IDs
+    std::vector<std::vector<int>> cellID;
+    switch( m_particleType )
+    {
+      case ParticleType::SinglePoint: case ParticleType::CPDI:
+      {
+        cellID.resize(1); // Single point maps to only 1 cell
+        cellID[0].resize(3);
+        for(int i=0; i<3; i++)
+        {
+          cellID[0][i] = std::floor((p_x[i] - xMin[i])/hx[i]);
+        }
+        break;
+      }
+//      case ParticleType::CPDI:
+//      {
+//        cellID.resize(8); // CPDI can map to up to 8 cells
+//        for(int cell=0; cell<8; cell++)
+//        {
+//          cellID[cell].resize(3);
+//          int sign[3] = signs[cell];
+//          for(int i=0; i<3; i++)
+//          {
+//            real64 CPDIcorner = p_x[i] + sign[0]*m_RVectors[p][0][i] + sign[1]*m_RVectors[p][1][i] + sign[2]*m_RVectors[p][2][i];
+//            cellID[cell][i] = std::floor((CPDIcorner - xMin[i])/hx[i]);
+//          }
+//        }
+//        break;
+//      }
+      default:
+      {
+        GEOSX_ERROR( "Invalid particle type: " << m_particleType );
+      }
+    }
+
+    // get node IDs
+    for(size_t cell=0; cell<cellID.size(); cell++)
+    {
+      for(int i=0; i<2; i++)
+      {
+        for(int j=0; j<2; j++)
+        {
+          for(int k=0; k<2; k++)
+          {
+            nodeIDs.push_back(ijkMap[cellID[cell][0]+i][cellID[cell][1]+j][cellID[cell][2]+k]);
+          }
+        }
+      }
+    }
+
+    // get weights and grad weights
+    for(size_t cell=0; cell<cellID.size(); cell++)
+    {
+      int corner = ijkMap[cellID[cell][0]][cellID[cell][1]][cellID[cell][2]];
+      auto corner_x = g_X[corner];
+
+      real64 x = p_x[0], y = p_x[1], z = p_x[2]; // need to initialize these so the compiler doesn't bitch
+
+      switch( m_particleType )
+      {
+        case ParticleType::SinglePoint: case ParticleType::CPDI:
+        {
+          x = p_x[0];
+          y = p_x[1];
+          z = p_x[2];
+          break;
+        }
+//        case ParticleType::CPDI:
+//        {
+//          int sign[3] = signs[cell];
+//          x = p_x[0] + sign[0]*m_RVectors[p][0][0] + sign[1]*m_RVectors[p][1][0] + sign[2]*m_RVectors[p][2][0];
+//          y = p_x[1] + sign[0]*m_RVectors[p][0][1] + sign[1]*m_RVectors[p][1][1] + sign[2]*m_RVectors[p][2][1];
+//          z = p_x[2] + sign[0]*m_RVectors[p][0][2] + sign[1]*m_RVectors[p][1][2] + sign[2]*m_RVectors[p][2][2];
+//          break;
+//        }
+        default:
+        {
+          GEOSX_ERROR( "Invalid particle type: " << m_particleType );
+        }
+      }
+
+      real64 xRel = (x - corner_x[0])/hx[0];
+      real64 yRel = (y - corner_x[1])/hx[1];
+      real64 zRel = (z - corner_x[2])/hx[2];
+      for(int i=0; i<2; i++)
+      {
+        real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
+        real64 dxWeight = i/hx[0] - (1-i)/hx[0];
+        for(int j=0; j<2; j++)
+        {
+          real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
+          real64 dyWeight = j/hx[1] - (1-j)/hx[1];
+          for(int k=0; k<2; k++)
+          {
+            real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
+            real64 dzWeight = k/hx[2] - (1-k)/hx[2];
+            weights.push_back(xWeight*yWeight*zWeight);
+            gradWeights[0].push_back(dxWeight*yWeight*zWeight);
+            gradWeights[1].push_back(xWeight*dyWeight*zWeight);
+            gradWeights[2].push_back(xWeight*yWeight*dzWeight);
+          }
+        }
+      }
+    }
+
+  }
+//  {
+//    LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
+//
+//    real64 Xlocal[10][3];
+//
+//    for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+//    {
+//      LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+//      LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ m_toNodesRelation( k, a ) ] );
+//    }
+//    LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
+//
+//    switch( m_elementType )
+//    {
+//      case ElementType::Hexahedron:
+//      {
+//        m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
+//        break;
+//      }
+//      case ElementType::Tetrahedron:
+//      {
+//        m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
+//        break;
+//      }
+//      case ElementType::Prism:
+//      {
+//        m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
+//        break;
+//      }
+//      case ElementType::Pyramid:
+//      {
+//        m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
+//        break;
+//      }
+//      default:
+//      {
+//        GEOSX_ERROR( "Volume calculation not supported for element type " << m_elementType << " and for CellElementSubRegion " << getName() );
+//      }
+//    }
+//  }
+
   /**
    * @name Overriding packing / Unpacking functions
    */
@@ -215,6 +382,7 @@ private:
   template< bool DOPACK >
   localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList ) const;
+
 
 };
 

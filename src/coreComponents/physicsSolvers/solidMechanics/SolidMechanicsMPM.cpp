@@ -561,18 +561,19 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
       real64 const & p_Vol = particleVolume[p];
       auto const & p_stress = particleStress[p][0];
 
-      // Get particle cell ID
-      std::vector<int> cellID(3);
-      for(int i=0; i<3; i++)
-      {
-        cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
-      }
-
-      // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
-      // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
-      std::vector<int> nodeIDs = getNodes(cellID);
-      std::vector<real64> weights = getWeights(p_x, cellID, g_X); // returns shape function value for each node
-      std::vector< std::vector<real64> > gradWeights = getGradWeights(p_x, cellID, g_X); // 1st index = direction, 2nd index = node
+      std::vector<int> nodeIDs; // = subRegion.getNodes(cellID, m_ijkMap);
+      std::vector<real64> weights; // = getWeights(p_x, cellID, g_X); // returns shape function value for each node
+      std::vector< std::vector<real64> > gradWeights; // = getGradWeights(p_x, cellID, g_X); // 1st index = direction, 2nd index = node
+      gradWeights.resize(3);
+      subRegion.getAllWeights(p,
+                              p_x,
+                              m_xMin,
+                              m_hx,
+                              m_ijkMap,
+                              g_X,
+                              nodeIDs,      // output
+                              weights,      // output
+                              gradWeights); // output
 
       // Update grid values
       for(size_t i=0; i<nodeIDs.size(); i++)
@@ -604,6 +605,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
         g_A[i][j] /= g_M[i]; // g_A holds the nodal forces before this update, divide by mass to obtain acceleration
         g_V[i][j] /= g_M[i]; // g_V holds the nodal momenta before this update, divide by mass to obtain velocity
         g_V[i][j] += g_A[i][j]*dt;
+      }
+    }
+    else
+    {
+      for(int j=0; j<3; j++)
+      {
+        g_A[i][j] = 0.0;
+        g_V[i][j] = 0.0;
       }
     }
   }
@@ -640,23 +649,30 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
       real64 sigTemp[3][3] = { {0} }; // Temporary stress-like object
       real64 detF = 0.0; // Material Jacobian
 
-
-      // Get particle cell ID - TODO: can this be a member of subRegion so we don't have to recalculate it?
-      std::vector<int> cellID(3);
+      // Store the old particle F
       for(int i=0; i<3; i++)
       {
-        cellID[i] = std::floor((p_x[i] - m_xMin[i])/m_hx[i]);
         for(int j=0; j<3; j++)
         {
-          p_FOld[i][j] = p_F[i][j]; // Abusing this loop a bit to store the old particle F
+          p_FOld[i][j] = p_F[i][j];
         }
       }
 
       // It might be better to define the particle to grid interpolation functions as subregion methods. They would then be automatically specialized based on the particle type.
       // Would probably have to make a specialized MpmSubRegion class derived from ParticleSubRegion
-      std::vector<int> nodeIDs = getNodes(cellID);
-      std::vector<real64> weights = getWeights(p_x, cellID, g_X);
-      std::vector< std::vector<real64> > gradWeights = getGradWeights(p_x, cellID, g_X);
+      std::vector<int> nodeIDs; // = subRegion.getNodes(cellID, m_ijkMap);
+      std::vector<real64> weights; // = getWeights(p_x, cellID, g_X);
+      std::vector< std::vector<real64> > gradWeights; // = getGradWeights(p_x, cellID, g_X);
+      gradWeights.resize(3);
+      subRegion.getAllWeights(p,
+                              p_x,
+                              m_xMin,
+                              m_hx,
+                              m_ijkMap,
+                              g_X,
+                              nodeIDs,      // output
+                              weights,      // output
+                              gradWeights); // output
 
       // Particle-to-grid map
       for(size_t i=0; i<nodeIDs.size(); i++)
