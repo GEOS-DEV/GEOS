@@ -131,9 +131,11 @@ public:
         elementSubRegion.template getConstitutiveModel< constitutive::MultiFluidBase >( fluidModelName );
 
       m_fluidPhaseDensity = fluid.phaseDensity();
+      m_fluidPhaseDensityOld = fluid.phaseDensityOld();
       m_dFluidPhaseDensity = fluid.dPhaseDensity();
 
       m_fluidPhaseCompFrac = fluid.phaseCompFraction();
+      m_fluidPhaseCompFracOld = fluid.phaseCompFractionOld();
       m_dFluidPhaseCompFrac = fluid.dPhaseCompFraction();
 
       m_fluidPhaseMassDensity = fluid.phaseMassDensity();
@@ -149,8 +151,6 @@ public:
       m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
       m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< deltaPressure >();
 
-      m_fluidPhaseDensityOld = elementSubRegion.template getExtrinsicData< phaseDensityOld >();
-      m_fluidPhaseCompFracOld = elementSubRegion.template getExtrinsicData< phaseComponentFractionOld >();
       m_fluidPhaseSaturationOld = elementSubRegion.template getExtrinsicData< phaseVolumeFractionOld >();
 
       m_fluidPhaseSaturation = elementSubRegion.template getExtrinsicData< phaseVolumeFraction >();
@@ -377,7 +377,7 @@ public:
     for( localIndex ip = 0; ip < NP; ++ip )
     {
       real64 const phaseAmountNew = porosityNew * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip );
-      real64 const phaseAmountOld = porosityOld * m_fluidPhaseSaturationOld( k, ip ) * m_fluidPhaseDensityOld( k, ip );
+      real64 const phaseAmountOld = porosityOld * m_fluidPhaseSaturationOld( k, ip ) * m_fluidPhaseDensityOld( k, q, ip );
 
       real64 const dPhaseAmount_dP = dPorosity_dPressure * m_fluidPhaseSaturation( k, ip ) * m_fluidPhaseDensity( k, q, ip )
                                      + porosityNew * (m_dFluidPhaseSaturation_dPressure( k, ip ) * m_fluidPhaseDensity( k, q, ip )
@@ -403,7 +403,7 @@ public:
       for( localIndex ic = 0; ic < NC; ++ic )
       {
         real64 const phaseCompAmountNew = phaseAmountNew * m_fluidPhaseCompFrac( k, q, ip, ic );
-        real64 const phaseCompAmountOld = phaseAmountOld * m_fluidPhaseCompFracOld( k, ip, ic );
+        real64 const phaseCompAmountOld = phaseAmountOld * m_fluidPhaseCompFracOld( k, q, ip, ic );
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * m_fluidPhaseCompFrac( k, q, ip, ic )
                                            + phaseAmountNew * m_dFluidPhaseCompFrac( k, q, ip, ic, Deriv::dP );
@@ -557,11 +557,11 @@ protected:
   arrayView2d< real64 const > m_solidDensity;
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensity;
-  arrayView2d< real64 const, compflow::USD_PHASE > m_fluidPhaseDensityOld;
+  arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseDensityOld;
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_DC > m_dFluidPhaseDensity;
 
   arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFrac;
-  arrayView3d< real64 const, compflow::USD_PHASE_COMP > m_fluidPhaseCompFracOld;
+  arrayView4d< real64 const, constitutive::multifluid::USD_PHASE_COMP > m_fluidPhaseCompFracOld;
   arrayView5d< real64 const, constitutive::multifluid::USD_PHASE_COMP_DC > m_dFluidPhaseCompFrac;
 
   arrayView3d< real64 const, constitutive::multifluid::USD_PHASE > m_fluidPhaseMassDensity;
