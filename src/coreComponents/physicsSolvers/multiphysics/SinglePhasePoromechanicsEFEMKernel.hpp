@@ -23,6 +23,7 @@
 #include "SinglePhasePoromechanicsKernel.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
 
 namespace geosx
@@ -111,7 +112,7 @@ public:
     m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.totalDisplacement()),
     m_deltaDisp( nodeManager.incrementalDisplacement()),
-    m_w( embeddedSurfSubRegion.displacementJump() ),
+    m_w( embeddedSurfSubRegion.getExtrinsicData<extrinsicMeshData::contact::dispJump>() ),
     m_matrixPresDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_wDofNumber( jumpDofNumber ),
@@ -123,8 +124,8 @@ public:
     m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
-    m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
-    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
+    m_tractionVec( embeddedSurfSubRegion.getExtrinsicData<extrinsicMeshData::contact::traction>() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.getExtrinsicData<extrinsicMeshData::contact::dTraction_dJump>() ),
     m_dTraction_dPressure( embeddedSurfSubRegion.dTraction_dPressure() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),

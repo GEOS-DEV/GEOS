@@ -114,26 +114,24 @@ public:
                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                               arrayView1d< real64 > const & localRhs );
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  {
-    constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
-
-    constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
-
-    constexpr static char const * deltaTractionString() { return "deltaTraction"; }
-
-    constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
-    constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
-    constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
-    constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
-
-    static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
-
-  };
-
   string const & getContactRelationName() const { return m_contactRelationName; }
+
+   bool setSimplestConfigurationState( DomainPartition & domain ) const override final;
+
+  bool updateConfiguration( DomainPartition & domain ) override final;
+
+  bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
+
+  void computeRotationMatrices( DomainPartition & domain ) const;
+
+  void computeTolerances( DomainPartition & domain ) const;
+
+  void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
+                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
+                             localIndex const kf0,
+                             array1d< real64 > & nodalArea ) const;
+
+  real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
 
 protected:
   virtual void postProcessInput() override final;
@@ -153,24 +151,23 @@ private:
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-public:
 
-  bool setSimplestConfigurationState( DomainPartition & domain ) const override final;
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+    constexpr static char const * stabilizationNameString() { return "stabilizationName"; }
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+    constexpr static char const * activeSetMaxIterString() { return "activeSetMaxIter"; } // TODO: remove
 
-  bool updateConfiguration( DomainPartition & domain ) override final;
+    constexpr static char const * rotationMatrixString() { return "rotationMatrix"; }
 
-  bool isFractureAllInStickCondition( DomainPartition const & domain ) const;
+    constexpr static char const * slidingCheckToleranceString() { return "slidingCheckTolerance"; }
+    constexpr static char const * normalDisplacementToleranceString() { return "normalDisplacementTolerance"; }
+    constexpr static char const * normalTractionToleranceString() { return "normalTractionTolerance"; }
+    constexpr static char const * slidingToleranceString() { return "slidingTolerance"; }
 
-  void computeRotationMatrices( DomainPartition & domain ) const;
+    static constexpr char const * transMultiplierString() { return "penaltyStiffnessTransMultiplier"; }
 
-  void computeTolerances( DomainPartition & domain ) const;
-
-  void computeFaceNodalArea( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
-                             ArrayOfArraysView< localIndex const > const & faceToNodeMap,
-                             localIndex const kf0,
-                             array1d< real64 > & nodalArea ) const;
-
-  real64 const machinePrecision = std::numeric_limits< real64 >::epsilon();
+  };
 
 };
 

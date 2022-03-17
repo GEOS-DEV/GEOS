@@ -76,29 +76,29 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
       {
         region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
         {
-          subRegion.registerExtrinsicData< dispJump >(getName() ).
+          subRegion.registerExtrinsicData< dispJump >( getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< deltaDispJump >(getName() ).
+          subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< oldDispJump >(getName() ).
+          subRegion.registerExtrinsicData< oldDispJump >( getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< traction >(getName() ).
-            reference().resizeDimension< 1 >( 3 );   
+          subRegion.registerExtrinsicData< traction >( getName() ).
+            reference().resizeDimension< 1 >( 3 );
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
             setPlotLevel( PlotLevel::LEVEL_0 ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          initializeFractureState( meshLevel, viewKeyStruct::fractureStateString() );
+          initializeFractureState( subRegion, viewKeyStruct::fractureStateString() );
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          initializeFractureState( meshLevel, viewKeyStruct::oldFractureStateString() );
+          initializeFractureState( subRegion, viewKeyStruct::oldFractureStateString() );
 
         } );
       } );
@@ -107,20 +107,12 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 }
 
 
-void ContactSolverBase::initializeFractureState( MeshLevel & mesh,
+void ContactSolverBase::initializeFractureState( SurfaceElementSubRegion & subRegion,
                                                  string const & fieldName ) const
 {
   GEOSX_MARK_FUNCTION;
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
-  {
-    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
-    {
-      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-      fractureState.setValues< parallelHostPolicy >( FractureState::Stick );
-    }
-  } );
+  arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
+  fractureState.setValues< parallelHostPolicy >( FractureState::Stick );
 }
 
 real64 ContactSolverBase::solverStep( real64 const & time_n,
@@ -157,75 +149,52 @@ void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & 
   MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
-  array1d< localIndex > localCounter( 3 );
+  array1d< globalIndex > localCounter( 3 );
 
   elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
   {
-    if( subRegion.hasWrapper( viewKeyStruct::tractionString() ) )
+    arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+
+    RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
+    forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
     {
-      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-      arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-
-      RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      if( ghostRank[kfe] < 0 )
       {
-        if( ghostRank[kfe] < 0 )
+        switch( fractureState[kfe] )
         {
-          switch( fractureState[kfe] )
-          {
-            case FractureState::Stick:
-              {
-                stickCount += 1;
-                break;
-              }
-            case FractureState::NewSlip:
-            case FractureState::Slip:
-              {
-                slipCount += 1;
-                break;
-              }
-            case FractureState::Open:
-              {
-                openCount += 1;
-                break;
-              }
-          }
+          case FractureState::Stick:
+            {
+              stickCount += 1;
+              break;
+            }
+          case FractureState::NewSlip:
+          case FractureState::Slip:
+            {
+              slipCount += 1;
+              break;
+            }
+          case FractureState::Open:
+            {
+              openCount += 1;
+              break;
+            }
         }
-      } );
+      }
+    } );
 
-      localCounter[0] += stickCount.get();
-      localCounter[1] += slipCount.get();
-      localCounter[2] += openCount.get();
-    }
+    localCounter[0] += stickCount.get();
+    localCounter[1] += slipCount.get();
+    localCounter[2] += openCount.get();
   } );
-
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  int const size = MpiWrapper::commSize( MPI_COMM_GEOSX );
-
-  array1d< globalIndex > globalCounter( 3*size );
-
-  // Everything is done on rank 0
-  MpiWrapper::gather( localCounter.data(),
-                      3,
-                      globalCounter.data(),
-                      3,
-                      0,
-                      MPI_COMM_GEOSX );
 
   array1d< globalIndex > totalCounter( 3 );
 
-  if( rank == 0 )
-  {
-    for( int r = 0; r < size; ++r )
-    {
-      // sum across all ranks
-      totalCounter[0] += globalCounter[3*r];
-      totalCounter[1] += globalCounter[3*r+1];
-      totalCounter[2] += globalCounter[3*r+2];
-    }
-  }
-
-  MpiWrapper::bcast( totalCounter.data(), 3, 0, MPI_COMM_GEOSX );
+  MpiWrapper::allReduce( localCounter.data(),
+                         totalCounter.data(),
+                         3,
+                         MPI_SUM,
+                         MPI_COMM_GEOSX );
 
   numStick = totalCounter[0];
   numSlip  = totalCounter[1];

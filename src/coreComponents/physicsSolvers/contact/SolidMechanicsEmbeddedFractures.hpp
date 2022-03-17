@@ -102,13 +102,6 @@ public:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
-  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
-  {
-    constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
-
-    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
-  };
-
   void applyTractionBC( real64 const time_n,
                         real64 const dt,
                         DomainPartition & domain );
@@ -129,6 +122,11 @@ private:
 
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
+
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
+  };
 };
 
 

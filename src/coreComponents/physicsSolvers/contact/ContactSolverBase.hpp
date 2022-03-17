@@ -111,7 +111,7 @@ protected:
            || ( state0 == FractureState::Slip && state1 == FractureState::NewSlip );
   }
 
-  void initializeFractureState( MeshLevel & mesh,
+  void initializeFractureState( SurfaceElementSubRegion & subRegion,
                                 string const & fieldName ) const;
 
   void synchronizeFractureState( DomainPartition & domain ) const;
