@@ -141,12 +141,11 @@ real64 ContactSolverBase::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void ContactSolverBase::computeFractureStateStatistics( DomainPartition const & domain,
+void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
                                                         globalIndex & numStick,
                                                         globalIndex & numSlip,
                                                         globalIndex & numOpen ) const
 {
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = mesh.getElemManager();
 
   array1d< globalIndex > localCounter( 3 );
@@ -209,11 +208,16 @@ void ContactSolverBase::outputConfigurationStatistics( DomainPartition const & d
     globalIndex numSlip  = 0;
     globalIndex numOpen  = 0;
 
-    computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
+    forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                                 MeshLevel const & mesh,
+                                                 arrayView1d< string const > const & )
+    {
+      computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
 
-    GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
-                                 " stick: {:12} | slip:  {:12} | open:  {:12}",
-                                 numStick, numSlip, numOpen ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "  Number of element for each fracture state:"
+                                   " stick: {:12} | slip:  {:12} | open:  {:12}",
+                                   numStick, numSlip, numOpen ) );
+    } );
   }
 }
 

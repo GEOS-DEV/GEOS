@@ -96,7 +96,7 @@ protected:
 
   virtual void postProcessInput() override;
 
-  void computeFractureStateStatistics( DomainPartition const & domain,
+  void computeFractureStateStatistics( MeshLevel const & mesh,
                                        globalIndex & numStick,
                                        globalIndex & numSlip,
                                        globalIndex & numOpen ) const;

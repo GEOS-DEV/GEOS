@@ -507,7 +507,7 @@ public:
    * @brief set the simplest configuration state.
    * @param domain the domain containing the mesh and fields
    */
-  virtual bool setSimplestConfigurationState( DomainPartition & domain ) const;
+  virtual bool resetConfigurationToDefault( DomainPartition & domain ) const;
 
 
   /**

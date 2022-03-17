@@ -1712,7 +1712,7 @@ void LagrangianContactSolver::updateState( DomainPartition & domain )
   computeFaceDisplacementJump( domain );
 }
 
-bool LagrangianContactSolver::setSimplestConfigurationState( DomainPartition & domain ) const
+bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1853,7 +1853,13 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition const & domain ) const
 {
   globalIndex numStick, numSlip, numOpen;
-  computeFractureStateStatistics( domain, numStick, numSlip, numOpen );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel const & mesh,
+                                                arrayView1d< string const > const & )
+  {
+    computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );    
+  } );
+
   return ( ( numSlip + numOpen ) == 0 );
 }
 

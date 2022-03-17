@@ -786,7 +786,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
       else if( !attemptedSimplestConfiguration )
       {
         resetStateToBeginningOfStep( domain );
-        bool const breakLoop = setSimplestConfigurationState( domain );
+        bool const breakLoop = resetConfigurationToDefault( domain );
         attemptedSimplestConfiguration = true;
         if( breakLoop )
         {
@@ -1074,7 +1074,7 @@ void SolverBase::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PAR
   GEOSX_ERROR( "SolverBase::ResetStateToBeginningOfStep called!. Should be overridden." );
 }
 
-bool SolverBase::setSimplestConfigurationState( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
+bool SolverBase::resetConfigurationToDefault( DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
 {
   // for most solvers it just breaks the loop.
   return true;
