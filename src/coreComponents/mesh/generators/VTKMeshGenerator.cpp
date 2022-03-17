@@ -876,13 +876,9 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
   meshBody.getMeshLevels().registerGroup< MeshLevel >( "Level0" );
 
-  //CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
-
-  // Ongoing test 
-  // TODO: Modify CellBlockManagerABC so that it has the basic functions used by the MeshGenerator
-  // The class CellBlockManager should not be a type for functions here
-  HexCellBlockManager & cellBlockManager = meshBody.registerGroup< HexCellBlockManager >( keys::cellManager );
-  
+  // TODO Choose the CellBlockManagerBase derived class to instanciate
+  // Debug and testing - DO NOT MERGE THIS
+  HexCellBlockManager & cellBlockManager = meshBody.registerGroup< HexCellBlockManager >( keys::cellManager );  
   
   double const globalLength = writeMeshNodes( cellBlockManager, m_vtkMesh );
   meshBody.setGlobalLengthScale( globalLength );

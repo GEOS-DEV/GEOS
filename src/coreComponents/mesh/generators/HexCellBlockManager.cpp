@@ -43,7 +43,7 @@ static const int NO_FACE = -10;
 
 /*  Hexahedron template
 *  WARNING - Hex vertex numbering in GEOSX differs from the one used 
-*  by most mesh datastructurees
+*  by most mesh datastructures - There are further variations in GEOSX itself 
 *
 *   6----------7
 *   |\         |\
@@ -125,25 +125,12 @@ struct {
 } equalEdgeInfo;
 
 
-void print(std::vector<EdgeInfo> const &in)
-{
-  for (unsigned int  i = 0; i < in.size(); ++i)
-  {
-    std::cout << std::setw(5) << i
-              << std::setw(5) << std::left << in[i].first 
-              << std::setw(5) << std::left << in[i].second 
-              << std::endl;
-  }
-  std::cout << std::endl
-            << std::endl;
-}
-
-
 
 /***************************************************************************************/
 /***************************************************************************************/
 
-// DEBUGGING
+/* Debugging functionalites */ 
+
 void print(std::vector<localIndex> const &in)
 {
   int count = 0 ;
@@ -196,6 +183,18 @@ void print(array2d<localIndex> const &in)
   std::cout << std::endl
             << std::endl;
 }
+void print(std::vector<EdgeInfo> const &in)
+{
+  for (unsigned int  i = 0; i < in.size(); ++i)
+  {
+    std::cout << std::setw(5) << i
+              << std::setw(5) << std::left << in[i].first 
+              << std::setw(5) << std::left << in[i].second 
+              << std::endl;
+  }
+  std::cout << std::endl
+            << std::endl;
+}
 
 /***************************************************************************************/
 /***************************************************************************************/
@@ -216,9 +215,7 @@ void print(array2d<localIndex> const &in)
  *
  * TODO Why are storage strategies different for the mappings ?
  * TODO Why multidimensional arrays? Isn't is more expensive? 
- * TODO Switch storage to LvArrays - What gains? 
- * TODO Implement specializationfor regular hex mesh
- * 
+ * TODO Implement specialization for regular hex mesh
  * 
  * TODO The storage of Faces and Edges is dependant on the Cell Types  
  * How do we manage the CellBlocks with different types of cells?
@@ -308,12 +305,11 @@ std::vector< CellBlock * > m_cellBlocks;
 /// Size of nbBlocks
 std::vector< LocalCellIndex > m_blockCellIndexOffset;
 
-
 /* Storage of a minimal set of information to iterate through
  * the faces while storing to which face of which cell they belong and which
  * is the neighbor face is the neighbor cell.
  * Use the numbering of cells managed by this class max is nbElements
- *  * Each face of each cell is encoded as  6 * cellIndex + faceIndexInCell
+ * Each face of each cell is encoded by 6 * cellIndex + faceIndexInCell
  * 
  * TODO Implement for tetrahedra (6 becomes 4)
  * TODO Define the strategy for hybrid FE meshes (hex, prism, pyramids, tets)
@@ -382,9 +378,9 @@ MeshConnectivityBuilder::MeshConnectivityBuilder( CellBlockManagerBase & cellBlo
   nbElements =  m_blockCellIndexOffset[nbBlocks-1];
 }
 
+// TODO convert to log output
 void MeshConnectivityBuilder::printDebugInformation() const
-{
-  
+{ 
    std::cout << std::endl
             << std::endl;
   
@@ -445,8 +441,6 @@ MeshConnectivityBuilder::getBlockCellFromManagerCell( LocalCellIndex cellId ) co
   {
     b++;
   }
-  assert(b < nbCellBlocks()); // debug paranoia
-
   localIndex offset = b > 0 ? m_blockCellIndexOffset[b-1] : 0;
   LocalCellIndex c = cellId - offset;
 
@@ -475,7 +469,7 @@ void MeshConnectivityBuilder::computeAllFacesToUniqueFace(
 bool MeshConnectivityBuilder::computeEdgesToNodes ( array2d<localIndex> & edgeToNodes ) const
 {
   edgeToNodes.resize(nbEdges, 2);
-  // Initialize contents to NO_ID 
+  // Initialize contents
   edgeToNodes.setValues< serialPolicy >( NO_ID );
  
   for (unsigned int i = 0; i < m_uniqueEdges.size(); ++i)
@@ -507,7 +501,6 @@ bool MeshConnectivityBuilder::computeNodesToEdges( ArrayOfSets<localIndex> & nod
   }
   localIndex valuesToReserve = std::accumulate(nbEdgesPerNode.begin(), nbEdgesPerNode.end(), 0);
 
-
   // 2 - Allocating 
   nodeToEdges.resize( 0 );
   nodeToEdges.reserve( nbNodes );
@@ -536,8 +529,8 @@ bool MeshConnectivityBuilder::computeNodesToEdges( ArrayOfSets<localIndex> & nod
 bool MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<localIndex> & nodeToElements ) const
 {
   // 1 -  Counting
+  // TODO Can be skipped for hexahedral meshes - 8 for regular nodes - 12 tops for singular nodes
   std::vector<unsigned int> nbElementsPerNode(nbNodes, 0);
-
   for (unsigned int i = 0; i < nbCellBlocks(); ++i)
   {
     CellBlock const & block = getCellBlock(i);
@@ -590,6 +583,10 @@ bool MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<localIndex> 
  * TODO Be able to get out and return an error message if 3 cells have the same face
  * 
  * TODO CellType dependant 
+ * TODO What management for triangles? Fill with NO_VERTEX the 4th vertex and 
+ * have consistent cell descriptions?
+ * The block knows the cell type, we could use this? 
+ * Maybe sort CellBlocks by cell type, and template things
  */
 bool HexMeshConnectivityBuilder::computeFaces()
 {
@@ -608,22 +605,11 @@ bool HexMeshConnectivityBuilder::computeFaces()
   localIndex curFace = 0;
   for (unsigned int i = 0; i < nbCellBlocks(); ++i)
   {
-    std::cout << " THE BLOCK " << m_cellBlocks[i] << std::endl;
-
     CellBlock const & block = getCellBlock(i);
     CellVertexIndices const & cells = block.getElemToNodes();
 
-    std::cout << " Number of Cells in the BLOCK " << cells.size(0) << std::endl;
-    std::cout << " Whatever " << cells.size() << std::endl;
-
     for (int j = 0; j < cells.size(0); ++j)
     {
-      // TODO How do we manage triangle faces 
-      // Fill with -1 the tables Pyramid::someThing  ?? 
-      // And ignore the negative value when filling the face
-      // THE block knows the cell type  -Store it  ? 
-      // How do we convert to my structures ?  
-      // or we sort CellBlocks by cell type so we know and can template things
       for (unsigned int f = 0; f < Hex::nbFacets; ++f)
       {
         // TODO Let's bet that we get VertexIds locally to the partition 
@@ -644,7 +630,7 @@ bool HexMeshConnectivityBuilder::computeFaces()
         allFaces[curFace].v[1] = v1;
         allFaces[curFace].v[2] = v2;
         // If the mesh is valid, then if 2 quad faces share 3 vertices they are the same
-        // Last slot is used to identify the facet from its cell 
+        // Last slot is used to identify the facet in its cell 
         allFaces[curFace].v[3]= Hex::nbFacets * j + f; 
         
         curFace++;
@@ -653,10 +639,9 @@ bool HexMeshConnectivityBuilder::computeFaces()
   }
 
   // 3 - Sort 
-  // TODO Definitely not the fastest we can do - Use of HXTSort if possible? LvArray is fast? 
+  // TODO Definitely not the fastest we can do - Use of HXTSort if possible? Has LvArray faster sort? 
   std::sort( allFaces.begin(), allFaces.end(), compareFaceInfo);
   
-
   // That is an overallocation, about twice as big as needed
   m_uniqueFaces.resize( allFaces.size() ); 
   m_isBoundaryFace.resize( allFaces.size(), false ); 
@@ -767,10 +752,6 @@ bool HexMeshConnectivityBuilder::computeEdges()
     }
     i = j;
   }
-  // TODO Tests and asserts
-
-  std::cout << "computed Edges " << m_uniqueEdges.size() << std::endl;
-
   nbEdges = m_uniqueEdges.size();
   return true;
 }
@@ -779,8 +760,8 @@ bool HexMeshConnectivityBuilder::computeEdges()
 bool HexMeshConnectivityBuilder::computeFacesToNodes( ArrayOfArrays<localIndex> & faceToNodes ) const
 {
   // 1 - Allocate - No overallocation
-  //faceToNodes.resize(0);
-  faceToNodes.resize( nbFaces ); //, Hex::nbNodesPerFacet );
+  faceToNodes.resize(0);
+  faceToNodes.resize( nbFaces, Hex::nbNodesPerFacet );
 
   // TODO Check if this resize or reserve the space for the inner arrays
   // In doubt resize inner arrays
@@ -788,8 +769,6 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes( ArrayOfArrays<localIndex> 
   {
     faceToNodes.resizeArray(i, Hex::nbNodesPerFacet);
   }
-
-  std::cout << " Size of Array" << faceToNodes[0].size() << std::endl;
 
   // 2 - Fill FaceToNode  -- Could be avoided and done when required from adjacencies
   for( unsigned int curFace = 0; curFace < m_uniqueFaces.size(); ++curFace)
@@ -887,7 +866,6 @@ bool HexMeshConnectivityBuilder::computeFacesToElements( array2d<localIndex> & f
   return true;
 }
 
-
 // Using a set means bad performances and annoying code 
 // TODO Change set to vector
 void HexMeshConnectivityBuilder::getFacesAroundEdge( 
@@ -950,7 +928,6 @@ bool HexMeshConnectivityBuilder::computeFacesToEdges( ArrayOfArrays<localIndex> 
 
   for (unsigned int edgeIndex = 0; edgeIndex < m_uniqueEdges.size(); ++edgeIndex)
   {
-    // Performance is not the best
     std::set<localIndex> faces;
     getFacesAroundEdge( edgeIndex, allFacesToUniqueFace, faces );
 
@@ -969,8 +946,8 @@ bool HexMeshConnectivityBuilder::computeFacesToEdges( ArrayOfArrays<localIndex> 
 bool HexMeshConnectivityBuilder::computeEdgesToFaces(ArrayOfSets<localIndex> & edgeToFaces ) const
 {
   // 1 - Allocate - Without counting  -- Should we overallocate a bit ?
-  // Probably for tet meshes one should count
-  int numberOfFacesAroundEdge = 5; // In a hexahedral mesh this more than enough
+  // TODO Count for tet meshes one should count
+  int numberOfFacesAroundEdge = 5; // In a hexahedral mesh this is enough
   edgeToFaces.resize( 0 );
   edgeToFaces.reserve( nbEdges );
   edgeToFaces.reserveValues( nbEdges * numberOfFacesAroundEdge );
@@ -1008,7 +985,6 @@ bool HexMeshConnectivityBuilder::computeElementsToFacesOfCellBlocks()
     LocalCellIndex c = id / Hex::nbFacets;
     HexFacetIndex face = id % Hex::nbFacets;
     auto blockCell = getBlockCellFromManagerCell(c);
-    assert( blockCell.second == c); // DEBUG TO REMOVE
 
     getCellBlock( blockCell.first ).setElementToFaces( blockCell.second, face, curFace );
 
@@ -1051,7 +1027,6 @@ bool HexMeshConnectivityBuilder::computeElementsToEdgesOfCellBlocks()
 }
 
 
-
 /*********************************************************************************************************************/
 /*********************************************************************************************************************/
 
@@ -1071,23 +1046,21 @@ HexCellBlockManager::~HexCellBlockManager()
 void HexCellBlockManager::buildMaps()
 {
   // Create the MeshConnectivityBuilder after the CellBlocks are 
-  // filled and we know the cell types
+  // filled and cell types are known
   // TODO Change the instanciated class depending on the incoming types of cells
   m_theOneWhoDoesTheJob = new HexMeshConnectivityBuilder( *this );
 
+  // If not called here - the number of faces and edges are not 
+  // available resize EdgeManager and FaceManager.
   m_theOneWhoDoesTheJob->computeFaces();
   m_theOneWhoDoesTheJob->computeEdges();
-
-  std::cout << " NB FACES "  <<  numFaces() << std::endl;
-  std::cout << " NB EDGES "  <<  numEdges() << std::endl;
   
   m_theOneWhoDoesTheJob->printDebugInformation(); 
 
-  // Otherwise nobody call them directly
+  // Otherwise this are not called. Who should?
   m_theOneWhoDoesTheJob->computeElementsToFacesOfCellBlocks(); 
   m_theOneWhoDoesTheJob->computeElementsToEdgesOfCellBlocks();
 
-  std::cout << " All maps are computed " << std::endl;
   return ;
 }
 

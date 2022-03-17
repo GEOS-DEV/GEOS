@@ -39,7 +39,7 @@ class MeshConnectivityBuilder;
  * It should not be necessary to modify this class.
  * 
  * POTENTIAL ISSUE: Where are the Element indices valid in the maps NodeToElements
- * and FaceToElements? In the CellBlock? 
+ * and FaceToElements? Should it be the index in the CellBlock? 
  */
 class HexCellBlockManager : public CellBlockManagerBase
 {

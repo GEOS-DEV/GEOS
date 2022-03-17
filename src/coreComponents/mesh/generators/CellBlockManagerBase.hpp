@@ -239,7 +239,7 @@ protected:
   array1d<globalIndex> m_nodeLocalToGlobal;
 
   /// Geometrical sets
-  std::map<string, SortedArray<localIndex>> m_nodeSets;  // Who fills this? What for?
+  std::map<string, SortedArray<localIndex>> m_nodeSets;  // TODO Complete documentation. Who fills this? What for?
 };
 
 }
