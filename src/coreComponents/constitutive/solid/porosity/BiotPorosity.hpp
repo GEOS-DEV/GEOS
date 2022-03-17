@@ -30,7 +30,6 @@ namespace constitutive
 class BiotPorosityUpdates : public PorosityBaseUpdates
 {
 public:
-
   /**
    * @brief Get number of elements in this wrapper.
    * @return number of elements
@@ -51,12 +50,11 @@ public:
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
-                       real64 const & grainBulkModulus ):
-    PorosityBaseUpdates( newPorosity,
-                         oldPorosity,
-                         dPorosity_dPressure,
-                         initialPorosity,
-                         referencePorosity ),
+                       real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
+                                                                               oldPorosity,
+                                                                               dPorosity_dPressure,
+                                                                               initialPorosity,
+                                                                               referencePorosity ),
     m_biotCoefficient( biotCoefficient ),
     m_grainBulkModulus( grainBulkModulus )
   {}
@@ -65,18 +63,23 @@ public:
   real64 getBiotCoefficient( localIndex const k ) const { return m_biotCoefficient[k]; }
 
   GEOSX_HOST_DEVICE
+  real64 getGrainBulkModulus() const { return m_grainBulkModulus; }
+
+  GEOSX_HOST_DEVICE
+  real64 dGrainDensity_dPressure() const { return 1.0 / m_grainBulkModulus; }
+
+  GEOSX_HOST_DEVICE
   void updateFromPressureAndStrain( localIndex const k,
                                     localIndex const q,
                                     real64 const & deltaPressure,
-                                    real64 const ( &strainIncrement )[6],
+                                    real64 const (&strainIncrement)[6],
                                     real64 & dPorosity_dPressure,
                                     real64 & dPorosity_dVolStrain ) const
   {
-    real64 const biotSkeletonModulusInverse = ( m_biotCoefficient[k] - m_referencePorosity[k] ) / m_grainBulkModulus;
+    real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
 
     real64 const porosity = m_oldPorosity[k][q] +
-                            +m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement )
-                            + biotSkeletonModulusInverse * deltaPressure;
+                            +m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure;
 
     dPorosity_dPressure = biotSkeletonModulusInverse;
 
@@ -84,7 +87,6 @@ public:
 
     savePorosity( k, q, porosity, biotSkeletonModulusInverse );
   }
-
 
   GEOSX_HOST_DEVICE
   void updateBiotCoefficient( localIndex const k,
@@ -98,7 +100,6 @@ protected:
 
   real64 m_grainBulkModulus;
 };
-
 
 class BiotPorosity : public PorosityBase
 {
@@ -114,10 +115,9 @@ public:
 
   struct viewKeyStruct : public PorosityBase::viewKeyStruct
   {
-    static constexpr char const * biotCoefficientString() { return "biotCoefficient"; }
-    static constexpr char const * grainBulkModulusString() { return "grainBulkModulus"; }
+    static constexpr char const *biotCoefficientString() { return "biotCoefficient"; }
+    static constexpr char const *grainBulkModulusString() { return "grainBulkModulus"; }
   } viewKeys;
-
 
   virtual void initializeState() const override final;
 
@@ -138,7 +138,6 @@ public:
                           m_grainBulkModulus );
   }
 
-
 protected:
   virtual void postProcessInput() override;
 
@@ -147,9 +146,8 @@ protected:
   real64 m_grainBulkModulus;
 };
 
-}/* namespace constitutive */
+}   /* namespace constitutive */
 
 } /* namespace geosx */
-
 
 #endif //GEOSX_CONSTITUTIVE_POROSITY_BIOTPOROSITY_HPP_
