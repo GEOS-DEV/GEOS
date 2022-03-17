@@ -222,7 +222,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
       if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
       {
         arrayView2d< real64 > const &
-        deltaTraction = subRegion.getExtrinsicData<extrinsicMeshData::contact::traction>();
+        deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
         arrayView2d< real64 const > const &
         dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
         arrayView2d< real64 > const &

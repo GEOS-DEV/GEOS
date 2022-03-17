@@ -116,7 +116,7 @@ public:
 
   string const & getContactRelationName() const { return m_contactRelationName; }
 
-   bool setSimplestConfigurationState( DomainPartition & domain ) const override final;
+  bool setSimplestConfigurationState( DomainPartition & domain ) const override final;
 
   bool updateConfiguration( DomainPartition & domain ) override final;
 

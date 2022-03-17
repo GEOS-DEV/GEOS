@@ -54,7 +54,7 @@ EXTRINSIC_MESH_DATA_TRAIT( oldDispJump,
                            0,
                            NOPLOT,
                            WRITE_AND_READ,
-                           "Displacement jump vector at the previous time-step" );                                                      
+                           "Displacement jump vector at the previous time-step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( traction,
                            "traction",

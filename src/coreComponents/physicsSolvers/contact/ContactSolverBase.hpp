@@ -64,7 +64,7 @@ public:
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
     constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
-    
+
     constexpr static char const * fractureStateString() { return "fractureState"; }
 
     constexpr static char const * oldFractureStateString() { return "oldFractureState"; }

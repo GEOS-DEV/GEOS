@@ -85,7 +85,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRe
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const,
                                                                                      EmbeddedSurfaceSubRegion & subRegion )
     {
-      subRegion.registerExtrinsicData< dTraction_dPressure >(getName() );
+      subRegion.registerExtrinsicData< dTraction_dPressure >( getName() );
     } );
   } );
 }

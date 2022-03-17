@@ -44,7 +44,7 @@ using namespace constitutive;
 
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
-  ContactSolverBase( name, parent )  
+  ContactSolverBase( name, parent )
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -84,7 +84,7 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
-  
+
   using namespace extrinsicMeshData::contact;
 
   forMeshTargets( meshBodies, [&] ( string const &,
@@ -98,7 +98,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          subRegion.registerExtrinsicData< dTraction_dJump >(getName() ).
+          subRegion.registerExtrinsicData< dTraction_dJump >( getName() ).
             reference().resizeDimension< 1, 2 >( 3, 3 );
         } );
       } );
@@ -626,7 +626,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
   if( !m_useStaticCondensation )
   {
-    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(),  extrinsicMeshData::contact::deltaDispJump::key(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::deltaDispJump::key(), -scalingFactor );
 
     dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), -scalingFactor );
   }
@@ -718,7 +718,7 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
         subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
 
       arrayView3d< real64 > const & dFractureTraction_dJump =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >(); 
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
