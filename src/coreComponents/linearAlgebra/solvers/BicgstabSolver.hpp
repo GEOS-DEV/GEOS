@@ -31,7 +31,7 @@ namespace geosx
  * @note  The notation is consistent with "Iterative Methods for
  *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
  *        and "Iterative Methods for Sparse Linear Systems"
- *        from Y. Saad (2003). 
+ *        from Y. Saad (2003).
  */
 template< typename VECTOR >
 class BicgstabSolver : public KrylovSolver< VECTOR >
