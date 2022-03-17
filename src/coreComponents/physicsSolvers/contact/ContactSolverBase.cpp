@@ -29,6 +29,7 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -40,8 +41,6 @@ using namespace constitutive;
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
   SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_fractureRegionName(),
   m_solidSolver( nullptr )
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
@@ -65,6 +64,8 @@ void ContactSolverBase::postProcessInput()
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
+  using namespace extrinsicMeshData::contact;
+
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
@@ -75,23 +76,17 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
       {
         region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
         {
-
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString() ).
-            setPlotLevel( PlotLevel::LEVEL_0 ).
+          subRegion.registerExtrinsicData< dispJump >(getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaDispJumpString() ).
+          subRegion.registerExtrinsicData< deltaDispJump >(getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldDispJumpString() ).
+          subRegion.registerExtrinsicData< oldDispJump >(getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::tractionString() ).
-            setApplyDefaultValue( 0.0 ).
-            setPlotLevel( PlotLevel::LEVEL_0 ).
-            setRegisteringObjects( this->getName()).
-            setDescription( "An array that holds the tractions on the fracture." ).
-            reference().resizeDimension< 1 >( 3 );
+          subRegion.registerExtrinsicData< traction >(getName() ).
+            reference().resizeDimension< 1 >( 3 );   
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
             setPlotLevel( PlotLevel::LEVEL_0 ).

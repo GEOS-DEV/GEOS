@@ -44,8 +44,7 @@ using namespace constitutive;
 
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
-  ContactSolverBase( name, parent ),
-  m_useStaticCondensation()
+  ContactSolverBase( name, parent )  
 {
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -85,6 +84,8 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   ContactSolverBase::registerDataOnMesh( meshBodies );
+  
+  using namespace extrinsicMeshData::contact;
 
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
@@ -97,7 +98,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
       {
         region.forElementSubRegions< EmbeddedSurfaceSubRegion >( [&]( EmbeddedSurfaceSubRegion & subRegion )
         {
-          subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() ).
+          subRegion.registerExtrinsicData< dTraction_dJump >(getName() ).
             reference().resizeDimension< 1, 2 >( 3, 3 );
         } );
       } );
@@ -140,8 +141,8 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    arrayView2d< real64 > oldDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
-    arrayView2d< real64 const > const dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+    arrayView2d< real64 > oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+    arrayView2d< real64 const > const dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -175,13 +176,13 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
       meshTargets[meshBodyName] = std::move( regions );
     } );
 
-    dofManager.addField( viewKeyStruct::dispJumpString(),
+    dofManager.addField( extrinsicMeshData::contact::dispJump::key(),
                          DofManager::Location::Elem,
                          3,
                          meshTargets );
 
-    dofManager.addCoupling( viewKeyStruct::dispJumpString(),
-                            viewKeyStruct::dispJumpString(),
+    dofManager.addCoupling( extrinsicMeshData::contact::dispJump::key(),
+                            extrinsicMeshData::contact::dispJump::key(),
                             DofManager::Connector::Elem );
   }
 }
@@ -283,7 +284,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
     if( !m_useStaticCondensation )
     {
-      string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+      string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
       arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
       solidMechanicsEFEMKernels::EFEMFactory kernelFactory( subRegion,
@@ -344,7 +345,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
     NodeManager const & nodeManager          = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+    string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
     string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
     arrayView1d< globalIndex const > const &
@@ -412,7 +413,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     NodeManager const & nodeManager          = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+    string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
     string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
     arrayView1d< globalIndex const > const &
@@ -503,7 +504,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
   fsManager.apply( time_n+ dt,
                    domain,
                    "ElementRegions",
-                   viewKeyStruct::tractionString(),
+                   extrinsicMeshData::contact::traction::key(),
                    [&] ( FieldSpecificationBase const & fs,
                          string const &,
                          SortedArrayView< localIndex const > const & targetSet,
@@ -513,7 +514,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
     fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
                                                                        time_n+dt,
                                                                        subRegion,
-                                                                       viewKeyStruct::tractionString() );
+                                                                       extrinsicMeshData::contact::traction::key() );
   } );
 
 }
@@ -530,7 +531,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
   if( !m_useStaticCondensation )
   {
 
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+    string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -625,9 +626,9 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
   if( !m_useStaticCondensation )
   {
-    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(),  extrinsicMeshData::contact::deltaDispJump::key(), -scalingFactor );
 
-    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), -scalingFactor );
   }
   else
   {
@@ -640,8 +641,8 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                 arrayView1d< string const > const & )
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString() ) );
-    fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
+    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::dispJump::key() ) );
+    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaDispJump::key()) );
     CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -708,13 +709,13 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
       arrayView2d< real64 const > const & jump  =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+        subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::dispJump::key() );
 
       arrayView2d< real64 const > const & oldJump  =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
 
       arrayView2d< real64 > const & fractureTraction =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::tractionString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
 
       arrayView3d< real64 > const & dFractureTraction_dJump =
         subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() );

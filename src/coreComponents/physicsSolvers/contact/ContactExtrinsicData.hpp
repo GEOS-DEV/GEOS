@@ -36,17 +36,42 @@ EXTRINSIC_MESH_DATA_TRAIT( dispJump,
                            "dispJump",
                            array2d< real64 >,
                            0,
-                           NOPLOT,
+                           LEVEL_0,
                            WRITE_AND_READ,
                            "Displacement jump vector" );
+
+EXTRINSIC_MESH_DATA_TRAIT( deltaDispJump,
+                           "deltaDisplacementJump",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Delta displacement jump vector" );
+
+EXTRINSIC_MESH_DATA_TRAIT( oldDispJump,
+                           "oldDisplacementJump",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Displacement jump vector at the previous time-step" );                                                      
 
 EXTRINSIC_MESH_DATA_TRAIT( traction,
                            "traction",
                            array2d< real64 >,
                            0,
-                           NOPLOT,
+                           LEVEL_0,
                            NO_WRITE,
                            "Fracture traction vector" );
+
+EXTRINSIC_MESH_DATA_TRAIT( deltaTraction,
+                           "traction",
+                           array2d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "An array that holds the traction increments on the fracture." );
+
 
 EXTRINSIC_MESH_DATA_TRAIT( dTraction_dJump,
                            "dTraction_dJump",

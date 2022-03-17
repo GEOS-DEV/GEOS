@@ -40,8 +40,8 @@ NonlinearSolverParameters::NonlinearSolverParameters( string const & name,
     setApplyDefaultValue( LineSearchInterpolationType::Linear ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Strategy to cut the solution update during the line search. Options are: \n "
-                    "* Linear    - .\n"
-                    "* Parabolic - ." );
+                    "* Linear\n"
+                    "* Parabolic" );
 
   registerWrapper( viewKeysStruct::lineSearchMaxCutsString, &m_lineSearchMaxCuts ).
     setApplyDefaultValue( 4 ).

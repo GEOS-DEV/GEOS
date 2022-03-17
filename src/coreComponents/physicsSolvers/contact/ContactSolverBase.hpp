@@ -13,7 +13,7 @@
  */
 
 /*
- * ContactSolverBase.hpp
+ *  @file ContactSolverBase.hpp
  *
  */
 
@@ -24,8 +24,6 @@
 
 namespace geosx
 {
-using namespace constitutive;
-
 class SolidMechanicsLagrangianFEM;
 
 class ContactSolverBase : public SolverBase
@@ -65,16 +63,8 @@ public:
 
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
-    constexpr static char const * dispJumpString() { return "displacementJump"; }
-
-    constexpr static char const * deltaDispJumpString() { return "deltaDisplacementJump"; }
-
-    constexpr static char const * oldDispJumpString()  { return "oldDisplacementJump"; }
-
     constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
-
-    constexpr static char const * tractionString() { return "traction"; }
-
+    
     constexpr static char const * fractureStateString() { return "fractureState"; }
 
     constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
