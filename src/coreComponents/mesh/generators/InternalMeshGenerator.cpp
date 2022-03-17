@@ -23,6 +23,8 @@
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "CellBlockManager.hpp"
+#include "HexCellBlockManager.hpp"
+
 
 #include "common/DataTypes.hpp"
 #include "common/TimingMacros.hpp"
@@ -571,7 +573,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+  HexCellBlockManager & cellBlockManager = meshBody.registerGroup< HexCellBlockManager >( keys::cellManager );
   auto & nodeSets = cellBlockManager.getNodeSets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
