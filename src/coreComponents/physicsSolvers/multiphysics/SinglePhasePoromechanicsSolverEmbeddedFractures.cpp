@@ -75,6 +75,8 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRe
 {
   SinglePhasePoromechanicsSolver::registerDataOnMesh( meshBodies );
 
+  using namespace extrinsicMeshData::contact;
+
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
@@ -83,7 +85,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::registerDataOnMesh( dataRe
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const,
                                                                                      EmbeddedSurfaceSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array1d< real64 > >( EmbeddedSurfaceSubRegion::viewKeyStruct::dTraction_dPressureString() );
+      subRegion.registerExtrinsicData< dTraction_dPressure >(getName() );
     } );
   } );
 }
@@ -621,7 +623,7 @@ void SinglePhasePoromechanicsSolverEmbeddedFractures::updateState( DomainPartiti
 
       arrayView2d< real64 > const & fractureTraction = subRegion.template getExtrinsicData< extrinsicMeshData::contact::traction >();
 
-      arrayView1d< real64 >  const & dTdpf = subRegion.dTraction_dPressure();
+      arrayView1d< real64 >  const & dTdpf = subRegion.template getExtrinsicData< extrinsicMeshData::contact::dTraction_dPressure >();
 
       arrayView1d< real64 const > const & pressure =
         subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();

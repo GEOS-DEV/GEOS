@@ -81,6 +81,14 @@ EXTRINSIC_MESH_DATA_TRAIT( dTraction_dJump,
                            NO_WRITE,
                            "Derivative of the traction w.r.t. the displacement jump." );
 
+EXTRINSIC_MESH_DATA_TRAIT( dTraction_dPressure,
+                           "dTraction_dPressure",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of the traction w.r.t. to the fluid pressure." );
+
 }
 
 }

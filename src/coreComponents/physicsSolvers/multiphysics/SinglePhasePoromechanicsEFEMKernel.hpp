@@ -126,7 +126,7 @@ public:
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
     m_tractionVec( embeddedSurfSubRegion.getExtrinsicData<extrinsicMeshData::contact::traction>() ),
     m_dTraction_dJump( embeddedSurfSubRegion.getExtrinsicData<extrinsicMeshData::contact::dTraction_dJump>() ),
-    m_dTraction_dPressure( embeddedSurfSubRegion.dTraction_dPressure() ),
+    m_dTraction_dPressure( embeddedSurfSubRegion.getExtrinsicData<extrinsicMeshData::contact::dTraction_dPressure>() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
     m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
