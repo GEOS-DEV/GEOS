@@ -93,7 +93,7 @@ void VanGenuchtenCapillaryPressure::postProcessInput()
 
     if( m_phaseTypes[ip] != CapillaryPressureBase::REFERENCE_PHASE )
     {
-      GEOSX_THROW_IF_LT_MSG( m_phaseCapPressureExponentInv[ip], 0.0,
+      GEOSX_THROW_IF_LE_MSG( m_phaseCapPressureExponentInv[ip], 0.0,
                              errorMsg( viewKeyStruct::phaseCapPressureExponentInvString() ),
                              InputError );
       GEOSX_THROW_IF_GT_MSG( m_phaseCapPressureExponentInv[ip], 1.0,
