@@ -181,7 +181,7 @@ public:
    * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Will provide the mappings.
    */
-  void setGeometricalRelations( CellBlockManagerABC & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
 
   /**
    * @brief Link the current manager to other managers.

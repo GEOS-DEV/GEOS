@@ -76,6 +76,7 @@ void EdgeManager::buildSets( NodeManager const & nodeManager )
 
   // Make sets from node sets.
   auto const & nodeSets = nodeManager.sets().wrappers();
+
   for( int i = 0; i < nodeSets.size(); ++i )
   {
     auto const & setWrapper = nodeSets[i];
@@ -101,11 +102,10 @@ void EdgeManager::buildEdges( localIndex const numNodes,
                                              faceToEdgeMap,
                                              m_toFacesRelation,
                                              m_toNodesRelation );
-
   resize( numEdges );
 }
 
-void EdgeManager::setGeometricalRelations( CellBlockManagerABC & cellBlockManager )
+void EdgeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
 {
   resize( cellBlockManager.numEdges() );
 

@@ -129,7 +129,7 @@ public:
    * @brief Copies the edges to (nodes|faces) mappings from @p cellBlockManager.
    * @param[in] cellBlockManager Provides the mappings.
    */
-  void setGeometricalRelations( CellBlockManagerABC & cellBlockManager );
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
 
   /**
    * @brief Link the current manager to other managers.
@@ -147,6 +147,8 @@ public:
    * @param[in] numNodes number of nodes
    * @param[in] faceToNodeMap manager face-to-nodes map
    * @param[in] faceToEdgeMap manager face-to-edges map
+   * 
+   * TODO Isn't this already done by the CellBlockManager? That means duplicated code
    */
   void buildEdges( localIndex const numNodes,
                    ArrayOfArraysView< localIndex const > const & faceToNodeMap,

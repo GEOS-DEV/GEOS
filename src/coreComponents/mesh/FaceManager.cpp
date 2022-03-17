@@ -193,7 +193,7 @@ void FaceManager::setDomainBoundaryObjects()
   } );
 }
 
-void FaceManager::setGeometricalRelations( CellBlockManagerABC & cellBlockManager,
+void FaceManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                            NodeManager const & nodeManager )
 {
   resize( cellBlockManager.numFaces() );
@@ -282,7 +282,10 @@ void FaceManager::sortAllFaceNodes( NodeManager const & nodeManager,
       // Take the first defined face-to-(elt/region/sub region) to sorting direction.
       localIndex const iElemLoc = facesToElements( iFace, 0 ) > -1 ? 0 : 1;
 
-      localIndex const er = facesToElementRegions[iFace][iElemLoc], esr = facesToElementSubRegions[iFace][iElemLoc], ei = facesToElements( iFace, iElemLoc );
+      localIndex const er = facesToElementRegions[iFace][iElemLoc];
+      localIndex const esr = facesToElementSubRegions[iFace][iElemLoc];
+      localIndex const ei = facesToElements( iFace, iElemLoc );
+      
       if( er != -1 and esr != -1 and ei != -1 )
       {
         CellElementSubRegion const & subRegion = elemManager.getRegion( er ).getSubRegion< CellElementSubRegion >( esr );

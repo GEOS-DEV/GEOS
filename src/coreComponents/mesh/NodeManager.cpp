@@ -274,7 +274,7 @@ void NodeManager::setDomainBoundaryObjects( FaceManager const & faceManager )
   } );
 }
 
-void NodeManager::setGeometricalRelations( CellBlockManagerABC & cellBlockManager )
+void NodeManager::setGeometricalRelations( CellBlockManagerABC const & cellBlockManager )
 {
   resize( cellBlockManager.numNodes() );
 

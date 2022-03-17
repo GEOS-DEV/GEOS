@@ -178,6 +178,9 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
+
+  // Why here?
+  // What is the link with the communication settings?
   faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
   faceManager.computeGeometry( nodeManager );
 }

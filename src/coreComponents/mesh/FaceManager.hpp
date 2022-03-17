@@ -147,7 +147,7 @@ public:
    * @param[in] cellBlockManager Provides the mappings.
    * @param[in] nodeManager Provides the nodes positions.
    */
-  void setGeometricalRelations( CellBlockManagerABC & cellBlockManager,
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager,
                                 NodeManager const & nodeManager );
 
   /**
