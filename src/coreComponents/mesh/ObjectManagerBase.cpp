@@ -303,7 +303,7 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
     }
 
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, wrappers.size() );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
     for( auto const & nameToWrapper: wrappers )
     {
       packedSize += bufferOps::Pack< DOPACK >( buffer, nameToWrapper.first );
