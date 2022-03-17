@@ -698,7 +698,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
 //      }
 
       // Particle kinematic update - TODO: surely there's a nicer way to do this with LvArray
-      // Add identity tensor to velocity gradient
+      // Add identity tensor to velocity gradient and multiply by dt
       for(int i=0; i<3; i++)
       {
         for(int j=0; j<3; j++)

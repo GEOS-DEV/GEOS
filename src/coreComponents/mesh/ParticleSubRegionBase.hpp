@@ -278,8 +278,12 @@ protected:
   /// Type of particles in this subregion.
   ParticleType m_particleType;
 
-  /// R-vectors
+  /// current R-vectors
   array3d< real64 > m_particleRVectors;
+
+  /// initial R-vectors
+  array3d< real64 > m_particleRVectors0;
+
 };
 
 

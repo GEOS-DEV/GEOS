@@ -72,17 +72,17 @@ static int toVTKCellType( ElementType const elementType )
   return VTK_EMPTY_CELL;
 }
 
-static int toVTKCellType( ParticleType const particleType )
-{
-  switch( particleType )
-  {
-    case ParticleType::SinglePoint:  return VTK_HEXAHEDRON;
-    case ParticleType::CPDI:         return VTK_HEXAHEDRON;
-    case ParticleType::CPTI:         return VTK_TETRA;
-    case ParticleType::CPDI2:        return VTK_HEXAHEDRON;
-  }
-  return VTK_EMPTY_CELL;
-}
+//static int toVTKCellType( ParticleType const particleType )
+//{
+//  switch( particleType )
+//  {
+//    case ParticleType::SinglePoint:  return VTK_HEXAHEDRON;
+//    case ParticleType::CPDI:         return VTK_HEXAHEDRON;
+//    case ParticleType::CPTI:         return VTK_TETRA;
+//    case ParticleType::CPDI2:        return VTK_HEXAHEDRON;
+//  }
+//  return VTK_EMPTY_CELL;
+//}
 
 static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
 {
