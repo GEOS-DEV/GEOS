@@ -41,7 +41,7 @@ SolidBase::SolidBase( string const & name, Group * const parent ):
     setDimLabels( 1, voightLabels );
 
   registerWrapper( viewKeyStruct::oldStressString(), &m_oldStress ).
-    setApplyDefaultValue( 0 ).   // default to zero initial stress
+    setApplyDefaultValue( 0 ). // default to zero initial stress
     setDescription( "Previous Material Stress" );
 
   registerWrapper( viewKeyStruct::densityString(), &m_density ).
@@ -69,7 +69,6 @@ void SolidBase::allocateConstitutiveData( dataRepository::Group & parent,
                                           localIndex const numConstitutivePointsPerParentIndex )
 {
   m_density.resize( 0, numConstitutivePointsPerParentIndex );
-
   m_newStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
   m_oldStress.resize( 0, numConstitutivePointsPerParentIndex, 6 );
 

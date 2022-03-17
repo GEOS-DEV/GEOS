@@ -22,7 +22,6 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "constitutive/permeability/PermeabilityBase.hpp"
-#include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/porosity/PorosityBase.hpp"
 #include "constitutive/solid/SolidInternalEnergy.hpp"
 
@@ -128,7 +127,6 @@ public:
   arrayView2d< real64 const > const  getDinternalEnergy_dTemperature() const
   { return getSolidInternalEnergyModel().getDinternalEnergy_dTemperature(); }
 
-
   /**
    * @brief initialize the constitutive models fields.
    */
@@ -177,7 +175,6 @@ private:
    */
   PorosityBase const & getBasePorosityModel() const
   { return this->getParent().template getGroup< PorosityBase >( m_porosityModelName ); }
-
   /**
    * @brief get a Permeability base constant reference to the permeability model
    * return a constant PermeabilityBase reference to the permeability model
