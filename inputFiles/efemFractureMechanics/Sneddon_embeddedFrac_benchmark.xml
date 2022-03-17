@@ -37,7 +37,6 @@
 
     <PeriodicEvent
       name="outputs"
-      cycleFrequency="1.0"
       targetExactTimestep="0"
       target="/Outputs/vtkOutput"/>
 
