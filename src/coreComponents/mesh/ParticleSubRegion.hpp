@@ -80,23 +80,24 @@ public:
 
   ///@}
 
-  void updateRVectors(int const p, LvArray::ArraySlice<double, 2, 1, long> const & p_F)
+  void updateRVectors(int const p,
+                      LvArray::ArraySlice<double, 2, 1, long> const & p_F)
   {
     if(m_hasRVectors)
     {
-      real64 rTemp[3][3];
+//      real64 rTemp[3][3]; // Might be able to use this for an incremental update? Using I+L*dt?
+//      for(int i=0; i<3; i++)
+//      {
+//        for(int j=0; j<3; j++)
+//        {
+//          rTemp[i][j] = m_particleRVectors[p][i][j];
+//        }
+//      }
       for(int i=0; i<3; i++)
       {
         for(int j=0; j<3; j++)
         {
-          rTemp[i][j] = m_particleRVectors[p][i][j];
-        }
-      }
-      for(int i=0; i<3; i++)
-      {
-        for(int j=0; j<3; j++)
-        {
-          m_particleRVectors[p][i][j] = p_F[0][i]*rTemp[0][j] + p_F[1][i]*rTemp[1][j] + p_F[2][i]*rTemp[2][j];
+          m_particleRVectors[p][i][j] = p_F[0][i]*m_particleRVectors0[p][0][j] + p_F[1][i]*m_particleRVectors0[p][1][j] + p_F[2][i]*m_particleRVectors0[p][2][j];
         }
       }
     }
