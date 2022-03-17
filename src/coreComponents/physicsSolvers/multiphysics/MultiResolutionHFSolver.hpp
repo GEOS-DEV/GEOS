@@ -95,9 +95,9 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual void updateNodeMap();
+  virtual void updateNodeMaps();
 
-  virtual void setInitialCrackDamageBCs();
+  virtual void setInitialCrackDamageBCs( MeshLevel const & patch );
 
   virtual void prepareSubProblemBCs( MeshLevel const & base,
                                      MeshLevel const & patch );
@@ -157,7 +157,7 @@ private:
   string m_surfaceGeneratorName;
 
   // list of damage dofs to be fixed in the subdomain boundary
-  Array1d<Real64> m_dofListDamage;
+  array1d<localIndex> m_dofListDamage;
 
   // list of disp dofs to be fixed in the subdomain boundary
   array1d<localIndex> m_dofListDisp;

@@ -115,10 +115,6 @@ void MultiResolutionHFSolver::resetStateToBeginningOfStep( DomainPartition & dom
 {
   m_globalSolver->resetStateToBeginningOfStep( domain );
   m_localSolver->resetStateToBeginningOfStep( domain );
-  //reset lists of dofs to empty to look up new boundary conditions for subproblem
-  m_dofListDisp = [];
-  m_fixedDispList = []; 
-  m_dofListDamage = [];
 }
 
 real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
@@ -131,34 +127,72 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-//in the initial step and whenever the subproblem mesh moves, we must update the node map   
-void MultiResolutionHFSolver::updateNodeMap()
+//in the initial step and whenever the subproblem mesh moves, we must update the node map
+void MultiResolutionHFSolver::updateNodeMaps( MeshLevel const & base,
+						MeshLevel const & patch )
 {
-  for i in innerMesh //accessible through nodeManager
+  // get list of nodes on the boundary of the patch
+  NodeManager const & patchNodeManager = patch.getNodeManager();
+  NodeManager const & baseNodeManager = base.getNodeManager();
+  SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
+  arrayView1d< globalIndex const > const localToGlobalMap = patchNodeManager.localToGlobalMap();
+  arrayView1d<real64 const> const patchPosition = patchNodeManager.referencePosition();
+  for (localIndex a : patchExternalSet )  
     {
-      xi,yi,zi = getXiYiZi(); //get cartesian coordinates of node i
-      //sometimes, there is no outerMesh node at xi,yi,zi, in this case, we can just return -1 in the function below.
-      int N = getNodeNumberFromCoordinate(outerMesh, xi, yi, zi);
-      //WARNING: this function may need a tolerance, which should probably be proportional to element size
-      m_nodeMap[i] = N;
+      localIndex A = getNodeNumberFromCoordinate(base, patchPosition(a,0), patchPosition(a,1), patchPosition(a,2));
+      m_nodeMapIndices(a) = A;
+      //since the boundary points lie on element edges, these will have dimension 2. weights can be computed by taking the ratio between distances to 2 closes points from base mesh.
+      m_nodeMapWeights(a) = 1; //for now, we dont need this, so we just use 1.
     }  
 }
 
+//this function is not part of any class yet - just tries to find the number of a node given its coordinates
+localIndex getNodeNumberFromCoordinate( MeshLevel const & mesh, real64 x, real64 y, real64 z)
+{
+  real64 tolerance = 1e-10;
+  NodeManager const & meshNodeManager = mesh.getNodeManager();
+  arrayView1d<real64 const> const nodalPositions = meshNodeManager.referencePosition();
+  for (localIndex a=0; a < meshNodeManager.size(); a++)
+    {
+      real64 dist_sq = (nodalPositions( a,0 ) - x)*(nodalPositions( a,0 ) - x) + (nodalPositions( a,1 ) - y)*(nodalPositions( a,1 ) - y) + (nodalPositions( a,2 ) - z)*(nodalPositions( a,2 ) - z);
+      real64 dist = sqrt(dist_sq);
+      if (dist < tolerance)
+	{
+	  return a;
+	}
+    }
+  return -1;
+}
+
 //Andre - 03/15 - this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1. 
-void MultiResolutionHFSolver::setInitialCrackDamageBCs()
+void MultiResolutionHFSolver::setInitialCrackDamageBCs( MeshLevel const & patch, MeshLevel const & base )
 {
 
-  //we need to zero the lists to erase data from previous step
-  //this->eraseLists(); //maybe this can go inside resetToBeginningOfStep() - already there! 
-  for i=allNodesInPatch
-    {
-      Real64 dist_i = compute_dist_to_frac(i);
-      if dist_i < h_patch //small element size - we must choose a good distance here
+  // get list of nodes on the boundary of the patch
+  NodeManager const & patchNodeManager = patch.getNodeManager();
+  ElementRegionManager const & baseElemManager = base.getElemManager();
+  baseElemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&](localIndex const, CellElementSubRegion const & cellElementSubRegion)
+  {
+    SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+    m_dofListDamage.resize( numNodesPerElement()*fracturedElements.size() );
+    localIndex count = 0;
+    for (localIndex a : fracturedElements)
       {
-      //append dofs associated with node i
-      m_dofListDamage.append(i); 
+	//get all nodes of fracturedElements(a)
+	for (localIndex b=0; b < numNodesPerElement(); b++)
+	  {
+	    cellElementSubRegion.nodeList( a,b )      
+	    //append dofs associated with node b of element a
+	    if (a is not on m_dofListDamage)
+	      {
+		m_dofListDamage(count) = a;
+		++count;
+	      }
+	  }
+	 
       }
-    }
+  });
+  m_dofListDamage.resize( count );
 }  
   
 //Andre - 03/15 - this function needs to access u_global (hopefully via node manager), the local mesh (via node manager too),
@@ -175,8 +209,6 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
   arrayView1d< globalIndex const > const localToGlobalMap = patchNodeManager.localToGlobalMap();
   arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference<array1d<real64>( "Damage" );
-
-
 
   NodeManager const & baseNodeManager = base.getNodeManager();
   arrayView1d<real64 const> const baseDisp = baseNodeManager.totalDisplacement();
@@ -195,19 +227,16 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
       {
         // NOTE: there needs to be a translation between patch and base mesh for the indices and values/weights.
 
-
-
         //append dofs associated with node i
         m_dofListDisp(count) = a;
         localIndex const numBaseNodes = m_nodeMapIndices.sizeOfArray( a );
         for( localIndex b=0; b<numBaseNodes; ++b )
         {
-          localIndex const I = m_nodeMap[i]; // global node number associated to local node i
-          m_fixedDispList(count,0) += m_nodeMapWeights(a,b) * baseDisp(I,0);
-          m_fixedDispList(count,1) += m_nodeMapWeights(a,b) * baseDisp(I,1);
-          m_fixedDispList(count,2) += m_nodeMapWeights(a,b) * baseDisp(I,2);
+          localIndex const B = m_nodeMapIndices[b]; // global node number associated to local node i
+          m_fixedDispList(count,0) += m_nodeMapWeights(a,b) * baseDisp(B,0);
+          m_fixedDispList(count,1) += m_nodeMapWeights(a,b) * baseDisp(B,1);
+          m_fixedDispList(count,2) += m_nodeMapWeights(a,b) * baseDisp(B,2);
         }
-
 
         ++count;
       }
