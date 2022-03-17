@@ -292,22 +292,20 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
       }
     }
 
-    // TODO We cannot rely on `wrapper.getName()` to get the key (they can be different).
-    //      Plus additional refactoring should be done by using `Group::packPrivate`
-    //      that duplicates the following pack code.
-    std::vector< std::pair< string, WrapperBase const * > > wrappers;
+    // Additional refactoring should be done by using `Group::packPrivate` that duplicates the following pack code.
+    std::vector< WrapperBase const * > wrappers;
     for( string const & wrapperName: wrapperNamesFinal )
     {
       WrapperBase const & wrapper = getWrapperBase( wrapperName );
-      wrappers.emplace_back( wrapperName, &wrapper );
+      wrappers.push_back( &wrapper );
     }
 
     packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
     packedSize += bufferOps::Pack< DOPACK >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
-    for( auto const & nameToWrapper: wrappers )
+    for( WrapperBase const * wrapper: wrappers )
     {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, nameToWrapper.first );
-      packedSize += nameToWrapper.second->packByIndex< DOPACK >( buffer, packList, true, onDevice, events );
+      packedSize += bufferOps::Pack< DOPACK >( buffer, wrapper->getName() );
+      packedSize += wrapper->packByIndex< DOPACK >( buffer, packList, true, onDevice, events );
     }
   }
 
