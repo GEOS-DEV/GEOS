@@ -1419,7 +1419,7 @@ private:
    */
   template< bool DO_PACK >
   localIndex packPrivate( buffer_unit_type * & buffer,
-                          string_array const & wrapperNames,
+                          array1d< string > const & wrapperNames,
                           arrayView1d< localIndex const > const & packList,
                           integer const recursive,
                           bool onDevice,

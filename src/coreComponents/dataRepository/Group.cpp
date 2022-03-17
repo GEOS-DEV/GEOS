@@ -276,7 +276,7 @@ void Group::initializationOrder( string_array & order )
 
 void Group::initialize_postMeshGeneration()
 {
-  string_array initOrder;
+  array1d< string > initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -290,7 +290,7 @@ void Group::initialize()
 {
   initializePreSubGroups();
 
-  string_array initOrder;
+  array1d< string > initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -306,7 +306,7 @@ void Group::initializePostInitialConditions()
 {
   initializePostInitialConditionsPreSubGroups();
 
-  string_array initOrder;
+  array1d< string > initOrder;
   initializationOrder( initOrder );
 
   for( auto const & groupName : initOrder )
@@ -319,7 +319,7 @@ void Group::initializePostInitialConditions()
 
 template< bool DO_PACK >
 localIndex Group::packPrivate( buffer_unit_type * & buffer,
-                               string_array const & wrapperNames,
+                               array1d< string > const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
                                integer const recursive,
                                bool onDevice,
@@ -385,7 +385,7 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
   return packedSize;
 }
 
-localIndex Group::packSize( string_array const & wrapperNames,
+localIndex Group::packSize( array1d< string > const & wrapperNames,
                             arrayView1d< localIndex const > const & packList,
                             integer const recursive,
                             bool onDevice,
@@ -396,7 +396,7 @@ localIndex Group::packSize( string_array const & wrapperNames,
 }
 
 
-localIndex Group::packSize( string_array const & wrapperNames,
+localIndex Group::packSize( array1d< string > const & wrapperNames,
                             integer const recursive,
                             bool onDevice,
                             parallelDeviceEvents & events ) const
@@ -407,7 +407,7 @@ localIndex Group::packSize( string_array const & wrapperNames,
 
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        string_array const & wrapperNames,
+                        array1d< string > const & wrapperNames,
                         arrayView1d< localIndex const > const & packList,
                         integer const recursive,
                         bool onDevice,
@@ -417,7 +417,7 @@ localIndex Group::pack( buffer_unit_type * & buffer,
 }
 
 localIndex Group::pack( buffer_unit_type * & buffer,
-                        string_array const & wrapperNames,
+                        array1d< string > const & wrapperNames,
                         integer const recursive,
                         bool onDevice,
                         parallelDeviceEvents & events ) const

@@ -812,12 +812,13 @@ private:
    *                    packing kernels ( device packing is incomplete until all
    *                    events are finalized )
    * @return The packed size.
+   * @note The @p Impl suffix was used to prevent from a name conflict.
    */
   template< bool DO_PACKING >
-  localIndex packTemplate( buffer_unit_type * & buffer,
-                           bool withMetadata,
-                           bool onDevice,
-                           parallelDeviceEvents & events ) const
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       bool withMetadata,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const
   {
     localIndex packedSize = 0;
 
@@ -893,7 +894,7 @@ private:
                           bool onDevice,
                           parallelDeviceEvents & events ) const override final
   {
-    return this->packTemplate< true >( buffer, withMetadata, onDevice, events );
+    return this->packImpl< true >( buffer, withMetadata, onDevice, events );
   }
 
   /**
@@ -916,7 +917,7 @@ private:
                               parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * dummy;
-    return this->packTemplate< false >( dummy, withMetadata, onDevice, events );
+    return this->packImpl< false >( dummy, withMetadata, onDevice, events );
   }
 
   /**
@@ -949,5 +950,20 @@ private:
 
 } // end of namespace geosx
 
+// Do not remove the following commented code since it's used for debugging with TotalView.
+//template< typename T >
+//int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
+//{
+//  std::cout<<"Executing "<<wrapper->totalviewTypeName()<<"::TV_ttf_display_type()"<<std::endl;
+//  return TV_ttf_format_raw;
+//}
+//
+//template int TV_ttf_display_type( geosx::dataRepository::Wrapper<int> const * wrapper );
+//
+//template< typename T >
+//void geosx::dataRepository::Wrapper<T>::tvTemplateInstantiation()
+//{
+//  TV_ttf_display_type<T>(this);
+//}
 
 #endif /* GEOSX_DATAREPOSITORY_WRAPPER_HPP_ */
