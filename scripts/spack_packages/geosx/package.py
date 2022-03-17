@@ -116,12 +116,11 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # IO
     # #
-
     depends_on('hdf5@1.10.5')
+    depends_on('silo@4.10.2~fortran')
 
     depends_on('conduit@0.7.2~test~fortran~hdf5_compat')
 
-    depends_on('silo@4.10.2~fortran')
 
     depends_on('adiak@0.2.1', when='+caliper')
     depends_on('caliper@2.4~gotcha~sampler', when='+caliper')
@@ -139,7 +138,7 @@ class Geosx(CMakePackage, CudaPackage):
 
     depends_on('parmetis@4.0.3+int64')
 
-    # depends_on('superlu-dist+int64+openmp', when='~petsc')
+    #depends_on('superlu-dist+int64+openmp', when='~petsc')
     depends_on('superlu-dist@6.3.0+int64+openmp')
 
     depends_on('scotch@6.0.9: +mpi +int64', when='+scotch')

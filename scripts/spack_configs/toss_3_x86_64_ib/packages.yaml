@@ -32,21 +32,21 @@ packages:
       - spec: papi@5.5.1
         prefix: /usr/tce/packages/papi/papi-5.5.1/
   cmake:
-    buildable: False
+    version: [3.14.5]
+    buildable: false
     externals:
     - spec: cmake@3.14.5
-      prefix: /usr/tce/packages/cmake/cmake-3.14.5/
-
+      prefix: /usr/tce/packages/cmake/cmake-3.14.5
   readline:
-    buildable: False
     externals:
-      - spec: readline@6.2
-        prefix: /usr/lib64/
+    - spec: readline@7.0
+      prefix: /collab/usr/gapps/python/build/spack-toss3.3/opt/spack/linux-rhel7-x86_64/gcc-4.9.3/readline-7.0-e5jqqjmcjknidgwvi353pd6umpixzxr2
+    buildable: false
   zlib:
     buildable: False
     externals:
       - spec: zlib@1.2.7
-        prefix: /usr/
+        prefix: /usr
   m4:
     buildable: False
     externals:
