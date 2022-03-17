@@ -1857,7 +1857,7 @@ bool LagrangianContactSolver::isFractureAllInStickCondition( DomainPartition con
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & )
   {
-    computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );    
+    computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
   } );
 
   return ( ( numSlip + numOpen ) == 0 );
