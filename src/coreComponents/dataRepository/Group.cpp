@@ -357,7 +357,7 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
   }
 
   // Now we pack the `wrappers`.
-  packedSize += bufferOps::Pack< DO_PACK >( buffer, static_cast< int >(wrappers.size()) );
+  packedSize += bufferOps::Pack< DO_PACK >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
   for( WrapperBase const * wrapper: wrappers )
   {
     packedSize += bufferOps::Pack< DO_PACK >( buffer, wrapper->getName() );
