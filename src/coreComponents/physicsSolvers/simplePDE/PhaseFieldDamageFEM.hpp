@@ -136,7 +136,7 @@ public:
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey fieldVarName = { "fieldName" };
+    dataRepository::ViewKey damageVarName = { "damage" };
   } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const * getSolution() const
@@ -151,14 +151,14 @@ public:
 
   string const & getFieldName() const
   {
-    return m_fieldName;
+    return m_damageName;
   }
 
 protected:
   virtual void postProcessInput() override final;
 
 private:
-  string m_fieldName;
+  string m_damageName;
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;

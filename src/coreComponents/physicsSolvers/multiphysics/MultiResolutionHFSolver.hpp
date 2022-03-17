@@ -124,9 +124,9 @@ public:
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
-    constexpr static char const * globalSolverNameString() { return "globalSolverName"; }
+    constexpr static char const * baseSolverNameString() { return "baseSolverName"; }
 
-    constexpr static char const * localSolverNameString() { return "localSolverName"; }
+    constexpr static char const * patchSolverNameString() { return "patchSolverName"; }
         
     constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
 
@@ -144,11 +144,11 @@ protected:
 
 private:
 
-  // name of the global efem solver
-  string m_globalSolverName;
+  // name of the base efem solver
+  string m_baseSolverName;
 
-  //name of local phase-field fracture solver
-  string m_localSolverName;
+  //name of patch phase-field fracture solver
+  string m_patchSolverName;
 
   // name of the contact relation
   string m_contactRelationName;
@@ -157,10 +157,10 @@ private:
   string m_surfaceGeneratorName;
 
   // list of damage dofs to be fixed in the subdomain boundary
-  array1d<localIndex> m_dofListDamage;
+  array1d<localIndex> m_nodeFixDamage;
 
   // list of disp dofs to be fixed in the subdomain boundary
-  array1d<localIndex> m_dofListDisp;
+  array1d<localIndex> m_nodeFixDisp;
   
   // list of displacement values to be prescribed in the subdomain boundary
   array2d<real64> m_fixedDispList;
@@ -169,11 +169,11 @@ private:
   ArrayOfArrays<localIndex> m_nodeMapIndices;
   ArrayOfArrays<real64> m_nodeMapWeights;
 
-  // pointer to global efem solver
-  SolidMechanicsEmbeddedFractures * m_globalSolver;
+  // pointer to base efem solver
+  SolidMechanicsEmbeddedFractures * m_baseSolver;
     
-  // pointer to local phase-field fracture solver
-  PhaseFieldFractureSolver * m_localSolver;
+  // pointer to patch phase-field fracture solver
+  PhaseFieldFractureSolver * m_patchSolver;
 
   /// pointer to the surface generator
   SurfaceGenerator * m_surfaceGenerator;
