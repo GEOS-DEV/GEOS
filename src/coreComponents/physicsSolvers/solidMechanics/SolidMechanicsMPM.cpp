@@ -267,7 +267,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I
 
       } );
     }
-    else // Particle field registration
+    else // Particle field registration? TODO: What goes here?
     {
       std::cout << "Registering particle fields, I guess" << std::endl;
     }
@@ -466,9 +466,9 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
     }
 
     // stress
-    particleStress.zero();
+    //particleStress.zero(); // This is actually handled by SolidBase.cpp - stress gets initialized to zero by default in the constructor
 
-    // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner
+    // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
     for(int p=0; p<subRegion.size(); p++)
     {
       for(int i=0; i<3; i++)

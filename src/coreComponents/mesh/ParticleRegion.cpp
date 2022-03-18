@@ -49,19 +49,52 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
 // TODO This isn't great because really this calculation should only happen once, classic speed/memory trade-off. It just seems silly having multiple versions of the particle coordinates owned by the manager, regions and subregions.
 array2d< real64 > ParticleRegion::getParticleCoordinates() const
 {
-  int size = this->size();
+  int size = 8*(this->size()); // number of particle corners in this region
   array2d< real64 > coords(size, 3);
   int index = 0;
+  int signs[8][3] = { { 1,  1,  1},
+                      { 1,  1, -1},
+                      { 1, -1,  1},
+                      { 1, -1, -1},
+                      {-1,  1,  1},
+                      {-1,  1, -1},
+                      {-1, -1,  1},
+                      {-1, -1, -1} };
   this->forParticleSubRegions( [&]( auto & subRegion )
   {
-    arrayView2d< real64 const > particleCoords = subRegion.getParticleCenter(); // I don't understand why the various consts are needed here, but it works so... TODO
-    for(int i=0; i<subRegion.size(); i++)
+    arrayView2d< real64 const > particleCenter = subRegion.getParticleCenter();
+    if(!subRegion.getHasRVectors()) // if no r-vectors, return coordinates of a cube centered at the particle with side length = volume^(1/3)
     {
-      for(int j=0; j<3; j++)
+      arrayView1d< real64 const > particleVolume = subRegion.getParticleVolume();
+      for(int p=0; p<subRegion.size(); p++)
       {
-        coords[index][j] = particleCoords[i][j];
+        real64 a = 0.5*std::pow(particleVolume[p],1.0/3.0); // cube half-side-length
+        for(int corner=0; corner<8; corner++)
+        {
+          for(int i=0; i<3; i++)
+          {
+            coords[index][i] = particleCenter[p][i] + signs[corner][i]*a;
+          }
+          index++;
+        }
       }
-      index++;
+    }
+    else // currently no difference from the preceding code
+    {
+      //arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
+      arrayView1d< real64 const > particleVolume = subRegion.getParticleVolume();
+      for(int p=0; p<subRegion.size(); p++)
+      {
+        real64 a = 0.5*std::pow(particleVolume[p],1.0/3.0); // cube half-side-length
+        for(int corner=0; corner<8; corner++)
+        {
+          for(int i=0; i<3; i++)
+          {
+            coords[index][i] = particleCenter[p][i] + signs[corner][i]*a;
+          }
+          index++;
+        }
+      }
     }
   } );
   return coords;

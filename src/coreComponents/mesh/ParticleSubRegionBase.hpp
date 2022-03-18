@@ -233,10 +233,20 @@ public:
   {
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
-    /// @return String key for the member level field for the particle center.
-        static constexpr char const * particleVelocityString() { return "particleVelocity"; }
+    /// @return String key for the member level field for the particle velocity.
+    static constexpr char const * particleVelocityString() { return "particleVelocity"; }
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
+    /// @return String key for the member level field for the particle volume.
+    static constexpr char const * particleVolume0String() { return "particleVolume0"; }
+    /// @return String key for the member level field for the particle volume.
+    static constexpr char const * particleMassString() { return "particleMass"; }
+    /// @return String key for the member level field for the particle volume.
+    static constexpr char const * particleDeformationGradientString() { return "particleDeformationGradient"; }
+    /// @return String key for the member level field for the particle volume.
+    static constexpr char const * particleRVectorsString() { return "particleRVectors"; }
+    /// @return String key for the member level field for the particle volume.
+    static constexpr char const * particleRVectors0String() { return "particleRVectors0"; }
   };
 
   /**
