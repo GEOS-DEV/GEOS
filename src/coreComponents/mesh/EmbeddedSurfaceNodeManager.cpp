@@ -211,13 +211,14 @@ void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const 
   m_ghostRank[ nodeIndex ] = pointGhostRank;
 }
 
-void EmbeddedSurfaceNodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > EmbeddedSurfaceNodeManager::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::edgeListString(),
+                   viewKeyStruct::elementRegionListString(),
+                   viewKeyStruct::elementSubRegionListString(),
+                   viewKeyStruct::elementListString() } );
+  return result;
 }
 
 

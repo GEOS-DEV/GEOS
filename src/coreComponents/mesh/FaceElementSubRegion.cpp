@@ -227,15 +227,17 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   }
 }
 
-void FaceElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > FaceElementSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::surfaceElementsToCellRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellIndexString() } );
+  return result;
 }
+
 
 } /* namespace geosx */

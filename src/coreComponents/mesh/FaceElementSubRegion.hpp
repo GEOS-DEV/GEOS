@@ -108,7 +108,7 @@ public:
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  std::set< string > getPackingExclusionList() const override;
 
   ///@}
 
