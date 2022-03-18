@@ -109,19 +109,19 @@ std::set< string > CellElementSubRegion::getPackingExclusionList() const
 localIndex CellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 
 localIndex CellElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
                                                  arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
 template< bool DO_PACKING >
-localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                        arrayView1d< localIndex const > const & packList ) const
+localIndex CellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                     arrayView1d< localIndex const > const & packList ) const
 {
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
@@ -189,7 +189,7 @@ localIndex CellElementSubRegion::packFracturedElementsSize( arrayView1d< localIn
                                                             arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packFracturedElementsPrivate< false >( junk, packList, embeddedSurfacesLocalToGlobal );
+  return packFracturedElementsImpl< false >( junk, packList, embeddedSurfacesLocalToGlobal );
 }
 
 
@@ -197,13 +197,13 @@ localIndex CellElementSubRegion::packFracturedElements( buffer_unit_type * & buf
                                                         arrayView1d< localIndex const > const & packList,
                                                         arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
-  return packFracturedElementsPrivate< true >( buffer, packList, embeddedSurfacesLocalToGlobal );
+  return packFracturedElementsImpl< true >( buffer, packList, embeddedSurfacesLocalToGlobal );
 }
 
 template< bool DO_PACKING >
-localIndex CellElementSubRegion::packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                                               arrayView1d< localIndex const > const & packList,
-                                                               arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
+localIndex CellElementSubRegion::packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                                            arrayView1d< localIndex const > const & packList,
+                                                            arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   localIndex packedSize = 0;
 

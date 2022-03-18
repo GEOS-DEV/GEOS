@@ -225,18 +225,18 @@ std::set< string > EmbeddedSurfaceNodeManager::getPackingExclusionList() const
 localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packNewNodesGlobalMapsPrivate< false >( junk, packList );
+  return packNewNodesGlobalMapsImpl< false >( junk, packList );
 }
 
 localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMaps( buffer_unit_type * & buffer,
                                                                arrayView1d< localIndex const > const & packList ) const
 {
-  return packNewNodesGlobalMapsPrivate< true >( buffer, packList );
+  return packNewNodesGlobalMapsImpl< true >( buffer, packList );
 }
 
 template< bool DO_PACKING >
-localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                                                      arrayView1d< localIndex const > const & packList ) const
+localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsImpl( buffer_unit_type * & buffer,
+                                                                   arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, this->getName() );
 
@@ -405,20 +405,20 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
 localIndex EmbeddedSurfaceNodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 
 localIndex EmbeddedSurfaceNodeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                                        arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
 
 template< bool DO_PACKING >
-localIndex EmbeddedSurfaceNodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                              arrayView1d< localIndex const > const & packList ) const
+localIndex EmbeddedSurfaceNodeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                           arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 

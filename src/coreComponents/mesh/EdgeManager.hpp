@@ -399,8 +399,8 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DO_PACKING >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
 };
 

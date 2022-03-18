@@ -242,21 +242,20 @@ int ElementRegionManager::PackSize( string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackPrivate< false >( junk, wrapperNames, packList );
+  return packImpl< false >( junk, wrapperNames, packList );
 }
 
 int ElementRegionManager::Pack( buffer_unit_type * & buffer,
                                 string_array const & wrapperNames,
                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
-  return PackPrivate< true >( buffer, wrapperNames, packList );
+  return packImpl< true >( buffer, wrapperNames, packList );
 }
 
 template< bool DO_PACKING >
-int
-ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
-                                   string_array const & wrapperNames,
-                                   ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ElementRegionManager::packImpl( buffer_unit_type *& buffer,
+                                    string_array const & wrapperNames,
+                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
 
@@ -298,18 +297,18 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
                                   ElementViewAccessor< arrayView1d< localIndex > > & packList )
 {
-  return unpackPrivate( buffer, packList );
+  return unpackImpl( buffer, packList );
 }
 
 int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
                                   ElementReferenceAccessor< array1d< localIndex > > & packList )
 {
-  return unpackPrivate( buffer, packList );
+  return unpackImpl( buffer, packList );
 }
 
 template< typename T >
-int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
-                                         T & packList )
+int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
+                                      T & packList )
 {
   int unpackedSize = 0;
 
@@ -351,18 +350,18 @@ int ElementRegionManager::unpackPrivate( buffer_unit_type const * & buffer,
 int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return PackGlobalMapsPrivate< false >( junk, packList );
+  return packGlobalMapsImpl< false >( junk, packList );
 }
 
 int ElementRegionManager::PackGlobalMaps( buffer_unit_type * & buffer,
                                           ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
-  return PackGlobalMapsPrivate< true >( buffer, packList );
+  return packGlobalMapsImpl< true >( buffer, packList );
 }
+
 template< bool DO_PACKING >
-int
-ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ElementRegionManager::packGlobalMapsImpl( buffer_unit_type * & buffer,
+                                              ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
 
@@ -436,29 +435,28 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
 int ElementRegionManager::PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 int ElementRegionManager::PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
                                           ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
                                           ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
 template< bool DO_PACKING, typename T >
-int
-ElementRegionManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                             T const & packList ) const
+int ElementRegionManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                              T const & packList ) const
 {
   int packedSize = 0;
 
@@ -489,15 +487,15 @@ ElementRegionManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-//template int
-//ElementRegionManager::
-//PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
-//template int
-//ElementRegionManager::
-//PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
+//template int
+//ElementRegionManager::
+//PackUpDownMapsImpl<true>( buffer_unit_type * & buffer,
+//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
+//template int
+//ElementRegionManager::
+//PackUpDownMapsImpl<false>( buffer_unit_type * & buffer,
+//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
 int
 ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
@@ -537,20 +535,20 @@ int ElementRegionManager::packFracturedElementsSize( ElementViewAccessor< arrayV
                                                      string const fractureRegionName ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packFracturedElementsPrivate< false >( junk, packList, fractureRegionName );
+  return packFracturedElementsImpl< false >( junk, packList, fractureRegionName );
 }
 
 int ElementRegionManager::packFracturedElements( buffer_unit_type * & buffer,
                                                  ElementViewAccessor< arrayView1d< localIndex > > const & packList,
                                                  string const fractureRegionName ) const
 {
-  return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
+  return packFracturedElementsImpl< true >( buffer, packList, fractureRegionName );
 }
+
 template< bool DO_PACKING >
-int
-ElementRegionManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                                    string const fractureRegionName ) const
+int ElementRegionManager::packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                                     string const fractureRegionName ) const
 {
   int packedSize = 0;
 

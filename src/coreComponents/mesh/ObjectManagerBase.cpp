@@ -214,16 +214,13 @@ localIndex ObjectManagerBase::packSize( string_array const & wrapperNames,
                                         bool onDevice,
                                         parallelDeviceEvents & events ) const
 {
-  localIndex packedSize = 0;
   buffer_unit_type * junk;
-  packedSize += this->packPrivate< false >( junk,
-                                            wrapperNames,
-                                            packList,
-                                            recursive,
-                                            onDevice,
-                                            events );
-
-  return packedSize;
+  return this->packImpl< false >( junk,
+                                  wrapperNames,
+                                  packList,
+                                  recursive,
+                                  onDevice,
+                                  events );
 }
 
 localIndex ObjectManagerBase::pack( buffer_unit_type * & buffer,
@@ -233,20 +230,16 @@ localIndex ObjectManagerBase::pack( buffer_unit_type * & buffer,
                                     bool onDevice,
                                     parallelDeviceEvents & events ) const
 {
-  localIndex packedSize = 0;
-
-  packedSize += this->packPrivate< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
-
-  return packedSize;
+  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 template< bool DO_PACKING >
-localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
-                                           string_array const & wrapperNames,
-                                           arrayView1d< localIndex const > const & packList,
-                                           integer const recursive,
-                                           bool onDevice,
-                                           parallelDeviceEvents & events ) const
+localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
+                                        string_array const & wrapperNames,
+                                        arrayView1d< localIndex const > const & packList,
+                                        integer const recursive,
+                                        bool onDevice,
+                                        parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, this->getName() );
@@ -292,7 +285,7 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
       }
     }
 
-    // Additional refactoring should be done by using `Group::packPrivate` that duplicates the following pack code.
+    // Additional refactoring should be done by using `Group::packImpl` that duplicates the following pack code.
     std::vector< WrapperBase const * > wrappers;
     for( string const & wrapperName: wrapperNamesFinal )
     {
@@ -384,8 +377,8 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
 }
 
 template< bool DO_PACKING >
-localIndex ObjectManagerBase::packParentChildMapsPrivate( buffer_unit_type * & buffer,
-                                                          arrayView1d< localIndex const > const & packList ) const
+localIndex ObjectManagerBase::packParentChildMapsImpl( buffer_unit_type * & buffer,
+                                                       arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
@@ -415,11 +408,11 @@ localIndex ObjectManagerBase::packParentChildMapsPrivate( buffer_unit_type * & b
 }
 
 template
-localIndex ObjectManagerBase::packParentChildMapsPrivate< true >( buffer_unit_type * & buffer,
-                                                                  arrayView1d< localIndex const > const & packList ) const;
+localIndex ObjectManagerBase::packParentChildMapsImpl< true >( buffer_unit_type * & buffer,
+                                                               arrayView1d< localIndex const > const & packList ) const;
 template
-localIndex ObjectManagerBase::packParentChildMapsPrivate< false >( buffer_unit_type * & buffer,
-                                                                   arrayView1d< localIndex const > const & packList ) const;
+localIndex ObjectManagerBase::packParentChildMapsImpl< false >( buffer_unit_type * & buffer,
+                                                                arrayView1d< localIndex const > const & packList ) const;
 
 
 localIndex ObjectManagerBase::unpackParentChildMaps( buffer_unit_type const * & buffer,
@@ -522,20 +515,20 @@ localIndex ObjectManagerBase::packGlobalMapsSize( arrayView1d< localIndex const 
                                                   integer const recursive ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packGlobalMapsPrivate< false >( junk, packList, recursive );
+  return packGlobalMapsImpl< false >( junk, packList, recursive );
 }
 
 localIndex ObjectManagerBase::packGlobalMaps( buffer_unit_type * & buffer,
                                               arrayView1d< localIndex const > const & packList,
                                               integer const recursive ) const
 {
-  return packGlobalMapsPrivate< true >( buffer, packList, recursive );
+  return packGlobalMapsImpl< true >( buffer, packList, recursive );
 }
 
 template< bool DO_PACKING >
-localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                                     arrayView1d< localIndex const > const & packList,
-                                                     integer const recursive ) const
+localIndex ObjectManagerBase::packGlobalMapsImpl( buffer_unit_type * & buffer,
+                                                  arrayView1d< localIndex const > const & packList,
+                                                  integer const recursive ) const
 {
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
@@ -584,7 +577,7 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
       ObjectManagerBase const * const subObjectManager = dynamicCast< ObjectManagerBase const * >( keyGroupPair.second );
       if( subObjectManager )
       {
-        packedSize += subObjectManager->packGlobalMapsPrivate< DO_PACKING >( buffer, packList, recursive );
+        packedSize += subObjectManager->packGlobalMapsImpl< DO_PACKING >( buffer, packList, recursive );
       }
     }
   }

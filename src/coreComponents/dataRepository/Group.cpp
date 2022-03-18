@@ -318,12 +318,12 @@ void Group::initializePostInitialConditions()
 }
 
 template< bool DO_PACKING >
-localIndex Group::packPrivate( buffer_unit_type * & buffer,
-                               array1d< string > const & wrapperNames,
-                               arrayView1d< localIndex const > const & packList,
-                               integer const recursive,
-                               bool onDevice,
-                               parallelDeviceEvents & events ) const
+localIndex Group::packImpl( buffer_unit_type * & buffer,
+                            array1d< string > const & wrapperNames,
+                            arrayView1d< localIndex const > const & packList,
+                            integer const recursive,
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
@@ -378,7 +378,7 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : m_subGroups )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->packPrivate< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
+      packedSize += keyGroupPair.second->packImpl< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
@@ -392,7 +392,7 @@ localIndex Group::packSize( array1d< string > const & wrapperNames,
                             parallelDeviceEvents & events ) const
 {
   buffer_unit_type * dummy;
-  return this->packPrivate< false >( dummy, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< false >( dummy, wrapperNames, packList, recursive, onDevice, events );
 }
 
 
@@ -413,7 +413,7 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  return this->packPrivate< false >( buffer, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< false >( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 localIndex Group::pack( buffer_unit_type * & buffer,

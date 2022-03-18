@@ -437,8 +437,8 @@ private:
    * @return the pack size
    */
   template< bool DO_PACKING >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Links the managers to their mappings.
@@ -449,9 +449,9 @@ private:
   void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
   template< bool DO_PACKING >
-  localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                           arrayView1d< localIndex const > const & packList,
-                                           arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+  localIndex packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                        arrayView1d< localIndex const > const & packList,
+                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 };
 
 } /* namespace geosx */

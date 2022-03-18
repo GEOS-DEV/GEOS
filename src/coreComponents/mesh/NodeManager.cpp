@@ -327,20 +327,20 @@ std::set< string > NodeManager::getPackingExclusionList() const
 localIndex NodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 
 localIndex NodeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
 
 template< bool DO_PACKING >
-localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+localIndex NodeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                            arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 

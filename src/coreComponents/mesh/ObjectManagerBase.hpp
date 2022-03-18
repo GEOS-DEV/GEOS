@@ -209,7 +209,7 @@ public:
   localIndex packParentChildMapsSize( arrayView1d< localIndex const > const & packList ) const
   {
     buffer_unit_type * buffer = nullptr;
-    return packParentChildMapsPrivate< false >( buffer, packList );
+    return packParentChildMapsImpl< false >( buffer, packList );
   }
 
   /**
@@ -221,7 +221,7 @@ public:
   localIndex packParentChildMaps( buffer_unit_type * & buffer,
                                   arrayView1d< localIndex const > const & packList ) const
   {
-    return packParentChildMapsPrivate< true >( buffer, packList );
+    return packParentChildMapsImpl< true >( buffer, packList );
   }
 
   /**
@@ -246,12 +246,12 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packPrivate( buffer_unit_type * & buffer,
-                          string_array const & wrapperNames,
-                          arrayView1d< localIndex const > const & packList,
-                          integer const recursive,
-                          bool onDevice,
-                          parallelDeviceEvents & events ) const;
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       string_array const & wrapperNames,
+                       arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   /**
    * @brief Packing global maps.
@@ -262,9 +262,9 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList,
-                                    integer const recursive ) const;
+  localIndex packGlobalMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList,
+                                 integer const recursive ) const;
 
   /**
    * @brief Pack parent and child maps.
@@ -274,8 +274,8 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packParentChildMapsPrivate( buffer_unit_type * & buffer,
-                                         arrayView1d< localIndex const > const & packList ) const;
+  localIndex packParentChildMapsImpl( buffer_unit_type * & buffer,
+                                      arrayView1d< localIndex const > const & packList ) const;
 
   //**********************************************************************************************************************
   // functions for compatibility with old data structure

@@ -448,8 +448,8 @@ private:
    * @return the pack size
    */
   template< bool DO_PACKING >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /// normal vector to the embedded surface element
   array2d< real64 > m_normalVector;

@@ -1125,9 +1125,9 @@ private:
    * @return the size of the buffer required to pack the wrappers
    */
   template< bool DO_PACKING >
-  int PackPrivate( buffer_unit_type * & buffer,
-                   string_array const & wrapperNames,
-                   ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+  int packImpl( buffer_unit_type * & buffer,
+                string_array const & wrapperNames,
+                ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack a buffer or get the buffer size.
@@ -1136,8 +1136,8 @@ private:
    * @return the size of the data packed
    */
   template< bool DO_PACKING >
-  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+  int packGlobalMapsImpl( buffer_unit_type * & buffer,
+                          ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
@@ -1147,8 +1147,8 @@ private:
    */
   template< bool DO_PACKING, typename T >
   int
-  packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         T const & packList ) const;
+  packUpDownMapsImpl( buffer_unit_type * & buffer,
+                      T const & packList ) const;
   /**
    * @brief Unpack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
@@ -1156,8 +1156,8 @@ private:
    * @return the size of the data unpacked
    */
   template< typename T >
-  int unpackPrivate( buffer_unit_type const * & buffer,
-                     T & packList );
+  int unpackImpl( buffer_unit_type const * & buffer,
+                  T & packList );
 
   /**
    * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
@@ -1167,10 +1167,9 @@ private:
    * @return the size of the data packed
    */
   template< bool DO_PACKING >
-  int
-  packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                string const fractureRegionName ) const;
+  int packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                 string const fractureRegionName ) const;
 
   /**
    * @brief Copy constructor.

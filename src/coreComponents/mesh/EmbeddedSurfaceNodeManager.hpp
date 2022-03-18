@@ -377,8 +377,8 @@ private:
    * @return size of data packed in terms of number of chars
    */
   template< bool DO_PACKING >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Packing global maps.
@@ -388,8 +388,8 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                            arrayView1d< localIndex const > const & packList ) const;
+  localIndex packNewNodesGlobalMapsImpl( buffer_unit_type * & buffer,
+                                         arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Checks if a node already exists on this rank and returns its local index.
