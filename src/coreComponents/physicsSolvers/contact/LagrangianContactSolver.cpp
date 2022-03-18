@@ -1301,7 +1301,7 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
       fractureSubRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
 
     // Get the tractions and stabilization contribution to the local jump
-    arrayView2d< real64 const > const & traction = getReference< array2d< real64 > >( extrinsicMeshData::contact::traction::key() );
+    arrayView2d< real64 const > const & traction = fractureSubRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
     arrayView2d< real64 const > const & deltaTraction = fractureSubRegion.getExtrinsicData< extrinsicMeshData::contact::deltaTraction >();
 
     // Get the volume for all elements
