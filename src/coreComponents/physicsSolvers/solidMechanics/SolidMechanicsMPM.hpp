@@ -241,12 +241,12 @@ protected:
   string m_contactRelationName;
   MPI_iCommData m_iComm;
 
-  std::vector<real64> m_hx{DBL_MAX,DBL_MAX,DBL_MAX}; // Grid spacing in x-y-z
-  std::vector<real64> m_xMin{DBL_MAX,DBL_MAX,DBL_MAX}; // Minimum grid coordinate
-  std::vector<real64> m_xMax{DBL_MIN,DBL_MIN,DBL_MIN}; // Maximum grid coordinate
-  std::vector<real64> m_domainL{0.0,0.0,0.0}; // Length of each edge of grid
-  std::vector<int> m_nEl{0,0,0}; // Number of elements in each grid direction
-  std::vector<std::vector<std::vector<int>>> m_ijkMap;
+  std::vector<real64> m_hx{DBL_MAX,DBL_MAX,DBL_MAX};    // Grid spacing in x-y-z
+  std::vector<real64> m_xMin{DBL_MAX,DBL_MAX,DBL_MAX};  // Minimum grid coordinate
+  std::vector<real64> m_xMax{DBL_MIN,DBL_MIN,DBL_MIN};  // Maximum grid coordinate
+  std::vector<real64> m_domainL{0.0,0.0,0.0};           // Length of each edge of grid
+  std::vector<int> m_nEl{0,0,0};                        // Number of elements in each grid direction
+  std::vector<std::vector<std::vector<int>>> m_ijkMap;  // Map from cell-spaced coordinates to cell ID
 
   std::vector< std::vector<int> > m_voigtMap = { {0, 5, 4},
                                                  {5, 1, 3},

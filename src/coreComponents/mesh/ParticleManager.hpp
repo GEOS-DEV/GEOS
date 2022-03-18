@@ -47,16 +47,11 @@ public:
    */
   struct groupKeyStruct : public ObjectManagerBase::groupKeyStruct
   {
-    /// @return element regions group string key
+    /// @return particle regions group string key
     static constexpr auto particleRegionsGroup() { return "particleRegionsGroup"; }
   };
 
-  /**
-   * Limit on max number of nodes for each element
-   */
-  constexpr static int maxNumNodesPerElem = 8;
-
-  /**
+   /**
    * @brief The ElementViewAccessor at the ParticleManager level is an array of array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
@@ -106,7 +101,7 @@ public:
    * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
   static const string catalogName()
-  { return "ZoneManager"; }
+  { return "ParticleManager"; }
 
   /**
    * @brief Virtual access to catalogName()
@@ -132,14 +127,14 @@ public:
    * @return number of elements
    */
   template< typename T = ParticleSubRegionBase >
-  localIndex getNumberOfElements() const
+  localIndex getNumberOfParticles() const
   {
-    localIndex numElem = 0;
-    this->forParticleSubRegions< T >( [&]( ParticleSubRegionBase const & particleBlock )
+    localIndex numParticle = 0;
+    this->forParticleSubRegions< T >( [&]( ParticleSubRegionBase const & particleSubRegion )
     {
-      numElem += particleBlock.size();
+      numParticle += particleSubRegion.size();
     } );
-    return numElem;
+    return numParticle;
   }
 
 //  void Initialize(  ){}
@@ -184,10 +179,10 @@ public:
   using Group::resize;
 
   /**
-   * @brief Set the number of elements for a set of element regions.
-   * @param numParticles list of the new element numbers
-   * @param regionNames list of the element region names
-   * @param particleTypes list of the element types
+   * @brief Set the number of elements for a set of particle regions.
+   * @param numParticles list of the new particle numbers
+   * @param regionNames list of the particle region names
+   * @param particleTypes list of the particle types
    */
   void resize( integer_array const & numParticles,
                string_array const & regionNames,
@@ -199,7 +194,7 @@ public:
   virtual void setMaxGlobalIndex() override final;
 
   /**
-   * @brief Get a collection of element regions
+   * @brief Get a collection of particle regions
    * @return reference to immutable subGroupMap
    */
   subGroupMap const & getRegions() const
@@ -208,7 +203,7 @@ public:
   }
 
   /**
-   * @brief Get a collection of element regions.
+   * @brief Get a collection of particle regions.
    * @return reference to mutable subGroupMap
    */
   subGroupMap & getRegions()
@@ -217,8 +212,8 @@ public:
   }
 
   /**
-   * @brief Get a element region.
-   * @param key The key of element region, either name or number.
+   * @brief Get a particle region.
+   * @param key The key of particle region, either name or number.
    * @return Reference to const T.
    */
   template< typename T=ParticleRegionBase, typename KEY_TYPE=void >
@@ -228,8 +223,8 @@ public:
   }
 
   /**
-   * @brief Get a element region.
-   * @param key The key of the element region, either name or number.
+   * @brief Get a particle region.
+   * @param key The key of the particle region, either name or number.
    * @return Reference to T.
    */
   template< typename T=ParticleRegionBase, typename KEY_TYPE=void >
@@ -284,11 +279,11 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the target element regions with region type =
+   * @brief This function is used to launch kernel function over the target particle regions with region type =
    * ParticleRegionBase.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename REGIONTYPE = ParticleRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -298,11 +293,11 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the target element regions with region type =
+   * @brief This const function is used to launch kernel function over the target particle regions with region type =
    * ParticleRegionBase.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename REGIONTYPE = ParticleRegionBase, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -312,7 +307,7 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over all the types of element regions.
+   * @brief This const function is used to launch kernel function over all the types of particle regions.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
@@ -323,7 +318,7 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over all the types of element regions.
+   * @brief This function is used to launch kernel function over all the types of particle regions.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
@@ -374,10 +369,10 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element regions.
+   * @brief This const function is used to launch kernel function over the specified target particle regions.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -387,10 +382,10 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element regions.
+   * @brief This function is used to launch kernel function over the specified target particle regions.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -400,11 +395,11 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element regions with region type =
-   * specified element region types.
+   * @brief This function is used to launch kernel function over the specified target particle regions with region type =
+   * specified particle region types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -418,11 +413,11 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element regions with region
-   * type = specified element region types.
+   * @brief This const function is used to launch kernel function over the specified target particle regions with region
+   * type = specified particle region types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename REGIONTYPE, typename ... REGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -436,7 +431,7 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the element subregions of all the subregion types.
+   * @brief This function is used to launch kernel function over the particle subregions of all the subregion types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
@@ -447,7 +442,7 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the element subregions of all the subregion
+   * @brief This const function is used to launch kernel function over the particle subregions of all the subregion
    * types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
@@ -459,10 +454,10 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element subregions.
+   * @brief This function is used to launch kernel function over the specified target particle subregions.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -472,10 +467,10 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element subregions.
+   * @brief This const function is used to launch kernel function over the specified target particle subregions.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -485,7 +480,7 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the element subregions of the specified subregion
+   * @brief This function is used to launch kernel function over the particle subregions of the specified subregion
    * types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
@@ -505,7 +500,7 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the element subregions of the specified subregion
+   * @brief This const function is used to launch kernel function over the particle subregions of the specified subregion
    * types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
@@ -524,11 +519,11 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element subregions with the
+   * @brief This function is used to launch kernel function over the specified target particle subregions with the
    * specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -546,11 +541,11 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element subregions with the
+   * @brief This const function is used to launch kernel function over the specified target particle subregions with the
    * specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -568,7 +563,7 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the element subregions of all subregion types.
+   * @brief This const function is used to launch kernel function over the particle subregions of all subregion types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
@@ -579,7 +574,7 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the element subregions of all subregion types.
+   * @brief This function is used to launch kernel function over the particle subregions of all subregion types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
    */
@@ -590,10 +585,10 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element subregions
+   * @brief This function is used to launch kernel function over the specified target particle subregions
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -603,10 +598,10 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element subregions
+   * @brief This const function is used to launch kernel function over the specified target particle subregions
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -616,7 +611,7 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over all the element subregions that can be casted to one of
+   * @brief This function is used to launch kernel function over all the particle subregions that can be casted to one of
    * the specified subregion types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
@@ -641,7 +636,7 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over all the element subregions that can be casted to
+   * @brief This const function is used to launch kernel function over all the particle subregions that can be casted to
    * one of the specified subregion types.
    * @tparam LAMBDA type of the user-provided function
    * @param lambda kernel function
@@ -666,11 +661,11 @@ public:
   }
 
   /**
-   * @brief This function is used to launch kernel function over the specified target element subregions that can be
+   * @brief This function is used to launch kernel function over the specified target particle subregions that can be
    * casted to one of the specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -696,11 +691,11 @@ public:
   }
 
   /**
-   * @brief This const function is used to launch kernel function over the specified target element subregions that can
+   * @brief This const function is used to launch kernel function over the specified target particle subregions that can
    * be casted to one of the specified subregion types.
    * @tparam LOOKUP_CONTAINER type of container of names or indices
    * @tparam LAMBDA type of the user-provided function
-   * @param targetRegions target element region names or indices
+   * @param targetRegions target particle region names or indices
    * @param lambda kernel function
    */
   template< typename SUBREGIONTYPE, typename ... SUBREGIONTYPES, typename LOOKUP_CONTAINER, typename LAMBDA >
@@ -1024,21 +1019,21 @@ public:
                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
   /**
-   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @brief Get the buffer size needed to pack particle-to-node and particle-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
   int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
+   * @brief Get the buffer size needed to pack particle-to-node and particle-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
   int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps.
+   * @brief Pack particle-to-node and particle-to-face maps.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of data packed.
@@ -1047,7 +1042,7 @@ public:
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps.
+   * @brief Pack particle-to-node and particle-to-face maps.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of data packed.
@@ -1056,7 +1051,7 @@ public:
                       ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Unpack element-to-node and element-to-face maps.
+   * @brief Unpack particle-to-node and particle-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to pack
    * @param overwriteMap flag to indicate whether to overwrite the local map
@@ -1066,41 +1061,6 @@ public:
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
-  /**
-   * @name viewKeyStruct/groupKeyStruct
-   */
-  ///@{
-
-  /**
-   *  @brief contains the added view access keys to be bound with class data member.
-   *  @struct viewKeyStruct
-   */
-  struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
-  {
-    /// @return String to access the reference position
-    static constexpr char const * referencePositionString() { return "ReferencePosition"; }
-
-    /// Accessor to reference position
-    dataRepository::ViewKey referencePosition       = { referencePositionString() };
-  }
-  /// viewKeys
-  viewKeys;
-
-  //START_SPHINX_REFPOS_ACCESS
-  /**
-   * @brief Get the mutable reference position array. This table will contain all the node coordinates.
-   * @return reference position array
-   */
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > & referencePosition() { return m_referencePosition; }
-
-  /**
-   * @brief Provide an immutable arrayView of the reference position. This table will contain all the node coordinates.
-   * @return an immutable arrayView of the reference position.
-   */
-
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > referencePosition() const
-  { return m_referencePosition; }
-  //END_SPHINX_REFPOS_ACCESS
 
 private:
 
@@ -1127,7 +1087,7 @@ private:
                              ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
-   * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
+   * @brief Pack particle-to-node and particle-to-face maps to a buffer or get the buffer size.
    * @param buffer pointer to the buffer to be packed
    * @param packList list of indices to pack
    * @return the size of the data packed
@@ -1137,7 +1097,7 @@ private:
   packUpDownMapsPrivate( buffer_unit_type * & buffer,
                          T const & packList ) const;
   /**
-   * @brief Unpack element-to-node and element-to-face maps.
+   * @brief Unpack particle-to-node and particle-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
    * @param packList list of indices to pack
    * @return the size of the data unpacked
@@ -1156,11 +1116,6 @@ private:
    * @return reference to this object
    */
   ParticleManager & operator=( const ParticleManager & );
-
-  //START_SPHINX_REFPOS
-  /// reference position of the nodes
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;
-  //END_SPHINX_REFPOS
 
 };
 

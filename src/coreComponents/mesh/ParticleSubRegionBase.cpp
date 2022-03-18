@@ -26,7 +26,13 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
   m_particleCenter(),
-  m_particleVolume()
+  m_particleVelocity(),
+  m_particleVolume(),
+  m_particleVolume0(),
+  m_particleMass(),
+  m_particleDeformationGradient(),
+  m_particleRVectors(),
+  m_particleRVectors0()
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
@@ -35,8 +41,23 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
     setPlotLevel( PlotLevel::LEVEL_1 ).
     reference().resizeDimension< 1 >( 3 );
 
+  registerWrapper( viewKeyStruct::particleVelocityString(), &m_particleVelocity ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1 >( 3 );
+
   registerWrapper( viewKeyStruct::particleVolumeString(), &m_particleVolume ).
     setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleVolume0String(), &m_particleVolume0 ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  registerWrapper( viewKeyStruct::particleMassString(), &m_particleMass ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
+
+  // idk what I'm doing
+//  registerWrapper( viewKeyStruct::particleDeformationGradientString(), &m_particleDeformationGradient ).
+//    setPlotLevel( PlotLevel::LEVEL_1 ).
+//    reference().resizeDimension< 1 >( 3 ).resizeDimension< 2 >( 3 );
 }
 
 ParticleSubRegionBase::~ParticleSubRegionBase()
