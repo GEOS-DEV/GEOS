@@ -66,7 +66,6 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
   VectorTemp z = createTempVector( r );
   VectorTemp t = createTempVector( r );
   VectorTemp s = createTempVector( r );
-  VectorTemp q = createTempVector( x );
 
   v.zero();
   p.zero();
@@ -124,13 +123,10 @@ void BicgstabSolver< VECTOR >::solve( Vector const & b,
     // Compute t = Az
     m_operator.apply( z, t );
 
-    // Compute t = Mt
-    m_precond.apply( t, q );
-
     // Update omega
-    real64 const q2 = q.dot( q );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( q2 )
-    omega = q.dot( z ) / q2;
+    real64 const t2 = t.dot( t );
+    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( t2 )
+    omega = t.dot( s ) / t2;
 
     // Update x = x + omega*z
     x.axpy( omega, z );
