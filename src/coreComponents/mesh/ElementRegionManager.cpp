@@ -238,14 +238,14 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
   } );
 }
 
-int ElementRegionManager::PackSize( string_array const & wrapperNames,
+int ElementRegionManager::packSize( string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return packImpl< false >( junk, wrapperNames, packList );
 }
 
-int ElementRegionManager::Pack( buffer_unit_type * & buffer,
+int ElementRegionManager::pack( buffer_unit_type * & buffer,
                                 string_array const & wrapperNames,
                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
@@ -253,7 +253,7 @@ int ElementRegionManager::Pack( buffer_unit_type * & buffer,
 }
 
 template< bool DO_PACKING >
-int ElementRegionManager::packImpl( buffer_unit_type *& buffer,
+int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
                                     string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
@@ -294,13 +294,13 @@ int ElementRegionManager::packImpl( buffer_unit_type *& buffer,
 }
 
 
-int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
+int ElementRegionManager::unpack( buffer_unit_type const * & buffer,
                                   ElementViewAccessor< arrayView1d< localIndex > > & packList )
 {
   return unpackImpl( buffer, packList );
 }
 
-int ElementRegionManager::Unpack( buffer_unit_type const * & buffer,
+int ElementRegionManager::unpack( buffer_unit_type const * & buffer,
                                   ElementReferenceAccessor< array1d< localIndex > > & packList )
 {
   return unpackImpl( buffer, packList );
@@ -347,13 +347,13 @@ int ElementRegionManager::unpackImpl( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
-int ElementRegionManager::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ElementRegionManager::packGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return packGlobalMapsImpl< false >( junk, packList );
 }
 
-int ElementRegionManager::PackGlobalMaps( buffer_unit_type * & buffer,
+int ElementRegionManager::packGlobalMaps( buffer_unit_type * & buffer,
                                           ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   return packGlobalMapsImpl< true >( buffer, packList );
@@ -395,7 +395,7 @@ int ElementRegionManager::packGlobalMapsImpl( buffer_unit_type * & buffer,
 
 
 int
-ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
+ElementRegionManager::unpackGlobalMaps( buffer_unit_type const * & buffer,
                                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
 {
   int unpackedSize = 0;
@@ -432,23 +432,23 @@ ElementRegionManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
 
 
 
-int ElementRegionManager::PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ElementRegionManager::packUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return packUpDownMapsImpl< false >( junk, packList );
 }
-int ElementRegionManager::PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
+int ElementRegionManager::packUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return packUpDownMapsImpl< false >( junk, packList );
 }
 
-int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
+int ElementRegionManager::packUpDownMaps( buffer_unit_type * & buffer,
                                           ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   return packUpDownMapsImpl< true >( buffer, packList );
 }
-int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
+int ElementRegionManager::packUpDownMaps( buffer_unit_type * & buffer,
                                           ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
 {
   return packUpDownMapsImpl< true >( buffer, packList );
@@ -498,7 +498,7 @@ int ElementRegionManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
 //                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
 
 int
-ElementRegionManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
+ElementRegionManager::unpackUpDownMaps( buffer_unit_type const * & buffer,
                                         ElementReferenceAccessor< localIndex_array > & packList,
                                         bool const overwriteMap )
 {

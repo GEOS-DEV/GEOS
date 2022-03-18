@@ -435,11 +435,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != getName(), "Group::Unpack(): group names do not match" );
+  GEOSX_ERROR_IF( groupName != getName(), "Group::unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
+  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -455,11 +455,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : m_subGroups )
     {

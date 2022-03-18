@@ -980,7 +980,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  int PackSize( string_array const & wrapperNames,
+  int packSize( string_array const & wrapperNames,
                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -990,7 +990,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed to the buffer
    */
-  int Pack( buffer_unit_type * & buffer,
+  int pack( buffer_unit_type * & buffer,
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
@@ -1003,7 +1003,7 @@ public:
    * @param packList list of indices to unpack
    * @return the size of data unpacked
    */
-  int Unpack( buffer_unit_type const * & buffer,
+  int unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor< arrayView1d< localIndex > > & packList );
 
   /**
@@ -1012,7 +1012,7 @@ public:
    * @param packList list of indices to unpack
    * @return the size of data unpacked.
    */
-  int Unpack( buffer_unit_type const * & buffer,
+  int unpack( buffer_unit_type const * & buffer,
               ElementReferenceAccessor< array1d< localIndex > > & packList );
 
   /**
@@ -1020,7 +1020,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack a buffer.
@@ -1028,7 +1028,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMaps( buffer_unit_type * & buffer,
+  int packGlobalMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -1037,7 +1037,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data unpacked
    */
-  int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+  int unpackGlobalMaps( buffer_unit_type const * & buffer,
                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
   /**
@@ -1045,14 +1045,14 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
+  int packUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack element-to-node and element-to-face maps.
@@ -1060,7 +1060,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
+  int packUpDownMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -1069,7 +1069,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
+  int packUpDownMaps( buffer_unit_type * & buffer,
                       ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
@@ -1079,7 +1079,7 @@ public:
    * @param overwriteMap flag to indicate whether to overwrite the local map
    * @return the size of data packed.
    */
-  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  int unpackUpDownMaps( buffer_unit_type const * & buffer,
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 

@@ -597,12 +597,12 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  string msg = "ObjectManagerBase::Unpack(): group names do not match as they are groupName = " + groupName + " and this->getName= " + this->getName();
+  string msg = "ObjectManagerBase::unpack(): group names do not match as they are groupName = " + groupName + " and this->getName= " + this->getName();
   GEOSX_ERROR_IF( groupName != this->getName(), msg );
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
-  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::Unpack(): label incorrect" );
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::unpack(): label incorrect" );
 
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
@@ -642,7 +642,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
         ++numNewIndices;
 
         GEOSX_ERROR_IF( packList.size() != 0,
-                        "ObjectManagerBase::Unpack(): packList specified, "
+                        "ObjectManagerBase::unpack(): packList specified, "
                         "but a new globalIndex is unpacked" );
       }
       else
@@ -680,7 +680,7 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
     arrayView1d< localIndex > const & parentIndex = this->getExtrinsicData< extrinsicMeshData::ParentIndex >();
     string parentIndicesString;
     unpackedSize += bufferOps::Unpack( buffer, parentIndicesString );
-    GEOSX_ERROR_IF( parentIndicesString != extrinsicMeshData::ParentIndex::key(), "ObjectManagerBase::Unpack(): label incorrect" );
+    GEOSX_ERROR_IF( parentIndicesString != extrinsicMeshData::ParentIndex::key(), "ObjectManagerBase::unpack(): label incorrect" );
     unpackedSize += bufferOps::Unpack( buffer,
                                        parentIndex,
                                        packList,
@@ -693,11 +693,11 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( this->getSubGroups().size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != this->getSubGroups().size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != this->getSubGroups().size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : this->getSubGroups() )
     {

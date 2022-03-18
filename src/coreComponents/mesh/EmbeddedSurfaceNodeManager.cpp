@@ -288,7 +288,7 @@ localIndex EmbeddedSurfaceNodeManager::unpackNewNodesGlobalMaps( buffer_unit_typ
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
-  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::Unpack(): label incorrect" );
+  GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::unpack(): label incorrect" );
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int sendingRank;
