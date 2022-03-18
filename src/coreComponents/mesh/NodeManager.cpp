@@ -307,19 +307,20 @@ void NodeManager::compressRelationMaps()
 }
 
 
-void NodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > NodeManager::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::edgeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::elementRegionListString(),
+                   viewKeyStruct::elementSubRegionListString(),
+                   viewKeyStruct::elementListString() } );
 
   if( this->hasWrapper( "usedFaces" ) )
   {
-    exclusionList.insert( this->getWrapperIndex( "usedFaces" ));
+    result.insert( "usedFaces" );
   }
+  return result;
 }
 
 

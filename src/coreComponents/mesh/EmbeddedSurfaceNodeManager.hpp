@@ -171,8 +171,7 @@ public:
    */
   ///@{
 
-
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  std::set< string > getPackingExclusionList() const override;
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.

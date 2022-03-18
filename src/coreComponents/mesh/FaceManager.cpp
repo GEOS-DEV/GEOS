@@ -426,14 +426,15 @@ void FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager c
   } );
 }
 
-void FaceManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > FaceManager::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::elementRegionListString(),
+                   viewKeyStruct::elementSubRegionListString(),
+                   viewKeyStruct::elementListString() } );
+  return result;
 }
 
 localIndex FaceManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
