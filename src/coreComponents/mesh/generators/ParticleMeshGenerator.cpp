@@ -180,26 +180,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   // Each rank will have its own version of particleData containing only the particles in the partition associated with that rank.
 
   particleManager.resize( numParticles ); // All this does is change m_size for the particleManager, gives a convenient way to get the total number of particles
-  arrayView2d< real64, particles::REFERENCE_POSITION_USD > const & X = particleManager.referencePosition();
-
-  // Assign the read-in particle coordinates to the particle reference positions.
-  int runningCount = 0;
-  for(auto const& it : particleTypeMap)
-  {
-    std::string particleType = it.first;
-    int numThisType = particleData[particleType].size(); // I hope this returns zero when particleType isn't in the map... we CANNOT use particleTypeMap[particleType] instead, doesn't return zero for uninitialized key.
-    runningCount += numThisType;
-    for(localIndex i=0; i<numThisType; i++)
-    {
-      for(localIndex j=0; j<3; j++)
-      {
-        int index = runningCount - numThisType + i;
-        X[index][j] = particleData[particleType][i][j];
-        //std::cout << X[index][j] << "\t"; // debug
-      }
-      //std::cout << "\n"; // debug
-    }
-  }
 
   // Get map from particle blocks to particle regions (more specifically the regions' associated materials)
   map < std::string, int > blockMaterialMap;

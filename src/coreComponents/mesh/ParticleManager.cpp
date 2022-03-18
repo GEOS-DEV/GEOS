@@ -35,14 +35,10 @@ class SpatialPartition;
 /**
  * @return
  */
-//START_SPHINX_REFPOS_REG
 
 ParticleManager::ParticleManager( string const & name, Group * const parent ):
-  ObjectManagerBase( name, parent ),
-  m_referencePosition( 0, 3 )
+  ObjectManagerBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::referencePositionString(), &m_referencePosition );
-  //END_SPHINX_REFPOS_REG
   setInputFlags( InputFlags::OPTIONAL );
   this->registerGroup< Group >( ParticleManager::groupKeyStruct::particleRegionsGroup() );
 }
@@ -93,7 +89,7 @@ Group * ParticleManager::createChild( string const & childKey, string const & ch
 {
   GEOSX_ERROR_IF( !(CatalogInterface::hasKeyName( childKey )),
                   "KeyName ("<<childKey<<") not found in ObjectManager::Catalog" );
-  GEOSX_LOG_RANK_0( "Adding Object " << childKey<<" named "<< childName<<" from ObjectManager::Catalog." );
+  GEOSX_LOG_RANK_0( "Adding Object " << childKey << " named " << childName << " from ObjectManager::Catalog." );
 
   Group & particleRegions = this->getGroup( ParticleManager::groupKeyStruct::particleRegionsGroup() );
   return &particleRegions.registerGroup( childName,

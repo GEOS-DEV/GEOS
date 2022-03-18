@@ -53,7 +53,7 @@ void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock 
   m_particleDeformationGradient.resize(particleBlock.size(),3,3);
   m_particleRVectors = particleBlock.getParticleRVectors();
   m_particleRVectors0 = particleBlock.getParticleRVectors();
-  m_particleMass.resize(particleBlock.size());
+  //m_particleMass.resize(particleBlock.size()); // handled by ParticleSubRegionBase constructor?
   m_hasRVectors = particleBlock.hasRVectors();
 
 

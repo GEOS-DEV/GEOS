@@ -160,9 +160,9 @@ vtkSmartPointer< vtkPoints >
 getVtkPoints( ParticleRegion const & particleRegion )
 {
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
-  points->SetNumberOfPoints( particleRegion.size() );
+  points->SetNumberOfPoints( 8*particleRegion.size() );
   array2d< real64 > const coord = particleRegion.getParticleCoordinates();
-  for( localIndex v = 0; v < particleRegion.size(); v++ )
+  for( localIndex v = 0; v < 8*particleRegion.size(); v++ )
   {
     points->SetPoint( v, coord[v][0], coord[v][1], coord[v][2] );
   }
@@ -762,9 +762,8 @@ void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
       ug->SetPoints( VTKPoints );
 //      auto VTKCells = getVtkCells( region );
 //      ug->SetCells( VTKCells.first.data(), VTKCells.second );
-//      writeTimestamp( *ug, time );
+      writeTimestamp( *ug, time );
 //      writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
-//      writeNodeFields( nodeManager, *ug->GetPointData() );
       writeUnstructuredGrid( time, region.getName(), *ug );
     }
   } );
