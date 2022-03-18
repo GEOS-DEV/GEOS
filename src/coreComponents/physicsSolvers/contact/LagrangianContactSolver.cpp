@@ -772,8 +772,6 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
-      {
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
         arrayView3d< real64 > const &
@@ -789,7 +787,6 @@ void LagrangianContactSolver::computeRotationMatrices( DomainPartition & domain 
 
           computationalGeometry::RotationMatrix_3D( Nbar.toSliceConst(), rotationMatrix[kfe] );
         } );
-      }
     } );
   } );
 }
@@ -896,8 +893,6 @@ void LagrangianContactSolver::
                                                               [&]( localIndex const,
                                                                    FaceElementSubRegion const & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
-      {
         arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
         arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::traction::key() );
         arrayView3d< real64 const > const &
@@ -1001,7 +996,6 @@ void LagrangianContactSolver::
             }
           }
         } );
-      }
     } );
   } );
 }
@@ -1038,8 +1032,6 @@ void LagrangianContactSolver::
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
-      if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
-      {
         arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
         arrayView1d< real64 const > const & area = subRegion.getElementArea();
@@ -1252,7 +1244,6 @@ void LagrangianContactSolver::
             }
           } );
         } );
-      }
     } );
   } );
 }
@@ -1684,7 +1675,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
 
   m_solidSolver->applySystemSolution( dofManager, localSolution, scalingFactor, domain );
 
-  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::deltaTraction::key(), extrinsicMeshData::contact::deltaTraction::key(), -scalingFactor );
+  dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), -scalingFactor );
   dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), -scalingFactor );
 
   std::map< string, string_array > fieldNames;

@@ -33,7 +33,7 @@ namespace contact
 {
 
 EXTRINSIC_MESH_DATA_TRAIT( dispJump,
-                           "dispJump",
+                           "displacementJump",
                            array2d< real64 >,
                            0,
                            LEVEL_0,

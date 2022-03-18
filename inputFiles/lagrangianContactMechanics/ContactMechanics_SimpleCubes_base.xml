@@ -16,7 +16,7 @@
         newtonMaxIter="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
-        lineSearchInterpolationType="Linear"/>
+        lineSearchInterpolationType="Parabolic"/>
       <LinearSolverParameters
         directParallel="0"/>
     </LagrangianContact>
