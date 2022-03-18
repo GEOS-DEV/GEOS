@@ -1405,7 +1405,7 @@ private:
 
   /**
    * @brief Concrete implementation of the packing method.
-   * @tparam DO_PACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param[in,out] buffer The buffer that will receive the packed data.
    * @param[in] wrapperNames The names of the wrapper to be packed. If empty, all the wrappers will be packed.
    * @param[in] packList The element we want packed. If empty, all the elements will be packed.
@@ -1417,7 +1417,7 @@ private:
    *                    events are finalized )
    * @return The packed size.
    */
-  template< bool DO_PACK >
+  template< bool DO_PACKING >
   localIndex packPrivate( buffer_unit_type * & buffer,
                           array1d< string > const & wrapperNames,
                           arrayView1d< localIndex const > const & packList,

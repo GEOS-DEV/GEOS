@@ -317,7 +317,7 @@ void Group::initializePostInitialConditions()
   initializePostInitialConditionsPostSubGroups();
 }
 
-template< bool DO_PACK >
+template< bool DO_PACKING >
 localIndex Group::packPrivate( buffer_unit_type * & buffer,
                                array1d< string > const & wrapperNames,
                                arrayView1d< localIndex const > const & packList,
@@ -326,9 +326,9 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
                                parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
-  packedSize += bufferOps::Pack< DO_PACK >( buffer, getName() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
 
-  packedSize += bufferOps::Pack< DO_PACK >( buffer, string( "Wrappers" ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "Wrappers" ) );
 
   // If `wrapperNames` is empty, then one takes all the available wrappers of this Group instance.
   // Here `tmp` is a convenience conversion from `array1d< string >` to `std::vector< string >`
@@ -357,28 +357,28 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
   }
 
   // Now we pack the `wrappers`.
-  packedSize += bufferOps::Pack< DO_PACK >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
   for( WrapperBase const * wrapper: wrappers )
   {
-    packedSize += bufferOps::Pack< DO_PACK >( buffer, wrapper->getName() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, wrapper->getName() );
     if( packList.empty() )
     {
-      packedSize += wrapper->pack< DO_PACK >( buffer, true, onDevice, events );
+      packedSize += wrapper->pack< DO_PACKING >( buffer, true, onDevice, events );
     }
     else
     {
-      packedSize += wrapper->packByIndex< DO_PACK >( buffer, packList, true, onDevice, events );
+      packedSize += wrapper->packByIndex< DO_PACKING >( buffer, packList, true, onDevice, events );
     }
   }
 
   if( recursive > 0 )
   {
-    packedSize += bufferOps::Pack< DO_PACK >( buffer, string( "SubGroups" ) );
-    packedSize += bufferOps::Pack< DO_PACK >( buffer, m_subGroups.size() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "SubGroups" ) );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, m_subGroups.size() );
     for( auto const & keyGroupPair : m_subGroups )
     {
-      packedSize += bufferOps::Pack< DO_PACK >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->packPrivate< DO_PACK >( buffer, wrapperNames, packList, recursive, onDevice, events );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, keyGroupPair.first );
+      packedSize += keyGroupPair.second->packPrivate< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
