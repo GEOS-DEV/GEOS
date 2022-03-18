@@ -173,7 +173,7 @@ public:
                                    localIndex const k ) const;
 
 
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  std::set< string > getPackingExclusionList() const override;
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
