@@ -77,8 +77,7 @@ namespace
       }
     return false;
   }
-  
-  
+    
 }
 
 using namespace dataRepository;
@@ -211,6 +210,7 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( MeshLevel const & GEOSX_
   baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion)
   {
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
+    //USE 1D ARRAY REGISTERED ON THE NODE MANAGER INSTEAD OF m_nodeFixDamage
     m_nodeFixDamage.resize( cellElementSubRegion.numNodesPerElement()*fracturedElements.size() );
     localIndex count = 0;
     for (localIndex a : fracturedElements)
@@ -219,14 +219,16 @@ void MultiResolutionHFSolver::setInitialCrackDamageBCs( MeshLevel const & GEOSX_
 	for (localIndex b=0; b < cellElementSubRegion.numNodesPerElement(); b++)
 	  {
 	    localIndex c = cellElementSubRegion.nodeList( a,b );
-	    //append dofs associated with node b of element a
+	    //append c = node b of element a
 	      if (!isMember(c,m_nodeFixDamage))
 	      {
+		//USE REGISTERED ARRAY HERE
 		m_nodeFixDamage(count) = cellElementSubRegion.nodeList( a,b );
 		++count;
 	      }
 	  } 
       }
+    //USE REGISTERED ARRAY HERE
     m_nodeFixDamage.resize( count );
   });
 }  
@@ -244,7 +246,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   NodeManager const & patchNodeManager = patch.getNodeManager();
   SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
   //arrayView1d< globalIndex const > const patchLocalToGlobalMap = patchNodeManager.localToGlobalMap();
-  arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference<array1d<real64> >( "damage" );
+  arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference<array1d<real64> >( "Damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
   arrayView2d<real64 const> const baseDisp = baseNodeManager.totalDisplacement();
   //unordered_map< globalIndex, localIndex > const & patchGlobalToLocalMap = baseNodeManager.globalToLocalMap();
@@ -253,6 +255,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   //this->eraseLists(); //maybe this can go inside resetToBeginningOfStep - already there() 
   real64 damage_threshold = 0.3;
 
+  //USE REGISTERED ARRAYS INSTEAD OF m_nodeFixDisp and m_fixedDispList
   m_nodeFixDisp.resize( patchExternalSet.size() );
   m_fixedDispList.resize( patchExternalSet.size(), 3 );
   localIndex count=0;
@@ -262,13 +265,15 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
       {
         // NOTE: there needs to be a translation between patch and base mesh for the indices and values/weights.
 
-        //append dofs associated with node i
+        //append node a
+	//USE REGISTERED ARRAY HERE
         m_nodeFixDisp(count) = a;
         localIndex const numBaseNodes = 1;//this wont be 1 in other cases //m_nodeMapIndices.sizeOfArray( a );
         for( localIndex b=0; b<numBaseNodes; ++b )
         {
           //localIndex const B = m_nodeMapIndices[b]; // base node number associated to patch node i
 	  //WARNING: IN THIS CASE, WE HAVE THE SAME MESH FOR BASE AND PATCH, SO B = b, IN GENERAL, WE WILL NEED A MAP
+	  //USE THE REGISTERED ARRAY HERE TOO
 	  m_fixedDispList(count,0) = baseDisp(b,0);
           m_fixedDispList(count,1) = baseDisp(b,1);
           m_fixedDispList(count,2) = baseDisp(b,2);
@@ -277,7 +282,7 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
         ++count;
       }
     }
-
+  //USE REGISTERED ARRAY HERE
   m_nodeFixDisp.resize( count );
   m_fixedDispList.resize( count, 3 );
   
@@ -305,11 +310,11 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                             baseSolver.getSystemSolution(),
                             true );
 
-  patchSolver.setupSystem( domain,
-                           patchSolver.getDofManager(),
-                           patchSolver.getLocalMatrix(),
-                           patchSolver.getSystemRhs(),
-                           patchSolver.getSystemSolution() );
+  //patchSolver.setupSystem( domain,
+  //                        patchSolver.getDofManager(),
+  //                         patchSolver.getLocalMatrix(),
+  //                         patchSolver.getSystemRhs(),
+  //                         patchSolver.getSystemSolution() );
   //Do we need to modify anything here??
   
   baseSolver.implicitStepSetup( time_n, dt, domain );
@@ -337,7 +342,11 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", BaseSolver: " );
 
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this anytime the base crack changes
-    this->setInitialCrackDamageBCs(domain.getMeshBody(0).getMeshLevel(0), domain.getMeshBody(0).getMeshLevel(0));
+    map<string, array1d<string>> const & baseTargets = baseSolver.getReference<map<string, array1d<string>>>(SolverBase::viewKeyStruct::meshTargetsString());
+    auto const baseTarget = baseTargets.begin();
+    map<string, array1d<string>> const & patchTargets = patchSolver.getReference<map<string, array1d<string>>>(SolverBase::viewKeyStruct::meshTargetsString());
+    auto const patchTarget = patchTargets.begin();
+    this->setInitialCrackDamageBCs(domain.getMeshBody(baseTarget->first).getMeshLevel(0), domain.getMeshBody(patchTarget->first).getMeshLevel(0));
 
     //patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
     //must prescribe the damage boundary conditions based on the location of the base crack relative to the subdomain mesh
@@ -372,7 +381,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     }
 
     //here, before calling the nonlinarImplicitStep of the patch solver, we must prescribe the displacement boundary conditions
-    this->prepareSubProblemBCs(domain.getMeshBody(0).getMeshLevel(0), domain.getMeshBody(0).getMeshLevel(0));
+    this->prepareSubProblemBCs(domain.getMeshBody(baseTarget->first).getMeshLevel(0), domain.getMeshBody(patchTarget->first).getMeshLevel(0));
 
     //finally, pass the shared boundary information to the patch solver
     //patchSolver.
@@ -381,10 +390,10 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
     //probably, a nonlinearImplicitStep is not the right one for the Phase Field solver, maybe we should call its solverStep which calls splitOperatorStep
-    dtReturnTemporary = patchSolver.nonlinearImplicitStep(  time_n,
-                                                            dtReturn,
-                                                            cycleNumber,
-                                                            domain );
+    dtReturnTemporary = patchSolver.solverStep(  time_n,
+                                                 dtReturn,
+                                                 cycleNumber,
+                                                 domain );
 
     if( dtReturnTemporary < dtReturn )
     {
@@ -414,11 +423,6 @@ void MultiResolutionHFSolver::setNextDt( real64 const & currentDt,
   if( m_numResolves[0] == 0 && m_numResolves[1] == 0 )
   {
     this->setNextDtBasedOnNewtonIter( currentDt, nextDt );
-  }
-  else
-  {
-    SolverBase & surfaceGenerator = this->getParent().getGroup< SolverBase >( "SurfaceGen" );
-    nextDt = surfaceGenerator.GetTimestepRequest() < 1e99 ? surfaceGenerator.GetTimestepRequest() : currentDt;
   }
 
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );

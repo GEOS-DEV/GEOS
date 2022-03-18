@@ -55,17 +55,17 @@ using namespace constitutive;
 PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
-  m_damageName( "damageField" )
+  m_damageName("Damage")
 {
 
   registerWrapper< string >( PhaseFieldDamageFEMViewKeys.timeIntegrationOption.key() ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.damageVarName.key(), &m_damageName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "name of damage variable" );
-
+  // registerWrapper< string >( PhaseFieldDamageFEMViewKeys.damageVarName.key(),"Damage" ).
+  //   setInputFlag( InputFlags::OPTIONAL ).
+  //   setDescription( "name of damage variable" );
+  
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
@@ -84,7 +84,7 @@ void PhaseFieldDamageFEM::registerDataOnMesh( Group & meshBodies )
   {
     NodeManager & nodes = mesh.getNodeManager();
 
-    nodes.registerWrapper< real64_array >( m_damageName )
+    nodes.registerWrapper< real64_array >( "Damage" )
       .setApplyDefaultValue( 0.0 )
       .setPlotLevel( PlotLevel::LEVEL_0 )
       .setDescription( "Damage variable" );

@@ -9,7 +9,7 @@
       patchSolverName="PhaseFieldSolve"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{base,patch}">
+      targetRegions="{base/base_cer,patch/patch_cer}">
       <NonlinearSolverParameters
         newtonMaxIter="10"/>
       <LinearSolverParameters
@@ -18,8 +18,8 @@
 
     <SolidMechanicsEmbeddedFractures
 	name="EFEMSolve"
-	targetRegions="{base,Fracture}"
-	fractureRegionName="Fracture"
+	targetRegions="{base/base_cer,base/Fracture_cer}"
+	fractureRegionName="Fracture_cer"
 	initialDt="1"
 	solidSolverName="EFEMSolidMechSolve"
 	contactRelationName="fractureContact"
@@ -31,7 +31,7 @@
       <LinearSolverParameters
 	  solverType="direct"
 	  directParallel="0"
-	  logLevel="2"/>
+	  logLevel="1"/>
     </SolidMechanicsEmbeddedFractures>
 
     <SolidMechanicsLagrangianSSLE
@@ -39,13 +39,13 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{base}"
+      targetRegions="{base/base_cer}"
       />
 
     <EmbeddedSurfaceGenerator
       name="SurfaceGenerator"
-      targetRegions="{base,Fracture}"
-      fractureRegion="Fracture"
+      targetRegions="{base/base_cer,base/Fracture_cer}"
+      fractureRegion="Fracture_cer"
       logLevel="1"
       mpiCommOrder="1"/>
     
@@ -57,7 +57,7 @@
       logLevel="1"
       subcycling="0"
       discretization="FE1"
-      targetRegions="{ patch }">
+      targetRegions="{patch/patch_cer}">
       <NonlinearSolverParameters
         newtonMaxIter="2"/>
       <LinearSolverParameters
@@ -69,7 +69,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{patch}"
+      targetRegions="{patch/patch_cer}"
       >
       <NonlinearSolverParameters
         newtonMaxIter="50"
@@ -82,10 +82,9 @@
       name="DamageSolve"
       discretization="FE1"
       timeIntegrationOption="SteadyState"
-      damageName="Damage"
       localDissipation="Linear"
       logLevel="1"
-      targetRegions="{patch}">
+      targetRegions="{patch/patch_cer}">
       <NonlinearSolverParameters
         newtonMaxIter="50"
         newtonTol="1.0e-12"/>
@@ -165,13 +164,21 @@
 
   <ElementRegions>
     <CellElementRegion
-      name="base"
+      name="base_cer"
+      meshBody="base"
       cellBlocks="{ cb1 }"
       materialList="{ shale }"/>
     <CellElementRegion
-      name="patch"
+      name="patch_cer"
+      meshBody="patch"
       cellBlocks="{ cb2 }"
       materialList="{ shale }"/>
+    <SurfaceElementRegion
+	name="Fracture_cer"
+	subRegionType="embeddedElement"
+	materialList="{ fractureContact }"
+        defaultAperture="1.0e-3"
+	meshBody="base"/>
   </ElementRegions>
 
   <Constitutive>
@@ -231,22 +238,22 @@
 	coordinates="{ -1.0e-3, 0.0 }"
 	values="{ 0.002e-3, 0.02e-3 }"/>
     <TableFunction
-      name="f_b"
-      inputVarNames="{ time }"
-      coordinates="{ 0, 501 }"
-      values="{ -1, 500 }"/>
+        name="f_b"
+        inputVarNames="{ time }"
+        coordinates="{ 0, 501 }"
+        values="{ -1, 500 }"/>
   </Functions>
 
   <Tasks>
     <PackCollection
 	name="displacementJumpCollection"
-	objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+	objectPath="ElementRegions/Fracture_cer/embeddedSurfaceSubRegion"
 	fieldName="displacementJump"/>
     </Tasks>
 
   <Outputs>
     <Silo
-      name="MRBasicTest_SiloOutput"/>
+	name="MRBasicTest_SiloOutput"/>
 
     <VTK
       name="MRBasicTest_VTKOutput"
