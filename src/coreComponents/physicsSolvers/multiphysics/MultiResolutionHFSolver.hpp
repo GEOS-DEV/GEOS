@@ -104,12 +104,6 @@ private:
   //name of patch phase-field fracture solver
   string m_patchSolverName;
 
-  // name of the contact relation
-  string m_contactRelationName;
-
-  /// name of the surface generator
-  string m_surfaceGeneratorName;
-
   // list of damage dofs to be fixed in the subdomain boundary
   array1d<localIndex> m_nodeFixDamage;
 
@@ -119,18 +113,11 @@ private:
   // list of displacement values to be prescribed in the subdomain boundary
   array2d<real64> m_fixedDispList;
   
-  // map that translate subproblem's node numbers to outer problem's node numbers
-  ArrayOfArrays<localIndex> m_nodeMapIndices;
-  ArrayOfArrays<real64> m_nodeMapWeights;
-
   // pointer to base efem solver
   SolidMechanicsEmbeddedFractures * m_baseSolver;
     
   // pointer to patch phase-field fracture solver
   PhaseFieldFractureSolver * m_patchSolver;
-
-  /// pointer to the surface generator
-  SurfaceGenerator * m_surfaceGenerator;
 
   integer m_maxNumResolves;
   integer m_numResolves[2];

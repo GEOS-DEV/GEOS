@@ -1,0 +1,259 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <MultiResolutionHF
+      name="MultiResolutionSolve"
+      baseSolverName="EFEMSolve"
+      patchSolverName="PhaseFieldSolve"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{base,patch}">
+      <NonlinearSolverParameters
+        newtonMaxIter="10"/>
+      <LinearSolverParameters
+        logLevel="2"/>
+    </MultiResolutionHF>
+
+    <SolidMechanicsEmbeddedFractures
+	name="EFEMSolve"
+	targetRegions="{base,Fracture}"
+	fractureRegionName="Fracture"
+	initialDt="1"
+	solidSolverName="EFEMSolidMechSolve"
+	contactRelationName="fractureContact"
+	logLevel="1"> 
+      <NonlinearSolverParameters
+	  newtonTol="1.0e-6"
+	  newtonMaxIter="2"
+	  maxTimeStepCuts="1"/>
+      <LinearSolverParameters
+	  solverType="direct"
+	  directParallel="0"
+	  logLevel="2"/>
+    </SolidMechanicsEmbeddedFractures>
+
+    <SolidMechanicsLagrangianSSLE
+      name="EFEMSolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{base}"
+      />
+
+    <EmbeddedSurfaceGenerator
+      name="SurfaceGenerator"
+      targetRegions="{base,Fracture}"
+      fractureRegion="Fracture"
+      logLevel="1"
+      mpiCommOrder="1"/>
+    
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="PFSolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="1"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ patch }">
+      <NonlinearSolverParameters
+        newtonMaxIter="2"/>
+      <LinearSolverParameters
+        logLevel="2"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="PFSolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{patch}"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-12"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      damageName="Damage"
+      localDissipation="Linear"
+      logLevel="1"
+      targetRegions="{patch}">
+      <NonlinearSolverParameters
+        newtonMaxIter="50"
+        newtonTol="1.0e-12"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <InternalMesh
+      name="base"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb1 }"/>
+    <InternalMesh
+      name="patch"
+      elementTypes="{ C3D8 }"
+      xCoords="{ -1, 1 }"
+      yCoords="{ -1, 1 }"
+      zCoords="{ -1, 1 }"
+      nx="{ 5 }"
+      ny="{ 5 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cb2 }"/>
+  </Mesh>
+
+  <Geometry>
+    <BoundedPlane
+      name="FracturePlane"
+      normal="{0.0,1.0,0.0}"
+      origin="{-0.6, 0.0, 0.0 }"
+      lengthVector="{1.0, 0.0, 0.0}"
+      widthVector="{0.0, 0.0, 1.0}"
+      dimensions="{0.8, 2}"/>
+  </Geometry>
+  
+  <Events
+      maxTime="2.0">
+    <SoloEvent
+	name="preFracture"
+	target="/Solvers/SurfaceGenerator"/>
+    
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1"
+      target="/Solvers/MultiResolutionSolve"/>
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1.0"
+      target="/Outputs/MRBasicTest_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/MRBasicTest_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="base"
+      cellBlocks="{ cb1 }"
+      materialList="{ shale }"/>
+    <CellElementRegion
+      name="patch"
+      cellBlocks="{ cb2 }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageSpectralElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="5.5556e9"
+      defaultShearModulus="8.3333e9"
+      lengthScale="0.4"
+      criticalFractureEnergy="2.7"
+      criticalStrainEnergy="1.0"/>
+
+    <FrictionlessContact
+	name="fractureContact"
+	penaltyStiffness="0.0e8"
+	apertureTableName="apertureTable"/> 
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="ypos"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="1.0e-7"
+      functionName="f_b"
+      setNames="{ ypos }"/>
+
+    <FieldSpecification
+      name="yneg"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="1"
+      scale="-1.0e-7"
+      functionName="f_b"
+      setNames="{ yneg }"/>
+
+    <FieldSpecification
+      name="xconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="0"
+      setNames="{ xpos }"/>
+
+    <FieldSpecification
+      name="zconstraint"
+      objectPath="nodeManager"
+      fieldName="TotalDisplacement"
+      component="2"
+      setNames="{ all }"/>
+
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+	name="apertureTable"
+	coordinates="{ -1.0e-3, 0.0 }"
+	values="{ 0.002e-3, 0.02e-3 }"/>
+    <TableFunction
+      name="f_b"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 501 }"
+      values="{ -1, 500 }"/>
+  </Functions>
+
+  <Tasks>
+    <PackCollection
+	name="displacementJumpCollection"
+	objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
+	fieldName="displacementJump"/>
+    </Tasks>
+
+  <Outputs>
+    <Silo
+      name="MRBasicTest_SiloOutput"/>
+
+    <VTK
+      name="MRBasicTest_VTKOutput"
+      plotFileRoot="plot"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+</Problem>

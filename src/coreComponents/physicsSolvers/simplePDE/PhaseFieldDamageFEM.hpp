@@ -136,7 +136,7 @@ public:
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
-    dataRepository::ViewKey damageVarName = { "damage" };
+    dataRepository::ViewKey damageVarName = { "damageName" };
   } PhaseFieldDamageFEMViewKeys;
 
   inline ParallelVector const * getSolution() const
