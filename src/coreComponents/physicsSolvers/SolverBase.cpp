@@ -316,7 +316,7 @@ real64 SolverBase::linearImplicitStep( real64 const & time_n,
   debugOutputSystem( 0.0, 0, 0, m_matrix, m_rhs );
 
   // Solve the linear system
-  solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+  solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
   // Output the linear system solution for debugging purposes
   debugOutputSolution( 0.0, 0, 0, m_solution );
@@ -570,10 +570,6 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
   // value to track the achieved dt for this step.
   real64 stepDt = dt;
 
-  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
-  integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
-  real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
-
   integer const maxNumberDtCuts = m_nonlinearSolverParameters.m_maxTimeStepCuts;
   real64 const dtCutFactor = m_nonlinearSolverParameters.m_timeStepCutFactor;
 
@@ -584,9 +580,6 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
   integer const & maxConfigurationIter = m_nonlinearSolverParameters.m_maxNumConfigurationAttempts;
 
   integer & configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
-
-  // a flag to denote whether we have converged
-  bool isNewtonConverged = false;
 
   bool isConfigurationLoopConverged = false;
 
@@ -610,165 +603,10 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
       outputConfigurationStatistics( domain );
 
-      // keep residual from previous iteration in case we need to do a line search
-      real64 lastResidual = 1e99;
-      integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
-      real64 scaleFactor = 1.0;
-
-      // main Newton loop
-      for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
-      {
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
-
-        // zero out matrix/rhs before assembly
-        m_localMatrix.zero();
-        m_rhs.zero();
-
-        {
-          arrayView1d< real64 > const localRhs = m_rhs.open();
-
-          // call assemble to fill the matrix and the rhs
-          assembleSystem( time_n,
-                          stepDt,
-                          domain,
-                          m_dofManager,
-                          m_localMatrix.toViewConstSizes(),
-                          localRhs );
-
-          // apply boundary conditions to system
-          applyBoundaryConditions( time_n,
-                                   stepDt,
-                                   domain,
-                                   m_dofManager,
-                                   m_localMatrix.toViewConstSizes(),
-                                   localRhs );
-
-          m_rhs.close();
-
-        }
-        if( m_assemblyCallback )
-        {
-          // Make a copy of LA objects and ship off to the callback
-          array1d< real64 > localRhsCopy( m_rhs.localSize() );
-          localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
-          m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
-        }
-
-        // TODO: maybe add scale function here?
-        // Scale()
-
-        // get residual norm
-        real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
-
-
-        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
-        if( newtonIter > 0 )
-        {
-          GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
-                                                m_linearSolverResult.numIterations,
-                                                m_linearSolverResult.residualReduction ) );
-        }
-
-        // if the residual norm is less than the Newton tolerance we denote that we have
-        // converged and break from the Newton loop immediately.
-
-        if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
-        {
-          isNewtonConverged = true;
-          break;
-        }
-
-        // do line search in case residual has increased
-        if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
-            && residualNorm > lastResidual )
-        {
-          bool lineSearchSuccess = false;
-          if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
-          {
-            residualNorm = lastResidual;
-            lineSearchSuccess = lineSearch( time_n,
-                                            stepDt,
-                                            cycleNumber,
-                                            domain,
-                                            m_dofManager,
-                                            m_localMatrix.toViewConstSizes(),
-                                            m_rhs,
-                                            m_solution,
-                                            scaleFactor,
-                                            residualNorm );
-          }
-          else
-          {
-            lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
-                                                                      stepDt,
-                                                                      cycleNumber,
-                                                                      domain,
-                                                                      m_dofManager,
-                                                                      m_localMatrix.toViewConstSizes(),
-                                                                      m_rhs,
-                                                                      m_solution,
-                                                                      scaleFactor,
-                                                                      lastResidual,
-                                                                      residualNorm );
-          }
-
-          if( !lineSearchSuccess )
-          {
-            if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
-            {
-              GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
-            }
-            else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
-            {
-              // if line search failed, then break out of the main Newton loop. Timestep will be cut.
-              GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
-              break;
-            }
-          }
-        }
-
-        // if using adaptive Krylov tolerance scheme, update tolerance.
-        LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
-        if( krylovParams.useAdaptiveTol )
-        {
-          krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
-        }
-
-        // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
-        if( m_precond )
-        {
-          m_precond->clear();
-        }
-
-        // Compose parallel LA matrix/rhs out of local LA matrix/rhs
-        m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
-
-        // Output the linear system matrix/rhs for debugging purposes
-        debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
-
-        // Solve the linear system
-        solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
-
-        // Output the linear system solution for debugging purposes
-        debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
-
-        scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
-
-        if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
-        {
-          // TODO try chopping (similar to line search)
-          GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
-          break;
-        }
-
-        // apply the system solution to the fields/variables
-        applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
-
-        // update non-primary variables (constitutive models)
-        updateState( domain );
-
-        lastResidual = residualNorm;
-      } // end of Newton's loop
+      bool const isNewtonConverged = solveNonlinearSystem( time_n,
+                                                           dt,
+                                                           cycleNumber,
+                                                           domain );
 
       if( isNewtonConverged )
       {
@@ -828,6 +666,181 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
 
   // return the achieved timestep
   return stepDt;
+}
+
+bool SolverBase::solveNonlinearSystem( real64 const & time_n,
+                                       real64 const & stepDt,
+                                       integer const cycleNumber,
+                                       DomainPartition & domain )
+{
+  integer const maxNewtonIter = m_nonlinearSolverParameters.m_maxIterNewton;
+  integer & dtAttempt = m_nonlinearSolverParameters.m_numdtAttempts;
+  integer & configurationLoopIter = m_nonlinearSolverParameters.m_numConfigurationAttempts;
+  integer const minNewtonIter = m_nonlinearSolverParameters.m_minIterNewton;
+  real64 const newtonTol = m_nonlinearSolverParameters.m_newtonTol;
+
+  // keep residual from previous iteration in case we need to do a line search
+  real64 lastResidual = 1e99;
+  integer & newtonIter = m_nonlinearSolverParameters.m_numNewtonIterations;
+  real64 scaleFactor = 1.0;
+
+  bool isNewtonConverged = false;
+
+  for( newtonIter = 0; newtonIter < maxNewtonIter; ++newtonIter )
+  {
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Attempt: {:2}, ConfigurationIter: {:2}, NewtonIter: {:2}", dtAttempt, configurationLoopIter, newtonIter ) );
+
+    // zero out matrix/rhs before assembly
+    m_localMatrix.zero();
+    m_rhs.zero();
+
+    {
+      arrayView1d< real64 > const localRhs = m_rhs.open();
+
+      // call assemble to fill the matrix and the rhs
+      assembleSystem( time_n,
+                      stepDt,
+                      domain,
+                      m_dofManager,
+                      m_localMatrix.toViewConstSizes(),
+                      localRhs );
+
+      // apply boundary conditions to system
+      applyBoundaryConditions( time_n,
+                               stepDt,
+                               domain,
+                               m_dofManager,
+                               m_localMatrix.toViewConstSizes(),
+                               localRhs );
+
+      m_rhs.close();
+
+    }
+    if( m_assemblyCallback )
+    {
+      // Make a copy of LA objects and ship off to the callback
+      array1d< real64 > localRhsCopy( m_rhs.localSize() );
+      localRhsCopy.setValues< parallelDevicePolicy<> >( m_rhs.values() );
+      m_assemblyCallback( m_localMatrix, std::move( localRhsCopy ) );
+    }
+
+    // TODO: maybe add scale function here?
+    // Scale()
+
+    // get residual norm
+    real64 residualNorm = calculateResidualNorm( domain, m_dofManager, m_rhs.values() );
+
+
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    ( R ) = ( {:4.2e} ) ; ", residualNorm ) );
+    if( newtonIter > 0 )
+    {
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "    Last LinSolve(iter,res) = ( {:3}, {:4.2e} ) ; ",
+                                            m_linearSolverResult.numIterations,
+                                            m_linearSolverResult.residualReduction ) );
+    }
+
+    // if the residual norm is less than the Newton tolerance we denote that we have
+    // converged and break from the Newton loop immediately.
+
+    if( residualNorm < newtonTol && newtonIter >= minNewtonIter )
+    {
+      isNewtonConverged = true;
+      break;
+    }
+
+    // do line search in case residual has increased
+    if( m_nonlinearSolverParameters.m_lineSearchAction != NonlinearSolverParameters::LineSearchAction::None
+        && residualNorm > lastResidual )
+    {
+      bool lineSearchSuccess = false;
+      if( m_nonlinearSolverParameters.m_lineSearchInterpType == NonlinearSolverParameters::LineSearchInterpolationType::Linear )
+      {
+        residualNorm = lastResidual;
+        lineSearchSuccess = lineSearch( time_n,
+                                        stepDt,
+                                        cycleNumber,
+                                        domain,
+                                        m_dofManager,
+                                        m_localMatrix.toViewConstSizes(),
+                                        m_rhs,
+                                        m_solution,
+                                        scaleFactor,
+                                        residualNorm );
+      }
+      else
+      {
+        lineSearchSuccess = lineSearchWithParabolicInterpolation( time_n,
+                                                                  stepDt,
+                                                                  cycleNumber,
+                                                                  domain,
+                                                                  m_dofManager,
+                                                                  m_localMatrix.toViewConstSizes(),
+                                                                  m_rhs,
+                                                                  m_solution,
+                                                                  scaleFactor,
+                                                                  lastResidual,
+                                                                  residualNorm );
+      }
+
+      if( !lineSearchSuccess )
+      {
+        if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Attempt )
+        {
+          GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Accepting iteration." );
+        }
+        else if( m_nonlinearSolverParameters.m_lineSearchAction == NonlinearSolverParameters::LineSearchAction::Require )
+        {
+          // if line search failed, then break out of the main Newton loop. Timestep will be cut.
+          GEOSX_LOG_LEVEL_RANK_0( 1, "        Line search failed to produce reduced residual. Exiting Newton Loop." );
+          break;
+        }
+      }
+    }
+
+    // if using adaptive Krylov tolerance scheme, update tolerance.
+    LinearSolverParameters::Krylov & krylovParams = m_linearSolverParameters.get().krylov;
+    if( krylovParams.useAdaptiveTol )
+    {
+      krylovParams.relTolerance = eisenstatWalker( residualNorm, lastResidual, krylovParams.weakestTol );
+    }
+
+    // TODO: Trilinos currently requires this, re-evaluate after moving to Tpetra-based solvers
+    if( m_precond )
+    {
+      m_precond->clear();
+    }
+
+    // Compose parallel LA matrix/rhs out of local LA matrix/rhs
+    m_matrix.create( m_localMatrix.toViewConst(), m_dofManager.numLocalDofs(), MPI_COMM_GEOSX );
+
+    // Output the linear system matrix/rhs for debugging purposes
+    debugOutputSystem( time_n, cycleNumber, newtonIter, m_matrix, m_rhs );
+
+    // Solve the linear system
+    solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+
+    // Output the linear system solution for debugging purposes
+    debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
+
+    scaleFactor = scalingForSystemSolution( domain, m_dofManager, m_solution.values() );
+
+    if( !checkSystemSolution( domain, m_dofManager, m_solution.values(), scaleFactor ) )
+    {
+      // TODO try chopping (similar to line search)
+      GEOSX_LOG_RANK_0( "    Solution check failed. Newton loop terminated." );
+      break;
+    }
+
+    // apply the system solution to the fields/variables
+    applySystemSolution( m_dofManager, m_solution.values(), scaleFactor, domain );
+
+    // update non-primary variables (constitutive models)
+    updateState( domain );
+
+    lastResidual = residualNorm;
+  }
+
+  return isNewtonConverged;
 }
 
 real64 SolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -991,10 +1004,10 @@ SolverBase::calculateResidualNorm( DomainPartition const & GEOSX_UNUSED_PARAM( d
   return 0;
 }
 
-void SolverBase::solveSystem( DofManager const & dofManager,
-                              ParallelMatrix & matrix,
-                              ParallelVector & rhs,
-                              ParallelVector & solution )
+void SolverBase::solveLinearSystem( DofManager const & dofManager,
+                                    ParallelMatrix & matrix,
+                                    ParallelVector & rhs,
+                                    ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
