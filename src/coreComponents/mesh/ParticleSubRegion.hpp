@@ -97,7 +97,7 @@ public:
       {
         for(int j=0; j<3; j++)
         {
-          m_particleRVectors[p][i][j] = p_F[0][i]*m_particleRVectors0[p][0][j] + p_F[1][i]*m_particleRVectors0[p][1][j] + p_F[2][i]*m_particleRVectors0[p][2][j];
+          m_particleRVectors[p][j][i] = p_F[i][0]*m_particleRVectors0[p][j][0] + p_F[i][1]*m_particleRVectors0[p][j][1] + p_F[i][2]*m_particleRVectors0[p][j][2];
         }
       }
     }
