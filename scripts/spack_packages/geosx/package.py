@@ -59,7 +59,6 @@ class Geosx(CMakePackage, CudaPackage):
 
     # SPHINX_BEGIN_VARIANTS
 
-    # COMMENT OUT START
     variant('shared', default=True, description='Build Shared Libs.')
     variant('caliper', default=True, description='Build Caliper support.')
         #These shouldn't be here; defined in packages.yaml,not here
@@ -78,7 +77,6 @@ class Geosx(CMakePackage, CudaPackage):
             values=('trilinos', 'hypre', 'petsc'),
             multi=False)
     # variant('pygeosx', default=False, description='Build the GEOSX python interface.')
-    # COMMENT OUT END
 
     # SPHINX_END_VARIANTS
 
@@ -146,13 +144,14 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('suite-sparse@5.10.1+openmp', when='+suite-sparse')
 
     trilinos_build_options = '~fortran+openmp'
-    trilinos_packages = '+stk+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado'
+    trilinos_packages = '+stratimikos~amesos2~anasazi~belos~ifpack2~muelu~sacado+thyra'
     depends_on('trilinos@12.18.1 ' + trilinos_build_options + trilinos_packages, when='+trilinos')
 
-    depends_on('hypre@2.23.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre')
-    depends_on('hypre@2.23.0geosx+cuda+shared+superlu-dist+mpi+openmp+unified-memory', when='+hypre-cuda')
+    depends_on('hypre@2.24.0geosx+shared+superlu-dist+mixedint+mpi+openmp', when='+hypre')
+    depends_on('hypre@2.24.0geosx+cuda+shared+superlu-dist+mpi+openmp+unified-memory', when='+hypre-cuda')
  
-    depends_on('petsc@3.13.0~hdf5~hypre+int64', when='+petsc')
+    depends_on('petsc@3.13.0~hdf5~hypre+int64+ptscotch', when='+petsc')
+    depends_on('scotch@6.0.9', when='+petsc')
 
 # COMMENT OUT START
     # #
@@ -167,12 +166,12 @@ class Geosx(CMakePackage, CudaPackage):
     # #
     # # Dev tools
     # #
-    # depends_on('uncrustify@0.70geosx')
+    depends_on('uncrustify@0.70geosx')
 
     # #
     # # Documentation
     # #
-    # depends_on('doxygen@1.8.13:', when='+docs', type='build')
+    # depends_on('doxygen@1.8.20', when='+docs', type='build')
     # depends_on('py-sphinx@1.6.3:', when='+docs', type='build')
 
     # # SPHINX_END_DEPENDS

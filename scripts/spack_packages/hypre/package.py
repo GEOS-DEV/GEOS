@@ -23,7 +23,9 @@ class Hypre(AutotoolsPackage, CudaPackage):
 
     test_requires_compiler = True
 
-    version('2.23.0geosx', commit='d2185217c0eb9568cf835f7a750344bc58ad31a9')
+    # GEOSX EDIT START
+    version('2.24.0geosx', commit='04af9a4cd9f4548a619e1b7dd5763cd5512a2588')
+    # GEOSX EDIT END
     version('develop', branch='master')
     version('2.23.0', sha256='8a9f9fb6f65531b77e4c319bf35bfc9d34bf529c36afe08837f56b635ac052e2')
     version('2.22.1', sha256='c1e7761b907c2ee0098091b69797e9be977bff8b7fd0479dc20cad42f45c4084')
