@@ -62,7 +62,7 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "option for default time integration method" );
 
-  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.fieldVarName.key(), &m_damageName ).
+  registerWrapper< string >( PhaseFieldDamageFEMViewKeys.damageVarName.key(), &m_damageName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "name of damage variable" );
 

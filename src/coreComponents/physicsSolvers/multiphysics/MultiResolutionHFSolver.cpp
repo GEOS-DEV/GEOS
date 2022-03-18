@@ -48,22 +48,22 @@ namespace geosx
 namespace
 {
 //this function is not part of any class yet - just tries to find the number of a node given its coordinates
-  localIndex getNodeNumberFromCoordinate( MeshLevel const & mesh, real64 const & x, real64 const & y, real64 const & z)
-  {
-    real64 tolerance = 1e-10;
-    NodeManager const & meshNodeManager = mesh.getNodeManager();
-    arrayView1d<real64 const> const nodalPositions = meshNodeManager.referencePosition();
-    for (localIndex a=0; a < meshNodeManager.size(); a++)
-      {
-	real64 dist_sq = (nodalPositions( a,0 ) - x)*(nodalPositions( a,0 ) - x) + (nodalPositions( a,1 ) - y)*(nodalPositions( a,1 ) - y) + (nodalPositions( a,2 ) - z)*(nodalPositions( a,2 ) - z);
-	real64 dist = sqrt(dist_sq);
-	if (dist < tolerance)
-	  {
-	    return a;
-	  }
-      }
-    return -1;
-  }
+  // localIndex getNodeNumberFromCoordinate( MeshLevel const & mesh, real64 const & x, real64 const & y, real64 const & z)
+  // {
+  //   real64 tolerance = 1e-10;
+  //   NodeManager const & meshNodeManager = mesh.getNodeManager();
+  //   arrayView2d<real64 const> const nodalPositions = meshNodeManager.referencePosition();
+  //   for (localIndex a=0; a < meshNodeManager.size(); a++)
+  //     {
+  // 	real64 dist_sq = (nodalPositions( a,0 ) - x)*(nodalPositions( a,0 ) - x) + (nodalPositions( a,1 ) - y)*(nodalPositions( a,1 ) - y) + (nodalPositions( a,2 ) - z)*(nodalPositions( a,2 ) - z);
+  // 	real64 dist = sqrt(dist_sq);
+  // 	if (dist < tolerance)
+  // 	  {
+  // 	    return a;
+  // 	  }
+  //     }
+  //   return -1;
+  // }
 
   //this function checks if an index is already in an array
   bool isMember( localIndex const & ind, array1d<localIndex> const & arr)
@@ -148,6 +148,8 @@ void MultiResolutionHFSolver::postProcessInput()
 {
   SolverBase::postProcessInput();
   m_surfaceGenerator = &this->getParent().getGroup< SurfaceGenerator >( m_surfaceGeneratorName );
+  m_baseSolver = &this->getParent().getGroup< SolidMechanicsEmbeddedFractures >( m_baseSolverName );
+  m_patchSolver = &this->getParent().getGroup< PhaseFieldFractureSolver >( m_patchSolverName );
 }
 
 void MultiResolutionHFSolver::initializePostInitialConditionsPreSubGroups()
@@ -170,51 +172,51 @@ real64 MultiResolutionHFSolver::solverStep( real64 const & time_n,
 }
 
 //in the initial step and whenever the subproblem mesh moves, we must update the node map
-void MultiResolutionHFSolver::updateNodeMaps( MeshLevel const & base,
-						MeshLevel const & patch )
-{
-  // get list of nodes on the boundary of the patch
-  NodeManager const & patchNodeManager = patch.getNodeManager();
-  NodeManager const & baseNodeManager = base.getNodeManager();
-  SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
-  arrayView1d<real64 const> const patchPosition = patchNodeManager.referencePosition();
-  for (localIndex a : patchExternalSet )  
-    {
-      localIndex A = getNodeNumberFromCoordinate(base, patchPosition(a,0), patchPosition(a,1), patchPosition(a,2));
-      m_nodeMapIndices(a) = A;
-      //since the boundary points lie on element edges, these will have dimension 2. weights can be computed by taking the ratio between distances to 2 closes points from base mesh.
-      m_nodeMapWeights(a) = 1; //for now, we dont need this, so we just use 1.
-    }  
-}
+// void MultiResolutionHFSolver::updateNodeMaps( MeshLevel const & base,
+// 						MeshLevel const & patch )
+// {
+//   // get list of nodes on the boundary of the patch
+//   NodeManager const & patchNodeManager = patch.getNodeManager();
+//   NodeManager const & baseNodeManager = base.getNodeManager();
+//   SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
+//   arrayView2d<real64 const> const patchPosition = patchNodeManager.referencePosition();
+//   for (localIndex a : patchExternalSet )  
+//     {
+//       localIndex A = getNodeNumberFromCoordinate(base, patchPosition(a,0), patchPosition(a,1), patchPosition(a,2));
+//       m_nodeMapIndices( a ) = A;
+//       //since the boundary points lie on element edges, these will have dimension 2. weights can be computed by taking the ratio between distances to 2 closes points from base mesh.
+//       m_nodeMapWeights( a,1 ) = 1; //for now, we dont need this, so we just use 1.
+//     }  
+// }
 
 //Andre - 03/15 - this function will loop over all subdomain nodes and check their distance to the prescribed discrete crack. If the distance is smaller than 1 element size (subdomain), we set the damage in this node to be fixed at 1. 
-void MultiResolutionHFSolver::setInitialCrackDamageBCs( MeshLevel const & patch, MeshLevel const & base )
+void MultiResolutionHFSolver::setInitialCrackDamageBCs( MeshLevel const & GEOSX_UNUSED_PARAM(patch), MeshLevel const & base )
 {
 
   // get list of nodes on the boundary of the patch
-  NodeManager const & patchNodeManager = patch.getNodeManager();
+  //NodeManager const & patchNodeManager = patch.getNodeManager();
   ElementRegionManager const & baseElemManager = base.getElemManager();
-  baseElemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [&](localIndex const, CellElementSubRegion const & cellElementSubRegion)
+  baseElemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & cellElementSubRegion)
   {
     SortedArrayView< localIndex const > const fracturedElements = cellElementSubRegion.fracturedElementsList();
-    m_nodeFixDamage.resize( numNodesPerElement()*fracturedElements.size() );
+    m_nodeFixDamage.resize( cellElementSubRegion.numNodesPerElement()*fracturedElements.size() );
     localIndex count = 0;
     for (localIndex a : fracturedElements)
       {
 	//get all nodes of fracturedElements(a)
-	for (localIndex b=0; b < numNodesPerElement(); b++)
+	for (localIndex b=0; b < cellElementSubRegion.numNodesPerElement(); b++)
 	  {
-	    cellElementSubRegion.nodeList( a,b )      
+	    localIndex c = cellElementSubRegion.nodeList( a,b );
 	    //append dofs associated with node b of element a
-	      if (!isMember(a,m_nodeFixDamage))
+	      if (!isMember(c,m_nodeFixDamage))
 	      {
-		m_nodeFixDamage(count) = a;
+		m_nodeFixDamage(count) = cellElementSubRegion.nodeList( a,b );
 		++count;
 	      }
 	  } 
       }
+    m_nodeFixDamage.resize( count );
   });
-  m_nodeFixDamage.resize( count );
 }  
   
 //Andre - 03/15 - this function needs to access u_base (hopefully via node manager), the patch mesh (via node manager too),
@@ -230,9 +232,9 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   NodeManager const & patchNodeManager = patch.getNodeManager();
   SortedArrayView< localIndex const > const patchExternalSet = patchNodeManager.externalSet();
   //arrayView1d< globalIndex const > const patchLocalToGlobalMap = patchNodeManager.localToGlobalMap();
-  arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference<array1d<real64>( "damage" );
+  arrayView1d< real64 const > const patchDamage = patchNodeManager.getReference<array1d<real64> >( "damage" );
   NodeManager const & baseNodeManager = base.getNodeManager();
-  arrayView1d<real64 const> const baseDisp = baseNodeManager.totalDisplacement();
+  arrayView2d<real64 const> const baseDisp = baseNodeManager.totalDisplacement();
   //unordered_map< globalIndex, localIndex > const & patchGlobalToLocalMap = baseNodeManager.globalToLocalMap();
 
   //we need to zero the lists to erase data from previous step
@@ -253,10 +255,11 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
         localIndex const numBaseNodes = m_nodeMapIndices.sizeOfArray( a );
         for( localIndex b=0; b<numBaseNodes; ++b )
         {
-          localIndex const B = m_nodeMapIndices[b]; // base node number associated to patch node i
-          m_fixedDispList(count,0) += m_nodeMapWeights(a,b) * baseDisp(B,0);
-          m_fixedDispList(count,1) += m_nodeMapWeights(a,b) * baseDisp(B,1);
-          m_fixedDispList(count,2) += m_nodeMapWeights(a,b) * baseDisp(B,2);
+          //localIndex const B = m_nodeMapIndices[b]; // base node number associated to patch node i
+	  //WARNING: IN THIS CASE, WE HAVE THE SAME MESH FOR BASE AND PATCH, SO B = b, IN GENERAL, WE WILL NEED A MAP
+	  m_fixedDispList(count,0) += m_nodeMapWeights(a,b) * baseDisp(b,0);
+          m_fixedDispList(count,1) += m_nodeMapWeights(a,b) * baseDisp(b,1);
+          m_fixedDispList(count,2) += m_nodeMapWeights(a,b) * baseDisp(b,2);
         }
 
         ++count;
@@ -268,10 +271,10 @@ void MultiResolutionHFSolver::prepareSubProblemBCs( MeshLevel const & base,
   
 }  
 
-real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & time_n,
                                                real64 const & dt,
-                                               integer const GEOSX_UNUSED_PARAM( cycleNumber ),
-                                               DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
+                                               integer const cycleNumber,
+                                               DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
   real64 dtReturn = dt;
@@ -322,18 +325,19 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_P
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", BaseSolver: " );
 
     //we probably want to run a phase-field solve in the patch problem at timestep 0 to get a smooth initial crack. Also, re-run this anytime the base crack changes
-    this->setInitialCrackDamageBCs();
+    this->setInitialCrackDamageBCs(domain.getMeshBody(0).getMeshLevel(0), domain.getMeshBody(0).getMeshLevel(0));
 
-    patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
+    //patchSolver.addCustomBCDamage(m_nodeFixDamage); //this function still doesnt exist
     //must prescribe the damage boundary conditions based on the location of the base crack relative to the subdomain mesh
 
     //now perform the subproblem run with no BCs on displacements, just to set the damage inital condition;
     if (iter == 1){
-      this->updateNodeMap(); //this has to be done at every prop. step
-      Real64 dtUseless = patchSolver.nonlinearImplicitStep(time_n,
+      //this->updateNodeMaps(); //this has to be done at every prop. step
+      real64 dtUseless = patchSolver.nonlinearImplicitStep(time_n,
 							 dtReturn,
 							 cycleNumber,
 							 domain );
+      GEOSX_UNUSED_VAR( dtUseless );
     }
 
     dtReturnTemporary = baseSolver.nonlinearImplicitStep( time_n,
@@ -356,11 +360,11 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_P
     }
 
     //here, before calling the nonlinarImplicitStep of the patch solver, we must prescribe the displacement boundary conditions
-    this->prepareSubProblemBCs();
+    this->prepareSubProblemBCs(domain.getMeshBody(0).getMeshLevel(0), domain.getMeshBody(0).getMeshLevel(0));
 
     //finally, pass the shared boundary information to the patch solver
     //patchSolver.
-    patchSolver.addCustomBCDisp(m_nodeFixDisp, m_fixedDispList); //this function still doesnt exist
+    //patchSolver.addCustomBCDisp(m_nodeFixDisp, m_fixedDispList); //this function still doesnt exist
     
     GEOSX_LOG_LEVEL_RANK_0( 1, "\tIteration: " << iter+1 << ", PatchSolver: " );
 
@@ -389,168 +393,7 @@ real64 MultiResolutionHFSolver::splitOperatorStep( real64 const & GEOSX_UNUSED_P
   return dtReturn;
 }
 
-real64 MultiResolutionHFSolver::explicitStep( real64 const & time_n,
-                                          real64 const & dt,
-                                          const int cycleNumber,
-                                          DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  m_baseSolver->solverStep( time_n, dt, cycleNumber, domain );
-  m_patchSolver->solverStep( time_n, dt, cycleNumber, domain );
-
-  return dt;
-}
-
-
-void MultiResolutionHFSolver::setupDofs( DomainPartition const & domain,
-                                     DofManager & dofManager ) const
-{
-  GEOSX_MARK_FUNCTION;
-  m_baseSolver->setupDofs( domain, dofManager );
-  m_patchSolver->setupDofs( domain, dofManager );
-}
-
 // Andre - 14/03/22 - This can probably be made trivial in the MR case
-void MultiResolutionHFSolver::setupSystem( DomainPartition & domain,
-                                       DofManager & dofManager,
-                                       CRSMatrix< real64, globalIndex > & localMatrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution,
-                                       bool const setSparsity )
-{
-  GEOSX_MARK_FUNCTION;
-
-  GEOSX_UNUSED_VAR( setSparsity );
-
-  dofManager.setDomain( domain );
-
-  setupDofs( domain, dofManager );
-  dofManager.reorderByRank();
-
-  localIndex const numLocalRows = dofManager.numLocalDofs();
-
-  SparsityPattern< globalIndex > patternOriginal;
-  dofManager.setSparsityPattern( patternOriginal );
-
-  // Get the original row lengths (diagonal blocks only)
-  array1d< localIndex > rowLengths( patternOriginal.numRows() );
-  for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
-  {
-    rowLengths[localRow] = patternOriginal.numNonZeros( localRow );
-  }
-
-  // Add the number of nonzeros induced by coupling
-  //addFluxApertureCouplingNNZ( domain, dofManager, rowLengths.toView() );
-
-  // Create a new pattern with enough capacity for coupled matrix
-  SparsityPattern< globalIndex > pattern;
-  pattern.resizeFromRowCapacities< parallelHostPolicy >( patternOriginal.numRows(),
-                                                         patternOriginal.numColumns(),
-                                                         rowLengths.data() );
-
-  // Copy the original nonzeros
-  for( localIndex localRow = 0; localRow < patternOriginal.numRows(); ++localRow )
-  {
-    globalIndex const * cols = patternOriginal.getColumns( localRow ).dataIfContiguous();
-    pattern.insertNonZeros( localRow, cols, cols + patternOriginal.numNonZeros( localRow ) );
-  }
-
-  // Add the nonzeros from coupling
-  //addFluxApertureCouplingSparsityPattern( domain, dofManager, pattern.toView() );
-
-  localMatrix.assimilate< parallelDevicePolicy<> >( std::move( pattern ) );
-  localMatrix.setName( this->getName() + "/matrix" );
-
-  rhs.setName( this->getName() + "/rhs" );
-  rhs.create( numLocalRows, MPI_COMM_GEOSX );
-
-  solution.setName( this->getName() + "/solution" );
-  solution.create( numLocalRows, MPI_COMM_GEOSX );
-
-  //setUpDflux_dApertureMatrix( domain, dofManager, localMatrix );
-}
-
-//Andre - 03/16 - Does this function ever gets called?
-void MultiResolutionHFSolver::assembleSystem( real64 const time,
-                                          real64 const dt,
-                                          DomainPartition & domain,
-                                          DofManager const & dofManager,
-                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                          arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  m_baseSolver->assembleSystem( time,
-                                 dt,
-                                 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
-
-  m_patchSolver->assembleSystem( time,
-				 dt,
-				 domain,
-                                 dofManager,
-                                 localMatrix,
-                                 localRhs );
-}
-
-//Andre - 03/16 - Does this function ever gets called?
-void MultiResolutionHFSolver::applyBoundaryConditions( real64 const time,
-                                                   real64 const dt,
-                                                   DomainPartition & domain,
-                                                   DofManager const & dofManager,
-                                                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                   arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  m_baseSolver->applyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
-
-  m_patchSolver->applyBoundaryConditions( time,
-                                         dt,
-                                         domain,
-                                         dofManager,
-                                         localMatrix,
-                                         localRhs );
-}
-
-//Andre - 03/16 - Does this function need to be implemented? It is just calling the base class function, which should be done automatically
-void
-MultiResolutionHFSolver::
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       DomainPartition & domain )
-{
-  GEOSX_MARK_FUNCTION;
-  SolverBase::applySystemSolution( dofManager, localSolution, scalingFactor, domain );
-  
-}
-
-void MultiResolutionHFSolver::updateState( DomainPartition & domain )
-{
-  m_baseSolver->updateState( domain );
-  m_patchSolver->updateState( domain );
-}
-
-
-
-// Andre Costa - 14/03/22 - we probably need one of these for the local solver as well, not sure what is the best design
-real64
-MultiResolutionHFSolver::scalingForSystemSolution( DomainPartition const & domain,
-                                               DofManager const & dofManager,
-                                               arrayView1d< real64 const > const & localSolution )
-{
-  return m_baseSolver->scalingForSystemSolution( domain,
-                                                  dofManager,
-                                                  localSolution );
-}
 
 void MultiResolutionHFSolver::setNextDt( real64 const & currentDt,
                                      real64 & nextDt )
@@ -568,12 +411,6 @@ void MultiResolutionHFSolver::setNextDt( real64 const & currentDt,
 
   GEOSX_LOG_LEVEL_RANK_0( 3, this->getName() << ": nextDt request is "  << nextDt );
 }
-
-void MultiResolutionHFSolver::initializeNewFaceElements( DomainPartition const & )
-{
-//  m_flowSolver->
-}
-
 
 REGISTER_CATALOG_ENTRY( SolverBase, MultiResolutionHFSolver, string const &, Group * const )
 } /* namespace geosx */

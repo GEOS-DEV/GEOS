@@ -48,45 +48,10 @@ public:
 
   virtual void RegisterDataOnMesh( Group & MeshBodies );
 
-  virtual void setupDofs( DomainPartition const & domain,
-                          DofManager & dofManager ) const override;
-
-  virtual void setupSystem( DomainPartition & domain,
-                            DofManager & dofManager,
-                            CRSMatrix< real64, globalIndex > & localMatrix,
-                            ParallelVector & rhs,
-                            ParallelVector & solution,
-                            bool const setSparsity = true ) override;
-
   virtual void
   implicitStepSetup( real64 const & time_n,
                      real64 const & dt,
                      DomainPartition & domain ) override final;
-
-  virtual void assembleSystem( real64 const time,
-                               real64 const dt,
-                               DomainPartition & domain,
-                               DofManager const & dofManager,
-                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                               arrayView1d< real64 > const & localRhs ) override;
-
-  virtual void applyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
-
-  virtual real64
-  scalingForSystemSolution( DomainPartition const & domain,
-                            DofManager const & dofManager,
-                            arrayView1d< real64 const > const & localSolution ) override;
-
-  virtual void
-  applySystemSolution( DofManager const & dofManager,
-                       arrayView1d< real64 const > const & localSolution,
-                       real64 const scalingFactor,
-                       DomainPartition & domain ) override;
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override;
 
@@ -95,33 +60,22 @@ public:
                              int const cycleNumber,
                              DomainPartition & domain ) override;
 
-  virtual void updateNodeMaps();
+  //virtual void updateNodeMaps( MeshLevel const & base, MeshLevel const & patch );
 
-  virtual void setInitialCrackDamageBCs( MeshLevel const & patch );
+  virtual void setInitialCrackDamageBCs( MeshLevel const & patch, MeshLevel const & base );
 
   virtual void prepareSubProblemBCs( MeshLevel const & base,
                                      MeshLevel const & patch );
     
-  virtual void setNextDt( real64 const & currentDt,
-                          real64 & nextDt ) override;
-
-
-  virtual real64 explicitStep( real64 const & time_n,
-                               real64 const & dt,
-                               integer const cycleNumber,
-                               DomainPartition & domain ) override;
-
-  virtual void updateState( DomainPartition & domain ) override final;
-
-  void updateDeformationForCoupling( DomainPartition & domain );
-
   real64 splitOperatorStep( real64 const & time_n,
                             real64 const & dt,
                             integer const cycleNumber,
                             DomainPartition & domain );
 
-  void initializeNewFaceElements( DomainPartition const & domain );
+  virtual void setNextDt( real64 const & currentDt,
+                          real64 & nextDt ) override;
 
+  
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * baseSolverNameString() { return "baseSolverName"; }
@@ -177,8 +131,6 @@ private:
 
   /// pointer to the surface generator
   SurfaceGenerator * m_surfaceGenerator;
-
-  std::unique_ptr< ParallelMatrix > m_blockDiagUU;
 
   integer m_maxNumResolves;
   integer m_numResolves[2];
