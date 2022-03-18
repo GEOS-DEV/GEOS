@@ -892,8 +892,8 @@ the relative residual norm satisfies:
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
 		<!--lineSearchInterpolationType => Strategy to cut the solution update during the line search. Options are: 
- * Linear    - .
-* Parabolic - .-->
+ * Linear
+* Parabolic-->
 		<xsd:attribute name="lineSearchInterpolationType" type="geosx_NonlinearSolverParameters_LineSearchInterpolationType" default="Linear" />
 		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
 		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
