@@ -857,11 +857,11 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packByIndexTemplate( buffer_unit_type * & buffer,
-                                  arrayView1d< localIndex const > const & packList,
-                                  bool withMetadata,
-                                  bool onDevice,
-                                  parallelDeviceEvents & events ) const
+  localIndex packByIndexImpl( buffer_unit_type * & buffer,
+                              arrayView1d< localIndex const > const & packList,
+                              bool withMetadata,
+                              bool onDevice,
+                              parallelDeviceEvents & events ) const
   {
     localIndex packedSize = 0;
 
@@ -906,7 +906,7 @@ private:
                                  bool onDevice,
                                  parallelDeviceEvents & events ) const override final
   {
-    return this->packByIndexTemplate< true >( buffer, packList, withMetadata, onDevice, events );
+    return this->packByIndexImpl< true >( buffer, packList, withMetadata, onDevice, events );
   }
 
   /**
@@ -929,7 +929,7 @@ private:
                                      parallelDeviceEvents & events ) const override final
   {
     buffer_unit_type * dummy;
-    return this->packByIndexTemplate< false >( dummy, packList, withMetadata, onDevice, events );
+    return this->packByIndexImpl< false >( dummy, packList, withMetadata, onDevice, events );
   }
 
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
