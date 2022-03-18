@@ -252,7 +252,7 @@ int ElementRegionManager::Pack( buffer_unit_type * & buffer,
   return PackPrivate< true >( buffer, wrapperNames, packList );
 }
 
-template< bool DOPACK >
+template< bool DO_PACKING >
 int
 ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
                                    string_array const & wrapperNames,
@@ -262,24 +262,24 @@ ElementRegionManager::PackPrivate( buffer_unit_type * & buffer,
 
 //  packedSize += Group::Pack( buffer, wrapperNames, {}, 0, 0);
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, this->getName() );
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, this->getName() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
   parallelDeviceEvents events;
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.numSubRegions() );
 
     elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, subRegion.getName() );
 
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
-      if( DOPACK )
+      if( DO_PACKING )
       {
         packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
       }
@@ -359,28 +359,28 @@ int ElementRegionManager::PackGlobalMaps( buffer_unit_type * & buffer,
 {
   return PackGlobalMapsPrivate< true >( buffer, packList );
 }
-template< bool DOPACK >
+template< bool DO_PACKING >
 int
 ElementRegionManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                                              ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.numSubRegions() );
     elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, subRegion.getName() );
 
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
-      if( DOPACK )
+      if( DO_PACKING )
       {
         packedSize += subRegion.packGlobalMaps( buffer, elemList, 0 );
       }
@@ -455,28 +455,28 @@ int ElementRegionManager::PackUpDownMaps( buffer_unit_type * & buffer,
   return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
-template< bool DOPACK, typename T >
+template< bool DO_PACKING, typename T >
 int
 ElementRegionManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                              T const & packList ) const
 {
   int packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.numSubRegions() );
     elemRegion.forElementSubRegionsIndex< ElementSubRegionBase >(
       [&]( localIndex const esr, ElementSubRegionBase const & subRegion )
     {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, subRegion.getName() );
 
       arrayView1d< localIndex > const elemList = packList[kReg][esr];
-      if( DOPACK )
+      if( DO_PACKING )
       {
         packedSize += subRegion.packUpDownMaps( buffer, elemList );
       }
@@ -546,7 +546,7 @@ int ElementRegionManager::packFracturedElements( buffer_unit_type * & buffer,
 {
   return packFracturedElementsPrivate< true >( buffer, packList, fractureRegionName );
 }
-template< bool DOPACK >
+template< bool DO_PACKING >
 int
 ElementRegionManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
                                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList,
@@ -562,21 +562,21 @@ ElementRegionManager::packFracturedElementsPrivate( buffer_unit_type * & buffer,
   arrayView1d< globalIndex const > const embeddedSurfacesLocalToGlobal =
     embeddedSurfaceSubRegion.localToGlobalMap();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, numRegions() );
 
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
     ElementRegionBase const & elemRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.getName() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.getName() );
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, elemRegion.numSubRegions() );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, elemRegion.numSubRegions() );
     elemRegion.forElementSubRegionsIndex< CellElementSubRegion >(
       [&]( localIndex const esr, CellElementSubRegion const & subRegion )
     {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, subRegion.getName() );
 
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
-      if( DOPACK )
+      if( DO_PACKING )
       {
         packedSize += subRegion.packFracturedElements( buffer, elemList, embeddedSurfacesLocalToGlobal );
       }

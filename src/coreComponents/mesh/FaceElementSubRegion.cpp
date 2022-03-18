@@ -102,7 +102,7 @@ localIndex FaceElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
   return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
-template< bool DOPACK >
+template< bool DO_PACKING >
 localIndex FaceElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
@@ -111,36 +111,36 @@ localIndex FaceElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buf
   arrayView1d< globalIndex const > const edgeLocalToGlobal = m_toEdgesRelation.relatedObjectLocalToGlobal();
   arrayView1d< globalIndex const > const faceLocalToGlobal = m_toFacesRelation.relatedObjectLocalToGlobal();
 
-  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
+  localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toNodesRelation.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToNodes,
-                                           packList,
-                                           localToGlobal,
-                                           nodeLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toNodesRelation.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToNodes,
+                                               packList,
+                                               localToGlobal,
+                                               nodeLocalToGlobal );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toEdgesRelation.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToEdges,
-                                           packList,
-                                           localToGlobal,
-                                           edgeLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::edgeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toEdgesRelation.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToEdges,
+                                               packList,
+                                               localToGlobal,
+                                               edgeLocalToGlobal );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToFaces,
-                                           packList,
-                                           localToGlobal,
-                                           faceLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toFacesRelation.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToFaces,
+                                               packList,
+                                               localToGlobal,
+                                               faceLocalToGlobal );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_surfaceElementsToCells,
-                                           packList,
-                                           m_surfaceElementsToCells.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_surfaceElementsToCells,
+                                               packList,
+                                               m_surfaceElementsToCells.getElementRegionManager() );
 
   return packedSize;
 }

@@ -867,18 +867,18 @@ localIndex WellElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
   return packUpDownMapsPrivate< true >( buffer, packList );
 }
 
-template< bool DOPACK >
+template< bool DO_PACKING >
 localIndex WellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                         arrayView1d< localIndex const > const & packList ) const
 {
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
-  return bufferOps::Pack< DOPACK >( buffer,
-                                    nodeList().base().toViewConst(),
-                                    m_unmappedGlobalIndicesInNodelist,
-                                    packList,
-                                    localToGlobal.toSliceConst(),
-                                    nodeLocalToGlobal );
+  return bufferOps::Pack< DO_PACKING >( buffer,
+                                        nodeList().base().toViewConst(),
+                                        m_unmappedGlobalIndicesInNodelist,
+                                        packList,
+                                        localToGlobal.toSliceConst(),
+                                        nodeLocalToGlobal );
 }
 
 localIndex WellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,

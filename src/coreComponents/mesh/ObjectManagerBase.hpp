@@ -96,14 +96,14 @@ public:
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
-   * @tparam DOPACK Template parameter that decides at compile time whether one should actually pack or not.
+   * @tparam DO_PACKING Template parameter that decides at compile time whether one should actually pack or not.
    * @param buffer The buffer that will store the packed data.
    * @param packList The elements of each set that should be packed.
    * @return The size of the (potentially) packed data.
    *
-   * Note that the returned value does not depend on parameter @p DOPACK.
+   * Note that the returned value does not depend on parameter @p DO_PACKING.
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   localIndex packSets( buffer_unit_type * & buffer,
                        arrayView1d< localIndex const > const & packList ) const;
 
@@ -236,7 +236,7 @@ public:
 private:
   /**
    * @brief Concrete implementation of the packing method.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param wrapperNames
    * @param packList The element we want packed.
@@ -245,7 +245,7 @@ private:
    *                  (buffer must be either pinned or a device pointer)
    * @return The packed size.
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   localIndex packPrivate( buffer_unit_type * & buffer,
                           string_array const & wrapperNames,
                           arrayView1d< localIndex const > const & packList,
@@ -255,25 +255,25 @@ private:
 
   /**
    * @brief Packing global maps.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
    * @param recursive recursive pack or not.
    * @return The packed size.
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   localIndex packGlobalMapsPrivate( buffer_unit_type * & buffer,
                                     arrayView1d< localIndex const > const & packList,
                                     integer const recursive ) const;
 
   /**
    * @brief Pack parent and child maps.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   localIndex packParentChildMapsPrivate( buffer_unit_type * & buffer,
                                          arrayView1d< localIndex const > const & packList ) const;
 

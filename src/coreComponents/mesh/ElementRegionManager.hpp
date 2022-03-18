@@ -1124,7 +1124,7 @@ private:
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   int PackPrivate( buffer_unit_type * & buffer,
                    string_array const & wrapperNames,
                    ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
@@ -1135,7 +1135,7 @@ private:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
                              ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
@@ -1145,7 +1145,7 @@ private:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  template< bool DOPACK, typename T >
+  template< bool DO_PACKING, typename T >
   int
   packUpDownMapsPrivate( buffer_unit_type * & buffer,
                          T const & packList ) const;
@@ -1166,7 +1166,7 @@ private:
    * @param fractureRegionName name of the fracture region
    * @return the size of the data packed
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   int
   packFracturedElementsPrivate( buffer_unit_type * & buffer,
                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,

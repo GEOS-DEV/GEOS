@@ -234,20 +234,20 @@ localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMaps( buffer_unit_type 
   return packNewNodesGlobalMapsPrivate< true >( buffer, packList );
 }
 
-template< bool DOPACK >
+template< bool DO_PACKING >
 localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsPrivate( buffer_unit_type * & buffer,
                                                                       arrayView1d< localIndex const > const & packList ) const
 {
-  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
+  localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, this->getName() );
 
   // this doesn't link without the string()...no idea why.
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
 
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
-  packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, numPackedIndices );
 
   if( numPackedIndices > 0 )
   {
@@ -263,13 +263,13 @@ localIndex EmbeddedSurfaceNodeManager::packNewNodesGlobalMapsPrivate( buffer_uni
       globalIndices[a] = this->m_localToGlobalMap[packList[a]];
       ghostRanks[a]= this->m_ghostRank[ packList[a] ];
     }
-    packedSize += bufferOps::Pack< DOPACK >( buffer, globalIndices );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, ghostRanks );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, globalIndices );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, ghostRanks );
 
     // 3. the referencePosition
     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & referencePosition = this->referencePosition();
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::referencePositionString() ) );
-    packedSize += bufferOps::PackByIndex< DOPACK >( buffer, referencePosition, packList );
+    packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::referencePositionString() ) );
+    packedSize += bufferOps::PackByIndex< DO_PACKING >( buffer, referencePosition, packList );
   }
 
   return packedSize;
@@ -416,17 +416,17 @@ localIndex EmbeddedSurfaceNodeManager::packUpDownMaps( buffer_unit_type * & buff
 }
 
 
-template< bool DOPACK >
+template< bool DO_PACKING >
 localIndex EmbeddedSurfaceNodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
                                                               arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_toElements,
-                                           packList,
-                                           m_toElements.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elementListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_toElements,
+                                               packList,
+                                               m_toElements.getElementRegionManager() );
   return packedSize;
 }
 
