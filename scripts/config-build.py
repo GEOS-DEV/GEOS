@@ -37,10 +37,7 @@ def setup_ats(scripts_dir, build_path):
     # Write the bash script to run ats.
     ats_script_path = os.path.join(build_path, "geosxats.sh")
     with open(ats_script_path, "w") as f:
-        contents = ("#!/bin/bash\n"
-                    "{} {} --workingDir {} \"$@\"")
-        contents = contents.format(geosxats_path, bin_dir, ats_update_dir)
-        f.write(contents)
+        f.write("#!/bin/bash\n{} {} --workingDir {} \"$@\"\n".format(geosxats_path, bin_dir, ats_update_dir))
 
     # Make the script executable
     st = os.stat(ats_script_path)
@@ -134,11 +131,11 @@ def parse_args(cli_arguments):
     return args, unknown_args
 
 
-def main(args, unknown_args):
+def main(calling_script, args, unknown_args):
     ########################
     # Find CMake Cache File
     ########################
-    scripts_dir = os.path.dirname( os.path.abspath(sys.argv[0]) )
+    scripts_dir = os.path.dirname(os.path.abspath(calling_script))
 
     cache_file = os.path.abspath(args.host_config)
     platform_info = os.path.split(cache_file)[1]
@@ -230,14 +227,14 @@ def main(args, unknown_args):
     # Append cache file at the end of the command line to make previous argument visible to the cache.
     cmake_line += " -C %s" % cache_file
 
-    cmake_line += os.path.normpath(" %s/../src " % scripts_dir)
+    cmake_line += " " + os.path.normpath(os.path.join(scripts_dir, "..", "src"))
 
     # Dump the cmake command to file for convenience
-    with open("%s/cmake_cmd" % build_path, "w") as cmd_file:
-        cmd_file.write(cmake_line)
-
-    st = os.stat("%s/cmake_cmd" % build_path)
-    os.chmod("%s/cmake_cmd" % build_path, st.st_mode | stat.S_IEXEC)
+    cmake_cmd = os.path.join(build_path, "cmake_cmd")
+    with open(cmake_cmd, "w") as cmd_file:
+        cmd_file.write(cmake_line + "\n")
+    st = os.stat(cmake_cmd)
+    os.chmod(cmake_cmd, st.st_mode | stat.S_IEXEC)
 
     ############################
     # Run CMake
@@ -253,4 +250,4 @@ def main(args, unknown_args):
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(filename)s]:[%(levelname)s]: %(message)s', level=logging.INFO)
-    main(*parse_args(sys.argv[1:]))
+    main(sys.argv[0], *parse_args(sys.argv[1:]))
