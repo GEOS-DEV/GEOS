@@ -79,18 +79,16 @@ array2d< real64 > ParticleRegion::getParticleCoordinates() const
         }
       }
     }
-    else // currently no difference from the preceding code
+    else
     {
-      //arrayView3d< real64 > const particleRVectors = subRegion.getParticleRVectors();
-      arrayView1d< real64 const > particleVolume = subRegion.getParticleVolume();
+      arrayView3d< real64 const > particleRVectors = subRegion.getParticleRVectors();
       for(int p=0; p<subRegion.size(); p++)
       {
-        real64 a = 0.5*std::pow(particleVolume[p],1.0/3.0); // cube half-side-length
         for(int corner=0; corner<8; corner++)
         {
           for(int i=0; i<3; i++)
           {
-            coords[index][i] = particleCenter[p][i] + signs[corner][i]*a;
+            coords[index][i] = particleCenter[p][i] + 0.5*(signs[corner][0]*particleRVectors[p][0][i] + signs[corner][1]*particleRVectors[p][1][i] + signs[corner][2]*particleRVectors[p][2][i]);
           }
           index++;
         }
