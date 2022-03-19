@@ -603,18 +603,18 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
     {
       for(int j=0; j<3; j++)
       {
-        //g_A[i][j] /= g_M[i]; // g_A holds the nodal forces before this update, divide by mass to obtain acceleration
-        //g_V[i][j] /= g_M[i]; // g_V holds the nodal momenta before this update, divide by mass to obtain velocity
-        //g_V[i][j] += g_A[i][j]*dt;
+        g_A[i][j] /= g_M[i]; // g_A holds the nodal forces before this update, divide by mass to obtain acceleration
+        g_V[i][j] /= g_M[i]; // g_V holds the nodal momenta before this update, divide by mass to obtain velocity
+        g_V[i][j] += g_A[i][j]*dt;
       }
       // hard-coded rotation about z-axis passing thru mesh center
-      double xRel = g_X[i][0] - 0.5*(m_xMax[0] - m_xMin[0]);
-      double yRel = g_X[i][1] - 0.5*(m_xMax[1] - m_xMin[1]);
-      double theta = atan2(yRel,xRel);
-      double r = hypot(xRel,yRel);
-      g_V[i][0] = -r*sin(theta)*50.0;
-      g_V[i][1] = r*cos(theta)*50.0;
-      g_V[i][2] = 0.0;
+//      double xRel = g_X[i][0] - 0.5*(m_xMax[0] - m_xMin[0]);
+//      double yRel = g_X[i][1] - 0.5*(m_xMax[1] - m_xMin[1]);
+//      double theta = atan2(yRel,xRel);
+//      double r = hypot(xRel,yRel);
+//      g_V[i][0] = -r*sin(theta)*50.0;
+//      g_V[i][1] = r*cos(theta)*50.0;
+//      g_V[i][2] = 0.0;
     }
     else
     {
