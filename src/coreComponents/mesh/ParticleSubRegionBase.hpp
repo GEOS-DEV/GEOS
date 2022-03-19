@@ -177,6 +177,19 @@ public:
   arrayView3d< real64 > getParticleDeformationGradient()
   { return m_particleDeformationGradient; }
 
+  /**
+   * @brief Get the r-vectors of each particle in this subregion.
+   * @return an arrayView3d of const particle r-vectors
+   */
+  arrayView3d< real64 const > getParticleRVectors() const
+  { return m_particleRVectors; }
+
+  /**
+   * @copydoc getParticleDeformationGradient() const
+   */
+  arrayView3d< real64 > getParticleRVectors()
+  { return m_particleRVectors; }
+
 
   /**
    * @brief Get the group in which the constitutive models of this subregion are registered.

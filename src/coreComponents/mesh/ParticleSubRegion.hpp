@@ -95,9 +95,9 @@ public:
 //      }
       for(int i=0; i<3; i++)
       {
-        for(int j=0; j<3; j++)
+        for(int j=0; j<3; j++) // This seems wrong to me, but I checked it against a grid-imposed rigid body rotation velocity field and everything looked good...
         {
-          m_particleRVectors[p][j][i] = p_F[i][0]*m_particleRVectors0[p][j][0] + p_F[i][1]*m_particleRVectors0[p][j][1] + p_F[i][2]*m_particleRVectors0[p][j][2];
+          m_particleRVectors[p][j][i] = p_F[0][i]*m_particleRVectors0[p][j][0] + p_F[1][i]*m_particleRVectors0[p][j][1] + p_F[2][i]*m_particleRVectors0[p][j][2];
         }
       }
     }
