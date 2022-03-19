@@ -9,7 +9,7 @@
       temperature="368.15"
       useMass="1"
       isThermal="1"
-      initialDt="1"
+      initialDt="1e3"
       maxCompFractionChange="0.5"
       targetRegions="{ region }">
       <NonlinearSolverParameters
@@ -61,7 +61,7 @@
 
     <PeriodicEvent
       name="restarts"
-      timeFrequency="0.75e4"
+      timeFrequency="7.5e4"
       target="/Outputs/sidreRestart"/>
   </Events>
 

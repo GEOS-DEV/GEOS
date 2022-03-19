@@ -1645,10 +1645,13 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
     string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
     MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
 
+    // in the isothermal case, we use the reservoir temperature to enforce the boundary condition
+    string const temperatureKey = m_isThermal ? extrinsicMeshData::flow::bcTemperature::key() : extrinsicMeshData::flow::temperature::key();
+
     arrayView1d< real64 const > const bcPres =
       subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcPressure::key() );
     arrayView1d< real64 const > const bcTemp =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::bcTemperature::key() );
+      subRegion.getReference< array1d< real64 > >( temperatureKey );
     arrayView2d< real64 const, compflow::USD_COMP > const compFrac =
       subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
 
