@@ -216,7 +216,7 @@ public:
    */
   template< typename T = Group >
   T & registerGroup( string const & name )
-  { return registerGroup< T >( name, std::move( std::make_unique< T >( name, this ) ) ); }
+  { return registerGroup< T >( name, std::make_unique< T >( name, this ) ); }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -231,8 +231,8 @@ public:
   template< typename T = Group >
   T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T & rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
-    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key()) );
+    T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
+    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
   }
 

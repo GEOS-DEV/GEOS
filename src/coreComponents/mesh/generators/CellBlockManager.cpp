@@ -666,17 +666,17 @@ localIndex CellBlockManager::numFaces() const
   return m_numFaces;
 }
 
-ArrayOfSets< geosx::localIndex > CellBlockManager::getEdgeToFaces() const
+ArrayOfSets< localIndex > CellBlockManager::getEdgeToFaces() const
 {
   return m_edgeToFaces;
 }
 
-array2d< geosx::localIndex > CellBlockManager::getEdgeToNodes() const
+array2d< localIndex > CellBlockManager::getEdgeToNodes() const
 {
   return m_edgeToNodes;
 }
 
-ArrayOfArrays< geosx::localIndex > CellBlockManager::getFaceToEdges() const
+ArrayOfArrays< localIndex > CellBlockManager::getFaceToEdges() const
 {
   return m_faceToEdges;
 }

@@ -7,7 +7,7 @@
   </Included>
 
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
       name="CubeHex"
       file="passingCrack_smoke.msh"/>
   </Mesh>

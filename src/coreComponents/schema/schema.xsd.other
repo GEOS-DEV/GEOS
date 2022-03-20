@@ -333,8 +333,8 @@
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
-			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
+			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
+			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -362,12 +362,12 @@
 		<!--yCoords => y-coordinates of each mesh block vertex-->
 		<xsd:attribute name="yCoords" type="real64_array" />
 	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshGeneratorType">
+	<xsd:complexType name="PAMELAMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="VTKMeshGeneratorType">
+	<xsd:complexType name="VTKMeshType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="meshLevels" type="meshLevelsType" />
 		</xsd:choice>
@@ -1702,8 +1702,8 @@
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
-			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
+			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
+			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="meshLevelsType">

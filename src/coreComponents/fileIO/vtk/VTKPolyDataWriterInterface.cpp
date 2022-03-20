@@ -60,11 +60,12 @@ static int toVTKCellType( ElementType const elementType )
 {
   switch( elementType )
   {
+    case ElementType::Vertex:        return VTK_VERTEX;
     case ElementType::Line:          return VTK_LINE;
     case ElementType::Triangle:      return VTK_TRIANGLE;
     case ElementType::Quadrilateral: return VTK_QUAD;
     case ElementType::Polygon:       return VTK_POLYGON;
-    case ElementType::Tetrahedron:    return VTK_TETRA;
+    case ElementType::Tetrahedron:   return VTK_TETRA;
     case ElementType::Pyramid:       return VTK_PYRAMID;
     case ElementType::Prism:         return VTK_WEDGE;
     case ElementType::Hexahedron:    return VTK_HEXAHEDRON;
@@ -73,17 +74,18 @@ static int toVTKCellType( ElementType const elementType )
   return VTK_EMPTY_CELL;
 }
 
-static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
+static std::vector< int > getVtkToGeosxNodeOrdering( ElementType const elementType )
 {
   switch( elementType )
   {
+    case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
-    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
-    case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
+    case ElementType::Tetrahedron:   return { 1, 0, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4 }; // TODO check
+    case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
@@ -193,7 +195,7 @@ getSurface( FaceElementSubRegion const & subRegion,
   geosx2VTKIndexing.reserve( subRegion.size() * subRegion.numNodesPerElement() );
   localIndex nodeIndexInVTK = 0;
   std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-  std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getElementType() );
+  std::vector< int > vtkOrdering = getVtkToGeosxNodeOrdering( subRegion.getElementType() );
 
   for( localIndex ei = 0; ei < subRegion.size(); ei++ )
   {
@@ -281,7 +283,7 @@ getVtkCells( CellElementRegion const & region )
   region.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion const & subRegion )
   {
     std::vector< vtkIdType > connectivity( subRegion.numNodesPerElement() );
-    std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getElementType() );
+    std::vector< int > vtkOrdering = getVtkToGeosxNodeOrdering( subRegion.getElementType() );
     int vtkCellType = toVTKCellType( subRegion.getElementType() );
     for( localIndex c = 0; c < subRegion.size(); c++ )
     {

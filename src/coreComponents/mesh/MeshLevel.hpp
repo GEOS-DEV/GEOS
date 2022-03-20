@@ -47,7 +47,6 @@ public:
    */
   MeshLevel( string const & name,
              Group * const parent );
-  virtual ~MeshLevel() override;
 
   /**
    * @brief Collects the nodes, edges, faces, and elements that are adjacent to a given list of nodes.

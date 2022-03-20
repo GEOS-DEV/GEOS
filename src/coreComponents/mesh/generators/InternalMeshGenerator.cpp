@@ -120,7 +120,7 @@ static int getNumElemPerBox( ElementType const elementType )
   {
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
-    case ElementType::Tetrahedron:    return 6;
+    case ElementType::Tetrahedron:   return 6;
     case ElementType::Prism:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;
@@ -130,23 +130,6 @@ static int getNumElemPerBox( ElementType const elementType )
       return 0;
     }
   }
-}
-
-static int getElementDim( ElementType const elementType )
-{
-  switch( elementType )
-  {
-    case ElementType::Line:          return 1;
-    case ElementType::Triangle:
-    case ElementType::Quadrilateral:
-    case ElementType::Polygon:       return 2;
-    case ElementType::Tetrahedron:
-    case ElementType::Pyramid:
-    case ElementType::Prism:
-    case ElementType::Hexahedron:
-    case ElementType::Polyhedron:    return 3;
-  }
-  return 0;
 }
 
 void InternalMeshGenerator::postProcessInput()
@@ -239,12 +222,6 @@ void InternalMeshGenerator::postProcessInput()
   }
 
   m_fPerturb = 0.0;
-}
-
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                            string const & GEOSX_UNUSED_PARAM( childName ) )
-{
-  return nullptr;
 }
 
 /**

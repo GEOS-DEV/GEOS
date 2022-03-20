@@ -50,8 +50,8 @@
   </Solvers>
 
   <!-- <Mesh>
-    <PAMELAMeshGenerator name="MyMeshName"
-                         file="/usr/workspace/macieira/GEOSX/debugTests/geo.msh"/>
+    <PAMELAMesh name="MyMeshName"
+                file="/usr/workspace/macieira/GEOSX/debugTests/geo.msh"/>
   </Mesh> -->
   <Mesh>
     <InternalMesh

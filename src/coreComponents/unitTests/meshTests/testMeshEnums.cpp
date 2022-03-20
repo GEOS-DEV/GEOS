@@ -27,6 +27,7 @@ TEST( MeshEnums, ElementType )
 {
   using EnumType = ElementType;
 
+  ASSERT_EQ( "Vertex", toString( EnumType::Vertex ) );
   ASSERT_EQ( "BEAM", toString( EnumType::Line ) );
   ASSERT_EQ( "C2D3", toString( EnumType::Triangle ) );
   ASSERT_EQ( "C2D4", toString( EnumType::Quadrilateral ) );
@@ -36,6 +37,8 @@ TEST( MeshEnums, ElementType )
   ASSERT_EQ( "C3D6", toString( EnumType::Prism ) );
   ASSERT_EQ( "C3D8", toString( EnumType::Hexahedron ) );
   ASSERT_EQ( "Polyhedron", toString( EnumType::Polyhedron ) );
+
+  ASSERT_EQ( numElementTypes(), 10 );
 }
 
 

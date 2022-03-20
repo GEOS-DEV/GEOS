@@ -29,17 +29,12 @@
 namespace geosx
 {
 
-//int MpiWrapper::Bcast( void * buffer, int count, MPI_Datatype datatype, int root, MPI_Comm comm )
-//{
-//#ifdef GEOSX_USE_MPI
-//  return MPI_Bcast( buffer, count, datatype, root, comm );
-//#else
-//  return 0;
-//#endif
-//
-//}
-
-
+void MpiWrapper::barrier( MPI_Comm const & MPI_PARAM( comm ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Barrier( comm );
+#endif
+}
 
 int MpiWrapper::cartCoords( MPI_Comm comm, int rank, int maxdims, int coords[] )
 {
@@ -78,37 +73,33 @@ void MpiWrapper::commFree( MPI_Comm & comm )
 #endif
 }
 
-std::size_t MpiWrapper::getSizeofMpiType( MPI_Datatype const type )
+int MpiWrapper::commRank( MPI_Comm const & MPI_PARAM( comm ) )
 {
-  if( type == MPI_CHAR )
-  {
-    return sizeof(char);
-  }
-  else if( type == MPI_FLOAT )
-  {
-    return sizeof(float);
-  }
-  else if( type == MPI_DOUBLE )
-  {
-    return sizeof(double);
-  }
-  else if( type == MPI_INT )
-  {
-    return sizeof(int);
-  }
-  else if( type == MPI_LONG )
-  {
-    return sizeof(long int);
-  }
-  else if( type == MPI_LONG_LONG )
-  {
-    return sizeof(long long int);
-  }
-  else
-  {
-    GEOSX_ERROR( "No conversion implemented for MPI_Datatype "<<type );
-  }
-  return 0;
+  int rank = 0;
+#ifdef GEOSX_USE_MPI
+  MPI_Comm_rank( comm, &rank );
+#endif
+  return rank;
+}
+
+int MpiWrapper::commSize( MPI_Comm const & MPI_PARAM( comm ) )
+{
+  int size = 1;
+#ifdef GEOSX_USE_MPI
+  MPI_Comm_size( comm, &size );
+#endif
+  return size;
+}
+
+bool MpiWrapper::commCompare( MPI_Comm const & comm1, MPI_Comm const & comm2 )
+{
+#ifdef GEOSX_USE_MPI
+  int result;
+  MPI_Comm_compare( comm1, comm2, &result );
+  return result == MPI_IDENT || result == MPI_CONGRUENT;
+#else
+  return comm1 == comm2;
+#endif
 }
 
 bool MpiWrapper::initialized()
