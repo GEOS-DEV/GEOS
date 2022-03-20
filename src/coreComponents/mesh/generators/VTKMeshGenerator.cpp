@@ -18,9 +18,8 @@
 
 #include "VTKMeshGenerator.hpp"
 
-#include "CellBlockManager.hpp"
-
 #include "mesh/DomainPartition.hpp"
+#include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "mesh/MeshBody.hpp"
 #include "constitutive/solid/CoupledSolidBase.hpp"
@@ -45,12 +44,10 @@
 #include <vtkXMLUnstructuredGridReader.h>
 
 #ifdef GEOSX_USE_MPI
-
 #include <vtkMPIController.h>
 #include <vtkMPI.h>
-
 #else
-  #include <vtkDummyController.h>
+#include <vtkDummyController.h>
 #endif
 
 #include <numeric>
@@ -214,20 +211,22 @@ redistributeMesh( vtkUnstructuredGrid & loadedMesh,
  * @details Compute the rank neighbors. The assumption is that 2 ranks are neighbors if
  * the corresponding bounding boxes intersect.
  */
-std::unordered_set< int > computeMPINeighborRanks( std::vector< vtkBoundingBox > const & cuts )
+std::unordered_set< int > computeMPINeighborRanks( std::vector< vtkBoundingBox > cuts )
 {
   int const numParts = LvArray::integerConversion< int >( cuts.size() );
   int const numRanks = MpiWrapper::commSize();
   int const thisRank = MpiWrapper::commRank();
 
+  double constexpr inflateFactor = 1.1;
+
   std::vector< int > const assignments = computePartitionAssignments( numParts, numRanks );
   std::vector< vtkBoundingBox > myCuts;
   for( int i = 0; i < numParts; ++i )
   {
+    cuts[i].ScaleAboutCenter( inflateFactor );
     if( assignments[i] == thisRank )
     {
       myCuts.push_back( cuts[i] );
-      // TODO should we inflate the boxes?
     }
   }
 
@@ -931,13 +930,7 @@ void VTKMeshGenerator::buildSurfaces( CellBlockManager & cellBlockManager ) cons
 
   for( auto const & surfaceCells: m_cellMap.at( ElementType::Polygon ) )
   {
-    int const & surfaceId = surfaceCells.first;
-    if( surfaceId < 0 )
-    {
-      // Unlabeled surface elements are ignored
-      continue;
-    }
-
+    int const surfaceId = surfaceCells.first;
     std::vector< vtkIdType > const & cellIds = surfaceCells.second;
     string const surfaceName = std::to_string( surfaceId );
     GEOSX_LOG_LEVEL_RANK_0( 1, "Importing surface " << surfaceName );
@@ -971,7 +964,7 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     m_vtkMesh = redistributeMesh( *loadedMesh, cuts );
 
     // TODO Check that the neighbor information set is bulletproof
-    std::unordered_set< int > const neighbors = computeMPINeighborRanks( cuts );
+    std::unordered_set< int > const neighbors = computeMPINeighborRanks( std::move( cuts ) );
     domain.getMetisNeighborList().insert( neighbors.begin(), neighbors.end() );
   }
 

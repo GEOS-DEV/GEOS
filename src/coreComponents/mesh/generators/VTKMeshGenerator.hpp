@@ -28,6 +28,7 @@
 #include <vtkSmartPointer.h>
 
 #include <map>
+#include <unordered_map>
 
 class vtkUnstructuredGrid;
 class vtkDataArray;
@@ -102,7 +103,12 @@ public:
 
   virtual void freeResources() override;
 
-  /// Type of map used to store cell lists
+  /**
+   * @brief Type of map used to store cell lists.
+   *
+   * This should be an unordered_map, but some outdated standard libraries on some systems
+   * do not provide std::hash specialization for enums. This is not performance critical though.
+   */
   using CellMapType = std::map< ElementType, std::unordered_map< int, std::vector< vtkIdType > > >;
 
 private:
