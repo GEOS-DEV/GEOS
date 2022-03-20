@@ -7,6 +7,7 @@ set( dataRepository_tests
      testWrapper.cpp
      testXmlWrapper.cpp
      testBufferOps.cpp
+     testRestartAfterGroupRemoval.cpp
    )
 
 set( dependencyList gtest dataRepository )
