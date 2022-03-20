@@ -216,7 +216,7 @@ public:
    */
   template< typename T = Group >
   T & registerGroup( string const & name )
-  { return registerGroup< T >( name, std::move( std::make_unique< T >( name, this ) ) ); }
+  { return registerGroup< T >( name, std::make_unique< T >( name, this ) ); }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -231,8 +231,8 @@ public:
   template< typename T = Group >
   T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T & rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
-    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key()) );
+    T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
+    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
   }
 
@@ -1402,6 +1402,28 @@ private:
   virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
   Group const & getBaseGroupByPath( string const & path ) const;
+
+  /**
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] wrapperNames The names of the wrapper to be packed. If empty, all the wrappers will be packed.
+   * @param[in] packList The element we want packed. If empty, all the elements will be packed.
+   * @param[in] recursive Recursive pack or not.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
+  template< bool DO_PACKING >
+  localIndex packPrivate( buffer_unit_type * & buffer,
+                          array1d< string > const & wrapperNames,
+                          arrayView1d< localIndex const > const & packList,
+                          integer const recursive,
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const;
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
