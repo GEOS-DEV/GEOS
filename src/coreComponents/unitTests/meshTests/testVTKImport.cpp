@@ -14,15 +14,16 @@
 
 
 // Source includes
-#include "mainInterface/initialization.hpp"
+#include "codingUtilities/UnitTestUtilities.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-#include "tests/meshDirName.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
 #include "mesh/MeshManager.hpp"
-
 #include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/generators/CellBlockABC.hpp"
 
-#include "codingUtilities/UnitTestUtilities.hpp"
+// special CMake-generated include
+#include "tests/meshDirName.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -35,7 +36,7 @@ using namespace geosx::dataRepository;
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
 {
-  string const meshNode = "<Mesh ><VTKMeshGenerator name=\"Cube\" file=\"" + meshFilePath + "\" /></Mesh>";
+  string const meshNode = "<Mesh ><VTKMesh name=\"mesh\" file=\"" + meshFilePath + "\" /></Mesh>";
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );
@@ -51,7 +52,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
 
   // TODO Field import is not tested yet. Proper refactoring needs to be done first.
 
-  validate( domain.getGroup< CellBlockManagerABC >( keys::cellManager ) );
+  validate( domain.getMeshBody( "mesh" ).getGroup< CellBlockManagerABC >( keys::cellManager ) );
 }
 
 TEST( VTKImport, cube )
@@ -97,12 +98,6 @@ TEST( VTKImport, cube )
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );
     ASSERT_EQ( allNodes.size(), expectedNumNodes );
 
-    // The "-1" set contains 3 quads connected in L shape.
-    // 2 of those quads touch in the center of the cube: 6 nodes for MPI rank 0.
-    // Rank 1 only has one cube: 4 nodes.
-    SortedArray< localIndex > const & nodesNoRegion = cellBlockManager.getNodeSets().at( "-1" );
-    ASSERT_EQ( nodesNoRegion.size(), expected( 8, { 6, 4 } ) );
-
     // The "2" set are all the boundary nodes (64 - 8 inside nodes = 56),
     // minus an extra node that belongs to regions -1 and 9 only.
     SortedArray< localIndex > const & nodesRegion2 = cellBlockManager.getNodeSets().at( "2" );
@@ -113,33 +108,28 @@ TEST( VTKImport, cube )
     SortedArray< localIndex > const & nodesRegion9 = cellBlockManager.getNodeSets().at( "9" );
     ASSERT_EQ( nodesRegion9.size(), expected( 4, { 0, 4 } ) );
 
-    // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
-    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), 3 );
-    GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 0 ).getName() );
-    GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 1 ).getName() );
-    GEOSX_LOG_RANK( cellBlockManager.getCellBlocks().getGroup( 2 ).getName() );
-
     // FIXME How to get the CellBlock as a function of the region, without knowing the naming pattern.
-    CellBlockABC const & hexs = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "hexahedra" );
-    CellBlockABC const & hexs3 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "3_hexahedra" );
-    CellBlockABC const & hexs9 = cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( "9_hexahedra" );
-
-    for( CellBlockABC const * h: { &hexs, &hexs3, &hexs9 } )
+    // 1 elements type on 3 regions ("-1", "3", "9") = 3 sub-groups
+    std::array< std::pair< string, int >, 3 > const expectedCellBlocks =
     {
+      {
+        { "hexahedra", expected( 1, {  1, 0 } ) },
+        { "3_hexahedra", expected( 25, { 17, 8 } ) },
+        { "9_hexahedra", expected( 1, {  0, 1 } ) }
+      }
+    };
+    ASSERT_EQ( cellBlockManager.getCellBlocks().numSubGroups(), expectedCellBlocks.size() );
+
+    for( const auto & nameAndSize : expectedCellBlocks )
+    {
+      ASSERT_TRUE( cellBlockManager.getCellBlocks().hasGroup< CellBlockABC >( nameAndSize.first ) );
+      CellBlockABC const * h = &cellBlockManager.getCellBlocks().getGroup< CellBlockABC >( nameAndSize.first );
+      localIndex const expectedSize = nameAndSize.second;
+
       // 8 nodes, 12 edges and 6 faces per hex.
       ASSERT_EQ( h->getElemToNodes().size( 1 ), 8 );
       ASSERT_EQ( h->getElemToEdges().size( 1 ), 12 );
       ASSERT_EQ( h->getElemToFaces().size( 1 ), 6 );
-    }
-
-    std::pair< CellBlockABC const *, localIndex > const
-    p{ &hexs, expected( 1, { 1, 0 } ) },
-    p3{ &hexs3, expected( 25, { 17, 8 } ) },
-    p9{ &hexs9, expected( 1, { 0, 1 } ) };
-    for( auto const & hs: { p, p3, p9 } )
-    {
-      CellBlockABC const * h = hs.first;
-      localIndex const & expectedSize = hs.second;
 
       ASSERT_EQ( h->size(), expectedSize );
       ASSERT_EQ( h->getElemToNodes().size( 0 ), expectedSize );
@@ -237,7 +227,7 @@ int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 

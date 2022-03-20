@@ -7,7 +7,7 @@
   </Included>
 
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
         name="CubeWedge"
         file="cube_10x10x10_wedge.msh"/>
   </Mesh>

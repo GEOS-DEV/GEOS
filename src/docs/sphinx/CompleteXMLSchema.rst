@@ -561,11 +561,11 @@ Element: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs.rst
 
 
-.. _XML_PAMELAMeshGenerator:
+.. _XML_PAMELAMesh:
 
-Element: PAMELAMeshGenerator
-============================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator.rst
+Element: PAMELAMesh
+===================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh.rst
 
 
 .. _XML_PVTDriver:
@@ -953,11 +953,11 @@ Element: VTK
 .. include:: ../../coreComponents/schema/docs/VTK.rst
 
 
-.. _XML_VTKMeshGenerator:
+.. _XML_VTKMesh:
 
-Element: VTKMeshGenerator
-=========================
-.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator.rst
+Element: VTKMesh
+================
+.. include:: ../../coreComponents/schema/docs/VTKMesh.rst
 
 
 .. _XML_VanGenuchtenBakerRelativePermeability:
@@ -1594,11 +1594,11 @@ Datastructure: Outputs
 .. include:: ../../coreComponents/schema/docs/Outputs_other.rst
 
 
-.. _DATASTRUCTURE_PAMELAMeshGenerator:
+.. _DATASTRUCTURE_PAMELAMesh:
 
-Datastructure: PAMELAMeshGenerator
-==================================
-.. include:: ../../coreComponents/schema/docs/PAMELAMeshGenerator_other.rst
+Datastructure: PAMELAMesh
+=========================
+.. include:: ../../coreComponents/schema/docs/PAMELAMesh_other.rst
 
 
 .. _DATASTRUCTURE_PVTDriver:
@@ -1986,11 +1986,11 @@ Datastructure: VTK
 .. include:: ../../coreComponents/schema/docs/VTK_other.rst
 
 
-.. _DATASTRUCTURE_VTKMeshGenerator:
+.. _DATASTRUCTURE_VTKMesh:
 
-Datastructure: VTKMeshGenerator
-===============================
-.. include:: ../../coreComponents/schema/docs/VTKMeshGenerator_other.rst
+Datastructure: VTKMesh
+======================
+.. include:: ../../coreComponents/schema/docs/VTKMesh_other.rst
 
 
 .. _DATASTRUCTURE_VanGenuchtenBakerRelativePermeability:

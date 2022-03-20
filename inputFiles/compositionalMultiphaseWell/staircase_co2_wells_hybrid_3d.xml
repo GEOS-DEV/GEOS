@@ -54,9 +54,13 @@
   </Solvers>
 
   <Mesh>
-    <PAMELAMeshGenerator
+
+    <VTKMesh
       name="mesh1"
-      file="staircase3d_tet.msh"/>
+      file="staircase3d_tet.vtu"
+      fieldsToImport="{ FluidComposition }"
+      fieldNamesInGEOSX="{ globalCompFraction }"
+      logLevel="1"/>
 
     <InternalWell
       name="well_producer1"
@@ -111,7 +115,7 @@
   <ElementRegions>
     <CellElementRegion
       name="Channel"
-      cellBlocks="{ DEFAULT_TETRA }"
+      cellBlocks="{ tetrahedra }"
       materialList="{ fluid1, rock, relperm }"/>
 
     <WellElementRegion

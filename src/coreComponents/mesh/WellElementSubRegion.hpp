@@ -61,11 +61,6 @@ public:
   WellElementSubRegion( string const & name,
                         Group * const parent );
 
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~WellElementSubRegion() override;
-
   ///@}
 
   /**

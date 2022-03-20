@@ -74,7 +74,7 @@ The following figure shows the mesh used in this problem.
 
    Imported mesh
 
-Here, we load the mesh with ``PAMELAMeshGenerator`` (see :ref:`ImportingExternalMesh`).
+Here, we load the mesh with ``PAMELAMesh`` (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple: in the XML file,
 the mesh file ``crackInPlane_benchmark.msh`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified label (here ``CubeHex``) is given to the mesh object. This unstructured mesh contains quadrilaterals elements and interface elements. Refinement is performed to conform with the fracture geometry specified in the ``Geometry`` section.
 

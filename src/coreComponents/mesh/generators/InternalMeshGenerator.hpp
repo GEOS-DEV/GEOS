@@ -50,14 +50,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  /**
-   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
-   * @param childKey the catalog key of the new geometric object to create
-   * @param childName the name of the new geometric object in the repository
-   * @return the group child
-   */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
-
   virtual void generateMesh( DomainPartition & domain ) override;
 
   /**

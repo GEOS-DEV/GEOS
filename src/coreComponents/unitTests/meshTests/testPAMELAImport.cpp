@@ -14,11 +14,14 @@
 
 
 // Source includes
-#include "mainInterface/initialization.hpp"
 #include "dataRepository/xmlWrapper.hpp"
-#include "tests/meshDirName.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/initialization.hpp"
 #include "mesh/MeshManager.hpp"
 #include "mesh/generators/CellBlockManager.hpp"
+
+// special CMake-generated include
+#include "tests/meshDirName.hpp"
 
 // TPL includes
 #include <gtest/gtest.h>
@@ -29,6 +32,7 @@ using namespace geosx::dataRepository;
 
 void TestMeshImport( string const & inputStringMesh,
                      string const & inputStringRegion,
+                     string const & meshBodyName,
                      string const & propertyToTest )
 {
   conduit::Node node;
@@ -44,10 +48,10 @@ void TestMeshImport( string const & inputStringMesh,
   meshManager.postProcessInputRecursive();
 
   // Create the domain and generate the Mesh
-  auto domain = std::unique_ptr< DomainPartition >( new DomainPartition( "domain", &root ) );
-  meshManager.generateMeshes( *domain );
+  DomainPartition domain( "domain", &root );
+  meshManager.generateMeshes( domain );
 
-  MeshBody & meshBody = domain->getMeshBody( 0 );
+  MeshBody & meshBody = domain.getMeshBody( meshBodyName );
   MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
   NodeManager & nodeManager = meshLevel.getNodeManager();
   FaceManager const & faceManager = meshLevel.getFaceManager();
@@ -75,21 +79,22 @@ void TestMeshImport( string const & inputStringMesh,
   }
 
   // Trigger import of the field
-  meshManager.importFields( *domain );
+  meshManager.importFields( domain );
 
   // Check if the computed center match with the imported center
   if( !propertyToTest.empty() )
   {
+    real64 const eps = meshBody.getGlobalLengthScale() * 1e-8;
     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
     {
       subRegion.calculateElementGeometricQuantities( nodeManager, faceManager );
       arrayView2d< real64 const > const elemCenter = subRegion.getElementCenter();
       arrayView2d< real64 const > const centerProperty = subRegion.getReference< array2d< real64 > >( propertyToTest );
-      for( localIndex ei = 0; ei < subRegion.size(); ei++ )
+      for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
-        real64 center[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
-        LvArray::tensorOps::subtract< 3 >( center, centerProperty[ei] );
-        GEOSX_ERROR_IF_GT_MSG( LvArray::tensorOps::l2Norm< 3 >( center ), meshBody.getGlobalLengthScale() * 1e-8, "Property import of centers if wrong" );
+        real64 diff[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( elemCenter[ ei ] );
+        LvArray::tensorOps::subtract< 3 >( diff, centerProperty[ei] );
+        EXPECT_LE( LvArray::tensorOps::l2Norm< 3 >( diff ), eps );
       }
     } );
   }
@@ -105,14 +110,14 @@ TEST( PAMELAImport, testGMSH )
 
   std::stringstream inputStreamMesh;
   inputStreamMesh <<
-    "<?xml version=\"1.0\" ?>" <<
-    "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
-    "  fieldsToImport=\"{barycenter}\""<<
-    "  fieldNamesInGEOSX=\"{barycenter}\""<<
-    "  file=\"" <<gmshFilePath.c_str()<< "\"/>"<<
-    "</Mesh>";
-  const string inputStringMesh = inputStreamMesh.str();
+    "<?xml version=\"1.0\" ?>"
+    "  <Mesh>"
+    "    <PAMELAMesh name=\"ToyModel\" "
+    "                fieldsToImport=\"{barycenter}\""
+    "                fieldNamesInGEOSX=\"{barycenter}\""
+    "                file=\"" << gmshFilePath.c_str() << "\"/>"
+                                                       "</Mesh>";
+  string const inputStringMesh = inputStreamMesh.str();
 
   std::stringstream inputStreamRegion;
   inputStreamRegion <<
@@ -124,7 +129,7 @@ TEST( PAMELAImport, testGMSH )
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
-  TestMeshImport( inputStringMesh, inputStringRegion, "barycenter" );
+  TestMeshImport( inputStringMesh, inputStringRegion, "ToyModel", "barycenter" );
 }
 
 TEST( PAMELAImport, testECLIPSE )
@@ -139,7 +144,7 @@ TEST( PAMELAImport, testECLIPSE )
   inputStreamMesh <<
     "<?xml version=\"1.0\" ?>" <<
     "  <Mesh xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"geos_v0.0.xsd\">" <<
-    "  <PAMELAMeshGenerator name=\"ToyModel\" " <<
+    "  <PAMELAMesh name=\"ToyModel\" " <<
     "  fieldsToImport=\"{PERM}\""<<
     "  fieldNamesInGEOSX=\"{PERM}\""<<
     "  file=\"" << eclipseFilePath.c_str()<< "\"/>"<<
@@ -154,14 +159,14 @@ TEST( PAMELAImport, testECLIPSE )
     "</ElementRegions>";
   string inputStringRegion = inputStreamRegion.str();
 
-  TestMeshImport( inputStringMesh, inputStringRegion, "" );
+  TestMeshImport( inputStringMesh, inputStringRegion, "ToyModel", "" );
 }
 
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
 
-  geosx::basicSetup( argc, argv );
+  geosx::GeosxState state( geosx::basicSetup( argc, argv ) );
 
   int const result = RUN_ALL_TESTS();
 

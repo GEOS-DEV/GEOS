@@ -106,9 +106,6 @@ public:
   EmbeddedSurfaceSubRegion( string const & name,
                             dataRepository::Group * const parent );
 
-  /// @brief Destructor
-  virtual ~EmbeddedSurfaceSubRegion() override;
-
   ///@}
 
   /**
