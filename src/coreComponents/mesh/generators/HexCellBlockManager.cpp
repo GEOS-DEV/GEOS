@@ -386,13 +386,10 @@ void MeshConnectivityBuilder::printDebugInformation() const
   
   std::cout << " Number of blocks : " << m_cellBlocks.size() << std::endl
             << std::endl;
-  for (unsigned int i = 0; i < m_cellBlocks.size(); ++i)
-  {
-     std::cout << m_cellBlocks[i] << std::endl;
-  }
-  std::cout << std::endl;
-  
-  print(m_blockCellIndexOffset);
+  print(m_blockCellIndexOffset);  
+
+  std::cout << std::endl
+            << std::endl;
 
   std::cout << " Total number of elements : " << nbElements << std::endl
             << std::endl;

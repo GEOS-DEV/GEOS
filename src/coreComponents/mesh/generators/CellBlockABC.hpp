@@ -50,11 +50,6 @@ public:
     Group( name, parent )
   { }
 
-  // To allow for modular computation of the different maps 
-  // The access function cannot be const 
-  // Typically the class will be modify to keep track of what has been computed
-  // Register part of the information
-
   /**
    * @brief Get the type of element in this subregion.
    * @return a string specifying the type of element in this subregion
