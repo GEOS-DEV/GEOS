@@ -102,10 +102,7 @@ struct EdgeInfo
    first = a;
    second = b;
   }
-  EdgeInfo(){
-   first = 0;
-   second = 0;
-  }
+  EdgeInfo(): EdgeInfo( 0, 0 ) {}
   LocalVertexIndex first;
   LocalEdgeIndex second;
 };
