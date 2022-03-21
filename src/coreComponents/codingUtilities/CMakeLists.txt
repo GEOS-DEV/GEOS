@@ -29,4 +29,7 @@ target_include_directories( codingUtilities PUBLIC ${CMAKE_SOURCE_DIR}/coreCompo
 
 geosx_add_code_checks(PREFIX codingUtilities )
 
-add_subdirectory(tests)
+
+if( GEOSX_ENABLE_TESTS )
+  add_subdirectory(tests)
+endif( )

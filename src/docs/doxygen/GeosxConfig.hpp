@@ -27,7 +27,7 @@
 #define GEOSX_USE_MPI
 
 /// Enables use of OpenMP (CMake option ENABLE_OPENMP)
-#define GEOSX_USE_OPENMP
+/* #undef GEOSX_USE_OPENMP */
 
 /// Enables use of CUDA (CMake option ENABLE_CUDA)
 #define GEOSX_USE_CUDA

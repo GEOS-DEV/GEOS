@@ -123,5 +123,7 @@ if( ENABLE_UNCRUSTIFY )
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR} )
 endif()
 
-add_subdirectory( unitTests )
+if(GEOSX_ENABLE_TESTS)
+  add_subdirectory( unitTests )
+endif( )
 

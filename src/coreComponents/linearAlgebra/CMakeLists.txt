@@ -166,6 +166,9 @@ blt_add_library( NAME       linearAlgebra
 
 target_include_directories( linearAlgebra PUBLIC ${CMAKE_CURRENT_LIST_DIR} )
 
-add_subdirectory( unitTests )
+
+if( GEOSX_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
 
 geosx_add_code_checks( PREFIX linearAlgebra )

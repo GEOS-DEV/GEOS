@@ -43,5 +43,7 @@ target_include_directories( finiteElement PUBLIC ${CMAKE_SOURCE_DIR}/coreCompone
 
 geosx_add_code_checks( PREFIX finiteElement )
 
-add_subdirectory( unitTests )
+if( GEOSX_ENABLE_TESTS )
+  add_subdirectory( unitTests )
+endif( )
 
