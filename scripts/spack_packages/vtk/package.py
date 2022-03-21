@@ -140,81 +140,39 @@ class Vtk(CMakePackage):
     def cmake_args(self):
         spec = self.spec
 
-        #opengl_ver = 'OpenGL{0}'.format('2' if '+opengl2' in spec else '')
+        # Added GEOSX Arguments
+        if '+mpi' in spec:
+            mpi_args = [
+                '-DVTK_USE_MPI=ON',
+                '-DVTK_MODULE_ENABLE_VTK_IOParallelXML=YES',
+                '-DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES'
+            ]
+        else:
+            mpi_args = [
+                '-DVTK_USE_MPI=OFF',
+                '-DVTK_MODULE_ENABLE_VTK_IOParallelXML=NO',
+                '-DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=NO',
+            ]
 
-        cmake_args = [
-            #'-DBUILD_SHARED_LIBS=ON',
-            #'-DVTK_RENDERING_BACKEND:STRING={0}'.format(opengl_ver),
-
-            # In general, we disable use of VTK "ThirdParty" libs, preferring
-            # spack-built versions whenever possible
-            #'-DVTK_USE_SYSTEM_LIBRARIES:BOOL=ON',
-
-            # However, in a few cases we can't do without them yet
-            #'-DVTK_USE_SYSTEM_GL2PS:BOOL=OFF',
-            #'-DVTK_USE_SYSTEM_LIBHARU=OFF',
-
-            #'-DNETCDF_DIR={0}'.format(spec['netcdf-c'].prefix),
-            #'-DNETCDF_C_ROOT={0}'.format(spec['netcdf-c'].prefix),
-            #'-DNETCDF_CXX_ROOT={0}'.format(spec['netcdf-cxx'].prefix),
-
-            # Allow downstream codes (e.g. VisIt) to override VTK's classes
-            #'-DVTK_ALL_NEW_OBJECT_FACTORY:BOOL=ON',
-
-            # Disable wrappers for other languages.
-            #'-DVTK_WRAP_JAVA=OFF',
-            #'-DVTK_WRAP_TCL=OFF',
-
-            # GEOSX added arguments
-            '-DVTK_GROUP_ENABLE_Imaging=NO',
-            '-DVTK_GROUP_ENABLE_MPI=NO',
-            '-DVTK_GROUP_ENABLE_Qt=NO',
-            '-DVTK_GROUP_ENABLE_Rendering=NO',
-            '-DVTK_GROUP_ENABLE_StandAlone=NO',
-            '-DVTK_GROUP_ENABLE_Views=NO',
-            '-DVTK_GROUP_ENABLE_Web=NO',
+        cmake_args= [
+            '-DVTK_GROUP_ENABLE_Imaging=DONT_WANT',
+            '-DVTK_GROUP_ENABLE_MPI=DONT_WANT',
+            '-DVTK_GROUP_ENABLE_Qt=DONT_WANT',
+            '-DVTK_GROUP_ENABLE_Rendering=DONT_WANT',
+            '-DVTK_GROUP_ENABLE_StandAlone=DONT_WANT',
+            '-DVTK_GROUP_ENABLE_Views=DONT_WANT',
+            '-DVTK_GROUP_ENABLE_Web=DONT_WANT',
             '-DVTK_BUILD_ALL_MODULES=OFF',
             '-DVTK_WRAP_PYTHON=OFF',
-            #'-DVTK_WRAP_JAVA=OFF',
-            '-DVTK_MODULE_ENABLE_VTK_vtkm=NO',
-            '-DVTK_MODULE_ENABLE_VTK_CommonDataModel=YES',
-            '-DVTK_MODULE_ENABLE_VTK_CommonCore=YES',
-            '-DVTK_MODULE_ENABLE_VTK_CommonExecutionModel=YES',
-            '-DVTK_MODULE_ENABLE_VTK_CommonMath=YES',
-            '-DVTK_MODULE_ENABLE_VTK_CommonMisc=YES',
-            '-DVTK_MODULE_ENABLE_VTK_CommonSystem=YES',
-            '-DVTK_MODULE_ENABLE_VTK_CommonTransforms=YES',
+            '-DVTK_WRAP_JAVA=OFF',
+            '-DVTK_MODULE_ENABLE_VTK_vtkm=DONT_WANT',
             '-DVTK_MODULE_ENABLE_VTK_IOXML=YES',
-            '-DVTK_MODULE_ENABLE_VTK_IOXMLParser=YES',
-            '-DVTK_MODULE_ENABLE_VTK_IOCore=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_IONetCDF=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_IOGeometry=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_IOParallel=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_IOImage=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_IOLegacy=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersCore=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersExtraction=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersParallel=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_ParallelCore=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersGeneral=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersHybrid=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_ImagingCore=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_RenderingCore=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersParallelVerdict=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersVerdict=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersGeometry=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_DomainsChemistry=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersModeling=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersSources=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersTexture=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_ImagingSources=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_FiltersStatistics=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_ParallelDIY=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_ImagingFourier=YES',
-            #'-DVTK_MODULE_ENABLE_VTK_CommonComputationalGeometry=YES',
+            '-DVTK_MODULE_ENABLE_VTK_IOLegacy=YES',
             '-DVTK_BUILD_TESTING=OFF',
             '-DVTK_LEGACY_REMOVE=ON'
         ]
+
+        cmake_args = mpi_args + cmake_args
 
         # Some variable names have changed
         #if spec.satisfies('@8.2.0:'):
