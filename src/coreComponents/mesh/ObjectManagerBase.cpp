@@ -69,9 +69,9 @@ ObjectManagerBase::CatalogInterface::CatalogType & ObjectManagerBase::getCatalog
   return catalog;
 }
 
-void ObjectManagerBase::createSet( const string & newSetName )
+SortedArray< localIndex > & ObjectManagerBase::createSet( const string & newSetName )
 {
-  m_sets.registerWrapper< SortedArray< localIndex > >( newSetName );
+  return m_sets.registerWrapper< SortedArray< localIndex > >( newSetName ).reference();
 }
 
 void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex const > const & inputSet,
@@ -254,55 +254,58 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
   int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
-
   localIndex const numPackedIndices = packList.size();
   packedSize += bufferOps::Pack< DOPACK >( buffer, numPackedIndices );
   if( numPackedIndices > 0 )
   {
-    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
-
-
-    string_array wrapperNamesForPacking;
-    if( wrapperNames.size()==0 )
+    // If `wrapperNames` is empty we fall back on all the wrappers actually registered in the instance.
+    std::set< string > tmpWrapperNames;
+    if( wrapperNames.empty() )
     {
-      SortedArray< localIndex > exclusionList;
-      viewPackingExclusionList( exclusionList );
-      wrapperNamesForPacking.resize( this->wrappers().size() );
-      localIndex count = 0;
-      for( localIndex k=0; k<this->wrappers().size(); ++k )
-      {
-        if( exclusionList.count( k ) == 0 )
-        {
-          wrapperNamesForPacking[count++] = wrappers().values()[k].first;
-        }
-      }
-      wrapperNamesForPacking.resize( count );
+      tmpWrapperNames = mapKeys< std::set >( wrappers() );
     }
     else
     {
-      wrapperNamesForPacking = wrapperNames;
+      std::copy( wrapperNames.begin(), wrapperNames.end(), std::inserter( tmpWrapperNames, tmpWrapperNames.end() ) );
     }
 
-    packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperNamesForPacking.size() );
-    for( auto const & wrapperName : wrapperNamesForPacking )
+    // We remove all the wrappers which names are in the `exclusion` list.
+    std::set< string > wrapperNamesWithoutExclusions;
+    std::set< string > const exclusion = getPackingExclusionList();
+    std::set_difference( tmpWrapperNames.cbegin(), tmpWrapperNames.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( wrapperNamesWithoutExclusions, wrapperNamesWithoutExclusions.end() ) );
+
+    // Now we build the final list.
+    // No packing by index is allowed if the registered wrapper
+    // does not share the size of the owning group.
+    // Hence, the sufficient (but not necessary...) condition on `wrapper.sizedFromParent()`.
+    std::set< string > wrapperNamesFinal;
+    for( string const & wrapperName: wrapperNamesWithoutExclusions )
     {
       if( this->hasWrapper( wrapperName ) )
       {
-        dataRepository::WrapperBase const & wrapper = this->getWrapperBase( wrapperName );
-        packedSize += bufferOps::Pack< DOPACK >( buffer, wrapperName );
-        if( DOPACK )
+        WrapperBase const & wrapper = getWrapperBase( wrapperName );
+
+        if( wrapper.sizedFromParent() )
         {
-          packedSize += wrapper.packByIndex( buffer, packList, true, onDevice, events );
-        }
-        else
-        {
-          packedSize += wrapper.packByIndexSize( packList, true, onDevice, events );
+          wrapperNamesFinal.insert( wrapperName );
         }
       }
-      else
-      {
-        packedSize += bufferOps::Pack< DOPACK >( buffer, string( "nullptr" ) );
-      }
+    }
+
+    // Additional refactoring should be done by using `Group::packPrivate` that duplicates the following pack code.
+    std::vector< WrapperBase const * > wrappers;
+    for( string const & wrapperName: wrapperNamesFinal )
+    {
+      WrapperBase const & wrapper = getWrapperBase( wrapperName );
+      wrappers.push_back( &wrapper );
+    }
+
+    packedSize += bufferOps::Pack< DOPACK >( buffer, string( "Wrappers" ) );
+    packedSize += bufferOps::Pack< DOPACK >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
+    for( WrapperBase const * wrapper: wrappers )
+    {
+      packedSize += bufferOps::Pack< DOPACK >( buffer, wrapper->getName() );
+      packedSize += wrapper->packByIndex< DOPACK >( buffer, packList, true, onDevice, events );
     }
   }
 
@@ -321,7 +324,6 @@ localIndex ObjectManagerBase::packPrivate( buffer_unit_type * & buffer,
 
   return packedSize;
 }
-
 
 
 localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
@@ -353,10 +355,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
     {
       string wrapperName;
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
-      if( wrapperName != "nullptr" )
-      {
-        unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
-      }
+      unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
     }
   }
 
@@ -538,12 +537,13 @@ localIndex ObjectManagerBase::packGlobalMapsPrivate( buffer_unit_type * & buffer
                                                      arrayView1d< localIndex const > const & packList,
                                                      integer const recursive ) const
 {
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
   localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, this->getName() );
 
   // this doesn't link without the string()...no idea why.
   packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::localToGlobalMapString() ) );
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   packedSize += bufferOps::Pack< DOPACK >( buffer, rank );
 
   localIndex const numPackedIndices = packList.size();
@@ -599,17 +599,18 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
                                                 integer const recursive )
 {
   GEOSX_MARK_FUNCTION;
+  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != this->getName(), "ObjectManagerBase::Unpack(): group names do not match" );
+  string msg = "ObjectManagerBase::Unpack(): group names do not match as they are groupName = " + groupName + " and this->getName= " + this->getName();
+  GEOSX_ERROR_IF( groupName != this->getName(), msg );
 
   string localToGlobalString;
   unpackedSize += bufferOps::Unpack( buffer, localToGlobalString );
   GEOSX_ERROR_IF( localToGlobalString != viewKeyStruct::localToGlobalMapString(), "ObjectManagerBase::Unpack(): label incorrect" );
 
-  int const rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   int sendingRank;
   unpackedSize += bufferOps::Unpack( buffer, sendingRank );
 
@@ -722,17 +723,14 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 }
 
 
-
-void ObjectManagerBase::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > ObjectManagerBase::getPackingExclusionList() const
 {
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::localToGlobalMapString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::globalToLocalMapString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::ghostRankString() ));
-  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ParentIndex::key() ));
-  exclusionList.insert( this->getWrapperIndex( extrinsicMeshData::ChildIndex::key() ));
-
+  return { viewKeyStruct::localToGlobalMapString(),
+           viewKeyStruct::globalToLocalMapString(),
+           viewKeyStruct::ghostRankString(),
+           extrinsicMeshData::ParentIndex::key(),
+           extrinsicMeshData::ChildIndex::key() };
 }
-
 
 localIndex ObjectManagerBase::getNumberOfGhosts() const
 {
@@ -839,9 +837,13 @@ void ObjectManagerBase::inheritGhostRankFromParent( std::set< localIndex > const
 
 void ObjectManagerBase::copyObject( const localIndex source, const localIndex destination )
 {
-  for( auto & wrapper : wrappers() )
+  for( auto & nameToWrapper: wrappers() )
   {
-    wrapper.second->copy( source, destination );
+    WrapperBase * wrapper = nameToWrapper.second;
+    if( wrapper->sizedFromParent() )
+    {
+      wrapper->copy( source, destination );
+    }
   }
 
   for( localIndex i=0; i<m_sets.wrappers().size(); ++i )
@@ -861,11 +863,7 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
 
 void ObjectManagerBase::setMaxGlobalIndex()
 {
-  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
-                         &m_maxGlobalIndex,
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOSX );
 }
 
 void ObjectManagerBase::cleanUpMap( std::set< localIndex > const & targetIndices,

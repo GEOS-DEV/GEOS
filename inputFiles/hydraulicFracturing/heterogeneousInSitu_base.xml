@@ -9,16 +9,16 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain, Fracture }"
-      contactRelationName="fractureContact">
+      targetRegions="{ Fracture }"
+      contactRelationName="fractureContact"
+      maxNumResolves="2">
       <NonlinearSolverParameters
-        newtonTol="1.0e-5"
-        newtonMaxIter="50"
-        lineSearchMaxCuts="10"/>
+        newtonTol="1.0e-6"
+        newtonMaxIter="40"
+        lineSearchMaxCuts="3"/>
       <LinearSolverParameters
         solverType="gmres"
         preconditionerType="amg"/>
@@ -28,8 +28,7 @@
       name="lagsolve"
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
+      targetRegions="{ Domain, Fracture }"
       contactRelationName="fractureContact">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"/>
@@ -41,10 +40,7 @@
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ fractureFilling }"
-      permeabilityNames="{ fracturePerm }">
+      targetRegions="{ Fracture }">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
         newtonMaxIter="10"/>
@@ -56,7 +52,6 @@
     <SurfaceGenerator
       name="SurfaceGen"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"
       rockToughness="$K_upscaled$"
       nodeBasedSIF="1"
       mpiCommOrder="1"/>
@@ -64,10 +59,11 @@
 
   <!-- SPHINX_HYDROFRACTURE_SOLVERS_END -->
   <Outputs>
+    <VTK
+      name="vtkOutput"/>
+
     <Silo
-      name="siloOutput"
-      plotLevel="3"
-      parallelThreads="16"/>
+      name="siloOutput"/>
 
     <Restart
       name="restartOutput"/>
@@ -75,7 +71,8 @@
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS -->
   <Events
-    maxTime="$t_max$">
+    maxTime="$t_max$"
+    logLevel="1">
     <!-- Generate the initial fractures -->
     <SoloEvent
       name="preFracture"
@@ -83,35 +80,35 @@
 
     <!-- Primary outputs -->
     <PeriodicEvent
-      name="outputs"
-      target="/Outputs/siloOutput"
-      timeFrequency="1 [min]"/>
-
-    <!-- Apply the hydrofracture solver, limiting the timesteps during certain time intervals -->
-    <PeriodicEvent
-      name="solverApplications_a"
-      maxEventDt="$dt_max_a$"
-      endTime="$t_init_a$"
-      target="/Solvers/hydrofracture"/>
+      name="outputs_vtk"
+      timeFrequency="1 [min]"
+      targetExactTimestep="0"
+      target="/Outputs/vtkOutput"/>
 
     <PeriodicEvent
-      name="solverApplications_b"
-      maxEventDt="$dt_max_b$"
-      beginTime="$t_init_a$"
-      endTime="$t_init_b$"
+      name="outputs_silo"
+      timeFrequency="1 [min]"
+      targetExactTimestep="0"
+      target="/Outputs/siloOutput"/>
+
+    <!-- Apply the hydrofracture solver -->
+    <PeriodicEvent
+      name="solverApplications"
+      maxEventDt="$dt_max$"
       target="/Solvers/hydrofracture"/>
 
+    <!-- Limit dt during the pump ramp-up -->
     <PeriodicEvent
-      name="solverApplications_c"
-      maxEventDt="$dt_max_c$"
-      beginTime="$t_init_b$"
-      target="/Solvers/hydrofracture"/>
+      name="pumpStart"
+      beginTime="$pump_start$"
+      endTime="`$pump_start$+$pump_ramp$`"
+      maxEventDt="$pump_ramp_dt_limit$"/>
 
     <!-- Watch the wall-clock, write a restart, and exit gracefully if necessary -->
-    <HaltEvent
+    <!-- <HaltEvent
       name="restarts"
       maxRuntime="$t_allocation$"
-      target="/Outputs/restartOutput"/>
+      target="/Outputs/restartOutput"/> -->
   </Events>
 
   <!-- SPHINX_HYDROFRACTURE_EVENTS_END -->
@@ -124,7 +121,7 @@
     <SurfaceElementRegion
       name="Fracture"
       defaultAperture="1.0e-4"
-      materialList="{ water, rock, fractureFilling, fracturePorosity, fracturePerm, nullSolid }"/>
+      materialList="{ water, rock, fractureFilling, fractureContact }"/>
   </ElementRegions>
 
   <Constitutive>
@@ -177,9 +174,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        meanPermCoefficient="0.8"/>
+        meanPermCoefficient="1.0"/>
     </FiniteVolume>
   </NumericalMethods>
 

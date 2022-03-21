@@ -2,32 +2,22 @@
 
 <Problem>
   <Included>
-    <File name="./FieldCaseTutorial3_base.xml"/>
+    <File name="./FieldCaseTutorial3_base.xml" />
   </Included>
 
-  <!-- SPHINX_FIELD_CASE_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
-      name="SyntheticMesh"
-      file="synthetic.msh"/>
+    <PAMELAMesh name="SyntheticMesh"
+                file="synthetic.msh" />
   </Mesh>
 
-  <!-- SPHINX_FIELD_CASE_MESH_END -->
- 
-  <!-- SPHINX_FIELD_CASE_EVENTS -->
-  <Events
-    maxTime="500.0e6">
-    <PeriodicEvent
-      name="solverApplications"
-      forceDt="2.0e6"
-      target="/Solvers/SinglePhaseFlow"/>
+  <Events maxTime="100.0e6">
+    <PeriodicEvent name="solverApplications"
+                   forceDt="10.0e6"
+                   target="/Solvers/SinglePhaseFlow" />
 
-    <PeriodicEvent
-      name="outputs"
-      timeFrequency="10.0e6"
-      target="/Outputs/syntheticReservoirVizFile"/>
+    <PeriodicEvent name="outputs"
+                   timeFrequency="10.0e6"
+                   target="/Outputs/reservoir_with_properties" />
   </Events>
 
-  <!-- SPHINX_FIELD_CASE_EVENTS_END -->
- 
 </Problem>

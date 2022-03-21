@@ -16,7 +16,8 @@
 #include "CellElementSubRegion.hpp"
 
 #include "common/TypeDispatch.hpp"
-#include "constitutive/ConstitutiveManager.hpp"
+#include "mesh/MeshLevel.hpp"
+#include "mesh/generators/CellBlockUtilities.hpp"
 
 namespace geosx
 {
@@ -24,8 +25,12 @@ using namespace dataRepository;
 using namespace constitutive;
 
 CellElementSubRegion::CellElementSubRegion( string const & name, Group * const parent ):
-  CellBlock( name, parent )
+  ElementSubRegionBase( name, parent )
 {
+  registerWrapper( viewKeyStruct::nodeListString(), &m_toNodesRelation );
+  registerWrapper( viewKeyStruct::edgeListString(), &m_toEdgesRelation );
+  registerWrapper( viewKeyStruct::faceListString(), &m_toFacesRelation );
+
   registerWrapper( viewKeyStruct::constitutiveGroupingString(), &m_constitutiveGrouping ).
     setSizedFromParent( 0 );
 
@@ -40,34 +45,37 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
 }
 
-CellElementSubRegion::~CellElementSubRegion()
+void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
 {
-  // TODO Auto-generated destructor stub
-}
+  // Defines the (unique) element type of this cell element region,
+  // and its associated number of nodes, edges, faces.
+  m_elementType = cellBlock.getElementType();
+  m_numNodesPerElement = cellBlock.numNodesPerElement();
+  m_numEdgesPerElement = cellBlock.numEdgesPerElement();
+  m_numFacesPerElement = cellBlock.numFacesPerElement();
 
-void CellElementSubRegion::copyFromCellBlock( CellBlock & source )
-{
-  this->setElementType( source.getElementType());
-  this->setNumNodesPerElement( source.numNodesPerElement() );
-  this->setNumFacesPerElement( source.numFacesPerElement() );
-  this->resize( source.size());
-  this->nodeList() = source.nodeList();
+  // We call the `resize` member function of the cell to (nodes, edges, faces) relations,
+  // before calling the `CellElementSubRegion::resize` in order to keep the first dimension.
+  // Be careful when refactoring.
+  m_toNodesRelation.resize( this->size(), m_numNodesPerElement );
+  m_toEdgesRelation.resize( this->size(), m_numEdgesPerElement );
+  m_toFacesRelation.resize( this->size(), m_numFacesPerElement );
+  this->resize( cellBlock.numElements() );
 
-  arrayView1d< globalIndex const > const sourceLocalToGlobal = source.localToGlobalMap();
-  this->m_localToGlobalMap.resize( sourceLocalToGlobal.size() );
-  for( localIndex i = 0; i < localToGlobalMap().size(); ++i )
-  {
-    this->m_localToGlobalMap[ i ] = sourceLocalToGlobal[ i ];
-  }
+  this->nodeList() = cellBlock.getElemToNodes();
+  this->edgeList() = cellBlock.getElemToEdges();
+  this->faceList() = cellBlock.getElemToFaces();
+
+  this->m_localToGlobalMap = cellBlock.localToGlobalMap();
 
   this->constructGlobalToLocalMap();
-  source.forExternalProperties( [&]( WrapperBase & wrapper )
+  cellBlock.forExternalProperties( [&]( WrapperBase & wrapper )
   {
     types::dispatch( types::StandardArrays{}, wrapper.getTypeId(), true, [&]( auto array )
     {
       using ArrayType = decltype( array );
       Wrapper< ArrayType > & wrapperT = Wrapper< ArrayType >::cast( wrapper );
-      this->registerWrapper( wrapper.getName(), &wrapperT.reference() );
+      this->registerWrapper( wrapper.getName(), std::make_unique< ArrayType >( wrapperT.reference() ) );
     } );
   } );
 }
@@ -81,13 +89,15 @@ void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
   m_fracturedCells.insert( cellElemIndex );
 }
 
-void CellElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+
+std::set< string > CellElementSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString()  ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString()  ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString()  ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::toEmbSurfString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::toEmbSurfString() } );
+  return result;
 }
 
 
@@ -266,5 +276,75 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 }
 
+void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
+                                         localIndex const localFaceIndex,
+                                         array1d< localIndex > & nodeIndices ) const
+{
+  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+}
+
+void CellElementSubRegion::
+  calculateElementCenterAndVolume( localIndex const k,
+                                   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
+{
+  LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
+  real64 Xlocal[10][3];
+
+  for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+  {
+    LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+    LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+  }
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
+
+  switch( m_elementType )
+  {
+    case ElementType::Hexahedron:
+    {
+      m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
+      break;
+    }
+    case ElementType::Tetrahedron:
+    {
+      m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
+      break;
+    }
+    case ElementType::Prism:
+    {
+      m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
+      break;
+    }
+    case ElementType::Pyramid:
+    {
+      m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
+      break;
+    }
+    default:
+    {
+      GEOSX_ERROR( GEOSX_FMT( "Volume calculation not supported for element type {} in subregion {}",
+                              m_elementType, getName() ) );
+    }
+  }
+}
+
+void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                                                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
+{
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+
+  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
+  {
+    calculateElementCenterAndVolume( k, X );
+  } );
+}
+
+void CellElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
+{
+  this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
+  this->m_toEdgesRelation.setRelatedObject( mesh.getEdgeManager() );
+  this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
+}
+
+REGISTER_CATALOG_ENTRY( ObjectManagerBase, CellElementSubRegion, string const &, Group * const )
 
 } /* namespace geosx */

@@ -19,16 +19,14 @@
 #ifndef GEOSX_MESH_NODEMANAGER_HPP_
 #define GEOSX_MESH_NODEMANAGER_HPP_
 
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "CellBlockManager.hpp"
+#include "mesh/simpleGeometricObjects/GeometricObjectManager.hpp"
 #include "ToElementRelation.hpp"
-
-class SiloFile;
 
 namespace geosx
 {
 
-class CellBlock;
 class FaceManager;
 class EdgeManager;
 class ElementRegionManager;
@@ -62,23 +60,27 @@ public:
   /**
    * @brief return default size of the value array in the node-to-edge mapping
    * @return default size of value array in the node-to-edge mapping
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getEdgeMapOverallocation()
-  { return 8; }
+  static constexpr inline localIndex getEdgeMapOverallocation()
+  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value in the node-to-face mapping
    * @return default size of value array in the node-to-face mapping
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getFaceMapOverallocation()
-  { return 8; }
+  static constexpr inline localIndex getFaceMapOverallocation()
+  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  inline localIndex getElemMapOverAllocation()
-  { return 8; }
+  static constexpr inline localIndex getElemMapOverAllocation()
+  { return CellBlockManagerABC::getElemMapOverAllocation(); }
 
 /**
  * @name Constructors/destructor
@@ -146,22 +148,50 @@ public:
   ///@}
 
   /**
-   * @brief Link the EdgeManager \p edgeManager to the NodeManager, and performs the node-to-edge mapping.
-   * @param [in] edgeManager the edgeManager to assign this NodeManager
+   * @brief Builds the nodes to regions and nodes to sub-regions mappings.
+   * @param [in] elementRegionManager the ElementRegionManager.
+   *
+   * @note Requires the sub-regions of the @p elementRegionManager to be fully defined.
+   * As well as the node to elements mappings of the @p NodeManager.
    */
-  void setEdgeMaps( EdgeManager const & edgeManager );
+  void buildRegionMaps( ElementRegionManager const & elementRegionManager );
 
   /**
-   * @brief Link the FaceManager \p faceManager to the NodeManager, and performs the node-to-face mapping.
-   * @param [in] faceManager the faceManager to assign this NodeManager
+   * @brief Copies the local to global mapping from @p cellBlockManager and invert to create the global to local mapping.
+   * @param cellBlockManager Provides the local to global mapping.
    */
-  void setFaceMaps( FaceManager const & faceManager );
+  void constructGlobalToLocalMap( CellBlockManagerABC const & cellBlockManager );
 
   /**
-   * @brief Assign the ElementRegionManager \p elementRegionManager to the NodeManager, and performs the node-to-element mapping
-   * @param [in] elementRegionManager the ElementRegionManager to assign this NodeManager
+   * @brief Build sets from sources.
+   * @param cellBlockManager Provides some node sets.
+   * @param geometries Provides other nodes sets, with some filtering based on node coordinates.
    */
-  void setElementMaps( ElementRegionManager const & elementRegionManager );
+  void buildSets( CellBlockManagerABC const & cellBlockManager,
+                  GeometricObjectManager const & geometries );
+
+  /**
+   * @brief Builds the node-on-domain-boundary indicator.
+   * @param[in] faceManager The computation is based on the face-on-domain-boundary indicator.
+   * @see ObjectManagerBase::getDomainBoundaryIndicator()
+   */
+  void setDomainBoundaryObjects( FaceManager const & faceManager );
+
+  /**
+   * @brief Copies the nodes positions and the nodes to (edges|faces|elements) mappings from @p cellBlockManager.
+   * @param[in] cellBlockManager Will provide the mappings.
+   */
+  void setGeometricalRelations( CellBlockManagerABC const & cellBlockManager );
+
+  /**
+   * @brief Link the current manager to other managers.
+   * @param edgeManager The edge manager instance.
+   * @param faceManager The face manager instance.
+   * @param elementRegionManager The element region manager instance.
+   */
+  void setupRelatedObjectsInRelations( EdgeManager const & edgeManager,
+                                       FaceManager const & faceManager,
+                                       ElementRegionManager const & elementRegionManager );
 
   /**
    * @brief Compress all NodeManager member arrays so that the values of each array are contiguous with no extra capacity inbetween.
@@ -174,11 +204,7 @@ public:
    */
   ///@{
 
-  /**
-   * @brief Creates an array listing all excluded local indices values.
-   * @param [in,out] exclusionList Sorted array with excluded local indices
-   */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  std::set< string > getPackingExclusionList() const override;
 
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
@@ -355,38 +381,55 @@ public:
   /**
    * @brief Get the mutable nodes-to-elements-regions relation.
    * @return reference to nodes-to-elements-regions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArrays< localIndex > & elementRegionList() { return m_toElements.m_toElementRegion; }
 
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-regions relation.
    * @return const reference to nodes-to-elements-regions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArraysView< localIndex const > elementRegionList() const { return m_toElements.m_toElementRegion.toViewConst(); }
 
   /**
    * @brief Get the mutable nodes-to-elements-subregions relation.
    * @return reference to nodes-to-elements-subregions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArrays< localIndex > & elementSubRegionList() { return m_toElements.m_toElementSubRegion; }
 
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements-subregions relation.
    * @return const reference to nodes-to-elements-subregions relation
+   * @copydetails NodeManager::elementList()
    */
   ArrayOfArraysView< localIndex const > elementSubRegionList() const { return m_toElements.m_toElementSubRegion.toViewConst(); }
 
   /**
-   * @brief Get the mutable nodes-to-elements indices.
+   * @brief Get the mutable nodes-to-elements relation.
    * @return reference to nodes-to-elements indices
+   * @details There is an implicit convention here.\n\n
+   * @p elementList binds a node index to multiple elements indices,
+   * like <tt>n -> (e0, e1,...)</tt>.
+   * @p elementRegionList and @p elementSubRegionList
+   * respectively bind node indices to the regions/sub-regions:
+   * <tt>n -> (er0, er1, ...)</tt> and <tt>n -> (esr0, esr1, ...)</tt>.\n\n
+   * It is assumed in the code that triplets obtained at indices @p 0, @p 1, @p ... of all these relations,
+   * (respectively <tt>(e0, er0, esr0)</tt>, <tt>(e1, er1, esr1)</tt>, <tt>...</tt>)
+   * are consistent. @p e0 should belong to both @p er0 and @p esr0. Same pattern for other indices.\n\n
+   * In particular, any mismatch like @a (e.g.) <tt>n -> (e0, e1, ...)</tt> and
+   * <tt>n -> (er1, er0, ...)</tt> will probably result in a bug.
+   * @warning @p e, @p er or @p esr will equal -1 if undefined.
+   * @see geosx::FaceManager::elementList that shares the same kind of pattern.
    */
   ArrayOfArrays< localIndex > & elementList() { return m_toElements.m_toElementIndex; }
 
   /**
    * @brief Provide an immutable arrayView to the nodes-to-elements indices.
    * @return const reference to nodes-to-elements indices
+   * @copydetails NodeManager::elementList()
    */
-
   ArrayOfArraysView< localIndex const > elementList() const
   { return m_toElements.m_toElementIndex.toViewConst(); }
 

@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-namespace CompositionalMultiphaseUtilities
+namespace compositionalMultiphaseUtilities
 {
 
 /**
@@ -137,7 +137,7 @@ void shiftRowsAheadByOneAndReplaceFirstRowWithColumnSum( integer const M,
   shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( M, N, 1, mat, work );
 }
 
-} // namespace CompositionalMultiphaseUtilities
+} // namespace compositionalMultiphaseUtilities
 
 } // namespace geosx
 

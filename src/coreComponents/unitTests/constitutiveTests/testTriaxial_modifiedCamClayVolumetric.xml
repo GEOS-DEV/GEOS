@@ -23,7 +23,6 @@
   </Events>
 
   <Constitutive>
-
     <ModifiedCamClay
       name="MCC"
       defaultDensity="2700"
@@ -34,7 +33,6 @@
       defaultCslSlope="1.2"
       defaultVirginCompressionIndex="0.003"
       defaultRecompressionIndex="0.002"/>
-
   </Constitutive>
 
   <Functions>
@@ -42,7 +40,7 @@
       name="strainFunction"
       inputVarNames="{ time }"
       coordinates="{ 0.0, 1.0 }"
-      values="{ 0, -0.005}"/>
+      values="{ 0, -0.005 }"/>
   </Functions>
 
   <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
@@ -59,4 +57,10 @@
       cellBlockNames="{ cellBlock01 }"/>
   </Mesh>
 
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
 </Problem>

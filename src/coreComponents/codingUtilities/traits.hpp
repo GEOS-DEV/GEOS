@@ -212,6 +212,30 @@ static constexpr bool hasCopyAssignmentOp = hasCopyAssignmentOperatorImpl< T >::
                                             std::is_arithmetic< T >::value ||
                                             std::is_enum< T >::value;
 
+namespace internal
+{
+
+template< typename T, template< typename ... > class L >
+constexpr std::size_t type_list_index( T, L<> ) { return 0; }
+
+template< typename T, template< typename ... > class L, typename ... Ts >
+constexpr std::size_t type_list_index( T, L< T, Ts ... > ) { return 0; }
+
+template< typename T, template< typename ... > class L, typename U, typename ... Ts >
+constexpr std::size_t type_list_index( T, L< U, Ts ... > ) { return 1 + type_list_index( T{}, L< Ts ... >{} ); }
+
+} // namespace internal
+
+/**
+ * @brief Index of a given type in a type list.
+ * @tparam T type to find
+ * @tparam LIST list of types (any variadic type, such as std::tuple<>, camp::list<>, etc.)
+ *
+ *  If @p T is not found, returns the size of the tuple.
+ *  This is consistent with @p end iterator for STL algorithms.
+ */
+template< typename T, typename LIST >
+constexpr std::size_t type_list_index = internal::type_list_index( T{}, LIST{} );
 
 } /* namespace traits */
 

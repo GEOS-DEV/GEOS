@@ -21,6 +21,9 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/layouts.hpp"
+#include "functions/TableFunction.hpp"
+
 namespace geosx
 {
 
@@ -35,9 +38,11 @@ class PhillipsBrineViscosityUpdate final : public PVTFunctionBaseUpdate
 public:
 
   PhillipsBrineViscosityUpdate( arrayView1d< real64 const > const & componentMolarWeight,
+                                TableFunction const & waterViscosityTable,
                                 real64 const coef0,
                                 real64 const coef1 )
     : PVTFunctionBaseUpdate( componentMolarWeight ),
+    m_waterViscosityTable( waterViscosityTable.createKernelWrapper() ),
     m_coef0( coef0 ),
     m_coef1( coef1 )
   {}
@@ -50,26 +55,26 @@ public:
                 real64 & value,
                 bool useMass ) const;
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
   {
     PVTFunctionBaseUpdate::move( space, touch );
+    m_waterViscosityTable.move( space, touch );
   }
 
 protected:
+
+  /// Table with water viscosity tabulated as a function of temperature
+  TableFunction::KernelWrapper m_waterViscosityTable;
 
   real64 m_coef0;
 
@@ -111,6 +116,9 @@ private:
 
   void makeCoefficients( string_array const & inputPara );
 
+  /// Table with water viscosity tabulated as a function (T)
+  TableFunction const * m_waterViscosityTable;
+
   real64 m_coef0;
 
   real64 m_coef1;
@@ -126,34 +134,44 @@ void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                                             bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure, phaseComposition, useMass );
-  value = m_coef0 + m_coef1 * temperature;
+
+  // compute the viscosity of pure water as a function of temperature
+  real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature );
+
+  // then compute the brine viscosity, accounting for the presence of salt
+  value = pureWaterVisc * ( m_coef0 + m_coef1 * temperature );
 }
 
-template< int USD1, int USD2, int USD3, int USD4 >
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void PhillipsBrineViscosityUpdate::compute( real64 const & pressure,
                                             real64 const & temperature,
                                             arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                            arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                            arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                            arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                            arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                             real64 & value,
-                                            real64 & dValue_dPressure,
-                                            real64 & dValue_dTemperature,
-                                            arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                            arraySlice1d< real64, USD3 > const & dValue,
                                             bool useMass ) const
 {
   GEOSX_UNUSED_VAR( pressure,
                     phaseComposition,
-                    dPhaseComposition_dPressure,
-                    dPhaseComposition_dTemperature,
-                    dPhaseComposition_dGlobalCompFraction,
+                    dPhaseComposition,
                     useMass );
 
-  compute( pressure, temperature, phaseComposition, value, useMass );
-  dValue_dPressure = 0.0;
-  dValue_dTemperature = m_coef1;
-  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
+  using Deriv = multifluid::DerivativeOffset;
+
+  // compute the viscosity of pure water as a function of temperature
+  real64 dPureWaterVisc_dTemperature;
+  real64 const pureWaterVisc = m_waterViscosityTable.compute( &temperature, &dPureWaterVisc_dTemperature );
+
+  // then compute the brine viscosity, accounting for the presence of salt
+
+  real64 const viscMultiplier = m_coef0 + m_coef1 * temperature;
+  real64 const dViscMultiplier_dTemperature = m_coef1;
+  value = pureWaterVisc * viscMultiplier;
+  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  dValue[Deriv::dP] = 0.0;
+  dValue[Deriv::dT] = dPureWaterVisc_dTemperature * viscMultiplier + pureWaterVisc * dViscMultiplier_dTemperature;
+
 }
 
 } // end namespace PVTProps

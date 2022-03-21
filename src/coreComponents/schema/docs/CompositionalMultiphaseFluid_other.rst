@@ -1,34 +1,26 @@
 
 
-====================================== ============================================================================================== ========================== 
-Name                                   Type                                                                                           Description                
-====================================== ============================================================================================== ========================== 
-dPhaseCompFraction_dGlobalCompFraction LvArray_Array< double, 5, camp_int_seq< long, 0l, 1l, 2l, 3l, 4l >, long, LvArray_ChaiBuffer > (no description available) 
-dPhaseCompFraction_dPressure           real64_array4d                                                                                 (no description available) 
-dPhaseCompFraction_dTemperature        real64_array4d                                                                                 (no description available) 
-dPhaseDensity_dGlobalCompFraction      real64_array4d                                                                                 (no description available) 
-dPhaseDensity_dPressure                real64_array3d                                                                                 (no description available) 
-dPhaseDensity_dTemperature             real64_array3d                                                                                 (no description available) 
-dPhaseFraction_dGlobalCompFraction     real64_array4d                                                                                 (no description available) 
-dPhaseFraction_dPressure               real64_array3d                                                                                 (no description available) 
-dPhaseFraction_dTemperature            real64_array3d                                                                                 (no description available) 
-dPhaseMassDensity_dGlobalCompFraction  real64_array4d                                                                                 (no description available) 
-dPhaseMassDensity_dPressure            real64_array3d                                                                                 (no description available) 
-dPhaseMassDensity_dTemperature         real64_array3d                                                                                 (no description available) 
-dPhaseViscosity_dGlobalCompFraction    real64_array4d                                                                                 (no description available) 
-dPhaseViscosity_dPressure              real64_array3d                                                                                 (no description available) 
-dPhaseViscosity_dTemperature           real64_array3d                                                                                 (no description available) 
-dTotalDensity_dGlobalCompFraction      real64_array3d                                                                                 (no description available) 
-dTotalDensity_dPressure                real64_array2d                                                                                 (no description available) 
-dTotalDensity_dTemperature             real64_array2d                                                                                 (no description available) 
-initialTotalMassDensity                real64_array2d                                                                                 (no description available) 
-phaseCompFraction                      real64_array4d                                                                                 (no description available) 
-phaseDensity                           real64_array3d                                                                                 (no description available) 
-phaseFraction                          real64_array3d                                                                                 (no description available) 
-phaseMassDensity                       real64_array3d                                                                                 (no description available) 
-phaseViscosity                         real64_array3d                                                                                 (no description available) 
-totalDensity                           real64_array2d                                                                                 (no description available) 
-useMass                                integer                                                                                        (no description available) 
-====================================== ============================================================================================== ========================== 
+======================= ============================================================================================= ============================================================================================================ 
+Name                    Type                                                                                          Description                                                                                                  
+======================= ============================================================================================= ============================================================================================================ 
+dPhaseCompFraction      LvArray_Array< double, 5, camp_int_seq< long, 0l, 1l, 2l, 3l, 4l >, int, LvArray_ChaiBuffer > Derivative of phase component fraction with respect to pressure, temperature, and global component fractions 
+dPhaseDensity           real64_array4d                                                                                Derivative of phase density with respect to pressure, temperature, and global component fractions            
+dPhaseEnthalpy          real64_array4d                                                                                Derivative of phase enthalpy with respect to pressure, temperature, and global component fractions           
+dPhaseFraction          real64_array4d                                                                                Derivative of phase fraction with respect to pressure, temperature, and global component fractions           
+dPhaseInternalEnergy    real64_array4d                                                                                Derivative of phase internal energy with respect to pressure, temperature, and global component fraction     
+dPhaseMassDensity       real64_array4d                                                                                Derivative of phase mass density with respect to pressure, temperature, and global component fractions       
+dPhaseViscosity         real64_array4d                                                                                Derivative of phase viscosity with respect to pressure, temperature, and global component fractions          
+dTotalDensity           real64_array3d                                                                                Derivative of total density with respect to pressure, temperature, and global component fractions            
+initialTotalMassDensity real64_array2d                                                                                Initial total mass density                                                                                   
+phaseCompFraction       real64_array4d                                                                                Phase component fraction                                                                                     
+phaseDensity            real64_array3d                                                                                Phase density                                                                                                
+phaseEnthalpy           real64_array3d                                                                                Phase enthalpy                                                                                               
+phaseFraction           real64_array3d                                                                                Phase fraction                                                                                               
+phaseInternalEnergy     real64_array3d                                                                                Phase internal energy                                                                                        
+phaseMassDensity        real64_array3d                                                                                Phase mass density                                                                                           
+phaseViscosity          real64_array3d                                                                                Phase viscosity                                                                                              
+totalDensity            real64_array2d                                                                                Total density                                                                                                
+useMass                 integer                                                                                       (no description available)                                                                                   
+======================= ============================================================================================= ============================================================================================================ 
 
 

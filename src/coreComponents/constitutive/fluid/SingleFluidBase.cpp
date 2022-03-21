@@ -18,6 +18,8 @@
 
 #include "SingleFluidBase.hpp"
 
+#include "SingleFluidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -29,28 +31,18 @@ namespace constitutive
 SingleFluidBase::SingleFluidBase( string const & name, Group * const parent )
   : ConstitutiveBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::defaultDensityString(), &m_defaultDensity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for density." );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::density{}, &m_density );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dDensity_dPressure{}, &m_dDensity_dPressure );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::initialDensity{}, &m_initialDensity );
 
-  registerWrapper( viewKeyStruct::defaultViscosityString(), &m_defaultViscosity ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Default value for viscosity." );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::viscosity{}, &m_viscosity );
+  registerExtrinsicData( extrinsicMeshData::singlefluid::dViscosity_dPressure{}, &m_dViscosity_dPressure );
 
-  registerWrapper( viewKeyStruct::densityString(), &m_density ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dDens_dPresString(), &m_dDensity_dPressure );
-
-  registerWrapper( viewKeyStruct::initialDensityString(), &m_initialDensity );
-
-  registerWrapper( viewKeyStruct::viscosityString(), &m_viscosity ).setPlotLevel( PlotLevel::LEVEL_0 );
-  registerWrapper( viewKeyStruct::dVisc_dPresString(), &m_dViscosity_dPressure );
 }
 
 void SingleFluidBase::postProcessInput()
 {
   ConstitutiveBase::postProcessInput();
-  getWrapper< array2d< real64 > >( viewKeyStruct::densityString() ).setApplyDefaultValue( m_defaultDensity );
-  getWrapper< array2d< real64 > >( viewKeyStruct::viscosityString() ).setApplyDefaultValue( m_defaultViscosity );
 }
 
 void SingleFluidBase::initializeState() const
@@ -70,6 +62,7 @@ void SingleFluidBase::initializeState() const
   } );
 }
 
+//START_SPHINX_INCLUDE_00
 void SingleFluidBase::allocateConstitutiveData( Group & parent,
                                                 localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -84,6 +77,7 @@ void SingleFluidBase::allocateConstitutiveData( Group & parent,
   m_viscosity.resize( parent.size(), numConstitutivePointsPerParentIndex );
   m_dViscosity_dPressure.resize( parent.size(), numConstitutivePointsPerParentIndex );
 }
+//END_SPHINX_INCLUDE_00
 
 } //namespace constitutive
 

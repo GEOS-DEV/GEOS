@@ -21,31 +21,30 @@
 
 namespace geosx
 {
+
 using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
                     Group * const parent ):
   Group( name, parent ),
+  m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
+{}
+
+MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
-  registerWrapper< integer >( viewKeys.meshLevels );
-}
-
-MeshBody::~MeshBody()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
-
-MeshLevel & MeshBody::createMeshLevel( localIndex const GEOSX_UNUSED_PARAM( newLevel ) )
-{
-  return this->registerGroup< MeshLevel >( "Level0" );
+  return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
 }
 
 void MeshBody::setGlobalLengthScale( real64 scale )
 {
   m_globalLengthScale = scale;
 }
+
+string MeshBody::intToMeshLevelString( localIndex const meshLevel )
+{
+  return GEOSX_FMT( "Level{}", meshLevel );
+}
+
 
 } /* namespace geosx */

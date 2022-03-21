@@ -34,7 +34,7 @@
 
 namespace geosx
 {
-namespace SinglePhaseHybridFVMKernels
+namespace singlePhaseHybridFVMKernels
 {
 
 /******************************** AssemblerKernelHelper ********************************/
@@ -559,9 +559,9 @@ struct FluxKernel
 
     // get the element data needed for transmissibility computation
     arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
+      subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
     arrayView1d< real64 const > const elemVolume =
-      subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+      subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
 
     arrayView3d< real64 const > const elemPerm = permeabilityModel.permeability();
     // TODO add this dependency to the compute function
@@ -599,7 +599,7 @@ struct FluxKernel
                                        transMatrix );
 
       // perform flux assembly in this element
-      SinglePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
+      singlePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
                                                                    regionFilter,
                                                                    elemRegionList,
                                                                    elemSubRegionList,
@@ -724,7 +724,7 @@ void KernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 }
 
 
-} // namespace SinglePhaseHybridFVMKernels
+} // namespace singlePhaseHybridFVMKernels
 
 } // namespace geosx
 

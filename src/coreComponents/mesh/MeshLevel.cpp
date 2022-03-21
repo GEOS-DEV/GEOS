@@ -57,9 +57,6 @@ MeshLevel::MeshLevel( string const & name,
   registerWrapper< integer >( viewKeys.meshLevel );
 }
 
-MeshLevel::~MeshLevel()
-{}
-
 void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
   m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -68,7 +65,6 @@ void MeshLevel::initializePostInitialConditionsPostSubGroups()
   } );
 }
 
-
 void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
@@ -76,19 +72,16 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
                                         ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > > & elementAdjacencyList,
                                         integer const depth )
 {
-  NodeManager & nodeManager = getNodeManager();
+  NodeManager const & nodeManager = getNodeManager();
 
   ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager.elementRegionList().toViewConst();
-
   ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager.elementSubRegionList().toViewConst();
-
   ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager.elementList().toViewConst();
 
-
-  FaceManager & faceManager = this->getFaceManager();
+  FaceManager const & faceManager = this->getFaceManager();
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager.edgeList().toViewConst();
 
-  ElementRegionManager & elemManager = this->getElemManager();
+  ElementRegionManager const & elemManager = this->getElemManager();
 
   std::set< localIndex > nodeAdjacencySet;
   std::set< localIndex > edgeAdjacencySet;

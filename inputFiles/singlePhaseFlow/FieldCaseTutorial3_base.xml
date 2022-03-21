@@ -1,7 +1,6 @@
 <?xml version="1.0" ?>
 
-<Problem> 
-  <!-- SPHINX_FIELD_CASE_REGION -->
+<Problem>
   <ElementRegions>
     <CellElementRegion
       name="Reservoir"
@@ -14,8 +13,6 @@
       materialList="{ water, rock }"/>
   </ElementRegions>
 
-  <!-- SPHINX_FIELD_CASE_REGION_END -->
-  <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
   <Constitutive>
     <CompressibleSinglePhaseFluid
       name="water"
@@ -37,36 +34,26 @@
     <PressurePorosity
       name="rockPorosity"
       defaultReferencePorosity="0.05"
-      referencePressure="0.0"
+      referencePressure="10e7"
       compressibility="1.0e-9"/>
 
     <ConstantPermeability
       name="rockPerm"
-      permeabilityComponents="{ 1.0e-14, 1.0e-14, 1.0e-18 }"/>
+      permeabilityComponents="{ 1.0e-13, 1.0e-13, 1.0e-16 }"/>
   </Constitutive>
 
-  <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
-  <!-- SPHINX_FIELD_CASE_NUMERICAL -->
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        targetRegions="{ Reservoir }"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+      />
     </FiniteVolume>
   </NumericalMethods>
 
-  <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
-  <!-- SPHINX_FIELD_CASE_SOLVER -->
-  <Solvers
-    gravityVector="{ 0.0, 0.0, 0.0 }">
+  <Solvers>
     <SinglePhaseFVM
       name="SinglePhaseFlow"
       discretization="singlePhaseTPFA"
-      fluidNames="{ water }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
       targetRegions="{ Reservoir }">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
@@ -78,8 +65,6 @@
     </SinglePhaseFVM>
   </Solvers>
 
-  <!-- SPHINX_FIELD_CASE_SOLVER_END -->
-  <!-- SPHINX_FIELD_CASE_GEOMETRY -->
   <Geometry>
     <Box
       name="all"
@@ -88,59 +73,82 @@
 
     <Box
       name="source"
-      xMin="{ -0.1, 9700, 4499.9 }"
-      xMax="{ 300, 10000.01, 5500.1 }"/>
+      xMin="{ 15500, 7000, -5000 }"
+      xMax="{ 16000, 7500, 0 }"/>
 
     <Box
       name="sink"
-      xMin="{ 19700, -0.1, 4499.9 }"
-      xMax="{ 20000.1, 300, 5500.1 }"/>
+      xMin="{ 6500, 1500, -5000 }"
+      xMax="{ 7000, 2000, 0 }"/>
   </Geometry>
 
-  <!-- SPHINX_FIELD_CASE_GEOMETRY_END -->
-  <!-- SPHINX_FIELD_CASE_FIELD -->
   <FieldSpecifications>
+
+    <FieldSpecification
+       name="permx"
+       initialCondition="1"
+       component="0"
+       setNames="{ all }"
+       objectPath="ElementRegions/Reservoir"
+       fieldName="rockPerm_permeability"
+       scale="1e-15"
+       functionName="permxFunc"/>
+
+     <FieldSpecification
+       name="permy"
+       initialCondition="1"
+       component="1"
+       setNames="{ all }"
+       objectPath="ElementRegions/Reservoir"
+       fieldName="rockPerm_permeability"
+       scale="1e-15"
+       functionName="permyFunc"/>
+
+     <FieldSpecification
+       name="permz"
+       initialCondition="1"
+       component="2"
+       setNames="{ all }"
+       objectPath="ElementRegions/Reservoir"
+       fieldName="rockPerm_permeability"
+       scale="3e-15"
+       functionName="permzFunc"/>
+
     <FieldSpecification
       name="initialPressure"
       initialCondition="1"
       setNames="{ all }"
       objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
       fieldName="pressure"
-      scale="1"
-      functionName="initialPressureFunc"/>
+      scale="1e7"
+      />
 
     <FieldSpecification
       name="sourceTerm"
       objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
       fieldName="pressure"
-      scale="1e7"
+      scale="15e7"
       setNames="{ source }"
-      functionName="timeInj"/>
+      />
 
     <FieldSpecification
       name="sinkTerm"
       objectPath="ElementRegions/Reservoir/Reservoir_TETRA"
       fieldName="pressure"
-      scale="0.0"
+      scale="5e7"
       setNames="{ sink }"/>
   </FieldSpecifications>
 
-  <!-- SPHINX_FIELD_CASE_FIELD_END -->
-  <!-- SPHINX_FIELD_CASE_OUTPUT -->
   <Outputs>
-    <!--   <Silo name="syntheticReservoirVizFile"/> -->
     <VTK
-      name="syntheticReservoirVizFile"/>
+      name="reservoir_with_properties"/>
   </Outputs>
 
-  <!-- SPHINX_FIELD_CASE_OUTPUT_END -->
-  
-  <!-- SPHINX_FIELD_CASE_TFUNC -->
   <Functions>
     <TableFunction
       name="timeInj"
       inputVarNames="{ time }"
-      coordinates="{ 200e6, 250e6, 500e6 }"
+      coordinates="{ 1e6, 10e6, 50e6 }"
       values="{ 1, 0.01, 0.00001 }"/>
 
     <TableFunction
@@ -171,5 +179,4 @@
       interpolation="nearest"/>
   </Functions>
 
-  <!-- SPHINX_FIELD_CASE_TFUNC_END -->
 </Problem>

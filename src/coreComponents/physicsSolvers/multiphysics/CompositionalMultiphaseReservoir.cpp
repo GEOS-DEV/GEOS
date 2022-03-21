@@ -25,6 +25,8 @@
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseUtilities.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
@@ -42,6 +44,19 @@ CompositionalMultiphaseReservoir::CompositionalMultiphaseReservoir( const string
 
 CompositionalMultiphaseReservoir::~CompositionalMultiphaseReservoir()
 {}
+
+void CompositionalMultiphaseReservoir::postProcessInput()
+{
+  ReservoirSolverBase::postProcessInput();
+
+  integer const & useMassFlow = m_flowSolver->getReference< integer >( CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString() );
+  integer const & useMassWell = m_wellSolver->getReference< integer >( CompositionalMultiphaseWell::viewKeyStruct::useMassFlagString() );
+  GEOSX_THROW_IF( useMassFlow != useMassWell,
+                  GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': the input flag {} must be the same in the flow and well solvers, respectively '{}' and '{}'",
+                             getName(), CompositionalMultiphaseBase::viewKeyStruct::useMassFlagString(),
+                             m_flowSolver->getName(), m_wellSolver->getName() ),
+                  InputError );
+}
 
 void CompositionalMultiphaseReservoir::initializePostInitialConditionsPreSubGroups()
 {
@@ -153,18 +168,18 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
   } );
 }
 
-void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
+void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                               real64 const dt,
                                                               DomainPartition const & domain,
                                                               DofManager const & dofManager,
                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                                               arrayView1d< real64 > const & localRhs )
 {
-  using namespace CompositionalMultiphaseUtilities;
+  using namespace compositionalMultiphaseUtilities;
 
-  using TAG = WellSolverBase::SubRegionTag;
-  using ROFFSET = CompositionalMultiphaseWell::RowOffset;
-  using COFFSET = CompositionalMultiphaseWell::ColOffset;
+  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 0 );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
@@ -185,6 +200,18 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
   elemManager.forElementSubRegions< WellElementSubRegion >( [&]( WellElementSubRegion const & subRegion )
   {
 
+    // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
+    // therefore, we do not want to compute perforation rates and we simply assume they are zero
+    WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
+    bool const detectCrossflow =
+      ( wellControls.isInjector() ) && wellControls.isCrossflowEnabled() &&
+      getLogLevel() >= 1; // since detect crossflow requires communication, we detect it only if the logLevel is sufficiently high
+
+    if( !wellControls.isWellOpen( time_n + dt ) )
+    {
+      return;
+    }
+
     PerforationData const * const perforationData = subRegion.getPerforationData();
 
     // get the degrees of freedom
@@ -194,11 +221,11 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
 
     // get well variables on perforations
     arrayView2d< real64 const > const & compPerfRate =
-      perforationData->getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::compPerforationRateString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::compPerforationRate >();
     arrayView3d< real64 const > const & dCompPerfRate_dPres =
-      perforationData->getReference< array3d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dPresString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dPres >();
     arrayView4d< real64 const > const & dCompPerfRate_dComp =
-      perforationData->getReference< array4d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCompPerforationRate_dCompString() );
+      perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
 
     arrayView1d< localIndex const > const & perfWellElemIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
@@ -210,6 +237,8 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
     arrayView1d< localIndex const > const & resElementIndex =
       perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+
+    RAJA::ReduceSum< parallelDeviceReduce, integer > numCrossflowPerforations( 0 );
 
     // loop over the perforations and add the rates to the residual and jacobian
     forAll< parallelDevicePolicy<> >( perforationData->size(), [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
@@ -248,6 +277,14 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
         localPerf[TAG::RES * numComps + ic] = dt * compPerfRate[iperf][ic];
         localPerf[TAG::WELL * numComps + ic] = -dt * compPerfRate[iperf][ic];
 
+        if( detectCrossflow )
+        {
+          if( compPerfRate[iperf][ic] > LvArray::NumericLimits< real64 >::epsilon )
+          {
+            numCrossflowPerforations += 1;
+          }
+        }
+
         for( localIndex ke = 0; ke < 2; ++ke )
         {
           localIndex const localDofIndexPres = ke * resNumDofs;
@@ -280,6 +317,19 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const GEOSX
         }
       }
     } );
+
+
+    if( detectCrossflow ) // check to avoid communications if not needed
+    {
+      globalIndex const totalNumCrossflowPerforations = MpiWrapper::sum( numCrossflowPerforations.get() );
+      if( totalNumCrossflowPerforations > 0 )
+      {
+        GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "CompositionalMultiphaseReservoir '{}': Warning! Crossflow detected at {} perforations in well {}"
+                                              "To disable crossflow for injectors, you can use the field '{}' in the WellControls '{}' section",
+                                              getName(), totalNumCrossflowPerforations, subRegion.getName(),
+                                              WellControls::viewKeyStruct::enableCrossflowString(), wellControls.getName() ) );
+      }
+    }
   } );
 }
 

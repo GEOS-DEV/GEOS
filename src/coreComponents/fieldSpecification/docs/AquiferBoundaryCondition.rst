@@ -42,7 +42,7 @@ Carter-Tracy analytical aquifer
 
 The Carter-Tracy aquifer model is a simplified approximation to a fully transient model
 (see R. D. Carter and G. W. Tracy,
-`An improved method for calculating water influx<https://onepetro.org/TRANS/article/219/01/415/162367/An-Improved-Method-for-Calculating-Water-Influx>`__,
+`An improved method for calculating water influx <https://onepetro.org/TRANS/article/219/01/415/162367/An-Improved-Method-for-Calculating-Water-Influx>`__,
 Transactions of the AIME, 1960).
 
 Although the theory was developed for a radially symmetric reservoir surrounded by an annular aquifer, this method applies to any geometry where the dimensionless pressure can be expressed as a function of a dimensionless time.
@@ -179,7 +179,7 @@ Setting up the **Aquifer** boundary condition requires two additional pieces of 
 .. note::
    This step captures *faces*, not *cells*. For now, the user must ensure that the box actually contains faces (GEOSX will proceed even if the face set is empty).
    
-For more complex meshes, sch as those imported using the **PAMELAMeshGenerator**, using a **Box** to perform a face selection is challenging. We recommend using a tagged ``PhysicalEntity`` in the .msh file instead. This physical entity will be used to locate the face set.
+For more complex meshes, sch as those imported using the **PAMELAMesh**, using a **Box** to perform a face selection is challenging. We recommend using a tagged ``PhysicalEntity`` in the .msh file instead. This physical entity will be used to locate the face set.
 
 2) To specify the aquifer characteristics: in the **FieldSpecifications** block of the XML file, we include an **Aquifer** tag. For single-phase flow, the aquifer definition looks like:
 
