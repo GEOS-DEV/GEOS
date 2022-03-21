@@ -84,6 +84,7 @@ public:
   using Base::m_elemsToNodes;
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
+  using Base::m_meshData;
 
 
   /**
@@ -176,22 +177,26 @@ public:
   void setup( localIndex const k,
               StackVariables & stack ) const
   {
-    for( localIndex a=0; a<numNodesPerElem; ++a )
+    m_finiteElementSpace.template setup< FE_TYPE >( k, m_meshData, stack.feStack );
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    stack.numRows =  3 * numSupportPoints;
+    stack.numCols = stack.numRows;
+    for( localIndex a = 0; a < numSupportPoints; ++a )
     {
       localIndex const localNodeIndex = m_elemsToNodes( k, a );
 
-      for( int i=0; i<3; ++i )
+      for( int i = 0; i < 3; ++i )
       {
 #if defined(CALC_FEM_SHAPE_IN_KERNEL)
         stack.xLocal[ a ][ i ] = m_X[ localNodeIndex ][ i ];
 #endif
-        stack.u_local[ a ][i] = m_disp[ localNodeIndex ][i];
-        stack.uhat_local[ a ][i] = m_uhat[ localNodeIndex ][i];
-        stack.localRowDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
-        stack.localColDofIndex[a*3+i] = m_dofNumber[localNodeIndex]+i;
+        stack.u_local[ a ][ i ] = m_disp[ localNodeIndex ][ i ];
+        stack.uhat_local[ a ][ i ] = m_uhat[ localNodeIndex ][ i ];
+        stack.localRowDofIndex[ a*3+i ] = m_dofNumber[ localNodeIndex ] + i;
+        stack.localColDofIndex[ a*3+i ] = m_dofNumber[ localNodeIndex ] + i;
       }
     }
-
   }
 
 
