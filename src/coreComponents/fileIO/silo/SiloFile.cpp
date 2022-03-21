@@ -1326,11 +1326,12 @@ static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
 {
   switch( elementType )
   {
+    case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
+    case ElementType::Tetrahedron:   return { 1, 0, 2, 3 };
     case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
     case ElementType::Prism:         return { 1, 0, 2, 3, 5, 4, 0, 0 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
@@ -1347,11 +1348,15 @@ static int toSiloShapeType( ElementType const elementType )
     case ElementType::Triangle:      return DB_ZONETYPE_TRIANGLE;
     case ElementType::Quadrilateral: return DB_ZONETYPE_QUAD;
     case ElementType::Polygon:       return DB_ZONETYPE_POLYGON;
-    case ElementType::Tetrahedron:    return DB_ZONETYPE_TET;
+    case ElementType::Tetrahedron:   return DB_ZONETYPE_TET;
     case ElementType::Pyramid:       return DB_ZONETYPE_PYRAMID;
     case ElementType::Prism:         return DB_ZONETYPE_PRISM;
     case ElementType::Hexahedron:    return DB_ZONETYPE_HEX;
     case ElementType::Polyhedron:    return DB_ZONETYPE_POLYHEDRON;
+    default:
+    {
+      GEOSX_ERROR( "Unsupported element type: " << elementType );
+    }
   }
   return -1;
 }

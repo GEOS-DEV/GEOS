@@ -79,15 +79,11 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_surfaceElementsToCells.resize( 0, 1 );
 }
 
-
-EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
-{}
-
 void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
-  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
   } );
@@ -380,15 +376,15 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-void EmbeddedSurfaceSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > EmbeddedSurfaceSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
-  //exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceWithGhostNodesString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::surfaceElementsToCellRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellIndexString() } );
+  return result;
 }
 
 } /* namespace geosx */

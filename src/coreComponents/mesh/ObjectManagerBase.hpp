@@ -115,13 +115,10 @@ public:
   localIndex unpackSets( buffer_unit_type const * & buffer );
 
   /**
-   * @brief Inserts in @p exclusionList the data that shall not be packed.
-   * @param[in,out] exclusionList Will receive the wrapper indices of the data that should not be packed.
-   *
-   * Note that data will be inserted into @p exclusionList
-   * and that data previously present in @p exclusionList may remain.
+   * @brief Gets the wrapper names that should not be packed.
+   * @return The set of names.
    */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const;
+  virtual std::set< string > getPackingExclusionList() const;
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.
@@ -308,8 +305,9 @@ public:
   /**
    * @brief Creates a new set.
    * @param newSetName The set name.
+   * @return reference to the set
    */
-  void createSet( const string & newSetName );
+  SortedArray< localIndex > & createSet( const string & newSetName );
 
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
@@ -797,6 +795,22 @@ public:
    */
   Group const & sets() const
   { return m_sets; }
+
+  /**
+   * @brief Get a set by name.
+   * @param setName Name of the set.
+   * @return Sorted array indices.
+   */
+  SortedArray< localIndex > & getSet( string const & setName )
+  { return m_sets.getReference< SortedArray< localIndex > >( setName ); }
+
+  /**
+   * @brief Get a set by name, const version.
+   * @param setName Name of the set.
+   * @return Sorted array indices.
+   */
+  SortedArrayView< localIndex const > getSet( string const & setName ) const
+  { return m_sets.getReference< SortedArray< localIndex > >( setName ).toViewConst(); }
 
   /**
    * @brief Get the external set.
