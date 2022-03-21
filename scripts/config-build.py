@@ -209,10 +209,10 @@ def main(calling_script, args, unknown_args):
         cmake_line.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
 
     if args.eclipse:
-        cmake_line.append('-G "Eclipse CDT4 - Unix Makefiles"')
+        cmake_line.append('-G"Eclipse CDT4 - Unix Makefiles"')
 
     if args.xcode:
-        cmake_line.append('-G Xcode')
+        cmake_line.append('-GXcode')
 
     if args.graphviz:
         cmake_line.append("--graphviz=dependency.dot")
@@ -224,7 +224,7 @@ def main(calling_script, args, unknown_args):
         cmake_line.append(unknown_arg)
 
     # Append cache file at the end of the command line to make previous argument visible to the cache.
-    cmake_line.append("-C %s" % cache_file)
+    cmake_line.append("-C%s" % cache_file)
 
     cmake_line.append(os.path.normpath(os.path.join(scripts_dir, "..", "src")))
 
@@ -242,7 +242,7 @@ def main(calling_script, args, unknown_args):
     os.chdir(build_path)
     with open(cmake_cmd, "r") as cmd_file:
         logging.info("Executing cmake line: '%s'" % cmd_file.read().rstrip(os.linesep))
-    subprocess.call(cmake_line, shell=True)
+    subprocess.call(cmake_cmd, shell=True)
 
     if args.graphviz:
         subprocess.call(dot_line, shell=True)
