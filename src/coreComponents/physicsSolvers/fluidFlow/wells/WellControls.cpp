@@ -53,7 +53,7 @@ WellControls::WellControls( string const & name, Group * const parent )
     setDescription( "Well control. Valid options:\n* " + EnumStrings< Control >::concat( "\n* " ) );
 
   registerWrapper( viewKeyStruct::targetBHPString(), &m_targetBHP ).
-    setDefaultValue( -1 ).
+    setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Target bottom-hole pressure [Pa]" );
 
@@ -65,7 +65,7 @@ WellControls::WellControls( string const & name, Group * const parent )
   registerWrapper( viewKeyStruct::targetPhaseRateString(), &m_targetPhaseRate ).
     setDefaultValue( 0.0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Target phase volumetric rate" );
+    setDescription( "Target phase volumetric rate [sm^3/s]" );
 
   registerWrapper( viewKeyStruct::targetPhaseNameString(), &m_targetPhaseName ).
     setDefaultValue( "" ).
@@ -214,13 +214,19 @@ void WellControls::postProcessInput()
 
   // 6) check the flag for surface / reservoir conditions
   GEOSX_THROW_IF( m_useSurfaceConditions == 1 && m_surfacePres <= 0,
-                  "WellControls '" << getName() << "': When useSurfaceConditions == 1, the surface pressure must be defined",
+                  "WellControls '" << getName() << "': When " << viewKeyStruct::useSurfaceConditionsString() << " == 1, the surface pressure must be defined",
                   InputError );
 
   // 7) check that at least one rate constraint has been defined
   GEOSX_THROW_IF( ((m_targetPhaseRate <= 0.0 && m_targetPhaseRateTableName.empty()) &&
                    (m_targetTotalRate <= 0.0 && m_targetTotalRateTableName.empty())),
-                  "WellControls '" << getName() << "': You need to specify a phase rate constraint or a total rate constraint for injectors",
+                  "WellControls '" << getName() << "': You need to specify a phase rate constraint or a total rate constraint. \n" <<
+                  "The phase rate constraint can be specified using " <<
+                  "either " << viewKeyStruct::targetPhaseRateString() <<
+                  " or " << viewKeyStruct::targetPhaseRateTableNameString() << ".\n" <<
+                  "The total rate constraint can be specified using " <<
+                  "either " << viewKeyStruct::targetTotalRateString() <<
+                  " or " << viewKeyStruct::targetTotalRateTableNameString(),
                   InputError );
 
   // 8) check whether redundant information has been provided
@@ -240,7 +246,8 @@ void WellControls::postProcessInput()
                   InputError );
 
   GEOSX_THROW_IF( ((m_targetBHP <= 0.0 && m_targetBHPTableName.empty())),
-                  "WellControls '" << getName() << "': You have to provide well BHP by specifying either " << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
+                  "WellControls '" << getName() << "': You have to provide well BHP by specifying either "
+                                   << viewKeyStruct::targetBHPString() << " or " << viewKeyStruct::targetBHPTableNameString(),
                   InputError );
 
   //  9) Make sure that the flag disabling crossflow is not used for producers
