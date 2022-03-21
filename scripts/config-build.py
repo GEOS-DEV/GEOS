@@ -148,7 +148,7 @@ def main(calling_script, args, unknown_args):
     #####################
     # Setup Build Dir
     #####################
-    if args.build_path != "":
+    if args.build_path:
         # use explicit build path
         build_path = args.build_path
     else:
@@ -186,7 +186,7 @@ def main(calling_script, args, unknown_args):
         install_path = os.path.abspath(install_path)
 
         if os.path.exists(install_path):
-            logging.info("Install directory '%s' already exists, deleting..." % install_path)
+            logging.info("Install directory '%s' already exists. Deleting..." % install_path)
             shutil.rmtree(install_path)
 
         logging.info("Creating install path '%s'..." % install_path)
@@ -196,52 +196,52 @@ def main(calling_script, args, unknown_args):
     # Build CMake command line
     ############################
 
-    cmake_line = extract_cmake_location(cache_file) or "cmake"
+    cmake_line = list()
+    cmake_line.append(extract_cmake_location(cache_file) or "cmake")
 
     # Add build type (opt or debug)
-    cmake_line += " -DCMAKE_BUILD_TYPE=" + args.build_type
-    # Set install dir
+    cmake_line.append("-DCMAKE_BUILD_TYPE=" + args.build_type)
 
     if not args.no_install:
-        cmake_line += " -DCMAKE_INSTALL_PREFIX=%s" % install_path
+        cmake_line.append("-DCMAKE_INSTALL_PREFIX=%s" % install_path)
 
     if args.export_compiler_commands:
-        cmake_line += " -DCMAKE_EXPORT_COMPILE_COMMANDS=on"
+        cmake_line.append("-DCMAKE_EXPORT_COMPILE_COMMANDS=ON")
 
     if args.eclipse:
-        cmake_line += ' -G "Eclipse CDT4 - Unix Makefiles"'
+        cmake_line.append('-G"Eclipse CDT4 - Unix Makefiles"')
 
     if args.xcode:
-        cmake_line += ' -G Xcode'
+        cmake_line.append('-GXcode')
 
     if args.graphviz:
-        cmake_line += " --graphviz=dependency.dot"
+        cmake_line.append("--graphviz=dependency.dot")
         dot_line = "dot -Tpng dependency.dot -o dependency.png"
 
-    if unknown_args:
-        for unknown_arg in unknown_args:
-            if not unknown_arg.startswith('-D'):
-                logging.warning("Additional argument %s does not start with '-D'..." % unknown_arg)
-        cmake_line += " " + " ".join(unknown_args)
+    for unknown_arg in unknown_args:
+        if not unknown_arg.startswith('-D'):
+            logging.warning("Additional argument '%s' does not start with '-D'. Keeping it nevertheless." % unknown_arg)
+        cmake_line.append(unknown_arg)
 
     # Append cache file at the end of the command line to make previous argument visible to the cache.
-    cmake_line += " -C %s" % cache_file
+    cmake_line.append("-C%s" % cache_file)
 
-    cmake_line += " " + os.path.normpath(os.path.join(scripts_dir, "..", "src"))
+    cmake_line.append(os.path.normpath(os.path.join(scripts_dir, "..", "src")))
 
     # Dump the cmake command to file for convenience
     cmake_cmd = os.path.join(build_path, "cmake_cmd")
     with open(cmake_cmd, "w") as cmd_file:
-        cmd_file.write(cmake_line + "\n")
+        cmd_file.write(" ".join(cmake_line) + os.linesep)
     st = os.stat(cmake_cmd)
     os.chmod(cmake_cmd, st.st_mode | stat.S_IEXEC)
 
     ############################
     # Run CMake
     ############################
-    logging.info("Changing to build directory...")
+    logging.info("Changing to build directory '%s'" % build_path)
     os.chdir(build_path)
-    logging.info("Executing cmake line: '%s'\n" % cmake_line)
+    with open(cmake_cmd, "r") as cmd_file:
+        logging.info("Executing cmake line: '%s'" % cmd_file.read().rstrip(os.linesep))
     subprocess.call(cmake_line, shell=True)
 
     if args.graphviz:
