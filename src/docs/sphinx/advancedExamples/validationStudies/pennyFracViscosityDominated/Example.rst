@@ -101,7 +101,7 @@ The fracture plane is defined by a nodeset occupying a small region within the c
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pennyShapedViscosityDominated_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_FRACPLANE -->
-  :end-before: <!-- SPHINX_FRACPLANE_END_END -->
+  :end-before: <!-- SPHINX_FRACPLANE_END -->
 
 
 ------------------------
