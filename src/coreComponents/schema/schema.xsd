@@ -625,8 +625,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
-			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
+			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
+			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -736,23 +736,37 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshGeneratorType">
-		<!--fieldNamesInGEOSX => Name of the fields within GEOSX-->
+	<xsd:complexType name="PAMELAMeshType">
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
 		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
-		<!--file => path to the mesh file-->
+		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
-		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
-		<xsd:attribute name="reverseZ" type="integer" default="0" />
-		<!--scale => Scale the coordinates of the vertices-->
-		<xsd:attribute name="scale" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="VTKMeshGeneratorType">
-		<!--file => path to the mesh file-->
+	<xsd:complexType name="VTKMeshType">
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
+		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
+		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--regionAttribute => Translate the coordinates of the vertices by a given vector-->
+		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1029,19 +1043,31 @@ the relative residual norm satisfies:
 	<xsd:complexType name="VTKType">
 		<!--childDirectory => Child directory path-->
 		<xsd:attribute name="childDirectory" type="string" default="" />
+		<!--format => Output data format.  Valid options: ``binary``, ``ascii``-->
+		<xsd:attribute name="format" type="geosx_vtk_VTKOutputMode" default="binary" />
+		<!--outputRegionType => Output region types.  Valid options: ``cell``, ``well``, ``surface``, ``all``-->
+		<xsd:attribute name="outputRegionType" type="geosx_vtk_VTKRegionTypes" default="all" />
 		<!--parallelThreads => Number of plot files.-->
 		<xsd:attribute name="parallelThreads" type="integer" default="1" />
 		<!--plotFileRoot => Name of the root file for this output.-->
 		<xsd:attribute name="plotFileRoot" type="string" default="VTK" />
 		<!--plotLevel => Level detail plot. Only fields with lower of equal plot level will be output.-->
 		<xsd:attribute name="plotLevel" type="integer" default="1" />
-		<!--writeBinaryData => Output the data in binary format-->
-		<xsd:attribute name="writeBinaryData" type="integer" default="1" />
 		<!--writeFEMFaces => (no description available)-->
 		<xsd:attribute name="writeFEMFaces" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
+	<xsd:simpleType name="geosx_vtk_VTKOutputMode">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|binary|ascii" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_vtk_VTKRegionTypes">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|cell|well|surface|all" />
+		</xsd:restriction>
+	</xsd:simpleType>
 	<xsd:complexType name="SolversType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="AcousticSEM" type="AcousticSEMType" />
@@ -1089,11 +1115,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise-->
-		<xsd:attribute name="outputSeismoTrace" type="localIndex" default="0" />
+		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
-		<xsd:attribute name="rickerOrder" type="localIndex" default="2" />
+		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1667,6 +1693,8 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
 		<xsd:attribute name="targetRegions" type="string_array" use="required" />
+		<!--useStaticCondensation => Defines whether to use static condensation or not.-->
+		<xsd:attribute name="useStaticCondensation" type="integer" default="0" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1814,7 +1842,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--objectPath => The name of the object from which to retrieve field values.-->
 		<xsd:attribute name="objectPath" type="string" use="required" />
 		<!--onlyOnSetChange => Whether or not to only collect when the collected sets of indices change in any way.-->
-		<xsd:attribute name="onlyOnSetChange" type="localIndex" default="0" />
+		<xsd:attribute name="onlyOnSetChange" type="integer" default="0" />
 		<!--setNames => The set(s) for which to retrieve data.-->
 		<xsd:attribute name="setNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->

@@ -12,25 +12,29 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-#pragma once
+#ifndef GEOSX_PYTHON_PYGROUP_HPP_
+#define GEOSX_PYTHON_PYGROUP_HPP_
 
 // Source includes
-#include "dataRepository/WrapperBase.hpp"
+#include "dataRepository/Group.hpp"
+#include "LvArray/src/python/pythonForwardDeclarations.hpp"
+#include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
+#include "PyWrapper.hpp"
 
 namespace geosx
 {
 namespace python
 {
 
-/**
- *
- */
-PyObject * createNewPyWrapper( dataRepository::WrapperBase & wrapper );
 
-/**
- *
- */
-PyTypeObject * getPyWrapperType();
+
+PyObject * createNewPyGroup( dataRepository::Group & group );
+
+
 
 } // namespace python
 } // namespace geosx
+
+#endif
