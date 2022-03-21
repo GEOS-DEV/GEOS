@@ -81,7 +81,7 @@ public:
   ///@}
 
   void updateRVectors(int const p,
-                      LvArray::ArraySlice<double, 2, 1, long> const & p_F)
+                      LvArray::ArraySlice<double, 2, 1, int> const & p_F)
   {
     if(m_hasRVectors)
     {
@@ -104,7 +104,7 @@ public:
   }
 
   void getAllWeights(int const p,
-                     LvArray::ArraySlice<double, 1, 0, long> const & p_x,
+                     LvArray::ArraySlice<double, 1, 0, int> const & p_x,
                      std::vector<real64> const & xMin,
                      std::vector<real64> const & hx,
                      std::vector<std::vector<std::vector<int>>> const & ijkMap,
