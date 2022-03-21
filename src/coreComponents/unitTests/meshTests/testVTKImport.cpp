@@ -56,7 +56,7 @@ void TestMeshImport( string const & meshFilePath, V const & validate )
 
 TEST( VTKImport, cube )
 {
-  auto validate = []( CellBlockManagerABC & cellBlockManager ) -> void
+  auto validate = []( CellBlockManagerABC const & cellBlockManager ) -> void
   {
     // `cube.vtk` is a cube made by 3 x 3 x 3 = 27 Hexahedron 3d-elements.
     // It contains 4 x 4 x 4 = 64 nodes.
