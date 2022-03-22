@@ -89,6 +89,40 @@ EXTRINSIC_MESH_DATA_TRAIT( dTraction_dPressure,
                            NO_WRITE,
                            "Derivative of the traction w.r.t. to the fluid pressure." );
 
+EXTRINSIC_MESH_DATA_TRAIT( fractureState,
+                           "fractureState",
+                           array1d< integer >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Fracture state." );
+
+ EXTRINSIC_MESH_DATA_TRAIT( oldFractureState,
+                           "oldFractureState",
+                           array1d< integer >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Fracture state at the previous timestep." );
+
+ /**
+   * @struct FractureState
+   *
+   * A struct for the fracture states
+   */
+  struct FractureState
+  {
+    enum State : integer
+    {
+      Stick = 0, ///< element is closed: no jump across the discontinuity.
+      Slip = 1, ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed.
+      NewSlip = 2, ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed.
+      Open = 3 ///< element is open: no constraints are imposed.
+    };
+  };                          
+
+ ENUM_STRINGS( FractureState::State, "stick", "slip", "new_slip", "open" );
+                          
 }
 
 }

@@ -21,6 +21,7 @@
 #define GEOSX_PHYSICSSOLVERS_CONTACT_CONTACTSOLVERBASE_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -63,22 +64,6 @@ public:
 
   void outputConfigurationStatistics( DomainPartition const & domain ) const override final;
 
-  /**
-   * @struct FractureState
-   *
-   * A struct for the fracture states
-   */
-  struct FractureState
-  {
-    enum State : integer
-    {
-      Stick = 0, ///< element is closed: no jump across the discontinuity.
-      Slip = 1, ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed.
-      NewSlip = 2, ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed.
-      Open = 3 ///< element is open: no constraints are imposed.
-    };
-  };
-
 protected:
 
   virtual void postProcessInput() override;
@@ -94,8 +79,8 @@ protected:
                                      integer const state1 )
   {
     return state0 == state1
-           || ( state0 == FractureState::NewSlip && state1 == FractureState::Slip )
-           || ( state0 == FractureState::Slip && state1 == FractureState::NewSlip );
+           || ( state0 == extrinsicMeshData::contact::FractureState::NewSlip && state1 == extrinsicMeshData::contact::FractureState::Slip )
+           || ( state0 == extrinsicMeshData::contact::FractureState::Slip && state1 == extrinsicMeshData::contact::FractureState::NewSlip );
   }
 
   void synchronizeFractureState( DomainPartition & domain ) const;
@@ -130,9 +115,6 @@ protected:
     constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
   };
 };
-
-ENUM_STRINGS( ContactSolverBase::FractureState::State, "stick", "slip", "new_slip", "open" );
-
 
 } /* namespace geosx */
 

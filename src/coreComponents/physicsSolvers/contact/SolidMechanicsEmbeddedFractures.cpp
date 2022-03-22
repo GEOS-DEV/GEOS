@@ -31,7 +31,6 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
 #include "physicsSolvers/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
@@ -739,6 +738,8 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
 {
   bool hasConfigurationConverged = true;
 
+  using namespace extrinsicMeshData::contact;
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -750,7 +751,7 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
-      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
 
       RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
 
