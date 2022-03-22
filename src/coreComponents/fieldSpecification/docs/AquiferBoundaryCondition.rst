@@ -179,7 +179,7 @@ Setting up the **Aquifer** boundary condition requires two additional pieces of 
 .. note::
    This step captures *faces*, not *cells*. For now, the user must ensure that the box actually contains faces (GEOSX will proceed even if the face set is empty).
    
-For more complex meshes, sch as those imported using the **PAMELAMeshGenerator**, using a **Box** to perform a face selection is challenging. We recommend using a tagged ``PhysicalEntity`` in the .msh file instead. This physical entity will be used to locate the face set.
+For more complex meshes, sch as those imported using the **PAMELAMesh**, using a **Box** to perform a face selection is challenging. We recommend using a tagged ``PhysicalEntity`` in the .msh file instead. This physical entity will be used to locate the face set.
 
 2) To specify the aquifer characteristics: in the **FieldSpecifications** block of the XML file, we include an **Aquifer** tag. For single-phase flow, the aquifer definition looks like:
 

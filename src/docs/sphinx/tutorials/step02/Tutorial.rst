@@ -146,7 +146,7 @@ we inspect the following XML file:
 
 
 In the XML ``Mesh`` tag, instead of an ``InternalMesh`` tag,
-we have a ``PAMELAMeshGenerator`` tag.
+we have a ``PAMELAMesh`` tag.
 We see that a file called ``cube_10x10x10_hex.msh`` is
 imported using PAMELA, and this object is instantiated with a user-defined ``name`` value.
 The file here contains geometric information in
@@ -202,7 +202,7 @@ In our case, the first lines are:
 .. code-block:: console
 
   Adding Solver of type SinglePhaseFlow, named SinglePhaseFlow
-  Adding Mesh: PAMELAMeshGenerator, CubeHex
+  Adding Mesh: PAMELAMesh, CubeHex
   Adding Geometric Object: Box, all
   Adding Geometric Object: Box, left
   Adding Event: PeriodicEvent, solverApplications
@@ -376,7 +376,7 @@ In our case, the first lines are:
 .. code-block:: console
 
   Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
-  Adding Mesh: PAMELAMeshGenerator, CubeTetra
+  Adding Mesh: PAMELAMesh, CubeTetra
   Adding Geometric Object: Box, left
   Adding Event: PeriodicEvent, solverApplications
   Adding Event: PeriodicEvent, outputs
@@ -423,7 +423,7 @@ Followed by:
     Domain/DEFAULT_TETRA/rockPerm is allocated with 1 quadrature points.
     Domain/DEFAULT_TETRA/rockPorosity is allocated with 1 quadrature points.
     Domain/DEFAULT_TETRA/nullSolid is allocated with 1 quadrature points.
-  PAMELAMeshGenerator CubeTetra: importing field data from mesh dataset
+  PAMELAMesh CubeTetra: importing field data from mesh dataset
 
 
 We see that we have now 366 nodes and 1153 tetrahedral elements.

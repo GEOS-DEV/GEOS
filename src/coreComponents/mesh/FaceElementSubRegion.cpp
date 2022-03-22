@@ -60,9 +60,6 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
   m_numNodesPerElement = 8;
 }
 
-FaceElementSubRegion::~FaceElementSubRegion()
-{}
-
 void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mesh )
 {
   this->m_toNodesRelation.setRelatedObject( mesh.getNodeManager() );
@@ -70,8 +67,8 @@ void FaceElementSubRegion::setupRelatedObjectsInRelations( MeshLevel const & mes
   this->m_toFacesRelation.setRelatedObject( mesh.getFaceManager() );
 }
 
-void FaceElementSubRegion::CalculateElementGeometricQuantities( localIndex const k,
-                                                                arrayView1d< real64 const > const & faceArea )
+void FaceElementSubRegion::calculateSingleElementGeometricQuantities( localIndex const k,
+                                                                      arrayView1d< real64 const > const & faceArea )
 {
   m_elementArea[k] = faceArea[ m_toFacesRelation[k][0] ];
   m_elementVolume[k] = m_elementAperture[k] * faceArea[m_toFacesRelation[k][0]];
@@ -82,9 +79,9 @@ void FaceElementSubRegion::calculateElementGeometricQuantities( NodeManager cons
 {
   arrayView1d< real64 const > const & faceArea = faceManager.faceArea();
 
-  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {
-    CalculateElementGeometricQuantities( k, faceArea );
+    calculateSingleElementGeometricQuantities( k, faceArea );
   } );
 }
 
@@ -227,15 +224,17 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
   }
 }
 
-void FaceElementSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > FaceElementSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::surfaceElementsToCellRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellIndexString() } );
+  return result;
 }
+
 
 } /* namespace geosx */

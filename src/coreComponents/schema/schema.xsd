@@ -625,8 +625,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
-			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
+			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
+			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -736,23 +736,37 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshGeneratorType">
-		<!--fieldNamesInGEOSX => Name of the fields within GEOSX-->
+	<xsd:complexType name="PAMELAMeshType">
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
 		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
-		<!--file => path to the mesh file-->
+		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
-		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
-		<xsd:attribute name="reverseZ" type="integer" default="0" />
-		<!--scale => Scale the coordinates of the vertices-->
-		<xsd:attribute name="scale" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="VTKMeshGeneratorType">
-		<!--file => path to the mesh file-->
+	<xsd:complexType name="VTKMeshType">
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
+		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
+		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--regionAttribute => Translate the coordinates of the vertices by a given vector-->
+		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
