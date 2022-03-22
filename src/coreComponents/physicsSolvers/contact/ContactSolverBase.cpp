@@ -90,12 +90,14 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
             setPlotLevel( PlotLevel::LEVEL_0 ).
+            setApplyDefaultValue( FractureState::Stick ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
           initializeFractureState( subRegion, viewKeyStruct::fractureStateString() );
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
+            setApplyDefaultValue( FractureState::Stick ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
           initializeFractureState( subRegion, viewKeyStruct::oldFractureStateString() );
@@ -229,6 +231,7 @@ void ContactSolverBase::applyBoundaryConditions( real64 const time,
                                                  arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
+
   m_solidSolver->applyBoundaryConditions( time,
                                           dt,
                                           domain,

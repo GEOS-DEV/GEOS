@@ -222,7 +222,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
       if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
       {
         arrayView2d< real64 > const &
-        deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
+        deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaTraction >();
         arrayView2d< real64 const > const &
         dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
         arrayView2d< real64 > const &
@@ -895,8 +895,7 @@ void LagrangianContactSolver::
     {
         arrayView1d< globalIndex const > const & tracDofNumber = subRegion.getReference< globalIndex_array >( tracDofKey );
         arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::traction::key() );
-        arrayView3d< real64 const > const &
-        rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
+        arrayView3d< real64 const > const & rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
         constexpr localIndex TriangularPermutation[3] = { 0, 1, 2 };
@@ -1678,6 +1677,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), -scalingFactor );
   dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), -scalingFactor );
 
+
   std::map< string, string_array > fieldNames;
   fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::traction::key() ) );
   fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaTraction::key() ) );
@@ -1695,7 +1695,6 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                          domain.getNeighbors(),
                                                          true );
   } );
-  computeFaceDisplacementJump( domain );
 }
 
 void LagrangianContactSolver::updateState( DomainPartition & domain )

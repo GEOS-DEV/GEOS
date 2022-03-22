@@ -65,7 +65,7 @@ EXTRINSIC_MESH_DATA_TRAIT( traction,
                            "Fracture traction vector" );
 
 EXTRINSIC_MESH_DATA_TRAIT( deltaTraction,
-                           "traction",
+                           "deltaTraction",
                            array2d< real64 >,
                            0,
                            NOPLOT,
