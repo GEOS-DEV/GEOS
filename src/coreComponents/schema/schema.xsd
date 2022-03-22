@@ -627,6 +627,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
 			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
+			<xsd:element name="ParticleMesh" type="ParticleMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -747,6 +748,16 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="reverseZ" type="integer" default="0" />
 		<!--scale => Scale the coordinates of the vertices-->
 		<xsd:attribute name="scale" type="real64" default="1" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
+	<xsd:complexType name="ParticleMeshType">
+		<!--file => path to the particle file-->
+		<xsd:attribute name="file" type="path" use="required" />
+		<!--particleBlockNames => Names of each particle block-->
+		<xsd:attribute name="particleBlockNames" type="string_array" use="required" />
+		<!--particleTypes => Particle types of each particle block-->
+		<xsd:attribute name="particleTypes" type="string_array" use="required" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -1081,11 +1092,11 @@ the relative residual norm satisfies:
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--outputSeismoTrace => Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise-->
-		<xsd:attribute name="outputSeismoTrace" type="localIndex" default="0" />
+		<xsd:attribute name="outputSeismoTrace" type="integer" default="0" />
 		<!--receiverCoordinates => Coordinates (x,y,z) of the receivers-->
 		<xsd:attribute name="receiverCoordinates" type="real64_array2d" use="required" />
 		<!--rickerOrder => Flag that indicates the order of the Ricker to be used o, 1 or 2. Order 2 by default-->
-		<xsd:attribute name="rickerOrder" type="localIndex" default="2" />
+		<xsd:attribute name="rickerOrder" type="integer" default="2" />
 		<!--sourceCoordinates => Coordinates (x,y,z) of the sources-->
 		<xsd:attribute name="sourceCoordinates" type="real64_array2d" use="required" />
 		<!--targetRegions => Allowable regions that the solver may be applied to. Note that this does not indicate that the solver will be applied to these regions, only that allocation will occur such that the solver may be applied to these regions. The decision about what regions this solver will beapplied to rests in the EventManager.-->
@@ -1792,8 +1803,6 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<xsd:attribute name="newmarkBeta" type="real64" default="0.25" />
 		<!--newmarkGamma => Value of :math:`\gamma` in the Newmark Method for Implicit Dynamic time integration option-->
 		<xsd:attribute name="newmarkGamma" type="real64" default="0.5" />
-		<!--solidMaterialNames => The name of the material that should be used in the constitutive updates-->
-		<xsd:attribute name="solidMaterialNames" type="string_array" use="required" />
 		<!--stiffnessDamping => Value of stiffness based damping coefficient. -->
 		<xsd:attribute name="stiffnessDamping" type="real64" default="0" />
 		<!--strainTheory => Indicates whether or not to use `Infinitesimal Strain Theory <https://en.wikipedia.org/wiki/Infinitesimal_strain_theory>`_, or `Finite Strain Theory <https://en.wikipedia.org/wiki/Finite_strain_theory>`_. Valid Inputs are:
@@ -1874,7 +1883,7 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 		<!--objectPath => The name of the object from which to retrieve field values.-->
 		<xsd:attribute name="objectPath" type="string" use="required" />
 		<!--onlyOnSetChange => Whether or not to only collect when the collected sets of indices change in any way.-->
-		<xsd:attribute name="onlyOnSetChange" type="localIndex" default="0" />
+		<xsd:attribute name="onlyOnSetChange" type="integer" default="0" />
 		<!--setNames => The set(s) for which to retrieve data.-->
 		<xsd:attribute name="setNames" type="string_array" default="{}" />
 		<!--name => A name is required for any non-unique nodes-->
@@ -2860,22 +2869,22 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-  <xsd:complexType name="ParticleRegionsType">
-    <xsd:choice minOccurs="0" maxOccurs="unbounded">
-      <xsd:element name="ParticleRegion" type="ParticleRegionType" />
-    </xsd:choice>
-  </xsd:complexType>
-  <xsd:complexType name="ParticleRegionType">
-    <xsd:choice minOccurs="0" maxOccurs="unbounded" />
-    <!--particleBlocks => (no description available)-->
-    <xsd:attribute name="particleBlocks" type="string_array" default="{}" />
-    <!--materialList => List of materials present in this region-->
-    <xsd:attribute name="materialList" type="string_array" use="required" />
-    <!--meshBody => Mesh body that contains this region-->
-    <xsd:attribute name="meshBody" type="string" default="" />
-    <!--name => A name is required for any non-unique nodes-->
-    <xsd:attribute name="name" type="string" use="required" />
-  </xsd:complexType>
+	<xsd:complexType name="ParticleRegionsType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded">
+			<xsd:element name="ParticleRegion" type="ParticleRegionType" />
+		</xsd:choice>
+	</xsd:complexType>
+	<xsd:complexType name="ParticleRegionType">
+		<xsd:choice minOccurs="0" maxOccurs="unbounded" />
+		<!--materialList => List of materials present in this region-->
+		<xsd:attribute name="materialList" type="string_array" use="required" />
+		<!--meshBody => Mesh body that contains this region-->
+		<xsd:attribute name="meshBody" type="string" default="" />
+		<!--particleBlocks => (no description available)-->
+		<xsd:attribute name="particleBlocks" type="string_array" default="{}" />
+		<!--name => A name is required for any non-unique nodes-->
+		<xsd:attribute name="name" type="string" use="required" />
+	</xsd:complexType>
 	<xsd:complexType name="IncludedType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="File" type="FileType" />

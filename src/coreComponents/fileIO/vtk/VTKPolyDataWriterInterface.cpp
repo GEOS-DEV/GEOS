@@ -72,17 +72,17 @@ static int toVTKCellType( ElementType const elementType )
   return VTK_EMPTY_CELL;
 }
 
-//static int toVTKCellType( ParticleType const particleType )
-//{
-//  switch( particleType )
-//  {
-//    case ParticleType::SinglePoint:  return VTK_HEXAHEDRON;
-//    case ParticleType::CPDI:         return VTK_HEXAHEDRON;
-//    case ParticleType::CPTI:         return VTK_TETRA;
-//    case ParticleType::CPDI2:        return VTK_HEXAHEDRON;
-//  }
-//  return VTK_EMPTY_CELL;
-//}
+static int toVTKCellType( ParticleType const particleType )
+{
+  switch( particleType )
+  {
+    case ParticleType::SinglePoint:  return VTK_HEXAHEDRON;
+    case ParticleType::CPDI:         return VTK_HEXAHEDRON;
+    case ParticleType::CPTI:         return VTK_TETRA;
+    case ParticleType::CPDI2:        return VTK_HEXAHEDRON;
+  }
+  return VTK_EMPTY_CELL;
+}
 
 static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
 {
@@ -97,6 +97,16 @@ static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
     case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
+  }
+  return {};
+}
+
+static std::vector< int > getVTKNodeOrdering( ParticleType const particleType ){
+  switch(particleType){
+    case ParticleType::CPTI: return { 1, 0, 2, 3 };
+    case ParticleType::SinglePoint:
+    case ParticleType::CPDI:
+    case ParticleType::CPDI2: return { 0, 1, 3, 2, 4, 5, 7, 6 }; //All fall through to hexahedron except tetrahedron CPTI
   }
   return {};
 }
@@ -336,6 +346,43 @@ getVtkCells( CellElementRegion const & region )
       }
       cellType.push_back( vtkCellType );
       cellsArray->InsertNextCell( subRegion.numNodesPerElement(), connectivity.data() );
+    }
+  } );
+  return std::make_pair( cellType, cellsArray );
+}
+
+//IN PROGRESS: Cameron Crook (crook5)
+/**
+ * @brief Gets the cell connectivities as a VTK object for the CellElementRegion @p er
+ * @param[in] region the CellElementRegion to be written
+ * @return a pair, first value is a table with the same size than the total number of element in the CellElementRegion
+ * contaning the type of the cells, the second value is a VTK object containing the connectivity information
+ */
+std::pair< std::vector< int >, vtkSmartPointer< vtkCellArray > >
+getVtkCells( ParticleRegion const & region )
+{
+  vtkSmartPointer< vtkCellArray > cellsArray = vtkCellArray::New();
+  cellsArray->SetNumberOfCells( region.getNumberOfParticles< ParticleRegion >() );
+  std::vector< int > cellType;
+  cellType.reserve( region.getNumberOfParticles< ParticleRegion >() );
+
+  vtkIdType nodeIndex = 0;
+
+  region.forParticleSubRegions< ParticleSubRegion >( [&]( ParticleSubRegion const & subRegion )
+  {
+    std::vector< int > vtkOrdering = getVTKNodeOrdering( subRegion.getParticleType() ); //Do I need a switch statement to map particletype to element type?
+    std::vector< vtkIdType > connectivity( vtkOrdering.size() ); //Does particleSubRegionBase need a number of nodes per particle variable? or can I just use the particle size of the nodeordering array?
+    int vtkCellType = toVTKCellType( subRegion.getParticleType() );
+    for( localIndex c = 0; c < subRegion.size(); c++ )
+    {
+      for( std::size_t i = 0; i < connectivity.size(); i++ )
+      {
+
+        connectivity[i] = vtkOrdering.size()*nodeIndex + vtkOrdering[i];
+      }
+      nodeIndex++;
+      cellType.push_back( vtkCellType );
+      cellsArray->InsertNextCell( vtkOrdering.size(), connectivity.data() );
     }
   } );
   return std::make_pair( cellType, cellsArray );
@@ -668,6 +715,62 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   }
 }
 
+//In Progress: Cameron Crook (crook5)
+template< class SUBREGION >
+void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & region,
+                                                     vtkCellData & cellData ) const
+{
+  std::unordered_set< string > materialFields;
+  conduit::Node fakeRoot;
+  Group materialData( "materialData", fakeRoot );
+  region.forElementSubRegions< SUBREGION >( [&]( SUBREGION const & subRegion )
+  {
+    // Register a dummy group for each subregion
+    Group & subReg = materialData.registerGroup( subRegion.getName() );
+    subReg.resize( subRegion.size() );
+
+    // Collect a list of plotted constitutive fields and create wrappers containing averaged data
+    subRegion.getConstitutiveModels().forSubGroups( [&]( Group const & material )
+    {
+      material.forWrappers( [&]( WrapperBase const & wrapper )
+      {
+        if( wrapper.getPlotLevel() <= m_plotLevel )
+        {
+          string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+          subReg.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, subReg ) );
+          materialFields.insert( fieldName );
+        }
+      } );
+    } );
+  } );
+
+  // Write averaged material data
+  for( string const & field : materialFields )
+  {
+    writeElementField( materialData, field, cellData );
+  }
+
+  // Collect a list of regular fields (filter out material field wrappers)
+  // TODO: this can be removed if we stop hanging constitutive wrappers on the mesh
+  std::unordered_set< string > regularFields;
+  region.forElementSubRegions< SUBREGION >( [&]( ElementSubRegionBase const & subRegion )
+  {
+    for( auto const & wrapperIter : subRegion.wrappers() )
+    {
+      if( wrapperIter.second->getPlotLevel() <= m_plotLevel && materialFields.count( wrapperIter.first ) == 0 )
+      {
+        regularFields.insert( wrapperIter.first );
+      }
+    }
+  } );
+
+  // Write regular fields
+  for( string const & field : regularFields )
+  {
+    writeElementField< SUBREGION >( region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() ), field, cellData );
+  }
+}
+
 void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
@@ -760,14 +863,15 @@ void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
       vtkSmartPointer< vtkUnstructuredGrid > const ug = vtkUnstructuredGrid::New();
       auto VTKPoints = getVtkPoints( region );
       ug->SetPoints( VTKPoints );
-//      auto VTKCells = getVtkCells( region );
-//      ug->SetCells( VTKCells.first.data(), VTKCells.second );
+      auto VTKCells = getVtkCells( region );
+      ug->SetCells( VTKCells.first.data(), VTKCells.second );
       writeTimestamp( *ug, time );
-//      writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
+      writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
       writeUnstructuredGrid( time, region.getName(), *ug );
     }
   } );
 }
+
 
 /**
  * @brief Writes a VTM file for the time-step \p time.
