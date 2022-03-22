@@ -40,10 +40,16 @@ class LagrangeBasis5GL
 public:
 
 
+  /// sqrt(7)
   static constexpr real64 sqrt_7_ = 2.64575131106459059;
+
+  /// sqrt( 7 + 2 * sqrt(7) )
   static constexpr real64 sqrt__7_plus_2sqrt7__ = 3.50592393273573196;
+
+  /// sqrt( 7 - 2 * sqrt(7) )
   static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
 
+  /// sqrt(1/21)
   static constexpr real64 sqrt_inv21 = 0.218217890235992381;
 
   /**

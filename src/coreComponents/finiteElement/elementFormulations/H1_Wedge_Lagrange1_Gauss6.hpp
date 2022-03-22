@@ -55,6 +55,7 @@ class H1_Wedge_Lagrange1_Gauss6 final : public FiniteElementBase
 {
 public:
 
+  /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
   /// The number of nodes/support points per element.
@@ -138,6 +139,11 @@ public:
                           MeshData< SUBREGION_TYPE > const & meshData,
                           StackVariables & stack );
 
+  /**
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+   */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void calcN( real64 const (&coords)[3],

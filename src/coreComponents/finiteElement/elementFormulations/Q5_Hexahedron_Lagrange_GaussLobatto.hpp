@@ -93,6 +93,7 @@ class Q5_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
 
+  /// The type of basis used for this element
   using BASIS = LagrangeBasis5GL;
 
   /// The number of nodes/support points per element.
@@ -118,6 +119,11 @@ public:
     return numNodes;
   }
 
+  /**
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+   */
   GEOSX_HOST_DEVICE
   static void calcN( real64 const (&coords)[3],
                      real64 ( & N )[numNodes] )

@@ -41,6 +41,7 @@ public:
   /// The number of support points for the basis
   constexpr static localIndex numSupportPoints = 4;
 
+  /// sqrt(5)
   constexpr static real64 sqrt5 = 2.2360679774997897;
 
   /**
@@ -292,6 +293,7 @@ public:
    */
   struct TensorProduct3D
   {
+    /// The number of support points in the 3D tensor product
     constexpr static localIndex numSupportPoints = 64;
 
     /**
@@ -321,7 +323,6 @@ public:
      * @param i0 The Cartesian index of the support point in the xi0 direction.
      * @param i1 The Cartesian index of the support point in the xi1 direction.
      * @param i2 The Cartesian index of the support point in the xi2 direction.
-     * @return
      */
     GEOSX_HOST_DEVICE
     GEOSX_FORCE_INLINE

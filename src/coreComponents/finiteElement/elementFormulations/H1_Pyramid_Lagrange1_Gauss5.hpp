@@ -58,6 +58,7 @@ class H1_Pyramid_Lagrange1_Gauss5 final : public FiniteElementBase
 {
 public:
 
+  /// The type of basis used for this element
   using BASIS = LagrangeBasis1;
 
   /// The number of nodes/support points per element.
@@ -142,6 +143,11 @@ public:
                           StackVariables & stack );
 
 
+  /**
+   * @brief Calculate shape functions values at a single point.
+   * @param[in] coords The parent coordinates at which to evaluate the shape function value
+   * @param[out] N The shape function values.
+   */
   GEOSX_HOST_DEVICE
   static void calcN( real64 const (&coords)[3],
                      real64 ( &N )[numNodes] );
