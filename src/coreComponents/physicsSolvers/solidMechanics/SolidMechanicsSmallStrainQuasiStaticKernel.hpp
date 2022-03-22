@@ -322,8 +322,9 @@ public:
 
     // TODO: Does this work if BTDB is non-symmetric?
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
-
-    for( int localNode = 0; localNode < numNodesPerElem; ++localNode )
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    for( int localNode = 0; localNode < numSupportPoints; ++localNode )
     {
       for( int dim = 0; dim < numDofPerTestSupportPoint; ++dim )
       {
@@ -333,7 +334,7 @@ public:
         m_matrix.template addToRowBinarySearchUnsorted< parallelDeviceAtomic >( dof,
                                                                                 stack.localRowDofIndex,
                                                                                 stack.localJacobian[ numDofPerTestSupportPoint * localNode + dim ],
-                                                                                numNodesPerElem * numDofPerTrialSupportPoint );
+                                                                                stack.numRows );
 
         RAJA::atomicAdd< parallelDeviceAtomic >( &m_rhs[ dof ], stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] );
         maxForce = fmax( maxForce, fabs( stack.localResidual[ numDofPerTestSupportPoint * localNode + dim ] ) );
