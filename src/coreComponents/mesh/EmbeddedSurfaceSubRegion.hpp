@@ -202,39 +202,8 @@ public:
     /// @return Connectivity index string
     static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
-    /// @return Displacement jump string
-    static constexpr char const * dispJumpString()          { return "displacementJump"; }
-
-    /// @return Delta displacement jump string
-    static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
-
-    /// @return Fracture traction string
-    static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
-
-    /// @return Fracture traction derivative w.r.t. jump string
-    static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
-
-    /// @return Fracture traction derivative w.r.t. pressure string
-    static constexpr char const * dTraction_dPressureString()   { return "dTraction_dPressure"; }
-
     /// @return surfaces with ghost nodes list string
     static constexpr char const * surfaceWithGhostNodesString() { return "surfaceWithGhostNodes"; }
-
-    /// Displacement jump key
-    dataRepository::ViewKey dispJump        = { dispJumpString() };
-
-    /// Delta displacement jump key
-    dataRepository::ViewKey deltaDispJump   = { deltaDispJumpString() };
-
-    /// traction vector key
-    dataRepository::ViewKey tractionVector  = { fractureTractionString() };
-
-    /// dTraction_dJump key
-    dataRepository::ViewKey dTraction_dJump = { dTraction_dJumpString() };
-
-    /// dTraction_dPressure key
-    dataRepository::ViewKey dTraction_dPressure = { dTraction_dPressureString() };
-
   }
   /// viewKey struct for the EmbeddedSurfaceSubRegion class
   viewKeys;
@@ -345,87 +314,6 @@ public:
    * @copydoc getConnectivityIndex()
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
-
-
-  /**
-   * @brief Get a mutable displacement jump array.
-   * @return the displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the displacement jump does not exist
-   */
-  array2d< real64 > & displacementJump()
-  { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the displacement jump array.
-   * @return immutable arrayView of the displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the displacement jump does not exist
-   */
-  arrayView2d< real64 const > displacementJump() const
-  {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
-
-  /**
-   * @brief Get a mutable incremental displacement jump array.
-   * @return the incremental displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the incremental displacement jump does not exist
-   */
-  array2d< real64 > & incrementalDisplacementJump()
-  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the incremental displacement jump array.
-   * @return immutable arrayView of the incremental displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the incremental displacement jump does not exist
-   */
-  arrayView2d< real64 const > incrementalDisplacementJump() const
-  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
-
-  /**
-   * @brief Get a mutable traction array.
-   * @return the traction array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the traction does not exist
-   */
-  array2d< real64 > & tractionVector()
-  { return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the traction array.
-   * @return immutable arrayView of the traction array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the traction does not exist
-   */
-  arrayView2d< real64 const > tractionVector() const
-  {return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
-
-  /**
-   * @brief Get a mutable dTraction_dJump array.
-   * @return the dTraction_dJump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the dTraction_dJump does not exist
-   */
-  array3d< real64 > & dTraction_dJump()
-  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the dTraction_dJump array.
-   * @return immutable arrayView of the dTraction_dJump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the dTraction_dJump does not exist
-   */
-  arrayView3d< real64 const > dTraction_dJump() const
-  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
-
-  /**
-   * @brief Get a mutable dTraction_dPressure array.
-   * @return the dTraction_dJump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the dTraction_dJump does not exist
-   */
-  array1d< real64 > & dTraction_dPressure()
-  { return getReference< array1d< real64 > >( viewKeys.dTraction_dPressure ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the dTraction_dJump array.
-   * @return immutable arrayView of the dTraction_dJump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the dTraction_dJump does not exist
-   */
-  arrayView1d< real64 const > dTraction_dPressure() const
-  { return getReference< array1d< real64 > >( viewKeys.dTraction_dPressure ); }
 
   /**
    * @brief accessor to the m_surfaceWithGhostNodes list

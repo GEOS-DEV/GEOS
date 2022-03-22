@@ -6,6 +6,14 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     contact/ContactSolverBase.hpp
+     contact/ContactExtrinsicData.hpp
+     contact/LagrangianContactSolver.hpp
+     contact/SolidMechanicsEFEMKernelsBase.hpp
+     contact/SolidMechanicsEFEMKernels.hpp
+     contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
+     contact/SolidMechanicsEFEMKernelsHelper.hpp
+     contact/SolidMechanicsEmbeddedFractures.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
      fluidFlow/CompositionalMultiphaseBaseKernels.hpp
@@ -44,7 +52,6 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/LagrangianContactSolver.hpp
      multiphysics/LagrangianContactFlowSolver.hpp
      multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/MultiphasePoromechanicsSolver.hpp
@@ -62,11 +69,6 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
-     solidMechanics/SolidMechanicsEFEMKernelsBase.hpp
-     solidMechanics/SolidMechanicsEFEMKernels.hpp
-     solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp
-     solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
@@ -91,6 +93,9 @@ set( physicsSolvers_sources
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     contact/ContactSolverBase.cpp
+     contact/LagrangianContactSolver.cpp
+     contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseFVMKernels.cpp
@@ -112,7 +117,6 @@ set( physicsSolvers_sources
      multiphysics/CompositionalMultiphaseReservoir.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
-     multiphysics/LagrangianContactSolver.cpp
      multiphysics/LagrangianContactFlowSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
@@ -125,7 +129,6 @@ set( physicsSolvers_sources
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp

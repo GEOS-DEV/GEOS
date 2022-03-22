@@ -21,8 +21,9 @@
 #define GEOSX_PHYSICSSOLVERS_MULTIPHYSICS_LAGRANGIANCONTACTFLOWSOLVER_HPP_
 
 #include "physicsSolvers/SolverBase.hpp"
-#include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 
 namespace geosx
@@ -93,10 +94,10 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -231,9 +232,6 @@ private:
 
   integer m_activeSetIter = 0;
 
-  string const m_tractionKey = LagrangianContactSolver::viewKeyStruct::tractionString();
-  string const m_fractureStateKey = LagrangianContactSolver::viewKeyStruct::fractureStateString();
-  string const m_dispJumpKey = LagrangianContactSolver::viewKeyStruct::dispJumpString();
   string const m_pressureKey = extrinsicMeshData::flow::pressure::key();
   string const m_deltaPressureKey = extrinsicMeshData::flow::deltaPressure::key();
 

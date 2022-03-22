@@ -24,6 +24,7 @@
 #include "physicsSolvers/SolverBase.hpp"
 #include "physicsSolvers/multiphysics/SinglePhasePoromechanicsSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -84,10 +85,10 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,

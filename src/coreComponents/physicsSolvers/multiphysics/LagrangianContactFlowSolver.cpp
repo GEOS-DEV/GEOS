@@ -29,7 +29,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBase.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
@@ -259,7 +259,7 @@ void LagrangianContactFlowSolver::updateOpeningForFlow( DomainPartition & domain
       if( subRegion.hasWrapper( m_pressureKey ) )
       {
         arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-        arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( m_dispJumpKey );
+        arrayView2d< real64 const > const & dispJump = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::dispJump::key() );
         arrayView1d< real64 const > const & area = subRegion.getElementArea().toViewConst();
         arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
         arrayView1d< real64 > const &
@@ -345,12 +345,17 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
     if( dtAttempt > 0 )
     {
       resetStateToBeginningOfStep( domain );
-      globalIndex numStick, numSlip, numOpen;
-      m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
+      //globalIndex numStick, numSlip, numOpen;
+      //forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+      //                                              MeshLevel const & mesh,
+      //                                              arrayView1d< string const > const & )
+      //{
+      //  m_contactSolver->computeFractureStateStatistics( mesh, numStick, numSlip, numOpen );
+      //} );
     }
 
     integer & activeSetIter = m_activeSetIter;
-    for( activeSetIter = 0; activeSetIter < m_contactSolver->getActiveSetMaxIter(); ++activeSetIter )
+    for( activeSetIter = 0; activeSetIter < m_nonlinearSolverParameters.m_maxNumConfigurationAttempts; ++activeSetIter )
     {
       // *******************************
       // Newton loop: begin
@@ -448,7 +453,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
         debugOutputSystem( time_n, cycleNumber, 10*activeSetIter+newtonIter, m_matrix, m_rhs );
 
         // Solve the linear system
-        solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+        solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
         // Output the linear system solution for debugging purposes
         debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
@@ -509,14 +514,14 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
       // *******************************
       // Active set check: begin
       // *******************************
-      bool const isPreviousFractureStateValid = m_contactSolver->updateFractureState( domain );
+      bool const isPreviousFractureStateValid = m_contactSolver->updateConfiguration( domain );
       GEOSX_LOG_LEVEL_RANK_0( 1, "active set flag: " << std::boolalpha << isPreviousFractureStateValid );
 
-      if( getLogLevel() > 2 )
-      {
-        globalIndex numStick, numSlip, numOpen;
-        m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
-      }
+      //if( getLogLevel() > 2 )
+      //{
+      //  globalIndex numStick, numSlip, numOpen;
+      //  m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
+      //}
       // *******************************
       // Active set check: end
       // *******************************
@@ -536,7 +541,7 @@ real64 LagrangianContactFlowSolver::nonlinearImplicitStep( real64 const & time_n
         GEOSX_LOG_LEVEL_RANK_0( 2, "Trying with an elastic step" );
         useElasticStep = false;
         resetStateToBeginningOfStep( domain );
-        m_contactSolver->setFractureStateForElasticStep( domain );
+        m_contactSolver->resetConfigurationToDefault( domain );
         updateOpeningForFlow( domain );
       }
       else
@@ -826,7 +831,7 @@ real64 LagrangianContactFlowSolver::calculateResidualNorm( DomainPartition const
                                                 MeshLevel const & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    string const & tracDofKey = dofManager.getKey( LagrangianContactSolver::viewKeyStruct::tractionString() );
+    string const & tracDofKey = dofManager.getKey( extrinsicMeshData::contact::traction::key() );
     string const & presDofKey = dofManager.getKey( m_pressureKey );
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -1000,7 +1005,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { m_tractionKey, { 3, 0, 3 } } },
+                         { { extrinsicMeshData::contact::traction::key(), { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     precond->setupBlock( 1,
@@ -1073,7 +1078,7 @@ void LagrangianContactFlowSolver::createPreconditioner( DomainPartition const & 
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { m_tractionKey, { 3, 0, 3 } } },
+                         { { extrinsicMeshData::contact::traction::key(), { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
@@ -1871,10 +1876,10 @@ void LagrangianContactFlowSolver::applySystemSolution( DofManager const & dofMan
   updateOpeningForFlow( domain );
 }
 
-void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
-                                               ParallelMatrix & matrix,
-                                               ParallelVector & rhs,
-                                               ParallelVector & solution )
+void LagrangianContactFlowSolver::solveLinearSystem( DofManager const & dofManager,
+                                                     ParallelMatrix & matrix,
+                                                     ParallelVector & rhs,
+                                                     ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1887,7 +1892,7 @@ void LagrangianContactFlowSolver::solveSystem( DofManager const & dofManager,
     rhs.write( "rhs.mtx", LAIOutputFormat::MATRIX_MARKET );
   }
 
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 
   //solution.write( "sol.petsc", LAIOutputFormat::MATRIX_MARKET );
 

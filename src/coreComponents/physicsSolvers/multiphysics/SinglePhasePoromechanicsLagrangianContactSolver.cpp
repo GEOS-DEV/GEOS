@@ -34,7 +34,7 @@
 #include "mesh/utilities/ComputationalGeometry.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 //#include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/multiphysics/LagrangianContactSolver.hpp"
+#include "physicsSolvers/contact/LagrangianContactSolver.hpp"
 #include "physicsSolvers/multiphysics/LagrangianContactFlowSolver.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "finiteElement/FiniteElementDispatch.hpp"
@@ -115,18 +115,18 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
     meshTargets[meshBodyName] = std::move( regions );
   } );
 
-  dofManager.addField( LagrangianContactSolver::viewKeyStruct::tractionString(),
+  dofManager.addField( extrinsicMeshData::contact::traction::key(),
                        DofManager::Location::Elem,
                        3,
                        meshTargets );
 //                       fractureRegions );
-  dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
-                          LagrangianContactSolver::viewKeyStruct::tractionString(),
+  dofManager.addCoupling( extrinsicMeshData::contact::traction::key(),
+                          extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::Face,
                           meshTargets );
 //                          fractureRegions );
   dofManager.addCoupling( keys::TotalDisplacement,
-                          LagrangianContactSolver::viewKeyStruct::tractionString(),
+                          extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::Elem,
                           meshTargets );
 //                          fractureRegions );
@@ -137,9 +137,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
                           extrinsicMeshData::flow::pressure::key(),
                           DofManager::Connector::Elem );
   dofManager.addCoupling( extrinsicMeshData::flow::pressure::key(),
-                          LagrangianContactSolver::viewKeyStruct::tractionString(),
+                          extrinsicMeshData::contact::traction::key(),
                           DofManager::Connector::None );
-//  dofManager.addCoupling( LagrangianContactSolver::viewKeyStruct::tractionString(),
+//  dofManager.addCoupling( extrinsicMeshData::contact::traction::key(),
 //                          FlowSolverBase::viewKeyStruct::pressureString(),
 //                          DofManager::Connector::None );
 
@@ -326,12 +326,12 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
     if( dtAttempt > 0 )
     {
       resetStateToBeginningOfStep( domain );
-      globalIndex numStick, numSlip, numOpen;
-      m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
+      //globalIndex numStick, numSlip, numOpen;
+      //m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
     }
 
     integer & activeSetIter = m_activeSetIter;
-    for( activeSetIter = 0; activeSetIter < m_contactSolver->getActiveSetMaxIter(); ++activeSetIter )
+    for( activeSetIter = 0; activeSetIter < m_nonlinearSolverParameters.m_maxNumConfigurationAttempts; ++activeSetIter )
     {
       // *******************************
       // Newton loop: begin
@@ -429,7 +429,7 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
         debugOutputSystem( time_n, cycleNumber, 10*activeSetIter+newtonIter, m_matrix, m_rhs );
 
         // Solve the linear system
-        solveSystem( m_dofManager, m_matrix, m_rhs, m_solution );
+        solveLinearSystem( m_dofManager, m_matrix, m_rhs, m_solution );
 
         // Output the linear system solution for debugging purposes
         debugOutputSolution( time_n, cycleNumber, newtonIter, m_solution );
@@ -490,14 +490,14 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
       // *******************************
       // Active set check: begin
       // *******************************
-      bool const isPreviousFractureStateValid = m_contactSolver->updateFractureState( domain );
+      bool const isPreviousFractureStateValid = m_contactSolver->updateConfiguration( domain );
       GEOSX_LOG_LEVEL_RANK_0( 1, "active set flag: " << std::boolalpha << isPreviousFractureStateValid );
 
-      if( getLogLevel() > 2 )
-      {
-        globalIndex numStick, numSlip, numOpen;
-        m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
-      }
+      //if( getLogLevel() > 2 )
+      //{
+      //  globalIndex numStick, numSlip, numOpen;
+      //  m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
+      //}
       // *******************************
       // Active set check: end
       // *******************************
@@ -517,7 +517,7 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
         GEOSX_LOG_LEVEL_RANK_0( 1, "Trying with an elastic step" );
         useElasticStep = false;
         resetStateToBeginningOfStep( domain );
-        m_contactSolver->setFractureStateForElasticStep( domain );
+        m_contactSolver->resetConfigurationToDefault( domain );
         m_contactFlowSolver->updateOpeningForFlow( domain );
       }
       else
@@ -692,7 +692,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
   // TODO: synchronizeFractureState ?
-  m_contactSolver->synchronizeFractureState( domain );
+  //m_contactSolver->synchronizeFractureState( domain );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -857,7 +857,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { LagrangianContactSolver::viewKeyStruct::tractionString(), { 3, 0, 3 } } },
+                         { { extrinsicMeshData::contact::traction::key(), { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     precond->setupBlock( 1,
@@ -930,7 +930,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
                                                                              schurOptions );
 
     precond->setupBlock( 0,
-                         { { LagrangianContactSolver::viewKeyStruct::tractionString(), { 3, 0, 3 } } },
+                         { { extrinsicMeshData::contact::traction::key(), { 3, 0, 3 } } },
                          std::move( tracPrecond ) );
 
     if( mechParams.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes )
@@ -989,12 +989,12 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
    */
 }
 
-void SinglePhasePoromechanicsLagrangianContactSolver::solveSystem( DofManager const & dofManager,
+void SinglePhasePoromechanicsLagrangianContactSolver::solveLinearSystem( DofManager const & dofManager,
                                                                    ParallelMatrix & matrix,
                                                                    ParallelVector & rhs,
                                                                    ParallelVector & solution )
 {
-  SinglePhasePoromechanicsSolver::solveSystem( dofManager, matrix, rhs, solution );
+  SinglePhasePoromechanicsSolver::solveLinearSystem( dofManager, matrix, rhs, solution );
 
   int rank = MpiWrapper::commRank( MPI_COMM_GEOSX );
   if( rank == 0 )
