@@ -203,7 +203,7 @@ public:
     real64 dM = 5 * sqrt(10) / sqrt( molarWeight );
 
     real64 P  = pow( criticalPressure / 101325., 2.0/3.0 ); // note: pascal to atm conversion
-    real64 dP = pow( 101325, -2.0/3.0 ) * pow( criticalPressure, -1.0/3.0 );
+    real64 dP = pow( 101325, -2.0/3.0 ) * pow( criticalPressure, -1.0/3.0 ) * 2.0/3.0;
 
     value  = M*P/T;
     derivP = M*dP/T;
