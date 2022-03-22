@@ -96,10 +96,10 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SinglePhaseWell::initializePreSubGroups()
+void SinglePhaseWell::initializePostSubGroups()
 {
 
-  WellSolverBase::initializePreSubGroups();
+  WellSolverBase::initializePostSubGroups();
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
