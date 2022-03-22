@@ -1034,7 +1034,7 @@ void LagrangianContactSolver::
       arrayView3d< real64 const > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::traction::key() );
+      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
       arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
       arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
       arrayView2d< real64 const > const & previousDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();

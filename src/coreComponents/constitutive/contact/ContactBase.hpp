@@ -21,6 +21,7 @@
 
 #include "constitutive/ConstitutiveBase.hpp"
 #include "functions/TableFunction.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
 
 namespace geosx
@@ -76,8 +77,9 @@ public:
   /**
    * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
    * @param[in] dispJump the displacement jump
-   * @param[in] tractionVector the traction vector
+   * @param[out] tractionVector the traction vector
    * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
+   * @param[in] fractureState the fracture state
    */
   GEOSX_HOST_DEVICE
   inline
@@ -86,8 +88,22 @@ public:
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump,
-                                bool const isOpen ) const
-  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, isOpen );}
+                                integer const & fractureState ) const
+  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, fractureState );}
+
+  /**
+   * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
+   * @param[in] dispJump the displacement jump
+   * @param[out] tractionVector the traction vector
+   * @param[out] fractureState the fracture state
+   */
+  GEOSX_HOST_DEVICE
+  inline
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & tractionVector,
+                                    integer & fractureState ) const
+  { GEOSX_UNUSED_VAR( k, dispJump, tractionVector, fractureState ); }
 
   /**
    * @brief Update the traction with the pressure term

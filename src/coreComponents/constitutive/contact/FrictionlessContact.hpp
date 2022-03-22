@@ -57,12 +57,6 @@ public:
   /// Deleted move assignment operator
   FrictionlessContactUpdates & operator=( FrictionlessContactUpdates && ) =  delete;
 
-  /**
-   * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
-   * @param[in] dispJump the displacement jump
-   * @param[in] tractionVector the traction vector
-   * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
-   */
   GEOSX_HOST_DEVICE
   inline
   virtual void computeTraction( localIndex const k,
@@ -70,7 +64,16 @@ public:
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
                                 arraySlice2d< real64 > const & dTractionVector_dJump,
-                                bool const isOpen ) const override final;
+                                integer const & fractureState ) const override final;
+
+
+  GEOSX_HOST_DEVICE
+  inline
+  virtual void updateFractureState(  localIndex const k,
+                                                 arraySlice1d< real64 const > const & dispJump,
+                                                 arraySlice1d< real64 const > const & tractionVector,
+                                                 integer & fractureState ) const override final;
+
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -147,9 +150,11 @@ void FrictionlessContactUpdates::computeTraction( localIndex const k,
                                                   arraySlice1d< real64 const > const & dispJump,
                                                   arraySlice1d< real64 > const & tractionVector,
                                                   arraySlice2d< real64 > const & dTractionVector_dJump,
-                                                  bool const isOpen ) const
+                                                  integer const & fractureState ) const
 {
   GEOSX_UNUSED_VAR( k, oldDispJump );
+
+  bool const isOpen = fractureState == extrinsicMeshData::contact::FractureState::Open;
 
   tractionVector[0] = isOpen ? 0.0 : m_penaltyStiffness * dispJump[0];
   tractionVector[1] = 0.0;
@@ -159,6 +164,22 @@ void FrictionlessContactUpdates::computeTraction( localIndex const k,
   dTractionVector_dJump( 0, 0 ) = isOpen ? 0.0 : m_penaltyStiffness;
 }
 
+GEOSX_HOST_DEVICE
+void FrictionlessContactUpdates::updateFractureState(  localIndex const k,
+                                                 arraySlice1d< real64 const > const & dispJump,
+                                                 arraySlice1d< real64 const > const & tractionVector,
+                                                 integer & fractureState ) const
+{
+    GEOSX_UNUSED_VAR( k, tractionVector);
+
+  if ( dispJump[0] >  -std::numeric_limits<real64>::epsilon() )
+  {
+    fractureState = extrinsicMeshData::contact::FractureState::Open;
+  }else
+  {
+    fractureState = extrinsicMeshData::contact::FractureState::Stick;
+  }
+}
 
 } /* namespace constitutive */
 

@@ -713,8 +713,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       arrayView3d< real64 > const & dFractureTraction_dJump =
         subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
 
-      arrayView1d< integer const > const & fractureState = 
-        subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() ); 
+      arrayView1d< integer const > const & fractureState =
+        subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() );
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -751,28 +751,29 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
     {
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
       arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
 
-      RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+      ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
-      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
-        if( ghostRank[kfe] < 0 )
-        {
-          integer const originalFractureState = fractureState[kfe];
-          if( dispJump[kfe][0] > -std::numeric_limits<real64>::epsilon() )
-          {
-            fractureState[kfe] = FractureState::Open;
-          }
-          else
-          {
-            fractureState[kfe] = FractureState::Slip;
-          }
-          checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
-        }
-      } );
+        using ContactType = TYPEOFREF( castedContact );
+        typename ContactType::KernelWrapper contactWrapper = castedContact.createKernelWrapper();
 
-      hasConfigurationConverged &= checkActiveSetSub.get();
+        RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+
+        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        {
+          if( ghostRank[kfe] < 0 )
+          {
+            integer const originalFractureState = fractureState[kfe];
+            contactWrapper.updateFractureState( kfe, dispJump[kfe], traction[kfe], fractureState[kfe] );
+            checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+          }
+        } );
+        hasConfigurationConverged &= checkActiveSetSub.get();
+      } );
     } );
   } );
   // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
