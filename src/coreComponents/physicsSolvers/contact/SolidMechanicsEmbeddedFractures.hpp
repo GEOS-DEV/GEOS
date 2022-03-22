@@ -17,10 +17,10 @@
  *
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_
 
-#include "physicsSolvers/SolverBase.hpp"
+#include "physicsSolvers/contact/ContactSolverBase.hpp"
 
 namespace geosx
 {
@@ -28,7 +28,7 @@ using namespace constitutive;
 
 class SolidMechanicsLagrangianFEM;
 
-class SolidMechanicsEmbeddedFractures : public SolverBase
+class SolidMechanicsEmbeddedFractures : public ContactSolverBase
 {
 public:
   SolidMechanicsEmbeddedFractures( const string & name,
@@ -73,14 +73,6 @@ public:
                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                arrayView1d< real64 > const & localRhs ) override;
 
-
-  virtual void applyBoundaryConditions( real64 const time,
-                                        real64 const dt,
-                                        DomainPartition & domain,
-                                        DofManager const & dofManager,
-                                        CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                        arrayView1d< real64 > const & localRhs ) override;
-
   virtual real64
   calculateResidualNorm( DomainPartition const & domain,
                          DofManager const & dofManager,
@@ -94,13 +86,7 @@ public:
 
   virtual void resetStateToBeginningOfStep( DomainPartition & domain ) override final;
 
-  virtual void updateState( DomainPartition & domain ) override;
-
-  virtual real64 solverStep( real64 const & time_n,
-                             real64 const & dt,
-                             int const cycleNumber,
-                             DomainPartition & domain ) override;
-
+  void updateState( DomainPartition & domain ) override final;
 
   void addCouplingNumNonzeros( DomainPartition & domain,
                                DofManager & dofManager,
@@ -116,34 +102,12 @@ public:
                                    DofManager const & dofManager,
                                    SparsityPatternView< globalIndex > const & pattern ) const;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
-    constexpr static char const * dispJumpString() { return "displacementJump"; }
-
-    constexpr static char const * deltaDispJumpString() { return "deltaDisplacementJump"; }
-
-    constexpr static char const * oldDispJumpString()  { return "oldDisplacementJump"; }
-
-    constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
-
-    constexpr static char const * fractureTractionString() { return "fractureTraction"; }
-
-    constexpr static char const * dTraction_dJumpString() { return "dTraction_dJump"; }
-
-    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
-  };
-
-  string const & getContactRelationName() const { return m_contactRelationName; }
-
-  string const & getFractureRegionName() const { return m_fractureRegionName; }
-
   void applyTractionBC( real64 const time_n,
                         real64 const dt,
                         DomainPartition & domain );
+
+
+  virtual bool updateConfiguration( DomainPartition & domain ) override final;
 
 protected:
 
@@ -156,23 +120,16 @@ private:
   void updateJump( DofManager const & dofManager,
                    DomainPartition & domain );
 
-  /// Solid mechanics solver name
-  string m_solidSolverName;
-
-  /// fracture region name
-  string m_fractureRegionName;
-
-  /// pointer to the solid mechanics solver
-  SolidMechanicsLagrangianFEM * m_solidSolver;
-
-  /// contact relation name string
-  string m_contactRelationName;
-
   /// decide whether to use static condensation or not
   integer m_useStaticCondensation;
+
+  struct viewKeyStruct : ContactSolverBase::viewKeyStruct
+  {
+    constexpr static char const * useStaticCondensationString() { return "useStaticCondensation"; }
+  };
 };
 
 
 } /* namespace geosx */
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEMBEDDEDFRACTURES_HPP_ */

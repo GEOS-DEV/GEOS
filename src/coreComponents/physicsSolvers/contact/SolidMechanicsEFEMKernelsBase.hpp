@@ -17,11 +17,12 @@
  * @file SolidMechanicsEFEMKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
-#define GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
+#ifndef GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
+#define GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_
 
-#include "SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
+#include "physicsSolvers/solidMechanics/SolidMechanicsSmallStrainQuasiStaticKernel.hpp"
 #include "SolidMechanicsEFEMKernelsHelper.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -101,9 +102,9 @@ public:
           inputMatrix,
           inputRhs,
           inputGravityVector ),
-    m_w( embeddedSurfSubRegion.displacementJump().toView() ),
-    m_tractionVec( embeddedSurfSubRegion.tractionVector().toViewConst() ),
-    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump().toViewConst() ),
+    m_w( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >().toView() ),
+    m_tractionVec( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::traction >().toViewConst() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >().toViewConst() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector().toViewConst() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1().toViewConst() ),
     m_tVec2( embeddedSurfSubRegion.getTangentVector2().toViewConst() ),
@@ -325,4 +326,4 @@ protected:
 } // namespace geosx
 
 
-#endif /* GEOSX_PHYSICSSOLVERS_SOLIDMECHANICS_SOLIDMECHANICSEFEMKERNELSBASE_HPP_ */
+#endif /* GEOSX_PHYSICSSOLVERS_CONTACT_SOLIDMECHANICSEFEMKERNELSBASE_HPP_ */
