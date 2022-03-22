@@ -810,7 +810,7 @@ void VTKPolyDataWriterInterface::writeParticleRegions( real64 const time,
       auto VTKCells = getVtkCells( region );
       ug->SetCells( VTKCells.first.data(), VTKCells.second );
       writeTimestamp( *ug, time );
-      writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
+      //writeParticleFields< ParticleSubRegion >( region, *ug->GetCellData() );
       writeUnstructuredGrid( time, region.getName(), *ug );
     }
   } );
