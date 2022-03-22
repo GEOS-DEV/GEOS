@@ -318,12 +318,12 @@ void Group::initializePostInitialConditions()
 }
 
 template< bool DO_PACKING >
-localIndex Group::packPrivate( buffer_unit_type * & buffer,
-                               array1d< string > const & wrapperNames,
-                               arrayView1d< localIndex const > const & packList,
-                               integer const recursive,
-                               bool onDevice,
-                               parallelDeviceEvents & events ) const
+localIndex Group::packImpl( buffer_unit_type * & buffer,
+                            array1d< string > const & wrapperNames,
+                            arrayView1d< localIndex const > const & packList,
+                            integer const recursive,
+                            bool onDevice,
+                            parallelDeviceEvents & events ) const
 {
   localIndex packedSize = 0;
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() );
@@ -378,7 +378,7 @@ localIndex Group::packPrivate( buffer_unit_type * & buffer,
     for( auto const & keyGroupPair : m_subGroups )
     {
       packedSize += bufferOps::Pack< DO_PACKING >( buffer, keyGroupPair.first );
-      packedSize += keyGroupPair.second->packPrivate< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
+      packedSize += keyGroupPair.second->packImpl< DO_PACKING >( buffer, wrapperNames, packList, recursive, onDevice, events );
     }
   }
 
@@ -392,7 +392,7 @@ localIndex Group::packSize( array1d< string > const & wrapperNames,
                             parallelDeviceEvents & events ) const
 {
   buffer_unit_type * dummy;
-  return this->packPrivate< false >( dummy, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< false >( dummy, wrapperNames, packList, recursive, onDevice, events );
 }
 
 
@@ -413,7 +413,7 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  return this->packPrivate< false >( buffer, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< false >( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 localIndex Group::pack( buffer_unit_type * & buffer,
@@ -435,11 +435,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   localIndex unpackedSize = 0;
   string groupName;
   unpackedSize += bufferOps::Unpack( buffer, groupName );
-  GEOSX_ERROR_IF( groupName != getName(), "Group::Unpack(): group names do not match" );
+  GEOSX_ERROR_IF( groupName != getName(), "Group::unpack(): group names do not match" );
 
   string wrappersLabel;
   unpackedSize += bufferOps::Unpack( buffer, wrappersLabel );
-  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::Unpack(): wrapper label incorrect" );
+  GEOSX_ERROR_IF( wrappersLabel != "Wrappers", "Group::unpack(): wrapper label incorrect" );
 
   localIndex numWrappers;
   unpackedSize += bufferOps::Unpack( buffer, numWrappers );
@@ -455,11 +455,11 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
   {
     string subGroups;
     unpackedSize += bufferOps::Unpack( buffer, subGroups );
-    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::Unpack(): group names do not match" );
+    GEOSX_ERROR_IF( subGroups != "SubGroups", "Group::unpack(): group names do not match" );
 
     decltype( m_subGroups.size()) numSubGroups;
     unpackedSize += bufferOps::Unpack( buffer, numSubGroups );
-    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::Unpack(): incorrect number of subGroups" );
+    GEOSX_ERROR_IF( numSubGroups != m_subGroups.size(), "Group::unpack(): incorrect number of subGroups" );
 
     for( auto const & index : m_subGroups )
     {

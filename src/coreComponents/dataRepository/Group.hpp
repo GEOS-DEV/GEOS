@@ -1418,12 +1418,12 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packPrivate( buffer_unit_type * & buffer,
-                          array1d< string > const & wrapperNames,
-                          arrayView1d< localIndex const > const & packList,
-                          integer const recursive,
-                          bool onDevice,
-                          parallelDeviceEvents & events ) const;
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       array1d< string > const & wrapperNames,
+                       arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.

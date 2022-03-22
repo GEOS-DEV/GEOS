@@ -980,7 +980,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  int PackSize( string_array const & wrapperNames,
+  int packSize( string_array const & wrapperNames,
                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -990,7 +990,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed to the buffer
    */
-  int Pack( buffer_unit_type * & buffer,
+  int pack( buffer_unit_type * & buffer,
             string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
@@ -1003,7 +1003,7 @@ public:
    * @param packList list of indices to unpack
    * @return the size of data unpacked
    */
-  int Unpack( buffer_unit_type const * & buffer,
+  int unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor< arrayView1d< localIndex > > & packList );
 
   /**
@@ -1012,7 +1012,7 @@ public:
    * @param packList list of indices to unpack
    * @return the size of data unpacked.
    */
-  int Unpack( buffer_unit_type const * & buffer,
+  int unpack( buffer_unit_type const * & buffer,
               ElementReferenceAccessor< array1d< localIndex > > & packList );
 
   /**
@@ -1020,7 +1020,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack a buffer.
@@ -1028,7 +1028,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMaps( buffer_unit_type * & buffer,
+  int packGlobalMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -1037,7 +1037,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data unpacked
    */
-  int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+  int unpackGlobalMaps( buffer_unit_type const * & buffer,
                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
   /**
@@ -1045,14 +1045,14 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
+  int packUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack element-to-node and element-to-face maps.
@@ -1060,7 +1060,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
+  int packUpDownMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -1069,7 +1069,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
+  int packUpDownMaps( buffer_unit_type * & buffer,
                       ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
@@ -1079,7 +1079,7 @@ public:
    * @param overwriteMap flag to indicate whether to overwrite the local map
    * @return the size of data packed.
    */
-  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  int unpackUpDownMaps( buffer_unit_type const * & buffer,
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
@@ -1124,10 +1124,10 @@ private:
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  template< bool DOPACK >
-  int PackPrivate( buffer_unit_type * & buffer,
-                   string_array const & wrapperNames,
-                   ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+  template< bool DO_PACKING >
+  int packImpl( buffer_unit_type * & buffer,
+                string_array const & wrapperNames,
+                ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack a buffer or get the buffer size.
@@ -1135,9 +1135,9 @@ private:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  template< bool DOPACK >
-  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+  template< bool DO_PACKING >
+  int packGlobalMapsImpl( buffer_unit_type * & buffer,
+                          ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
@@ -1145,10 +1145,10 @@ private:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  template< bool DOPACK, typename T >
+  template< bool DO_PACKING, typename T >
   int
-  packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         T const & packList ) const;
+  packUpDownMapsImpl( buffer_unit_type * & buffer,
+                      T const & packList ) const;
   /**
    * @brief Unpack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
@@ -1156,8 +1156,8 @@ private:
    * @return the size of the data unpacked
    */
   template< typename T >
-  int unpackPrivate( buffer_unit_type const * & buffer,
-                     T & packList );
+  int unpackImpl( buffer_unit_type const * & buffer,
+                  T & packList );
 
   /**
    * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
@@ -1166,11 +1166,10 @@ private:
    * @param fractureRegionName name of the fracture region
    * @return the size of the data packed
    */
-  template< bool DOPACK >
-  int
-  packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                string const fractureRegionName ) const;
+  template< bool DO_PACKING >
+  int packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                 string const fractureRegionName ) const;
 
   /**
    * @brief Copy constructor.
