@@ -105,15 +105,15 @@ public:
    * @brief The function is to return the name of the ElementRegionManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "ZoneManager"; }
 
   /**
    * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  virtual const string getCatalogName() const override final
-  { return ElementRegionManager::catalogName(); }
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   /**
    * @brief Constructor.
@@ -263,6 +263,14 @@ public:
   {
     return this->getRegions().size();
   }
+
+  /**
+   * @brief Produce a map from cell block indices to element region and subregion indices
+   * @param cellBlockManager the CellBlocKManager
+   * @return a (numBlock x 2) array with each row corresponding to a cell block and containing
+   *         region (first entry) and subregion (second entry) indices, or -1 if block was not used.
+   */
+  array2d< localIndex > getCellBlockToSubRegionMap( CellBlockManagerABC const & cellBlockManager ) const;
 
   /**
    * @brief This function is used to launch kernel function over all the element regions with region type =
