@@ -58,12 +58,12 @@ public:
   {
 
     real64 result=0.0;
-   
-    switch (supportPointIndex)
+
+    switch( supportPointIndex )
     {
       case 0:
         result = -1.0;
-      break;
+        break;
 
       case 1:
         result = -sqrt_inv21*sqrt__7_plus_2sqrt7__;
@@ -104,39 +104,39 @@ public:
   constexpr static real64 value( const int index,
                                  const real64 xi )
   {
-     
+
     real64 result=0.0;
 
-    switch (index)
+    switch( index )
     {
       case 0:
-        return result = LagrangeBasis5GL::value0(xi);
+        return result = LagrangeBasis5GL::value0( xi );
         break;
 
       case 1:
-        return result = LagrangeBasis5GL::value1(xi);
+        return result = LagrangeBasis5GL::value1( xi );
         break;
 
       case 2:
-        return result = LagrangeBasis5GL::value2(xi);
+        return result = LagrangeBasis5GL::value2( xi );
         break;
 
       case 3:
-        return result = LagrangeBasis5GL::value3(xi);
+        return result = LagrangeBasis5GL::value3( xi );
         break;
 
       case 4:
-        return result = LagrangeBasis5GL::value4(xi);
+        return result = LagrangeBasis5GL::value4( xi );
         break;
 
       case 5:
-        return result = LagrangeBasis5GL::value5(xi);
+        return result = LagrangeBasis5GL::value5( xi );
         break;
 
       default:
         break;
     }
-    
+
     return result;
 
   }
@@ -154,11 +154,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 0. Here we need the points
        at index 3,4 called lambda3, lambda4. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
     return (-21.0/16.0)*(xi*xi*xi*xi*xi-xi*xi*xi*xi-(lambda3*lambda3+lambda4*lambda4)*xi*xi*xi+(lambda3*lambda3+lambda4*lambda4)*xi*xi+
-           lambda3*lambda3*lambda4*lambda4*xi-lambda3*lambda3*lambda4*lambda4);
+                         lambda3*lambda3*lambda4*lambda4*xi-lambda3*lambda3*lambda4*lambda4);
   }
 
 
@@ -174,18 +174,18 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 1. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
 
-    return ((21.0/16.0)*sqrt(7.0-sqrt_7_/2.0))*(xi*xi*xi*xi*xi-lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi+lambda4*(lambda3*lambda3+1)*xi*xi+
-           lambda3*lambda3*xi-lambda4*lambda3*lambda3);
+    return ((21.0/16.0)*sqrt( 7.0-sqrt_7_/2.0 ))*(xi*xi*xi*xi*xi-lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi+lambda4*(lambda3*lambda3+1)*xi*xi+
+                                                  lambda3*lambda3*xi-lambda4*lambda3*lambda3);
   }
 
 /**
-   * @brief The value of the basis function for the 2 support point.
-   * @param xi The coordinate at which to evaluate the basis.
-   * @return The value of the basis.
-   */
+ * @brief The value of the basis function for the 2 support point.
+ * @param xi The coordinate at which to evaluate the basis.
+ * @return The value of the basis.
+ */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 value2( const real64 xi )
@@ -193,18 +193,18 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 2. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return ((-21.0/16.0)*sqrt(7.0+sqrt_7_/2.0))*(xi*xi*xi*xi*xi-lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi+lambda3*(lambda4*lambda4+1)*xi*xi+
-           lambda4*lambda4*xi-lambda3*lambda4*lambda4);
+    return ((-21.0/16.0)*sqrt( 7.0+sqrt_7_/2.0 ))*(xi*xi*xi*xi*xi-lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi+lambda3*(lambda4*lambda4+1)*xi*xi+
+                                                   lambda4*lambda4*xi-lambda3*lambda4*lambda4);
   }
 
 /**
-   * @brief The value of the basis function for the 3 support point.
-   * @param xi The coordinate at which to evaluate the basis.
-   * @return The value of the basis.
-   */
+ * @brief The value of the basis function for the 3 support point.
+ * @param xi The coordinate at which to evaluate the basis.
+ * @return The value of the basis.
+ */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 value3( const real64 xi )
@@ -212,18 +212,18 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 3. Here we need the points
        at index 3 and 4 called lambda1, lambda2. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return ((21.0/16.0)*sqrt(7.0+sqrt_7_/2.0))*(xi*xi*xi*xi*xi+lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi-lambda3*(lambda4*lambda4+1)*xi*xi+
-           lambda4*lambda4*xi+lambda3*lambda4*lambda4);
+    return ((21.0/16.0)*sqrt( 7.0+sqrt_7_/2.0 ))*(xi*xi*xi*xi*xi+lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi-lambda3*(lambda4*lambda4+1)*xi*xi+
+                                                  lambda4*lambda4*xi+lambda3*lambda4*lambda4);
   }
 
 /**
-   * @brief The value of the basis function for the 4 support point.
-   * @param xi The coordinate at which to evaluate the basis.
-   * @return The value of the basis.
-   */
+ * @brief The value of the basis function for the 4 support point.
+ * @param xi The coordinate at which to evaluate the basis.
+ * @return The value of the basis.
+ */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 value4( const real64 xi )
@@ -231,18 +231,18 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 4. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return ((-21.0/16.0)*sqrt(7.0-sqrt_7_/2.0))*(xi*xi*xi*xi*xi+lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi-lambda4*(lambda3*lambda3+1)*xi*xi+
-           lambda3*lambda3*xi+lambda4*lambda3*lambda3);
+    return ((-21.0/16.0)*sqrt( 7.0-sqrt_7_/2.0 ))*(xi*xi*xi*xi*xi+lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi-lambda4*(lambda3*lambda3+1)*xi*xi+
+                                                   lambda3*lambda3*xi+lambda4*lambda3*lambda3);
   }
 
 /**
-   * @brief The value of the basis function for the 5 support point.
-   * @param xi The coordinate at which to evaluate the basis.
-   * @return The value of the basis.
-   */
+ * @brief The value of the basis function for the 5 support point.
+ * @param xi The coordinate at which to evaluate the basis.
+ * @return The value of the basis.
+ */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 value5( const real64 xi )
@@ -250,11 +250,11 @@ public:
     /* Define the two GL points needed to compute the basis function at point index 5. Here we need the points
        at index 3 and 4 called lambda3, lambda4. */
 
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
 
     return (21.0/16.0)*(xi*xi*xi*xi*xi+xi*xi*xi*xi-(lambda4*lambda4+lambda3*lambda3)*xi*xi*xi-(lambda3*lambda3+lambda4*lambda4)*xi*xi+
-           lambda3*lambda3*lambda4*lambda4*xi+lambda4*lambda4*lambda3*lambda3);
+                        lambda3*lambda3*lambda4*lambda4*xi+lambda4*lambda4*lambda3*lambda3);
   }
 
   /**
@@ -273,30 +273,30 @@ public:
 
     real64 result=0.0;
 
-    switch (index)
+    switch( index )
     {
       case 0:
-        result = LagrangeBasis5GL::gradient0(xi);
+        result = LagrangeBasis5GL::gradient0( xi );
         break;
 
       case 1:
-        result = LagrangeBasis5GL::gradient1(xi);
+        result = LagrangeBasis5GL::gradient1( xi );
         break;
 
       case 2:
-        result = LagrangeBasis5GL::gradient2(xi);
+        result = LagrangeBasis5GL::gradient2( xi );
         break;
 
       case 3:
-        result = LagrangeBasis5GL::gradient3(xi);
+        result = LagrangeBasis5GL::gradient3( xi );
         break;
 
       case 4:
-        result = LagrangeBasis5GL::gradient4(xi);
+        result = LagrangeBasis5GL::gradient4( xi );
         break;
 
       case 5:
-        result = LagrangeBasis5GL::gradient5(xi);
+        result = LagrangeBasis5GL::gradient5( xi );
         break;
 
       default:
@@ -318,28 +318,28 @@ public:
   constexpr static real64 gradient0( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
     return (-21.0/16.0)*(5.0*xi*xi*xi*xi-4.0*xi*xi*xi-3.0*(lambda3*lambda3+lambda4*lambda4)*xi*xi+2.0*(lambda3*lambda3+lambda4*lambda4)*xi+lambda3*lambda3*lambda4*lambda4);
 
   }
 
 /**
-   * @brief The gradient of the basis function for support point 1 evaluated at
-   *   a point along the axes.
-   * @param xi The coordinate at which to evaluate the gradient.
-   * @return The gradient of basis function at point 1.
-   */
+ * @brief The gradient of the basis function for support point 1 evaluated at
+ *   a point along the axes.
+ * @param xi The coordinate at which to evaluate the gradient.
+ * @return The gradient of basis function at point 1.
+ */
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   constexpr static real64 gradient1( const real64 xi )
   {
 
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
 
-    return (21.0/16.0)*sqrt(7.0-sqrt_7_/2.0)*(5.0*xi*xi*xi*xi-4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi+2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
+    return (21.0/16.0)*sqrt( 7.0-sqrt_7_/2.0 )*(5.0*xi*xi*xi*xi-4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi+2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
 
   }
 
@@ -354,10 +354,10 @@ public:
   constexpr static real64 gradient2( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (-21.0/16.0)*sqrt(7.0+sqrt_7_/2.0)*(5.0*xi*xi*xi*xi-4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi+2.0*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
+    return (-21.0/16.0)*sqrt( 7.0+sqrt_7_/2.0 )*(5.0*xi*xi*xi*xi-4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi+2.0*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
 
   }
 
@@ -372,10 +372,10 @@ public:
   constexpr static real64 gradient3( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (21.0/16.0)*sqrt(7.0+sqrt_7_/2.0)*(5.0*xi*xi*xi*xi+4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi-2*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
+    return (21.0/16.0)*sqrt( 7.0+sqrt_7_/2.0 )*(5.0*xi*xi*xi*xi+4.0*lambda3*xi*xi*xi-3.0*(lambda4*lambda4+1.0)*xi*xi-2*lambda3*(lambda4*lambda4+1.0)*xi+lambda4*lambda4);
 
   }
 
@@ -390,10 +390,10 @@ public:
   constexpr static real64 gradient4( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
-    return (-21.0/16.0)*sqrt(7.0-sqrt_7_/2.0)*(5.0*xi*xi*xi*xi+4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi-2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
+    return (-21.0/16.0)*sqrt( 7.0-sqrt_7_/2.0 )*(5.0*xi*xi*xi*xi+4.0*lambda4*xi*xi*xi-3.0*(lambda3*lambda3+1.0)*xi*xi-2.0*lambda4*(lambda3*lambda3+1.0)*xi+lambda3*lambda3);
 
   }
 
@@ -408,14 +408,15 @@ public:
   constexpr static real64 gradient5( const real64 xi )
   {
 
-    real64 lambda4=LagrangeBasis5GL::parentSupportCoord(4);
-    real64 lambda3=LagrangeBasis5GL::parentSupportCoord(3);
+    real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
+    real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
     return (21.0/16.0)*(5.0*xi*xi*xi*xi+4.0*xi*xi*xi-3.0*(lambda3*lambda3+lambda4*lambda4)*xi*xi-2.0*(lambda3*lambda3+lambda4*lambda4)*xi+lambda3*lambda3*lambda4*lambda4);
 
   }
 
 
+  /* UNCRUSTIFY-OFF */
 
   /**
    * @struct TensorProduct3D
@@ -464,6 +465,8 @@ public:
    *    0        1        2        3        4        5                   o----- xi0
    */
 
+  /* UNCRUSTIFY-ON */
+
   struct TensorProduct3D
   {
     /// The number of support points in the basis.
@@ -501,13 +504,13 @@ public:
                                       int & i1,
                                       int & i2 )
     {
-       
-       i2 = linearIndex/36;
-  
-       i1 = (linearIndex%36)/6;
 
-       i0 = (linearIndex%36)%6;
-    
+      i2 = linearIndex/36;
+
+      i1 = (linearIndex%36)/6;
+
+      i0 = (linearIndex%36)%6;
+
     }
 
     /**

@@ -42,24 +42,23 @@ MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
   return m_meshLevels.registerGroup< MeshLevel >( intToMeshLevelString( newLevel ) );
 }
 
- MeshLevel & MeshBody::createMeshLevel( string const & name  )
- {
-   return m_meshLevels.registerGroup< MeshLevel >( name );
- }
+MeshLevel & MeshBody::createMeshLevel( string const & name )
+{
+  return m_meshLevels.registerGroup< MeshLevel >( name );
+}
 
- MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
-                                        string const & newLevelName,
-                                        int const order,
-                                        arrayView1d<string const> const & regions )
- {
-   MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
-   return m_meshLevels.registerGroup( newLevelName,
-                                      std::make_unique<MeshLevel>( newLevelName,
-                                                                   this,
-                                                                   sourceMeshLevel,
-                                                                   order  ) );
- }
- 
+MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
+                                       string const & newLevelName,
+                                       int const order )
+{
+  MeshLevel const & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
+  return m_meshLevels.registerGroup( newLevelName,
+                                     std::make_unique< MeshLevel >( newLevelName,
+                                                                    this,
+                                                                    sourceMeshLevel,
+                                                                    order ) );
+}
+
 void MeshBody::setGlobalLengthScale( real64 scale )
 {
   m_globalLengthScale = scale;

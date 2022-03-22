@@ -70,7 +70,7 @@ protected:
     GEOSX_ERROR_IF_NE_MSG( elemManager.getRegions().size(), 1, "Only one region should exist." );
 
     ElementRegionBase & elemRegion = elemManager.getRegion( 0 );
-    GEOSX_ERROR_IF_NE_MSG( elemRegion.getSubRegions().size(), 1, "Only one subregion should exist." );
+    GEOSX_ERROR_IF_NE_MSG( elemRegion.numSubRegions(), 1, "Only one subregion should exist." );
 
     m_subRegion = &elemRegion.getSubRegion< CellElementSubRegion >( 0 );
   }
@@ -89,9 +89,8 @@ protected:
       "                  elementTypes=\"{C3D8}\""
       "                  xCoords=\"{0, " STRINGIFY( MAX_COORD_X ) "}\""
                                                                   "                  yCoords=\"{0, " STRINGIFY( MAX_COORD_Y ) "}\""
-                                                                                                                              "                  zCoords=\"{0, "
-      STRINGIFY( MAX_COORD_Z ) "}\""
-                               "                  nx=\"{"
+                                                                                                                              "                  zCoords=\"{0, " STRINGIFY( MAX_COORD_Z ) "}\""
+                                                                                                                                                                                          "                  nx=\"{"
       STRINGIFY( NX ) "}\""
                       "                  ny=\"{"
       STRINGIFY( NY ) "}\""

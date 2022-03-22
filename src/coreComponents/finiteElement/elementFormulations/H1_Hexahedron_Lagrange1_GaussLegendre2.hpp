@@ -133,7 +133,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void calcN( real64 const (& coords)[3],
+  static void calcN( real64 const (&coords)[3],
                      real64 (& N)[numNodes] )
   {
     LagrangeBasis1::TensorProduct3D::value( coords, N );

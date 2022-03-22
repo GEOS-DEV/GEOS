@@ -379,7 +379,7 @@ private:
 
     for( localIndex a = 0; a < m_numNodesPerElement; ++a )
     {
-      localIndex const nodeIndex = m_toNodesRelation( k, a ) ;
+      localIndex const nodeIndex = m_toNodesRelation( k, a );
       LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ nodeIndex ] );
       LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], X[ nodeIndex ] );
     }

@@ -156,43 +156,41 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   forMeshBodies( [&]( MeshBody & meshBody )
   {
 
-     MeshLevel & meshLevel = meshBody.getMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString() );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString() );
 
-     for( NeighborCommunicator const & neighbor : m_neighbors )
-     {
-       neighbor.addNeighborGroupToMesh( meshLevel );
-     }
+    for( NeighborCommunicator const & neighbor : m_neighbors )
+    {
+      neighbor.addNeighborGroupToMesh( meshLevel );
+    }
 
-     NodeManager & nodeManager = meshLevel.getNodeManager();
-     FaceManager & faceManager = meshLevel.getFaceManager();
-     EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    NodeManager & nodeManager = meshLevel.getNodeManager();
+    FaceManager & faceManager = meshLevel.getFaceManager();
+    EdgeManager & edgeManager = meshLevel.getEdgeManager();
 
-     nodeManager.setMaxGlobalIndex();
+    nodeManager.setMaxGlobalIndex();
 
-     CommunicationTools::getInstance().assignGlobalIndices( faceManager,
-                                                            nodeManager,
-                                                            m_neighbors );
+    CommunicationTools::getInstance().assignGlobalIndices( faceManager,
+                                                           nodeManager,
+                                                           m_neighbors );
 
-     CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
-                                                            nodeManager,
-                                                            m_neighbors );
+    CommunicationTools::getInstance().assignGlobalIndices( edgeManager,
+                                                           nodeManager,
+                                                           m_neighbors );
 
-     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
-                                                                            m_neighbors );
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( faceManager,
+                                                                           m_neighbors );
 
-     CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
-                                                                            m_neighbors );
+    CommunicationTools::getInstance().findMatchedPartitionBoundaryObjects( nodeManager,
+                                                                           m_neighbors );
 
-     CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
+    CommunicationTools::getInstance().setupGhosts( meshLevel, m_neighbors, use_nonblocking );
 
-     faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
-     faceManager.computeGeometry( nodeManager );
+    faceManager.sortAllFaceNodes( nodeManager, meshLevel.getElemManager() );
+    faceManager.computeGeometry( nodeManager );
 
-     meshBody.forMeshLevels([&]( MeshLevel & meshLevel)
-     {
-
-     });
-  });
+    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+    {} );
+  } );
 }
 
 void DomainPartition::addNeighbors( const unsigned int idim,

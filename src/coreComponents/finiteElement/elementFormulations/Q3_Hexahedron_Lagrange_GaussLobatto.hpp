@@ -152,8 +152,8 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (& coords)[3],
-                     real64 ( &N )[numNodes] )
+  static void calcN( real64 const (&coords)[3],
+                     real64 ( & N )[numNodes] )
   {
     LagrangeBasis3GL::TensorProduct3D::value( coords, N );
   }
@@ -404,10 +404,10 @@ private:
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 Q3_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
-                                                     int const qb,
-                                                     int const qc,
-                                                     FUNC && func,
-                                                     PARAMS &&... params )
+                                                  int const qb,
+                                                  int const qc,
+                                                  FUNC && func,
+                                                  PARAMS &&... params )
 {
 
   real64 const qCoords[3] = { LagrangeBasis3GL::parentSupportCoord( qa ),
@@ -420,15 +420,15 @@ Q3_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
     {
       for( int a=0; a<4; ++a )
       {
-        real64 const dNdXi[3] = { LagrangeBasis3GL::gradient( a, qCoords[0])*
-                                  LagrangeBasis3GL::value( b, qCoords[1])*
-                                  LagrangeBasis3GL::value( c, qCoords[2]),
-                                  LagrangeBasis3GL::value( a, qCoords[0])*
-                                  LagrangeBasis3GL::gradient( b, qCoords[1])*
-                                  LagrangeBasis3GL::value( c, qCoords[2]),
-                                  LagrangeBasis3GL::value( a, qCoords[0])*
-                                  LagrangeBasis3GL::value( b, qCoords[1])*
-                                  LagrangeBasis3GL::gradient( c, qCoords[2])};
+        real64 const dNdXi[3] = { LagrangeBasis3GL::gradient( a, qCoords[0] )*
+                                  LagrangeBasis3GL::value( b, qCoords[1] )*
+                                  LagrangeBasis3GL::value( c, qCoords[2] ),
+                                  LagrangeBasis3GL::value( a, qCoords[0] )*
+                                  LagrangeBasis3GL::gradient( b, qCoords[1] )*
+                                  LagrangeBasis3GL::value( c, qCoords[2] ),
+                                  LagrangeBasis3GL::value( a, qCoords[0] )*
+                                  LagrangeBasis3GL::value( b, qCoords[1] )*
+                                  LagrangeBasis3GL::gradient( c, qCoords[2] )};
 
         localIndex const nodeIndex = LagrangeBasis3GL::TensorProduct3D::linearIndex( a, b, c );
 
@@ -438,98 +438,98 @@ Q3_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
   }
 
   /*
-  /// Options for how to calculate the parent gradients.
-    #define PARENT_GRADIENT_METHOD 2
-  #if PARENT_GRADIENT_METHOD == 1
-    // This option calculates the basis values at the quadrature point for each
-    // linear basis index.
+     /// Options for how to calculate the parent gradients.
+   #define PARENT_GRADIENT_METHOD 2
+   #if PARENT_GRADIENT_METHOD == 1
+     // This option calculates the basis values at the quadrature point for each
+     // linear basis index.
 
-    real64 const quadratureCoords[3] = { -quadratureFactor + 1.154700538379252 * qa,
+     real64 const quadratureCoords[3] = { -quadratureFactor + 1.154700538379252 * qa,
                                          -quadratureFactor + 1.154700538379252 * qb,
                                          -quadratureFactor + 1.154700538379252 * qc };
 
-    real64 const psi0[2] = { 0.5 - 0.5 * quadratureCoords[0],
+     real64 const psi0[2] = { 0.5 - 0.5 * quadratureCoords[0],
                              0.5 + 0.5 * quadratureCoords[0] };
-    real64 const psi1[2] = { 0.5 - 0.5 * quadratureCoords[1],
+     real64 const psi1[2] = { 0.5 - 0.5 * quadratureCoords[1],
                              0.5 + 0.5 * quadratureCoords[1] };
-    real64 const psi2[2] = { 0.5 - 0.5 * quadratureCoords[2],
+     real64 const psi2[2] = { 0.5 - 0.5 * quadratureCoords[2],
                              0.5 + 0.5 * quadratureCoords[2] };
-    constexpr real64 dpsi[2] = { -0.5, 0.5 };
-  #elif PARENT_GRADIENT_METHOD == 2
-    // This option calculates the product of linear basis prior to use.
-    // The tensor product basis gradient may be expressed as a permutation of the
-    // product between the two possible linear basis gradients. Thus the values
-    // in the basis loop of qaa/qbb/qcc indicate which permutation to choose.
-    // The quantities qaa, qbb, qcc are the difference in index between the
-    // quadrature point and the basis. This is possible because there are 8
-    // basis, and 8 quadrature points, which have correlated indices. So the
-    // values of qaa/qbb/qcc are the "distance" from the quadrature point index
-    // and the support point index.
-    // THIS approach uses about 10 less registers than option 1, with no apparent
-    // cost.
+     constexpr real64 dpsi[2] = { -0.5, 0.5 };
+   #elif PARENT_GRADIENT_METHOD == 2
+     // This option calculates the product of linear basis prior to use.
+     // The tensor product basis gradient may be expressed as a permutation of the
+     // product between the two possible linear basis gradients. Thus the values
+     // in the basis loop of qaa/qbb/qcc indicate which permutation to choose.
+     // The quantities qaa, qbb, qcc are the difference in index between the
+     // quadrature point and the basis. This is possible because there are 8
+     // basis, and 8 quadrature points, which have correlated indices. So the
+     // values of qaa/qbb/qcc are the "distance" from the quadrature point index
+     // and the support point index.
+     // THIS approach uses about 10 less registers than option 1, with no apparent
+     // cost.
 
-  //  constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
-  //                                                         0.5 - 0.5 * quadratureFactor };
-  //  constexpr static real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
-  //                                            0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[1],
-  //                                            0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1] };
+     //  constexpr static real64 linearBasisAtQuadrature[2] = { 0.5 + 0.5 * quadratureFactor,
+     //                                                         0.5 - 0.5 * quadratureFactor };
+     //  constexpr static real64 psiProduct[3] = { 0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[0],
+     //                                            0.5 * linearBasisAtQuadrature[0]*linearBasisAtQuadrature[1],
+     //                                            0.5 * linearBasisAtQuadrature[1]*linearBasisAtQuadrature[1] };
 
-    /// { 1/12 (2 + Sqrt[3]), 1/12, 1/12 (2 - Sqrt[3]) }
-    constexpr static real64 psiProduct[3] = { 0.311004233964073108, 0.083333333333333333, 0.022329099369260226};
-    constexpr static int dpsi[2] = { -1, 1 };
+     /// { 1/12 (2 + Sqrt[3]), 1/12, 1/12 (2 - Sqrt[3]) }
+     constexpr static real64 psiProduct[3] = { 0.311004233964073108, 0.083333333333333333, 0.022329099369260226};
+     constexpr static int dpsi[2] = { -1, 1 };
 
-  //  constexpr static real64 psiProduct[3] = { psiProduct0, psiProduct1, psiProduct2 };
-  //  constexpr short dpsi[2] = { dpsi0, dpsi1 };
-  #endif
+     //  constexpr static real64 psiProduct[3] = { psiProduct0, psiProduct1, psiProduct2 };
+     //  constexpr short dpsi[2] = { dpsi0, dpsi1 };
+   #endif
 
-    // Loop over the linear basis indices in each direction.
-    for( int a=0; a<2; ++a )
-    {
-  #if PARENT_GRADIENT_METHOD == 2
+     // Loop over the linear basis indices in each direction.
+     for( int a=0; a<2; ++a )
+     {
+   #if PARENT_GRADIENT_METHOD == 2
       int const qaa = ( a^qa ); // abs(a-qa)
-  #endif
+   #endif
       for( int b=0; b<2; ++b )
       {
-  #if PARENT_GRADIENT_METHOD == 2
+   #if PARENT_GRADIENT_METHOD == 2
         int const qbb = ( b^qb );
-  #endif
+   #endif
         for( int c=0; c<2; ++c )
         {
-  #if PARENT_GRADIENT_METHOD == 2
+   #if PARENT_GRADIENT_METHOD == 2
           int const qcc = ( c^qc );
-  #endif
+   #endif
 
-  #if PARENT_GRADIENT_METHOD == 1
+   #if PARENT_GRADIENT_METHOD == 1
           real64 const dNdXi[3] = { dpsi[a] * psi1[b] * psi2[c],
                                     psi0[a] * dpsi[b] * psi2[c],
                                     psi0[a] * psi1[b] * dpsi[c] };
-  #elif PARENT_GRADIENT_METHOD == 2
+   #elif PARENT_GRADIENT_METHOD == 2
 
 
-  //        const real64 dNdXi[3] = { dpsi[a] * psiProductFunc( qbb + qcc ),
-  //                                  dpsi[b] * psiProductFunc( qaa + qcc ),
-  //                                  dpsi[c] * psiProductFunc( qaa + qbb ) };
+     //        const real64 dNdXi[3] = { dpsi[a] * psiProductFunc( qbb + qcc ),
+     //                                  dpsi[b] * psiProductFunc( qaa + qcc ),
+     //                                  dpsi[c] * psiProductFunc( qaa + qbb ) };
 
           real64 const dNdXi[3] = { dpsi[a] * psiProduct[ qbb + qcc ],
                                     dpsi[b] * psiProduct[ qaa + qcc ],
                                     dpsi[c] * psiProduct[ qaa + qbb ] };
-  #endif
+   #endif
           localIndex const nodeIndex = LagrangeBasis1::TensorProduct3D::linearIndex( a, b, c );
 
           func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
         }
       }
-    }
-    */
+     }
+   */
 }
 
 //*************************************************************************************************
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
-Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const  q,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const q,
+                                                real64 const (&X)[numNodes][3],
+                                                real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
@@ -543,52 +543,55 @@ Q3_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const  q,
 
   applyTransformationToParentGradients( qa, qb, qc, J, gradN );
 //MODIF1 : Change the calcul of detJ multiplying by the right weight in each direction xi, yi, zi
-  switch (qa){
-  case 0:
+  switch( qa )
+  {
+    case 0:
       weight *= weight1;
       break;
-  case 1:
+    case 1:
       weight *= weight2;
       break;
-  case 2:
+    case 2:
       weight *= weight3;
       break;
-  case 3:
+    case 3:
       weight *= weight4;
       break;
-  default:
+    default:
       break;
   }
-  switch (qb){
-  case 0:
+  switch( qb )
+  {
+    case 0:
       weight *= weight1;
       break;
-  case 1:
+    case 1:
       weight *= weight2;
       break;
-  case 2:
+    case 2:
       weight *= weight3;
       break;
-  case 3:
+    case 3:
       weight *= weight4;
       break;
-  default:
+    default:
       break;
   }
-  switch (qc){
-  case 0:
+  switch( qc )
+  {
+    case 0:
       weight *= weight1;
       break;
-  case 1:
+    case 1:
       weight *= weight2;
       break;
-  case 2:
+    case 2:
       weight *= weight3;
       break;
-  case 3:
+    case 3:
       weight *= weight4;
       break;
-  default:
+    default:
       break;
   }
 
@@ -706,9 +709,9 @@ Q3_Hexahedron_Lagrange_GaussLobatto::
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Q3_Hexahedron_Lagrange_GaussLobatto::symmetricGradient( int const q,
-                                                                real64 const (&invJ)[3][3],
-                                                                real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+                                                             real64 const (&invJ)[3][3],
+                                                             real64 const (&var)[numNodes][3],
+                                                             real64 (& grad)[6] )
 {
   int qa, qb, qc;
   LagrangeBasis3GL::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -741,9 +744,9 @@ void Q3_Hexahedron_Lagrange_GaussLobatto::symmetricGradient( int const q,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Q3_Hexahedron_Lagrange_GaussLobatto::plus_gradNajAij( int const q,
-                                                              real64 const (&invJ)[3][3],
-                                                              real64 const (&var)[6],
-                                                              real64 (& R)[numNodes][3] )
+                                                           real64 const (&invJ)[3][3],
+                                                           real64 const (&var)[6],
+                                                           real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis3GL::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -776,9 +779,9 @@ void Q3_Hexahedron_Lagrange_GaussLobatto::plus_gradNajAij( int const q,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Q3_Hexahedron_Lagrange_GaussLobatto::gradient( int const q,
-                                                       real64 const (&invJ)[3][3],
-                                                       real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+                                                    real64 const (&invJ)[3][3],
+                                                    real64 const (&var)[numNodes][3],
+                                                    real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
   LagrangeBasis3GL::TensorProduct3D::multiIndex( q, qa, qb, qc );

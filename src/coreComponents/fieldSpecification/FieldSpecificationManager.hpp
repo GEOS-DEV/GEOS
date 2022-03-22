@@ -248,32 +248,32 @@ public:
           MeshBody & meshBody = domain.getMeshBody( 0 );
           meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
           {
-          dataRepository::Group * targetGroup = &meshLevel;
+            dataRepository::Group * targetGroup = &meshLevel;
 
-          for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
-          {
-            dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
-            if( elemRegionSubGroup != nullptr )
+            for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
             {
-              targetGroup = elemRegionSubGroup;
-            }
+              dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
+              if( elemRegionSubGroup != nullptr )
+              {
+                targetGroup = elemRegionSubGroup;
+              }
 
-            dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
-            if( elemSubRegionSubGroup != nullptr )
-            {
-              targetGroup = elemSubRegionSubGroup;
-            }
+              dataRepository::Group * const elemSubRegionSubGroup = targetGroup->getGroupPointer( ElementRegionBase::viewKeyStruct::elementSubRegions() );
+              if( elemSubRegionSubGroup != nullptr )
+              {
+                targetGroup = elemSubRegionSubGroup;
+              }
 
-            if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
-                targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
-            {
-              continue;
-            }
+              if( targetPath[pathLevel] == ElementRegionManager::groupKeyStruct::elementRegionsGroup() ||
+                  targetPath[pathLevel] == ElementRegionBase::viewKeyStruct::elementSubRegions() )
+              {
+                continue;
+              }
 
-            targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
-          }
-          applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
-        } );
+              targetGroup = &targetGroup->getGroup( targetPath[pathLevel] );
+            }
+            applyOnTargetRecursive( *targetGroup, fs, targetName, lambda );
+          } );
         }
       }
     } );

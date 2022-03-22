@@ -522,16 +522,20 @@ void ProblemManager::generateMesh()
 
   meshManager.generateMeshes( domain );
 
-  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
-  discretizations = getDiscretizations();
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d< string const > const >
+  discretizations = getFiniteElementDiscretizations();
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
     CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
     MeshLevel & baseMesh = meshBody.getMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString() );
-    array1d<string> junk;
+    array1d< string > junk;
     this->generateDiscretization( baseMesh, cellBlockManager, nullptr, junk.toViewConst() );
+
+    ElementRegionManager & elemManager = baseMesh.getElemManager();
+    elemManager.generateWells( meshManager, baseMesh );
+
   } );
 
   for( auto const & discretizationPair: discretizations )
@@ -546,8 +550,7 @@ void ProblemManager::generateMesh()
 
     MeshLevel & mesh = meshBody.createMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString(),
                                                  discretizationName,
-                                                 discretization.getOrder(),
-                                                 regionNames );
+                                                 discretization.getOrder() );
 
     this->generateDiscretization( mesh,
                                   cellBlockManager,
@@ -565,9 +568,9 @@ void ProblemManager::generateMesh()
 
 
 
-//  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-//  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-//  domain.setupCommunications( useNonblockingMPI );
+  Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
+  integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
+  domain.setupCommunications( useNonblockingMPI );
 
 //  domain.forMeshBodies( [&]( MeshBody & meshBody )
 //  {
@@ -611,11 +614,11 @@ void ProblemManager::applyNumericalMethods()
 
 
 
-map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
-ProblemManager::getDiscretizations() const
+map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d< string const > const >
+ProblemManager::getFiniteElementDiscretizations() const
 {
 
-  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const > meshDiscretizations;
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d< string const > const > meshDiscretizations;
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
@@ -626,33 +629,36 @@ ProblemManager::getDiscretizations() const
   DomainPartition const & domain  = getDomainPartition();
   Group const & meshBodies = domain.getMeshBodies();
 
-  m_physicsSolverManager->forSubGroups<SolverBase>( [&]( SolverBase & solver )
+  m_physicsSolverManager->forSubGroups< SolverBase >( [&]( SolverBase & solver )
   {
 
     solver.generateMeshTargetsFromTargetRegions( meshBodies );
 
     string const discretizationName = solver.getDiscretizationName();
 
-    FiniteElementDiscretization const &
-    feDiscretization = feDiscretizationManager.getGroup< FiniteElementDiscretization >( discretizationName );
+    FiniteElementDiscretization const * const
+    feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( discretizationName );
 
+    if( feDiscretization != nullptr )
+    {
       solver.forMeshTargets( meshBodies,
-                              [&]( string const & meshBodyName,
-                                   MeshLevel const & meshLevel,
-                                   auto const & regionNames )
+                             [&]( string const & meshBodyName,
+                                  MeshLevel const & meshLevel,
+                                  auto const & regionNames )
       {
-        std::pair< string, FiniteElementDiscretization const * const > key = std::make_pair( meshBodyName, &feDiscretization );
+        std::pair< string, FiniteElementDiscretization const * const > key = std::make_pair( meshBodyName, feDiscretization );
         meshDiscretizations.insert( { key, regionNames } );
-      });
+      } );
+    }
   } );
 
   return meshDiscretizations;
 }
 
 void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
-                                         CellBlockManagerABC & cellBlockManager,
-                                         Group const * const discretization,
-                                         arrayView1d<string const> const & targetRegions )
+                                             CellBlockManagerABC & cellBlockManager,
+                                             Group const * const discretization,
+                                             arrayView1d< string const > const & targetRegions )
 {
   int order = 1;
   if( discretization != nullptr )
@@ -671,7 +677,7 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
 
       if( fvsDisc!=nullptr && fvhDisc!=nullptr )
       {
-        GEOSX_ERROR("Group expected to cast to a discretization object.");
+        GEOSX_ERROR( "Group expected to cast to a discretization object." );
       }
     }
   }
@@ -685,7 +691,7 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
 
 //  MeshUtilities::generateNodesets( geometricObjects, nodeManager );
 
-  
+
 //  nodeManager.constructGlobalToLocalMap();
 
 
@@ -731,9 +737,6 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
     } );
     elemManager.setMaxGlobalIndex();
   }
-
-
-//  elemManager.generateWells( meshManager, meshLevel );
 }
 
 

@@ -623,7 +623,7 @@ public:
       string const meshBodyName = target.first;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      MeshLevel const & meshLevel = meshBody.getMeshLevel(this->m_discretizationName);
+      MeshLevel const & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
       lambda( meshBodyName, meshLevel, regionNames );
     }
   }
@@ -636,7 +636,7 @@ public:
       string const meshBodyName = target.first;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      MeshLevel & meshLevel = meshBody.getMeshLevel(this->m_discretizationName);
+      MeshLevel & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
       lambda( meshBodyName, meshLevel, regionNames );
     }
   }

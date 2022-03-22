@@ -135,7 +135,7 @@ public:
                           StackVariables & stack );
 
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (& coords)[2],
+  static void calcN( real64 const (&coords)[2],
                      real64 ( &N )[numNodes] );
 
   /**
@@ -276,7 +276,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
-  calcN( real64 const (& coords)[2],
+  calcN( real64 const (&coords)[2],
          real64 (& N)[numNodes] )
 {
   for( localIndex a=0; a<numNodes; ++a )

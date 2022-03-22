@@ -31,6 +31,7 @@ namespace geosx
 namespace finiteElement
 {
 
+/* UNCRUSTIFY-OFF */
 
 /**
  * This class contains the kernel accessible functions specific to the standard
@@ -85,6 +86,9 @@ namespace finiteElement
  *
  *
  */
+
+/* UNCRUSTIFY-ON */
+
 class Q5_Hexahedron_Lagrange_GaussLobatto final : public FiniteElementBase
 {
 public:
@@ -115,8 +119,8 @@ public:
   }
 
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (& coords)[3],
-                     real64 ( &N )[numNodes] )
+  static void calcN( real64 const (&coords)[3],
+                     real64 ( & N )[numNodes] )
   {
     LagrangeBasis5GL::TensorProduct3D::value( coords, N );
   }
@@ -323,12 +327,12 @@ private:
 template< typename FUNC, typename ... PARAMS >
 GEOSX_HOST_DEVICE GEOSX_FORCE_INLINE void
 Q5_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
-                                                     int const qb,
-                                                     int const qc,
-                                                     FUNC && func,
-                                                     PARAMS &&... params )
+                                                  int const qb,
+                                                  int const qc,
+                                                  FUNC && func,
+                                                  PARAMS &&... params )
 {
-   
+
   real64 const qCoords[3] = { LagrangeBasis5GL::parentSupportCoord( qa ),
                               LagrangeBasis5GL::parentSupportCoord( qb ),
                               LagrangeBasis5GL::parentSupportCoord( qc ) };
@@ -339,16 +343,16 @@ Q5_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
     {
       for( int a=0; a<6; ++a )
       {
-        real64 const dNdXi[3] = { LagrangeBasis5GL::gradient( a, qCoords[0])*
-                                  LagrangeBasis5GL::value( b, qCoords[1])*
-                                  LagrangeBasis5GL::value( c, qCoords[2]),
-                                  LagrangeBasis5GL::value( a, qCoords[0])*
-                                  LagrangeBasis5GL::gradient( b, qCoords[1])*
-                                  LagrangeBasis5GL::value( c, qCoords[2]),
-                                  LagrangeBasis5GL::value( a, qCoords[0])*
-                                  LagrangeBasis5GL::value( b, qCoords[1])*
-                                  LagrangeBasis5GL::gradient( c, qCoords[2])};
-        
+        real64 const dNdXi[3] = { LagrangeBasis5GL::gradient( a, qCoords[0] )*
+                                  LagrangeBasis5GL::value( b, qCoords[1] )*
+                                  LagrangeBasis5GL::value( c, qCoords[2] ),
+                                  LagrangeBasis5GL::value( a, qCoords[0] )*
+                                  LagrangeBasis5GL::gradient( b, qCoords[1] )*
+                                  LagrangeBasis5GL::value( c, qCoords[2] ),
+                                  LagrangeBasis5GL::value( a, qCoords[0] )*
+                                  LagrangeBasis5GL::value( b, qCoords[1] )*
+                                  LagrangeBasis5GL::gradient( c, qCoords[2] )};
+
         localIndex const nodeIndex = LagrangeBasis5GL::TensorProduct3D::linearIndex( a, b, c );
 
         func( dNdXi, nodeIndex, std::forward< PARAMS >( params )... );
@@ -356,7 +360,7 @@ Q5_Hexahedron_Lagrange_GaussLobatto::supportLoop( int const qa,
     }
   }
 
- 
+
 }
 
 //*************************************************************************************************
@@ -364,19 +368,19 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 real64
 Q5_Hexahedron_Lagrange_GaussLobatto::calcGradN( localIndex const q,
-                                                   real64 const (&X)[numNodes][3],
-                                                   real64 (& gradN)[numNodes][3] )
+                                                real64 const (&X)[numNodes][3],
+                                                real64 (& gradN)[numNodes][3] )
 {
   real64 J[3][3] = {{0}};
 
-  //Define the Gauss Lobatto weights 
-  real64 weight[6]={ 1.0/15.0,(1.0/30.0)*(14.0-sqrt(7.0)),(1.0/30.0)*(14.0+sqrt(7.0)),(1.0/30.0)*(14.0+sqrt(7.0)),(1.0/30.0)*(14.0-sqrt(7.0)),1.0/15.0};
+  //Define the Gauss Lobatto weights
+  real64 weight[6]={ 1.0/15.0, (1.0/30.0)*(14.0-sqrt( 7.0 )), (1.0/30.0)*(14.0+sqrt( 7.0 )), (1.0/30.0)*(14.0+sqrt( 7.0 )), (1.0/30.0)*(14.0-sqrt( 7.0 )), 1.0/15.0};
 
   int qa, qb, qc;
   LagrangeBasis5GL::TensorProduct3D::multiIndex( q, qa, qb, qc );
 
   jacobianTransformation( qa, qb, qc, X, J );
-  
+
   real64 const detJ = LvArray::tensorOps::invert< 3 >( J );
 
   applyTransformationToParentGradients( qa, qb, qc, J, gradN );
@@ -489,9 +493,9 @@ Q5_Hexahedron_Lagrange_GaussLobatto::
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Q5_Hexahedron_Lagrange_GaussLobatto::symmetricGradient( int const q,
-                                                                real64 const (&invJ)[3][3],
-                                                                real64 const (&var)[numNodes][3],
-                                                                real64 (& grad)[6] )
+                                                             real64 const (&invJ)[3][3],
+                                                             real64 const (&var)[numNodes][3],
+                                                             real64 (& grad)[6] )
 {
   int qa, qb, qc;
   LagrangeBasis5GL::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -524,9 +528,9 @@ void Q5_Hexahedron_Lagrange_GaussLobatto::symmetricGradient( int const q,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Q5_Hexahedron_Lagrange_GaussLobatto::plus_gradNajAij( int const q,
-                                                              real64 const (&invJ)[3][3],
-                                                              real64 const (&var)[6],
-                                                              real64 (& R)[numNodes][3] )
+                                                           real64 const (&invJ)[3][3],
+                                                           real64 const (&var)[6],
+                                                           real64 (& R)[numNodes][3] )
 {
   int qa, qb, qc;
   LagrangeBasis5GL::TensorProduct3D::multiIndex( q, qa, qb, qc );
@@ -559,9 +563,9 @@ void Q5_Hexahedron_Lagrange_GaussLobatto::plus_gradNajAij( int const q,
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void Q5_Hexahedron_Lagrange_GaussLobatto::gradient( int const q,
-                                                       real64 const (&invJ)[3][3],
-                                                       real64 const (&var)[numNodes][3],
-                                                       real64 (& grad)[3][3] )
+                                                    real64 const (&invJ)[3][3],
+                                                    real64 const (&var)[numNodes][3],
+                                                    real64 (& grad)[3][3] )
 {
   int qa, qb, qc;
   LagrangeBasis5GL::TensorProduct3D::multiIndex( q, qa, qb, qc );

@@ -140,8 +140,8 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static void calcN( real64 const (& coords)[3],
-                     real64 (& N)[numNodes] );
+  static void calcN( real64 const (&coords)[3],
+                     real64 ( &N )[numNodes] );
 
 
   /**
@@ -488,8 +488,8 @@ H1_Wedge_Lagrange1_Gauss6::
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
-H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (& coords)[3],
-            real64 (& N)[numNodes] )
+H1_Wedge_Lagrange1_Gauss6::calcN( real64 const (&coords)[3],
+                                  real64 (& N)[numNodes] )
 {
   real64 const r  = coords[0];
   real64 const s  = coords[1];

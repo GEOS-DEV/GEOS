@@ -143,7 +143,7 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (& coords)[3],
+  static void calcN( real64 const (&coords)[3],
                      real64 ( &N )[numNodes] );
 
   /**
@@ -525,7 +525,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Pyramid_Lagrange1_Gauss5::
-  calcN( real64 const (& xi)[3],
+  calcN( real64 const (&xi)[3],
          real64 ( & N )[numNodes] )
 {
   N[0] = 0.125*( 1.0 - xi[0] ) * ( 1.0 - xi[1] ) * ( 1.0 - xi[2] );

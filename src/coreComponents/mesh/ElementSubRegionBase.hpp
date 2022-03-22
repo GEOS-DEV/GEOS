@@ -96,6 +96,12 @@ public:
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
 
 
+  /**
+   * @brief Set all "perElement" values for this subregion.
+   * @param numNodesPerElement The number of nodes per elem in this subregion.
+   * @param numEdgesPerElement The number of edges per elem in this subregion.
+   * @param numFacesPerElement The number of faces per elem in this subregion.
+   */
   virtual void resizePerElementValues( localIndex const numNodesPerElement,
                                        localIndex const numEdgesPerElement,
                                        localIndex const numFacesPerElement );
@@ -113,6 +119,10 @@ public:
    */
   localIndex const & numNodesPerElement() const { return m_numNodesPerElement; }
 
+  /**
+   * @brief Set the number of nodes per element in the subregion.
+   * @param input The new number of nodes per element in the subregion.
+   */
   void setNumNodesPerElement( localIndex const input ) { m_numNodesPerElement = input; }
 
   /**
@@ -128,10 +138,22 @@ public:
    */
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
 
+  /**
+   * @brief Sets the number of faces per element.
+   * @param input The number of faces per element to set for this ElementSubRegion.
+   */
   void setNumFacesPerElement( localIndex const input ) { m_numFacesPerElement = input; }
 
+  /**
+   * @brief Gets the number of edges per element.
+   * @return input The number of edges per element in this ElementSubRegion.
+   */
   localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
 
+  /**
+   * @brief Sets the number of edges per element.
+   * @param input The number of edges per element to set for this ElementSubRegion.
+   */
   void setNumEdgesPerElement( localIndex const input ) { m_numEdgesPerElement = input; }
 
 
@@ -193,6 +215,10 @@ public:
   ElementType getElementType() const
   { return m_elementType; }
 
+  /**
+   * @brief Setter for m_elementType
+   * @param elemType They type of element for this ElementSubRegion.
+   */
   void setElementType( ElementType const elemType )
   { m_elementType = elemType; }
 

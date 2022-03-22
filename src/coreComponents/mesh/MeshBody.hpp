@@ -55,30 +55,48 @@ public:
    */
   MeshLevel & createMeshLevel( localIndex const newLevel );
 
-  MeshLevel & createMeshLevel( string const & name  );
+  /**
+   * @brief Create a new mesh level.
+   * @param[in] name The name of the new MeshLevel.
+   * @return A reference to the new MeshLevel.
+   */
+  MeshLevel & createMeshLevel( string const & name );
 
+  /**
+   * @brief Create a new mesh level from a source MeshLevel.
+   * @param sourceLevelName The name of the source MeshLevel.
+   * @param newLevelName The name of the new MeshLevel.
+   * @param order The order of the new MeshLevel.
+   * @return A reference to the new MeshLevel.
+   */
   MeshLevel & createMeshLevel( string const & sourceLevelName,
                                string const & newLevelName,
-                               int const order,
-                               arrayView1d<string const> const & regions  );
+                               int const order );
 
   /**
    * @brief Get the meshLevels group
    * @return reference to the meshLevels group.
    */
   Group & getMeshLevels() { return m_meshLevels; }
+
   /**
    * @copydoc getMeshLevels()
    */
   Group const & getMeshLevels() const { return m_meshLevels; }
+
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
-   * @return reference to const MeshLevel
+   * @return const reference to the MeshLevel
    */
   MeshLevel const & getMeshLevel( string const & level ) const
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
+  /**
+   * @brief Get the specified MeshLevel
+   * @param level The name of the MeshLevel
+   * @return Reference to the MeshLevel
+   */
   MeshLevel & getMeshLevel( string const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 

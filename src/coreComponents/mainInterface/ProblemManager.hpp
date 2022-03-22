@@ -335,13 +335,13 @@ private:
   map< std::tuple< string, string, string >, localIndex > calculateRegionQuadrature( Group & meshBodies );
 
 
-  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d<string const> const >
-  getDiscretizations() const;
+  map< std::pair< string, FiniteElementDiscretization const * const >, arrayView1d< string const > const >
+  getFiniteElementDiscretizations() const;
 
   void generateDiscretization( MeshLevel & meshLevel,
-                     CellBlockManagerABC & cellBlockManager,
-                     Group const * const discretization,
-                     arrayView1d<string const> const & targetRegions );
+                               CellBlockManagerABC & cellBlockManager,
+                               Group const * const discretization,
+                               arrayView1d< string const > const & targetRegions );
 
   /**
    * @brief Allocate constitutive relations on each subregion with appropriate

@@ -135,7 +135,7 @@ public:
 
 
   GEOSX_HOST_DEVICE
-  static void calcN( real64 const (& coords)[3],
+  static void calcN( real64 const (&coords)[3],
                      real64 ( &N )[numNodes] );
 
   /**
@@ -299,7 +299,7 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
 H1_Tetrahedron_Lagrange1_Gauss1::
-  calcN( real64 const (& coords)[3],
+  calcN( real64 const (&coords)[3],
          real64 (& N)[numNodes] )
 {
   real64 const r = coords[0];

@@ -232,7 +232,7 @@ protected:
 
       if( targetGroup == nullptr )
       {
-        GEOSX_ERROR("not implmented");
+        GEOSX_ERROR( "not implmented" );
       }
 
       for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
