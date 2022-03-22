@@ -6,8 +6,8 @@
   </Included>
 
   <Mesh>
-    <PAMELAMeshGenerator name="SyntheticMesh"
-                         file="synthetic.msh" />
+    <PAMELAMesh name="SyntheticMesh"
+                file="synthetic.msh" />
   </Mesh>
 
   <Events maxTime="100.0e6">

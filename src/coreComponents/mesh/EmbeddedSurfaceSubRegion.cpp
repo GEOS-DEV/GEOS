@@ -79,15 +79,11 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_surfaceElementsToCells.resize( 0, 1 );
 }
 
-
-EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
-{}
-
 void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
-  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
   } );

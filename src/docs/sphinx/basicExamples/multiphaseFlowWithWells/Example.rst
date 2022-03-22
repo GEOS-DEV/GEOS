@@ -118,7 +118,7 @@ Mesh definition and well geometry
 
 In the presence of wells, the **Mesh** block of the XML input file includes two parts:
 
- - a sub-block **PAMELAMeshGenerator** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
+ - a sub-block **PAMELAMesh** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
  - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
 
 The reservoir mesh is imported from a ``.msh`` file that contains the mesh geometry
@@ -279,7 +279,7 @@ attribute (here, 0 or 1) is used to point to a specific entry of the ``phaseName
 in the **DeadOilFluid** block. 
 
 Note that we also define the uniform porosity field here since it is not included in the mesh file
-imported by the **PAMELAMeshGenerator**.
+imported by the **PAMELAMesh**.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
@@ -332,7 +332,7 @@ The first few lines appearing to the console are indicating that the XML element
   Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
   Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
   Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
-  Adding Mesh: PAMELAMeshGenerator, mesh
+  Adding Mesh: PAMELAMesh, mesh
   Adding Mesh: InternalWell, wellProducer1
   Adding Mesh: InternalWell, wellProducer2
   Adding Mesh: InternalWell, wellProducer3
