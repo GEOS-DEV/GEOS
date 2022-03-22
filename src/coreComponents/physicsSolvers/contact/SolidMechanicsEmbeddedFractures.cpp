@@ -733,10 +733,56 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
 
 bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
 {
-  GEOSX_UNUSED_VAR( domain );
-  return true;
-}
+  bool hasConfigurationConverged = true;
 
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
+                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    {
+      arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
+      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+
+      RAJA::ReduceMin< parallelHostReduce, integer > checkActiveSetSub( 1 );
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+      {
+        if( ghostRank[kfe] < 0 )
+        {
+          integer const originalFractureState = fractureState[kfe];
+          if( dispJump[kfe][0] > -std::numeric_limits<real64>::epsilon() )
+          {
+            fractureState[kfe] = FractureState::Open;
+          }
+          else
+          {
+            fractureState[kfe] = FractureState::Slip;
+          }
+          checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
+        }
+      } );
+
+      hasConfigurationConverged &= checkActiveSetSub.get();
+    } );
+  } );
+  // Need to synchronize the fracture state due to the use will be made of in AssemblyStabilization
+  synchronizeFractureState( domain );
+
+  // Compute if globally the fracture state has changed
+  bool hasConfigurationConvergedGlobally;
+  MpiWrapper::allReduce( &hasConfigurationConverged,
+                         &hasConfigurationConvergedGlobally,
+                         1,
+                         MPI_LAND,
+                         MPI_COMM_GEOSX );
+
+  return hasConfigurationConvergedGlobally;
+}
 
 REGISTER_CATALOG_ENTRY( SolverBase, SolidMechanicsEmbeddedFractures, string const &, Group * const )
 } /* namespace geosx */
