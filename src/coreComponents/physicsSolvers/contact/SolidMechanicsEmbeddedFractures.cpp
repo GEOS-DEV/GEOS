@@ -714,6 +714,9 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       arrayView3d< real64 > const & dFractureTraction_dJump =
         subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
 
+      arrayView1d< integer const > const & fractureState = 
+        subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() ); 
+
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
         using ContactType = TYPEOFREF( castedContact );
@@ -725,7 +728,8 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
                                             oldJump,
                                             jump,
                                             fractureTraction,
-                                            dFractureTraction_dJump );
+                                            dFractureTraction_dJump,
+                                            fractureState );
       } );
     } );
   } );

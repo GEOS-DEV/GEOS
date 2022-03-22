@@ -80,7 +80,8 @@ public:
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
+                                arraySlice2d< real64 > const & dTractionVector_dJump,
+                                bool const isOpen ) const override final;
 
 private:
 
@@ -133,21 +134,6 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex ) override final;
 
   /**
-   * @struct Set of "char const *" and keys for data specified in this class.
-   */
-  struct viewKeyStruct : public ContactBase::viewKeyStruct
-  {
-    /// string/key for cohesion
-    static constexpr char const * cohesionString() { return "cohesion"; }
-
-    /// string/key for friction coefficient
-    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
-
-    /// string/key for the elastic slip
-    static constexpr char const * elasticSlipString() { return "elasticSlip"; }
-  };
-
-  /**
    * @brief Const accessor for cohesion
    * @return A const reference to arrayView1d<real64 const> containing the
    *         cohesions (at every element).
@@ -184,6 +170,22 @@ private:
 
   /// Elastic slip
   array2d< real64 > m_elasticSlip;
+
+/**
+ * @struct Set of "char const *" and keys for data specified in this class.
+ */
+  struct viewKeyStruct : public ContactBase::viewKeyStruct
+  {
+    /// string/key for cohesion
+    static constexpr char const * cohesionString() { return "cohesion"; }
+
+    /// string/key for friction coefficient
+    static constexpr char const * frictionCoefficientString() { return "frictionCoefficient"; }
+
+    /// string/key for the elastic slip
+    static constexpr char const * elasticSlipString() { return "elasticSlip"; }
+  };
+
 };
 
 
@@ -201,7 +203,8 @@ void CoulombContactUpdates::computeTraction( localIndex const k,
                                              arraySlice1d< real64 const > const & oldDispJump,
                                              arraySlice1d< real64 const > const & dispJump,
                                              arraySlice1d< real64 > const & tractionVector,
-                                             arraySlice2d< real64 > const & dTractionVector_dJump ) const
+                                             arraySlice2d< real64 > const & dTractionVector_dJump,
+                                             bool const isOpen ) const
 {
   // Initialize everyting to 0
   tractionVector[0] = 0.0;
@@ -209,7 +212,7 @@ void CoulombContactUpdates::computeTraction( localIndex const k,
   tractionVector[2] = 0.0;
   LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
   // If the fracture is open the traction is 0 and so are its derivatives so there is nothing to do
-  if( dispJump[0] < 0.0 )
+  if( !isOpen )
   {
     // normal component of the traction
     tractionVector[0] = m_penaltyStiffness * dispJump[0];

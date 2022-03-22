@@ -85,8 +85,9 @@ public:
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const
-  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump );}
+                                arraySlice2d< real64 > const & dTractionVector_dJump,
+                                bool const isOpen ) const
+  {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, isOpen );}
 
   /**
    * @brief Update the traction with the pressure term

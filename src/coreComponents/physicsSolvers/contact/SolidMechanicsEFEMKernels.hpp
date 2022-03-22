@@ -300,11 +300,15 @@ struct StateUpdateKernel
           arrayView2d< real64 const > const & oldJump,
           arrayView2d< real64 const > const & jump,
           arrayView2d< real64 > const & fractureTraction,
-          arrayView3d< real64 > const & dFractureTraction_dJump )
+          arrayView3d< real64 > const & dFractureTraction_dJump,
+          arrayView1d< integer const > const & fractureState )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      contactWrapper.computeTraction( k, oldJump[k], jump[k], fractureTraction[k], dFractureTraction_dJump[k] );
+      contactWrapper.computeTraction( k, oldJump[k], jump[k],
+                                      fractureTraction[k],
+                                      dFractureTraction_dJump[k],
+                                      fractureState[k] == 3 );
     } );
   }
 

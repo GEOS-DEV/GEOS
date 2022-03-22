@@ -51,6 +51,11 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
+  registerWrapper( viewKeyStruct::initialFractureStateString(), &m_initialFractureState ).
+    setApplyDefaultValue( FractureState::Stick ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "The initial state of fractures. Options are: 0 (stick) or 3 (open). Default value is stick." );  
+
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 }
@@ -60,6 +65,12 @@ void ContactSolverBase::postProcessInput()
 {
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   SolverBase::postProcessInput();
+
+  if ( !compareFractureStates ( m_initialFractureState,  FractureState::Stick ) 
+     || !compareFractureStates ( m_initialFractureState, FractureState::Open ) )
+  {
+    GEOSX_ERROR( " Invalid initial fracture state. Valid options are stick and open." );
+  }
 }
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
@@ -90,31 +101,19 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
             setPlotLevel( PlotLevel::LEVEL_0 ).
-            setApplyDefaultValue( FractureState::Stick ).
+            setApplyDefaultValue( m_initialFractureState ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          initializeFractureState( subRegion, viewKeyStruct::fractureStateString() );
 
           subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
             setPlotLevel( PlotLevel::NOPLOT ).
-            setApplyDefaultValue( FractureState::Stick ).
+            setApplyDefaultValue( m_initialFractureState ).
             setRegisteringObjects( this->getName()).
             setDescription( "An array that holds the fracture state." );
-          initializeFractureState( subRegion, viewKeyStruct::oldFractureStateString() );
-
         } );
       } );
     }
   } );
-}
-
-
-void ContactSolverBase::initializeFractureState( SurfaceElementSubRegion & subRegion,
-                                                 string const & fieldName ) const
-{
-  GEOSX_MARK_FUNCTION;
-  arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-  fractureState.setValues< parallelHostPolicy >( FractureState::Stick );
 }
 
 real64 ContactSolverBase::solverStep( real64 const & time_n,

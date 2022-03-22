@@ -57,19 +57,6 @@ public:
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs ) override;
 
-  struct viewKeyStruct : SolverBase::viewKeyStruct
-  {
-    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
-
-    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
-
-    constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
-
-    constexpr static char const * fractureStateString() { return "fractureState"; }
-
-    constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
-  };
-
   string const & getContactRelationName() const { return m_contactRelationName; }
 
   string const & getFractureRegionName() const { return m_fractureRegionName; }
@@ -111,9 +98,6 @@ protected:
            || ( state0 == FractureState::Slip && state1 == FractureState::NewSlip );
   }
 
-  void initializeFractureState( SurfaceElementSubRegion & subRegion,
-                                string const & fieldName ) const;
-
   void synchronizeFractureState( DomainPartition & domain ) const;
 
   /// Solid mechanics solver name
@@ -127,6 +111,24 @@ protected:
 
   /// contact relation name string
   string m_contactRelationName;
+
+  /// initial fracture State
+  integer m_initialFractureState;
+
+  struct viewKeyStruct : SolverBase::viewKeyStruct
+  {
+    constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
+
+    constexpr static char const * contactRelationNameString() { return "contactRelationName"; }
+
+    constexpr static char const * fractureRegionNameString() { return "fractureRegionName"; }
+
+    constexpr static char const * fractureStateString() { return "fractureState"; }
+
+    constexpr static char const * oldFractureStateString() { return "oldFractureState"; }
+
+    constexpr static char const * initialFractureStateString() { return "initialFractureState"; }
+  };
 };
 
 ENUM_STRINGS( ContactSolverBase::FractureState::State, "stick", "slip", "new_slip", "open" );

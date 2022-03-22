@@ -69,7 +69,8 @@ public:
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
+                                arraySlice2d< real64 > const & dTractionVector_dJump,
+                                bool const isOpen ) const override final;
 
   /**
    * @brief Evaluate the limit tangential traction norm and return the derivative wrt normal traction
@@ -145,16 +146,17 @@ void FrictionlessContactUpdates::computeTraction( localIndex const k,
                                                   arraySlice1d< real64 const > const & oldDispJump,
                                                   arraySlice1d< real64 const > const & dispJump,
                                                   arraySlice1d< real64 > const & tractionVector,
-                                                  arraySlice2d< real64 > const & dTractionVector_dJump ) const
+                                                  arraySlice2d< real64 > const & dTractionVector_dJump,
+                                                  bool const isOpen ) const
 {
   GEOSX_UNUSED_VAR( k, oldDispJump );
 
-  tractionVector[0] = dispJump[0] >= 0 ? 0.0 : m_penaltyStiffness * dispJump[0];
+  tractionVector[0] = isOpen ? 0.0 : m_penaltyStiffness * dispJump[0];
   tractionVector[1] = 0.0;
   tractionVector[2] = 0.0;
 
   LvArray::forValuesInSlice( dTractionVector_dJump, []( real64 & val ){ val = 0.0; } );
-  dTractionVector_dJump( 0, 0 ) = dispJump[0] >=0 ? 0.0 : m_penaltyStiffness;
+  dTractionVector_dJump( 0, 0 ) = isOpen ? 0.0 : m_penaltyStiffness;
 }
 
 
