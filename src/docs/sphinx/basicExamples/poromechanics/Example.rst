@@ -48,7 +48,7 @@ Only the loaded face if permeable to fluid flow, with the remaining parts of
 the boundary subject to roller constraints and impervious.
 
 
-.. _problemSketchFig:
+.. _problemSketchPoromechanicsFig:
 .. figure:: terzaghi_sketch.svg
    :align: center
    :width: 500
@@ -138,10 +138,10 @@ As we have seen before, the coupling solver and the solid mechanics solver requi
 This discretization method is defined here as a finite element method
 using linear basis functions and Gaussian quadrature rules.
 For more information on defining finite elements numerical schemes,
-please see the dedicated :ref:`FiniteElement` section.
+please see the dedicated :ref:`FiniteElement <FiniteElement>` section.
 
 The finite volume method requires the specification of a discretization scheme.
-Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume`).
+Here, we use a two-point flux approximation as described in the dedicated documentation (found here: :ref:`FiniteVolume <FiniteVolume>`).
 
 .. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
   :language: xml
@@ -158,7 +158,7 @@ We use the internal mesh generator to create a beam-like mesh,
 with one single element along the Y and Z axes, and 21 elements along the X axis.
 All the elements are hexahedral elements (C3D8) of the same dimension (1x1x1 meters).
 
-.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_base_direct.xml
+.. literalinclude:: ../../../../../inputFiles/poromechanics/PoroElastic_Terzaghi_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_POROELASTIC_MESH -->
   :end-before: <!-- SPHINX_POROELASTIC_MESH_END -->

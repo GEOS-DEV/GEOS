@@ -168,7 +168,7 @@ def main():
     rlist_node = []
     displist = []
     for i in range(0,len(zcord_node)):
-        if abs(zcord_node[i]/1.0-1.) < 0.01 and abs(xcord_node[i]*tan(theta)/ycord_node[i]-1.)< 0.01:
+        if abs(zcord_node[i]/1.0-1.) < 0.01 and abs(xcord_node[i]*tan(theta)/(ycord_node[i] + 1e-6)-1.)< 0.01:
            rlist_node.append((xcord_node[i]**2+ycord_node[i]**2)**0.5)
            displist.append(disp_Cart[i, :]*1.0e3)            
            

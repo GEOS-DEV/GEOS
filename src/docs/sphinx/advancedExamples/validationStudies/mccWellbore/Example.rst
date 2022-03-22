@@ -30,7 +30,7 @@ Description of the case
 We simulate a drained wellbore problem subjected to isotropic horizontal stress (:math:`\sigma_h`) and vertical stress (:math:`\sigma_v`), as shown below. By increasing the wellbore supporting pressure (:math:`P_w`), the wellbore expands, and the formation rock experiences elastoplastic deformation. A plastic zone develops in the near wellbore region.
 
 
-.. _problemSketchFig:
+.. _problemSketchMccWellFig:
 .. figure:: MCC_wellSketch.png
    :align: center
    :width: 500
@@ -53,7 +53,7 @@ Mesh
 Following figure shows the generated mesh that is used for solving this wellbore problem.
 
 
-.. _problemSketchFig:
+.. _problemSketchMccMeshFig:
 .. figure:: MCC_wellMesh.png
    :align: center
    :width: 500
@@ -197,7 +197,7 @@ Inspecting results
 
 In the above example, we requested silo-format output files. We can therefore import these into VisIt and use python scripts to visualize the outcome. The following figure shows the distribution of :math:`\sigma_{\theta\theta}` in the near wellbore region.
 
-.. _problemVerificationFig1:
+.. _problemVerificationMccFig1:
 .. figure:: MCC_Stress.png
    :align: center
    :width: 1000

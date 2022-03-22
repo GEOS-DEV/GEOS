@@ -31,7 +31,7 @@ Description of the case
 We simulate a hydraulic fracturing experiment within a finite domain made of three layers of polymethylmethacrylate (PMMA). As shown below, we inject viscous fluid to create a single planar fracture in the middle layer. The target layer is bonded weakly to the adjacent layers, so a vertical fracture develops inside the middle layer. Four pressure gages are placed to monitor wellbore pressure (gage 56) and fluid pressure along the fracture length (gage 57, 58, and 59). A linear variable differential transducer (LVDT) measures the fracture aperture at 28.5 mm away from the wellbore. Images are taken at regular time intervals to show the temporal evolution of the fracture extent. All experimental measurements for the time history of pressure, aperture, and length are reported in `Rubin (1983)  <http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=BBFD63D08B444221B5546F7AAC3FC159?doi=10.1.1.1052.2551&rep=rep1&type=pdf>`__. We use GEOSX to reproduce the conditions of this test, including material properties and pumping parameters. In the experiment, the upper and lower layers are used only to restrict the fracture height growth, they are therefore not simulated in GEOSX but are present as boundary conditions. Given the vertical plane of symmetry, only half of the middle layer is modeled. For verification purposes, a plane strain deformation and zero fluid leak-off are considered in the numerical model.
 
 
-.. _problemSketchFig:
+.. _problemSketchKGDFig:
 .. figure:: sketch.png
    :align: center
    :width: 500
@@ -53,7 +53,7 @@ Mesh
 The following figure shows the mesh used in this problem.
 
 
-.. _problemSketchFig:
+.. _problemMeshKGDFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -80,7 +80,7 @@ The fracture plane is defined by a nodeset occupying a small region within the c
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdValidation_benchmark.xml
   :language: xml
   :start-after: <!-- SPHINX_FRACPLANE -->
-  :end-before: <!-- SPHINX_FRACPLANE_END_END -->
+  :end-before: <!-- SPHINX_FRACPLANE_END -->
 
 
 ------------------------
@@ -196,7 +196,7 @@ Inspecting results
 
 The following figure shows the distribution of :math:`\sigma_{yy}` at :math:`t=100 s` within the computational domain..
 
-.. _problemVerificationFig1:
+.. _problemVerificationKGDFig1:
 .. figure:: syy.png
    :align: center
    :width: 1000

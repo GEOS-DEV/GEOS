@@ -107,7 +107,7 @@ Mesh
 
 Internal mesh generator is used to generate the geometry of this example. The domain size is large enough comparing to the final size of the fracture. A sensitivity analysis has shown that the domain size in the direction perpendicular to the fracture plane, i.e. x-axis, must be at least ten times of the final fracture half-length to minimize the boundary effect. However, smaller size along the fracture plane, i.e. y-axis, of only two times the fracture half-length is good enough. It is also important to note that at least two layers are required in z-axis to ensure a good match between the numerical results and analytical solutions, due to the node based fracture propagation criterion. Also in x-axis, bias parameter ``xBias`` is added for optimizing the mesh by refining the elements near the fracture plane.
 
-.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_base.xml
+.. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/kgdToughnessDominated_benchmark.xml
   :language: xml
   :start-after: <!-- Sphinx_Mesh_InternalMesh -->
   :end-before:  <!-- Sphinx_Mesh_InternalMesh_End -->

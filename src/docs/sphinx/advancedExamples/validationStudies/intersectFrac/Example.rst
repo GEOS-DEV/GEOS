@@ -32,7 +32,7 @@ Description of the case
 We simulate two intersecting fractures under a remote compressive stress constraint, as shown below. The two fractures sit in an infinite, homogeneous, isotropic, and elastic medium. The vertical fracture is internally pressurized and perpendicularly intersects the middle of the horizontal fracture. A combination of uniaxial compression, frictional contact, and opening of the vertical fracture causes mechanical deformations of the surrounding rock, thus leads to sliding of the horizontal fracture. For verification purposes, a plane strain deformation and Coulomb failure criterion are considered in this numerical model.
 
 
-.. _problemSketchFig:
+.. _problemSketchIntersectFracFig:
 .. figure:: sketch.png
    :align: center
    :width: 500
@@ -55,7 +55,7 @@ Mesh
 The following figure shows the mesh used in this problem.
 
 
-.. _problemSketchFig:
+.. _problemMeshIntersectFracFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -104,7 +104,7 @@ To setup a coupling between rock and fracture deformations, we define three diff
 
 - For solving the frictional contact, we define a Lagrangian contact solver, called here ``lagrangiancontact``. In this solver, we specify ``targetRegions`` that include both the continuum region ``Region`` and the discontinuum region ``Fracture``  where the solver is applied to couple rock and fracture deformations. The contact constitutive law used for the fracture elements is named ``fractureMaterial``,  and is defined later in the ``Constitutive`` section. 
 
-- Rock deformations are handled by a solid mechanics solver ``SolidMechanics_LagrangianFEM``. This solid mechanics solver (see :ref:`SolidMechanics_LagrangianFEM`) is based on the Lagrangian finite element formulation. The problem runs in ``QuasiStatic`` mode without inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock`` and its mechanical properties are specified later in the ``Constitutive`` section.
+- Rock deformations are handled by a solid mechanics solver ``SolidMechanics_LagrangianFEM``. This solid mechanics solver (see :ref:`SolidMechanicsLagrangianFEM <SolidMechanicsLagrangianFEM>`) is based on the Lagrangian finite element formulation. The problem runs in ``QuasiStatic`` mode without inertial effects. The computational domain is discretized by ``FE1``, which is defined in the ``NumericalMethods`` section. The solid material is named ``rock`` and its mechanical properties are specified later in the ``Constitutive`` section.
 
 - The solver ``SurfaceGenerator`` defines the fracture region and rock toughness.
 
@@ -207,7 +207,7 @@ Inspecting results
 We request VTK-format output files and use Paraview to visualize the results.
 The following figure shows the distribution of :math:`\sigma_{xx}` in the computational domain.
 
-.. _problemVerificationFig1:
+.. _problemVerificationIntersectFracFig1:
 .. figure:: sxx.png
    :align: center
    :width: 1000
@@ -218,7 +218,7 @@ The following figure shows the distribution of :math:`\sigma_{xx}` in the comput
 
 The next figure shows the distribution of relative shear displacement values along the surface of two intersected fractures.
 
-.. _problemVerificationFig1:
+.. _problemVerificationIntersectFracFig2:
 .. figure:: slip.png
    :align: center
    :width: 1000

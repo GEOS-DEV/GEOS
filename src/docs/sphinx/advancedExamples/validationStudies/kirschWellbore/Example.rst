@@ -30,7 +30,7 @@ Description of the case
 
 We solve a drained wellbore problem subjected to anisotropic horizontal stress (:math:`\sigma_{xx}` and :math:`\sigma_{yy}`) as shown below. This is a vertical wellbore drilled in an infinite, homogeneous, isotropic, and elastic medium. Far-field in-situ stresses and internal supporting pressure acting at the circular cavity cause a mechanical deformation of the reservoir rock and stress concentration in the near-wellbore region. For verification purpose, a plane strain condition is considered for the numerical model. 
 
-.. _problemSketchFig:
+.. _problemSketchKirschWellboreFig:
 .. figure:: wellSketch.png
    :align: center
    :width: 500
@@ -69,7 +69,7 @@ Mesh
 Following figure shows the generated mesh that is used for solving this wellbore problem.
 
 
-.. _problemSketchFig:
+.. _problemMeshKirschWellboreFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -213,7 +213,7 @@ Inspecting results
 
 In the above examples, we request VTK output files that can be imported into Paraview to visualize the outcome. The following figure shows the distribution of :math:`\sigma_{xx}` in the near wellbore region.
 
-.. _problemVerificationFig1:
+.. _problemVerificationKirschWellboreSxx:
 .. figure:: sxx.png
    :align: center
    :width: 1000

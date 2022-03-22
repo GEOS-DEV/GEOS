@@ -79,7 +79,7 @@ Mesh
 The following figure shows the mesh used in this problem.
 
 
-.. _problemSketchFig:
+.. _problemMeshMandelFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -121,24 +121,24 @@ As demonstrated in this example, to setup a poromechanical coupling, we need to 
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_WELLBORE_MECHANICALSOLVER -->
-  :end-before: <!-- SPHINX_WELLBORE_MECHANICALSOLVER_END -->
+  :start-after: <!-- SPHINX_MECHANICALSOLVER -->
+  :end-before: <!-- SPHINX_MECHANICALSOLVER_END -->
 
 
 - the single-phase flow solver, a solver of type ``SinglePhaseFVM`` called here ``SinglePhaseFlow`` (more information on these solvers at :ref:`SinglePhaseFlow`),
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM -->
-  :end-before: <!-- SPHINX_WELLBORE_SINGLEPHASEFVM_END -->
+  :start-after: <!-- SPHINX_SINGLEPHASEFVM -->
+  :end-before: <!-- SPHINX_SINGLEPHASEFVM_END -->
 
 
 - the coupling solver (``SinglePhasePoromechanics``) that will bind the two single-physics solvers above, which is named as ``poroSolve`` (more information at :ref:`PoroelasticSolver`).
 
 .. literalinclude:: ../../../../../../inputFiles/poromechanics/PoroElastic_Mandel_base.xml
   :language: xml
-  :start-after: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER -->
-  :end-before: <!-- SPHINX_WELLBORE_POROMECHANICSSOLVER_END -->
+  :start-after: <!-- SPHINX_POROMECHANICSSOLVER -->
+  :end-before: <!-- SPHINX_POROMECHANICSSOLVER_END -->
 
 
 The two single-physics solvers are parameterized as explained
@@ -243,7 +243,7 @@ Inspecting results
 We request VTK-format output files and use Paraview to visualize the results.
 The following figure shows the distribution of pore pressure (:math:`p(x,z,t)`) at :math:`t=10 s` within the computational domain.
 
-.. _problemVerificationFig1:
+.. _problemVerificationMandelFig1:
 .. figure:: pressure.png
    :align: center
    :width: 1000
@@ -254,7 +254,7 @@ The following figure shows the distribution of pore pressure (:math:`p(x,z,t)`) 
 
 The next figure shows the distribution of vertical displacement (:math:`u_z(x,z,t)`) at :math:`t=10 s`.
 
-.. _problemVerificationFig2:
+.. _problemVerificationMandelFig2:
 .. figure:: disp.png
    :align: center
    :width: 1000
