@@ -715,62 +715,6 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   }
 }
 
-//In Progress: Cameron Crook (crook5)
-template< class SUBREGION >
-void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & region,
-                                                     vtkCellData & cellData ) const
-{
-  std::unordered_set< string > materialFields;
-  conduit::Node fakeRoot;
-  Group materialData( "materialData", fakeRoot );
-  region.forElementSubRegions< SUBREGION >( [&]( SUBREGION const & subRegion )
-  {
-    // Register a dummy group for each subregion
-    Group & subReg = materialData.registerGroup( subRegion.getName() );
-    subReg.resize( subRegion.size() );
-
-    // Collect a list of plotted constitutive fields and create wrappers containing averaged data
-    subRegion.getConstitutiveModels().forSubGroups( [&]( Group const & material )
-    {
-      material.forWrappers( [&]( WrapperBase const & wrapper )
-      {
-        if( wrapper.getPlotLevel() <= m_plotLevel )
-        {
-          string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
-          subReg.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, subReg ) );
-          materialFields.insert( fieldName );
-        }
-      } );
-    } );
-  } );
-
-  // Write averaged material data
-  for( string const & field : materialFields )
-  {
-    writeElementField( materialData, field, cellData );
-  }
-
-  // Collect a list of regular fields (filter out material field wrappers)
-  // TODO: this can be removed if we stop hanging constitutive wrappers on the mesh
-  std::unordered_set< string > regularFields;
-  region.forElementSubRegions< SUBREGION >( [&]( ElementSubRegionBase const & subRegion )
-  {
-    for( auto const & wrapperIter : subRegion.wrappers() )
-    {
-      if( wrapperIter.second->getPlotLevel() <= m_plotLevel && materialFields.count( wrapperIter.first ) == 0 )
-      {
-        regularFields.insert( wrapperIter.first );
-      }
-    }
-  } );
-
-  // Write regular fields
-  for( string const & field : regularFields )
-  {
-    writeElementField< SUBREGION >( region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() ), field, cellData );
-  }
-}
-
 void VTKPolyDataWriterInterface::writeCellElementRegions( real64 const time,
                                                           ElementRegionManager const & elemManager,
                                                           NodeManager const & nodeManager ) const
