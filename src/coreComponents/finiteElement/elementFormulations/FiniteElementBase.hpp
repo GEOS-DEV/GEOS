@@ -287,15 +287,26 @@ public:
    * @brief Add stabilization of grad-grad bilinear form to input matrix.
    * @tparam LEAF Type of the derived finite element implementation.
    * @tparam MATRIXTYPE Type of the matrix to be filled.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables created by a call to @ref setup.
    * @param matrix The input matrix to which values have to be added.
+   * @param scaleFactor Optional scaling of the stabilization matrix.
+   * @param rowOffset Optional row index from which to start adding.
+   * @param colOffset Optional column index from which to start adding.
    */
-  template< typename LEAF, typename MATRIXTYPE >
+  template< typename LEAF, typename MATRIXTYPE, bool UPPER = false >
   GEOSX_HOST_DEVICE
   void addGradGradStabilizationMatrix( typename LEAF::StackVariables const & stack,
-                                       MATRIXTYPE & matrix ) const
+                                       MATRIXTYPE & matrix,
+                                       real64 const scaleFactor = 1.0,
+                                       localIndex const rowOffset = 0,
+                                       localIndex const colOffset = 0 ) const
   {
-    LEAF::addGradGradStabilization( stack, matrix );
+    LEAF::template addGradGradStabilization< MATRIXTYPE, UPPER >( stack,
+                                                                  matrix,
+                                                                  scaleFactor,
+                                                                  rowOffset,
+                                                                  colOffset );
   }
 
   /**

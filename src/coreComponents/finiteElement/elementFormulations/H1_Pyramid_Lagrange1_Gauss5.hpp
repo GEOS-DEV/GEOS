@@ -208,14 +208,21 @@ public:
    * @brief Empty method, here for compatibility with methods that require a stabilization of the
    * grad-grad bilinear form.
    * @tparam MATRIXTYPE The type of @p matrix.
+   * @tparam UPPER If true only the upper triangular part of @p matrix is modified.
    * @param stack Stack variables as filled by @ref setupStack.
    * @param matrix The matrix that needs to be stabilized.
+   * @param scaleFactor Optional scaling of the stabilization matrix.
+   * @param rowOffset Optional row index from which to start adding.
+   * @param colOffset Optional column index from which to start adding.
    */
-  template< typename MATRIXTYPE >
+  template< typename MATRIXTYPE, bool UPPER >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void addGradGradStabilization( StackVariables const & stack,
-                                        MATRIXTYPE & matrix );
+                                        MATRIXTYPE & matrix,
+                                        real64 const scaleFactor,
+                                        localIndex const rowOffset,
+                                        localIndex const colOffset );
 
   /**
    * @brief Calculates the isoparametric "Jacobian" transformation
@@ -408,13 +415,22 @@ void H1_Pyramid_Lagrange1_Gauss5::
               StackVariables & GEOSX_UNUSED_PARAM( stack ) )
 {}
 
-template< typename MATRIXTYPE >
+template< typename MATRIXTYPE, bool UPPER >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void H1_Pyramid_Lagrange1_Gauss5::
-  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
-                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
-{}
+  addGradGradStabilization( StackVariables const & stack,
+                            MATRIXTYPE & matrix,
+                            real64 const scaleFactor,
+                            localIndex const rowOffset,
+                            localIndex const colOffset )
+{
+  GEOSX_UNUSED_VAR( stack );
+  GEOSX_UNUSED_VAR( matrix );
+  GEOSX_UNUSED_VAR( scaleFactor );
+  GEOSX_UNUSED_VAR( rowOffset );
+  GEOSX_UNUSED_VAR( colOffset );
+}
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
