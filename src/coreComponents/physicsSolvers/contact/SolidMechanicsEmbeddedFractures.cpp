@@ -30,9 +30,11 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMKernels.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp"
-#include "physicsSolvers/solidMechanics/SolidMechanicsEFEMJumpUpdateKernels.hpp"
+#include "common/GEOS_RAJA_Interface.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
+#include "physicsSolvers/contact/SolidMechanicsEFEMKernels.hpp"
+#include "physicsSolvers/contact/SolidMechanicsEFEMStaticCondensationKernels.hpp"
+#include "physicsSolvers/contact/SolidMechanicsEFEMJumpUpdateKernels.hpp"
 
 namespace geosx
 {
@@ -42,31 +44,16 @@ using namespace constitutive;
 
 SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string & name,
                                                                   Group * const parent ):
-  SolverBase( name, parent ),
-  m_solidSolverName(),
-  m_fractureRegionName(),
-  m_solidSolver( nullptr ),
-  m_useStaticCondensation()
+  ContactSolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the solid mechanics solver in the rock matrix" );
-
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fracture region." );
-
-  registerWrapper( viewKeyStruct::contactRelationNameString(), &m_contactRelationName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
   registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
     setDescription( "Defines whether to use static condensation or not." );
-
-  this->getWrapper< string >( viewKeyStruct::discretizationString() ).
-    setInputFlag( InputFlags::FALSE );
 }
 
 SolidMechanicsEmbeddedFractures::~SolidMechanicsEmbeddedFractures()
@@ -96,6 +83,10 @@ void SolidMechanicsEmbeddedFractures::postProcessInput()
 
 void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
+  ContactSolverBase::registerDataOnMesh( meshBodies );
+
+  using namespace extrinsicMeshData::contact;
+
   forMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & regionNames )
@@ -103,20 +94,7 @@ void SolidMechanicsEmbeddedFractures::registerDataOnMesh( dataRepository::Group 
     ElementRegionManager & elemManager = mesh.getElemManager();
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&] ( localIndex const, EmbeddedSurfaceSubRegion & subRegion )
     {
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::dispJumpString() ).
-        setPlotLevel( PlotLevel::LEVEL_0 ).
-        reference().resizeDimension< 1 >( 3 );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::deltaDispJumpString() ).
-        reference().resizeDimension< 1 >( 3 );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::oldDispJumpString() ).
-        reference().resizeDimension< 1 >( 3 );
-
-      subRegion.registerWrapper< array2d< real64 > >( viewKeyStruct::fractureTractionString() ).
-        reference().resizeDimension< 1 >( 3 );
-
-      subRegion.registerWrapper< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() ).
+      subRegion.registerExtrinsicData< dTraction_dJump >( getName() ).
         reference().resizeDimension< 1, 2 >( 3, 3 );
     } );
   } );
@@ -157,8 +135,8 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
     SurfaceElementRegion & region = elemManager.getRegion< SurfaceElementRegion >( m_fractureRegionName );
     EmbeddedSurfaceSubRegion & subRegion = region.getSubRegion< EmbeddedSurfaceSubRegion >( 0 );
 
-    arrayView2d< real64 > oldDispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
-    arrayView2d< real64 const > const dispJump = subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+    arrayView2d< real64 > oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+    arrayView2d< real64 const > const dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(),
                                       [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -166,37 +144,6 @@ void SolidMechanicsEmbeddedFractures::implicitStepComplete( real64 const & time_
       LvArray::tensorOps::copy< 3 >( oldDispJump[k], dispJump[k] );
     } );
   } );
-}
-
-real64 SolidMechanicsEmbeddedFractures::solverStep( real64 const & time_n,
-                                                    real64 const & dt,
-                                                    int const cycleNumber,
-                                                    DomainPartition & domain )
-{
-  real64 dtReturn = dt;
-
-  implicitStepSetup( time_n,
-                     dt,
-                     domain );
-
-  setupSystem( domain,
-               m_dofManager,
-               m_localMatrix,
-               m_rhs,
-               m_solution );
-
-  // currently the only method is implicit time integration
-  dtReturn = this->nonlinearImplicitStep( time_n,
-                                          dt,
-                                          cycleNumber,
-                                          domain );
-
-  // m_solidSolver->updateStress( domain );
-
-  // final step for completion of timestep. typically secondary variable updates and cleanup.
-  implicitStepComplete( time_n, dtReturn, domain );
-
-  return dtReturn;
 }
 
 void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
@@ -223,13 +170,13 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
       meshTargets[meshBodyName] = std::move( regions );
     } );
 
-    dofManager.addField( viewKeyStruct::dispJumpString(),
+    dofManager.addField( extrinsicMeshData::contact::dispJump::key(),
                          DofManager::Location::Elem,
                          3,
                          meshTargets );
 
-    dofManager.addCoupling( viewKeyStruct::dispJumpString(),
-                            viewKeyStruct::dispJumpString(),
+    dofManager.addCoupling( extrinsicMeshData::contact::dispJump::key(),
+                            extrinsicMeshData::contact::dispJump::key(),
                             DofManager::Connector::Elem );
   }
 }
@@ -331,7 +278,7 @@ void SolidMechanicsEmbeddedFractures::assembleSystem( real64 const time,
 
     if( !m_useStaticCondensation )
     {
-      string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+      string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
       arrayView1d< globalIndex const > const jumpDofNumber = subRegion.getReference< globalIndex_array >( jumpDofKey );
 
       solidMechanicsEFEMKernels::EFEMFactory kernelFactory( subRegion,
@@ -392,7 +339,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingNumNonzeros( DomainPartition & 
     NodeManager const & nodeManager          = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+    string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
     string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
     arrayView1d< globalIndex const > const &
@@ -460,7 +407,7 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
     NodeManager const & nodeManager          = mesh.getNodeManager();
     ElementRegionManager const & elemManager = mesh.getElemManager();
 
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+    string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
     string const dispDofKey = dofManager.getKey( keys::TotalDisplacement );
 
     arrayView1d< globalIndex const > const &
@@ -542,25 +489,6 @@ void SolidMechanicsEmbeddedFractures::addCouplingSparsityPattern( DomainPartitio
 
 }
 
-void SolidMechanicsEmbeddedFractures::applyBoundaryConditions( real64 const time,
-                                                               real64 const dt,
-                                                               DomainPartition & domain,
-                                                               DofManager const & dofManager,
-                                                               CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                               arrayView1d< real64 > const & localRhs )
-{
-  GEOSX_MARK_FUNCTION;
-
-  m_solidSolver->applyBoundaryConditions( time,
-                                          dt,
-                                          domain,
-                                          dofManager,
-                                          localMatrix,
-                                          localRhs );
-
-
-}
-
 void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
                                                        real64 const dt,
                                                        DomainPartition & domain )
@@ -570,7 +498,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
   fsManager.apply( time_n+ dt,
                    domain,
                    "ElementRegions",
-                   viewKeyStruct::fractureTractionString(),
+                   extrinsicMeshData::contact::traction::key(),
                    [&] ( FieldSpecificationBase const & fs,
                          string const &,
                          SortedArrayView< localIndex const > const & targetSet,
@@ -580,7 +508,7 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
     fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
                                                                        time_n+dt,
                                                                        subRegion,
-                                                                       viewKeyStruct::fractureTractionString() );
+                                                                       extrinsicMeshData::contact::traction::key() );
   } );
 
 }
@@ -597,7 +525,7 @@ real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition c
   if( !m_useStaticCondensation )
   {
 
-    string const jumpDofKey = dofManager.getKey( viewKeyStruct::dispJumpString() );
+    string const jumpDofKey = dofManager.getKey( extrinsicMeshData::contact::dispJump::key() );
 
     globalIndex const rankOffset = dofManager.rankOffset();
 
@@ -692,9 +620,9 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
 
   if( !m_useStaticCondensation )
   {
-    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::deltaDispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::deltaDispJump::key(), -scalingFactor );
 
-    dofManager.addVectorToField( localSolution, viewKeyStruct::dispJumpString(), viewKeyStruct::dispJumpString(), -scalingFactor );
+    dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::dispJump::key(), extrinsicMeshData::contact::dispJump::key(), -scalingFactor );
   }
   else
   {
@@ -707,8 +635,8 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                 arrayView1d< string const > const & )
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( viewKeyStruct::dispJumpString() ) );
-    fieldNames["elems"].emplace_back( string( viewKeyStruct::deltaDispJumpString() ) );
+    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::dispJump::key() ) );
+    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaDispJump::key()) );
     CommunicationTools::getInstance().synchronizeFields( fieldNames,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -775,16 +703,16 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
       arrayView2d< real64 const > const & jump  =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::dispJumpString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
 
       arrayView2d< real64 const > const & oldJump  =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::oldDispJumpString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
 
       arrayView2d< real64 > const & fractureTraction =
-        subRegion.getReference< array2d< real64 > >( viewKeyStruct::fractureTractionString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
 
       arrayView3d< real64 > const & dFractureTraction_dJump =
-        subRegion.getReference< array3d< real64 > >( viewKeyStruct::dTraction_dJumpString() );
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -801,6 +729,12 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
       } );
     } );
   } );
+}
+
+bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR( domain );
+  return true;
 }
 
 

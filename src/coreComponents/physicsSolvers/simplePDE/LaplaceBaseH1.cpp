@@ -213,14 +213,14 @@ void LaplaceBaseH1::
    This method is simply initiating the solution and right-hand side
    and pass it to the base class solver.
  */
-void LaplaceBaseH1::solveSystem( DofManager const & dofManager,
-                                 ParallelMatrix & matrix,
-                                 ParallelVector & rhs,
-                                 ParallelVector & solution )
+void LaplaceBaseH1::solveLinearSystem( DofManager const & dofManager,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution )
 {
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )

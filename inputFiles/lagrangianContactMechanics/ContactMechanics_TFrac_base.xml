@@ -9,12 +9,12 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
+        maxNumConfigurationAttempts="10"
         newtonMaxIter="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
