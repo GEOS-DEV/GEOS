@@ -74,7 +74,7 @@ def main():
     lw=8
     mew=2
     malpha = 1.0
-    lablelist = ['Asymptotic ($\mu$ => 0, $C_{L}$ => 0 )', 'GEOSX ($\mu$ => 0, $C_{L}$ => 0 )']
+    lablelist = ['Asymptotic ( $\mu$ => 0, $C_{L}$ => 0 )', 'GEOSX ( $\mu$ => 0, $C_{L}$ => 0 )']
     
     fig, ax = plt.subplots(2,2,figsize=(24, 18))
     cmap = plt.get_cmap("tab10")
