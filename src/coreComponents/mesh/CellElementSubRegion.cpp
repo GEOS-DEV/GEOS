@@ -104,19 +104,19 @@ std::set< string > CellElementSubRegion::getPackingExclusionList() const
 localIndex CellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 
 localIndex CellElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
                                                  arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                        arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex CellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                     arrayView1d< localIndex const > const & packList ) const
 {
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
@@ -125,27 +125,27 @@ localIndex CellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buf
   arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
 
-  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer,
-                                                     nodeList().base().toViewConst(),
-                                                     m_unmappedGlobalIndicesInNodelist,
-                                                     packList,
-                                                     localToGlobal,
-                                                     nodeLocalToGlobal );
+  localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer,
+                                                         nodeList().base().toViewConst(),
+                                                         m_unmappedGlobalIndicesInNodelist,
+                                                         packList,
+                                                         localToGlobal,
+                                                         nodeLocalToGlobal );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           edgeList().base().toViewConst(),
-                                           m_unmappedGlobalIndicesInEdgelist,
-                                           packList,
-                                           localToGlobal,
-                                           edgeLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               edgeList().base().toViewConst(),
+                                               m_unmappedGlobalIndicesInEdgelist,
+                                               packList,
+                                               localToGlobal,
+                                               edgeLocalToGlobal );
 
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           faceList().base().toViewConst(),
-                                           m_unmappedGlobalIndicesInFacelist,
-                                           packList,
-                                           localToGlobal,
-                                           faceLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               faceList().base().toViewConst(),
+                                               m_unmappedGlobalIndicesInFacelist,
+                                               packList,
+                                               localToGlobal,
+                                               faceLocalToGlobal );
 
   return packedSize;
 }
@@ -184,7 +184,7 @@ localIndex CellElementSubRegion::packFracturedElementsSize( arrayView1d< localIn
                                                             arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packFracturedElementsPrivate< false >( junk, packList, embeddedSurfacesLocalToGlobal );
+  return packFracturedElementsImpl< false >( junk, packList, embeddedSurfacesLocalToGlobal );
 }
 
 
@@ -192,13 +192,13 @@ localIndex CellElementSubRegion::packFracturedElements( buffer_unit_type * & buf
                                                         arrayView1d< localIndex const > const & packList,
                                                         arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
-  return packFracturedElementsPrivate< true >( buffer, packList, embeddedSurfacesLocalToGlobal );
+  return packFracturedElementsImpl< true >( buffer, packList, embeddedSurfacesLocalToGlobal );
 }
 
-template< bool DOPACK >
-localIndex CellElementSubRegion::packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                                               arrayView1d< localIndex const > const & packList,
-                                                               arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
+template< bool DO_PACKING >
+localIndex CellElementSubRegion::packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                                            arrayView1d< localIndex const > const & packList,
+                                                            arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const
 {
   localIndex packedSize = 0;
 
@@ -207,19 +207,19 @@ localIndex CellElementSubRegion::packFracturedElementsPrivate( buffer_unit_type 
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::toEmbSurfString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           embeddedSurfacesList().base().toViewConst(),
-                                           unmappedGlobalIndices,
-                                           packList,
-                                           localToGlobal,
-                                           embeddedSurfacesLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::toEmbSurfString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               embeddedSurfacesList().base().toViewConst(),
+                                               unmappedGlobalIndices,
+                                               packList,
+                                               localToGlobal,
+                                               embeddedSurfacesLocalToGlobal );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::fracturedCellsString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_fracturedCells.toViewConst(),
-                                           packList,
-                                           localToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::fracturedCellsString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_fracturedCells.toViewConst(),
+                                               packList,
+                                               localToGlobal );
 
   return packedSize;
 }
