@@ -344,16 +344,16 @@ real64 ReservoirSolverBase::calculateResidualNorm( DomainPartition const & domai
   return sqrt( reservoirResidualNorm * reservoirResidualNorm + wellResidualNorm * wellResidualNorm );
 }
 
-void ReservoirSolverBase::solveSystem( DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
+void ReservoirSolverBase::solveLinearSystem( DofManager const & dofManager,
+                                             ParallelMatrix & matrix,
+                                             ParallelVector & rhs,
+                                             ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 bool ReservoirSolverBase::checkSystemSolution( DomainPartition const & domain,
