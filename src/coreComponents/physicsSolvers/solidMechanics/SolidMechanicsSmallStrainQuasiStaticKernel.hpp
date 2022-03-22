@@ -251,7 +251,8 @@ public:
                               STRESS_MODIFIER && stressModifier = NoOpFunctors{} ) const
   {
     real64 dNdX[ numNodesPerElem ][ 3 ];
-    real64 const detJ = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal, dNdX );
+    real64 const detJxW = m_finiteElementSpace.template getGradN< FE_TYPE >( k, q, stack.xLocal,
+                                                                             stack.feStack, dNdX );
 
     real64 strainInc[6] = {0};
     real64 stress[6] = {0};
@@ -265,21 +266,47 @@ public:
     stressModifier( stress );
     for( localIndex i=0; i<6; ++i )
     {
-      stress[i] *= -detJ;
+      stress[i] *= -detJxW;
     }
 
-    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJ,
-                                     m_gravityVector[1] * m_density( k, q )* detJ,
-                                     m_gravityVector[2] * m_density( k, q )* detJ };
+    real64 const gravityForce[3] = { m_gravityVector[0] * m_density( k, q )* detJxW,
+                                     m_gravityVector[1] * m_density( k, q )* detJxW,
+                                     m_gravityVector[2] * m_density( k, q )* detJxW };
 
     real64 N[numNodesPerElem];
-    FE_TYPE::calcN( q, N );
+    FE_TYPE::calcN( q, stack.feStack, N );
     FE_TYPE::plusGradNajAijPlusNaFi( dNdX,
                                      stress,
                                      N,
                                      gravityForce,
                                      reinterpret_cast< real64 (&)[numNodesPerElem][3] >(stack.localResidual) );
-    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJ, stack.localJacobian );
+    stiffness.template upperBTDB< numNodesPerElem >( dNdX, -detJxW, stack.localJacobian );
+
+    // Add stabilization to block diagonal parts of the local jacobian
+    // (this is a no-operation with FEM classes)
+    localIndex const numSupportPoints =
+      m_finiteElementSpace.template numSupportPoints< FE_TYPE >( stack.feStack );
+    m_finiteElementSpace.template addGradGradStabilizationMatrix
+    < FE_TYPE,
+      real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
+      [numNodesPerElem *numDofPerTestSupportPoint],
+      true >( stack.feStack,
+              stack.localJacobian,
+              0, 0 );
+    m_finiteElementSpace.template addGradGradStabilizationMatrix
+    < FE_TYPE,
+      real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
+      [numNodesPerElem *numDofPerTestSupportPoint],
+      true >( stack.feStack,
+              stack.localJacobian,
+              numSupportPoints, numSupportPoints );
+    m_finiteElementSpace.template addGradGradStabilizationMatrix
+    < FE_TYPE,
+      real64 ( & ) [numNodesPerElem *numDofPerTestSupportPoint]
+      [numNodesPerElem *numDofPerTestSupportPoint],
+      true >( stack.feStack,
+              stack.localJacobian,
+              2*numSupportPoints, 2*numSupportPoints );
   }
 
   /**
