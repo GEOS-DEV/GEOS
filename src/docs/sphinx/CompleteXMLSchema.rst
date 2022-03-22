@@ -603,6 +603,27 @@ Element: ParticleFluid
 .. include:: ../../coreComponents/schema/docs/ParticleFluid.rst
 
 
+.. _XML_ParticleMesh:
+
+Element: ParticleMesh
+=====================
+.. include:: ../../coreComponents/schema/docs/ParticleMesh.rst
+
+
+.. _XML_ParticleRegion:
+
+Element: ParticleRegion
+=======================
+.. include:: ../../coreComponents/schema/docs/ParticleRegion.rst
+
+
+.. _XML_ParticleRegions:
+
+Element: ParticleRegions
+========================
+.. include:: ../../coreComponents/schema/docs/ParticleRegions.rst
+
+
 .. _XML_Perforation:
 
 Element: Perforation
@@ -1622,6 +1643,27 @@ Datastructure: ParticleFluid
 .. include:: ../../coreComponents/schema/docs/ParticleFluid_other.rst
 
 
+.. _DATASTRUCTURE_ParticleMesh:
+
+Datastructure: ParticleMesh
+===========================
+.. include:: ../../coreComponents/schema/docs/ParticleMesh_other.rst
+
+
+.. _DATASTRUCTURE_ParticleRegion:
+
+Datastructure: ParticleRegion
+=============================
+.. include:: ../../coreComponents/schema/docs/ParticleRegion_other.rst
+
+
+.. _DATASTRUCTURE_ParticleRegions:
+
+Datastructure: ParticleRegions
+==============================
+.. include:: ../../coreComponents/schema/docs/ParticleRegions_other.rst
+
+
 .. _DATASTRUCTURE_Perforation:
 
 Datastructure: Perforation
@@ -2007,20 +2049,6 @@ Datastructure: WellElementRegionuniqueSubRegion
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
 
 
-.. _DATASTRUCTURE_cellBlocks:
-
-Datastructure: cellBlocks
-=========================
-.. include:: ../../coreComponents/schema/docs/cellBlocks_other.rst
-
-
-.. _DATASTRUCTURE_cellManager:
-
-Datastructure: cellManager
-==========================
-.. include:: ../../coreComponents/schema/docs/cellManager_other.rst
-
-
 .. _DATASTRUCTURE_commandLine:
 
 Datastructure: commandLine
@@ -2096,6 +2124,20 @@ Datastructure: neighborData
 Datastructure: nodeManager
 ==========================
 .. include:: ../../coreComponents/schema/docs/nodeManager_other.rst
+
+
+.. _DATASTRUCTURE_particleRegionsGroup:
+
+Datastructure: particleRegionsGroup
+===================================
+.. include:: ../../coreComponents/schema/docs/particleRegionsGroup_other.rst
+
+
+.. _DATASTRUCTURE_particleSubRegions:
+
+Datastructure: particleSubRegions
+=================================
+.. include:: ../../coreComponents/schema/docs/particleSubRegions_other.rst
 
 
 .. _DATASTRUCTURE_quartz:
