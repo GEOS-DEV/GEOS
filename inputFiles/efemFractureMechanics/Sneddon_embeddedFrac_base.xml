@@ -12,7 +12,7 @@
       solidSolverName="matrixSolver"
       contactRelationName="fractureContact"
       logLevel="1"
-      initialFractureState="stick">
+      initialFractureState="open">
       <NonlinearSolverParameters
         newtonTol="1.0e-6"
         newtonMaxIter="2"

@@ -109,6 +109,37 @@ void SolidMechanicsEmbeddedFractures::resetStateToBeginningOfStep( DomainPartiti
 {
   m_solidSolver->resetStateToBeginningOfStep( domain );
 
+  // reset displacementJump
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
+                                                                                    EmbeddedSurfaceSubRegion & subRegion )
+    {
+      arrayView2d< real64 > const & jump  =
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+
+      arrayView2d< real64 const > const & oldJump  =
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+
+      arrayView2d< real64 > const & deltaJump  =
+        subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaDispJump >();
+
+
+      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const kfe )
+      {
+        for( localIndex i = 0; i < 3; ++i )
+        {
+          jump( kfe, i ) = oldJump( kfe, i );
+          deltaJump( kfe, i ) = 0.0;
+        }
+      } );
+    } );
+  } );
+
   updateState( domain );
 }
 
@@ -786,6 +817,10 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                          1,
                          MPI_LAND,
                          MPI_COMM_GEOSX );
+  
+  // for this solver it makes sense to reset the state.
+  if ( !hasConfigurationConvergedGlobally )
+    resetStateToBeginningOfStep( domain );
 
   return hasConfigurationConvergedGlobally;
 }

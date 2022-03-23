@@ -97,12 +97,9 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
           subRegion.registerExtrinsicData< traction >( getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< fractureState >( getName() ).
-            setApplyDefaultValue( m_initialFractureState );
+          subRegion.registerExtrinsicData< fractureState >( getName() );
 
-
-          subRegion.registerExtrinsicData< oldFractureState >( getName() ).
-            setApplyDefaultValue( m_initialFractureState );
+          subRegion.registerExtrinsicData< oldFractureState >( getName() );
         } );
       } );
     }
