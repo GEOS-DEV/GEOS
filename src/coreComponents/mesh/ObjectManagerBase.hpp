@@ -96,14 +96,14 @@ public:
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.
-   * @tparam DOPACK Template parameter that decides at compile time whether one should actually pack or not.
+   * @tparam DO_PACKING Template parameter that decides at compile time whether one should actually pack or not.
    * @param buffer The buffer that will store the packed data.
    * @param packList The elements of each set that should be packed.
    * @return The size of the (potentially) packed data.
    *
-   * Note that the returned value does not depend on parameter @p DOPACK.
+   * Note that the returned value does not depend on parameter @p DO_PACKING.
    */
-  template< bool DOPACK >
+  template< bool DO_PACKING >
   localIndex packSets( buffer_unit_type * & buffer,
                        arrayView1d< localIndex const > const & packList ) const;
 
@@ -115,13 +115,10 @@ public:
   localIndex unpackSets( buffer_unit_type const * & buffer );
 
   /**
-   * @brief Inserts in @p exclusionList the data that shall not be packed.
-   * @param[in,out] exclusionList Will receive the wrapper indices of the data that should not be packed.
-   *
-   * Note that data will be inserted into @p exclusionList
-   * and that data previously present in @p exclusionList may remain.
+   * @brief Gets the wrapper names that should not be packed.
+   * @return The set of names.
    */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const;
+  virtual std::set< string > getPackingExclusionList() const;
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.
@@ -212,7 +209,7 @@ public:
   localIndex packParentChildMapsSize( arrayView1d< localIndex const > const & packList ) const
   {
     buffer_unit_type * buffer = nullptr;
-    return packParentChildMapsPrivate< false >( buffer, packList );
+    return packParentChildMapsImpl< false >( buffer, packList );
   }
 
   /**
@@ -224,7 +221,7 @@ public:
   localIndex packParentChildMaps( buffer_unit_type * & buffer,
                                   arrayView1d< localIndex const > const & packList ) const
   {
-    return packParentChildMapsPrivate< true >( buffer, packList );
+    return packParentChildMapsImpl< true >( buffer, packList );
   }
 
   /**
@@ -239,7 +236,7 @@ public:
 private:
   /**
    * @brief Concrete implementation of the packing method.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param wrapperNames
    * @param packList The element we want packed.
@@ -248,37 +245,37 @@ private:
    *                  (buffer must be either pinned or a device pointer)
    * @return The packed size.
    */
-  template< bool DOPACK >
-  localIndex packPrivate( buffer_unit_type * & buffer,
-                          string_array const & wrapperNames,
-                          arrayView1d< localIndex const > const & packList,
-                          integer const recursive,
-                          bool onDevice,
-                          parallelDeviceEvents & events ) const;
+  template< bool DO_PACKING >
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       string_array const & wrapperNames,
+                       arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   /**
    * @brief Packing global maps.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
    * @param recursive recursive pack or not.
    * @return The packed size.
    */
-  template< bool DOPACK >
-  localIndex packGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList,
-                                    integer const recursive ) const;
+  template< bool DO_PACKING >
+  localIndex packGlobalMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList,
+                                 integer const recursive ) const;
 
   /**
    * @brief Pack parent and child maps.
-   * @tparam DOPACK A template parameter to discriminate between actually packing or only computing the packing size.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
    * @param buffer The buffer that will receive the packed data.
    * @param packList The element we want packed.
    * @return The packed size.
    */
-  template< bool DOPACK >
-  localIndex packParentChildMapsPrivate( buffer_unit_type * & buffer,
-                                         arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packParentChildMapsImpl( buffer_unit_type * & buffer,
+                                      arrayView1d< localIndex const > const & packList ) const;
 
   //**********************************************************************************************************************
   // functions for compatibility with old data structure
@@ -308,8 +305,9 @@ public:
   /**
    * @brief Creates a new set.
    * @param newSetName The set name.
+   * @return reference to the set
    */
-  void createSet( const string & newSetName );
+  SortedArray< localIndex > & createSet( const string & newSetName );
 
   /**
    * @brief Builds a new set on this instance given another objects set and the map between them.
@@ -797,6 +795,22 @@ public:
    */
   Group const & sets() const
   { return m_sets; }
+
+  /**
+   * @brief Get a set by name.
+   * @param setName Name of the set.
+   * @return Sorted array indices.
+   */
+  SortedArray< localIndex > & getSet( string const & setName )
+  { return m_sets.getReference< SortedArray< localIndex > >( setName ); }
+
+  /**
+   * @brief Get a set by name, const version.
+   * @param setName Name of the set.
+   * @return Sorted array indices.
+   */
+  SortedArrayView< localIndex const > getSet( string const & setName ) const
+  { return m_sets.getReference< SortedArray< localIndex > >( setName ).toViewConst(); }
 
   /**
    * @brief Get the external set.

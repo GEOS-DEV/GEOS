@@ -9,7 +9,7 @@
 
   <!-- SPHINX_TUT_DEAD_OIL_EGG_MESH -->
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
       name="mesh"
       file="../../../../../GEOSXDATA/DataSets/Egg/egg.msh"
       fieldsToImport="{ PERM }"
