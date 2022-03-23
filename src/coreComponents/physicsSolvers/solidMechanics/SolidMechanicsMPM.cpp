@@ -491,7 +491,7 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
 
 }
 
-real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n),
+real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
                                         real64 const & dt,
                                         const int cycleNumber,
                                         DomainPartition & domain )
@@ -615,6 +615,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
 //      g_V[i][0] = -r*sin(theta)*50.0;
 //      g_V[i][1] = r*cos(theta)*50.0;
 //      g_V[i][2] = 0.0;
+      // hard-coded simple shear
+//        g_V[i][0] = 50.0*(g_X[i][1] - 0.5*(m_xMax[1] - m_xMin[1]));
+//        g_V[i][1] = 25.0*(g_X[i][0] - 0.5*(m_xMax[0] - m_xMin[0]));
+//        g_V[i][2] = 0.0;
     }
     else
     {
@@ -696,13 +700,16 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
           }
         }
       }
-//      for(int i=0; i<3; i++)
+//      if(p==0)
 //      {
-//        for(int j=0; j<3; j++)
+//        for(int i=0; i<3; i++)
 //        {
-//          std::cout << p_L[i][j] << ", ";
+//          for(int j=0; j<3; j++)
+//          {
+//            std::cout << p_L[i][j] << ", ";
+//          }
+//          std::cout << std::endl;
 //        }
-//        std::cout << std::endl;
 //      }
 
       // Particle kinematic update - TODO: surely there's a nicer way to do this with LvArray
@@ -760,11 +767,11 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
           if(i == j)
           {
             real64 lambda = bulkModulus[p] - (2.0/3.0)*shearModulus[p];
-            PK2[i][j] = lambda*(EG[0][0] + EG[1][1] + EG[2][2]) + 2*shearModulus[p]*EG[i][j];
+            PK2[i][j] = lambda*(EG[0][0] + EG[1][1] + EG[2][2]) + 2.0*shearModulus[p]*EG[i][j];
           }
           else
           {
-            PK2[i][j] = 2*shearModulus[p]*EG[i][j];
+            PK2[i][j] = 2.0*shearModulus[p]*EG[i][j];
           }
           //std::cout << PK2[i][j] << "\t";
         }
@@ -789,7 +796,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & GEOSX_UNUSED_PARAM(time_n
         {
           int voigt = m_voigtMap[i][j];
           //std::cout << "i: " << i << ", j:" << j << ", Voigt: " << voigt << std::endl;
-          p_stress[voigt] = sigTemp[i][0]*p_F[j][0] + sigTemp[i][1]*p_F[j][1] + sigTemp[i][2]*p_F[j][2];
+          p_stress[voigt] = (sigTemp[i][0]*p_F[j][0] + sigTemp[i][1]*p_F[j][1] + sigTemp[i][2]*p_F[j][2]);
         }
       }
       //std::cout << p_stress[0] << ", " << p_stress[1] << ", " << p_stress[2] << ", " << p_stress[3] << ", " << p_stress[4] << ", " << p_stress[5] << std::endl;

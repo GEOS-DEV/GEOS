@@ -97,7 +97,7 @@ public:
       {
         for(int j=0; j<3; j++) // This seems wrong to me, but I checked it against a grid-imposed rigid body rotation velocity field and everything looked good...
         {
-          m_particleRVectors[p][j][i] = p_F[0][i]*m_particleRVectors0[p][j][0] + p_F[1][i]*m_particleRVectors0[p][j][1] + p_F[2][i]*m_particleRVectors0[p][j][2];
+          m_particleRVectors[p][i][j] = p_F[j][0]*m_particleRVectors0[p][i][0] + p_F[j][1]*m_particleRVectors0[p][i][1] + p_F[j][2]*m_particleRVectors0[p][i][2];
         }
       }
     }
@@ -273,9 +273,9 @@ public:
                 real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
                 real64 weight = xWeight*yWeight*zWeight;
                 weights.push_back(0.125*weight); // note the built-in factor of 1/8 so we don't need it in the solver
-                gradWeights[0].push_back(alpha[cornerMap[cell]][0]*weight);
-                gradWeights[1].push_back(alpha[cornerMap[cell]][1]*weight);
-                gradWeights[2].push_back(alpha[cornerMap[cell]][2]*weight);
+                gradWeights[0].push_back(-alpha[cornerMap[cell]][0]*weight);
+                gradWeights[1].push_back(-alpha[cornerMap[cell]][1]*weight);
+                gradWeights[2].push_back(-alpha[cornerMap[cell]][2]*weight);
               }
             }
           }
