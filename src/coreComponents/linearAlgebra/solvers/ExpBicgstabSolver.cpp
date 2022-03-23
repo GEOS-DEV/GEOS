@@ -52,38 +52,23 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
   real64 const absTol = rnorm0 * m_params.krylov.relTolerance;
 
   // Define temporary vectors
-  VectorTemp S  = createTempVector( r );
-  VectorTemp Y  = createTempVector( r );
-  VectorTemp Q  = createTempVector( r );
-  VectorTemp Q2 = createTempVector( r );
-  VectorTemp P2 = createTempVector( r );
-  VectorTemp R2 = createTempVector( r );
-  VectorTemp S2 = createTempVector( r );
-  VectorTemp W  = createTempVector( r );
-  VectorTemp Z  = createTempVector( r );
-  VectorTemp W2 = createTempVector( r );
-  VectorTemp Z2 = createTempVector( r );
-  VectorTemp T  = createTempVector( r );
-  VectorTemp V  = createTempVector( r );
-
-  // Define vectors
   VectorTemp r0( r );
+  VectorTemp p( r );
+  VectorTemp Mp    = createTempVector( r );
+  VectorTemp AMp   = createTempVector( r );
+  VectorTemp Mr    = createTempVector( r );
+  VectorTemp AMr   = createTempVector( r );
+  VectorTemp Mq    = createTempVector( r );
+  VectorTemp AMq   = createTempVector( r );
+  VectorTemp MAMp  = createTempVector( r );
+  VectorTemp AMAMp = createTempVector( r );
+  VectorTemp MAMq  = createTempVector( r );
+  VectorTemp AMAMq = createTempVector( r );
 
-  // Define scalars and reinitialize some
-  real64 rho = rnorm0 * rnorm0; // same as r.dot( r0 );
-  
-  m_precond.apply( r, R2 );
-  m_operator.apply( R2, W );
-  
-  real64 d2 = W.dot( r0 );
-    
-  m_precond.apply( W, W2 );
-  m_operator.apply( W2, T );
+  m_precond.apply( p, Mp );
+  m_operator.apply( Mp, AMp );
 
-  real64 alpha = rho / d2;
-  real64 beta = 0.0;
-  real64 omega;
-  real64 d1, d3;
+  real64 alpha = 1.0;
 
   // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
@@ -103,76 +88,64 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
       break;
     }
 
+    real64 inner_r0_r   = r0.dot( r );
+    real64 inner_r0_AMp = r0.dot( AMp );
+
+    m_precond.apply( r, Mr );
+    m_operator.apply( Mr, AMr );
+
+    m_precond.apply( AMp, MAMp );
+    m_operator.apply( MAMp, AMAMp );
+
+    // Error correction 
     // 
-    if ( k == 0 )
-    {
-      R2.copy( P2 );
-      W.copy( S );
-      W2.copy( S2 );
-      T.copy( Z );
-    }
-    else
-    {
-      P2.axpby( 1.0, R2, beta );    // TODO
-      P2.axpy( -beta * omega, S2 ); // add method axpbypcz
-      S.axpby( 1.0, W, beta );
-      S.axpy( -beta * omega, Z );
-      S2.axpby( 1.0, W2, beta );
-      S2.axpy( -beta * omega, Z2 );
-      Z.axpby( 1.0, T, beta );
-      Z.axpy( -beta * omega, V );
-    }
-    
-    r.copy( Q );
-    Q.axpy ( -alpha, x );
-    R2.copy( Q2 );
-    Q2.axpy( -alpha, S2 );
-    W.copy( Y );
-    Y.axpy( -alpha, Z );
-    
-    d1 = Q.dot( Y );
-    d2 = Y.dot( Y );
+    // ... TBD
 
-    if ( isZero( d2 ) )
-    {
-      d1 = Q.dot( Q );  
-      GEOSX_KRYLOV_BREAKDOWN_IFNOT_ZERO( d1 )
-      x.axpy( alpha, P2 );
-      ++k;
-      m_residualNorms.emplace_back( 0.0 );
-      logProgress();
-      m_result.status = LinearSolverResult::Status::Success;
-      break;
-    }
+    //  Scalar operations
+    alpha = inner_r0_r / inner_r0_AMp;
+    // Mq  =  Mr - alpha * MAMp;
+    Mq.copy( Mr );
+    Mq.axpy( -alpha, MAMp );
 
-    omega = d1 / d2;
+    // AMq = AMr - alpha * AMAMp;
+    AMq.copy( AMr );
+    AMq.axpy( -alpha, AMAMp );
 
-    x.axpy( alpha, P2 );
-    x.axpy( omega, Q2 );
+    real64 const inner_r0_AMq = r0.dot( AMq );
+    real64 const inner_AMq_AMq = AMq.dot( AMq );
+    real64 const inner_r_AMq = r.dot( AMq );
+    real64 const inner_AMp_AMq = AMp.dot( AMq );
 
-    Q.copy( r );
-    r.axpy ( -omega, Y );
-    W2.copy( R2 );
-    R2.axpy( -alpha, Z2 );
-    R2.axpby( 1.0, Q2, -omega );
-    T.copy( W );
-    W.axpy( -alpha, V );
-    W.axpby( 1.0, Y, -omega );
+    m_precond.apply( AMq, MAMq );
+    m_operator.apply( MAMq, AMAMq );
 
-    real64 rho_old = rho;
+    real64 const inner_q_AMq = inner_r_AMq - alpha * inner_AMp_AMq;
+    real64 const omega = inner_q_AMq / inner_AMq_AMq;
+    real64 const inner_r0_rp1 = inner_r0_r - alpha * inner_r0_AMp - omega * inner_r0_AMq;
+    real64 const beta = ( alpha / omega) * ( inner_r0_rp1 / inner_r0_r );
 
-    rho = r.dot( r0 );
-    d1 = S.dot( r0 );
-    d2 = W.dot( r0 );
-    d3 = Z.dot( r0 );
+    // x = x + alpha *  Mp + omega*Mq;
+    x.axpy( alpha, Mp );
+    x.axpy( omega, Mq );
+    // r = r - alpha * AMp - omega*AMq;
+    r.axpy( -alpha, AMp );
+    r.axpy( -omega, AMq );
 
-    m_precond.apply( W, W2 );
-    m_operator.apply( W2, T );
+    // Mp  =  Mq - omega* MAMq + beta*(  Mp - omega*MAMp ) ;
+    Mp.axpy( -omega, MAMp );
+    Mp.scale( beta );
+    Mp.axpy( 1.0, Mq );
+    Mp.axpy( -omega, MAMq );
 
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( rho_old );
-    GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( omega );
-    beta = ( rho / rho_old ) * ( alpha / omega );
-    alpha = rho / ( d2 + beta *d1 - beta * omega * d3 );
+    // AMp = AMq - omega*AMAMq + beta*( AMp - omega*AMAMp );
+    AMp.axpy( -omega, AMAMp );
+    AMp.scale( beta );
+    AMp.axpy( 1.0, AMq );
+    AMp.axpy( -omega, AMAMq );
+
+    // Restart
+    // TODO
+
   }
 
 

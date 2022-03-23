@@ -42,6 +42,7 @@ struct LinearSolverParameters
     gmres,         ///< GMRES
     fgmres,        ///< Flexible GMRES
     bicgstab,      ///< BiCGStab
+    expBicgstab,   ///< Experimental biCGStab
     preconditioner ///< Preconditioner only
   };
 

@@ -19,6 +19,7 @@
 #include "KrylovSolver.hpp"
 #include "linearAlgebra/solvers/BicgstabSolver.hpp"
 #include "linearAlgebra/solvers/CgSolver.hpp"
+#include "linearAlgebra/solvers/ExpBicgstabSolver.hpp"
 #include "linearAlgebra/solvers/GmresSolver.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 
@@ -58,6 +59,12 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
     case LinearSolverParameters::SolverType::bicgstab:
     {
       return std::make_unique< BicgstabSolver< Vector > >( parameters,
+                                                           matrix,
+                                                           precond );
+    }
+    case LinearSolverParameters::SolverType::expBicgstab:
+    {
+      return std::make_unique< ExpBicgstabSolver< Vector > >( parameters,
                                                            matrix,
                                                            precond );
     }

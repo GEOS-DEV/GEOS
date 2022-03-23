@@ -89,6 +89,12 @@ public:
   void zero();
 
   /**
+   * @brief Set vector elements to a constant value.
+   * @param value value to set vector elements to
+   */
+  void set( real64 const value );
+
+  /**
    * @brief Set vector elements to random entries.
    * @param seed the random seed to use
    */
@@ -281,6 +287,15 @@ void BlockVectorView< VECTOR >::zero()
   for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).zero();
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::set( real64 const value )
+{
+  for( localIndex i = 0; i < blockSize(); i++ )
+  {
+    block( i ).set( value );
   }
 }
 
