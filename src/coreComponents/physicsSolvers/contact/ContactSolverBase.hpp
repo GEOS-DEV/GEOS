@@ -97,9 +97,6 @@ protected:
   /// contact relation name string
   string m_contactRelationName;
 
-  /// initial fracture State
-  integer m_initialFractureState;
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
