@@ -8,7 +8,7 @@ Viscosity-Storage-Dominated Penny Shaped Hydraulic Fracture
 
 **Context**
 
-In this example, we simulate the propagation of a radial hydraulic fracture in viscosity-storage-dominated regime, another classic benchmark in hydraulic fracturing. The developed fracture is characterized as a planar fracture with an elliptical cross-section perpendicular to the fracture plane and a circular fracture tip. Unlike the toughness-storage-dominated fractures, fluid frictional loss during the transport of viscous fracturing fluids governs the growth of viscosity-storage-dominated fractures. This problem is solved using the hydrofracture solver in GEOSX to obtain the temporal evolutions of the fracture characteristics (length, aperture, and pressure), which are verified against the corresponding analytical solutions `(Savitski and Detournay, 2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__. 
+In this example, we simulate the propagation of a radial hydraulic fracture in viscosity-storage-dominated regime, another classic benchmark in hydraulic fracturing. The fracture develops as a planar fracture with an elliptical cross-section perpendicular to the fracture plane and a circular fracture tip. Unlike the toughness-storage-dominated fractures, fluid frictional loss during the transport of viscous fracturing fluids governs the growth of viscosity-storage-dominated fractures. We solve this problem using the hydrofracture solver in GEOSX. We simulate the change in length, aperture, and pressure of the fracture, and compare them against the corresponding analytical solutions `(Savitski and Detournay, 2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__. 
 
 
 **Input file**
@@ -35,11 +35,11 @@ A python script for post-processing the simulation results is also prepared:
 Description of the case
 ------------------------------------------------------------------
 
-We model a radial fracture emerging from a point source and forming a perfect circular shape in an infinite, isotropic, and homogenous elastic domain. As with the viscosity dominated KGD problem, we restrict the model to a radial fracture developed in a viscosity-storage-dominated propagation regime. For viscosity-dominated fractures, more work is applied to move the fracturing fluid than to split the intact rock. If neglecting fluid leakoff, storage-dominated propagation occurs with most of the injected fluid confined within the open surfaces. In this analysis, low rock toughness (:math:`0.3 MPa { \sqrt{m} }`) and slickwater with constant viscosity (:math:`1.0 cp`) and zero compressibility are specified. In addition, an impermeable fracture surface is assumed to eliminate the effect of fluid leak-off. This way, the presented GEOSX simulations meet the requirements of the viscosity-storage dominated assumptions. 
+We model a radial fracture emerging from a point source and forming a perfect circular shape in an infinite, isotropic, and homogenous elastic domain. As with the viscosity-dominated KGD problem, we restrict the model to a radial fracture developed in a viscosity-storage-dominated propagation regime. For viscosity-dominated fractures, more energy is applied to move the fracturing fluid than to split the intact rock. If we neglect fluid leak-off, the storage-dominated propagation occurs from most of the injected fluid confined within the opened surfaces. We use a low rock toughness (:math:`0.3 MPa { \sqrt{m} }`), and the slickwater we inject has a constant viscosity value (:math:`1.0 cp`) and zero compressibility. In addition, we assume that the fracture surfaces are impermeable, thus eliminating fluid leak-off. With this configuration, our GEOSX simulations meet the requirements of the viscosity-storage-dominated assumptions.
 
-In this model, the injected fluid within the fracture follows the lubrication equation resulting from mass conservation and Poiseuille's law. The fracture propagates by creating new surfaces if the stress intensity factor exceeds the local rock toughness :math:`K_{IC}`. By symmetry, the simulation is reduced to a quarter-scale to save computational cost. For verification purposes, a plane strain deformation is considered in the numerical model. 
+The fluid injected in the fracture follows the lubrication equation resulting from mass conservation and Poiseuille's law. The fracture propagates by creating new surfaces if the stress intensity factor exceeds the local rock toughness :math:`K_{IC}`. By symmetry, the simulation is reduced to a quarter-scale to save computational cost. For verification purposes, a plane strain deformation is considered in the numerical model. 
 
-In this example, we set up and solve a hydraulic fracture model to obtain the temporal solutions of the fracture radius :math:`R`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point for the penny-shaped fracture developed in viscosity-storage-dominated regime. `Savitski and Detournay (2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__ presented the corresponding asymptotic solutions, which is employed hereby to verify the GEOSX simulations:
+We set up and solve a hydraulic fracture model to obtain the evolution with time of the fracture radius :math:`R`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point for the penny-shaped fracture developed in viscosity-storage-dominated regime. `Savitski and Detournay (2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__ presented the corresponding asymptotic solutions, used here to validate the results of our GEOSX simulations:
 
 .. math:: R(t) = 0.6955 (\frac{ E_p Q_0^3 t^4 }{ m_p })^{ 1/9 }
 
@@ -154,7 +154,7 @@ Constitutive laws
 ------------------------------
 
 For this problem, a homogeneous and isotropic domain with one solid material is assumed. Its mechanical properties and associated fluid rheology are specified in the ``Constitutive`` section. 
-``ElasticIsotropic`` model is used to describe the mechanical behavior of ``rock`` when subjected to fluid injection.
+The ``ElasticIsotropic`` model is used to describe the mechanical behavior of ``rock`` when subjected to fluid injection.
 The single-phase fluid model ``CompressibleSinglePhaseFluid`` is selected to simulate the response of ``water`` upon fracture propagation.
 
 
@@ -171,10 +171,10 @@ All constitutive parameters such as density, viscosity, bulk modulus, and shear 
 Initial and boundary conditions
 -----------------------------------------------------------
 
-The next step is to specify fields, including:
+Next, we specify initial and boundary conditions:
 
-  - The initial values: the ``waterDensity``, ``separableFace`` and the ``ruptureState`` of the propagating fracture have to be initialized,
-  - The boundary conditions: fluid injection rates and the constraints of the outer boundaries have to be set.
+  - Initial values: the ``waterDensity``, ``separableFace`` and the ``ruptureState`` of the propagating fracture have to be initialized,
+  - Boundary conditions: fluid injection rates and the constraints of the outer boundaries have to be set.
 
 In this example, a mass injection rate ``SourceFlux`` (``scale="-6.625"``) is applied at the surfaces of the initial fracture. Only one fourth of the total injection rate is defined in this boundary condition because only a quarter of the fracture is modeled (the problem is symmetric). The value given for ``scale`` is :math:`Q_0 \rho_f/4` (not :math:`Q_0 /4`). 
 All the outer boundaries are subject to roller constraints. 
@@ -223,7 +223,7 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=4
 
  
 GEOSX simulation results (markers) and asymptotic solutions (curves) for the case with viscosity-storage
-dominated assumptions are plotted together in the following figure. As seen, modelling predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
+dominated assumptions are plotted together in the following figure. As seen, GEOSX predictions of the temporal evolution of fracture radius, wellbore aperture and pressure at fluid inlet are nearly identical to the asymptotic solutions.
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/pennyFracViscosityDominated/pennyFracViscosityDominatedFigure.py
 
