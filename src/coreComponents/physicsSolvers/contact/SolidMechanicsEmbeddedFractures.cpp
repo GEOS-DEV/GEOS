@@ -817,9 +817,9 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                          1,
                          MPI_LAND,
                          MPI_COMM_GEOSX );
-  
+
   // for this solver it makes sense to reset the state.
-  if ( !hasConfigurationConvergedGlobally )
+  if( !hasConfigurationConvergedGlobally )
     resetStateToBeginningOfStep( domain );
 
   return hasConfigurationConvergedGlobally;

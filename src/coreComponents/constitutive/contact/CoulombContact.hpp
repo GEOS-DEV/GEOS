@@ -251,7 +251,7 @@ void CoulombContactUpdates::computeTraction( localIndex const k,
 
         // The slip is only elastic: we add the full slip to the elastic one
         LvArray::tensorOps::add< 2 >( m_elasticSlip[k], slip );
-        
+
         break;
       }
       case extrinsicMeshData::contact::FractureState::Slip:
