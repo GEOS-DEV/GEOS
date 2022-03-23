@@ -8,7 +8,7 @@ Viscosity-Storage-Dominated PKN Hydraulic Fracture
 
 **Context**
 
-In this example, we simulate the propagation of a Perkins–Kern–Nordgren (PKN) fracture in viscosity-storage-dominated regime, a classic benchmark in hydraulic fracturing. The developed planar fracture displays elliptical vertical cross-section. Unlike KGD and penny shaped fractures, height growth of a PKN fracture is constrained by mechanical barriers (such as bedding layers, sedimentary laminations, or weak interfaces), which promotes lateral propagation. This problem is solved using the hydrofracture solver in GEOSX to obtain the temporal evolutions of the fracture characteristics (length, aperture, and pressure), which are verified against the existing analytical solutions `(Kovalyshen and Detournay, 2010;  <https://link.springer.com/article/10.1007/s11242-009-9403-4>`__ `Economides and Nolte, 2000)  <https://books.google.com/books/about/Reservoir_Stimulation.html?id=rDlQAQAAIAAJ>`__. 
+In this example, we simulate the propagation of a Perkins–Kern–Nordgren (PKN) fracture in a viscosity-storage-dominated regime, a classic benchmark in hydraulic fracturing. The developed planar fracture displays an elliptical vertical cross-section. Unlike KGD and penny-shaped fractures, the growth height of a PKN fracture is constrained by mechanical barriers (such as bedding layers, sedimentary laminations, or weak interfaces), thus promoting lateral propagation. This problem is solved using the hydrofracture solver in GEOSX to obtain the temporal evolutions of the fracture characteristics (length, aperture, and pressure). We validate these simulated values against existing analytical solutions `(Kovalyshen and Detournay, 2010;  <https://link.springer.com/article/10.1007/s11242-009-9403-4>`__ `Economides and Nolte, 2000)  <https://books.google.com/books/about/Reservoir_Stimulation.html?id=rDlQAQAAIAAJ>`__. 
 
 
 **Input file**
@@ -35,12 +35,11 @@ A python script for post-processing the simulation results is also prepared:
 Description of the case
 ------------------------------------------------------------------
 
-In this example, a hydraulic fracture initiates and propagates from the center of a 20 m thick target layer, which is
-homogeneous and bounded by neighboring (both upper and lower) layers. For viscosity-dominated fractures, more work is applied to move the fracturing fluid than to split the intact rock. If neglecting fluid leakoff, storage-dominated propagation occurs with most of the injected fluid confined within the open surfaces. To meet the requirements of the viscosity-storage dominated assumptions, impermeable domain (no fluid leakoff), incompressible fluid with constant viscosity (:math:`1.0 cp`) and ultra-low rock toughness (:math:`0.1 MPa { \sqrt{m} }`) are chosen in the GEOSX simulation. This way, the fracture is well contained within the target layer, keeps extending in the horizontal direction and eventually reaches the conditions of developing a PKN fracture in viscosity-storage dominated regime.
+In this example, a hydraulic fracture initiates and propagates from the center of a 20m-thick layer. This layer is homogeneous and bounded by neighboring upper and lower layers. For viscosity-dominated fractures, more energy is necessary to move the fracturing fluid than to split the intact rock. If fluid leak-off is neglected, storage-dominated propagation occurs with most of the injected fluid confined within the open surfaces. To meet the requirements of the viscosity-storage-dominated assumptions, impermeable domain (no fluid leak-off), incompressible fluid with constant viscosity (:math:`1.0 cp`) and ultra-low rock toughness (:math:`0.1 MPa { \sqrt{m} }`) are chosen in the GEOSX simulation. With these parameters, the fracture stays within the target layer; it extends horizontally and meets the conditions of the PKN fracture in a viscosity-storage-dominated regime.
 
-In this model, the injected fluid within the fracture follows the lubrication equation resulting from mass conservation and Poiseuille's law. The fracture propagates by creating new surfaces if the stress intensity factor exceeds the local rock toughness :math:`K_{IC}`. As the geometry of the PKN fracture exhibits symmetry, the simulation is reduced to quarter-scale. For verification purposes, a plane strain deformation is considered in the numerical model. 
+We assume that the fluid injected in the fracture follows the lubrication equation resulting from mass conservation and Poiseuille's law. The fracture propagates by creating new surfaces if the stress intensity factor exceeds the local rock toughness :math:`K_{IC}`. As the geometry of the PKN fracture exhibits symmetry, the simulation is reduced to a quarter-scale. For verification purposes, a plane strain deformation is considered in the numerical model.
 
-In this example, we set up and solve a hydraulic fracture model to obtain the temporal solutions of the fracture half length :math:`l`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the fluid inlet for the PKN fracture propagating in viscosity-storage-dominated regime. ` Kovalyshen and Detournay (2010)  <https://link.springer.com/article/10.1007/s11242-009-9403-4>`__  and `Economides and Nolte (2000)  <https://books.google.com/books/about/Reservoir_Stimulation.html?id=rDlQAQAAIAAJ>`__ derived the analytical solutions for this classic hydraulic fracture problem, which are used to verify the GEOSX simulations:
+We set up and solve a hydraulic fracture model to obtain the temporal solutions of the fracture half length :math:`l`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the fluid inlet for the PKN fracture propagating in viscosity-storage-dominated regime. ` Kovalyshen and Detournay (2010)  <https://link.springer.com/article/10.1007/s11242-009-9403-4>`__  and `Economides and Nolte (2000)  <https://books.google.com/books/about/Reservoir_Stimulation.html?id=rDlQAQAAIAAJ>`__ derived the analytical solutions for this classic hydraulic fracture problem, used here to verify the results of the GEOSX simulations:
 
 .. math:: l(t) = 0.3817 (\frac{ E_p Q_0^3 t^4 }{ \mu h^4 })^{ 1/5 }
 
@@ -85,7 +84,7 @@ with one group of cell blocks named here ``cb1``. Local refinement is performed 
     :end-before: <!-- SPHINX_MESH_END -->
 
 
-The fracture plane is defined by a nodeset occupying a small region within the computation domain, where the fracture tends to open and propagate upon fluid injection:
+The fracture plane is defined by a nodeset occupying a small region within the computational domain, where the fracture tends to open and propagate upon fluid injection:
 
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated_benchmark.xml
@@ -112,7 +111,7 @@ Three elementary solvers are combined in the solver ``hydrofracture`` to model t
   :end-before: <!-- SPHINX_HYDROFRACSOLVER_END -->
 
 
-- Rock and fracture deformation are modeled by the solid mechanics solver ``SolidMechanicsLagrangianSSLE``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is specified in this solver by the ``contactRelationName``.
+- Rock and fracture deformations are modeled by the solid mechanics solver ``SolidMechanicsLagrangianSSLE``. In this solver, we define ``targetRegions`` that includes both the continuum region and the fracture region. The name of the contact constitutive behavior is specified in this solver by the ``contactRelationName``.
 
 
 .. literalinclude:: ../../../../../../inputFiles/hydraulicFracturing/pknViscosityDominated_benchmark.xml
@@ -161,12 +160,12 @@ All constitutive parameters such as density, viscosity, bulk modulus, and shear 
 Initial and boundary conditions
 -----------------------------------------------------------
 
-The next step is to specify fields, including:
+The next step is to specify:
 
   - The initial values: the ``waterDensity``, ``separableFace`` and the ``ruptureState`` of the propagating fracture have to be initialized,
   - The boundary conditions: fluid injection rates and the constraints of the outer boundaries have to be set.
 
-In this example, a mass injection rate ``SourceFlux`` (``scale="-6.625"``) is applied at the surfaces of the initial fracture. Only one fourth of the total injection rate is defined in this boundary condition because only a quarter of the fracture is modeled (the problem is symmetric). The value given for ``scale`` is :math:`Q_0 \rho_f/4` (not :math:`Q_0 /4`). 
+In this example, a mass injection rate ``SourceFlux`` (``scale="-6.625"``) is applied at the surfaces of the initial fracture. Only one fourth of the total injection rate is used because only a quarter of the fracture is modeled (the problem is symmetric). The value given for ``scale`` is :math:`Q_0 \rho_f/4` (not :math:`Q_0 /4`). 
 All the outer boundaries are subject to roller constraints. 
 These boundary conditions are set through the ``FieldSpecifications`` section.
 
@@ -215,8 +214,8 @@ The following figure shows the distribution of :math:`\sigma_{zz}` at :math:`t=2
 
  
 Figure below shows the comparisons between the results from GEOSX simulations (markers) and the corresponding
-analytical solutions (curves) for the testing example with viscosity-storage dominated assumptions. As seen, the time
-history of fracture half length, near wellbore fracture aperture and fluid pressure correlate well with the analytical
+analytical solutions (curves) for the example with viscosity-storage dominated assumptions. The evolution in time
+of the fracture half-length, the near-wellbore fracture aperture, and the fluid pressure all correlate well with the analytical
 solutions.  
 
 .. plot:: docs/sphinx/advancedExamples/validationStudies/pknFracViscosityDominated/pknViscosityDominatedFigure.py
