@@ -17,6 +17,7 @@ set( linearAlgebra_headers
      solvers/BicgstabSolver.hpp
      solvers/BlockPreconditioner.hpp
      solvers/CgSolver.hpp
+     solvers/ExpBicgstabSolver.hpp
      solvers/GmresSolver.hpp
      solvers/KrylovSolver.hpp
      solvers/KrylovUtils.hpp
@@ -49,6 +50,7 @@ set( linearAlgebra_sources
      solvers/BicgstabSolver.cpp
      solvers/BlockPreconditioner.cpp
      solvers/CgSolver.cpp
+     solvers/ExpBicgstabSolver.cpp
      solvers/GmresSolver.cpp
      solvers/KrylovSolver.cpp
      solvers/SeparateComponentPreconditioner.cpp

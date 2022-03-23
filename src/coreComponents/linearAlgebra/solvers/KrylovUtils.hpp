@@ -35,4 +35,19 @@
     break;                                  \
   }                                         \
 
+/**
+ * @brief Exit solver iteration and report a breakdown if value not close to zero.
+ * @param VAR the variable or expression
+ */
+#define GEOSX_KRYLOV_BREAKDOWN_IFNOT_ZERO( VAR ) \
+  if( !isZero( VAR, 0.0 ) )                  \
+  {                                         \
+    if( m_params.logLevel >= 1 )            \
+    {                                       \
+      GEOSX_LOG_RANK_0( "Breakdown in " << methodName() << ": " << #VAR << " = " << VAR ); \
+    }                                       \
+    m_result.status = LinearSolverResult::Status::Breakdown; \
+    break;                                  \
+  }                                         \
+
 #endif //GEOSX_LINEARALGEBRA_SOLVERS_KRYLOVUTILS_HPP_
