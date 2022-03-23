@@ -392,15 +392,15 @@ private:
 
   /**
    * @brief function to pack the upward and downward pointing maps.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occurred if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occurred if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
 };
 

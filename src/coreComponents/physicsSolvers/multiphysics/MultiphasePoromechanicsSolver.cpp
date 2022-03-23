@@ -310,15 +310,15 @@ real64 MultiphasePoromechanicsSolver::calculateResidualNorm( DomainPartition con
   return sqrt( momementumResidualNorm * momementumResidualNorm + massResidualNorm * massResidualNorm );
 }
 
-void MultiphasePoromechanicsSolver::solveSystem( DofManager const & dofManager,
-                                                 ParallelMatrix & matrix,
-                                                 ParallelVector & rhs,
-                                                 ParallelVector & solution )
+void MultiphasePoromechanicsSolver::solveLinearSystem( DofManager const & dofManager,
+                                                       ParallelMatrix & matrix,
+                                                       ParallelVector & rhs,
+                                                       ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void MultiphasePoromechanicsSolver::applySystemSolution( DofManager const & dofManager,

@@ -625,8 +625,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 			<xsd:element name="InternalMesh" type="InternalMeshType" />
 			<xsd:element name="InternalWell" type="InternalWellType" />
 			<xsd:element name="InternalWellbore" type="InternalWellboreType" />
-			<xsd:element name="PAMELAMeshGenerator" type="PAMELAMeshGeneratorType" />
-			<xsd:element name="VTKMeshGenerator" type="VTKMeshGeneratorType" />
+			<xsd:element name="PAMELAMesh" type="PAMELAMeshType" />
+			<xsd:element name="VTKMesh" type="VTKMeshType" />
 		</xsd:choice>
 	</xsd:complexType>
 	<xsd:complexType name="InternalMeshType">
@@ -736,23 +736,37 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="PAMELAMeshGeneratorType">
-		<!--fieldNamesInGEOSX => Name of the fields within GEOSX-->
+	<xsd:complexType name="PAMELAMeshType">
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
 		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
 		<!--fieldsToImport => Fields to be imported from the external mesh file-->
 		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
-		<!--file => path to the mesh file-->
+		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
-		<!--reverseZ => 0 : Z coordinate is upward, 1 : Z coordinate is downward-->
-		<xsd:attribute name="reverseZ" type="integer" default="0" />
-		<!--scale => Scale the coordinates of the vertices-->
-		<xsd:attribute name="scale" type="real64" default="1" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
-	<xsd:complexType name="VTKMeshGeneratorType">
-		<!--file => path to the mesh file-->
+	<xsd:complexType name="VTKMeshType">
+		<!--fieldNamesInGEOSX => Names of fields in GEOSX to import into-->
+		<xsd:attribute name="fieldNamesInGEOSX" type="string_array" default="{}" />
+		<!--fieldsToImport => Fields to be imported from the external mesh file-->
+		<xsd:attribute name="fieldsToImport" type="string_array" default="{}" />
+		<!--file => Path to the mesh file-->
 		<xsd:attribute name="file" type="path" use="required" />
+		<!--logLevel => Log level-->
+		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--regionAttribute => Translate the coordinates of the vertices by a given vector-->
+		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
+		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
+		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
+		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
+		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
@@ -891,10 +905,16 @@ the relative residual norm satisfies:
 		<xsd:attribute name="lineSearchAction" type="geosx_NonlinearSolverParameters_LineSearchAction" default="Attempt" />
 		<!--lineSearchCutFactor => Line search cut factor. For instance, a value of 0.5 will result in the effective application of the last solution by a factor of (0.5, 0.25, 0.125, ...)-->
 		<xsd:attribute name="lineSearchCutFactor" type="real64" default="0.5" />
+		<!--lineSearchInterpolationType => Strategy to cut the solution update during the line search. Options are: 
+ * Linear
+* Parabolic-->
+		<xsd:attribute name="lineSearchInterpolationType" type="geosx_NonlinearSolverParameters_LineSearchInterpolationType" default="Linear" />
 		<!--lineSearchMaxCuts => Maximum number of line search cuts.-->
 		<xsd:attribute name="lineSearchMaxCuts" type="integer" default="4" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
+		<!--maxNumConfigurationAttempts => Max number of times that the configuration can be changed-->
+		<xsd:attribute name="maxNumConfigurationAttempts" type="integer" default="10" />
 		<!--maxSubSteps => Maximum number of time sub-steps allowed for the solver-->
 		<xsd:attribute name="maxSubSteps" type="integer" default="10" />
 		<!--maxTimeStepCuts => Max number of time step cuts-->
@@ -911,6 +931,11 @@ the relative residual norm satisfies:
 	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchAction">
 		<xsd:restriction base="xsd:string">
 			<xsd:pattern value=".*[\[\]`$].*|None|Attempt|Require" />
+		</xsd:restriction>
+	</xsd:simpleType>
+	<xsd:simpleType name="geosx_NonlinearSolverParameters_LineSearchInterpolationType">
+		<xsd:restriction base="xsd:string">
+			<xsd:pattern value=".*[\[\]`$].*|Linear|Parabolic" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="FiniteVolumeType">
@@ -1358,17 +1383,15 @@ Equal to 1 for surface conditions, and to 0 for reservoir conditions-->
 			<xsd:element name="LinearSolverParameters" type="LinearSolverParametersType" maxOccurs="1" />
 			<xsd:element name="NonlinearSolverParameters" type="NonlinearSolverParametersType" maxOccurs="1" />
 		</xsd:choice>
-		<!--activeSetMaxIter => Maximum number of iteration for the active set strategy in the lagrangian contact solver-->
-		<xsd:attribute name="activeSetMaxIter" type="integer" default="10" />
 		<!--cflFactor => Factor to apply to the `CFL condition <http://en.wikipedia.org/wiki/Courant-Friedrichs-Lewy_condition>`_ when calculating the maximum allowable time step. Values should be in the interval (0,1] -->
 		<xsd:attribute name="cflFactor" type="real64" default="0.5" />
-		<!--contactRelationName => Name of the constitutive law used for fracture elements-->
+		<!--contactRelationName => Name of contact relation to enforce constraints on fracture boundary.-->
 		<xsd:attribute name="contactRelationName" type="string" use="required" />
 		<!--initialDt => Initial time-step value required by the solver to the event manager.-->
 		<xsd:attribute name="initialDt" type="real64" default="1e+99" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--solidSolverName => Name of the solid mechanics solver to use in the lagrangian contact solver-->
+		<!--solidSolverName => Name of the solid mechanics solver in the rock matrix-->
 		<xsd:attribute name="solidSolverName" type="string" use="required" />
 		<!--stabilizationName => Name of the stabilization to use in the lagrangian contact solver-->
 		<xsd:attribute name="stabilizationName" type="string" use="required" />
