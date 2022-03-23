@@ -717,13 +717,13 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
 
 //In Progress: Cameron Crook (crook5)
 template< class SUBREGION >
-void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & region,
+void VTKPolyDataWriterInterface::writeParticleFields( ParticleRegionBase const & region,
                                                      vtkCellData & cellData ) const
 {
   std::unordered_set< string > materialFields;
   conduit::Node fakeRoot;
   Group materialData( "materialData", fakeRoot );
-  region.forElementSubRegions< SUBREGION >( [&]( SUBREGION const & subRegion )
+  region.forParticleSubRegions< SUBREGION >( [&]( SUBREGION const & subRegion )
   {
     // Register a dummy group for each subregion
     Group & subReg = materialData.registerGroup( subRegion.getName() );
@@ -737,7 +737,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
         if( wrapper.getPlotLevel() <= m_plotLevel )
         {
           string const fieldName = constitutive::ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
-          subReg.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, subReg ) );
+          subReg.registerWrapper( fieldName,  wrapper.averageOverSecondDim( fieldName, subReg ) ); //TO DO (crook5): get rid of averaging and report individual values
           materialFields.insert( fieldName );
         }
       } );
@@ -753,7 +753,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   // Collect a list of regular fields (filter out material field wrappers)
   // TODO: this can be removed if we stop hanging constitutive wrappers on the mesh
   std::unordered_set< string > regularFields;
-  region.forElementSubRegions< SUBREGION >( [&]( ElementSubRegionBase const & subRegion )
+  region.forParticleSubRegions< SUBREGION >( [&]( ParticleSubRegionBase const & subRegion )
   {
     for( auto const & wrapperIter : subRegion.wrappers() )
     {
@@ -767,7 +767,7 @@ void VTKPolyDataWriterInterface::writeElementFields( ElementRegionBase const & r
   // Write regular fields
   for( string const & field : regularFields )
   {
-    writeElementField< SUBREGION >( region.getGroup( ElementRegionBase::viewKeyStruct::elementSubRegions() ), field, cellData );
+    writeElementField< SUBREGION >( region.getGroup( ParticleRegionBase::viewKeyStruct::particleSubRegions() ), field, cellData );
   }
 }
 

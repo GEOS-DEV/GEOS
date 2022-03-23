@@ -194,6 +194,11 @@ private:
   void writeElementFields( ElementRegionBase const & subRegion,
                            vtkCellData & cellData ) const;
 
+  //Cameron Crook
+  template< class SUBREGION >
+  void writeParticleFields( ParticleRegionBase const & region,
+                            vtkCellData & cellData ) const;
+
   /**
    * @brief Writes an unstructured grid
    * @details The unstructured grid is the last element in the hierarchy of the output,
