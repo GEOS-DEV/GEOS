@@ -278,39 +278,39 @@ void EdgeManager::connectivityFromGlobalToLocal( const SortedArray< localIndex >
 localIndex EdgeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex EdgeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex EdgeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex EdgeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                            arrayView1d< localIndex const > const & packList ) const
 {
   arrayView1d< globalIndex const > const localToGlobal = localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
   arrayView1d< globalIndex const > faceLocalToGlobal = faceList().relatedObjectLocalToGlobal();
 
-  localIndex packedSize = bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toNodesRelation.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToNodes,
-                                           packList,
-                                           localToGlobal,
-                                           nodeLocalToGlobal );
+  localIndex packedSize = bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toNodesRelation.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToNodes,
+                                               packList,
+                                               localToGlobal,
+                                               nodeLocalToGlobal );
 
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.base().toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToFaces,
-                                           packList,
-                                           localToGlobal,
-                                           faceLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toFacesRelation.base().toArrayOfArraysView(),
+                                               m_unmappedGlobalIndicesInToFaces,
+                                               packList,
+                                               localToGlobal,
+                                               faceLocalToGlobal );
 
   return packedSize;
 }
