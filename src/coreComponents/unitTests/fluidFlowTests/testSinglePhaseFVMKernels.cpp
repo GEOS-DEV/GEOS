@@ -79,6 +79,7 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   CellElementStencilTPFA::IndexContainerViewConstType const & sesri = stencil.getElementSubRegionIndices();
   CellElementStencilTPFA::IndexContainerViewConstType const & sei = stencil.getElementIndices();
   CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
+  // CellElementStencilTPFA::WeightContainerViewConstType const & stabWeights = stencil.getStabWeights();
 
   auto presView        = AccessorHelper< FULL >::template makeElementAccessor< 1 >( pres,
                                                                                     stencilSize,
@@ -180,11 +181,13 @@ TEST( SinglePhaseFVMKernels, fluxFull )
   localIndex elemSubReg[2] = {0, 0};
   localIndex elemIndex[2] = {1, 0};
   real64 weight[] = { 1e-12, -1e-12 };
+  real64 stabWeight[] = { 1e-12, -1e-12 };
   stencil.add( stencilSize,
                elemReg,
                elemSubReg,
                elemIndex,
                weight,
+               stabWeight,
                0 );
 
 

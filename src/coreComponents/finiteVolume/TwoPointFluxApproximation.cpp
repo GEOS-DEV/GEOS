@@ -95,6 +95,9 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
   ElementRegionManager::ElementViewAccessor< arrayView2d< real64 const > > const elemCenter =
     elemManager.constructArrayViewAccessor< real64, 2 >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
 
+  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > > const elemVolume =
+    elemManager.constructArrayViewAccessor< real64, 1 >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+
   ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > const elemGlobalIndex =
     elemManager.constructArrayViewAccessor< globalIndex, 1 >( ObjectManagerBase::viewKeyStruct::localToGlobalMapString() );
 
@@ -148,6 +151,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
     stackArray1d< localIndex, 2 > subRegionIndex( 2 );
     stackArray1d< localIndex, 2 > elementIndex( 2 );
     stackArray1d< real64, 2 > stencilWeights( 2 );
+    stackArray1d< real64, 2 > stencilStabWeights( 2 );
     stackArray1d< globalIndex, 2 > stencilCellsGlobalIndex( 2 );
 
     for( localIndex ke = 0; ke < 2; ++ke )
@@ -167,6 +171,8 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
       real64 const c2fDistance = LvArray::tensorOps::normalize< 3 >( cellToFaceVec[ke] );
 
       stencilWeights[ke] = faceArea / c2fDistance;
+
+      stencilStabWeights[ke] = 0.5 * elemVolume[er][esr][ei] * (ke == 0 ? 1 : -1);
     }
 
     // Ensure elements are added to stencil in order of global indices
@@ -182,6 +188,7 @@ void TwoPointFluxApproximation::computeCellStencil( MeshLevel & mesh ) const
                  subRegionIndex.data(),
                  elementIndex.data(),
                  stencilWeights.data(),
+                 stencilStabWeights.data(),
                  kf );
 
     stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
@@ -357,6 +364,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
     stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
     stackArray1d< real64, maxElems > stencilWeights( numElems );
+    stackArray1d< real64, maxElems > stencilStabWeights( numElems );
     stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
     stackArray1d< integer, maxElems > isGhostConnectors( numElems );
 
@@ -467,6 +475,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                          stencilCellsSubRegionIndex.data(),
                          stencilCellsIndex.data(),
                          stencilWeights.data(),
+                         stencilStabWeights.data(),
                          connectorIndex );
 
     fractureStencil.add( numElems,
@@ -587,6 +596,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
         stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
         stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
         stackArray1d< real64, maxElems > stencilWeights( numElems );
+        stackArray1d< real64, maxElems > stencilStabWeights( numElems );
 
         real64 cellToFaceVec[ 3 ], faceNormalVector[ 3 ];
 
@@ -634,6 +644,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                                    stencilCellsSubRegionIndex.data(),
                                    stencilCellsIndex.data(),
                                    stencilWeights.data(),
+                                   stencilStabWeights.data(),
                                    connectorIndex );
 
             faceToCellStencil.addVectors( transMultiplier[faceIndex], faceNormalVector, cellToFaceVec );
@@ -684,6 +695,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
       stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsSubRegionIndex( numElems );
       stackArray1d< localIndex, MAX_NUM_ELEMS > stencilCellsIndex( numElems );
       stackArray1d< real64, MAX_NUM_ELEMS > stencilWeights( numElems );
+      stackArray1d< real64, MAX_NUM_ELEMS > stencilStabWeights( numElems );
 
       localIndex const er  = surfaceElementsToCells.m_toElementRegion[kes][0];
       localIndex const esr = surfaceElementsToCells.m_toElementSubRegion[kes][0];
@@ -708,6 +720,7 @@ void TwoPointFluxApproximation::addFractureMatrixConnections( MeshLevel & mesh,
                        stencilCellsSubRegionIndex.data(),
                        stencilCellsIndex.data(),
                        stencilWeights.data(),
+                       stencilStabWeights.data(),
                        connectorIndex );
 
       connectorIndex++;
@@ -759,6 +772,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
       stackArray1d< localIndex, maxElems > stencilCellsSubRegionIndex( numElems );
       stackArray1d< localIndex, maxElems > stencilCellsIndex( numElems );
       stackArray1d< real64, maxElems > stencilWeights( numElems );
+      stackArray1d< real64, maxElems > stencilStabWeights( numElems );
 
       stackArray1d< R1Tensor, maxElems > stencilCellCenterToEdgeCenters( numElems );
       stackArray1d< integer, maxElems > isGhostConnectors( numElems );
@@ -797,6 +811,7 @@ void TwoPointFluxApproximation::addFractureFractureConnections( MeshLevel & mesh
                            stencilCellsSubRegionIndex.data(),
                            stencilCellsIndex.data(),
                            stencilWeights.data(),
+                           stencilStabWeights.data(),
                            connectorIndex );
 
       fractureStencil.add( numElems,
@@ -878,6 +893,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
   stackArray1d< localIndex, numPts > stencilSubRegionIndices( numPts );
   stackArray1d< localIndex, numPts > stencilElemOrFaceIndices( numPts );
   stackArray1d< real64, numPts > stencilWeights( numPts );
+  stackArray1d< real64, numPts > stencilStabWeights( numPts );
 
   real64 const lengthTolerance = m_lengthScale * m_areaRelTol;
   real64 const areaTolerance = lengthTolerance * lengthTolerance;
@@ -945,6 +961,7 @@ void TwoPointFluxApproximation::computeBoundaryStencil( MeshLevel & mesh,
                    stencilSubRegionIndices.data(),
                    stencilElemOrFaceIndices.data(),
                    stencilWeights.data(),
+                   stencilStabWeights.data(),
                    kf );
 
       stencil.addVectors( transMultiplier[kf], faceNormal, cellToFaceVec );
@@ -1079,6 +1096,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
     stackArray1d< localIndex, numPts > stencilSubRegionIndices( numPts );
     stackArray1d< localIndex, numPts > stencilElemOrFaceIndices( numPts );
     stackArray1d< real64, numPts > stencilWeights( numPts );
+    stackArray1d< real64, numPts > stencilStabWeights( numPts );
 
     localIndex const aquiferIndex = aquiferNameToAquiferId.at( bc.getName() );
 
@@ -1125,6 +1143,7 @@ void TwoPointFluxApproximation::computeAquiferStencil( DomainPartition & domain,
                      stencilSubRegionIndices.data(),
                      stencilElemOrFaceIndices.data(),
                      stencilWeights.data(),
+                     stencilStabWeights.data(),
                      iface );
       }
     }
