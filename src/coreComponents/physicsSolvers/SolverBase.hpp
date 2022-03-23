@@ -217,6 +217,33 @@ public:
               real64 & lastResidual );
 
   /**
+   * @brief Function to perform line search using a parabolic interpolation to find the scaling factor.
+   * @param time_n time at the beginning of the step
+   * @param dt the perscribed timestep
+   * @param cycleNumber the current cycle number
+   * @param domain the domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   * @param solution the solution vector
+   * @param lastResidual (in) target value below which to reduce residual norm, (out) achieved residual norm
+   * @return return true if line search succeeded, false otherwise
+   *
+   */
+  virtual bool
+  lineSearchWithParabolicInterpolation ( real64 const & time_n,
+                                         real64 const & dt,
+                                         integer const cycleNumber,
+                                         DomainPartition & domain,
+                                         DofManager const & dofManager,
+                                         CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                         ParallelVector & rhs,
+                                         ParallelVector & solution,
+                                         real64 const scaleFactor,
+                                         real64 & lastResidual,
+                                         real64 & residualNormT );
+
+  /**
    * @brief Function for a linear implicit integration step
    * @param time_n time at the beginning of the step
    * @param dt the perscribed timestep
@@ -392,10 +419,10 @@ public:
    * solution method such as LinearImplicitStep() or NonlinearImplicitStep().
    */
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution );
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution );
 
   /**
    * @brief Function to check system solution for physical consistency and constraint violation
@@ -456,6 +483,32 @@ public:
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain );
+
+  /**
+   * @brief updates the configuration (if needed) based on the state after a converged Newton loop.
+   * @param domain the domain containing the mesh and fields
+   * @return a bool that states whether the configuration used to solve the nonlinear loop is still valid or not.
+   */
+  virtual bool updateConfiguration( DomainPartition & domain );
+
+  /**
+   * @brief
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void outputConfigurationStatistics( DomainPartition const & domain ) const;
+
+  /**
+   * @brief resets the configuration to the beginning of the time-step.
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void resetConfigurationToBeginningOfStep( DomainPartition & domain );
+
+  /**
+   * @brief set the simplest configuration state.
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual bool resetConfigurationToDefault( DomainPartition & domain ) const;
+
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models)
@@ -703,6 +756,10 @@ private:
    */
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const { GEOSX_UNUSED_VAR( subRegion ); }
 
+  bool solveNonlinearSystem( real64 const & time_n,
+                             real64 const & dt,
+                             integer const cycleNumber,
+                             DomainPartition & domain );
 
 };
 
