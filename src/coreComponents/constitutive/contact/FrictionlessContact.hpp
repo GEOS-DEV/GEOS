@@ -69,10 +69,10 @@ public:
 
   GEOSX_HOST_DEVICE
   inline
-  virtual void updateFractureState(  localIndex const k,
-                                                 arraySlice1d< real64 const > const & dispJump,
-                                                 arraySlice1d< real64 const > const & tractionVector,
-                                                 integer & fractureState ) const override final;
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & tractionVector,
+                                    integer & fractureState ) const override final;
 
 
   /**
@@ -165,17 +165,18 @@ void FrictionlessContactUpdates::computeTraction( localIndex const k,
 }
 
 GEOSX_HOST_DEVICE
-void FrictionlessContactUpdates::updateFractureState(  localIndex const k,
-                                                 arraySlice1d< real64 const > const & dispJump,
-                                                 arraySlice1d< real64 const > const & tractionVector,
-                                                 integer & fractureState ) const
+void FrictionlessContactUpdates::updateFractureState( localIndex const k,
+                                                      arraySlice1d< real64 const > const & dispJump,
+                                                      arraySlice1d< real64 const > const & tractionVector,
+                                                      integer & fractureState ) const
 {
-    GEOSX_UNUSED_VAR( k, tractionVector);
+  GEOSX_UNUSED_VAR( k, tractionVector );
 
-  if ( dispJump[0] >  -std::numeric_limits<real64>::epsilon() )
+  if( dispJump[0] >  -std::numeric_limits< real64 >::epsilon() )
   {
     fractureState = extrinsicMeshData::contact::FractureState::Open;
-  }else
+  }
+  else
   {
     fractureState = extrinsicMeshData::contact::FractureState::Stick;
   }

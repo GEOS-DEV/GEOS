@@ -617,7 +617,7 @@ real64 SolverBase::nonlinearImplicitStep( real64 const & time_n,
           break; // get out of configuration loop coz everything converged.
         }
         else
-        { 
+        {
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );
           GEOSX_LOG_LEVEL_RANK_0( 1, "---------- Configuration did not converge. Testing new configuration. ----------" );
           GEOSX_LOG_LEVEL_RANK_0( 1, "   " );

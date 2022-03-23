@@ -85,10 +85,10 @@ public:
 
   GEOSX_HOST_DEVICE
   inline
-  virtual void updateFractureState(  localIndex const k,
-                                                 arraySlice1d< real64 const > const & dispJump,
-                                                 arraySlice1d< real64 const > const & tractionVector,
-                                                 integer & fractureState ) const override final;
+  virtual void updateFractureState( localIndex const k,
+                                    arraySlice1d< real64 const > const & dispJump,
+                                    arraySlice1d< real64 const > const & tractionVector,
+                                    integer & fractureState ) const override final;
 
 private:
 

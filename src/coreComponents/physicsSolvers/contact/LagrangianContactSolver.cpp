@@ -1735,7 +1735,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   GEOSX_MARK_FUNCTION;
 
   using namespace extrinsicMeshData::contact;
-  
+
   bool hasConfigurationConverged = true;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,

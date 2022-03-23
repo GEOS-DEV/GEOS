@@ -54,7 +54,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
   registerWrapper( viewKeyStruct::initialFractureStateString(), &m_initialFractureState ).
     setApplyDefaultValue( FractureState::Stick ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "The initial state of fractures. Options are: 0 (stick) or 3 (open). Default value is stick." );  
+    setDescription( "The initial state of fractures. Options are: 0 (stick) or 3 (open). Default value is stick." );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -66,8 +66,8 @@ void ContactSolverBase::postProcessInput()
   m_solidSolver = &this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
   SolverBase::postProcessInput();
 
-  if ( !compareFractureStates ( m_initialFractureState,  FractureState::Stick ) 
-     || !compareFractureStates ( m_initialFractureState, FractureState::Open ) )
+  if( !compareFractureStates ( m_initialFractureState, FractureState::Stick )
+      || !compareFractureStates ( m_initialFractureState, FractureState::Open ) )
   {
     GEOSX_ERROR( " Invalid initial fracture state. Valid options are stick and open." );
   }
