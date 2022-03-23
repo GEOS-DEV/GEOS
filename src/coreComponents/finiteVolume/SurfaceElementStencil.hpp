@@ -71,6 +71,7 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
+   * @param stabWeights The container for the stabilization weights for each point in each stencil
    * @param cellCenterToEdgeCenters Cell center to Edge center vector
    * @param meanPermCoefficient Mean permeability coefficient
    */
@@ -78,6 +79,7 @@ public:
                                 IndexContainerType const & elementSubRegionIndices,
                                 IndexContainerType const & elementIndices,
                                 WeightContainerType const & weights,
+                                WeightContainerType const & stabWeights,
                                 ArrayOfArrays< R1Tensor > const & cellCenterToEdgeCenters,
                                 real64 const meanPermCoefficient );
 
@@ -215,6 +217,7 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
+                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) override;
 
   /**

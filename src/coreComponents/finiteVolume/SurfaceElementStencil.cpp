@@ -32,6 +32,7 @@ void SurfaceElementStencil::add( localIndex const numPts,
                                  localIndex const * const elementSubRegionIndices,
                                  localIndex const * const elementIndices,
                                  real64 const * const weights,
+                                 real64 const * const stabWeights,
                                  localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
@@ -43,6 +44,7 @@ void SurfaceElementStencil::add( localIndex const numPts,
     m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
     m_elementIndices.appendArray( elementIndices, elementIndices + numPts );
     m_weights.appendArray( weights, weights + numPts );
+    m_stabWeights.appendArray( stabWeights, stabWeights + numPts );
 
     m_connectorIndices[connectorIndex] = m_weights.size() - 1;
   }
@@ -53,11 +55,13 @@ void SurfaceElementStencil::add( localIndex const numPts,
     m_elementSubRegionIndices.clearArray( stencilIndex );
     m_elementIndices.clearArray( stencilIndex );
     m_weights.clearArray( stencilIndex );
+    m_stabWeights.clearArray( stencilIndex );
 
     m_elementRegionIndices.appendToArray( stencilIndex, elementRegionIndices, elementRegionIndices + numPts );
     m_elementSubRegionIndices.appendToArray( stencilIndex, elementSubRegionIndices, elementSubRegionIndices + numPts );
     m_elementIndices.appendToArray( stencilIndex, elementIndices, elementIndices + numPts );
     m_weights.appendToArray( stencilIndex, weights, weights + numPts );
+    m_stabWeights.appendToArray( stencilIndex, stabWeights, stabWeights + numPts );
   }
 }
 
@@ -94,6 +98,7 @@ SurfaceElementStencil::createKernelWrapper() const
            m_elementSubRegionIndices,
            m_elementIndices,
            m_weights,
+           m_stabWeights,
            m_cellCenterToEdgeCenters,
            m_meanPermCoefficient };
 }
@@ -103,13 +108,15 @@ SurfaceElementStencilWrapper::
                                 IndexContainerType const & elementSubRegionIndices,
                                 IndexContainerType const & elementIndices,
                                 WeightContainerType const & weights,
+                                WeightContainerType const & stabWeights,
                                 ArrayOfArrays< R1Tensor > const & cellCenterToEdgeCenters,
                                 real64 const meanPermCoefficient )
 
   : StencilWrapperBase( elementRegionIndices,
                         elementSubRegionIndices,
                         elementIndices,
-                        weights ),
+                        weights,
+                        stabWeights ),
   m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
   m_meanPermCoefficient( meanPermCoefficient )
 {}

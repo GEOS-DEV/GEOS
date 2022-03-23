@@ -41,11 +41,13 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
+   * @param stabWeights The container for the stabilization weights for each point in each stencil
    */
   EmbeddedSurfaceToCellStencilWrapper( IndexContainerType const & elementRegionIndices,
                                        IndexContainerType const & elementSubRegionIndices,
                                        IndexContainerType const & elementIndices,
-                                       WeightContainerType const & weights );
+                                       WeightContainerType const & weights,
+                                       WeightContainerType const & stabWeights  );
 
   /**
    * @brief Give the number of stencil entries.
@@ -132,6 +134,7 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
+                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) override;
 
   /// Type of kernel wrapper for in-kernel update

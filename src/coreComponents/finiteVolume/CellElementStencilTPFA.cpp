@@ -43,6 +43,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
                                   localIndex const * const elementSubRegionIndices,
                                   localIndex const * const elementIndices,
                                   real64 const * const weights,
+                                  real64 const * const stabWeights,
                                   localIndex const connectorIndex )
 {
   GEOSX_ERROR_IF_NE_MSG( numPts, 2, "Number of cells in TPFA stencil should be 2" );
@@ -53,6 +54,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
   m_elementSubRegionIndices.resize( newSize, numPts );
   m_elementIndices.resize( newSize, numPts );
   m_weights.resize( newSize, numPts );
+  m_stabWeights.resize( newSize, numPts );
 
   for( localIndex a=0; a<numPts; ++a )
   {
@@ -60,6 +62,7 @@ void CellElementStencilTPFA::add( localIndex const numPts,
     m_elementSubRegionIndices( oldSize, a ) = elementSubRegionIndices[a];
     m_elementIndices( oldSize, a ) = elementIndices[a];
     m_weights( oldSize, a ) = weights[a];
+    m_stabWeights( oldSize, a ) = stabWeights[a];
   }
   m_connectorIndices[connectorIndex] = oldSize;
 }
@@ -90,6 +93,7 @@ CellElementStencilTPFA::createKernelWrapper() const
            m_elementSubRegionIndices,
            m_elementIndices,
            m_weights,
+           m_stabWeights,
            m_faceNormal,
            m_cellToFaceVec,
            m_transMultiplier };
@@ -100,13 +104,15 @@ CellElementStencilTPFAWrapper::
                                  IndexContainerType const & elementSubRegionIndices,
                                  IndexContainerType const & elementIndices,
                                  WeightContainerType const & weights,
+                                 WeightContainerType const & stabWeights,
                                  arrayView2d< real64 > const & faceNormal,
                                  arrayView3d< real64 > const & cellToFaceVec,
                                  arrayView1d< real64 > const & transMultiplier )
   : StencilWrapperBase( elementRegionIndices,
                         elementSubRegionIndices,
                         elementIndices,
-                        weights ),
+                        weights,
+                        stabWeights ),
   m_faceNormal( faceNormal ),
   m_cellToFaceVec( cellToFaceVec ),
   m_transMultiplier( transMultiplier )

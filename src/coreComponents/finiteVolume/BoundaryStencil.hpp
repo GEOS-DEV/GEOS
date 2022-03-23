@@ -41,6 +41,7 @@ public:
    * @param elementSubRegionIndices The container for the element sub region indices for each point in each stencil
    * @param elementIndices The container for the element indices for each point in each stencil
    * @param weights The container for the weights for each point in each stencil
+   * @param stabWeights The container for the stabilization weights for each point in each stencil
    * @param faceNormal Face normal vector
    * @param cellToFaceVec Cell center to face center vector
    * @param weightMultiplier Weight multiplier
@@ -49,6 +50,7 @@ public:
                           IndexContainerType const & elementSubRegionIndices,
                           IndexContainerType const & elementIndices,
                           WeightContainerType const & weights,
+                          WeightContainerType const & stabWeights,
                           arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & faceNormal,
                           arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & cellToFaceVec,
                           arrayView1d< real64 > const & weightMultiplier );
@@ -135,6 +137,7 @@ public:
                     localIndex const * const elementSubRegionIndices,
                     localIndex const * const elementIndices,
                     real64 const * const weights,
+                    real64 const * const stabWeights,
                     localIndex const connectorIndex ) override;
 
   /**
