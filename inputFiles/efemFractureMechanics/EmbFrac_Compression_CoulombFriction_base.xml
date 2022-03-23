@@ -67,6 +67,7 @@
     <Coulomb
       name="fractureContact"
       penaltyStiffness="1.0e8"
+      shearStiffness="1.0e8"
       cohesion ="0.0"
       frictionCoefficient = "0.6"
       apertureTableName="apertureTable"/>
