@@ -314,11 +314,9 @@ void WellControls::initializePreSubGroups()
   if( isProducer() )
   {
     array1d< real64 > & phaseRateTableValues = m_targetPhaseRateTable->getValues();
-    std::cout << "phaseRateTableValues.size() = " << phaseRateTableValues.size() << std::endl;
     for( localIndex i = 0; i < phaseRateTableValues.size(); ++i )
     {
       phaseRateTableValues( i ) *= -1;
-      std::cout << "phaseRateTableValues(" << i << ") = " << phaseRateTableValues( i ) << std::endl;
     }
 
     array1d< real64 > & totalRateTableValues = m_targetTotalRateTable->getValues();
