@@ -326,6 +326,7 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
     if( dtAttempt > 0 )
     {
       resetStateToBeginningOfStep( domain );
+      //TODO: ripristinare le seguenti 2 istruzioni
       //globalIndex numStick, numSlip, numOpen;
       //m_contactSolver->computeFractureStateStatistics( domain, numStick, numSlip, numOpen, true );
     }
@@ -493,6 +494,7 @@ real64 SinglePhasePoromechanicsLagrangianContactSolver::nonlinearImplicitStep( r
       bool const isPreviousFractureStateValid = m_contactSolver->updateConfiguration( domain );
       GEOSX_LOG_LEVEL_RANK_0( 1, "active set flag: " << std::boolalpha << isPreviousFractureStateValid );
 
+      // TODO: ripristinare il seguente loop
       //if( getLogLevel() > 2 )
       //{
       //  globalIndex numStick, numSlip, numOpen;
@@ -691,7 +693,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::assembleSystem( real64 con
   // Need to synchronize the two iteration counters
   m_contactSolver->getNonlinearSolverParameters().m_numNewtonIterations = m_nonlinearSolverParameters.m_numNewtonIterations;
 
-  // TODO: synchronizeFractureState ?
+  // TODO: synchronizeFractureState ? ripristinare seguente istruzione
   //m_contactSolver->synchronizeFractureState( domain );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
