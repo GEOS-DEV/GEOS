@@ -15,6 +15,8 @@
 
 #include "CellElementSubRegion.hpp"
 
+#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
+
 #include "common/TypeDispatch.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/generators/CellBlockUtilities.hpp"
@@ -96,7 +98,14 @@ std::set< string > CellElementSubRegion::getPackingExclusionList() const
   result.insert( { viewKeyStruct::nodeListString(),
                    viewKeyStruct::edgeListString(),
                    viewKeyStruct::faceListString(),
+                   viewKeyStruct::fracturedCellsString(),
                    viewKeyStruct::toEmbSurfString() } );
+
+  std::set< string > feNames;
+  auto f = [&feNames]( auto const & fe ) { feNames.insert( fe.getName() ); };
+  forWrappers< finiteElement::FiniteElementBase >( f );
+  result.insert( feNames.cbegin(), feNames.cend() );
+
   return result;
 }
 

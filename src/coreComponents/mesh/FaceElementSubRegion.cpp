@@ -19,6 +19,8 @@
 #include "FaceElementSubRegion.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
+#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
+
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
@@ -233,6 +235,12 @@ std::set< string > FaceElementSubRegion::getPackingExclusionList() const
                    viewKeyStruct::surfaceElementsToCellRegionsString(),
                    viewKeyStruct::surfaceElementsToCellSubRegionsString(),
                    viewKeyStruct::surfaceElementsToCellIndexString() } );
+
+  std::set< string > feNames;
+  auto f = [&feNames]( auto const & fe ) { feNames.insert( fe.getName() ); };
+  forWrappers< finiteElement::FiniteElementBase >( f );
+  result.insert( feNames.cbegin(), feNames.cend() );
+
   return result;
 }
 

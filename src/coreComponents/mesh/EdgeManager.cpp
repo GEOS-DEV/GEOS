@@ -375,5 +375,16 @@ void EdgeManager::depopulateUpMaps( std::set< localIndex > const & receivedEdges
   ObjectManagerBase::cleanUpMap( receivedEdges, m_toFacesRelation.toView(), facesToEdges );
 }
 
+std::set< string > EdgeManager::getPackingExclusionList() const
+{
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::elementRegionListString(),
+                   viewKeyStruct::elementSubRegionListString(),
+                   viewKeyStruct::elementListString() } );
+  return result;
+}
+
 
 } /// namespace geosx
