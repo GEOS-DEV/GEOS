@@ -312,8 +312,6 @@ public:
   static constexpr int maxEdgesPerNode()
   { return CellBlockManagerABC::maxEdgesPerNode(); }
 
-  set< string > getPackingExclusionList() const override;
-
   /**
    * @name Getters for stored value.
    */

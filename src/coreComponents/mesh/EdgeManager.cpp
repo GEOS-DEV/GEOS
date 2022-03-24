@@ -59,6 +59,12 @@ EdgeManager::EdgeManager( string const & name,
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of fracture connector local indices face element local indices" ).
     setSizedFromParent( 0 );
+
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
 
 EdgeManager::~EdgeManager()
@@ -373,17 +379,6 @@ void EdgeManager::depopulateUpMaps( std::set< localIndex > const & receivedEdges
                                     ArrayOfArraysView< localIndex const > const & facesToEdges )
 {
   ObjectManagerBase::cleanUpMap( receivedEdges, m_toFacesRelation.toView(), facesToEdges );
-}
-
-std::set< string > EdgeManager::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::elementRegionListString(),
-                   viewKeyStruct::elementSubRegionListString(),
-                   viewKeyStruct::elementListString() } );
-  return result;
 }
 
 

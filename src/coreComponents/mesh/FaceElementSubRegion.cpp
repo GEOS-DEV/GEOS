@@ -19,8 +19,6 @@
 #include "FaceElementSubRegion.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
-#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-
 #include "NodeManager.hpp"
 #include "MeshLevel.hpp"
 #include "BufferOps.hpp"
@@ -56,6 +54,13 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setPlotLevel( dataRepository::PlotLevel::LEVEL_1 ).
     setDescription( "Scalar indicator of level of separation for a fracturing face." );
 #endif
+
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::edgeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::surfaceElementsToCellRegionsString(),
+                                viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                                viewKeyStruct::surfaceElementsToCellIndexString() } );
 
   m_surfaceElementsToCells.resize( 0, 2 );
 
@@ -225,24 +230,5 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
     m_ghostRank[index] = faceGhostRank[ m_toFacesRelation[index][0] ];
   }
 }
-
-std::set< string > FaceElementSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::surfaceElementsToCellRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellIndexString() } );
-
-  std::set< string > feNames;
-  auto f = [&feNames]( auto const & fe ) { feNames.insert( fe.getName() ); };
-  forWrappers< finiteElement::FiniteElementBase >( f );
-  result.insert( feNames.cbegin(), feNames.cend() );
-
-  return result;
-}
-
 
 } /* namespace geosx */

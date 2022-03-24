@@ -73,6 +73,12 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   registerWrapper( viewKeyStruct::surfaceElementToParentPlaneString(), &m_parentPlaneName ).
     setDescription( "A map of surface element to the parent fracture name" );
 
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::edgeListString(),
+                                viewKeyStruct::surfaceElementsToCellRegionsString(),
+                                viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                                viewKeyStruct::surfaceElementsToCellIndexString() } );
+
   m_normalVector.resizeDimension< 1 >( 3 );
   m_tangentVector1.resizeDimension< 1 >( 3 );
   m_tangentVector2.resizeDimension< 1 >( 3 );
@@ -374,17 +380,6 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
                                      overwriteUpMaps );
 
   return unPackedSize;
-}
-
-std::set< string > EmbeddedSurfaceSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::surfaceElementsToCellRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellIndexString() } );
-  return result;
 }
 
 } /* namespace geosx */

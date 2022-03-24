@@ -15,8 +15,6 @@
 
 #include "CellElementSubRegion.hpp"
 
-#include "finiteElement/elementFormulations/FiniteElementBase.hpp"
-
 #include "common/TypeDispatch.hpp"
 #include "mesh/MeshLevel.hpp"
 #include "mesh/generators/CellBlockUtilities.hpp"
@@ -45,6 +43,12 @@ CellElementSubRegion::CellElementSubRegion( string const & name, Group * const p
   registerWrapper( viewKeyStruct::toEmbSurfString(), &m_toEmbeddedSurfaces ).setSizedFromParent( 1 );
 
   registerWrapper( viewKeyStruct::fracturedCellsString(), &m_fracturedCells ).setSizedFromParent( 1 );
+
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::edgeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::fracturedCellsString(),
+                                viewKeyStruct::toEmbSurfString() } );
 }
 
 void CellElementSubRegion::copyFromCellBlock( CellBlockABC & cellBlock )
@@ -89,24 +93,6 @@ void CellElementSubRegion::addFracturedElement( localIndex const cellElemIndex,
   m_toEmbeddedSurfaces.emplaceBack( cellElemIndex, embSurfIndex );
   // add the element to the fractured elements list
   m_fracturedCells.insert( cellElemIndex );
-}
-
-
-std::set< string > CellElementSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::fracturedCellsString(),
-                   viewKeyStruct::toEmbSurfString() } );
-
-  std::set< string > feNames;
-  auto f = [&feNames]( auto const & fe ) { feNames.insert( fe.getName() ); };
-  forWrappers< finiteElement::FiniteElementBase >( f );
-  result.insert( feNames.cbegin(), feNames.cend() );
-
-  return result;
 }
 
 
