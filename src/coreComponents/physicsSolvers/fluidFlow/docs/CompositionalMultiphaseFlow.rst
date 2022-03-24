@@ -153,7 +153,7 @@ In the approximation of the flux term at the interface between two control volum
 the calculation of the pressure stencil is general and will ultimately support a
 Multi-Point Flux Approximation (MPFA) approach. The current implementation of the
 transmissibility calculation is reviewed in the section about
-:doc:`/coreComponents/finiteVolume/docs/FiniteVolume`.
+:doc:`/coreComponents/discretizationMethods/docs/NumericalMethodsManager`.
 
 The approximation of the dynamic transport coefficients multiplying the discrete
 potential difference (e.g., the phase mobilities) is performed with a first-order

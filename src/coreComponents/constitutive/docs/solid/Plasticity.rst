@@ -62,13 +62,13 @@ in which :math:`\hat{\boldsymbol{n}} = \boldsymbol{e}/\|\boldsymbol{e}\|`.
 
 The following two-invariant models are currently implemented in GEOSX:
 
-  - :ref:`Drucker-Prager`
+  - :ref:`DruckerPrager <DruckerPrager>`
 
-  - :ref:`J2 plasticity`
+  - :ref:`J2Plasticity <J2Plasticity>`
 
-  - :ref:`Modified Cam-Clay`
+  - :ref:`ModifiedCamClay <ModifiedCamClay>`
 
-  - :ref:`Delft-Egg`
+  - :ref:`DelftEgg <DelftEgg>`
 
 Three-Invariant Models
 ----------------------------------

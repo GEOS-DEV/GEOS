@@ -1,4 +1,4 @@
-.. _Wrapper:
+.. _WrapperDoc:
 
 
 Wrapper

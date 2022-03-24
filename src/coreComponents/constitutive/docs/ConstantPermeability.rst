@@ -1,4 +1,4 @@
-.. _KozenyCarmanPermeability:
+.. _ConstantPermeability:
 
 
 ####################################################

@@ -155,7 +155,7 @@ In VisIt, the prepared files can be visualized as follows:
 
 1. Click the Open icon (or select File/Open from the top menu).
 2. Enter the vtk output folder in the left-hand panel (these will be separate if you use option 2 above).
-3. Select the desired *.vtm group in the right-hand panel (by double-clicking or selecting OK).
+3. Select the desired ``*.vtm`` group in the right-hand panel (by double-clicking or selecting OK).
 4. (Repeat for any additional datasets/regions.)
 5. In the main window, select the desired dataset from the Active Sources dropdown menu.
 6. Click on the Add icon, and select a parameter to visualize from the mesh, psuedocolor, or vector plot options
