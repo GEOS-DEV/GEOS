@@ -122,12 +122,6 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
 
-  virtual real64
-  nonlinearImplicitStep( real64 const & time_n,
-                         real64 const & dt,
-                         integer const cycleNumber,
-                         DomainPartition & domain ) override;
-
   virtual bool
   lineSearch( real64 const & time_n,
               real64 const & dt,
