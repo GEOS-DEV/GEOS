@@ -234,7 +234,7 @@ public:
 
 protected:
 
-  virtual void initializePreSubGroups() override;
+  virtual void initializePostSubGroups() override;
 
 private:
 
