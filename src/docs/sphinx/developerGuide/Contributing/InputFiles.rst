@@ -1,8 +1,8 @@
-.. _InputFiles:
+.. _ContributingInputFilesDoc:
 
-***********
-Input Files
-***********
+************************
+Contributing Input Files
+************************
 As part of the development cycle, functional input files should be introduced 
 into the repository in order to provide 1) testing, 2) examples of proper use of
 the code.

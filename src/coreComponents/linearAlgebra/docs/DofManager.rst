@@ -146,13 +146,13 @@ Example
 Here we show how the sparsity pattern is computed for a simple 2D quadrilateral mesh with 6 elements.
 Unknowns are pressure, located on the element center, and displacements (*x* and *y* components), located on the nodes.
 For fluxes, a two-point flux approximation (TPFA) is used.
-The representation of the sparsity pattern of the :math:`\mathsf{C_L}` matrix (connectors/locations) for the simple mesh, shown in :numref:`meshFig`, is
-reported in :numref:`CLFig`.
+The representation of the sparsity pattern of the :math:`\mathsf{C_L}` matrix (connectors/locations) for the simple mesh, shown in :numref:`meshDofManagerFig`, is
+reported in :numref:`CLDofManagerFig`.
 It can be notices that the two unknowns for the displacements *x* and *y* are grouped together.
 Elements are the connectivity for DoF on nodes (Finite Element Method for displacements) and on elements (pressures).
 Faces are the connectivity for DoF on elements (Finite Volume Method for pressure), being the flux computation based on the pressure on the two adjacent elements.
 
-.. _meshFig:
+.. _meshDofManagerFig:
 .. figure:: /coreComponents/linearAlgebra/docs/images/mesh2D.svg
    :align: center
    :width: 250
@@ -162,7 +162,7 @@ Faces are the connectivity for DoF on elements (Finite Volume Method for pressur
    Nodes are label with black numbers, elements with light gray numbers and
    faces with italic dark gray numbers.
 
-.. _CLFig:
+.. _CLDofManagerFig:
 .. figure:: /coreComponents/linearAlgebra/docs/images/CL.svg
    :align: center
    :width: 500
@@ -170,9 +170,9 @@ Faces are the connectivity for DoF on elements (Finite Volume Method for pressur
 
    Sparsity pattern of the binary matrix connections/locations.
 
-The global sparsity pattern, shown in :numref:`patternFig`, is obtained through the symbolic multiplication of the transpose of the matrix :math:`\mathsf{C_L}` and the matrix itself, i.e. :math:`\mathsf{P = C_L^T C_L}`.
+The global sparsity pattern, shown in :numref:`patternDofManagerFig`, is obtained through the symbolic multiplication of the transpose of the matrix :math:`\mathsf{C_L}` and the matrix itself, i.e. :math:`\mathsf{P = C_L^T C_L}`.
 
-.. _patternFig:
+.. _patternDofManagerFig:
 .. figure:: /coreComponents/linearAlgebra/docs/images/pattern.svg
    :align: center
    :width: 400
@@ -185,7 +185,7 @@ Real mesh and patterns
 ======================
 
 Now we build the pattern of the Jacobian matrix for a simple 3D mesh, shown in
-:numref:`meshCubeFig`. Fields are:
+:numref:`meshCubeDofManagerFig`. Fields are:
 
 - displacement (location: node, connectivity: element) defined on the blue, orange and red regions;
 - pressure (location: element, connectivity: face) defined on the green, orange and red regions;
@@ -197,7 +197,7 @@ Moreover, following coupling are imposed:
 - pressure-mass matrix and transpose (connectivity: element) everywhere it is
   possibile.
 
-.. _meshCubeFig:
+.. _meshCubeDofManagerFig:
 .. figure:: /coreComponents/linearAlgebra/docs/images/meshCube3D.svg
    :align: center
    :width: 400
@@ -205,12 +205,12 @@ Moreover, following coupling are imposed:
 
    Real mesh used to compute the Jacobian pattern.
 
-:numref:`globalPatterFig` shows the global pattern with the field-based ordering of unknowns.
+:numref:`globalPatterDofManagerFig` shows the global pattern with the field-based ordering of unknowns.
 Different colors mean different fields.
 Red unkwnons are associated with displacement, yellow ones with pressure and blue ones with mass matrix.
 Orange means the coupling among displacement and pressure, while green is the symmetric coupling among pressure and mass matrix.
 
-.. _globalPatterFig:
+.. _globalPatterDofManagerFig:
 .. figure:: /coreComponents/linearAlgebra/docs/images/global.svg
    :align: center
    :width: 400
@@ -220,11 +220,11 @@ Orange means the coupling among displacement and pressure, while green is the sy
    Red is associated with displacement unknowns, yellow with pressure ones and blue with those of mass matrix field.
    Orange means the coupling among displacement and pressure, while green is the symmetric coupling among pressure and mass matrix.
 
-:numref:`permutedPatterFig` shows the global pattern with the MPI rank-based ordering of unknowns.
+:numref:`permutedPatterDofManagerFig` shows the global pattern with the MPI rank-based ordering of unknowns.
 In this case, just two processes are used.
 Again, different colors indicate different ranks.
 
-.. _permutedPatterFig:
+.. _permutedPatterDofManagerFig:
 .. figure:: /coreComponents/linearAlgebra/docs/images/permutedGlobal.svg
    :align: center
    :width: 400
