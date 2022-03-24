@@ -299,7 +299,7 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups() override;
+  virtual void initializePostSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
