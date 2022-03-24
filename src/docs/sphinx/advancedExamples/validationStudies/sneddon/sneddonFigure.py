@@ -37,7 +37,7 @@ def getFracturePressureFromXML( xmlFilePath ):
     tree = ElementTree.parse(xmlFilePath)
 
     param = tree.findall('FieldSpecifications/FieldSpecification')
-
+    pressure = 0.0
     found_traction = False
     for elem in param:
         if elem.get("fieldName") == "fractureTraction" and elem.get("component") == "0":
