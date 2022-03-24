@@ -1,0 +1,29 @@
+--- a/CMake/patches/3.22/FindMPI.cmake	2021-11-04 12:48:20.000000000 -0700
++++ b/CMake/patches/3.22/FindMPI.cmake.patched	2022-03-09 23:04:48.008672246 -0800
+@@ -1213,6 +1213,8 @@
+   set_property(TARGET MPI::MPI_${LANG} PROPERTY INTERFACE_COMPILE_DEFINITIONS "${MPI_${LANG}_COMPILE_DEFINITIONS}")
+ 
+   if(MPI_${LANG}_LINK_FLAGS)
++    string(REPLACE "," "$<COMMA>" _MPI_${LANG}_LINK_FLAGS "${MPI_${LANG}_LINK_FLAGS}")
++    string(PREPEND _MPI_${LANG}_LINK_FLAGS "SHELL:")
+     if (CMAKE_VERSION VERSION_LESS "3.18") # Introduction of `$<HOST_LINK>`
+       if (CMAKE_CUDA_COMPILER)
+         message(AUTHOR_WARNING
+@@ -1230,8 +1232,7 @@
+           "https://gitlab.kitware.com/cmake/cmake/-/issues/22007)")
+       endif ()
+     else ()
+-      string(REPLACE "," "$<COMMA>" _MPI_${LANG}_LINK_FLAGS "${MPI_${LANG}_LINK_FLAGS}")
+-      string(PREPEND _MPI_${LANG}_LINK_FLAGS "$<HOST_LINK:SHELL:")
++      string(PREPEND _MPI_${LANG}_LINK_FLAGS "$<HOST_LINK:")
+       string(APPEND _MPI_${LANG}_LINK_FLAGS ">")
+     endif ()
+     set_property(TARGET MPI::MPI_${LANG} PROPERTY INTERFACE_LINK_OPTIONS "${_MPI_${LANG}_LINK_FLAGS}")
+@@ -1823,7 +1824,6 @@
+ find_package_handle_standard_args(MPI
+     REQUIRED_VARS ${_MPI_REQ_VARS}
+     VERSION_VAR ${_MPI_MIN_VERSION}
+-    REASON_FAILURE_MESSAGE "${_MPI_FAIL_REASON}"
+     HANDLE_COMPONENTS)
+ 
+ #=============================================================================
