@@ -58,7 +58,7 @@ if ( ENABLE_CUDA )
 endif()
 
 if( ENABLE_HIP )
-  set( commonDeps ${commonDeps} hip hip_runtime )
+  set( commonDeps ${commonDeps} blt::hip ) #blt::hip blt::hip_runtime )
 endif()
 
 if( ENABLE_MPI )
@@ -127,3 +127,14 @@ if(GEOSX_ENABLE_TESTS)
   add_subdirectory( unitTests )
 endif( )
 
+
+#foreach( lib ${subdirs} )
+#  blt_print_target_properties(TARGET ${lib})
+#  get_target_property(interface_libs ${lib} INTERFACE_LINK_LIBRARIES)
+#  foreach( ilib ${interface_libs})
+#    blt_print_target_properties(TARGET ${ilib})
+#  endforeach()
+#endforeach()
+
+#blt_print_target_properties(TARGET hip::host)
+#blt_print_target_properties(TARGET hip::amdhip64)

@@ -252,7 +252,7 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
                                                                               &dofColIndices[0],
                                                                               &localPerfJacobian[0][0] + 2 * i,
                                                                               2 );
-            atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
+	    RAJA::atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localPerf[i] );
           }
         }
       } );

@@ -121,7 +121,7 @@ if( ENABLE_CUDA )
 endif()
 
 if( ENABLE_HIP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} hip hip_runtime )
+  set( extraComponentsLinkList ${extraComponentsLinkList} ) # blt::hip blt::hip_runtime )
 endif()
 
 if ( GEOSX_BUILD_SHARED_LIBS )
@@ -200,3 +200,5 @@ if( ENABLE_PYGEOSX )
   add_subdirectory( pygeosx )
 endif()
 
+
+blt_print_target_properties(TARGET geosx)
