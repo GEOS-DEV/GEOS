@@ -550,17 +550,9 @@ void MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<cellIndex> &
       }
     }
   }
-  arraySize nbValues = std::accumulate(nbElementsPerNode.begin(), nbElementsPerNode.end(), 0);
-
+  
   //  2 - Allocating - No overallocation
-  nodeToElements.resize(0);
-  nodeToElements.resize(m_numNodes);
-  nodeToElements.reserveValues( nbValues ); // Does this accelerate allocation?
-
-  for( int i = 0; i < m_numNodes; ++i )
-  {
-    nodeToElements.setCapacityOfArray(i, nbElementsPerNode[i]);
-  }
+  nodeToElements.resizeFromCapacities< parallelHostPolicy >( nbNodes, nbElementsPerNode.data() );
 
   // 3 - Set the values
   for (unsigned int i = 0; i < numCellBlocks(); ++i)
