@@ -367,14 +367,12 @@ MeshConnectivityBuilder::MeshConnectivityBuilder( CellBlockManagerBase & cellBlo
   m_cellBlocks.resize(nbBlocks);
   m_blockCellIndexOffset.resize(nbBlocks);
 
-  localIndex prevSum = 0;
   for (int i = 0; i < nbBlocks; ++i)
   {
-    // TODO - Check that we indeed have CellBlock instantiation 
-    CellBlock & cur = group.getGroup< CellBlock >( i );
-    m_cellBlocks[i] = &cur;
-    m_blockCellIndexOffset[i] = prevSum + m_cellBlocks[i]->numElements();
+    m_cellBlocks[i] = &group.getGroup< CellBlock >( i );
+    m_blockCellIndexOffset[i] = m_cellBlocks[i]->numElements();
   }
+  std::partial_sum( m_blockCellIndexOffset.begin(), m_blockCellIndexOffset.end(), m_blockCellIndexOffset.begin() );
   assert( nbBlocks > 0);
 
   nbElements =  m_blockCellIndexOffset[nbBlocks-1];
