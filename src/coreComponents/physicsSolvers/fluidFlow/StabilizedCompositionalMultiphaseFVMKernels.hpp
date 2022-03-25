@@ -21,6 +21,9 @@
 
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
 
+#include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/SolidExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -63,6 +66,9 @@ public:
   using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::phaseVolumeFractionOld,
                                                   extrinsicMeshData::flow::phaseDensityOld,
                                                   extrinsicMeshData::flow::phaseComponentFractionOld >;
+
+  using SolidAccessors = StencilAccessors< extrinsicMeshData::solid::bulkModulus,
+                                           extrinsicMeshData::solid::shearModulus >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -116,6 +122,7 @@ public:
                            MultiFluidAccessors const & multiFluidAccessors,
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
+                           SolidAccessors const & solidAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
@@ -134,6 +141,8 @@ public:
     m_phaseMassDensOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseDensityOld {}) ),
     m_phaseCompFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseComponentFractionOld {})),
     m_phaseVolFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseVolumeFractionOld {})),
+    m_bulkModulus(solidAccessors.get(extrinsicMeshData::solid::bulkModulus {})),
+    m_shearModulus(solidAccessors.get(extrinsicMeshData::solid::shearModulus {})),
     m_stabWeights(stencilWrapper.getStabWeights())
 
   {}
@@ -240,6 +249,9 @@ protected:
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_COMP > > const m_phaseCompFracOld;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFracOld;
 
+  ElementViewConst< arrayView1d< real64 const> > const m_bulkModulus;
+  ElementViewConst< arrayView1d< real64 const> > const m_shearModulus;
+
   typename STENCILWRAPPER::WeightContainerViewConstType m_stabWeights;
 
 };
@@ -297,10 +309,11 @@ public:
       typename KERNEL_TYPE::StabCompFlowAccessors stabCompFlowAccessors( elemManager, solverName );
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::SolidAccessors solidAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors,
+                          capPressureAccessors, permeabilityAccessors, solidAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );

@@ -17,6 +17,7 @@
  */
 
 #include "ElasticIsotropic.hpp"
+#include "SolidExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -58,6 +59,9 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::shearModulusString(), &m_shearModulus ).
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Shear Modulus Field" );
+
+  registerExtrinsicData(extrinsicMeshData::solid::bulkModulus{}, &m_bulkModulus);
+  registerExtrinsicData(extrinsicMeshData::solid::shearModulus{}, &m_shearModulus);
 }
 
 ElasticIsotropic::~ElasticIsotropic()
