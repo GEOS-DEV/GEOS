@@ -47,6 +47,14 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature,
                            WRITE_AND_READ,
                            "Temperature" );
 
+EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
+                           "deltaTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Accumulated temperature updates" );
+
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
                            array2dLayoutComp,
@@ -95,6 +103,14 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dPressure,
                            NO_WRITE,
                            "Derivative of phase volume fraction with respect to pressure" );
 
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dTemperature,
+                           "dPhaseVolumeFraction_dTemperature",
+                           array2dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase volume fraction with respect to temperature" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseVolumeFraction_dGlobalCompDensity,
                            "dPhaseVolumeFraction_dGlobalCompDensity",
                            array3dLayoutPhase_dC,
@@ -119,6 +135,14 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseMobility_dPressure,
                            NO_WRITE,
                            "Derivative of phase mobility with respect to pressure" );
 
+EXTRINSIC_MESH_DATA_TRAIT( dPhaseMobility_dTemperature,
+                           "dPhaseMobility_dTemperature",
+                           array2dLayoutPhase,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Derivative of phase mobility with respect to temperature" );
+
 EXTRINSIC_MESH_DATA_TRAIT( dPhaseMobility_dGlobalCompDensity,
                            "dPhaseMobility_dGlobalCompDensity",
                            array3dLayoutPhase_dC,
@@ -135,22 +159,6 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFractionOld,
                            WRITE_AND_READ,
                            "Phase volume fraction at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensityOld,
-                           "phaseDensityOld",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( totalDensityOld,
-                           "totalDensityOld",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
-
 EXTRINSIC_MESH_DATA_TRAIT( phaseMobilityOld,
                            "phaseMobilityOld",
                            array2dLayoutPhase,
@@ -158,14 +166,6 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseMobilityOld,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Phase mobility at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseComponentFractionOld,
-                           "phaseComponentFractionOld",
-                           array3dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseOutflux,
                            "phaseOutflux",

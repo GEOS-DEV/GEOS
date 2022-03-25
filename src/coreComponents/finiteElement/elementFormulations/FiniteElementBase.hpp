@@ -27,6 +27,7 @@
 
 #include "common/DataTypes.hpp"
 #include "common/GeosxMacros.hpp"
+#include "finiteElement/PDEUtilities.hpp"
 #include "LvArray/src/tensorOps.hpp"
 #include "mesh/NodeManager.hpp"
 #include "mesh/EdgeManager.hpp"
@@ -165,6 +166,25 @@ public:
    */
   GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const = 0;
+
+  /**
+   * @brief An helper struct to determine the function space.
+   * @tparam N The number of components per support point (i.e., 1 if
+   *   scalar variable, 3 if vector variable)
+   */
+  template< int N >
+  struct FunctionSpaceHelper
+  {};
+
+  /**
+   * @brief Getter for the function space.
+   * @tparam The number of components per support point (i.e., 1 if
+   *   scalar variable, 3 if vector variable)
+   * @return The function space.
+   */
+  template< int N >
+  GEOSX_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace();
 
   /**
    * @brief Getter for the number of support points per element.
@@ -603,12 +623,38 @@ protected:
   arrayView2d< real64 const > m_viewDetJ;
 };
 
-
 /// @cond Doxygen_Suppress
 
 //*************************************************************************************************
 //***** Definitions *******************************************************************************
 //*************************************************************************************************
+
+template<>
+struct FiniteElementBase::FunctionSpaceHelper< 1 >
+{
+  GEOSX_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    return PDEUtilities::FunctionSpace::H1;
+  }
+};
+
+template<>
+struct FiniteElementBase::FunctionSpaceHelper< 3 >
+{
+  GEOSX_HOST_DEVICE
+  constexpr static PDEUtilities::FunctionSpace getFunctionSpace()
+  {
+    return PDEUtilities::FunctionSpace::H1vector;
+  }
+};
+
+template< int N >
+GEOSX_HOST_DEVICE
+constexpr PDEUtilities::FunctionSpace FiniteElementBase::getFunctionSpace()
+{
+  return FunctionSpaceHelper< N >::getFunctionSpace();
+}
 
 template< typename LEAF >
 GEOSX_HOST_DEVICE

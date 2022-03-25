@@ -930,17 +930,17 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
 
 }
 
-void ProppantTransport::solveSystem( DofManager const & dofManager,
-                                     ParallelMatrix & matrix,
-                                     ParallelVector & rhs,
-                                     ParallelVector & solution )
+void ProppantTransport::solveLinearSystem( DofManager const & dofManager,
+                                           ParallelMatrix & matrix,
+                                           ParallelVector & rhs,
+                                           ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();
 
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )

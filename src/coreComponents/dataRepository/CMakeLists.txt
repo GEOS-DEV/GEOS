@@ -42,8 +42,14 @@ if ( ENABLE_CUDA )
 endif()
 
 if( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pylvarray )
-  add_subdirectory( python )
+  list( APPEND dataRepository_headers
+	python/PyGroup.hpp 
+	python/PyGroupType.hpp 
+	python/PyWrapper.hpp )
+  list( APPEND dataRepository_sources
+	python/PyGroup.cpp 
+	python/PyWrapper.cpp ) 
+  list( APPEND dependencyList Python3::Python pylvarray )  
 endif()
 
 
