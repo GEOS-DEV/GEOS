@@ -50,13 +50,13 @@ WillisRichardsPermeability::WillisRichardsPermeability( string const & name, Gro
 
 std::unique_ptr< ConstitutiveBase >
 WillisRichardsPermeability::deliverClone( string const & name,
-                                         Group * const parent ) const
+                                          Group * const parent ) const
 {
   return ConstitutiveBase::deliverClone( name, parent );
 }
 
 void WillisRichardsPermeability::allocateConstitutiveData( dataRepository::Group & parent,
-                                                          localIndex const numConstitutivePointsPerParentIndex )
+                                                           localIndex const numConstitutivePointsPerParentIndex )
 {
 // NOTE: enforcing 1 quadrature point
   m_dPerm_dDispJump.resize( 0, 1, 3, 3 );
