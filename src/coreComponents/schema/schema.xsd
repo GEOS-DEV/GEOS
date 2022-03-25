@@ -1268,16 +1268,16 @@ the relative residual norm satisfies:
 		<!--surfaceTemperature => Surface temperature used to compute volumetric rates when surface conditions are used [K]-->
 		<xsd:attribute name="surfaceTemperature" type="real64" default="0" />
 		<!--targetBHP => Target bottom-hole pressure [Pa]-->
-		<xsd:attribute name="targetBHP" type="real64" default="-1" />
+		<xsd:attribute name="targetBHP" type="real64" default="0" />
 		<!--targetBHPTableName => Name of the BHP table when the rate is a time dependent function-->
 		<xsd:attribute name="targetBHPTableName" type="string" default="" />
 		<!--targetPhaseName => Name of the target phase-->
 		<xsd:attribute name="targetPhaseName" type="string" default="" />
-		<!--targetPhaseRate => Target phase volumetric rate-->
+		<!--targetPhaseRate => Target phase volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="targetPhaseRate" type="real64" default="0" />
 		<!--targetPhaseRateTableName => Name of the phase rate table when the rate is a time dependent function-->
 		<xsd:attribute name="targetPhaseRateTableName" type="string" default="" />
-		<!--targetTotalRate => Target total volumetric rate [sm^3/s]-->
+		<!--targetTotalRate => Target total volumetric rate (if useSurfaceConditions: [surface m^3/s]; else [reservoir m^3/s])-->
 		<xsd:attribute name="targetTotalRate" type="real64" default="0" />
 		<!--targetTotalRateTableName => Name of the total rate table when the rate is a time dependent function-->
 		<xsd:attribute name="targetTotalRateTableName" type="string" default="" />
