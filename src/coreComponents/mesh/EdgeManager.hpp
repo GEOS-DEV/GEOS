@@ -148,7 +148,6 @@ public:
    * @param[in] faceToNodeMap manager face-to-nodes map
    * @param[in] faceToEdgeMap manager face-to-edges map
    * 
-   * TODO Isn't this already done by the CellBlockManager? That means duplicated code
    */
   void buildEdges( localIndex const numNodes,
                    ArrayOfArraysView< localIndex const > const & faceToNodeMap,

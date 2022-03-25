@@ -77,7 +77,7 @@ public:
 
 private:
   /// Instance of the class that build the mappings
-  MeshConnectivityBuilder * m_theOneWhoDoesTheJob;
+  std::unique_ptr<MeshConnectivityBuilder> m_delegate;
 };
 
 }
