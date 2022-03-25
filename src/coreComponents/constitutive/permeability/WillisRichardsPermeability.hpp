@@ -47,8 +47,7 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const & pressure,
-                real64 const ( &dispJump )[3], 
+  void compute( real64 const ( &dispJump )[3], 
                 real64 const ( &traction )[3],                  
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump,
@@ -63,10 +62,9 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override final
   {
-    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture );
+    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, pressure );
 
-    compute( pressure,
-             dispJump,
+    compute( dispJump,
              traction,
              m_permeability[k][0],
              m_dPerm_dDispJump[k][0],
@@ -156,8 +154,7 @@ private:
 
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-void WillisRichardsPermeabilityUpdate::compute( real64 const & pressure,
-                                                real64 const ( &dispJump )[3], 
+void WillisRichardsPermeabilityUpdate::compute( real64 const ( &dispJump )[3], 
                                                 real64 const ( &traction )[3],
                                                 arraySlice1d< real64 > const & permeability,
                                                 arraySlice2d< real64 > const & dPerm_dDispJump,
