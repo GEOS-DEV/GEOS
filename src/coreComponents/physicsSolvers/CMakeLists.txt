@@ -6,6 +6,14 @@ set( physicsSolvers_headers
      NonlinearSolverParameters.hpp
      PhysicsSolverManager.hpp
      SolverBase.hpp
+     contact/ContactSolverBase.hpp
+     contact/ContactExtrinsicData.hpp
+     contact/LagrangianContactSolver.hpp
+     contact/SolidMechanicsEFEMKernelsBase.hpp
+     contact/SolidMechanicsEFEMKernels.hpp
+     contact/SolidMechanicsEFEMStaticCondensationKernels.hpp
+     contact/SolidMechanicsEFEMKernelsHelper.hpp
+     contact/SolidMechanicsEmbeddedFractures.hpp
      fluidFlow/CompositionalMultiphaseBase.hpp
      fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp
      fluidFlow/CompositionalMultiphaseBaseKernels.hpp
@@ -44,7 +52,6 @@ set( physicsSolvers_headers
      multiphysics/FlowProppantTransportSolver.hpp
      multiphysics/HydrofractureSolver.hpp
      multiphysics/HydrofractureSolverKernels.hpp
-     multiphysics/LagrangianContactSolver.hpp
      multiphysics/MultiphasePoromechanicsKernel.hpp
      multiphysics/MultiphasePoromechanicsSolver.hpp
      multiphysics/PhaseFieldFractureSolver.hpp
@@ -60,11 +67,6 @@ set( physicsSolvers_headers
      simplePDE/LaplaceFEMKernels.hpp
      simplePDE/PhaseFieldDamageFEM.hpp
      simplePDE/PhaseFieldDamageFEMKernels.hpp
-     solidMechanics/SolidMechanicsEFEMKernelsBase.hpp
-     solidMechanics/SolidMechanicsEFEMKernels.hpp
-     solidMechanics/SolidMechanicsEFEMStaticCondensationKernels.hpp
-     solidMechanics/SolidMechanicsEFEMKernelsHelper.hpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.hpp
      solidMechanics/SolidMechanicsFiniteStrainExplicitNewmarkKernel.hpp
      solidMechanics/SolidMechanicsLagrangianFEM.hpp
      solidMechanics/SolidMechanicsLagrangianFEMKernels.hpp
@@ -89,6 +91,9 @@ set( physicsSolvers_sources
      NonlinearSolverParameters.cpp
      PhysicsSolverManager.cpp
      SolverBase.cpp
+     contact/ContactSolverBase.cpp
+     contact/LagrangianContactSolver.cpp
+     contact/SolidMechanicsEmbeddedFractures.cpp
      fluidFlow/CompositionalMultiphaseBase.cpp
      fluidFlow/CompositionalMultiphaseFVM.cpp
      fluidFlow/CompositionalMultiphaseFVMKernels.cpp
@@ -110,7 +115,6 @@ set( physicsSolvers_sources
      multiphysics/CompositionalMultiphaseReservoir.cpp
      multiphysics/FlowProppantTransportSolver.cpp
      multiphysics/HydrofractureSolver.cpp
-     multiphysics/LagrangianContactSolver.cpp
      multiphysics/MultiphasePoromechanicsSolver.cpp
      multiphysics/PhaseFieldFractureSolver.cpp
      multiphysics/ReservoirSolverBase.cpp
@@ -121,7 +125,6 @@ set( physicsSolvers_sources
      simplePDE/LaplaceBaseH1.cpp
      simplePDE/LaplaceFEM.cpp
      simplePDE/PhaseFieldDamageFEM.cpp
-     solidMechanics/SolidMechanicsEmbeddedFractures.cpp
      solidMechanics/SolidMechanicsLagrangianFEM.cpp
      solidMechanics/SolidMechanicsLagrangianSSLE.cpp
      surfaceGeneration/EmbeddedSurfaceGenerator.cpp
@@ -133,6 +136,14 @@ set( physicsSolvers_sources
    )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
+if( ENABLE_PYGEOSX )
+  list( APPEND physicsSolvers_headers
+	python/PySolver.hpp 
+	python/PySolverType.hpp ) 
+  list( APPEND physicsSolvers_sources
+	python/PySolver.cpp ) 
+  list( APPEND dependencyList Python3::Python pylvarray )
+endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -152,6 +163,3 @@ endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( python )
-endif()

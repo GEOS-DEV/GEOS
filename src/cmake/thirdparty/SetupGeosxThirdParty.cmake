@@ -616,10 +616,10 @@ endif()
 # Python
 ################################
 if(ENABLE_PYGEOSX)
-    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     find_package(Python3 REQUIRED
                  COMPONENTS Development NumPy)
 
+    message(STATUS "Python3_EXECUTABLE=${Python3_EXECUTABLE}")
     message(STATUS "Python3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
     message(STATUS "Python3_LIBRARY_DIRS = ${Python3_LIBRARY_DIRS}")
     message(STATUS "Python3_NumPy_INCLUDE_DIRS = ${Python3_NumPy_INCLUDE_DIRS}")
