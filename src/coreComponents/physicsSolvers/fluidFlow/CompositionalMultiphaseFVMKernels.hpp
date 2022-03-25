@@ -812,7 +812,7 @@ public:
       // call the lambda in the phase loop to allow the reuse of the phase fluxes and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the flux term of the energy equation for this phase
       // note: more variables may need to be passed, but it is hard to tell which ones will be needed for now
-      phaseFluxKernelOp( ip, er_up, esr_up, ei_up, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+      phaseFluxKernelOp( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
     }
 
@@ -913,7 +913,7 @@ public:
     } );
   }
 
-private:
+protected:
 
   // Stencil information
 

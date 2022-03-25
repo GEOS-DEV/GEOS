@@ -69,10 +69,12 @@ public:
                                                   extrinsicMeshData::flow::phaseDensityOld,
                                                   extrinsicMeshData::flow::phaseComponentFractionOld >;
 
-  using SolidAccessors = StencilAccessors< extrinsicMeshData::solid::bulkModulus,
+  using SolidAccessors = StencilMaterialAccessors< SolidBase,
+                                           extrinsicMeshData::solid::bulkModulus,
                                            extrinsicMeshData::solid::shearModulus >;
 
-  using BiotAccessors = StencilAccessors< extrinsicMeshData::biot::biotCoefficient >;
+  using BiotAccessors = StencilMaterialAccessors< PorosityBase,
+                                          extrinsicMeshData::biot::biotCoefficient >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -208,15 +210,15 @@ public:
                                                              real64 const (&dPhaseFlux_dP)[maxStencilSize],
                                                              real64 const (&dPhaseFlux_dC)[maxStencilSize][numComp] )
     {
-      GEOSX_UNUSED_VAR( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+      GEOSX_UNUSED_VAR( k_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
+      GEOSX_UNUSED_VAR( ip, er_up, esr_up, ei_up );
 
       // We are in the loop over phases, ip provides the current phase index.
-
-      // need to check if phase is present?? bool const phaseExists = (phaseVolFrac[ip] > 0);
       
-      real64 dPresGrad{};
+      real64 dPresGradStab{};
 
-      real64 tauStab = 0.0; // need to get correct value
+      real64 tauStab = 0.0; 
+      tauStab = 9.6344e-12;
 
 
       // compute potential difference MPFA-style
@@ -226,10 +228,10 @@ public:
         localIndex const esr = m_sesri( iconn, i );
         localIndex const ei  = m_sei( iconn, i );
 
-        tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
+        // tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
 
-        dPresGrad += tauStab * m_stabWeights(iconn, i) * m_dPres[er][esr][ei];
+        dPresGradStab += tauStab * m_stabWeights(iconn, i) * m_dPres[er][esr][ei];
 
       }
 
@@ -239,16 +241,16 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
 
-        stack.stabFlux[ic] += dPresGrad * m_phaseDensOld[er_up][esr_up][ei_up][0][ip] 
-                                        * m_phaseCompFracOld[er_up][esr_up][ei_up][0][ip][ic]
-                                        * m_phaseVolFracOld[er_up][esr_up][ei_up][0][ip];
+        stack.stabFlux[ic] += dPresGradStab * m_phaseDensOld[er_up][esr_up][ei_up][ip] 
+                                        * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
+                                        * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
 
         for( integer ke = 0; ke < stack.stencilSize; ++ke )
         {
 
-          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights(iconn, ke) * m_phaseDensOld[er_up][esr_up][ei_up][0][ip] 
-                                                                           * m_phaseCompFracOld[er_up][esr_up][ei_up][0][ip][ic]
-                                                                           * m_phaseVolFracOld[er_up][esr_up][ei_up][0][ip];
+          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights(iconn, ke) * m_phaseDensOld[er_up][esr_up][ei_up][ip] 
+                                                                           * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
+                                                                           * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
 
         }
       }
@@ -259,14 +261,14 @@ public:
     // populate local flux vector and derivatives
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      stack.localFlux[ic]           =  stack.stabFlux[ic]; // does sign need to flip here?
-      stack.localFlux[numComp + ic] = -stack.compFlux[ic];
+      stack.localFlux[ic]           +=  stack.stabFlux[ic]; // does sign need to flip here?
+      stack.localFlux[numComp + ic] += -stack.compFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]           =  stack.dStabFlux_dP[ke][ic]; // does sign need to flip here
-        stack.localFluxJacobian[numComp + ic][localDofIndexPres] = -stack.dStabFlux_dP[ke][ic];
+        stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic]; // does sign need to flip here
+        stack.localFluxJacobian[numComp + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
 
       }
     }
