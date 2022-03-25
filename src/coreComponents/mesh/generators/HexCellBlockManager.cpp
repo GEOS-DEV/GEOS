@@ -22,24 +22,23 @@
 namespace geosx
 {
 
-typedef localIndex  LocalVertexIndex;
-typedef globalIndex GlobalVertexIndex;
-typedef localIndex  LocalCellIndex;
-typedef globalIndex GlobalCellIndex; 
-typedef localIndex  LocalFaceIndex;  // A  face in a cell nbFaces * idCell + f
-typedef localIndex  LocalEdgeIndex;  // An edge in a cell nbEdges * idCell + e
-typedef localIndex  CellBlockIndex;
-typedef localIndex  SizeOfStuff;
+using LocalVertexIndex  =   localIndex  ; 
+using GlobalVertexIndex =   globalIndex ;
+using LocalCellIndex    =   localIndex  ; 
+using GlobalCellIndex   =   globalIndex ; 
+using LocalFaceIndex    =   localIndex  ;   // A  face in a cell nbFaces * idCell + f
+using LocalEdgeIndex    =   localIndex  ;  // An edge in a cell numEdges * idCell + e
+using CellBlockIndex    =   localIndex  ;
+using SizeOfStuff       =   localIndex  ;
 
-typedef array2d<localIndex, cells::NODE_MAP_PERMUTATION> CellVertexIndices;
+using  CellVertexIndices=  array2d<localIndex, cells::NODE_MAP_PERMUTATION> ;
 
 // Use explicit aliases for indices in a hexahedron
-typedef unsigned int HexVertexIndex;      // a vertex in a hex 0 to 8
-typedef unsigned int HexEdgeIndex;        // a edge in a hex 0 to 12
-typedef unsigned int HexFacetIndex;       // a facet in a hex 0 to 6
+using HexVertexIndex = unsigned int;      // a vertex in a hex 0 to 8
+using HexEdgeIndex   = unsigned int;      // a edge in a hex 0 to 12
+using HexFacetIndex  = unsigned int;      // a facet in a hex 0 to 6
 
 static const int NO_ID = -1;
-static const int NO_FACE = -10;
 
 /*  Hexahedron template
 *  WARNING - Hex vertex numbering in GEOSX differs from the one used 
@@ -57,21 +56,22 @@ static const int NO_FACE = -10;
 *      \|         \|
 *       0----------1
 */
+// TODO Check the policy for the name of constants before final review
 struct Hex
 {
-static const unsigned int nbVertices = 8;
-static const unsigned int nbEdges = 12;
-static const unsigned int nbFacets = 6;
-static const unsigned int nbEdgesPerFacet = 4;
-static const unsigned int nbNodesPerFacet = 4;
+static constexpr unsigned int numVertices = 8;
+static constexpr unsigned int numEdges = 12;
+static constexpr unsigned int numFacets = 6;
+static constexpr unsigned int numEdgesPerFacet = 4;
+static constexpr unsigned int numNodesPerFacet = 4;
 
-static constexpr HexVertexIndex facetVertex[6][4] = {
+static constexpr HexVertexIndex facetVertex[numFacets][numNodesPerFacet] = {
     {0, 1, 3, 2}, {4, 5, 7, 6}, {0, 1, 5, 4}, {1, 3, 7, 5}, {2, 3, 7, 6}, {0, 2, 6, 4}};
 //         0             1           2            3             4               5          
-static constexpr HexVertexIndex edgeVertex[12][2]{
+static constexpr HexVertexIndex edgeVertex[numEdges][2]{
     {0, 1}, {0, 2}, {0, 4}, {1, 3}, {1, 5}, {2, 3}, {2, 6}, {3, 7}, {4, 5}, {4, 6}, {5, 7}, {6, 7}};
 
-static constexpr HexVertexIndex edgeAdjacentFacet[12][2]{
+static constexpr HexVertexIndex edgeAdjacentFacet[numEdges][2]{
     {0, 2}, {0, 5}, {2, 5}, {0, 3}, {2, 3}, {0, 4}, {5, 4}, {3, 4}, {2, 1}, {1, 5}, {1, 3}, {1, 4}};
 
 // This the ordering needed to compute consistent normals
@@ -83,10 +83,10 @@ static constexpr HexVertexIndex edgeAdjacentFacet[12][2]{
 /* Structure for face computation
  * The table stores 3 sorted LocalVertexIndex v0 < v1 < v2
  * and f the LocalFaceIndex that identifies unambiguously a face in a cell
- *  v3 =  Hex::nbFacets * idCell + f_hex
+ *  v3 =  Hex::numFacets * idCell + f_hex
  * where f_hex is the HexFaceIndex
  * 
- * TODO Optimize: replace (v0, v1, v2) by (v0*nbNodes + v1, v2)
+ * TODO Optimize: replace (v0, v1, v2) by (v0*m_numNodes + v1, v2)
  */
 struct FaceInfo{
 
@@ -125,9 +125,9 @@ struct EdgeInfo
     return first < right.first;
   }
 
-  /// The two nodes v0-v1, with v0 < v1, stored as first v0 * nbNodes +v1
+  /// The two nodes v0-v1, with v0 < v1, stored as first v0 * m_numNodes +v1
   LocalVertexIndex first;
-  /// Unambiguous id of the edge in the cell, stored as second =  Hex::nbEdges * idCell + e
+  /// Unambiguous id of the edge in the cell, stored as second =  Hex::numEdges * idCell + e
   /// where  e is the HexEdgeIndex
   LocalEdgeIndex second;
 };
@@ -232,7 +232,7 @@ void print(std::vector<EdgeInfo> const &in)
  * TODO For full tetrahedral meshes we need a dedicated implementation
  * 
  * Options : Store if the face is a triangle or quad ? 
- *  Store a  NO_FACE  value if  same storage space for hybrid meshes
+ *  Store a  NO_ID  value if  same storage space for hybrid meshes
  *  
  */
 class MeshConnectivityBuilder
@@ -251,26 +251,26 @@ public:
   }
 
   // Dependent on Cell Type
-  virtual bool computeFaces() = 0;
-  virtual bool computeEdges() = 0;
+  virtual void computeFaces() = 0;
+  virtual void computeEdges() = 0;
 
   // Independent on Cell Type
-  bool computeNodesToEdges( ArrayOfSets<localIndex> & result ) const; 
-  bool computeEdgesToNodes( array2d<localIndex>& result ) const;  
-  bool computeNodesToElements( ArrayOfArrays<localIndex>  & result ) const;
+  void computeNodesToEdges( ArrayOfSets<localIndex> & result ) const; 
+  void computeEdgesToNodes( array2d<localIndex>& result ) const;  
+  void computeNodesToElements( ArrayOfArrays<localIndex>  & result ) const;
 
   // Dependent on Cell Type
-  virtual bool computeNodesToFaces( ArrayOfSets<localIndex> & result ) const = 0 ;
-  virtual bool computeEdgesToFaces( ArrayOfSets<localIndex> & result ) const  = 0;
-  virtual bool computeFacesToNodes( ArrayOfArrays<localIndex> & result ) const = 0;
-  virtual bool computeFacesToElements( array2d<localIndex> &  result ) const  = 0;
-  virtual bool computeFacesToEdges( ArrayOfArrays<localIndex> & result ) const =0 ;
+  virtual void computeNodesToFaces( ArrayOfSets<localIndex> & result ) const = 0 ;
+  virtual void computeEdgesToFaces( ArrayOfSets<localIndex> & result ) const  = 0;
+  virtual void computeFacesToNodes( ArrayOfArrays<localIndex> & result ) const = 0;
+  virtual void computeFacesToElements( array2d<localIndex> &  result ) const  = 0;
+  virtual void computeFacesToEdges( ArrayOfArrays<localIndex> & result ) const =0 ;
 
-  // Why is this here? The information is on the CellBlocks
-  virtual bool computeElementsToFacesOfCellBlocks() = 0; 
-  virtual bool computeElementsToEdgesOfCellBlocks() = 0;
+  // Fill in the mappings stored by the CellBlocks
+  virtual void computeElementsToFacesOfCellBlocks() = 0; 
+  virtual void computeElementsToEdgesOfCellBlocks() = 0;
 
-  bool debuggingComputeAllMaps() const;
+  void debuggingComputeAllMaps() const;
 
   void printDebugInformation() const;
 
@@ -278,7 +278,7 @@ protected:
   std::pair< CellBlockIndex, LocalCellIndex> 
   getBlockCellFromManagerCell( LocalCellIndex cellId ) const;
 
-  unsigned int nbCellBlocks() const {
+  unsigned int numCellBlocks() const {
     return m_cellBlocks.size();
   } 
   CellBlock const & getCellBlock( unsigned int id ) const {
@@ -288,17 +288,17 @@ protected:
     return *(m_cellBlocks[id]);
   }
  
-  void computeAllFacesToUniqueFace( std::vector< localIndex > & result ) const;
+  std::vector< localIndex > computeAllFacesToUniqueFace() const;
 
-  virtual void getFacesAroundEdge( int edgeIndex,
+  virtual void getOneEdgeToFaces( int edgeIndex,
                            std::vector< localIndex > const & allFacesToUniqueFace, 
                            std::set <localIndex> & faces ) const = 0;
 
 protected:
 /// Number of vertices 
-SizeOfStuff nbNodes = 0;
+SizeOfStuff m_numNodes = 0;
 /// All Elements in all CellBlocks
-SizeOfStuff nbElements = 0;  
+SizeOfStuff m_numElements = 0;  
 
 /// Cell Blocks on which the class operates - Size of nbBlocks
 std::vector< CellBlock * > m_cellBlocks;
@@ -310,21 +310,21 @@ std::vector< LocalCellIndex > m_blockCellIndexOffset;
 /* Storage of a minimal set of information to iterate through
  * the faces while storing to which face of which cell they belong and which
  * is the neighbor face is the neighbor cell.
- * Use the numbering of cells managed by this class max is nbElements
+ * Use the numbering of cells managed by this class max is m_numElements
  * Each face of each cell is encoded by 6 * cellIndex + faceIndexInCell
  * 
  * TODO Implement for tetrahedra (6 becomes 4)
  * TODO Define the strategy for hybrid FE meshes (hex, prism, pyramids, tets)
  */
-std::vector< LocalFaceIndex > m_allFacesToNeighbors;  // 6 * nbElements
+std::vector< LocalFaceIndex > m_allFacesToNeighbors;  // 6 * m_numElements
 std::vector< localIndex > m_uniqueFaces;              // nbFaces
 std::vector< bool > m_isBoundaryFace;                 // nbFaces
 
 /* Storage of a minimal set of information to iterate through
  * the edges faces while storing to which face of which cell they belong to
  */
-std::vector< EdgeInfo > m_allEdges;                 // 12 * nbElements
-std::vector< localIndex > m_uniqueEdges;            // nbEdges
+std::vector< EdgeInfo > m_allEdges;                 // 12 * m_numElements
+std::vector< localIndex > m_uniqueEdges;            // numEdges
 
 };
 
@@ -337,20 +337,20 @@ public:
   HexMeshConnectivityBuilder & operator=( const HexMeshConnectivityBuilder & ) = delete;
   ~HexMeshConnectivityBuilder() = default;
 
-  bool computeFaces() override;
-  bool computeEdges() override;
+  void computeFaces() override;
+  void computeEdges() override;
   
-  virtual bool computeElementsToFacesOfCellBlocks() override;
-  virtual bool computeElementsToEdgesOfCellBlocks() override;
+  virtual void computeElementsToFacesOfCellBlocks() override;
+  virtual void computeElementsToEdgesOfCellBlocks() override;
 
-  bool computeNodesToFaces(ArrayOfSets<localIndex> &result) const override;
-  bool computeEdgesToFaces(ArrayOfSets<localIndex> &result) const override;
-  bool computeFacesToNodes(ArrayOfArrays<localIndex> &result) const override;
-  bool computeFacesToElements(array2d<localIndex> &result) const override;
-  bool computeFacesToEdges(ArrayOfArrays<localIndex> &result) const override;
+  void computeNodesToFaces(ArrayOfSets<localIndex> &result) const override;
+  void computeEdgesToFaces(ArrayOfSets<localIndex> &result) const override;
+  void computeFacesToNodes(ArrayOfArrays<localIndex> &result) const override;
+  void computeFacesToElements(array2d<localIndex> &result) const override;
+  void computeFacesToEdges(ArrayOfArrays<localIndex> &result) const override;
 
 protected:
-  void getFacesAroundEdge(int edgeIndex,
+  void getOneEdgeToFaces(int edgeIndex,
                           std::vector<localIndex> const &allFacesToUniqueFace,
                           std::set<localIndex> &faces) const override;
 };
@@ -359,7 +359,7 @@ protected:
 
 MeshConnectivityBuilder::MeshConnectivityBuilder( CellBlockManagerBase & cellBlockManager )
 {
-  nbNodes = cellBlockManager.numNodes();
+  m_numNodes = cellBlockManager.numNodes();
   
   dataRepository::Group & group = cellBlockManager.getCellBlocks();
   localIndex nbBlocks = group.numSubGroups();
@@ -375,9 +375,10 @@ MeshConnectivityBuilder::MeshConnectivityBuilder( CellBlockManagerBase & cellBlo
     m_cellBlocks[i] = &cur;
     m_blockCellIndexOffset[i] = prevSum + m_cellBlocks[i]->numElements();
   }
-  assert( nbBlocks > 0);
+  
+  GEOSX_ERROR_IF( nbBlocks <= 0, " Invalid number of CellBlocks in mesh connectivity computation");
 
-  nbElements =  m_blockCellIndexOffset[nbBlocks-1];
+  m_numElements =  m_blockCellIndexOffset[nbBlocks-1];
 }
 
 // TODO convert to log output
@@ -393,7 +394,7 @@ void MeshConnectivityBuilder::printDebugInformation() const
   std::cout << std::endl
             << std::endl;
 
-  std::cout << " Total number of elements : " << nbElements << std::endl
+  std::cout << " Total number of elements : " << m_numElements << std::endl
             << std::endl;
 
 
@@ -436,7 +437,7 @@ std::pair< CellBlockIndex, LocalCellIndex>
 MeshConnectivityBuilder::getBlockCellFromManagerCell( LocalCellIndex cellId ) const
 {
   CellBlockIndex b = 0;
-  while( b < nbCellBlocks() && cellId > m_blockCellIndexOffset[b] )
+  while( b < numCellBlocks() && cellId > m_blockCellIndexOffset[b] )
   {
     b++;
   }
@@ -447,10 +448,9 @@ MeshConnectivityBuilder::getBlockCellFromManagerCell( LocalCellIndex cellId ) co
 }
 
 
-void MeshConnectivityBuilder::computeAllFacesToUniqueFace(
-   std::vector< localIndex > & allFacesToUniqueFace ) const
+std::vector< localIndex > MeshConnectivityBuilder::computeAllFacesToUniqueFace() const
 {
-  allFacesToUniqueFace.resize( m_allFacesToNeighbors.size(), NO_FACE );
+  std::vector< localIndex > allFacesToUniqueFace ( m_allFacesToNeighbors.size(), NO_ID );
 
   for( unsigned int curFace = 0; curFace < m_uniqueFaces.size(); ++curFace)
   {
@@ -461,11 +461,12 @@ void MeshConnectivityBuilder::computeAllFacesToUniqueFace(
       localIndex f1 = m_allFacesToNeighbors[f];
       allFacesToUniqueFace[f1] = curFace;
     }
-  }  
+  }
+  return allFacesToUniqueFace;  
 }
 
 // Cell type independent
-bool MeshConnectivityBuilder::computeEdgesToNodes ( array2d<localIndex> & edgeToNodes ) const
+void MeshConnectivityBuilder::computeEdgesToNodes ( array2d<localIndex> & edgeToNodes ) const
 {
   edgeToNodes.resize(numEdges(), 2);
   // Initialize contents
@@ -474,27 +475,27 @@ bool MeshConnectivityBuilder::computeEdgesToNodes ( array2d<localIndex> & edgeTo
   for (unsigned int i = 0; i < m_uniqueEdges.size(); ++i)
   {
     EdgeInfo e = m_allEdges[m_uniqueEdges[i]];
-    LocalVertexIndex v0 = e.first / nbNodes;
-    LocalVertexIndex v1 = e.first % nbNodes;
+    LocalVertexIndex v0 = e.first / m_numNodes;
+    LocalVertexIndex v1 = e.first % m_numNodes;
 
     edgeToNodes[i][0] = v0;
     edgeToNodes[i][1] = v1;
   }
-  return true;
+  
 }
 
 // Cell type independent - There is no need for this to be an ArrayOfSets
 // We fill it with unique (maybe sorted) values
-bool MeshConnectivityBuilder::computeNodesToEdges( ArrayOfSets<localIndex> & nodeToEdges ) const
+void MeshConnectivityBuilder::computeNodesToEdges( ArrayOfSets<localIndex> & nodeToEdges ) const
 { 
   // 1 - Counting 
   // TODO Can be skipped for hexahedral meshes - 6 for regular nodes - 10 tops for singular nodes
-  std::vector<unsigned int> nbEdgesPerNode(nbNodes, 0);
+  std::vector<unsigned int> nbEdgesPerNode(m_numNodes, 0);
   for( unsigned int i = 0; i < m_uniqueEdges.size(); ++i)
   {
     EdgeInfo e = m_allEdges[ m_uniqueEdges[i] ];
-    LocalVertexIndex v0 = e.first / nbNodes;
-    LocalVertexIndex v1 = e.first % nbNodes;
+    LocalVertexIndex v0 = e.first / m_numNodes;
+    LocalVertexIndex v1 = e.first % m_numNodes;
     nbEdgesPerNode[v0]++;
     nbEdgesPerNode[v1]++;
   }
@@ -502,11 +503,11 @@ bool MeshConnectivityBuilder::computeNodesToEdges( ArrayOfSets<localIndex> & nod
 
   // 2 - Allocating 
   nodeToEdges.resize( 0 );
-  nodeToEdges.reserve( nbNodes );
+  nodeToEdges.reserve( m_numNodes );
   nodeToEdges.reserveValues( valuesToReserve );
 
   // Append and set the capacity of the individual arrays.
-  for (localIndex n = 0; n < nbNodes; ++n)
+  for (localIndex n = 0; n < m_numNodes; ++n)
   {
     nodeToEdges.appendSet( nbEdgesPerNode[n] );
   }
@@ -515,30 +516,30 @@ bool MeshConnectivityBuilder::computeNodesToEdges( ArrayOfSets<localIndex> & nod
   for(unsigned  int i = 0; i < m_uniqueEdges.size(); ++i)
   {
     EdgeInfo e = m_allEdges[ m_uniqueEdges[i] ];
-    LocalVertexIndex v0 = e.first / nbNodes;
-    LocalVertexIndex v1 = e.first % nbNodes;
+    LocalVertexIndex v0 = e.first / m_numNodes;
+    LocalVertexIndex v1 = e.first % m_numNodes;
 
     nodeToEdges.insertIntoSet( v0, i); 
     nodeToEdges.insertIntoSet( v1, i);
   }
-  return true;
+  
 }
 
 // Cell type independent
-bool MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<localIndex> & nodeToElements ) const
+void MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<localIndex> & nodeToElements ) const
 {
   // 1 -  Counting
   // TODO Can be skipped for hexahedral meshes - 8 for regular nodes - 12 tops for singular nodes
-  std::vector<unsigned int> nbElementsPerNode(nbNodes, 0);
-  for (unsigned int i = 0; i < nbCellBlocks(); ++i)
+  std::vector<unsigned int> nbElementsPerNode(m_numNodes, 0);
+  for (unsigned int i = 0; i < numCellBlocks(); ++i)
   {
     CellBlock const & block = getCellBlock(i);
     CellVertexIndices const & cells = block.getElemToNodes();
-    localIndex nbVertices = block.numNodesPerElement();
+    localIndex numVertices = block.numNodesPerElement();
 
     for (int j = 0; j < block.numElements(); ++j)
     {
-      for (unsigned int v = 0; v < nbVertices; ++v)
+      for (unsigned int v = 0; v < numVertices; ++v)
       {
         nbElementsPerNode[ cells( j, v ) ]++;   
       }
@@ -548,31 +549,31 @@ bool MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<localIndex> 
 
   //  2 - Allocating - No overallocation
   nodeToElements.resize(0);
-  nodeToElements.resize(nbNodes);
+  nodeToElements.resize(m_numNodes);
   nodeToElements.reserveValues( nbValues ); // Does this accelerate allocation?
 
-  for( int i = 0; i < nbNodes; ++i )
+  for( int i = 0; i < m_numNodes; ++i )
   {
     nodeToElements.setCapacityOfArray(i, nbElementsPerNode[i]);
   }
 
   // 3 - Set the values
-  for (unsigned int i = 0; i < nbCellBlocks(); ++i)
+  for (unsigned int i = 0; i < numCellBlocks(); ++i)
   {
     CellBlock const & block = getCellBlock(i);
     CellVertexIndices const & cells = block.getElemToNodes();
-    localIndex nbVertices = block.numNodesPerElement();
+    localIndex numVertices = block.numNodesPerElement();
 
     for (int j = 0; j < block.numElements(); ++j)
     {
-      for (unsigned int v = 0; v < nbVertices; ++v)
+      for (unsigned int v = 0; v < numVertices; ++v)
       {
         localIndex const nodeIndex = cells(j, v);
         nodeToElements.emplaceBack(nodeIndex, j);
       }
     }
   }
-  return true;
+  
 }
 
 
@@ -587,14 +588,14 @@ bool MeshConnectivityBuilder::computeNodesToElements( ArrayOfArrays<localIndex> 
  * The block knows the cell type, we could use this? 
  * Maybe sort CellBlocks by cell type, and template things
  */
-bool HexMeshConnectivityBuilder::computeFaces()
+void HexMeshConnectivityBuilder::computeFaces()
 {
   m_allFacesToNeighbors.resize( 0);
   m_uniqueFaces.resize( 0 ); 
   m_isBoundaryFace.resize( 0 ); 
   
   // 1 - Allocate - 
-  SizeOfStuff nbTotalFaces = nbElements * Hex::nbFacets;
+  SizeOfStuff nbTotalFaces = m_numElements * Hex::numFacets;
   m_allFacesToNeighbors.resize( nbTotalFaces);
   
   // To collect and sort the facets 
@@ -602,14 +603,14 @@ bool HexMeshConnectivityBuilder::computeFaces()
 
   // 2 - Fill 
   localIndex curFace = 0;
-  for (unsigned int i = 0; i < nbCellBlocks(); ++i)
+  for (unsigned int i = 0; i < numCellBlocks(); ++i)
   {
     CellBlock const & block = getCellBlock(i);
     CellVertexIndices const & cells = block.getElemToNodes();
 
     for (int j = 0; j < cells.size(0); ++j)
     {
-      for (unsigned int f = 0; f < Hex::nbFacets; ++f)
+      for (unsigned int f = 0; f < Hex::numFacets; ++f)
       {
         // TODO Let's bet that we get VertexIds locally to the partition 
         // and that they are not local to the CellBlock 
@@ -630,7 +631,7 @@ bool HexMeshConnectivityBuilder::computeFaces()
         allFaces[curFace].v[2] = v2;
         // If the mesh is valid, then if 2 quad faces share 3 vertices they are the same
         // Last slot is used to identify the facet in its cell 
-        allFaces[curFace].cellFace= Hex::nbFacets * j + f; 
+        allFaces[curFace].cellFace= Hex::numFacets * j + f; 
         
         curFace++;
       }
@@ -685,7 +686,7 @@ bool HexMeshConnectivityBuilder::computeFaces()
   m_uniqueFaces.resize( nbFaces );
   m_isBoundaryFace.resize( nbFaces );
 
-  return true;
+  
 }
 
 /**
@@ -694,34 +695,34 @@ bool HexMeshConnectivityBuilder::computeFaces()
  * 
  * TODO CellType dependant 
  */
-bool HexMeshConnectivityBuilder::computeEdges()
+void HexMeshConnectivityBuilder::computeEdges()
 {
   m_allEdges.resize( 0 );
   m_uniqueEdges.resize( 0 );
 
   // 1 - Allocate 
-  SizeOfStuff nbAllEdges = nbElements * Hex::nbEdges;
+  SizeOfStuff nbAllEdges = m_numElements * Hex::numEdges;
   m_allEdges.resize( nbAllEdges );
   
   // 2 - Get all edges
   localIndex cur = 0 ;
-  for (unsigned int i = 0; i < nbCellBlocks(); ++i)
+  for (unsigned int i = 0; i < numCellBlocks(); ++i)
   {
     CellBlock const & block = getCellBlock(i);
     CellVertexIndices const & cells = block.getElemToNodes();
 
     for (int j = 0; j < cells.size(0); ++j)
     {
-      for(unsigned int e = 0; e < Hex::nbEdges; ++e)
+      for(unsigned int e = 0; e < Hex::numEdges; ++e)
       {
-        assert (cur < nbAllEdges );
+        GEOSX_ERROR_IF (cur >= nbAllEdges, "Invalid edge computation" );
 
         LocalVertexIndex v0 = cells( j, Hex::edgeVertex[e][0]);
         LocalVertexIndex v1 = cells( j, Hex::edgeVertex[e][1]);
 
         if (v1 < v0 ) { std::swap(v0, v1); }
-        LocalVertexIndex v = v0 * nbNodes + v1;
-        LocalEdgeIndex id = j * Hex::nbEdges + e;
+        LocalVertexIndex v = v0 * m_numNodes + v1;
+        LocalEdgeIndex id = j * Hex::numEdges + e;
 
         m_allEdges[cur] = EdgeInfo(v, id);
         ++cur;
@@ -733,9 +734,9 @@ bool HexMeshConnectivityBuilder::computeEdges()
   
   // 4 - Reserve space unique edges 
   // If a CellBlockManager manages a connected set of cells (any type of cell)
-  // bounded by a sphere nbNodes - nbEdges + nbFaces - nbElements = 1 
+  // bounded by a sphere m_numNodes - nbEdges + nbFaces - m_numElements = 1 
   // For Hexes: 12 * nbCells = 4 * nbEdges + BoundaryEdges + Singularities - speculation 3.5 factor
-  SizeOfStuff guessNbEdges = numFaces() != 0 ? nbNodes + numFaces() - nbElements : 3.5 * nbElements;
+  SizeOfStuff guessNbEdges = numFaces() != 0 ? m_numNodes + numFaces() - m_numElements : 3.5 * m_numElements;
   m_uniqueEdges.reserve( guessNbEdges );
 
   // 4 - Get unique edges
@@ -750,28 +751,28 @@ bool HexMeshConnectivityBuilder::computeEdges()
     }
     i = j;
   }
-  return true;
+  
 }
 
 
-bool HexMeshConnectivityBuilder::computeFacesToNodes( ArrayOfArrays<localIndex> & faceToNodes ) const
+void HexMeshConnectivityBuilder::computeFacesToNodes( ArrayOfArrays<localIndex> & faceToNodes ) const
 {
   // 1 - Allocate - No overallocation
   faceToNodes.resize(0);
-  faceToNodes.resize( numFaces(), Hex::nbNodesPerFacet );
+  faceToNodes.resize( numFaces(), Hex::numNodesPerFacet );
 
   // TODO Check if this resize or reserve the space for the inner arrays
   // In doubt resize inner arrays
   for (int i = 0; i < numFaces(); ++i)
   {
-    faceToNodes.resizeArray(i, Hex::nbNodesPerFacet);
+    faceToNodes.resizeArray(i, Hex::numNodesPerFacet);
   }
 
   // 2 - Fill FaceToNode  -- Could be avoided and done when required from adjacencies
   for( unsigned int curFace = 0; curFace < m_uniqueFaces.size(); ++curFace)
   {
     localIndex f = m_uniqueFaces[curFace];
-    LocalCellIndex c = f / Hex::nbFacets;
+    LocalCellIndex c = f / Hex::numFacets;
 
     // We want the nodes of face f % 6 in cell c 
     auto blockCell = getBlockCellFromManagerCell(c) ;
@@ -779,9 +780,9 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes( ArrayOfArrays<localIndex> 
     localIndex cellInBlock = blockCell.second;
 
     CellBlock const & cB = getCellBlock( blockIndex );
-    HexFacetIndex faceToStore = f % Hex::nbFacets;
+    HexFacetIndex faceToStore = f % Hex::numFacets;
 
-    assert(cellInBlock >= 0); // debug 
+    GEOSX_ERROR_IF(cellInBlock >= 0, "Unexpected error in mesh mapping computations");  
 
     // Maybe the oriented facets would be useful - if they are the ones recomputed 
     // later one by the FaceManager
@@ -790,18 +791,18 @@ bool HexMeshConnectivityBuilder::computeFacesToNodes( ArrayOfArrays<localIndex> 
     faceToNodes[curFace][2] = cB.getElementNode(cellInBlock, Hex::facetVertex[faceToStore][2]);
     faceToNodes[curFace][3] = cB.getElementNode(cellInBlock, Hex::facetVertex[faceToStore][3]);
   }
-  return true;
+  
 }
 
 
-bool HexMeshConnectivityBuilder::computeNodesToFaces( ArrayOfSets<localIndex> & nodeToFaces ) const
+void HexMeshConnectivityBuilder::computeNodesToFaces( ArrayOfSets<localIndex> & nodeToFaces ) const
 {
   ArrayOfArrays<localIndex> faceToNodes; 
   computeFacesToNodes( faceToNodes );
 
   // 1 - Counting  - Quite unecessary for hexahedral meshes 
   //( 12 for regular nodes  - TODO check a good max for singular node )
-  std::vector<unsigned int> nbFacesPerNode(nbNodes, 0);
+  std::vector<unsigned int> nbFacesPerNode(m_numNodes, 0);
   for(unsigned int i = 0; i < faceToNodes.size(); ++i)
   {
     nbFacesPerNode[faceToNodes[i][0]]++;
@@ -813,9 +814,9 @@ bool HexMeshConnectivityBuilder::computeNodesToFaces( ArrayOfSets<localIndex> & 
 
   // 2 - Allocating 
   nodeToFaces.resize(0);
-  nodeToFaces.resize(nbNodes);
+  nodeToFaces.resize(m_numNodes);
   nodeToFaces.reserveValues( valuesToReserve );
-  for (localIndex n = 0; n < nbNodes; ++n)
+  for (localIndex n = 0; n < m_numNodes; ++n)
   {
     nodeToFaces.appendSet( nbFacesPerNode[n] );
   }
@@ -828,13 +829,11 @@ bool HexMeshConnectivityBuilder::computeNodesToFaces( ArrayOfSets<localIndex> & 
     nodeToFaces.insertIntoSet( faceToNodes[i][2],i );
     nodeToFaces.insertIntoSet( faceToNodes[i][3],i );
   }
-
-  return false;
 }
 
 
 // TODO We have a problem - where are the Element index valid ?
-bool HexMeshConnectivityBuilder::computeFacesToElements( array2d<localIndex> & faceToElements ) const
+void HexMeshConnectivityBuilder::computeFacesToElements( array2d<localIndex> & faceToElements ) const
 {
   faceToElements.resize(0);
   faceToElements.resize(numFaces(), 2);
@@ -846,26 +845,27 @@ bool HexMeshConnectivityBuilder::computeFacesToElements( array2d<localIndex> & f
     localIndex f = m_uniqueFaces[curFace];
     LocalFaceIndex neighbor = m_allFacesToNeighbors[f];
 
-    LocalCellIndex c = f/Hex::nbFacets;
-    LocalCellIndex cNeighbor = -1;
+    LocalCellIndex c = f/Hex::numFacets;
+    LocalCellIndex cNeighbor = NO_ID;
     
     localIndex cellInBlock = getBlockCellFromManagerCell(c).second;
-    localIndex neighborCellInMaybeNotSameBlock = -1;
+    // The neighbor cell may not be in the same CellBlock
+    localIndex neighborCell = NO_ID;
     
-    if (neighbor != -1) {
-      cNeighbor = neighbor/Hex::nbFacets;
-      neighborCellInMaybeNotSameBlock = getBlockCellFromManagerCell( cNeighbor ).second;
+    if (neighbor != NO_ID) {
+      cNeighbor = neighbor/Hex::numFacets;
+      neighborCell = getBlockCellFromManagerCell( cNeighbor ).second;
     }
 
     faceToElements[curFace][0] = cellInBlock;
-    faceToElements[curFace][1] = neighborCellInMaybeNotSameBlock;
+    faceToElements[curFace][1] = neighborCell;
   }
-  return true;
+  
 }
 
 // Using a set means bad performances and annoying code 
 // TODO Change set to vector
-void HexMeshConnectivityBuilder::getFacesAroundEdge( 
+void HexMeshConnectivityBuilder::getOneEdgeToFaces( 
   int edgeIndex, 
   std::vector< localIndex > const & allFacesToUniqueFace,
   std::set <localIndex> & faces ) const
@@ -885,14 +885,14 @@ void HexMeshConnectivityBuilder::getFacesAroundEdge(
   {
     LocalEdgeIndex id = m_allEdges[i].second;
     // Get the cell
-    LocalCellIndex c = id / Hex::nbEdges;
+    LocalCellIndex c = id / Hex::numEdges;
     // Get the hex facet incident to the edge
-    HexEdgeIndex e = id % Hex::nbEdges;
+    HexEdgeIndex e = id % Hex::numEdges;
     HexFacetIndex f0 = Hex::edgeAdjacentFacet[e][0];
     HexFacetIndex f1 = Hex::edgeAdjacentFacet[e][1];
     // Get the face index in allFaces 
-    LocalFaceIndex face0 = Hex::nbFacets * c + f0;
-    LocalFaceIndex face1 = Hex::nbFacets * c + f1;
+    LocalFaceIndex face0 = Hex::numFacets * c + f0;
+    LocalFaceIndex face1 = Hex::numFacets * c + f1;
     // Get the uniqueFaceId 
     localIndex uniqueFace0 = allFacesToUniqueFace[face0];
     localIndex uniqueFace1 = allFacesToUniqueFace[face1];
@@ -903,16 +903,16 @@ void HexMeshConnectivityBuilder::getFacesAroundEdge(
 }
 
 
-bool HexMeshConnectivityBuilder::computeFacesToEdges( ArrayOfArrays<localIndex> & faceToEdges) const 
+void HexMeshConnectivityBuilder::computeFacesToEdges( ArrayOfArrays<localIndex> & faceToEdges) const 
 {
   // 1 - Allocate
   faceToEdges.resize(0);
   // TODO Check if this resize or reserve the space for the inner arrays
-  faceToEdges.resize( numFaces(), Hex::nbEdgesPerFacet); 
+  faceToEdges.resize( numFaces(), Hex::numEdgesPerFacet); 
   // In doubt resize inner arrays
   for (int i = 0; i < numFaces(); ++i)
   {
-    faceToEdges.resizeArray(i, Hex::nbEdgesPerFacet );
+    faceToEdges.resizeArray(i, Hex::numEdgesPerFacet );
     // Initialize the values - Is there a simpler way to do this?
     faceToEdges[i][0] = NO_ID;
     faceToEdges[i][1] = NO_ID;
@@ -920,13 +920,12 @@ bool HexMeshConnectivityBuilder::computeFacesToEdges( ArrayOfArrays<localIndex> 
     faceToEdges[i][3] = NO_ID;
   }
 
-  std::vector< localIndex > allFacesToUniqueFace;
-  computeAllFacesToUniqueFace( allFacesToUniqueFace );
+  std::vector< localIndex >  const allFacesToUniqueFace = computeAllFacesToUniqueFace();
 
   for (unsigned int edgeIndex = 0; edgeIndex < m_uniqueEdges.size(); ++edgeIndex)
   {
     std::set<localIndex> faces;
-    getFacesAroundEdge( edgeIndex, allFacesToUniqueFace, faces );
+    getOneEdgeToFaces( edgeIndex, allFacesToUniqueFace, faces );
 
     for( auto itr( faces.begin()); itr !=faces.end(); ++itr)
     { 
@@ -934,17 +933,19 @@ bool HexMeshConnectivityBuilder::computeFacesToEdges( ArrayOfArrays<localIndex> 
       else if( faceToEdges[*itr][1] == NO_ID )  faceToEdges[*itr][1] = edgeIndex ;
       else if( faceToEdges[*itr][2] == NO_ID )  faceToEdges[*itr][2] = edgeIndex ;
       else if( faceToEdges[*itr][3] == NO_ID )  faceToEdges[*itr][3] = edgeIndex ;
-      else assert( false ); 
+      else GEOSX_ASSERT(" Change computeFacesToEdges implementation "); 
     }
   }
-  return true;
+  
 }
 
-bool HexMeshConnectivityBuilder::computeEdgesToFaces(ArrayOfSets<localIndex> & edgeToFaces ) const
+void HexMeshConnectivityBuilder::computeEdgesToFaces(ArrayOfSets<localIndex> & edgeToFaces ) const
 {
   // 1 - Allocate - Without counting  -- Should we overallocate a bit ?
   // TODO Count for tet meshes one should count
   int numberOfFacesAroundEdge = 5; // In a hexahedral mesh this is enough
+  // TODO How can we prevent problems with potentially bad quality and irregular hexahedral meshes?
+  // Do we need to?
   edgeToFaces.resize( 0 );
   edgeToFaces.reserve( numEdges() );
   edgeToFaces.reserveValues( numEdges() * numberOfFacesAroundEdge );
@@ -956,51 +957,50 @@ bool HexMeshConnectivityBuilder::computeEdgesToFaces(ArrayOfSets<localIndex> & e
   }
 
   // 2 - Get the mapping
-  std::vector< localIndex > allFacesToUniqueFace;
-  computeAllFacesToUniqueFace( allFacesToUniqueFace );
+  std::vector< localIndex >  const allFacesToUniqueFace = computeAllFacesToUniqueFace();
 
   for (unsigned int edgeIndex = 0; edgeIndex < m_uniqueEdges.size(); ++edgeIndex)
   {
     std::set<localIndex> faces;
-    getFacesAroundEdge( edgeIndex, allFacesToUniqueFace, faces );
+    getOneEdgeToFaces( edgeIndex, allFacesToUniqueFace, faces );
     
     for( auto itr( faces.begin()); itr !=faces.end(); ++itr)
     {
       edgeToFaces.insertIntoSet(edgeIndex, *itr);
     }
   }
-  return true;
+  
 }
 
 // Allocation is managed by the CellBlock 
-bool HexMeshConnectivityBuilder::computeElementsToFacesOfCellBlocks() 
+void HexMeshConnectivityBuilder::computeElementsToFacesOfCellBlocks() 
 {
   for(unsigned int curFace = 0; curFace < m_uniqueFaces.size(); ++curFace)
   {
     LocalFaceIndex id = m_uniqueFaces[curFace];
 
-    LocalCellIndex c = id / Hex::nbFacets;
-    HexFacetIndex face = id % Hex::nbFacets;
+    LocalCellIndex c = id / Hex::numFacets;
+    HexFacetIndex face = id % Hex::numFacets;
     auto blockCell = getBlockCellFromManagerCell(c);
 
     getCellBlock( blockCell.first ).setElementToFaces( blockCell.second, face, curFace );
 
     LocalFaceIndex idNeighbor = m_allFacesToNeighbors[id];
-    if( idNeighbor != -1)
+    if( idNeighbor != NO_ID)
     {
-      LocalCellIndex cNeighbor = idNeighbor / Hex::nbFacets;
-      HexFacetIndex faceNeighbor = idNeighbor % Hex::nbFacets;
+      LocalCellIndex cNeighbor = idNeighbor / Hex::numFacets;
+      HexFacetIndex faceNeighbor = idNeighbor % Hex::numFacets;
       auto blockCellNeighbor = getBlockCellFromManagerCell(cNeighbor) ;
       getCellBlock( blockCellNeighbor.first ).setElementToFaces( blockCellNeighbor.second, faceNeighbor, curFace );
     }
   }
 
-  return true;
+  
 }
 
 
 // Allocation is managed by the CellBlock 
-bool HexMeshConnectivityBuilder::computeElementsToEdgesOfCellBlocks() 
+void HexMeshConnectivityBuilder::computeElementsToEdgesOfCellBlocks() 
 {
   for (unsigned int edgeIndex = 0; edgeIndex < m_uniqueEdges.size(); ++edgeIndex)
   {
@@ -1014,13 +1014,13 @@ bool HexMeshConnectivityBuilder::computeElementsToEdgesOfCellBlocks()
     for(unsigned int i = first ; i < last; ++i)
     {
       LocalEdgeIndex id = m_allEdges[i].second;
-      LocalCellIndex c = id / Hex::nbEdges;
-      HexEdgeIndex e = id % Hex::nbEdges;
+      LocalCellIndex c = id / Hex::numEdges;
+      HexEdgeIndex e = id % Hex::numEdges;
       auto blockCell = getBlockCellFromManagerCell(c);
       getCellBlock(blockCell.first).setElementToEdges(blockCell.second, e, edgeIndex);
     }
   }
-  return true;
+  
 }
 
 
@@ -1031,92 +1031,89 @@ HexCellBlockManager::HexCellBlockManager(string const &name,
                                          dataRepository::Group *const parent) 
   :CellBlockManagerBase(name, parent)
 {
-  m_theOneWhoDoesTheJob = nullptr; 
+  m_delegate = nullptr; 
 }
 
-HexCellBlockManager::~HexCellBlockManager()
-{
-  delete m_theOneWhoDoesTheJob;
-  m_theOneWhoDoesTheJob = nullptr;
-}
+HexCellBlockManager::~HexCellBlockManager() = default;
+
 
 void HexCellBlockManager::buildMaps()
 {
   // Create the MeshConnectivityBuilder after the CellBlocks are 
   // filled and cell types are known
   // TODO Change the instanciated class depending on the incoming types of cells
-  m_theOneWhoDoesTheJob = new HexMeshConnectivityBuilder( *this );
+  m_delegate = std::unique_ptr<HexMeshConnectivityBuilder> (new HexMeshConnectivityBuilder( *this ));
 
   // If not called here - the number of faces and edges are not 
   // available resize EdgeManager and FaceManager.
-  m_theOneWhoDoesTheJob->computeFaces();
-  m_theOneWhoDoesTheJob->computeEdges();
+  m_delegate->computeFaces();
+  m_delegate->computeEdges();
   
-  m_theOneWhoDoesTheJob->printDebugInformation(); 
+  m_delegate->printDebugInformation(); 
 
   // Otherwise this are not called. Who should?
-  m_theOneWhoDoesTheJob->computeElementsToFacesOfCellBlocks(); 
-  m_theOneWhoDoesTheJob->computeElementsToEdgesOfCellBlocks();
+  m_delegate->computeElementsToFacesOfCellBlocks(); 
+  m_delegate->computeElementsToEdgesOfCellBlocks();
 
   return ;
 }
 
 localIndex HexCellBlockManager::numEdges() const
 {
-  return m_theOneWhoDoesTheJob->numEdges();
+  return m_delegate->numEdges();
 }
 localIndex HexCellBlockManager::numFaces() const
 {
-  return m_theOneWhoDoesTheJob->numFaces();
+  return m_delegate->numFaces();
 }
 
 array2d<localIndex> HexCellBlockManager::getEdgeToNodes() const
 {
   array2d<localIndex> result;
-  m_theOneWhoDoesTheJob->computeEdgesToNodes(result);
+  m_delegate->computeEdgesToNodes(result);
   return result;
 }
 
 ArrayOfSets<localIndex> HexCellBlockManager::getEdgeToFaces() const
 {
   ArrayOfSets<localIndex> result;
-  m_theOneWhoDoesTheJob->computeEdgesToFaces(result);
+  m_delegate->computeEdgesToFaces(result);
   return result;
 }
 ArrayOfArrays<localIndex> HexCellBlockManager::getFaceToNodes() const
 {
   ArrayOfArrays<localIndex> result;
-  m_theOneWhoDoesTheJob->computeFacesToNodes(result);
+  m_delegate->computeFacesToNodes(result);
   return result;
 }
 ArrayOfArrays<localIndex> HexCellBlockManager::getFaceToEdges() const
 {
   ArrayOfArrays<localIndex> result;
-  m_theOneWhoDoesTheJob->computeFacesToEdges(result);
+  m_delegate->computeFacesToEdges(result);
   return result;
 }
 array2d<localIndex> HexCellBlockManager::getFaceToElements() const
 {
   array2d<localIndex> result;
-  m_theOneWhoDoesTheJob->computeFacesToElements(result);
+  m_delegate->computeFacesToElements(result);
   return result;
 }
 ArrayOfSets<localIndex> HexCellBlockManager::getNodeToEdges() const
 {
   ArrayOfSets<localIndex> result;
-  m_theOneWhoDoesTheJob->computeNodesToEdges(result);
+  m_delegate->computeNodesToEdges(result);
   return result;
 }
 ArrayOfSets<localIndex> HexCellBlockManager::getNodeToFaces() const
 {
   ArrayOfSets<localIndex> result;
-  m_theOneWhoDoesTheJob->computeNodesToFaces(result);
+  m_delegate->computeNodesToFaces(result);
   return result;
 }
 ArrayOfArrays<localIndex> HexCellBlockManager::getNodeToElements() const
 {
   ArrayOfArrays<localIndex> result;
-  m_theOneWhoDoesTheJob->computeNodesToElements(result);
+  m_delegate->computeNodesToElements(result);
   return result;
 }
 
