@@ -614,14 +614,25 @@ PresInitializationKernel::
     pressureControl = ( isProducer ) ? 0.5 * pres : 2.0 * pres;
   }
 
-  GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
+  GEOSX_THROW_IF( pressureControl <= 0,
+                  "Invalid well initialization: negative pressure was found",
+                  InputError );
+
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
 
   // estimate the pressures in the well elements using this avgDensity
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-    wellElemPressure[iwelem] = pressureControl
-                               + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    wellElemPressure[iwelem] = pressureControl + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    if( wellElemPressure[iwelem] <= 0 )
+    {
+      foundNegativePressure.max( 1 );
+    }
   } );
+
+  GEOSX_THROW_IF( foundNegativePressure.get() == 1,
+                  "Invalid well initialization: negative pressure was found",
+                  InputError );
 }
 
 /******************************** RateInitializationKernel ********************************/
