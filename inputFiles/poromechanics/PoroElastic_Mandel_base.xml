@@ -3,12 +3,11 @@
 <Problem>
   <Solvers
     gravityVector="{ 0.0, 0.0, 0.0 }">
-    <!-- SPHINX_POROMECHANICSSOLVER -->-->
+    <!-- SPHINX_POROMECHANICSSOLVER -->
     <SinglePhasePoromechanics
       name="poroSolve"
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
-      porousMaterialNames="{ shale }"
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Domain }">
@@ -28,8 +27,7 @@
       timeIntegrationOption="QuasiStatic"
       logLevel="1"
       discretization="FE1"
-      targetRegions="{ Domain }"
-      solidMaterialNames="{ shaleSolid }"/>
+      targetRegions="{ Domain }"/>
     <!-- SPHINX_MECHANICALSOLVER_END -->
 
     <!-- SPHINX_SINGLEPHASEFVM -->
@@ -37,10 +35,7 @@
       name="SinglePhaseFlow"
       logLevel="1"
       discretization="singlePhaseTPFA"
-      targetRegions="{ Domain }"
-      fluidNames="{ water }"
-      solidNames="{ shale }"
-      permeabilityNames="{ shalePerm }"/>
+      targetRegions="{ Domain }"/>
     <!-- SPHINX_SINGLEPHASEFVM_END -->
   </Solvers>
  
@@ -54,9 +49,7 @@
 
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"/>
+        name="singlePhaseTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
   <!-- SPHINX_NUMERICAL_END -->

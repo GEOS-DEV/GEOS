@@ -54,7 +54,7 @@ In the command line to run GEOSX, the user can specify the partitioning pattern 
 Graph-based partitioning
 ---------------------------
 
-The Graph-based partitioning is used only when importing exernal meshes using the ``PAMELAMeshGenerator``
+The Graph-based partitioning is used only when importing exernal meshes using the ``PAMELAMesh``
 (see :ref:`TutorialFieldCase` section for more details using external meshes). While importing the
 mesh, PAMELA computes the graph of connectivity between all the volume elements of the mesh. The partitioning
 is then done using the METIS_ library. The graph is not weighted so the expected result is as mesh divided

@@ -57,6 +57,7 @@ static std::vector< int > getBlueprintNodeOrdering( ElementType const elementTyp
   // Same as VTK, but kept separate for flexibility
   switch( elementType )
   {
+    case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
@@ -291,7 +292,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
     if( wrapper.getPlotLevel() <= m_plotLevel && wrapper.sizedFromParent() )
     {
       string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
-      averagedConstitutiveData.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
+      averagedConstitutiveData.registerWrapper( wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
         .addBlueprintField( fields, fieldName, topology );
     }
   } );

@@ -1,14 +1,12 @@
 
 
-========================= ============ ================================ =========================================================================== 
-Name                      Type         Registered On                    Description                                                                 
-========================= ============ ================================ =========================================================================== 
-maxStableDt               real64                                        Value of the Maximum Stable Timestep for this solver.                       
-thermalConductivityNames  string_array                                  Name of the thermal conductivity constitutive model to use                  
-facePressure              real64_array :ref:`DATASTRUCTURE_FaceManager` Face pressure                                                               
-gravityCoefficient        real64_array :ref:`DATASTRUCTURE_FaceManager` Gravity coefficient (dot product of gravity acceleration by gravity vector) 
-LinearSolverParameters    node                                          :ref:`DATASTRUCTURE_LinearSolverParameters`                                 
-NonlinearSolverParameters node                                          :ref:`DATASTRUCTURE_NonlinearSolverParameters`                              
-========================= ============ ================================ =========================================================================== 
+========================= =============================================================================================================================================================================================================================================================================================== ================================================================ 
+Name                      Type                                                                                                                                                                                                                                                                                            Description                                                      
+========================= =============================================================================================================================================================================================================================================================================================== ================================================================ 
+maxStableDt               real64                                                                                                                                                                                                                                                                                          Value of the Maximum Stable Timestep for this solver.            
+meshTargets               geosx_mapBase< std___cxx11_basic_string< char, std_char_traits< char >, std_allocator< char > >, LvArray_Array< std___cxx11_basic_string< char, std_char_traits< char >, std_allocator< char > >, 1, camp_int_seq< long, 0l >, int, LvArray_ChaiBuffer >, std_integral_constant< bool, true > > MeshBody/Region combinations that the solver will be applied to. 
+LinearSolverParameters    node                                                                                                                                                                                                                                                                                            :ref:`DATASTRUCTURE_LinearSolverParameters`                      
+NonlinearSolverParameters node                                                                                                                                                                                                                                                                                            :ref:`DATASTRUCTURE_NonlinearSolverParameters`                   
+========================= =============================================================================================================================================================================================================================================================================================== ================================================================ 
 
 

@@ -23,12 +23,13 @@
 #include "SinglePhasePoromechanicsKernel.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 
 
 namespace geosx
 {
 
-namespace PoromechanicsEFEMKernels
+namespace poromechanicsEFEMKernels
 {
 
 /**
@@ -64,9 +65,10 @@ public:
                                                   3,
                                                   3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
   /// Compile time value for the number of quadrature points per element.
   static constexpr int numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
   using Base::numDofPerTestSupportPoint;
@@ -88,14 +90,14 @@ public:
                FE_TYPE const & finiteElementSpace,
                CONSTITUTIVE_TYPE & inputConstitutiveType,
                EmbeddedSurfaceSubRegion const & embeddedSurfSubRegion,
-               arrayView1d< globalIndex const > const & dispDofNumber,
-               arrayView1d< globalIndex const > const & jumpDofNumber,
-               string const & inputFlowDofKey,
+               arrayView1d< globalIndex const > const dispDofNumber,
+               arrayView1d< globalIndex const > const jumpDofNumber,
+               string const inputFlowDofKey,
                globalIndex const rankOffset,
-               CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-               arrayView1d< real64 > const & inputRhs,
+               CRSMatrixView< real64, globalIndex const > const inputMatrix,
+               arrayView1d< real64 > const inputRhs,
                real64 const (&inputGravityVector)[3],
-               arrayView1d< string const > const & fluidModelNames ):
+               string const fluidModelKey ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -110,20 +112,21 @@ public:
     m_X( nodeManager.referencePosition()),
     m_disp( nodeManager.totalDisplacement()),
     m_deltaDisp( nodeManager.incrementalDisplacement()),
-    m_w( embeddedSurfSubRegion.displacementJump() ),
+    m_w( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >() ),
     m_matrixPresDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_fracturePresDofNumber( embeddedSurfSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey ) ),
     m_wDofNumber( jumpDofNumber ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
-    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).density() ),
+    m_fluidDensity( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
     m_fluidDensityOld( embeddedSurfSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
-    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( fluidModelNames[targetRegionIndex] ).dDensity_dPressure() ),
+    m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
+                                                                                                                       fluidModelKey ) ).dDensity_dPressure() ),
     m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
-    m_tractionVec( embeddedSurfSubRegion.tractionVector() ),
-    m_dTraction_dJump( embeddedSurfSubRegion.dTraction_dJump() ),
-    m_dTraction_dPressure( embeddedSurfSubRegion.dTraction_dPressure() ),
+    m_tractionVec( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::traction >() ),
+    m_dTraction_dJump( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >() ),
+    m_dTraction_dPressure( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dPressure >() ),
     m_nVec( embeddedSurfSubRegion.getNormalVector() ),
     m_tVec1( embeddedSurfSubRegion.getTangentVector1() ),
     m_tVec2( embeddedSurfSubRegion.getTangentVector2() ),
@@ -351,26 +354,26 @@ public:
     //       need to know the strain increment to compute the current stiffness value.
     m_constitutiveUpdate.getElasticStiffness( k, q, stack.constitutiveStiffness );
 
-    SolidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
+    solidMechanicsEFEMKernelsHelper::computeHeavisideFunction< numNodesPerElem >( Heaviside,
                                                                                   stack.xLocal,
                                                                                   m_nVec[embSurfIndex],
                                                                                   m_surfaceCenter[embSurfIndex] );
 
 
-    SolidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleEquilibriumOperator( eqMatrix,
                                                                   m_nVec[embSurfIndex],
                                                                   m_tVec1[embSurfIndex],
                                                                   m_tVec2[embSurfIndex],
                                                                   stack.hInv );
 
-    SolidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
+    solidMechanicsEFEMKernelsHelper::assembleCompatibilityOperator< numNodesPerElem >( compMatrix,
                                                                                        m_nVec[embSurfIndex],
                                                                                        m_tVec1[embSurfIndex],
                                                                                        m_tVec2[embSurfIndex],
                                                                                        Heaviside,
                                                                                        dNdX );
 
-    SolidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
+    solidMechanicsEFEMKernelsHelper::assembleStrainOperator< 6, nUdof, numNodesPerElem >( strainMatrix, dNdX );
 
     // transp(B)D
     LvArray::tensorOps::Rij_eq_AkiBkj< nUdof, 6, 6 >( matBD, strainMatrix, stack.constitutiveStiffness );
@@ -575,14 +578,14 @@ protected:
 
 using SinglePhaseKernelFactory = finiteElement::KernelFactory< SinglePhase,
                                                                EmbeddedSurfaceSubRegion const &,
-                                                               arrayView1d< globalIndex const > const &,
-                                                               arrayView1d< globalIndex const > const &,
-                                                               string const &,
+                                                               arrayView1d< globalIndex const > const,
+                                                               arrayView1d< globalIndex const > const,
+                                                               string const,
                                                                globalIndex const,
-                                                               CRSMatrixView< real64, globalIndex const > const &,
-                                                               arrayView1d< real64 > const &,
+                                                               CRSMatrixView< real64, globalIndex const > const,
+                                                               arrayView1d< real64 > const,
                                                                real64 const (&)[3],
-                                                               arrayView1d< string const > const >;
+                                                               string const >;
 
 /**
  * @brief A struct to perform volume, aperture and fracture traction updates
@@ -650,7 +653,7 @@ struct StateUpdateKernel
   }
 };
 
-} /* namespace PoromechanicsEFEMKernels */
+} // namespace poromechanicsEFEMKernels
 
 } /* namespace geosx */
 

@@ -27,6 +27,7 @@
 #include "Wrapper.hpp"
 #include "xmlWrapper.hpp"
 
+
 #include <iostream>
 
 #ifndef NOCHARTOSTRING_KEYLOOKUP
@@ -215,7 +216,7 @@ public:
    */
   template< typename T = Group >
   T & registerGroup( string const & name )
-  { return registerGroup< T >( name, std::move( std::make_unique< T >( name, this ) ) ); }
+  { return registerGroup< T >( name, std::make_unique< T >( name, this ) ); }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -230,8 +231,8 @@ public:
   template< typename T = Group >
   T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T & rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
-    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key()) );
+    T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
+    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
   }
 
@@ -492,6 +493,47 @@ public:
     }
   }
 
+
+  /**
+   * @brief Apply the given functor to subgroups that can be casted to one of specified types.
+   * @tparam GROUPTYPE  the first type that will be used in the attempted casting of group.
+   * @tparam GROUPTYPES a variadic list of types that will be used in the attempted casting of group.
+   * @tparam LAMBDA     the type of functor to call
+   * @param[in] lambda  the functor to call on subgroups
+   */
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forSubGroupsIndex( LAMBDA && lambda )
+  {
+    localIndex counter = 0;
+    for( auto & subGroupIter : m_subGroups )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second,
+                                                          [&]( auto & castedSubGroup )
+      {
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
+    }
+  }
+
+  /**
+   * @copydoc forSubGroupsIndex(LAMBDA &&)
+   */
+  template< typename GROUPTYPE = Group, typename ... GROUPTYPES, typename LAMBDA >
+  void forSubGroupsIndex( LAMBDA && lambda ) const
+  {
+    localIndex counter = 0;
+    for( auto const & subGroupIter : m_subGroups )
+    {
+      applyLambdaToContainer< GROUPTYPE, GROUPTYPES... >( *subGroupIter.second,
+                                                          [&]( auto const & castedSubGroup )
+      {
+        lambda( counter, castedSubGroup );
+      } );
+      ++counter;
+    }
+  }
+
   /**
    * @copybrief forSubGroups(LAMBDA &&)
    * @tparam GROUPTYPE        the first type that will be used in the attempted casting of group.
@@ -622,6 +664,11 @@ public:
    * @name Initialization and data registration
    */
   ///@{
+  /**
+   * @brief initialization post generation of the mesh.
+   */
+  virtual void initialize_postMeshGeneration();
+
 
   /**
    * @brief Run initialization functions on this and all subgroups.
@@ -723,6 +770,7 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject an owning pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
   Wrapper< T > & registerWrapper( string const & name, std::unique_ptr< T > newObject );
@@ -733,6 +781,7 @@ public:
    * @param[in] name the name of the wrapper to use as a string key
    * @param[in] newObject a pointer to the object that is being registered
    * @return A reference to the newly registered/created Wrapper
+   * @note Not intended to register a @p WrapperBase instance. Use dedicated member function instead.
    */
   template< typename T >
   Wrapper< T > & registerWrapper( string const & name,
@@ -740,12 +789,10 @@ public:
 
   /**
    * @brief Register and take ownership of an existing Wrapper.
-   * @param name The name of the wrapper to use as a string key
    * @param wrapper A pointer to the an existing wrapper.
    * @return An un-typed pointer to the newly registered/created wrapper
    */
-  WrapperBase & registerWrapper( string const & name,
-                                 std::unique_ptr< WrapperBase > wrapper );
+  WrapperBase & registerWrapper( std::unique_ptr< WrapperBase > wrapper );
 
   /**
    * @brief Removes a Wrapper from this group.
@@ -1283,6 +1330,19 @@ public:
   integer getLogLevel() const { return m_logLevel; }
   ///@}
 
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() {}
+
+  /**
+   * @brief Return PyGroup type.
+   * @return Return PyGroup type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const;
+#endif
+
 protected:
 
   /**
@@ -1329,6 +1389,8 @@ protected:
   virtual void postRestartInitialization()
   {}
 
+
+
   ///@}
 
 private:
@@ -1340,6 +1402,28 @@ private:
   virtual void processInputFile( xmlWrapper::xmlNode const & targetNode );
 
   Group const & getBaseGroupByPath( string const & path ) const;
+
+  /**
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] wrapperNames The names of the wrapper to be packed. If empty, all the wrappers will be packed.
+   * @param[in] packList The element we want packed. If empty, all the elements will be packed.
+   * @param[in] recursive Recursive pack or not.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
+  template< bool DO_PACKING >
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       array1d< string > const & wrapperNames,
+                       arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.
@@ -1430,6 +1514,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        std::unique_ptr< T > newObject )
 {
+  static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, std::move( newObject ) ),
                      true );
@@ -1446,6 +1531,7 @@ template< typename T >
 Wrapper< T > & Group::registerWrapper( string const & name,
                                        T * newObject )
 {
+  static_assert( !std::is_base_of< WrapperBase, T >::value, "This function should not be used for `WrapperBase`. Use the dedicated `registerWrapper` instead." );
   m_wrappers.insert( name,
                      new Wrapper< T >( name, *this, newObject ),
                      true );

@@ -127,10 +127,10 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -176,9 +176,7 @@ public:
 
   /**@}*/
 
-  void resizeFractureFields( MeshLevel & mesh );
-
-  arrayView1d< string const > const proppantModelNames() const { return m_proppantModelNames; }
+  void resizeFractureFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
   struct viewKeyStruct : FlowSolverBase::viewKeyStruct
   {
@@ -210,7 +208,7 @@ public:
    * @brief Function to update fluid and proppant properties
    * @param domain the domain
    */
-  void updateState( ObjectManagerBase & dataGroup, localIndex const targetIndex );
+  void updateState( ObjectManagerBase & dataGroup );
 
 protected:
 
@@ -222,11 +220,11 @@ private:
    * @brief Function to update fluid properties
    * @param domain the domain
    */
-  void updateFluidModel( ObjectManagerBase & dataGroup, localIndex const targetIndex );
+  void updateFluidModel( ObjectManagerBase & dataGroup );
 
-  void updateComponentDensity( ObjectManagerBase & dataGroup, localIndex const targetIndex );
+  void updateComponentDensity( ObjectManagerBase & dataGroup );
 
-  void updateProppantModel( ObjectManagerBase & dataGroup, localIndex const targetIndex );
+  void updateProppantModel( ObjectManagerBase & dataGroup );
 
   /**
    * @brief Function to update cell-based fluid flux
@@ -234,7 +232,7 @@ private:
   void updateCellBasedFlux( real64 const time_n,
                             DomainPartition & domain );
 
-  array1d< string > m_proppantModelNames;
+  void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
   integer m_numComponents;
 

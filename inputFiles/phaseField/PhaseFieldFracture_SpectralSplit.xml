@@ -22,7 +22,7 @@
       logLevel="1"
       discretization="FE1"
       targetRegions="{ Region1 }"
-      solidMaterialNames="{ shale }">
+      >
       <NonlinearSolverParameters
         newtonMaxIter="200"
         newtonTol="1.0e-12"/>
@@ -35,7 +35,7 @@
       discretization="FE1"
       timeIntegrationOption="SteadyState"
       fieldName="Damage"
-      solidMaterialNames="{ shale }"
+      
       localDissipation="Linear"
       logLevel="1"
       targetRegions="{ Region1 }">
@@ -48,7 +48,7 @@
   </Solvers>
 
   <Mesh>
-    <PAMELAMeshGenerator
+    <PAMELAMesh
       name="Mode2Notched"
       file="Mode2CrackMesh/geo.msh"/>
 

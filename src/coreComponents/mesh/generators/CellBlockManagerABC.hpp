@@ -40,8 +40,6 @@ public:
     // Left blank
   }
 
-  virtual ~CellBlockManagerABC() = default;
-
   /**
    * @brief Maximum number of edges allowed (in memory) per each node.
    * @return The number as an integer.
@@ -93,6 +91,12 @@ public:
   virtual Group & getCellBlocks() = 0;
 
   /**
+   * @brief Returns a group containing the cell blocks as CellBlockABC instances
+   * @return Const reference to the Group instance.
+   */
+  virtual const Group & getCellBlocks() const = 0;
+
+  /**
    * @brief Total number of nodes across all the cell blocks.
    * @return The total number of nodes.
    *
@@ -142,13 +146,13 @@ public:
    * @brief Returns the edge to nodes mapping.
    * @return A 1 to 2 relationship. The result is meant to have size (numEdges, 2).
    */
-  virtual array2d< geosx::localIndex > getEdgeToNodes() const = 0;
+  virtual array2d< localIndex > getEdgeToNodes() const = 0;
 
   /**
    * @brief Returns the edge to faces mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfSets< geosx::localIndex > getEdgeToFaces() const = 0;
+  virtual ArrayOfSets< localIndex > getEdgeToFaces() const = 0;
 
   /**
    * @brief Returns the face to nodes mapping.
@@ -160,7 +164,7 @@ public:
    * @brief Returns the face to edges mapping.
    * @return A one to many relationship.
    */
-  virtual ArrayOfArrays< geosx::localIndex > getFaceToEdges() const = 0;
+  virtual ArrayOfArrays< localIndex > getFaceToEdges() const = 0;
 
   /**
    * @brief Returns the face to elements mappings.

@@ -40,12 +40,6 @@ public:
    */
   CellBlockManager( string const & name, Group * const parent );
 
-  CellBlockManager( const CellBlockManager & ) = delete;
-
-  CellBlockManager & operator=( const CellBlockManager & ) = delete;
-
-  ~CellBlockManager() override = default;
-
   virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
@@ -78,13 +72,13 @@ public:
 
   ArrayOfArrays< localIndex > getNodeToElements() const override;
 
-  array2d< geosx::localIndex > getEdgeToNodes() const override;
+  array2d< localIndex > getEdgeToNodes() const override;
 
-  ArrayOfSets< geosx::localIndex > getEdgeToFaces() const override;
+  ArrayOfSets< localIndex > getEdgeToFaces() const override;
 
   ArrayOfArrays< localIndex > getFaceToNodes() const override;
 
-  ArrayOfArrays< geosx::localIndex > getFaceToEdges() const override;
+  ArrayOfArrays< localIndex > getFaceToEdges() const override;
 
   array2d< localIndex > getFaceToElements() const override;
 
@@ -153,6 +147,8 @@ public:
     return this->getGroup( viewKeyStruct::cellBlocks() ).getGroup< CellBlock >( name );
   }
 
+  const Group & getCellBlocks() const override;
+
   Group & getCellBlocks() override;
 
   /**
@@ -180,12 +176,6 @@ private:
     /// Cell blocks key
     static constexpr char const * cellBlocks() { return "cellBlocks"; }
   };
-
-  /**
-   * @brief Returns a group containing the cell blocks as CellBlockABC instances
-   * @return Reference to the Group instance.
-   */
-  const Group & getCellBlocks() const;
 
   /**
    * @brief Get cell block at index @p iCellBlock.

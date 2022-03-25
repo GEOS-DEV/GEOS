@@ -26,7 +26,7 @@ namespace geosx
 
 /**
  * @brief This class implements Bi-Conjugate Gradient Stabilized method
- *        for monolithic and block linear operators.
+ *        (right-preconditioned) for monolithic and block linear operators.
  * @tparam VECTOR type of vectors this solver operates on.
  * @note  The notation is consistent with "Iterative Methods for
  *        Linear and Non-Linear Equations" from C.T. Kelley (1995)
@@ -96,6 +96,6 @@ protected:
 
 };
 
-} // namespace GEOSX
+} // namespace geosx
 
 #endif /*GEOSX_LINEARALGEBRA_SOLVERS_BICGSTABSOLVER_HPP_ */

@@ -79,11 +79,11 @@ class KernelBase
 public:
   /// Compile time value for the number of test function support points per
   /// element.
-  static constexpr int numTestSupportPointsPerElem  = FE_TYPE::numNodes;
+  static constexpr int maxNumTestSupportPointsPerElem  = FE_TYPE::maxSupportPoints;
 
   /// Compile time value for the number of trial function support points per
   /// element.
-  static constexpr int numTrialSupportPointsPerElem = FE_TYPE::numNodes;
+  static constexpr int maxNumTrialSupportPointsPerElem = FE_TYPE::maxSupportPoints;
 
   /// Compile time value for the number of degrees of freedom per test function
   /// support point.
@@ -347,7 +347,7 @@ private:
  * @param mesh The MeshLevel object.
  * @param targetRegions The names of the target regions(of type @p SUBREGION_TYPE) to apply the @p KERNEL_TEMPLATE.
  * @param finiteElementName The name of the finite element.
- * @param constitutiveNames The names of the constitutive models present in the region.
+ * @param constitutiveStringName The key to the constitutive model name found on the Region.
  * @param kernelFactory The object used to construct the kernel.
  * @return The maximum contribution to the residual, which may be used to scale the residual.
  *
@@ -362,7 +362,7 @@ static
 real64 regionBasedKernelApplication( MeshLevel & mesh,
                                      arrayView1d< string const > const & targetRegions,
                                      string const & finiteElementName,
-                                     arrayView1d< string const > const & constitutiveNames,
+                                     string const & constitutiveStringName,
                                      KERNEL_FACTORY & kernelFactory )
 {
   GEOSX_MARK_FUNCTION;
@@ -376,7 +376,7 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
 
   // Loop over all sub-regions in regions of type SUBREGION_TYPE, that are listed in the targetRegions array.
   elementRegionManager.forElementSubRegions< SUBREGION_TYPE >( targetRegions,
-                                                               [&constitutiveNames,
+                                                               [&constitutiveStringName,
                                                                 &maxResidualContribution,
                                                                 &nodeManager,
                                                                 &edgeManager,
@@ -388,11 +388,13 @@ real64 regionBasedKernelApplication( MeshLevel & mesh,
     localIndex const numElems = elementSubRegion.size();
 
     // Get the constitutive model...and allocate a null constitutive model if required.
+
     constitutive::ConstitutiveBase * constitutiveRelation = nullptr;
     constitutive::NullModel * nullConstitutiveModel = nullptr;
-    if( targetRegionIndex <= constitutiveNames.size()-1 )
+    if( elementSubRegion.template hasWrapper< string >( constitutiveStringName ) )
     {
-      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveNames[targetRegionIndex] );
+      string const & constitutiveName = elementSubRegion.template getReference< string >( constitutiveStringName );
+      constitutiveRelation = &elementSubRegion.template getConstitutiveModel( constitutiveName );
     }
     else
     {

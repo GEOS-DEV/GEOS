@@ -5,10 +5,6 @@
     <CompositionalMultiphaseFVM
       name="compflow"
       discretization="fluidTPFA"
-      fluidNames="{ fluid1 }"
-      solidNames="{ rock }"
-      permeabilityNames="{ rockPerm }"
-      relPermNames="{ relperm }"
       temperature="368.15"
       useMass="1"
       targetRegions="{ Region1 }">
@@ -77,10 +73,7 @@
   <NumericalMethods>
     <FiniteVolume>
       <TwoPointFluxApproximation
-        name="fluidTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm }"/>
+        name="fluidTPFA"/>
     </FiniteVolume>
   </NumericalMethods>
 
