@@ -59,7 +59,7 @@ public:
                                                        real64 const ( &dispJump )[3],
                                                        real64 const ( &traction )[3] ) const override
   {
-    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, traction, pressure);
+    GEOSX_UNUSED_VAR( q, oldHydraulicAperture, newHydraulicAperture, traction, pressure );
 
     compute( dispJump,
              m_initialPermeability,
@@ -131,7 +131,7 @@ private:
   /// Initial permeability tensor
   R1Tensor m_initialPermeability;
 
-  struct viewKeyStruct 
+  struct viewKeyStruct
   {
     static constexpr char const * shearDispThresholdString() { return "shearDispThreshold"; }
     static constexpr char const * maxPermMultiplierString() { return "maxPermMultiplier"; }
