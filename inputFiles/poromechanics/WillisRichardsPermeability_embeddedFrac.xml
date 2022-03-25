@@ -9,8 +9,7 @@
       initialDt="1e-3"
       fracturesSolverName="fractureMechSolver"
       fluidSolverName="flowSolver"
-      solidSolverName="matrixMechSolver"
-      porousMaterialNames="{ porousRock, fractureFilling }"
+      solidSolverName="matrixMechSolver"      
       logLevel="1">
       <NonlinearSolverParameters
         newtonTol="1.0e-5"
@@ -32,19 +31,16 @@
       timeIntegrationOption="QuasiStatic"
       discretization="FE1"
       targetRegions="{ Domain }"
-      solidMaterialNames="{ rock }"/>
+      />
 
     <SinglePhaseFVM
       name="flowSolver"
       discretization="singlePhaseTPFA"
       targetRegions="{ Domain, Fracture }"
-      fluidNames="{ water }"
-      solidNames="{ porousRock, fractureFilling }"
-      permeabilityNames="{ rockPerm, fracturePerm }"/>
+      />
 
     <EmbeddedSurfaceGenerator
-      name="SurfaceGenerator"
-      solidMaterialNames="{ rock }"
+      name="SurfaceGenerator"      
       targetRegions="{ Domain, Fracture }"
       fractureRegion="Fracture"
       logLevel="2"
@@ -170,9 +166,7 @@
     <FiniteVolume>
       <TwoPointFluxApproximation
         name="singlePhaseTPFA"
-        fieldName="pressure"
-        coefficientName="permeability"
-        coefficientModelNames="{ rockPerm, fracturePerm, fractureContact }"/>
+        />
     </FiniteVolume>
   </NumericalMethods>
 
@@ -340,7 +334,7 @@
     <PackCollection
       name="tractionCollection"
       objectPath="ElementRegions/Fracture/embeddedSurfaceSubRegion"
-      fieldName="fractureTraction"/>
+      fieldName="traction"/>
 
     <PackCollection
       name="displacementJumpCollection"
@@ -357,7 +351,7 @@
     <VTK
       name="vtkOutput"
       plotLevel="3"
-      writeBinaryData="1"/>
+      format="binary"/>
 
    <TimeHistory
       name="timeHistoryOutput"
