@@ -49,7 +49,7 @@ public:
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const ( &dispJump )[3], 
-                real64 const ( &fractureTraction )[3],                  
+                real64 const ( &traction )[3],                  
                 arraySlice1d< real64 > const & permeability,
                 arraySlice2d< real64 > const & dPerm_dDispJump,
                 arraySlice2d< real64 > const & dPerm_dTraction ) const;
@@ -158,14 +158,14 @@ GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void WillisRichardsPermeabilityUpdate::compute( real64 const & pressure,
                                                 real64 const ( &dispJump )[3], 
-                                                real64 const ( &fractureTraction )[3],
+                                                real64 const ( &traction )[3],
                                                 arraySlice1d< real64 > const & permeability,
                                                 arraySlice2d< real64 > const & dPerm_dDispJump,
                                                 arraySlice2d< real64 > const & dPerm_dTraction ) const
 { 
   real64 const shearMag = std::sqrt( dispJump[1]*dispJump[1] + dispJump[2]*dispJump[2] );
   
-  real64 const effNormalStress = fractureTraction[0] - pressure; 
+  real64 const effNormalStress = std::abs(traction[0]); 
 
   real64 const aperture = ( m_maxFracAperture + shearMag * m_dilationCoefficient ) / ( 1.0 + 9.0 * effNormalStress/m_refClosureStress );
 
@@ -184,7 +184,7 @@ void WillisRichardsPermeabilityUpdate::compute( real64 const & pressure,
     dPerm_dDispJump[i][1] = dPerm_daperture * tmpValue * dispJump[1];
     dPerm_dDispJump[i][2] = dPerm_daperture * tmpValue * dispJump[2];
 
-    dPerm_dTraction[i][0] = dPerm_daperture * daperture_deffNormalStress;
+    dPerm_dTraction[i][0] = - dPerm_daperture * daperture_deffNormalStress;
     dPerm_dTraction[i][1] = 0.0;
     dPerm_dTraction[i][2] = 0.0;
   }
