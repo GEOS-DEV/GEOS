@@ -23,6 +23,8 @@
 
 #include "constitutive/solid/SolidBase.hpp"
 #include "constitutive/solid/SolidExtrinsicData.hpp"
+#include "constitutive/solid/porosity/BiotPorosity.hpp"
+#include "constitutive/solid/porosity/BiotExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -69,6 +71,8 @@ public:
 
   using SolidAccessors = StencilAccessors< extrinsicMeshData::solid::bulkModulus,
                                            extrinsicMeshData::solid::shearModulus >;
+
+  using BiotAccessors = StencilAccessors< extrinsicMeshData::biot::biotCoefficient >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -123,6 +127,7 @@ public:
                            CapPressureAccessors const & capPressureAccessors,
                            PermeabilityAccessors const & permeabilityAccessors,
                            SolidAccessors const & solidAccessors,
+                           BiotAccessors const & biotAccessors,
                            real64 const & dt,
                            CRSMatrixView< real64, globalIndex const > const & localMatrix,
                            arrayView1d< real64 > const & localRhs )
@@ -143,6 +148,7 @@ public:
     m_phaseVolFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseVolumeFractionOld {})),
     m_bulkModulus(solidAccessors.get(extrinsicMeshData::solid::bulkModulus {})),
     m_shearModulus(solidAccessors.get(extrinsicMeshData::solid::shearModulus {})),
+    m_biotCoefficient(biotAccessors.get(extrinsicMeshData::biot::biotCoefficient {})),
     m_stabWeights(stencilWrapper.getStabWeights())
 
   {}
@@ -251,6 +257,7 @@ protected:
 
   ElementViewConst< arrayView1d< real64 const> > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const> > const m_shearModulus;
+  ElementViewConst< arrayView1d< real64 const> > const m_biotCoefficient;
 
   typename STENCILWRAPPER::WeightContainerViewConstType m_stabWeights;
 
@@ -310,10 +317,11 @@ public:
       typename KERNEL_TYPE::CapPressureAccessors capPressureAccessors( elemManager, solverName );
       typename KERNEL_TYPE::PermeabilityAccessors permeabilityAccessors( elemManager, solverName );
       typename KERNEL_TYPE::SolidAccessors solidAccessors( elemManager, solverName );
+      typename KERNEL_TYPE::BiotAccessors biotAccessors( elemManager, solverName );
 
       KERNEL_TYPE kernel( numPhases, rankOffset, hasCapPressure, stencilWrapper, dofNumberAccessor,
                           compFlowAccessors, stabCompFlowAccessors, multiFluidAccessors,
-                          capPressureAccessors, permeabilityAccessors, solidAccessors,
+                          capPressureAccessors, permeabilityAccessors, solidAccessors, biotAccessors,
                           dt, localMatrix, localRhs );
       KERNEL_TYPE::template launch< POLICY >( stencilWrapper.size(), kernel );
     } );
