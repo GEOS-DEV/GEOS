@@ -75,10 +75,6 @@ public:
   FaceElementSubRegion( string const & name,
                         dataRepository::Group * const parent );
 
-
-  /// @brief Destructor
-  virtual ~FaceElementSubRegion() override;
-
   ///@}
 
   /**
@@ -90,11 +86,11 @@ public:
                                                     FaceManager const & faceManager ) override;
   /**
    * @brief Function to compute the geometric quantities of a specific face element.
-   * @param index index of the face element
+   * @param k index of the face element
    * @param faceArea surface area of the face
    */
-  void CalculateElementGeometricQuantities( localIndex const index,
-                                            arrayView1d< real64 const > const & faceArea );
+  void calculateSingleElementGeometricQuantities( localIndex const k,
+                                                  arrayView1d< real64 const > const & faceArea );
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -235,9 +231,9 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;

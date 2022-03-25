@@ -201,7 +201,7 @@ public:
                               arrayView1d< real64 > const & localRhs )
     : Base( numPhases, rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs ),
     m_dPhaseVolFrac_dTemp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >() ),
-    m_phaseInternalEnergyOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseInternalEnergyOld >() ),
+    m_phaseInternalEnergyOld( fluid.phaseInternalEnergyOld() ),
     m_phaseInternalEnergy( fluid.phaseInternalEnergy() ),
     m_dPhaseInternalEnergy( fluid.dPhaseInternalEnergy() ),
     m_rockInternalEnergyOld( solid.getOldInternalEnergy() ),
@@ -302,7 +302,7 @@ public:
       arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
       arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
-      arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseInternalEnergyOld = m_phaseInternalEnergyOld[ei];
+      arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergyOld = m_phaseInternalEnergyOld[ei][0];
       arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseInternalEnergy = m_phaseInternalEnergy[ei][0];
       arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseInternalEnergy = m_dPhaseInternalEnergy[ei][0];
 
@@ -396,7 +396,7 @@ protected:
   arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dTemp;
 
   /// Views on phase internal energy
-  arrayView2d< real64 const, compflow::USD_PHASE > m_phaseInternalEnergyOld;
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergyOld;
   arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseInternalEnergy;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseInternalEnergy;
 
@@ -566,10 +566,10 @@ struct ResidualNormKernel
                       arrayView1d< real64 const > const & refPoro,
                       arrayView1d< real64 const > const & volume,
                       arrayView2d< real64 const > const & solidInternalEnergyOld,
-                      arrayView1d< real64 const > const & totalDensOld,
-                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseDensOld,
                       arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFracOld,
-                      arrayView2d< real64 const, compflow::USD_PHASE > const & phaseInternalEnergyOld,
+                      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld,
+                      arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDensOld,
+                      arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseInternalEnergyOld,
                       real64 & localFlowResidualNorm,
                       real64 & localEnergyResidualNorm )
   {
@@ -585,11 +585,11 @@ struct ResidualNormKernel
         // first, compute the normalizers for the component mass balance and energy balance equations
         // TODO: apply a separate treatment to the volume balance equation
         real64 const poreVolume = refPoro[ei] * volume[ei];
-        real64 const flowNormalizer = totalDensOld[ei] * poreVolume;
+        real64 const flowNormalizer = totalDensOld[ei][0] * poreVolume;
         real64 energyNormalizer = solidInternalEnergyOld[ei][0] * ( 1.0 - refPoro[ei] ) * volume[ei];
         for( integer ip = 0; ip < numPhases; ++ip )
         {
-          energyNormalizer += phaseInternalEnergyOld[ei][ip] * phaseDensOld[ei][ip] * phaseVolFracOld[ei][ip] * poreVolume;
+          energyNormalizer += phaseInternalEnergyOld[ei][0][ip] * phaseDensOld[ei][0][ip] * phaseVolFracOld[ei][ip] * poreVolume;
         }
 
         // then, compute the normalized residual

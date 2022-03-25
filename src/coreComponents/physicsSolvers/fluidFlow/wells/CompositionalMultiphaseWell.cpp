@@ -417,9 +417,9 @@ void CompositionalMultiphaseWell::validateWellConstraints( WellElementSubRegion 
                   InputError );
 }
 
-void CompositionalMultiphaseWell::initializePreSubGroups()
+void CompositionalMultiphaseWell::initializePostSubGroups()
 {
-  WellSolverBase::initializePreSubGroups();
+  WellSolverBase::initializePostSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 

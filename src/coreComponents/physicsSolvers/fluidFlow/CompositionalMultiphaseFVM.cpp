@@ -329,11 +329,13 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
+
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDensOld = fluid.totalDensityOld();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
       arrayView1d< real64 const > const referencePorosity = solidModel.getReferencePorosity();
 
       real64 subRegionFlowResidualNorm = 0.0;
@@ -341,12 +343,10 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 
       if( m_isThermal )
       {
-        arrayView2d< real64 const, compflow::USD_PHASE > const phaseDensOld =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseDensityOld >();
         arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFracOld =
           subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >();
-        arrayView2d< real64 const, compflow::USD_PHASE > const phaseInternalEnergyOld =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseInternalEnergyOld >();
+        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensOld = fluid.phaseDensityOld();
+        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergyOld = fluid.phaseInternalEnergyOld();
 
         string const & solidInternalEnergyName = subRegion.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
         SolidInternalEnergy const & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
@@ -364,9 +364,9 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                           referencePorosity,
                                           volume,
                                           solidInternalEnergyOld,
+                                          phaseVolFracOld,
                                           totalDensOld,
                                           phaseDensOld,
-                                          phaseVolFracOld,
                                           phaseInternalEnergyOld,
                                           subRegionFlowResidualNorm,
                                           subRegionEnergyResidualNorm );

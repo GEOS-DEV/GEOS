@@ -21,10 +21,6 @@ if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
 endif()
 
-if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pygeosx )
-endif()
-
 if( ENABLE_PVTPackage )
     list( APPEND gtest_geosx_tests
           testCompMultiphaseFlow.cpp

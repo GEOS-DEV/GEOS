@@ -216,7 +216,7 @@ public:
    */
   template< typename T = Group >
   T & registerGroup( string const & name )
-  { return registerGroup< T >( name, std::move( std::make_unique< T >( name, this ) ) ); }
+  { return registerGroup< T >( name, std::make_unique< T >( name, this ) ); }
 
   /**
    * @brief @copybrief registerGroup(string const &,std::unique_ptr<T>)
@@ -231,8 +231,8 @@ public:
   template< typename T = Group >
   T & registerGroup( subGroupMap::KeyIndex const & keyIndex )
   {
-    T & rval = registerGroup< T >( keyIndex.key(), std::move( std::make_unique< T >( keyIndex.key(), this )) );
-    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key()) );
+    T & rval = registerGroup< T >( keyIndex.key(), std::make_unique< T >( keyIndex.key(), this ) );
+    keyIndex.setIndex( m_subGroups.getIndex( keyIndex.key() ) );
     return rval;
   }
 
@@ -1418,12 +1418,12 @@ private:
    * @return The packed size.
    */
   template< bool DO_PACKING >
-  localIndex packPrivate( buffer_unit_type * & buffer,
-                          array1d< string > const & wrapperNames,
-                          arrayView1d< localIndex const > const & packList,
-                          integer const recursive,
-                          bool onDevice,
-                          parallelDeviceEvents & events ) const;
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       array1d< string > const & wrapperNames,
+                       arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   //START_SPHINX_INCLUDE_02
   /// The parent Group that contains "this" Group in its "sub-Group" collection.

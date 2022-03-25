@@ -293,6 +293,8 @@ protected:
 
   virtual void postProcessInput() override;
 
+  virtual void initializePreSubGroups() override;
+
 private:
 
   /// Well type (as Type enum)
