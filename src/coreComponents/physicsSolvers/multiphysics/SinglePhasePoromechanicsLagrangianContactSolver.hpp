@@ -152,7 +152,6 @@ protected:
 
 private:
 
-  integer m_activeSetIter = 0;
   void createPreconditioner( DomainPartition const & domain );
 
 };
