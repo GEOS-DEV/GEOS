@@ -88,6 +88,8 @@ public:
   using AbstractBase::m_dCompFrac_dCompDens;
   using AbstractBase::m_dPhaseCapPressure_dPhaseVolFrac;
 
+  using AbstractBase::m_dPres;
+
   using Base = compositionalMultiphaseFVMKernels::FaceBasedAssemblyKernel< NUM_COMP, NUM_DOF, STENCILWRAPPER >;
   using Base::numComp;
   using Base::numDof;
@@ -143,7 +145,7 @@ public:
             dt,
             localMatrix,
             localRhs ), 
-    m_phaseMassDensOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseDensityOld {}) ),
+    m_phaseDensOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseDensityOld {}) ),
     m_phaseCompFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseComponentFractionOld {})),
     m_phaseVolFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseVolumeFractionOld {})),
     m_bulkModulus(solidAccessors.get(extrinsicMeshData::solid::bulkModulus {})),
@@ -160,8 +162,8 @@ public:
     GEOSX_HOST_DEVICE
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
-      stabFlux( 0.0 ),
-      dStabFlux_dP( size )
+      stabFlux( numComp ),
+      dStabFlux_dP( size, numComp  )
     {}
 
     using Base::StackVariables::stencilSize;
@@ -172,8 +174,8 @@ public:
     using Base::StackVariables::localFlux;
     using Base::StackVariables::localFluxJacobian;
 
-    real64 stabFlux;
-    stackArray1d< real64, maxStencilSize > dStabFlux_dP;
+    stackArray1d< real64, numComp > stabFlux;
+    stackArray2d< real64, maxStencilSize * numComp > dStabFlux_dP;
 
   };
 
@@ -208,29 +210,66 @@ public:
     {
       GEOSX_UNUSED_VAR( ip, k_up, er_up, esr_up, ei_up, potGrad, phaseFlux, dPhaseFlux_dP, dPhaseFlux_dC );
 
-      // // We are in the loop over phases, ip provides the current phase index.
+      // We are in the loop over phases, ip provides the current phase index.
+
+      // need to check if phase is present?? bool const phaseExists = (phaseVolFrac[ip] > 0);
       
-      // real64 dPresGrad{};
+      real64 dPresGrad{};
 
-      // real64 tauStab = 0.0; // need to get correct value
+      real64 tauStab = 0.0; // need to get correct value
 
 
-      // // compute potential difference MPFA-style
-      // for( integer i = 0; i < stack.stencilSize; ++i )
-      // {
-      //   localIndex const er  = m_seri( iconn, i );
-      //   localIndex const esr = m_sesri( iconn, i );
-      //   localIndex const ei  = m_sei( iconn, i );
+      // compute potential difference MPFA-style
+      for( integer i = 0; i < stack.stencilSize; ++i )
+      {
+        localIndex const er  = m_seri( iconn, i );
+        localIndex const esr = m_sesri( iconn, i );
+        localIndex const ei  = m_sei( iconn, i );
 
-      //   dPresGrad += tauStab*m_stabWeights[iconn][i]*m_dPres[er][esr][ei]; // need to figure out indices into stabWeigts and tau
+        tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
-      // }
 
-      // // modify flux with stabilization
-      // // multiply dPresGrad with upwind quantities
+        dPresGrad += tauStab * m_stabWeights(iconn, i) * m_dPres[er][esr][ei];
+
+      }
+
+      // modify flux with stabilization
+      // multiply dPresGrad with upwind, lagged quantities
+
+      for( integer ic = 0; ic < numComp; ++ic )
+      {
+
+        stack.stabFlux[ic] += dPresGrad * m_phaseDensOld[er_up][esr_up][ei_up][0][ip] 
+                                        * m_phaseCompFracOld[er_up][esr_up][ei_up][0][ip][ic]
+                                        * m_phaseVolFracOld[er_up][esr_up][ei_up][0][ip];
+
+        for( integer ke = 0; ke < stack.stencilSize; ++ke )
+        {
+
+          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights(iconn, ke) * m_phaseDensOld[er_up][esr_up][ei_up][0][ip] 
+                                                                           * m_phaseCompFracOld[er_up][esr_up][ei_up][0][ip][ic]
+                                                                           * m_phaseVolFracOld[er_up][esr_up][ei_up][0][ip];
+
+        }
+      }
 
 
     } ); // end call to Base::computeFlux
+
+    // populate local flux vector and derivatives
+    for( integer ic = 0; ic < numComp; ++ic )
+    {
+      stack.localFlux[ic]           =  stack.stabFlux[ic]; // does sign need to flip here?
+      stack.localFlux[numComp + ic] = -stack.compFlux[ic];
+
+      for( integer ke = 0; ke < stack.stencilSize; ++ke )
+      {
+        localIndex const localDofIndexPres = ke * numDof;
+        stack.localFluxJacobian[ic][localDofIndexPres]           =  stack.dStabFlux_dP[ke][ic]; // does sign need to flip here
+        stack.localFluxJacobian[numComp + ic][localDofIndexPres] = -stack.dStabFlux_dP[ke][ic];
+
+      }
+    }
 
     
   }
@@ -251,7 +290,7 @@ public:
 
 protected:
 
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const  m_phaseMassDensOld;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const  m_phaseDensOld;
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_COMP > > const m_phaseCompFracOld;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFracOld;
 
