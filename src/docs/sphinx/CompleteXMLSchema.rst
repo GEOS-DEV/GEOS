@@ -1517,6 +1517,13 @@ Datastructure: LaplaceFEM
 .. include:: ../../coreComponents/schema/docs/LaplaceFEM_other.rst
 
 
+.. _DATASTRUCTURE_Level0:
+
+Datastructure: Level0
+=====================
+.. include:: ../../coreComponents/schema/docs/Level0_other.rst
+
+
 .. _DATASTRUCTURE_LinearSolverParameters:
 
 Datastructure: LinearSolverParameters
@@ -2026,13 +2033,6 @@ Datastructure: WellElementRegion
 Datastructure: WellElementRegionuniqueSubRegion
 ===============================================
 .. include:: ../../coreComponents/schema/docs/WellElementRegionuniqueSubRegion_other.rst
-
-
-.. _DATASTRUCTURE_baseDiscretization:
-
-Datastructure: baseDiscretization
-=================================
-.. include:: ../../coreComponents/schema/docs/baseDiscretization_other.rst
 
 
 .. _DATASTRUCTURE_commandLine:

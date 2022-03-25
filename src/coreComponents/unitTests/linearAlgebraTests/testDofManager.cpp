@@ -283,7 +283,7 @@ TEST_F( DofManagerIndicesTest, Node_Full )
       "displacement",
       DofManager::Location::Node,
       3,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     }
   } );
 }
@@ -299,7 +299,7 @@ TEST_F( DofManagerIndicesTest, Node_Partial )
       "displacement",
       DofManager::Location::Node,
       3,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -315,7 +315,7 @@ TEST_F( DofManagerIndicesTest, Elem_Full )
       "pressure",
       DofManager::Location::Elem,
       2,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     }
   } );
 }
@@ -331,7 +331,7 @@ TEST_F( DofManagerIndicesTest, Elem_Partial )
       "pressure",
       DofManager::Location::Elem,
       2,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -347,7 +347,7 @@ TEST_F( DofManagerIndicesTest, Face_Full )
       "flux",
       DofManager::Location::Face,
       2,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     }
   } );
 }
@@ -363,7 +363,7 @@ TEST_F( DofManagerIndicesTest, Face_Partial )
       "flux",
       DofManager::Location::Face,
       2,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -379,13 +379,13 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Full )
       "displacement",
       DofManager::Location::Node,
       3,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     },
     {
       "pressure",
       DofManager::Location::Elem,
       2,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     }
   } );
 }
@@ -401,13 +401,13 @@ TEST_F( DofManagerIndicesTest, Node_Elem_Partial )
       "displacement",
       DofManager::Location::Node,
       3,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     {
       "pressure",
       DofManager::Location::Elem,
       2,
-      { { "mesh", "baseDiscretization", { "region1", "region2", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region2", "region4" } } }
     }
   } );
 }
@@ -423,13 +423,13 @@ TEST_F( DofManagerIndicesTest, Face_Elem_Full )
       "flux",
       DofManager::Location::Face,
       2,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     },
     {
       "pressure",
       DofManager::Location::Elem,
       2,
-      { { "mesh", "baseDiscretization", {} } }
+      { { "mesh", "Level0", {} } }
     }
   } );
 }
@@ -445,13 +445,13 @@ TEST_F( DofManagerIndicesTest, Face_Elem_Partial )
       "flux",
       DofManager::Location::Face,
       2,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     {
       "pressure",
       DofManager::Location::Elem,
       2,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -656,7 +656,7 @@ TYPED_TEST_P( DofManagerSparsityTest, TPFA_Partial )
       DofManager::Location::Elem,
       DofManager::Connector::Face,
       2, makeSparsityTPFA,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -686,7 +686,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_Partial )
       DofManager::Location::Node,
       DofManager::Connector::Elem,
       3, makeSparsityFEM,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -716,7 +716,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Mass_Partial )
       DofManager::Location::Elem,
       DofManager::Connector::None,
       2, makeSparsityMass,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -746,7 +746,7 @@ TYPED_TEST_P( DofManagerSparsityTest, Flux_Partial )
       DofManager::Location::Face,
       DofManager::Connector::Elem,
       2, makeSparsityFlux,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     }
   } );
 }
@@ -788,13 +788,13 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
       DofManager::Location::Node,
       DofManager::Connector::Elem,
       3, makeSparsityFEM,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
       2, makeSparsityTPFA,
-      { {"mesh", "baseDiscretization", { "region1", "region2", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region2", "region4" } } }
     }
   },
   {
@@ -803,7 +803,7 @@ TYPED_TEST_P( DofManagerSparsityTest, FEM_TPFA_Partial )
       { DofManager::Connector::Elem,
         makeSparsityFEM_FVM,
         true,
-        { {"mesh", "baseDiscretization", { "region4" } } }
+        { {"mesh", "Level0", { "region4" } } }
       }
     }
   } );
@@ -947,7 +947,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, SingleBlock )
       DofManager::Location::Elem,
       DofManager::Connector::Face,
       3, nullptr,
-      { {"mesh", "baseDiscretization", {"region1", "region3", "region4"} } }
+      { {"mesh", "Level0", {"region1", "region3", "region4"} } }
     }
   },
   {
@@ -963,13 +963,13 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
       DofManager::Location::Node,
       DofManager::Connector::Elem,
       3, nullptr,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
       2, nullptr,
-      { {"mesh", "baseDiscretization", { "region1", "region2", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region2", "region4" } } }
     }
   },
   {
@@ -981,7 +981,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_First )
       { DofManager::Connector::Elem,
         nullptr,
         true,
-        { {"mesh", "baseDiscretization", { "region4" } } }
+        { {"mesh", "Level0", { "region4" } } }
       }
     }
   } );
@@ -995,13 +995,13 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )
       DofManager::Location::Node,
       DofManager::Connector::Elem,
       3, nullptr,
-      { {"mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { {"mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
       2, nullptr,
-      { {"mesh", "baseDiscretization", {"region1", "region2", "region4"} } }
+      { {"mesh", "Level0", {"region1", "region2", "region4"} } }
     }
   },
   {
@@ -1013,7 +1013,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Second )
       { DofManager::Connector::Elem,
         nullptr,
         true,
-        { {"mesh", "baseDiscretization", { "region4" } } }
+        { {"mesh", "Level0", { "region4" } } }
       }
     }
   }
@@ -1028,13 +1028,13 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Both )
       DofManager::Location::Node,
       DofManager::Connector::Elem,
       3, nullptr,
-      { { "mesh", "baseDiscretization", { "region1", "region3", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region3", "region4" } } }
     },
     { "pressure",
       DofManager::Location::Elem,
       DofManager::Connector::Face,
       2, nullptr,
-      { { "mesh", "baseDiscretization", { "region1", "region2", "region4" } } }
+      { { "mesh", "Level0", { "region1", "region2", "region4" } } }
     }
   },
   {
@@ -1046,7 +1046,7 @@ TYPED_TEST_P( DofManagerRestrictorTest, MultiBlock_Both )
       { DofManager::Connector::Elem,
         nullptr,
         true,
-        { {"mesh", "baseDiscretization", { "region4" } } }
+        { {"mesh", "Level0", { "region4" } } }
       }
     }
   }

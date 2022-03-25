@@ -1312,7 +1312,7 @@ void SiloFile::writeDomainPartition( DomainPartition const & domain,
                                      bool const isRestart )
 {
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
   writeMeshLevel( mesh, cycleNum, problemTime, isRestart );
 
   if( isRestart )

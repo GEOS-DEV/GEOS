@@ -204,7 +204,7 @@ void setupProblemFromXML( ProblemManager & problemManager, char const * const xm
   MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
   topLevelNode = xmlProblemNode.child( elementManager.getName().c_str());
   elementManager.processInputFileRecursive( topLevelNode );
 

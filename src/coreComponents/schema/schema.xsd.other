@@ -1708,10 +1708,10 @@
 	</xsd:complexType>
 	<xsd:complexType name="meshLevelsType">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
-			<xsd:element name="baseDiscretization" type="baseDiscretizationType" />
+			<xsd:element name="Level0" type="Level0Type" />
 		</xsd:choice>
 	</xsd:complexType>
-	<xsd:complexType name="baseDiscretizationType">
+	<xsd:complexType name="Level0Type">
 		<xsd:choice minOccurs="0" maxOccurs="unbounded">
 			<xsd:element name="ElementRegions" type="ElementRegionsType" maxOccurs="1" />
 			<xsd:element name="edgeManager" type="edgeManagerType" />

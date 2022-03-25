@@ -226,7 +226,7 @@ protected:
         localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
         if( numMeshLevels <= 2 )
         {
-          targetGroup = &(meshBody.getMeshLevels().getGroup( 1 ));
+          targetGroup = &(meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ) );
         }
       }
 

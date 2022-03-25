@@ -84,149 +84,150 @@ static std::vector< int > getVTKNodeOrdering( ElementType const elementType )
     case ElementType::Tetrahedron:    return { 1, 0, 2, 3 };
     case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
     case ElementType::Prism:         return { 0, 4, 2, 1, 5, 3, 0, 0 };
-    case ElementType::Hexahedron:
-    {
-      int order = 3;
-      std::vector< int > vtkNodes;
-
-      vtkNodes.push_back( 0 );// = 0;
-      vtkNodes.push_back( order );
-      vtkNodes.push_back( pow( order+1, 2 )-1 );
-      vtkNodes.push_back((order+1)*order );
-      vtkNodes.push_back( order*pow( order+1, 2 ));
-      vtkNodes.push_back( order*pow( order+1, 2 )+ order );
-      vtkNodes.push_back( pow( order+1, 3 )-1 );
-      vtkNodes.push_back( order*pow( order+1, 2 )+order*(order+1));
-
-      //Loop to fill the edges
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( i+1 );
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order + (order+1)*(i+1));
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order*(order+1)+1+i );
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back((order+1)+(order+1)*i );
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order*pow( order+1, 2 )+1+i );
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order*pow( order+1, 2 )+order+(order+1)*(i+1));
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order*pow( order+1, 2 )+order*(order+1)+1+i );
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order*pow( order+1, 2 )+(order+1)*(i+1));
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( pow( order+1, 2 )*(i+1));
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order+pow( order+1, 2 )*(i+1));
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( pow( order+1, 2 )-1+ pow( order+1, 2 )*(i+1));
-      }
-
-      for( localIndex i = 0; i < order-1; ++i )
-      {
-        vtkNodes.push_back( order*(order+1) + pow( order+1, 2 )*(i+1));
-      }
-      //Loops to fill the faces
-      // Face 1 (z=zmin)
-      for( localIndex j = 0; j < order-1; ++j )
-      {
-        for( localIndex i = 0; i < order-1; ++i )
-        {
-          vtkNodes.push_back( pow( order+1, 2 ) + pow( order+1, 2 )*j+i+1 );
-        }
-      }
-
-      // Face 2 (z=zmax)
-      for( localIndex j = 0; j < order-1; ++j )
-      {
-        for( localIndex i = 0; i < order-1; ++i )
-        {
-          vtkNodes.push_back( pow( order+1, 2 ) + order*(order+1) + pow( order+1, 2 )*j+i+1 );
-        }
-      }
-
-      // Face 3 (x=xmin)
-      for( localIndex j = 0; j < order-1; ++j )
-      {
-        for( localIndex i = 0; i < order-1; ++i )
-        {
-          vtkNodes.push_back( pow( order+1, 2 )+pow( order+1, 2 )*j+(order+1)*(i+1));
-        }
-      }
-
-      // Face 4 (x=xmax)
-      for( localIndex j = 0; j < order-1; ++j )
-      {
-        for( localIndex i = 0; i < order-1; ++i )
-        {
-          vtkNodes.push_back( pow( order+1, 2 ) +order+1+order+ pow( order+1, 2 )*j+(order+1)*i );
-        }
-      }
-
-      // Face 5 (y=ymin)
-      for( localIndex j = 0; j < order-1; ++j )
-      {
-        for( localIndex i = 0; i < order-1; ++i )
-        {
-          vtkNodes.push_back( order+1 + (order+1)*j+i+1 );
-        }
-      }
-
-      // Face 6 (y=ymax)
-      for( localIndex j = 0; j < order-1; ++j )
-      {
-        for( localIndex i = 0; i < order-1; ++i )
-        {
-          vtkNodes.push_back( pow( order+1, 2 )*order+order+1 + (order+1)*j+i+1 );
-        }
-      }
-
-      //Nodes inside the cell
-      for( localIndex k = 0; k < order-1; ++k )
-      {
-        for( localIndex j = 0; j < order-1; ++j )
-        {
-          for( localIndex i = 0; i < order-1; ++i )
-          {
-            vtkNodes.push_back( pow( order+1, 2 ) + (order+1) + pow( order+1, 2 )*k + (order+1)*j + (i+1));
-          }
-        }
-      }
-
-      return vtkNodes;
-    }
+    case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
+//    case ElementType::Hexahedron:
+//    {
+//      int order = 3;
+//      std::vector< int > vtkNodes;
+//
+//      vtkNodes.push_back( 0 );// = 0;
+//      vtkNodes.push_back( order );
+//      vtkNodes.push_back( pow( order+1, 2 )-1 );
+//      vtkNodes.push_back((order+1)*order );
+//      vtkNodes.push_back( order*pow( order+1, 2 ));
+//      vtkNodes.push_back( order*pow( order+1, 2 )+ order );
+//      vtkNodes.push_back( pow( order+1, 3 )-1 );
+//      vtkNodes.push_back( order*pow( order+1, 2 )+order*(order+1));
+//
+//      //Loop to fill the edges
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( i+1 );
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order + (order+1)*(i+1));
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order*(order+1)+1+i );
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back((order+1)+(order+1)*i );
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order*pow( order+1, 2 )+1+i );
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order*pow( order+1, 2 )+order+(order+1)*(i+1));
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order*pow( order+1, 2 )+order*(order+1)+1+i );
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order*pow( order+1, 2 )+(order+1)*(i+1));
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( pow( order+1, 2 )*(i+1));
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order+pow( order+1, 2 )*(i+1));
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( pow( order+1, 2 )-1+ pow( order+1, 2 )*(i+1));
+//      }
+//
+//      for( localIndex i = 0; i < order-1; ++i )
+//      {
+//        vtkNodes.push_back( order*(order+1) + pow( order+1, 2 )*(i+1));
+//      }
+//      //Loops to fill the faces
+//      // Face 1 (z=zmin)
+//      for( localIndex j = 0; j < order-1; ++j )
+//      {
+//        for( localIndex i = 0; i < order-1; ++i )
+//        {
+//          vtkNodes.push_back( pow( order+1, 2 ) + pow( order+1, 2 )*j+i+1 );
+//        }
+//      }
+//
+//      // Face 2 (z=zmax)
+//      for( localIndex j = 0; j < order-1; ++j )
+//      {
+//        for( localIndex i = 0; i < order-1; ++i )
+//        {
+//          vtkNodes.push_back( pow( order+1, 2 ) + order*(order+1) + pow( order+1, 2 )*j+i+1 );
+//        }
+//      }
+//
+//      // Face 3 (x=xmin)
+//      for( localIndex j = 0; j < order-1; ++j )
+//      {
+//        for( localIndex i = 0; i < order-1; ++i )
+//        {
+//          vtkNodes.push_back( pow( order+1, 2 )+pow( order+1, 2 )*j+(order+1)*(i+1));
+//        }
+//      }
+//
+//      // Face 4 (x=xmax)
+//      for( localIndex j = 0; j < order-1; ++j )
+//      {
+//        for( localIndex i = 0; i < order-1; ++i )
+//        {
+//          vtkNodes.push_back( pow( order+1, 2 ) +order+1+order+ pow( order+1, 2 )*j+(order+1)*i );
+//        }
+//      }
+//
+//      // Face 5 (y=ymin)
+//      for( localIndex j = 0; j < order-1; ++j )
+//      {
+//        for( localIndex i = 0; i < order-1; ++i )
+//        {
+//          vtkNodes.push_back( order+1 + (order+1)*j+i+1 );
+//        }
+//      }
+//
+//      // Face 6 (y=ymax)
+//      for( localIndex j = 0; j < order-1; ++j )
+//      {
+//        for( localIndex i = 0; i < order-1; ++i )
+//        {
+//          vtkNodes.push_back( pow( order+1, 2 )*order+order+1 + (order+1)*j+i+1 );
+//        }
+//      }
+//
+//      //Nodes inside the cell
+//      for( localIndex k = 0; k < order-1; ++k )
+//      {
+//        for( localIndex j = 0; j < order-1; ++j )
+//        {
+//          for( localIndex i = 0; i < order-1; ++i )
+//          {
+//            vtkNodes.push_back( pow( order+1, 2 ) + (order+1) + pow( order+1, 2 )*k + (order+1)*j + (i+1));
+//          }
+//        }
+//      }
+//
+//      return vtkNodes;
+//    }
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
   return {};
@@ -951,11 +952,10 @@ void VTKPolyDataWriterInterface::write( real64 const time,
   }
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( 1 );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
   NodeManager const & nodeManager = meshLevel.getNodeManager();
   EmbeddedSurfaceNodeManager const & embSurfNodeManager = meshLevel.getEmbSurfNodeManager();
-  std::cout << MeshLevel::viewStructKeys::baseDiscretizationString() << std::endl;
   writeCellElementRegions( time, cycle, elemManager, nodeManager );
   writeWellElementRegions( time, cycle, elemManager, nodeManager );
   writeSurfaceElementRegions( time, cycle, elemManager, nodeManager, embSurfNodeManager );

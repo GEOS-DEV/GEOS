@@ -593,10 +593,14 @@ public:
       string const meshBodyName = target.first;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
-      {
-        lambda( meshBodyName, meshLevel, regionNames );
-      } );
+//      meshBody.forMeshLevels( [&]( MeshLevel const & meshLevel )
+//      {
+//        lambda( meshBodyName, meshLevel, regionNames );
+//      } );
+      lambda( meshBodyName,
+              meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+              regionNames );
+
     }
   }
 
@@ -608,10 +612,16 @@ public:
       string const meshBodyName = target.first;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
-      {
-        lambda( meshBodyName, meshLevel, regionNames );
-      } );
+
+//      meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+//      {
+//        lambda( meshBodyName, meshLevel, regionNames );
+//      } );
+
+      lambda( meshBodyName,
+              meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+              regionNames );
+
     }
   }
 

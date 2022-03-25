@@ -156,7 +156,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   forMeshBodies( [&]( MeshBody & meshBody )
   {
 
-    MeshLevel & meshLevel = meshBody.getMeshLevel( MeshLevel::viewStructKeys::baseDiscretizationString() );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
 
     for( NeighborCommunicator const & neighbor : m_neighbors )
     {

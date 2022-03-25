@@ -463,7 +463,7 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
   GEOSX_LOG_RANK_0( catalogName() << " " << getName() << ": importing field data from mesh dataset" );
   GEOSX_ASSERT_MSG( m_pamelaMesh, "Must call generateMesh() before importFields()" );
 
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
+  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
 
   PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
 
@@ -521,7 +521,7 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
       string const & wrapperName = m_fieldNamesInGEOSX[fieldIndex];
       fieldNames["elems"].emplace_back( wrapperName );
     }
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( 0 ), domain.getNeighbors(), false );
+    CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ), domain.getNeighbors(), false );
   }
 
 }

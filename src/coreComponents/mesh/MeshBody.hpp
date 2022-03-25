@@ -106,16 +106,16 @@ public:
    * @param [in] level index of the mesh level
    * @return pointer to MeshLevel
    */
-  MeshLevel & getMeshLevel( localIndex const level )
-  { return m_meshLevels.getGroup< MeshLevel >( level );}//getMeshLevel( intToMeshLevelString( level ) ); }
+//  MeshLevel & getMeshLevel( localIndex const level )
+//  { return m_meshLevels.getGroup< MeshLevel >( level );}//getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Get mesh level
    * @param [in] level index of the mesh level
    * @return pointer to const MeshLevel
    */
-  MeshLevel const & getMeshLevel( localIndex const level ) const
-  { return m_meshLevels.getGroup< MeshLevel >( level );}// getMeshLevel( intToMeshLevelString( level ) ); }
+//  MeshLevel const & getMeshLevel( localIndex const level ) const
+//  { return m_meshLevels.getGroup< MeshLevel >( level );}// getMeshLevel( intToMeshLevelString( level ) ); }
 
   /**
    * @brief Apply the given functor to all meshLevels on this meshBody.
