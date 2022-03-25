@@ -185,6 +185,18 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
   internal::forEachArgInTuple( tuple, std::forward< F >( func ), std::make_index_sequence< sizeof...( Ts ) >() );
 }
 
+/**
+ * @brief Utility function to convert the value of an enumerator to its underlying type (integer).
+ * @tparam ENUMERATION the type of the enumeration
+ * @param[in] value the value of the enumerator
+ * @return the integer conversion of @p value
+ */
+template< typename ENUMERATION >
+std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
+{
+  return static_cast< std::underlying_type_t< ENUMERATION > >( value );
+}
+
 // The code below should work with any subscriptable vector/matrix types
 
 /**

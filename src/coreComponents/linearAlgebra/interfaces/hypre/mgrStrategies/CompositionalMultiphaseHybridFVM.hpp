@@ -70,9 +70,9 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0] = 0; // Jacobi
-    m_levelFRelaxMethod[1] = 0; // Jacobi
-    m_levelFRelaxMethod[2] = 0; // Jacobi
+    m_levelFRelaxMethod[0] = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
+    m_levelFRelaxMethod[1] = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
+    m_levelFRelaxMethod[2] = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
 
     m_levelInterpType[0] = 2;
     m_levelInterpType[1] = 2;

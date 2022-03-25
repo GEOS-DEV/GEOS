@@ -71,17 +71,17 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0] = 2; // AMG V-cycle
-    m_levelFRelaxMethod[1] = 0; // Jacobi
-    m_levelFRelaxMethod[2] = 0; // Jacobi
+    m_levelFRelaxMethod[0] = toUnderlying( hypre::MGRFRelaxationMethod::amgVCycle );
+    m_levelFRelaxMethod[1] = toUnderlying( hypre::MGRFRelaxationMethod::singleLevel ); //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[2] = toUnderlying( hypre::MGRFRelaxationMethod::singleLevel ); //default, i.e. Jacobi (to be confirmed)
 
     // Specified for the first level and default for the remaining
-    m_levelInterpType[0] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 1; // diagonal sparsification
-    m_levelInterpType[1] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[1] = 0; // standard Galerkin
-    m_levelInterpType[2] = 2;       // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[2] = 0; // standard Galerkin
+    m_levelInterpType[0] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelCoarseGridMethod[0] =toUnderlying( hypre::MGRLevelCoarseGridMethod::nonGalerkin );
+    m_levelInterpType[1] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelCoarseGridMethod[1] = toUnderlying( hypre::MGRLevelCoarseGridMethod::galerkin );
+    m_levelInterpType[2] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelCoarseGridMethod[2] = toUnderlying( hypre::MGRLevelCoarseGridMethod::galerkin );
 
 //    m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 0;

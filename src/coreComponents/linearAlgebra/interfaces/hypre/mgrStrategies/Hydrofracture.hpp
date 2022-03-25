@@ -57,8 +57,8 @@ public:
     m_labels[0].push_back( 3 );
     setupLabels();
 
-    m_levelInterpType[0] = 2; // diagonal scaling (Jacobi)
-    m_levelCoarseGridMethod[0] = 0; // Galerkin coarse grid computation using RAP
+    m_levelInterpType[0] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelCoarseGridMethod[0] = toUnderlying( hypre::MGRLevelCoarseGridMethod::galerkin );
 
     m_fRelaxMethod = 2; // AMG V-cycle
     m_numGlobalSmoothSweeps = 0;
@@ -92,8 +92,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( mgrData.coarseSolver.ptr, 1 ) );
 #ifdef GEOSX_USE_HYPRE_CUDA
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 0 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, 8 ) ); // PMIS
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, 18 ) ); // l1-Jacobi
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, toUnderlying( hypre::AMGCoarseningType::PMIS ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 2 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.coarseSolver.ptr, 1.0 ) );
 #else
