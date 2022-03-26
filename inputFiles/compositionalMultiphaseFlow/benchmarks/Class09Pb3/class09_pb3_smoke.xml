@@ -1,0 +1,118 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Included>
+    <File name="./class09_pb3_base.xml"/>
+  </Included>
+
+  <Mesh>
+  <!--  <VTKMeshGenerator
+      name="mesh"
+      file="../../../../../GEOSXDATA/DataSets/Class09_p3/meshes/Johansen.vtk" /> --> 
+   <PAMELAMeshGenerator
+	name="mesh"
+	file="../../../../../GEOSXDATA/DataSets/Class09_p3/meshes/Johansen.msh" 
+	fieldsToImport="{ perm, poro }"
+	fieldNamesInGEOSX="{ rockPerm_permeability, rockPorosity_referencePorosity }" /> 
+   <InternalWell
+      name="wellInjector1"
+      wellRegionName="wellRegion"
+      wellControlsName="wellControls"
+      logLevel="1"
+      meshName="mesh"
+      polylineNodeCoords="{ { 5440.0, 3300.0, -2900.0 },
+                            { 5440.0, 3300.0, -3000.00 } }"
+      polylineSegmentConn="{ { 0, 1 } }"
+      radius="0.1"
+      numElementsPerSegment="10">
+      <Perforation
+        name="injector1_perf1"
+        distanceFromHead="95"/>
+      <Perforation
+        name="injector1_perf2"
+        distanceFromHead="85"/>
+      <Perforation
+        name="injector1_perf3"
+        distanceFromHead="75"/>
+      <Perforation
+        name="injector1_perf4"
+	distanceFromHead="65"/> 
+    </InternalWell>
+  </Mesh>
+ 
+  <!-- max time 50 y -->
+  <Events
+    maxTime="1.544e+09">
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/simpleReservoirViz"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
+      name="timeHistoryCollection"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Tasks/wellPressureCollection" />
+    
+   <PeriodicEvent
+      name="timeRhoHistoryCollection"
+      timeFrequency="3.0879e7"
+      targetExactTimestep="1"
+      target="/Tasks/rhoCollection" /> 
+   <PeriodicEvent
+      name="timeRhoHistoryOutput"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timeRhoHistoryOutput" />
+   <PeriodicEvent
+      name="timeSatHistoryCollection"
+      timeFrequency="3.0879e7"
+      targetExactTimestep="1"
+      target="/Tasks/satCollection" /> 
+    <PeriodicEvent
+      name="timeSatHistoryOutput"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timeSatHistoryOutput" />
+   <PeriodicEvent
+      name="timeXcompHistoryCollection"
+      timeFrequency="3.0879e7"
+      targetExactTimestep="1"
+      target="/Tasks/xcompCollection" /> 
+    <PeriodicEvent
+      name="timeXcompHistoryOutput"
+      timeFrequency="1e8"
+      targetExactTimestep="1"
+      target="/Outputs/timeXcompHistoryOutput" />
+
+    <!-- Ease injection-to-migration transition -->
+    <PeriodicEvent
+      name="solverApplications1"
+      beginTime="0"
+      endTime="7.72e8"
+      maxEventDt="5e6"        
+      target="/Solvers/coupledFlowAndWells"/>
+    <PeriodicEvent
+      name="solverApplications2"
+      beginTime="7.72e8"
+      endTime="7.7205e8"
+      forceDt="1e4"        
+      target="/Solvers/coupledFlowAndWells"/>
+    <PeriodicEvent
+      name="solverApplications3"
+      beginTime="7.7205e8"
+      endTime="1.544e9"
+      maxEventDt="2.5e6"        
+      target="/Solvers/coupledFlowAndWells"/>
+
+  </Events>
+</Problem>
+
