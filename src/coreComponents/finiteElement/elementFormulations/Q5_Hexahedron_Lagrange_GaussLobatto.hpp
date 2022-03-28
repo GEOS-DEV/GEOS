@@ -119,6 +119,12 @@ public:
     return numNodes;
   }
 
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return numNodes;
+  }
+
   /**
    * @brief Calculate shape functions values at a single point.
    * @param[in] coords The parent coordinates at which to evaluate the shape function value
