@@ -146,6 +146,11 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
   dofManager.printFieldInfo();
 }
 
+bool SinglePhasePoromechanicsLagrangianContactSolver::updateConfiguration( DomainPartition & domain )
+{
+   return m_contactSolver->updateConfiguration( domain );
+}
+
 void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartition & domain,
                                                                    DofManager & dofManager,
                                                                    CRSMatrix< real64, globalIndex > & localMatrix,

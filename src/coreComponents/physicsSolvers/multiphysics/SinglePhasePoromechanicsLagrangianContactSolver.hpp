@@ -134,6 +134,8 @@ public:
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
+  virtual bool updateConfiguration( DomainPartition & domain );
+
 protected:
 
   virtual void postProcessInput() override;

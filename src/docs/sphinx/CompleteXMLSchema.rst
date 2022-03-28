@@ -197,13 +197,6 @@ Element: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability.rst
 
 
-.. _XML_CompressibleSolidConstantPlusParallelPlatesPermeability:
-
-Element: CompressibleSolidConstantPlusParallelPlatesPermeability
-================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPlusParallelPlatesPermeability.rst
-
-
 .. _XML_CompressibleSolidParallelPlatesPermeability:
 
 Element: CompressibleSolidParallelPlatesPermeability
@@ -223,13 +216,6 @@ Element: CompressibleSolidSlipDependentPermeability
 Element: ConstantPermeability
 =============================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability.rst
-
-
-.. _XML_ConstantPlusParallelPlatesPermeability:
-
-Element: ConstantPlusParallelPlatesPermeability
-===============================================
-.. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability.rst
 
 
 .. _XML_ConstantThermalConductivity:
@@ -1230,13 +1216,6 @@ Datastructure: CompressibleSolidConstantPermeability
 .. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPermeability_other.rst
 
 
-.. _DATASTRUCTURE_CompressibleSolidConstantPlusParallelPlatesPermeability:
-
-Datastructure: CompressibleSolidConstantPlusParallelPlatesPermeability
-======================================================================
-.. include:: ../../coreComponents/schema/docs/CompressibleSolidConstantPlusParallelPlatesPermeability_other.rst
-
-
 .. _DATASTRUCTURE_CompressibleSolidParallelPlatesPermeability:
 
 Datastructure: CompressibleSolidParallelPlatesPermeability
@@ -1256,13 +1235,6 @@ Datastructure: CompressibleSolidSlipDependentPermeability
 Datastructure: ConstantPermeability
 ===================================
 .. include:: ../../coreComponents/schema/docs/ConstantPermeability_other.rst
-
-
-.. _DATASTRUCTURE_ConstantPlusParallelPlatesPermeability:
-
-Datastructure: ConstantPlusParallelPlatesPermeability
-=====================================================
-.. include:: ../../coreComponents/schema/docs/ConstantPlusParallelPlatesPermeability_other.rst
 
 
 .. _DATASTRUCTURE_ConstantThermalConductivity:
