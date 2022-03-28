@@ -121,7 +121,7 @@ public:
   std::set< string > getPackingExclusionList() const;
 
   /**
-   * @brief Registers a wrapper that will be excluded from packing.
+   * @brief Registers wrappers that will be excluded from packing.
    * @param wrapperNames The wrapper names.
    */
   void excludeWrappersFromPacking( std::set< string > const & wrapperNames );
