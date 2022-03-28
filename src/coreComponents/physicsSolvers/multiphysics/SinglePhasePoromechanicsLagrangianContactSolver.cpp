@@ -148,7 +148,7 @@ void SinglePhasePoromechanicsLagrangianContactSolver::setupDofs( DomainPartition
 
 bool SinglePhasePoromechanicsLagrangianContactSolver::updateConfiguration( DomainPartition & domain )
 {
-   return m_contactSolver->updateConfiguration( domain );
+  return m_contactSolver->updateConfiguration( domain );
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartition & domain,
@@ -714,9 +714,9 @@ void SinglePhasePoromechanicsLagrangianContactSolver::createPreconditioner( Doma
 }
 
 void SinglePhasePoromechanicsLagrangianContactSolver::solveLinearSystem( DofManager const & dofManager,
-                                                                   ParallelMatrix & matrix,
-                                                                   ParallelVector & rhs,
-                                                                   ParallelVector & solution )
+                                                                         ParallelMatrix & matrix,
+                                                                         ParallelVector & rhs,
+                                                                         ParallelVector & solution )
 {
   SinglePhasePoromechanicsSolver::solveLinearSystem( dofManager, matrix, rhs, solution );
 
@@ -770,6 +770,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::updateState( DomainPartiti
 //  {
 //    m_flowSolver->updateFluidState( subRegion, targetIndex );
 //  } );
+
+  m_contactSolver->updateState( domain );
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,

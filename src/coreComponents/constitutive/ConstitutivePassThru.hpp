@@ -38,6 +38,7 @@
 #include "solid/porosity/PressurePorosity.hpp"
 #include "solid/porosity/ProppantPorosity.hpp"
 #include "permeability/ConstantPermeability.hpp"
+#include "permeability/ConstantPlusParallelPlatesPermeability.hpp"
 #include "permeability/CarmanKozenyPermeability.hpp"
 #include "permeability/ParallelPlatesPermeability.hpp"
 #include "permeability/ProppantPermeability.hpp"
@@ -168,6 +169,7 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >
@@ -179,6 +181,7 @@ struct ConstitutivePassThru< CompressibleSolidBase >
   static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >
@@ -221,6 +224,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
   static void execute( ConstitutiveBase & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
@@ -242,6 +246,7 @@ struct ConstitutivePassThru< CoupledSolidBase >
   static void execute( ConstitutiveBase const & constitutiveRelation, LAMBDA && lambda )
   {
     ConstitutivePassThruHandler< CompressibleSolid< PressurePorosity, ConstantPermeability >,
+                                 CompressibleSolid< PressurePorosity, ConstantPlusParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, CarmanKozenyPermeability >,
                                  CompressibleSolid< PressurePorosity, ParallelPlatesPermeability >,
                                  CompressibleSolid< PressurePorosity, SlipDependentPermeability >,
