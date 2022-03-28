@@ -40,10 +40,15 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
   m_max(),
   m_pCoord{}
 {
-  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
+  registerWrapper( viewKeyStruct::particleFilePathString(), &m_particleFilePath ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "path to the particle file" );
+
+  registerWrapper( viewKeyStruct::headerFilePathString(), &m_headerFilePath ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "path to the header file" );
 
   registerWrapper( viewKeyStruct::particleBlockNamesString(), &m_blockNames ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -87,7 +92,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     particleBlock.setParticleType( EnumStrings< ParticleType >::fromString( m_particleType[aa++] ) );
   }
 
-  GEOSX_LOG_RANK_0( "MPM particle file path: " << m_filePath );
+  GEOSX_LOG_RANK_0( "MPM particle file path: " << m_particleFilePath );
+  GEOSX_LOG_RANK_0( "MPM header file path: " << m_headerFilePath );
 
   int numParticles = 0;
   int numMaterials, numParticleTypes;
@@ -100,13 +106,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   // Get MPI rank
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
-  if(mpiRank==0) // Only rank 0 should read the particle file (for now).
+  if(mpiRank==0) // Only rank 0 should read the particle and header file (for now).
   {
-    std::ifstream file(m_filePath); // open file
+    // Get and process header and particle files
+    std::ifstream headerFile(m_headerFilePath);
+    std::ifstream particleFile(m_particleFilePath);
     std::string line; // initialize line variable
 
     // Read in number of materials and particle types
-    std::getline(file, line); // get a line
+    std::getline(headerFile, line); // get a line
     std::istringstream iss1(line); // turn the line into a stream
     iss1 >> numMaterials >> numParticleTypes;
     particleTypes.resize(numParticleTypes);
@@ -117,7 +125,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     // Read in material key
     for(int i=0; i<numMaterials; i++)
     {
-      std::getline(file, line);
+      std::getline(headerFile, line);
       std::istringstream iss2(line);
       std::string key; // Material name
       int value; // Material ID
@@ -129,7 +137,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     // Read in particle type key
     for(int i=0; i<numParticleTypes; i++)
     {
-      std::getline(file, line);
+      std::getline(headerFile, line);
       std::istringstream iss2(line);
       std::string particleType; // Particle type
       int np; // Number of particles of that type
@@ -144,7 +152,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     {
       for(int j=0; j<particleTypeMap[particleTypes[i]]; j++)
       {
-        std::getline(file, line);
+        std::getline(particleFile, line);
         std::vector<double> lineData;
         std::istringstream lineStream(line);
 
