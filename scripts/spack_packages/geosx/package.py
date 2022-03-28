@@ -125,7 +125,7 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('pugixml')
 
     depends_on('fmt@8.0.1 cxxstd=14')
-    depends_on('vtk@9.0.3')
+    depends_on('vtk@9.1.0')
 
     # #
     # # Math

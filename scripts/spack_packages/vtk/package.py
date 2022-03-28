@@ -43,7 +43,9 @@ class Vtk(CMakePackage):
     variant('ffmpeg', default=False, description='Build with FFMPEG support')
     variant('mpi', default=True, description='Enable MPI support')
 
-    patch('VTK-9.0.3-disable_traits.patch', when='@9.0.3')
+    patch('VTK-9.1.0-disable_traits.patch', when='@9.1.0')
+    patch('VTK-9.1.0-duplicate-points-fix.patch', when='@9.1.0')
+    patch('VTK-9.1.0-cmake-fix.patch', when='@9.1.0')
 
     patch('gcc.patch', when='@6.1.0')
     # patch to fix some missing stl includes
