@@ -975,23 +975,19 @@ public:
   using ObjectManagerBase::unpackUpDownMaps;
 
   /**
-   * @brief Get the buffer size needed to pack a list of wrappers.
-   * @param wrapperNames list of wrapper names
+   * @brief Get the buffer size needed to pack all the wrappers of all the sub regions of all the regions.
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  int packSize( string_array const & wrapperNames,
-                ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack a list of wrappers to a buffer.
+   * @brief Pack all the wrappers of all the sub regions of all the regions.
    * @param buffer pointer to the buffer to be packed
-   * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
    * @return the size of data packed to the buffer
    */
   int pack( buffer_unit_type * & buffer,
-            string_array const & wrapperNames,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /// @copydoc dataRepository::Group::unpack
@@ -1126,7 +1122,7 @@ private:
    */
   template< bool DO_PACKING >
   int packImpl( buffer_unit_type * & buffer,
-                string_array const & wrapperNames,
+//                string_array const & wrapperNames,
                 ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
