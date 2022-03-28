@@ -413,7 +413,7 @@ localIndex Group::pack( buffer_unit_type * & buffer,
                         bool onDevice,
                         parallelDeviceEvents & events ) const
 {
-  return this->packImpl< false >( buffer, wrapperNames, packList, recursive, onDevice, events );
+  return this->packImpl< true >( buffer, wrapperNames, packList, recursive, onDevice, events );
 }
 
 localIndex Group::pack( buffer_unit_type * & buffer,
