@@ -75,7 +75,8 @@ protected:
   ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
   {
-    constexpr static char const * filePathString() { return "file"; }
+    constexpr static char const * particleFilePathString() { return "particleFile"; }
+    constexpr static char const * headerFilePathString() { return "headerFile"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
     constexpr static char const * particleTypesString() { return "particleTypes"; }
     constexpr static char const * positionToleranceString() { return "positionTolerance"; }
@@ -99,7 +100,10 @@ protected:
 private:
 
   /// Path to the particle file
-  Path m_filePath;
+  Path m_particleFilePath;
+
+  /// Path to the header file (problem and particle metadata)
+  Path m_headerFilePath;
 
   /// String array of particle block names associated with the particle mesh
   array1d< string > m_blockNames;
