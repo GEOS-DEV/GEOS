@@ -134,7 +134,7 @@ public:
               real64 const scaleFactor,
               real64 & lastResidual ) override;
 
-  virtual bool updateConfiguration( DomainPartition & domain );
+  virtual bool updateConfiguration( DomainPartition & domain ) override;
 
 protected:
 
