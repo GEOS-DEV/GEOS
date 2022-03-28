@@ -438,7 +438,7 @@ enum class MGRLevelInterpolationType : HYPRE_Int
 /**
  * @enum MGRLevelRestrictionType
  * @brief This enum class specifies the strategy for computing the level restriction operator in MGR.
- * 
+ *
  */
 enum class MGRLevelRestrictionType : HYPRE_Int
 {
@@ -457,6 +457,10 @@ enum class MGRLevelCoarseGridMethod : HYPRE_Int
   nonGalerkin = 1 //!< Non-Galerkin coarse grid computation with dropping strategy
 };
 
+/**
+ * @enum MGRFRelaxationMethod
+ * @brief This enum class specifies the F-relaxation strategy.
+ */
 enum class MGRFRelaxationMethod : HYPRE_Int
 {
   singleLevel = 0, //!< single-level relaxation
@@ -464,6 +468,10 @@ enum class MGRFRelaxationMethod : HYPRE_Int
   amgVCycle = 2    //!< multilevel relaxation
 };
 
+/**
+ * @enum MGRFRelaxationType
+ * @brief This enum class specifies the F-relaxation type.
+ */
 enum class MGRFRelaxationType : HYPRE_Int
 {
   jacobi = 0,                       //!< Jacobi
@@ -474,22 +482,26 @@ enum class MGRFRelaxationType : HYPRE_Int
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
   l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
-  option19 = 19,                    //!< ... 
-  option98 = 98                     //!< ... 
+  option19 = 19,                    //!< ...
+  option98 = 98                     //!< ...
 };
 
+/**
+ * @enum MGRLevelGlobalSmootherType
+ * @brief This enum class specifies the global smoother type.
+ */
 enum class MGRLevelGlobalSmootherType : HYPRE_Int
 {
   blockJacobi = 0, //!< block Jacobi (default)
   jacobi = 1,      //!< Jacobi
   ilu0 = 16        //!< incomplete LU factorization
-  // nameTBD = 2, //!< Gauss-Seidel, sequential (very slow!)
-  // nameTBD = 3, //!< Gauss-Seidel, interior points in parallel, boundary sequential (slow!)
-  // nameTBD = 4, //!< hybrid Gauss-Seidel or SOR, forward solve
-  // nameTBD = 5, //!< hybrid Gauss-Seidel or SOR, backward solve
-  // nameTBD = 6, //!< hybrid chaotic Gauss-Seidel (works only with OpenMP)
-  // nameTBD = 7, //!< hybrid symmetric Gauss-Seidel or SSOR
-  // nameTBD = 8, //!< Euclid (ILU)
+         // nameTBD = 2, //!< Gauss-Seidel, sequential (very slow!)
+         // nameTBD = 3, //!< Gauss-Seidel, interior points in parallel, boundary sequential (slow!)
+         // nameTBD = 4, //!< hybrid Gauss-Seidel or SOR, forward solve
+         // nameTBD = 5, //!< hybrid Gauss-Seidel or SOR, backward solve
+         // nameTBD = 6, //!< hybrid chaotic Gauss-Seidel (works only with OpenMP)
+         // nameTBD = 7, //!< hybrid symmetric Gauss-Seidel or SSOR
+         // nameTBD = 8, //!< Euclid (ILU)
 };
 
 } // namespace hypre
