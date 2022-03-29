@@ -1116,13 +1116,11 @@ private:
   /**
    * @brief Pack a list of wrappers or get the buffer size needed to pack.
    * @param buffer pointer to the buffer to be packed
-   * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
   template< bool DO_PACKING >
   int packImpl( buffer_unit_type * & buffer,
-//                string_array const & wrapperNames,
                 ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
