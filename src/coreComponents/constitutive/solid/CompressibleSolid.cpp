@@ -21,6 +21,7 @@
 #include "porosity/PressurePorosity.hpp"
 #include "constitutive/permeability/ConstantPermeability.hpp"
 #include "constitutive/permeability/CarmanKozenyPermeability.hpp"
+#include "constitutive/permeability/ExponentialDecayPermeability.hpp"
 #include "constitutive/permeability/ParallelPlatesPermeability.hpp"
 #include "constitutive/permeability/SlipDependentPermeability.hpp"
 
@@ -45,12 +46,14 @@ CompressibleSolid< PORO_TYPE, PERM_TYPE >::~CompressibleSolid() = default;
 // Register all CompressibleSolid model types.
 typedef CompressibleSolid< PressurePorosity, ConstantPermeability > CompressibleRockConstant;
 typedef CompressibleSolid< PressurePorosity, CarmanKozenyPermeability > CompressibleRockCK;
+typedef CompressibleSolid< PressurePorosity, ExponentialDecayPermeability > FaultED;
 typedef CompressibleSolid< PressurePorosity, ParallelPlatesPermeability > FractureRock;
 typedef CompressibleSolid< PressurePorosity, SlipDependentPermeability > Fault;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockConstant, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CompressibleRockCK, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, FractureRock, string const &, Group * const )
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, FaultED, string const &, Group * const )
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, Fault, string const &, Group * const )
 
 
