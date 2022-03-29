@@ -295,22 +295,23 @@ public:
 
 protected:
 
+
+
   virtual void postProcessInput() override;
 
-  virtual void initializePreSubGroups() override;
+  virtual void initializePostSubGroups() override;
 
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
-  /**
-   * @brief Checks constitutive models for consistency
-   * @param meshLevel reference to the mesh
-   * @param cm        reference to the global constitutive model manager
-   *
+  /*
+   * @brief Utility function that checks the consistency of the constitutive models
+   * @param[in] domain the domain partition
+   * @detail
    * This function will produce an error if one of the well constitutive models
    * (fluid, relperm) is incompatible with the corresponding models in reservoir
    * regions connected to that particular well.
    */
-  // void validateConstitutiveModels( MeshLevel const & meshLevel, constitutive::ConstitutiveManager const & cm ) const;
+  void validateConstitutiveModels( DomainPartition const & domain ) const;
 
   /**
    * @brief Checks injection streams for validity (compositions sum to one)

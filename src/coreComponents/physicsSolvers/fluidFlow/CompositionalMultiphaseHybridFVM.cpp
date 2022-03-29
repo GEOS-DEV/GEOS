@@ -97,7 +97,7 @@ void CompositionalMultiphaseHybridFVM::initializePreSubGroups()
                   ": the HybridMimeticDiscretization must be selected with CompositionalMultiphaseHybridFVM",
                   InputError );
 
-  GEOSX_THROW_IF( m_capPressureFlag,
+  GEOSX_THROW_IF( m_hasCapPressure,
                   catalogName() << " " << getName() <<
                   ": capillary pressure is not yet supported by CompositionalMultiphaseHybridFVM",
                   InputError );
@@ -797,25 +797,27 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
 
-      CoupledSolidBase const & solidModel =
-        getConstitutiveModel< CoupledSolidBase >( subRegion,
-                                                  subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld = fluid.totalDensityOld();
 
-      arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+      arrayView1d< real64 const > const & referencePorosity = solid.getReferencePorosity();
 
       real64 subRegionResidualNorm = 0.0;
-      compositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                                      parallelDeviceReduce >( localRhs,
-                                                                                              rankOffset,
-                                                                                              numFluidComponents(),
-                                                                                              elemDofNumber,
-                                                                                              elemGhostRank,
-                                                                                              referencePorosity,
-                                                                                              volume,
-                                                                                              totalDensOld,
-                                                                                              subRegionResidualNorm );
+      compositionalMultiphaseBaseKernels::
+        ResidualNormKernel::launch< parallelDevicePolicy<>,
+                                    parallelDeviceReduce >( localRhs,
+                                                            rankOffset,
+                                                            numFluidComponents(),
+                                                            elemDofNumber,
+                                                            elemGhostRank,
+                                                            referencePorosity,
+                                                            volume,
+                                                            totalDensOld,
+                                                            subRegionResidualNorm );
       localResidualNorm += subRegionResidualNorm;
     } );
 

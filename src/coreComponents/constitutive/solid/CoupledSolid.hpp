@@ -107,10 +107,12 @@ protected:
  * @tparam PORO_TYPE type of porosity model
  * @tparam PERM_TYPE type of permeability model
  */
+//START_SPHINX_INCLUDE_00
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
 class CoupledSolid : public CoupledSolidBase
+//END_SPHINX_INCLUDE_00
 {
 public:
 
@@ -139,8 +141,8 @@ public:
                                                                     getPermModel() );
   }
 
+  //START_SPHINX_INCLUDE_01
 protected:
-
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
 
@@ -149,6 +151,7 @@ protected:
 
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
+  //END_SPHINX_INCLUDE_01
 
 };
 

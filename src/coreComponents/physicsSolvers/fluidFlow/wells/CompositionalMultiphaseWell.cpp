@@ -298,6 +298,36 @@ void compareMulticomponentModels( MODEL1_TYPE const & lhs, MODEL2_TYPE const & r
 
 }
 
+void CompositionalMultiphaseWell::validateConstitutiveModels( DomainPartition const & domain ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  ConstitutiveManager const & cm = domain.getConstitutiveManager();
+
+  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+  string const referenceFluidName = flowSolver.referenceFluidModelName();
+  MultiFluidBase const & referenceFluid = cm.getConstitutiveRelation< MultiFluidBase >( m_referenceFluidModelName );
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & regionNames )
+  {
+
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion const & subRegion )
+    {
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      compareMultiphaseModels( fluid, referenceFluid );
+      compareMulticomponentModels( fluid, referenceFluid );
+
+      string const & relpermName = subRegion.getReference< string >( viewKeyStruct::relPermNamesString() );
+      RelativePermeabilityBase const & relPerm = getConstitutiveModel< RelativePermeabilityBase >( subRegion, relpermName );
+      compareMultiphaseModels( relPerm, referenceFluid );
+    } );
+
+  } );
+}
 
 void CompositionalMultiphaseWell::validateInjectionStreams( WellElementSubRegion const & subRegion ) const
 {
@@ -385,11 +415,13 @@ void CompositionalMultiphaseWell::validateWellConstraints( WellElementSubRegion 
                   InputError );
 }
 
-void CompositionalMultiphaseWell::initializePreSubGroups()
+void CompositionalMultiphaseWell::initializePostSubGroups()
 {
-  WellSolverBase::initializePreSubGroups();
+  WellSolverBase::initializePostSubGroups();
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  validateConstitutiveModels( domain );
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,

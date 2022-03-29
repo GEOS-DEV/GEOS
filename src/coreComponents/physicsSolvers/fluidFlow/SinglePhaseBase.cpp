@@ -630,11 +630,14 @@ void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion
   arrayView2d< real64 const > const density = fluidProps.dens;
   arrayView2d< real64 const > const dDens_dPres = fluidProps.dDens_dPres;
 
+  //START_SPHINX_INCLUDE_COUPLEDSOLID
   CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
   arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
+  //END_SPHINX_INCLUDE_COUPLEDSOLID
+
 
   AccumulationKernel::template launch< parallelDevicePolicy<> >( subRegion.size(),
                                                                  rankOffset,
@@ -883,17 +886,17 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseBase::solveSystem( DofManager const & dofManager,
-                                   ParallelMatrix & matrix,
-                                   ParallelVector & rhs,
-                                   ParallelVector & solution )
+void SinglePhaseBase::solveLinearSystem( DofManager const & dofManager,
+                                         ParallelMatrix & matrix,
+                                         ParallelVector & rhs,
+                                         ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();
 
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )

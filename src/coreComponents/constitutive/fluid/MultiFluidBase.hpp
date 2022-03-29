@@ -121,6 +121,9 @@ public:
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
   { return m_phaseDensity.value; }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensityOld() const
+  { return m_phaseDensityOld; }
+
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDensity() const
   { return m_phaseDensity.derivs; }
 
@@ -139,11 +142,17 @@ public:
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
   { return m_phaseCompFraction.value; }
 
+  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFractionOld() const
+  { return m_phaseCompFractionOld; }
+
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > dPhaseCompFraction() const
   { return m_phaseCompFraction.derivs; }
 
   arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
   { return m_totalDensity.value; }
+
+  arrayView2d< real64 const, multifluid::USD_FLUID > totalDensityOld() const
+  { return m_totalDensityOld; }
 
   arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity() const
   { return m_totalDensity.derivs; }
@@ -154,14 +163,31 @@ public:
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
   { return m_phaseEnthalpy.value; }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpyOld() const
+  { return m_phaseEnthalpyOld; }
+
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseEnthalpy() const
   { return m_phaseEnthalpy.derivs; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
   { return m_phaseInternalEnergy.value; }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergyOld() const
+  { return m_phaseInternalEnergyOld; }
+
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseInternalEnergy() const
   { return m_phaseInternalEnergy.derivs; }
+
+  /**
+   * @brief Save the initial total mass density
+   * @param[in] phaseVolFraction an array containing the initial phase volume fractions
+   */
+  virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
+
+  /**
+   * @brief Save the phase densities, component fractions, enthalpies and internal energies (for accumulation)
+   */
+  virtual void saveConvergedState() const override;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -530,6 +556,14 @@ protected:
   PhaseProp m_phaseInternalEnergy;
   PhaseComp m_phaseCompFraction;
   FluidProp m_totalDensity;
+
+  // backup data
+
+  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseDensityOld;
+  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseEnthalpyOld;
+  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseInternalEnergyOld;
+  array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_phaseCompFractionOld;
+  array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensityOld;
 
   // initial data (used to compute the body force in the poromechanics solver)
 

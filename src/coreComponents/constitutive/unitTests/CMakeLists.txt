@@ -33,5 +33,3 @@ foreach(test ${gtest_geosx_tests})
                 )
 
 endforeach()
-
-

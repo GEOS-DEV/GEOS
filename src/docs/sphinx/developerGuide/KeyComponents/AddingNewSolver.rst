@@ -139,7 +139,7 @@ between the input XML file and the source code.
 
 We can check that in the *LaplaceFEM* companion integratedTest
 
-.. literalinclude:: ../../../../../inputFiles/simplePDE/10x10x10_LaplaceFEM.xml
+.. literalinclude:: ../../../../../inputFiles/simplePDE/Laplace_base.xml
    :language: xml
    :start-after: <Solvers>
    :end-before: </Solvers>

@@ -1002,14 +1002,14 @@ void SolidMechanicsLagrangianFEM::assembleSystem( real64 const GEOSX_UNUSED_PARA
                                                                                   dt );
   }
 
-  if( getLogLevel() >= 2 )
-  {
-    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
-    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
-    //std::cout<< localMatrix;
-    GEOSX_LOG_RANK_0( "\nResidual:\n" );
-    std::cout<< localRhs;
-  }
+//  if( getLogLevel() >= 2 )
+//  {
+//    GEOSX_LOG_RANK_0( "After SolidMechanicsLagrangianFEM::AssembleSystem" );
+//    GEOSX_LOG_RANK_0( "\nJacobian:\n" );
+//    //std::cout<< localMatrix;
+//    GEOSX_LOG_RANK_0( "\nResidual:\n" );
+//    std::cout<< localRhs;
+//  }
 }
 
 void
@@ -1171,13 +1171,13 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                        true );
 }
 
-void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,
-                                               ParallelMatrix & matrix,
-                                               ParallelVector & rhs,
-                                               ParallelVector & solution )
+void SolidMechanicsLagrangianFEM::solveLinearSystem( DofManager const & dofManager,
+                                                     ParallelMatrix & matrix,
+                                                     ParallelVector & rhs,
+                                                     ParallelVector & solution )
 {
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )

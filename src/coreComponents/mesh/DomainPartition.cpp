@@ -105,7 +105,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
   {
     for( integer const neighborRank : m_metisNeighborList )
     {
-      m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
+      m_neighbors.emplace_back( neighborRank );
     }
   }
 
@@ -146,7 +146,7 @@ void DomainPartition::setupCommunications( bool use_nonblocking )
 
   for( integer const neighborRank : secondNeighborRanks )
   {
-    m_neighbors.emplace_back( NeighborCommunicator( neighborRank ) );
+    m_neighbors.emplace_back( neighborRank );
   }
 
   MpiWrapper::waitAll( requests.size(), requests.data(), MPI_STATUSES_IGNORE );
