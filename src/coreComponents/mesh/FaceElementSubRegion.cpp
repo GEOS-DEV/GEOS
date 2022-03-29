@@ -55,12 +55,7 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Scalar indicator of level of separation for a fracturing face." );
 #endif
 
-  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
-                                viewKeyStruct::edgeListString(),
-                                viewKeyStruct::faceListString(),
-                                viewKeyStruct::surfaceElementsToCellRegionsString(),
-                                viewKeyStruct::surfaceElementsToCellSubRegionsString(),
-                                viewKeyStruct::surfaceElementsToCellIndexString() } );
+  excludeWrappersFromPacking( { viewKeyStruct::faceListString() } );
 
   m_surfaceElementsToCells.resize( 0, 2 );
 
