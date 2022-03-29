@@ -153,24 +153,27 @@ public:
       // and inversePhaseChi is a function of composition.
       // these derivatives are *added* to the ones already present from the dilute terms above.
 
-      real64 dPolynomialTwo_dDensity  = 4*pow(polynomialOne,3);
-             dPolynomialTwo_dDensity *= 0.023364 
-                                        + 2*0.058533*reducedDensity 
-                                        - 3*0.040758*pow(reducedDensity,2) 
-                                        + 4*0.0093324*pow(reducedDensity,3);
-             dPolynomialTwo_dDensity *= phaseCriticalVolume / phaseMolarWeight;
-
-      real64 dViscosity_dDensity = dPolynomialTwo_dDensity * inversePhaseChi;
+      real64 dPolynomialOne_dReducedDensity = 0.023364 + 0.117066*reducedDensity - 0.122274*pow(reducedDensity,2) + 0.0373296*pow(reducedDensity,3);
+      real64 dPolynomialTwo_dReducedDensity = 4 * pow(polynomialOne,3) * dPolynomialOne_dReducedDensity;
+    
+      real64 dViscosity_dDensity       = dPolynomialTwo_dReducedDensity * inversePhaseChi * phaseCriticalVolume / phaseMolarWeight;
+      real64 dViscosity_dCriticalRatio = dPolynomialTwo_dReducedDensity * inversePhaseChi * phaseDensity.value[p];
+ 
+      real64 dViscosity_dPc = polynomialTwo * dInversePhaseChi_dPc;
+      real64 dViscosity_dTc = polynomialTwo * dInversePhaseChi_dTc;
+      real64 dViscosity_dMw = polynomialTwo * dInversePhaseChi_dMw - dViscosity_dCriticalRatio * phaseCriticalVolume / pow(phaseMolarWeight,2);
+      real64 dViscosity_dVc = dViscosity_dCriticalRatio / phaseMolarWeight;
 
       phaseViscosity.derivs[p][Deriv::dP] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dP];
       phaseViscosity.derivs[p][Deriv::dT] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dT];
 
       for( integer c=0; c<numComponents; ++c)
       {
-        phaseViscosity.derivs[p][Deriv::dC+c] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dC+c];
-        phaseViscosity.derivs[p][Deriv::dC+c] += polynomialTwo * dInversePhaseChi_dPc * m_componentCriticalPressure[c];
-        phaseViscosity.derivs[p][Deriv::dC+c] += polynomialTwo * dInversePhaseChi_dTc * m_componentCriticalTemperature[c];
-        phaseViscosity.derivs[p][Deriv::dC+c] += polynomialTwo * dInversePhaseChi_dMw * m_componentMolarWeight[c];
+        phaseViscosity.derivs[p][Deriv::dC+c] += dViscosity_dDensity * phaseDensity.derivs[p][Deriv::dC+c]
+                                                 + dViscosity_dPc * m_componentCriticalPressure[c]
+                                                 + dViscosity_dTc * m_componentCriticalTemperature[c]
+                                                 + dViscosity_dMw * m_componentMolarWeight[c]
+                                                 + dViscosity_dVc * m_componentCriticalVolume[c];
       }
 
       // scale centipoise to pascal.seconds
