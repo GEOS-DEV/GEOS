@@ -76,7 +76,7 @@ public:
 
     m_levelInterpType[0] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
     m_levelInterpType[1] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
-    m_levelInterpType[2] = : oUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelInterpType[2] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
 
     m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 0; // No global smoother
