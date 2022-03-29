@@ -172,7 +172,7 @@ void FrictionlessContactUpdates::updateFractureState( localIndex const k,
 {
   GEOSX_UNUSED_VAR( k, tractionVector );
 
-  if( dispJump[0] >  -std::numeric_limits< real64 >::epsilon() )
+  if( dispJump[0] >  -LvArray::NumericLimits< real64 >::epsilon )
   {
     fractureState = extrinsicMeshData::contact::FractureState::Open;
   }
