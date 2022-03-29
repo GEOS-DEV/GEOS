@@ -992,7 +992,7 @@ public:
    * pointer is altered and returned to the new location corresponding the
    * original value of @p buffer plus the size of data packed to the buffer.
    */
-  localIndex pack( buffer_unit_type *& buffer,
+  localIndex pack( buffer_unit_type * & buffer,
                    arrayView1d< localIndex const > const & packList,
                    integer const recursive,
                    bool onDevice,
