@@ -495,13 +495,6 @@ enum class MGRLevelGlobalSmootherType : HYPRE_Int
   blockJacobi = 0, //!< block Jacobi (default)
   jacobi = 1,      //!< Jacobi
   ilu0 = 16        //!< incomplete LU factorization
-         // nameTBD = 2, //!< Gauss-Seidel, sequential (very slow!)
-         // nameTBD = 3, //!< Gauss-Seidel, interior points in parallel, boundary sequential (slow!)
-         // nameTBD = 4, //!< hybrid Gauss-Seidel or SOR, forward solve
-         // nameTBD = 5, //!< hybrid Gauss-Seidel or SOR, backward solve
-         // nameTBD = 6, //!< hybrid chaotic Gauss-Seidel (works only with OpenMP)
-         // nameTBD = 7, //!< hybrid symmetric Gauss-Seidel or SSOR
-         // nameTBD = 8, //!< Euclid (ILU)
 };
 
 } // namespace hypre

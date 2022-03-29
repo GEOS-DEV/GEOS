@@ -70,13 +70,13 @@ public:
 
     setupLabels();
 
-    m_levelFRelaxMethod[0] = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
-    m_levelFRelaxMethod[1] = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
-    m_levelFRelaxMethod[2] = hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::jacobi );
+    m_levelFRelaxMethod[0] = toUnderlying( hypre::MGRFRelaxationMethod::singleLevel ); //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[1] = toUnderlying( hypre::MGRFRelaxationMethod::singleLevel ); //default, i.e. Jacobi (to be confirmed)
+    m_levelFRelaxMethod[2] = toUnderlying( hypre::MGRFRelaxationMethod::singleLevel ); //default, i.e. Jacobi (to be confirmed)
 
-    m_levelInterpType[0] = 2;
-    m_levelInterpType[1] = 2;
-    m_levelInterpType[2] = 2;
+    m_levelInterpType[0] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelInterpType[1] = toUnderlying( hypre::MGRLevelInterpolationType::jacobi );
+    m_levelInterpType[2] = : oUnderlying( hypre::MGRLevelInterpolationType::jacobi );
 
     m_globalSmoothType = 16; // ILU(0)
     m_numGlobalSmoothSweeps = 0; // No global smoother
