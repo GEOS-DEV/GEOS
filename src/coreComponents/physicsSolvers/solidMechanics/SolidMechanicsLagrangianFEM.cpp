@@ -1026,13 +1026,14 @@ SolidMechanicsLagrangianFEM::
 {
   GEOSX_MARK_FUNCTION;
 
+  FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+  
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
     FaceManager & faceManager = mesh.getFaceManager();
-    FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-
+    
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
     fsManager.apply( time_n + dt,
@@ -1061,6 +1062,8 @@ SolidMechanicsLagrangianFEM::
   } );
 
   applyTractionBC( time_n + dt, dofManager, domain, localRhs );
+
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
