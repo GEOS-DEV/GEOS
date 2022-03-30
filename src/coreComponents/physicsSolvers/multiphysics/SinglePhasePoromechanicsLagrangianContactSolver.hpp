@@ -136,6 +136,8 @@ public:
 
   virtual bool updateConfiguration( DomainPartition & domain ) override;
 
+  virtual bool resetConfigurationToDefault( DomainPartition & domain ) const override;
+
 protected:
 
   virtual void postProcessInput() override;

@@ -1868,7 +1868,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
               {
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
-              if( currentTau > limitTau )
+              if( currentTau >= limitTau )
               {
                 if( originalFractureState == FractureState::Stick )
                 {

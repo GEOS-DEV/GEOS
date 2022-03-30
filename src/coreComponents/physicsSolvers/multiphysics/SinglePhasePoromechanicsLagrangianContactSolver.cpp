@@ -151,6 +151,11 @@ bool SinglePhasePoromechanicsLagrangianContactSolver::updateConfiguration( Domai
   return m_contactSolver->updateConfiguration( domain );
 }
 
+bool SinglePhasePoromechanicsLagrangianContactSolver::resetConfigurationToDefault( DomainPartition & domain ) const
+{
+  return m_contactSolver->resetConfigurationToDefault( domain );
+}
+
 void SinglePhasePoromechanicsLagrangianContactSolver::setupSystem( DomainPartition & domain,
                                                                    DofManager & dofManager,
                                                                    CRSMatrix< real64, globalIndex > & localMatrix,
