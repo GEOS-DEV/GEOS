@@ -1,39 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import xml.etree.ElementTree as ElementTree
-
-class Penny_viscosityStorageDominated:
-    def __init__( self, E, nu, KIC, mu, Q0, t, xSource ):
-        Ep = E / ( 1.0 - nu**2.0 )
-        Mp = 12.0 * mu
-        self.t  = t
-        self.Q0 = Q0
-        self.mu = mu
-        self.Ep = Ep
-        self.Mp = Mp
-        self.xSource = xSource
-
-    def analyticalSolution( self ):
-        t  = self.t
-        Q0 = self.Q0
-        mu = self.mu        
-        Ep = self.Ep
-        Mp = self.Mp
-        xSource = self.xSource
-
-        def PI_m0(rho):
-            A1 = 0.3581
-            B = 0.09269
-            return A1 * ( 2.479 - 2.0 / 3.0 / pow( 1.0 - rho , 1.0/3.0 )) - B * ( np.log(rho/2.0) + 1.0 )
-
-        fracRadius = 0.6955 * ( ( Ep * Q0**3.0 * t**4.0 ) / ( Mp ))**( 1.0/9.0 )
-
-        inletAperture = 1.1977 * ( ( Mp**2.0 * Q0**3.0 * t ) / ( Ep**2.0 ))**( 1.0/9.0 )        
-        
-        xd0 = xSource/fracRadius
-        inletPressure = PI_m0(xd0) * ( ( Ep**2.0 * Mp ) / ( t ))**( 1.0/3.0 )
-        
-        return [ fracRadius, inletAperture , inletPressure ]
+import HydrofractureSolutions
 
 
 def getParametersFromXML( xmlFilePath ):
@@ -51,8 +19,7 @@ def getParametersFromXML( xmlFilePath ):
             source = [float(i) for i in source[1:-1].split(",")]
             x_source = round(source[0])
             found_source = True
-        if found_source: break
-  
+        if found_source: break  
 
     tree = ElementTree.parse(xmlFilePath + "_base.xml")
 
@@ -76,11 +43,15 @@ def main():
     xmlFilePathPrefix = "../../../../../../inputFiles/hydraulicFracturing/pennyShapedViscosityDominated"    
 
     tMax, E, nu, KIC, mu, Q0, xSource = getParametersFromXML( xmlFilePathPrefix )
+    Ep = E / ( 1.0 - nu**2.0 )
 
-    t = np.arange( 0.01*tMax, tMax, 0.01*tMax )
-
-    pennyFrac = Penny_viscosityStorageDominated ( E, nu, KIC, mu, Q0, t, xSource )
-    fracRadius, inletAperture , inletPressure = pennyFrac.analyticalSolution()
+    t = np.arange( 0.01*tMax, tMax, 0.01*tMax )   
+    radTimes = np.array([tMax])
+    hfsolns = HydrofractureSolutions.PennySolutions()
+    pennyFrac = hfsolns.Solutions( mu, Ep, Q0, KIC, t, radTimes, xSource )
+    inletPressure = pennyFrac[8]
+    fracRadius = pennyFrac[9]
+    inletAperture = pennyFrac[10]
 
     # Load GEOSX results
     t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
