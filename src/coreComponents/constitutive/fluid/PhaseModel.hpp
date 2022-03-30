@@ -31,23 +31,20 @@ namespace constitutive
  * @tparam DENS Class describing the density model
  * @tparam VISC Class describing the viscosity model
  * @tparam ENTH Class describing the enthalpy model
- * @tparam INTENERGY Class describing the internal energy model
  */
-template< typename DENS, typename VISC, typename ENTH, typename INTENERGY >
+template< typename DENS, typename VISC, typename ENTH >
 struct PhaseModel
 {
   using Density = DENS;
   using Viscosity = VISC;
   using Enthalpy = ENTH;
-  using InternalEnergy = INTENERGY;
 
   /// Enum used in the constructor to make the distinction between submodel params
   enum InputParamOrder : integer
   {
     DENSITY        = 0, ///< position of the density params
     VISCOSITY      = 1, ///< position of the viscosity params
-    ENTHALPY       = 2, ///< position of the enthalpy params
-    INTERNALENERGY = 3  ///< position of the internal energy params
+    ENTHALPY       = 2  ///< position of the enthalpy params
   };
 
   /**
@@ -72,11 +69,7 @@ struct PhaseModel
     enthalpy( phaseModelName + "_" + Enthalpy::catalogName(),
               inputParams[InputParamOrder::ENTHALPY],
               componentNames,
-              componentMolarWeight ),
-    internalEnergy( phaseModelName + "_" + InternalEnergy::catalogName(),
-                    inputParams[InputParamOrder::INTERNALENERGY],
-                    componentNames,
-                    componentMolarWeight )
+              componentMolarWeight )
   {}
 
   /// The phase density model
@@ -87,9 +80,6 @@ struct PhaseModel
 
   /// The phase enthalpy model (can be NoOp for non-thermal models)
   Enthalpy enthalpy;
-
-  /// The phase internal energy model (can be NoOp for non-thermal models)
-  InternalEnergy internalEnergy;
 
   /**
    * @brief Struct storing the submodels wrappers used for in-kernel fluid updates
@@ -102,16 +92,13 @@ struct PhaseModel
      * @param[in] dens the density model
      * @param[in] visc the viscosity model
      * @param[in] enth the enthalpy model
-     * @param[in] intEnergy the internal energy model
      */
     KernelWrapper( Density const & dens,
                    Viscosity const & visc,
-                   Enthalpy const & enth,
-                   InternalEnergy const & intEnergy )
+                   Enthalpy const & enth )
       : density( dens.createKernelWrapper() ),
       viscosity( visc.createKernelWrapper() ),
-      enthalpy( enth.createKernelWrapper() ),
-      internalEnergy( intEnergy.createKernelWrapper() )
+      enthalpy( enth.createKernelWrapper() )
     {}
 
     /**
@@ -124,7 +111,6 @@ struct PhaseModel
       density.move( space, touch );
       viscosity.move( space, touch );
       enthalpy.move( space, touch );
-      internalEnergy.move( space, touch );
     }
 
     /// Kernel wrapper for density updates
@@ -136,8 +122,6 @@ struct PhaseModel
     /// Kernel wrapper for enthalpy updates
     typename Enthalpy::KernelWrapper enthalpy;
 
-    /// Kernel wrapper for internal energy updates
-    typename InternalEnergy::KernelWrapper internalEnergy;
   };
 
   /**
@@ -148,8 +132,7 @@ struct PhaseModel
   {
     return KernelWrapper( density,
                           viscosity,
-                          enthalpy,
-                          internalEnergy );
+                          enthalpy );
   }
 };
 
