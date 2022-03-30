@@ -1079,7 +1079,7 @@ SolidMechanicsLagrangianFEM::
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 totalResidualNorm = LvArray::NumericLimits< real64 >::max;
+  real64 totalResidualNorm = 0.0;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel const & mesh,
