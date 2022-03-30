@@ -298,14 +298,16 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                      ElementSubRegionBase const & subRegion )
     {
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-      arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
-      arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
+      arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
+      arrayView1d< real64 const > const volume = subRegion.getElementVolume();
+
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDensOld = fluid.totalDensityOld();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-
-      arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
+      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+      arrayView1d< real64 const > const referencePorosity = solid.getReferencePorosity();
 
       real64 subRegionResidualNorm = 0.0;
       ResidualNormKernel::launch< parallelDevicePolicy<>,

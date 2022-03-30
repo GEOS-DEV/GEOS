@@ -18,12 +18,13 @@ class Penny_toughnessStorageDominated:
         mu = self.mu        
         Ep = self.Ep
         Kp = self.Kp
+        epsilon = 1e-9
         
         fracRadius = 0.8546 *  ( ( Ep**2.0 * Q0**2.0 * t**2.0 ) / ( Kp**2.0 ))**( 1.0/5.0 )
 
         inletAperture = 0.6537 * ( ( Kp**4.0 * Q0 * t ) / ( Ep**4.0 ))**( 1.0/5.0 )
         
-        inletPressure = 0.3004 * ( ( Kp**6.0 ) / ( Ep * Q0 * t ))**( 1.0/5.0 )
+        inletPressure = 0.3004 * ( ( Kp**6.0 ) / ( Ep * Q0 * (t + epsilon) ))**( 1.0/5.0 )
         
         return [ fracRadius, inletAperture , inletPressure ]
 

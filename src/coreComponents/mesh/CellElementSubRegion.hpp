@@ -99,8 +99,6 @@ public:
    */
   ///@{
 
-  std::set< string > getPackingExclusionList() const override;
-
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
@@ -386,14 +384,14 @@ private:
 
   /**
    * @brief Pack element-to-node and element-to-face maps
-   * @tparam the flag for the bufferOps::Pack function
+   * @tparam DO_PACKING the flag for the bufferOps::Pack function
    * @param buffer the buffer used in the bufferOps::Pack function
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Links the managers to their mappings.
@@ -403,10 +401,10 @@ private:
    */
   void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
-  template< bool DOPACK >
-  localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                           arrayView1d< localIndex const > const & packList,
-                                           arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+  template< bool DO_PACKING >
+  localIndex packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                        arrayView1d< localIndex const > const & packList,
+                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 };
 
 } /* namespace geosx */
