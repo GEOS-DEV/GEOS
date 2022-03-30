@@ -45,8 +45,6 @@ set( constitutive_headers
      fluid/PVTFunctions/SpanWagnerCO2Density.hpp
      fluid/PVTFunctions/BrineEnthalpy.hpp
      fluid/PVTFunctions/CO2Enthalpy.hpp
-     fluid/PVTFunctions/BrineInternalEnergy.hpp
-     fluid/PVTFunctions/CO2InternalEnergy.hpp
      fluid/PVTFunctions/CO2EOSSolver.hpp
      fluid/PVTFunctions/PureWaterProperties.hpp     
      fluid/ParticleFluid.hpp
@@ -150,8 +148,6 @@ set( constitutive_sources
      fluid/PVTFunctions/PVTFunctionHelpers.cpp
      fluid/PVTFunctions/BrineEnthalpy.cpp
      fluid/PVTFunctions/CO2Enthalpy.cpp
-     fluid/PVTFunctions/BrineInternalEnergy.cpp
-     fluid/PVTFunctions/CO2InternalEnergy.cpp
      fluid/PVTFunctions/CO2EOSSolver.cpp
      fluid/PVTFunctions/PureWaterProperties.cpp		
      fluid/ParticleFluid.cpp              
