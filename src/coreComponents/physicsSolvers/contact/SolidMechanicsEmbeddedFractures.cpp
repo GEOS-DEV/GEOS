@@ -776,7 +776,10 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                                                 arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
+    
 
+    // We want to update the configuration (fracture state in this case) and check if it has changed. If it hasn't changed
+    // then we know the configuartion loop has converged and we can return true. 
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
                                                                                     EmbeddedSurfaceSubRegion & subRegion )
     {

@@ -79,9 +79,9 @@ public:
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
+                                integer const & fractureState,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump,
-                                integer const & fractureState ) const override final;
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
   GEOSX_HOST_DEVICE
   inline
@@ -209,9 +209,9 @@ GEOSX_HOST_DEVICE
 void CoulombContactUpdates::computeTraction( localIndex const k,
                                              arraySlice1d< real64 const > const & oldDispJump,
                                              arraySlice1d< real64 const > const & dispJump,
+                                             integer const & fractureState,
                                              arraySlice1d< real64 > const & tractionVector,
-                                             arraySlice2d< real64 > const & dTractionVector_dJump,
-                                             integer const & fractureState ) const
+                                             arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
 
   bool const isOpen = fractureState == extrinsicMeshData::contact::FractureState::Open;
@@ -294,9 +294,11 @@ void CoulombContactUpdates::updateFractureState( localIndex const k,
                                                  arraySlice1d< real64 const > const & tractionVector,
                                                  integer & fractureState ) const
 {
+  using namespace extrinsicMeshData::contact;
+
   if( dispJump[0] >  -LvArray::NumericLimits< real64 >::epsilon )
   {
-    fractureState = extrinsicMeshData::contact::FractureState::Open;
+    fractureState = FractureState::Open;
     m_elasticSlip[k][0] = 0.0;
     m_elasticSlip[k][1] = 0.0;
   }
@@ -312,14 +314,8 @@ void CoulombContactUpdates::updateFractureState( localIndex const k,
 
     // Yield function (not necessary but makes it clearer)
     real64 const yield = tauNorm - limitTau;
-    if( yield < 0 )
-    {
-      fractureState = extrinsicMeshData::contact::FractureState::Stick;
-    }
-    else
-    {
-      fractureState = extrinsicMeshData::contact::FractureState::Slip;
-    }
+
+    fractureState = yield < 0 ? FractureState::Stick : FractureState::Slip;
   }
 }
 

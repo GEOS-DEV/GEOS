@@ -62,9 +62,9 @@ public:
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
+                                integer const & fractureState,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump,
-                                integer const & fractureState ) const override final;
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const override final;
 
 
   GEOSX_HOST_DEVICE
@@ -148,9 +148,9 @@ GEOSX_HOST_DEVICE
 void FrictionlessContactUpdates::computeTraction( localIndex const k,
                                                   arraySlice1d< real64 const > const & oldDispJump,
                                                   arraySlice1d< real64 const > const & dispJump,
+                                                  integer const & fractureState,
                                                   arraySlice1d< real64 > const & tractionVector,
-                                                  arraySlice2d< real64 > const & dTractionVector_dJump,
-                                                  integer const & fractureState ) const
+                                                  arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
   GEOSX_UNUSED_VAR( k, oldDispJump );
 

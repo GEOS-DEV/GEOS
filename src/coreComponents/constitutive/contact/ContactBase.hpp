@@ -77,24 +77,24 @@ public:
   /**
    * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
    * @param[in] dispJump the displacement jump
+   * @param[in] fractureState the fracture state
    * @param[out] tractionVector the traction vector
    * @param[out] dTractionVector_dJump the derivative of the traction vector wrt displacement jump
-   * @param[in] fractureState the fracture state
    */
   GEOSX_HOST_DEVICE
   inline
   virtual void computeTraction( localIndex const k,
                                 arraySlice1d< real64 const > const & oldDispJump,
                                 arraySlice1d< real64 const > const & dispJump,
+                                integer const & fractureState,
                                 arraySlice1d< real64 > const & tractionVector,
-                                arraySlice2d< real64 > const & dTractionVector_dJump,
-                                integer const & fractureState ) const
+                                arraySlice2d< real64 > const & dTractionVector_dJump ) const
   {GEOSX_UNUSED_VAR( k, oldDispJump, dispJump, tractionVector, dTractionVector_dJump, fractureState );}
 
   /**
    * @brief Evaluate the traction vector and its derivatives wrt to pressure and jump
    * @param[in] dispJump the displacement jump
-   * @param[out] tractionVector the traction vector
+   * @param[in] tractionVector the traction vector
    * @param[out] fractureState the fracture state
    */
   GEOSX_HOST_DEVICE
