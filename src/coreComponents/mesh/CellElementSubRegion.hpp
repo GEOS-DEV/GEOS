@@ -99,8 +99,6 @@ public:
    */
   ///@{
 
-  std::set< string > getPackingExclusionList() const override;
-
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,

@@ -59,6 +59,12 @@ EdgeManager::EdgeManager( string const & name,
     setPlotLevel( PlotLevel::NOPLOT ).
     setDescription( "A map of fracture connector local indices face element local indices" ).
     setSizedFromParent( 0 );
+
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
 
 EdgeManager::~EdgeManager()
