@@ -197,6 +197,18 @@ std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
   return static_cast< std::underlying_type_t< ENUMERATION > >( value );
 }
 
+/**
+ * @brief Utility function to convert a pointer to an enumeration to a pointer to its underlying type (integer).
+ * @tparam ENUMERATION the type of the enumeration
+ * @param[in] enumPtr the pointer to the enumeration
+ * @return the pointer to the enumeration underlying type
+ */
+template< typename ENUMERATION >
+std::underlying_type_t< ENUMERATION > * toUnderlyingPtr( ENUMERATION * const enumPtr )
+{
+  return reinterpret_cast< std::underlying_type_t< ENUMERATION > * >( enumPtr );
+}
+
 // The code below should work with any subscriptable vector/matrix types
 
 /**

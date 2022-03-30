@@ -54,12 +54,15 @@ public:
   {
     // Level 0: eliminate the cell-centered pressure
     m_labels[0].push_back( 1 );
+
     setupLabels();
 
-    m_levelInterpType[0] = 2; // diagonal scaling
-    m_levelCoarseGridMethod[0] = 0; // Galerkin coarse grid computation using RAP
+    // Level 0
+    m_levelFRelaxMethod[0]     = hypre::MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed), swith to l1 jacobi
+    m_levelInterpType[0]       = hypre::MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]     = hypre::MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0] = hypre::MGRCoarseGridMethod::galerkin;
 
-    m_fRelaxMethod = 18; // l1 Jacobi
     m_numGlobalSmoothSweeps = 0;
   }
 
@@ -77,10 +80,11 @@ public:
                                                                   m_numLabels, m_ptrLabels,
                                                                   mgrData.pointMarkers.data() ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetFRelaxMethod( precond.ptr, m_fRelaxMethod ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );

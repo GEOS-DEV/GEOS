@@ -424,10 +424,10 @@ enum class AMGCoarseningType : HYPRE_Int
 };
 
 /**
- * @enum MGRLevelInterpolationType
+ * @enum MGRInterpolationType
  * @brief This enum class specifies the strategy for computing the level intepolation operator in MGR.
  */
-enum class MGRLevelInterpolationType : HYPRE_Int
+enum class MGRInterpolationType : HYPRE_Int
 {
   injection = 0,                      //!< Injection \f$[0  I]^{T}\f$
   jacobi = 2,                         //!< Diagonal scaling
@@ -436,11 +436,11 @@ enum class MGRLevelInterpolationType : HYPRE_Int
 };
 
 /**
- * @enum MGRLevelRestrictionType
+ * @enum MGRRestrictionType
  * @brief This enum class specifies the strategy for computing the level restriction operator in MGR.
  *
  */
-enum class MGRLevelRestrictionType : HYPRE_Int
+enum class MGRRestrictionType : HYPRE_Int
 {
   injection = 0,         //!< Injection \f$[0  I]\f$
   jacobi = 2,            //!< Diagonal scaling
@@ -448,10 +448,10 @@ enum class MGRLevelRestrictionType : HYPRE_Int
 };
 
 /**
- * @enum MGRLevelCoarseGridMethod
+ * @enum MGRCoarseGridMethod
  * @brief This enum class specifies the strategy for level coarse grid computation in MGR.
  */
-enum class MGRLevelCoarseGridMethod : HYPRE_Int
+enum class MGRCoarseGridMethod : HYPRE_Int
 {
   galerkin = 0,   //!< Galerkin coarse grid computation using RAP
   nonGalerkin = 1 //!< Non-Galerkin coarse grid computation with dropping strategy
@@ -487,10 +487,10 @@ enum class MGRFRelaxationType : HYPRE_Int
 };
 
 /**
- * @enum MGRLevelGlobalSmootherType
+ * @enum MGRGlobalSmootherType
  * @brief This enum class specifies the global smoother type.
  */
-enum class MGRLevelGlobalSmootherType : HYPRE_Int
+enum class MGRGlobalSmootherType : HYPRE_Int
 {
   blockJacobi = 0, //!< block Jacobi (default)
   jacobi = 1,      //!< Jacobi

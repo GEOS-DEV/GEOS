@@ -82,20 +82,18 @@ protected:
   HYPRE_Int m_numLabels[numLevels]{ -1 };              ///< Number of dof labels kept
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };       ///< Pointers to each level's labels, as consumed by MGR
 
-  HYPRE_Int m_levelFRelaxMethod[numLevels]{ -1 };      ///< F-relaxation method for each level
-  HYPRE_Int m_levelInterpType[numLevels]{ -1 };        ///< Interpolation type for each level
-  HYPRE_Int m_levelRestrictType[numLevels]{ -1 };      ///< Restriction type for each level
-  HYPRE_Int m_levelCoarseGridMethod[numLevels]{ -1 };  ///< Coarse grid method for each level
+  hypre::MGRFRelaxationMethod m_levelFRelaxMethod[numLevels]{};//{ -1 };     ///< F-relaxation method for each level
+  hypre::MGRInterpolationType m_levelInterpType[numLevels]{};//{ -1 };       ///< Interpolation type for each level
+  hypre::MGRRestrictionType m_levelRestrictType[numLevels]{};  //{ -1 };     ///< Restriction type for each level
+  hypre::MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]{}; //{ -1 }; ///< Coarse grid method for each level
 
-  HYPRE_Int m_numRestrictSweeps{ -1 };                 ///< Number of restrict sweeps
-  HYPRE_Int m_numInterpSweeps{ -1 };                   ///< Number of interpolation sweeps
+  HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
+  HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
 
-  HYPRE_Int m_fRelaxMethod{ -1 };                      ///< F-relaxation method
-  HYPRE_Int m_relaxType{ -1 };                         ///< F-relaxation type
-  HYPRE_Int m_numRelaxSweeps{ -1 };                    ///< F-relaxation number of sweeps
+  HYPRE_Int m_numRelaxSweeps{ -1 }; ///< F-relaxation number of sweeps
 
-  HYPRE_Int m_globalSmoothType{ -1 };                  ///< Global smoothing type
-  HYPRE_Int m_numGlobalSmoothSweeps{ -1 };             ///< Global smoothing number of iterations
+  hypre::MGRGlobalSmootherType m_globalSmoothType{};//{ -1 }; ///< Global smoothing type
+  HYPRE_Int m_numGlobalSmoothSweeps{ -1 };               ///< Global smoothing number of iterations
 
   /**
    * @brief Constructor.
