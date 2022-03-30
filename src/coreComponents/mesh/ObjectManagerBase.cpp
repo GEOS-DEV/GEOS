@@ -267,7 +267,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
     std::set< string > tmp0;
     std::set_intersection( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp0, tmp0.end() ) );
 
-    // Checking that no requested wrapper was requested
+    // Checking that all the requested wrappers are available.
     std::set< string > tmp1;
     std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp1, tmp1.end() ) );
     if( !tmp1.empty() )
@@ -275,7 +275,7 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
       GEOSX_LOG( "Wrappers \"" << stringutilities::join( tmp1, ", " ) << "\" were requested and are not available." );
     }
 
-    // Not taking the wrappers that are excluded
+    // Not taking the wrappers that are excluded.
     std::set< string > tmp2;
     std::set_difference( tmp0.cbegin(), tmp0.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( tmp2, tmp2.end() ) );
 
