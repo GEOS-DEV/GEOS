@@ -42,6 +42,11 @@ EmbeddedSurfaceNodeManager::EmbeddedSurfaceNodeManager( string const & name,
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
   this->registerWrapper( viewKeyStruct::parentEdgeGlobalIndexString(), &m_parentEdgeGlobalIndex );
+
+  excludeWrappersFromPacking( { viewKeyStruct::edgeListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
 
 
@@ -209,16 +214,6 @@ void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const 
   this->resize( nodeIndex + 1 );
   LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
   m_ghostRank[ nodeIndex ] = pointGhostRank;
-}
-
-std::set< string > EmbeddedSurfaceNodeManager::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::edgeListString(),
-                   viewKeyStruct::elementRegionListString(),
-                   viewKeyStruct::elementSubRegionListString(),
-                   viewKeyStruct::elementListString() } );
-  return result;
 }
 
 

@@ -55,6 +55,8 @@ FaceElementSubRegion::FaceElementSubRegion( string const & name,
     setDescription( "Scalar indicator of level of separation for a fracturing face." );
 #endif
 
+  excludeWrappersFromPacking( { viewKeyStruct::faceListString() } );
+
   m_surfaceElementsToCells.resize( 0, 2 );
 
   m_numNodesPerElement = 8;
@@ -223,18 +225,5 @@ void FaceElementSubRegion::inheritGhostRankFromParentFace( FaceManager const & f
     m_ghostRank[index] = faceGhostRank[ m_toFacesRelation[index][0] ];
   }
 }
-
-std::set< string > FaceElementSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::surfaceElementsToCellRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
-                   viewKeyStruct::surfaceElementsToCellIndexString() } );
-  return result;
-}
-
 
 } /* namespace geosx */

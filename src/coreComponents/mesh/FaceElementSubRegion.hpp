@@ -104,8 +104,6 @@ public:
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
 
-  std::set< string > getPackingExclusionList() const override;
-
   ///@}
 
   /**
