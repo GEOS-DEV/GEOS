@@ -47,7 +47,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.newNodes )
     {
-      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecusive( parentNodeIndices, index );
+      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, index );
       if( nodeGhostRank[parentNodeIndex] == neighborRank )
       {
         newNodePackListArray[a] = index;
@@ -61,7 +61,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.modifiedNodes )
     {
-      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecusive( parentNodeIndices, index );
+      localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, index );
       if( nodeGhostRank[parentNodeIndex] == neighborRank )
       {
         modNodePackListArray[a] = index;
@@ -77,7 +77,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.newEdges )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentEdgeIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentEdgeIndices, index );
       if( edgeGhostRank[parentIndex] == neighborRank )
       {
         newEdgePackListArray[a] = index;
@@ -91,7 +91,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.modifiedEdges )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentEdgeIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentEdgeIndices, index );
       if( edgeGhostRank[parentIndex] == neighborRank )
       {
         modEdgePackListArray[a] = index;
@@ -107,7 +107,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.newFaces )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentFaceIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentFaceIndices, index );
       if( faceGhostRank[parentIndex] == neighborRank )
       {
         newFacePackListArray[a] = index;
@@ -121,7 +121,7 @@ void packNewAndModifiedObjectsToOwningRanks( NeighborCommunicator * const neighb
     localIndex a=0;
     for( auto const index : modifiedObjects.modifiedFaces )
     {
-      localIndex const parentIndex = ObjectManagerBase::getParentRecusive( parentFaceIndices, index );
+      localIndex const parentIndex = ObjectManagerBase::getParentRecursive( parentFaceIndices, index );
       if( faceGhostRank[parentIndex] == neighborRank )
       {
         modFacePackListArray[a] = index;

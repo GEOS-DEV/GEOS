@@ -56,6 +56,12 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString(), &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
+
+  excludeWrappersFromPacking( { viewKeyStruct::localToGlobalMapString(),
+                                viewKeyStruct::globalToLocalMapString(),
+                                viewKeyStruct::ghostRankString(),
+                                extrinsicMeshData::ParentIndex::key(),
+                                extrinsicMeshData::ChildIndex::key() } );
 }
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -718,12 +724,15 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 
 std::set< string > ObjectManagerBase::getPackingExclusionList() const
 {
-  return { viewKeyStruct::localToGlobalMapString(),
-           viewKeyStruct::globalToLocalMapString(),
-           viewKeyStruct::ghostRankString(),
-           extrinsicMeshData::ParentIndex::key(),
-           extrinsicMeshData::ChildIndex::key() };
+  return m_packingExclusionList;
 }
+
+
+void ObjectManagerBase::excludeWrappersFromPacking( std::set< string > const & wrapperNames )
+{
+  m_packingExclusionList.insert( wrapperNames.cbegin(), wrapperNames.cend() );
+}
+
 
 localIndex ObjectManagerBase::getNumberOfGhosts() const
 {
