@@ -121,6 +121,9 @@ public:
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensity() const
   { return m_phaseDensity.value; }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseDensityOld() const
+  { return m_phaseDensityOld; }
+
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseDensity() const
   { return m_phaseDensity.derivs; }
 
@@ -139,11 +142,17 @@ public:
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFraction() const
   { return m_phaseCompFraction.value; }
 
+  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > phaseCompFractionOld() const
+  { return m_phaseCompFractionOld; }
+
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > dPhaseCompFraction() const
   { return m_phaseCompFraction.derivs; }
 
   arrayView2d< real64 const, multifluid::USD_FLUID > totalDensity() const
   { return m_totalDensity.value; }
+
+  arrayView2d< real64 const, multifluid::USD_FLUID > totalDensityOld() const
+  { return m_totalDensityOld; }
 
   arrayView3d< real64 const, multifluid::USD_FLUID_DC > dTotalDensity() const
   { return m_totalDensity.derivs; }
@@ -154,11 +163,17 @@ public:
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpy() const
   { return m_phaseEnthalpy.value; }
 
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseEnthalpyOld() const
+  { return m_phaseEnthalpyOld; }
+
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseEnthalpy() const
   { return m_phaseEnthalpy.derivs; }
 
   arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergy() const
   { return m_phaseInternalEnergy.value; }
+
+  arrayView3d< real64 const, multifluid::USD_PHASE > phaseInternalEnergyOld() const
+  { return m_phaseInternalEnergyOld; }
 
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > dPhaseInternalEnergy() const
   { return m_phaseInternalEnergy.derivs; }
@@ -168,6 +183,11 @@ public:
    * @param[in] phaseVolFraction an array containing the initial phase volume fractions
    */
   virtual void initializeState( arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFraction ) const;
+
+  /**
+   * @brief Save the phase densities, component fractions, enthalpies and internal energies (for accumulation)
+   */
+  virtual void saveConvergedState() const override;
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
   {
@@ -334,6 +354,39 @@ protected:
                                  arraySlice2d< real64, multifluid::USD_PHASE_DC - 2 > const dPhaseInternalEnergy ) const;
 
     /**
+     * @brief Utility function to compute the internal energy from pressure, enthalpy, and density
+     * @tparam maxNumComp the max number of components
+     * @tparam maxNumPhase the max number of phases
+     * @param[in] pressure the pressure in the cell
+     * @param[in] phaseFrac the phase fractions
+     * @param[in] phaseMassDens the phase mass densities
+     * @param[out] phaseEnthalpy the phase enthalpies
+     * @param[out] phaseInternalEnergy the phase internal energy
+     */
+    template< integer maxNumComp, integer maxNumPhase >
+    GEOSX_HOST_DEVICE
+    void computeInternalEnergy( real64 const & pressure,
+                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
+                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseMassDens,
+                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseEnthalpy,
+                                arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseInternalEnergy ) const;
+
+    /**
+     * @brief Utility function to compute the internal energy from pressure, enthalpy, and density and keep derivatives
+     * @param[in] pressure the pressure in the cellx
+     * @param[in] phaseFrac the phase fractions (+ derivatives)
+     * @param[in] phaseMassDens the phase mass densities (+ derivatives)
+     * @param[out] phaseEnthalpy the phase enthalpies (+ derivatives)
+     * @param[out] phaseInternalEnergy the phase internal energy (+ derivatives)
+     */
+    GEOSX_HOST_DEVICE
+    void computeInternalEnergy( real64 const & pressure,
+                                PhaseProp::SliceType const phaseFrac,
+                                PhaseProp::SliceType const phaseMassDens,
+                                PhaseProp::SliceType const phaseEnthalpy,
+                                PhaseProp::SliceType const phaseInternalEnergy ) const;
+
+    /**
      * @brief Utility function to convert mole fractions to mass fractions
      * @tparam maxNumComp the max number of components
      * @tparam maxNumPhase the max number of phases
@@ -350,7 +403,7 @@ protected:
     /**
      * @brief Utility function to convert mole fractions to mass fractions and keep derivatives
      * @param[in] phaseFrac the phase fractions properly converted (+ derivatives)
-     * @param[in] phaseFrac the phase densities in mass or moles (+ derivatives)
+     * @param[in] phaseDens the phase densities in mass or moles (+ derivatives)
      * @param[out] totalDens the total density (+ derivatives)
      */
     GEOSX_HOST_DEVICE
@@ -536,6 +589,14 @@ protected:
   PhaseProp m_phaseInternalEnergy;
   PhaseComp m_phaseCompFraction;
   FluidProp m_totalDensity;
+
+  // backup data
+
+  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseDensityOld;
+  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseEnthalpyOld;
+  array3d< real64, multifluid::LAYOUT_PHASE > m_phaseInternalEnergyOld;
+  array4d< real64, multifluid::LAYOUT_PHASE_COMP > m_phaseCompFractionOld;
+  array2d< real64, multifluid::LAYOUT_FLUID > m_totalDensityOld;
 
   // initial data (used to compute the body force in the poromechanics solver)
 
@@ -790,6 +851,76 @@ MultiFluidBase::KernelWrapper::
     {
       applyChainRuleInPlace( numComp, dCompMoleFrac_dCompMassFrac, phaseCompFrac.derivs[ip][ic], work, Deriv::dC );
     }
+  }
+}
+
+template< integer maxNumComp, integer maxNumPhase >
+GEOSX_HOST_DEVICE
+inline void
+MultiFluidBase::KernelWrapper::
+  computeInternalEnergy( real64 const & pressure,
+                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseFrac,
+                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseMassDens,
+                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseEnthalpy,
+                         arraySlice1d< real64, multifluid::USD_PHASE - 2 > const phaseInternalEnergy ) const
+{
+  using namespace multifluid;
+
+  integer constexpr maxNumDof = maxNumComp + 2;
+  integer const numPhase = numPhases();
+  integer const numComp = numComponents();
+
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseFrac( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseFracAndDeriv { phaseFrac, dPhaseFrac[0][0] };
+
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseMassDens( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseMassDensAndDeriv { phaseMassDens, dPhaseMassDens[0][0] };
+
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseEnthalpy( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseEnthalpyAndDeriv { phaseEnthalpy, dPhaseEnthalpy[0][0] };
+
+  StackArray< real64, 4, maxNumDof *maxNumPhase, LAYOUT_PHASE_DC > dPhaseInternalEnergy( 1, 1, numPhase, numComp+2 );
+  MultiFluidVarSlice< real64, 1, USD_PHASE - 2, USD_PHASE_DC - 2 >
+  phaseInternalEnergyAndDeriv { phaseInternalEnergy, dPhaseInternalEnergy[0][0] };
+
+  computeInternalEnergy( pressure,
+                         phaseFracAndDeriv,
+                         phaseMassDensAndDeriv,
+                         phaseEnthalpyAndDeriv,
+                         phaseInternalEnergyAndDeriv );
+}
+
+GEOSX_HOST_DEVICE
+inline void
+MultiFluidBase::KernelWrapper::
+  computeInternalEnergy( real64 const & pressure,
+                         PhaseProp::SliceType const phaseFrac,
+                         PhaseProp::SliceType const phaseMassDens,
+                         PhaseProp::SliceType const phaseEnthalpy,
+                         PhaseProp::SliceType const phaseInternalEnergy ) const
+{
+  integer const numPhase = numPhases();
+  integer const numComp = numComponents();
+  for( integer ip = 0; ip < numPhase; ++ip )
+  {
+
+    bool const phaseExists = (phaseFrac.value[ip] > 0);
+    if( !phaseExists )
+    {
+      continue;
+    }
+
+    real64 const densInv = 1.0 / phaseMassDens.value[ip];
+    real64 const densInvSquared = densInv * densInv;
+    phaseInternalEnergy.value[ip] = phaseEnthalpy.value[ip] - pressure * densInv;
+    for( integer idof = 0; idof < numComp; ++idof )
+    {
+      phaseInternalEnergy.derivs[ip][idof] = phaseEnthalpy.derivs[ip][idof] + pressure * phaseMassDens.derivs[ip][idof] * densInvSquared;
+    }
+    phaseInternalEnergy.derivs[ip][multifluid::DerivativeOffset::dP] -= densInv;
   }
 }
 
