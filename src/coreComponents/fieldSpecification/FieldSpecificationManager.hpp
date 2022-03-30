@@ -296,7 +296,7 @@ private:
         && target.getName() != ObjectManagerBase::groupKeyStruct::setsString()
         && target.getName() != ObjectManagerBase::groupKeyStruct::neighborDataString() )
     {
-      if( target.hasWrapper( targetName ) )
+//      if( target.hasWrapper( targetName ) )
       {
         dataRepository::Group const & setGroup = target.getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
         string_array setNames = fs.getSetNames();
