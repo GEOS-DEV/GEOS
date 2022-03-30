@@ -47,6 +47,11 @@ NodeManager::NodeManager( string const & name,
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
 
+  excludeWrappersFromPacking( { viewKeyStruct::edgeListString(),
+                                viewKeyStruct::faceListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
 
 
@@ -304,23 +309,6 @@ void NodeManager::compressRelationMaps()
   m_toElements.m_toElementRegion.compress();
   m_toElements.m_toElementSubRegion.compress();
   m_toElements.m_toElementIndex.compress();
-}
-
-
-std::set< string > NodeManager::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::edgeListString(),
-                   viewKeyStruct::faceListString(),
-                   viewKeyStruct::elementRegionListString(),
-                   viewKeyStruct::elementSubRegionListString(),
-                   viewKeyStruct::elementListString() } );
-
-  if( this->hasWrapper( "usedFaces" ) )
-  {
-    result.insert( "usedFaces" );
-  }
-  return result;
 }
 
 
