@@ -82,7 +82,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 
   ParticleBlockManager & particleBlockManager = meshBody.registerGroup< ParticleBlockManager >( keys::particleManager );
 
-  //SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
   // This should probably handled elsewhere:
   int aa = 0;
@@ -157,11 +157,25 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         std::istringstream lineStream(line);
 
         double value;
+        int positionComponent = 0;
+        bool inPartition = true;
         while(lineStream >> value)
         {
           lineData.push_back(value);
+          if(positionComponent<3) // first three values are the particle position, check for partition membership
+          {
+            inPartition = inPartition && partition.isCoordInPartition(value, positionComponent);
+            if(!inPartition) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next line
+            {
+              break;
+            }
+          }
+          positionComponent++;
         }
-        particleData[particleTypes[i]].push_back(lineData);
+        if(inPartition)
+        {
+          particleData[particleTypes[i]].push_back(lineData);
+        }
       }
     }
 
@@ -209,7 +223,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     ParticleBlock & particleBlock = particleBlockManager.getParticleBlock( particleBlockName );
     std::string s = particleBlock.hasRVectors() ? " does " : " doesn't ";
     std::string particleType = EnumStrings< ParticleType >::toString( particleBlock.getParticleType() );
-    std::cout << "Particle block " << particleBlock.getName() << " is of type " << particleType << " and hence" << s << "have r-vectors!" << std::endl;
+    GEOSX_LOG_RANK( "Particle block " << particleBlock.getName() << " is of type " << particleType << " and hence" << s << "have r-vectors!");
 
     int numThisType = particleData[particleType].size(); // I hope this returns zero when particleType isn't in the map...
     int materialID;
@@ -312,11 +326,13 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
     numParticlesCheck += size;
     particleRegion.resize(size);
-    GEOSX_LOG_RANK_0("Particle region " << particleRegion.getName() << " contains " << size << " particles.");
+    GEOSX_LOG_RANK("Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank.");
   } );
-  GEOSX_ERROR_IF(numParticlesCheck != numParticles, "Inconsistency detected between MPM particle file and GEOSX input file! Check if you've correctly allocated all particle blocks.");
 
-  GEOSX_LOG_RANK_0( "Total number of particles: " << particleManager.size() );
+
+  //GEOSX_ERROR_IF(numParticlesCheck != numParticles, "Inconsistency detected between MPM particle file and GEOSX input file! Check if you've correctly allocated all particle blocks.");
+
+  GEOSX_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
 }
 
 void ParticleMeshGenerator::postProcessInput()
