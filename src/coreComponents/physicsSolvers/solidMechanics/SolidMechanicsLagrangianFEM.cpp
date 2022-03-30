@@ -1245,12 +1245,6 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
       NodeManager & nodeManager = mesh.getNodeManager();
       ElementRegionManager & elemManager = mesh.getElemManager();
 
-      ConstitutiveManager const &
-      constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-      ContactBase const & contact = constitutiveManager.getGroup< ContactBase >( m_contactRelationName );
-      real64 const contactStiffness = contact.stiffness();
-
       arrayView2d< real64 const, nodes::TOTAL_DISPLACEMENT_USD > const u = nodeManager.totalDisplacement();
       arrayView2d< real64 > const fc = nodeManager.getReference< array2d< real64 > >( viewKeyStruct::contactForceString() );
       fc.zero();
@@ -1268,6 +1262,10 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
       elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
       {
+        ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
+
+        real64 const contactStiffness = contact.stiffness();
+
         arrayView1d< real64 > const area = subRegion.getElementArea();
         arrayView2d< localIndex const > const elemsToFaces = subRegion.faceList();
 
