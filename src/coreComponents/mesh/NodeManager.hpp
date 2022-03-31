@@ -204,8 +204,6 @@ public:
    */
   ///@{
 
-  std::set< string > getPackingExclusionList() const override;
-
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
    * @details Packed data are meant to be communicated to other MPI ranks
