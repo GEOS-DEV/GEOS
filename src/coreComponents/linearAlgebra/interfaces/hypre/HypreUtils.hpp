@@ -482,8 +482,6 @@ enum class MGRFRelaxationType : HYPRE_Int
   l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
   l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
   l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
-  option19 = 19,                    //!< ...
-  option98 = 98                     //!< ...
 };
 
 /**
