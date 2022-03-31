@@ -238,23 +238,20 @@ void ElementRegionManager::buildSets( NodeManager const & nodeManager )
   } );
 }
 
-int ElementRegionManager::packSize( string_array const & wrapperNames,
-                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ElementRegionManager::packSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packImpl< false >( junk, wrapperNames, packList );
+  return packImpl< false >( junk, packList );
 }
 
 int ElementRegionManager::pack( buffer_unit_type * & buffer,
-                                string_array const & wrapperNames,
                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
-  return packImpl< true >( buffer, wrapperNames, packList );
+  return packImpl< true >( buffer, packList );
 }
 
 template< bool DO_PACKING >
 int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
-                                    string_array const & wrapperNames,
                                     ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
@@ -280,11 +277,11 @@ int ElementRegionManager::packImpl( buffer_unit_type * & buffer,
       arrayView1d< localIndex const > const elemList = packList[kReg][esr];
       if( DO_PACKING )
       {
-        packedSize += subRegion.pack( buffer, wrapperNames, elemList, 0, false, events );
+        packedSize += subRegion.pack( buffer, elemList, 0, false, events );
       }
       else
       {
-        packedSize += subRegion.packSize( wrapperNames, elemList, 0, false, events );
+        packedSize += subRegion.packSize( elemList, 0, false, events );
       }
     } );
   }
