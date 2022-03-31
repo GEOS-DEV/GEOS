@@ -897,7 +897,7 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] onDevice    whether to use device-based packing functions
+   * @param[in] onDevice     whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
@@ -909,6 +909,22 @@ public:
                                integer const recursive,
                                bool onDevice,
                                parallelDeviceEvents & events ) const;
+
+  /**
+   * @brief Get the size required to pack a list of indices for all registered wrappers.
+   * @param[in] packList     the list of indices to pack
+   * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] onDevice     whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return                 the size of the buffer required to pack the wrapper indices.
+   */
+  localIndex packSize( arrayView1d< localIndex const > const & packList,
+                       integer const recursive,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
@@ -940,7 +956,7 @@ public:
    * @param[in] wrapperNames an array that contains the names of the wrappers to pack.
    * @param[in] packList     the list of indices to pack
    * @param[in] recursive    whether or not to perform a recursive pack.
-   * @param[in] onDevice    whether to use device-based packing functions
+   * @param[in] onDevice     whether to use device-based packing functions
    *                         (buffer must be either pinned or a device pointer)
    * @param[out] events      a collection of events to poll for completion of async
    *                         packing kernels ( device packing is incomplete until all
@@ -958,6 +974,29 @@ public:
                            integer const recursive,
                            bool onDevice,
                            parallelDeviceEvents & events ) const;
+
+  /**
+   * @brief Pack a list of indices for all registered wrappers.
+   * @param[in,out] buffer   the buffer that will be packed.
+   * @param[in] packList     the list of indices to pack
+   * @param[in] recursive    whether or not to perform a recursive pack.
+   * @param[in] onDevice     whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return                 the size of data packed to the buffer.
+   *
+   * This function takes in a reference to a pointer @p buffer, and packs data specified by
+   * @p wrapperNames, @p packList, and @p recursive to that pointer location. The
+   * pointer is altered and returned to the new location corresponding the
+   * original value of @p buffer plus the size of data packed to the buffer.
+   */
+  localIndex pack( buffer_unit_type * & buffer,
+                   arrayView1d< localIndex const > const & packList,
+                   integer const recursive,
+                   bool onDevice,
+                   parallelDeviceEvents & events ) const;
 
   /**
    * @brief Unpack a buffer.
