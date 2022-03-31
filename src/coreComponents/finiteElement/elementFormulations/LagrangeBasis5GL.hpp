@@ -50,10 +50,10 @@ public:
   static constexpr real64 sqrt__7_mins_2sqrt7__ = 1.30709501485960033;
 
   /// sqrt( 7 + 2 * sqrt(7) )
-  static constexpr real64 sqrt__7_plus_sqrt7_div2__ = 2.884939454;
+  static constexpr real64 sqrt__7_plus_sqrt7_div2__ = 2.884939454396278;
 
   /// sqrt( 7 - 2 * sqrt(7) )
-  static constexpr real64 sqrt__7_mins_sqrt7_div2__ = 2.382671682;
+  static constexpr real64 sqrt__7_mins_sqrt7_div2__ = 2.382671682055189;
 
   /// sqrt(1/21)
   static constexpr real64 sqrt_inv21 = 0.218217890235992381;
