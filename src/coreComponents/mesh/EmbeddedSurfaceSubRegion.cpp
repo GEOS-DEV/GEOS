@@ -79,15 +79,11 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_surfaceElementsToCells.resize( 0, 1 );
 }
 
-
-EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
-{}
-
 void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
-  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
   } );
@@ -314,37 +310,37 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const &
 localIndex EmbeddedSurfaceSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex EmbeddedSurfaceSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
                                                      arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                            arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex EmbeddedSurfaceSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                         arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToNodes,
-                                           packList,
-                                           localToGlobal,
-                                           nodeLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               nodeList().base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToNodes,
+                                               packList,
+                                               localToGlobal,
+                                               nodeLocalToGlobal );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_surfaceElementsToCells,
-                                           packList,
-                                           m_surfaceElementsToCells.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_surfaceElementsToCells,
+                                               packList,
+                                               m_surfaceElementsToCells.getElementRegionManager() );
 
   return packedSize;
 }
@@ -380,15 +376,15 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
   return unPackedSize;
 }
 
-void EmbeddedSurfaceSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > EmbeddedSurfaceSubRegion::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
-  //exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceWithGhostNodesString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::surfaceElementsToCellRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellSubRegionsString(),
+                   viewKeyStruct::surfaceElementsToCellIndexString() } );
+  return result;
 }
 
 } /* namespace geosx */

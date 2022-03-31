@@ -307,63 +307,64 @@ void NodeManager::compressRelationMaps()
 }
 
 
-void NodeManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > NodeManager::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::faceListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::edgeListString(),
+                   viewKeyStruct::faceListString(),
+                   viewKeyStruct::elementRegionListString(),
+                   viewKeyStruct::elementSubRegionListString(),
+                   viewKeyStruct::elementListString() } );
 
   if( this->hasWrapper( "usedFaces" ) )
   {
-    exclusionList.insert( this->getWrapperIndex( "usedFaces" ));
+    result.insert( "usedFaces" );
   }
+  return result;
 }
 
 
 localIndex NodeManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 
 localIndex NodeManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
 
-template< bool DOPACK >
-localIndex NodeManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex NodeManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                            arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toEdgesRelation.toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToEdges,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_toEdgesRelation.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::edgeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toEdgesRelation.toArrayOfArraysView(),
+                                               m_unmappedGlobalIndicesInToEdges,
+                                               packList,
+                                               this->localToGlobalMap(),
+                                               m_toEdgesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::faceListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_toFacesRelation.toArrayOfArraysView(),
-                                           m_unmappedGlobalIndicesInToFaces,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_toFacesRelation.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::faceListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_toFacesRelation.toArrayOfArraysView(),
+                                               m_unmappedGlobalIndicesInToFaces,
+                                               packList,
+                                               this->localToGlobalMap(),
+                                               m_toFacesRelation.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_toElements,
-                                           packList,
-                                           m_toElements.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elementListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_toElements,
+                                               packList,
+                                               m_toElements.getElementRegionManager() );
   return packedSize;
 }
 

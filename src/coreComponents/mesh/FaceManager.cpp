@@ -426,56 +426,57 @@ void FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager c
   } );
 }
 
-void FaceManager::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
+std::set< string > FaceManager::getPackingExclusionList() const
 {
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementSubRegionListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::elementListString() ));
+  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
+  result.insert( { viewKeyStruct::nodeListString(),
+                   viewKeyStruct::edgeListString(),
+                   viewKeyStruct::elementRegionListString(),
+                   viewKeyStruct::elementSubRegionListString(),
+                   viewKeyStruct::elementListString() } );
+  return result;
 }
 
 localIndex FaceManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex FaceManager::packUpDownMaps( buffer_unit_type * & buffer,
                                         arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex FaceManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                               arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex FaceManager::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                            arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_nodeList.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToNodes,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_nodeList.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_nodeList.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToNodes,
+                                               packList,
+                                               this->localToGlobalMap(),
+                                               m_nodeList.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::edgeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           m_edgeList.base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToEdges,
-                                           packList,
-                                           this->localToGlobalMap(),
-                                           m_edgeList.relatedObjectLocalToGlobal() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::edgeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               m_edgeList.base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToEdges,
+                                               packList,
+                                               this->localToGlobalMap(),
+                                               m_edgeList.relatedObjectLocalToGlobal() );
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::elementListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_toElements,
-                                           packList,
-                                           m_toElements.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::elementListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_toElements,
+                                               packList,
+                                               m_toElements.getElementRegionManager() );
 
   return packedSize;
 }
