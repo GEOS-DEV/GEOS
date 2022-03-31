@@ -229,6 +229,8 @@ void SolidMechanicsLagrangianFEM::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE );
 
+      subRegion.excludeWrappersFromPacking( { viewKeyStruct::elemsAttachedToSendOrReceiveNodesString(),
+                                              viewKeyStruct::elemsNotAttachedToSendOrReceiveNodesString() } );
     } );
   } );
 }
