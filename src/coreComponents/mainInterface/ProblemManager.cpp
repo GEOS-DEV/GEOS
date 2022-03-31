@@ -715,6 +715,7 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                 finiteElement::FiniteElementBase &
                 fe = subRegion.template registerWrapper< finiteElement::FiniteElementBase >( discretizationName, std::move( newFE ) ).
                        setRestartFlags( dataRepository::RestartFlags::NO_WRITE ).reference();
+                subRegion.excludeWrappersFromPacking( { discretizationName } );
 
                 finiteElement::dispatch3D( fe,
                                            [&] ( auto & finiteElement )
