@@ -41,9 +41,11 @@ public:
 
   ContactBaseUpdates( real64 const & penaltyStiffness,
                       real64 const & shearStiffness,
+                      real64 const & displacementJumpThreshold,
                       TableFunction const & apertureTable )
     : m_penaltyStiffness( penaltyStiffness ),
     m_shearStiffness( shearStiffness ),
+    m_displacementJumpThreshold( displacementJumpThreshold ),
     m_apertureTable( apertureTable.createKernelWrapper() )
   {}
 
@@ -136,8 +138,11 @@ protected:
   /// The penalty stiffness
   real64 m_penaltyStiffness;
 
-  ///
+  /// The shear stiffness
   real64 m_shearStiffness;
+
+  /// A threshold valued to determine whether a fracture is open or not.
+  real64 m_displacementJumpThreshold;
 
   /// The aperture table function wrapper
   TableFunction::KernelWrapper m_apertureTable;
@@ -198,6 +203,9 @@ public:
     /// string/key for shear stiffness
     static constexpr char const * shearStiffnessString() { return "shearStiffness"; }
 
+    /// string/key for the displacement jump threshold value
+    static constexpr char const * displacementJumpThresholdString() { return "displacementJumpThreshold"; }
+
     /// string/key for aperture tolerance
     static constexpr char const * apertureToleranceString() { return "apertureTolerance"; }
 
@@ -220,6 +228,7 @@ protected:
   /// The value of penalty to penetration
   real64 m_penaltyStiffness;
 
+  /// The value of the shear stiffness
   real64 m_shearStiffness;
 
   /// The aperture tolerance to avoid floating point errors in expressions involving aperture
@@ -227,6 +236,9 @@ protected:
 
   /// The name of the aperture table, if any
   string m_apertureTableName;
+
+  /// A threshold valued to determine whether a fracture is open or not.
+  real64 m_displacementJumpThreshold;
 
   /// Pointer to the function that limits the model aperture to a physically admissible value.
   TableFunction const * m_apertureTable;

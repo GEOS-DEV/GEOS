@@ -38,11 +38,12 @@ public:
 
   CoulombContactUpdates( real64 const & penaltyStiffness,
                          real64 const & shearStiffness,
+                         real64 const & displacementJumpThreshold,
                          TableFunction const & apertureTable,
                          real64 const & cohesion,
                          real64 const & frictionCoefficient,
                          arrayView2d< real64 > const & elasticSlip )
-    : ContactBaseUpdates( penaltyStiffness, shearStiffness, apertureTable ),
+    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable ),
     m_cohesion( cohesion ),
     m_frictionCoefficient( frictionCoefficient ),
     m_elasticSlip( elasticSlip )
@@ -206,12 +207,12 @@ real64 CoulombContactUpdates::computeLimitTangentialTractionNorm( real64 const &
 
 
 GEOSX_HOST_DEVICE
-void CoulombContactUpdates::computeTraction( localIndex const k,
-                                             arraySlice1d< real64 const > const & oldDispJump,
-                                             arraySlice1d< real64 const > const & dispJump,
-                                             integer const & fractureState,
-                                             arraySlice1d< real64 > const & tractionVector,
-                                             arraySlice2d< real64 > const & dTractionVector_dJump ) const
+inline void CoulombContactUpdates::computeTraction( localIndex const k,
+                                                    arraySlice1d< real64 const > const & oldDispJump,
+                                                    arraySlice1d< real64 const > const & dispJump,
+                                                    integer const & fractureState,
+                                                    arraySlice1d< real64 > const & tractionVector,
+                                                    arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
 
   bool const isOpen = fractureState == extrinsicMeshData::contact::FractureState::Open;
@@ -289,10 +290,10 @@ void CoulombContactUpdates::computeTraction( localIndex const k,
 }
 
 GEOSX_HOST_DEVICE
-void CoulombContactUpdates::updateFractureState( localIndex const k,
-                                                 arraySlice1d< real64 const > const & dispJump,
-                                                 arraySlice1d< real64 const > const & tractionVector,
-                                                 integer & fractureState ) const
+inline void CoulombContactUpdates::updateFractureState( localIndex const k,
+                                                        arraySlice1d< real64 const > const & dispJump,
+                                                        arraySlice1d< real64 const > const & tractionVector,
+                                                        integer & fractureState ) const
 {
   using namespace extrinsicMeshData::contact;
 

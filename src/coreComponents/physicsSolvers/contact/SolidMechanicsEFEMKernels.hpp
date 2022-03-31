@@ -306,9 +306,9 @@ struct StateUpdateKernel
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       contactWrapper.computeTraction( k, oldJump[k], jump[k],
+                                      fractureState[k],
                                       fractureTraction[k],
-                                      dFractureTraction_dJump[k],
-                                      fractureState[k] == 3 );
+                                      dFractureTraction_dJump[k] );
     } );
   }
 

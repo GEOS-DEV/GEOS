@@ -38,8 +38,9 @@ public:
 
   FrictionlessContactUpdates( real64 const & penaltyStiffness,
                               real64 const & shearStiffness,
+                              real64 const & displacementJumpThreshold,
                               TableFunction const & apertureTable )
-    : ContactBaseUpdates( penaltyStiffness, shearStiffness, apertureTable )
+    : ContactBaseUpdates( penaltyStiffness, shearStiffness, displacementJumpThreshold, apertureTable )
   {}
 
   /// Default copy constructor
@@ -145,12 +146,12 @@ protected:
 };
 
 GEOSX_HOST_DEVICE
-void FrictionlessContactUpdates::computeTraction( localIndex const k,
-                                                  arraySlice1d< real64 const > const & oldDispJump,
-                                                  arraySlice1d< real64 const > const & dispJump,
-                                                  integer const & fractureState,
-                                                  arraySlice1d< real64 > const & tractionVector,
-                                                  arraySlice2d< real64 > const & dTractionVector_dJump ) const
+inline void FrictionlessContactUpdates::computeTraction( localIndex const k,
+                                                         arraySlice1d< real64 const > const & oldDispJump,
+                                                         arraySlice1d< real64 const > const & dispJump,
+                                                         integer const & fractureState,
+                                                         arraySlice1d< real64 > const & tractionVector,
+                                                         arraySlice2d< real64 > const & dTractionVector_dJump ) const
 {
   GEOSX_UNUSED_VAR( k, oldDispJump );
 
@@ -165,21 +166,14 @@ void FrictionlessContactUpdates::computeTraction( localIndex const k,
 }
 
 GEOSX_HOST_DEVICE
-void FrictionlessContactUpdates::updateFractureState( localIndex const k,
-                                                      arraySlice1d< real64 const > const & dispJump,
-                                                      arraySlice1d< real64 const > const & tractionVector,
-                                                      integer & fractureState ) const
+inline void FrictionlessContactUpdates::updateFractureState( localIndex const k,
+                                                             arraySlice1d< real64 const > const & dispJump,
+                                                             arraySlice1d< real64 const > const & tractionVector,
+                                                             integer & fractureState ) const
 {
   GEOSX_UNUSED_VAR( k, tractionVector );
-
-  if( dispJump[0] >  -LvArray::NumericLimits< real64 >::epsilon )
-  {
-    fractureState = extrinsicMeshData::contact::FractureState::Open;
-  }
-  else
-  {
-    fractureState = extrinsicMeshData::contact::FractureState::Stick;
-  }
+  using namespace extrinsicMeshData::contact;
+  fractureState = dispJump[0] > m_displacementJumpThreshold ? FractureState::Open : FractureState::Stick;
 }
 
 } /* namespace constitutive */

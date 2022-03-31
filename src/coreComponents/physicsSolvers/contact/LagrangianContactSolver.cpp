@@ -219,16 +219,11 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      arrayView2d< real64 > const &
-      deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaTraction >();
-      arrayView2d< real64 const > const &
-      dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
-      arrayView2d< real64 > const &
-      oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
-      arrayView1d< integer const > const &
-      fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
-      arrayView1d< integer > const &
-      oldFractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldFractureState >();
+      arrayView2d< real64 > const & deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaTraction >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView2d< real64 > const & oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+      arrayView1d< integer > const & oldFractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {

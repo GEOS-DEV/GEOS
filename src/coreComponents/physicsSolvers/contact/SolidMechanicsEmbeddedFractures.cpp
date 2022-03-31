@@ -732,20 +732,15 @@ void SolidMechanicsEmbeddedFractures::updateState( DomainPartition & domain )
     {
       ContactBase const & contact = getConstitutiveModel< ContactBase >( subRegion, m_contactRelationName );
 
-      arrayView2d< real64 const > const & jump  =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView2d< real64 const > const & jump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
 
-      arrayView2d< real64 const > const & oldJump  =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+      arrayView2d< real64 const > const & oldJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
 
-      arrayView2d< real64 > const & fractureTraction =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
+      arrayView2d< real64 > const & fractureTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
 
-      arrayView3d< real64 > const & dFractureTraction_dJump =
-        subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
+      arrayView3d< real64 > const & dFractureTraction_dJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >();
 
-      arrayView1d< integer const > const & fractureState =
-        subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() );
+      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
 
       constitutiveUpdatePassThru( contact, [&] ( auto & castedContact )
       {
@@ -776,10 +771,10 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                                                 arrayView1d< string const > const & regionNames )
   {
     ElementRegionManager & elemManager = mesh.getElemManager();
-    
+
 
     // We want to update the configuration (fracture state in this case) and check if it has changed. If it hasn't changed
-    // then we know the configuartion loop has converged and we can return true. 
+    // then we know the configuartion loop has converged and we can return true.
     elemManager.forElementSubRegions< EmbeddedSurfaceSubRegion >( regionNames, [&]( localIndex const,
                                                                                     EmbeddedSurfaceSubRegion & subRegion )
     {
@@ -822,8 +817,8 @@ bool SolidMechanicsEmbeddedFractures::updateConfiguration( DomainPartition & dom
                          MPI_COMM_GEOSX );
 
   // for this solver it makes sense to reset the state.
-  if( !hasConfigurationConvergedGlobally )
-    resetStateToBeginningOfStep( domain );
+  // if( !hasConfigurationConvergedGlobally )
+  //   resetStateToBeginningOfStep( domain );
 
   return hasConfigurationConvergedGlobally;
 }
