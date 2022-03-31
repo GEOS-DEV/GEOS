@@ -66,18 +66,18 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = hypre::MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
-    m_levelInterpType[0]       = hypre::MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = hypre::MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = hypre::MGRCoarseGridMethod::galerkin;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = hypre::MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
-    m_levelInterpType[1]       = hypre::MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]     = hypre::MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = hypre::MGRCoarseGridMethod::galerkin;
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
 
-    m_globalSmoothType = hypre::MGRGlobalSmootherType::ilu0; // TODO switch to levelGlobalSmoother when hypre allows
+    m_globalSmoothType = MGRGlobalSmootherType::ilu0; // TODO switch to levelGlobalSmoother when hypre allows
     m_numGlobalSmoothSweeps = 0; // No global smoother
   }
 
@@ -103,7 +103,7 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalsmoothType( precond.ptr, toUnderlying( m_globalSmoothType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalsmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 #ifdef GEOSX_USE_HYPRE_CUDA
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetTruncateCoarseGridThreshold( precond.ptr, 1e-20 )); // truncate intermediate/coarse grids
 #endif
 
@@ -113,8 +113,8 @@ public:
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetTol( mgrData.coarseSolver.ptr, 0.0 ) );
 #ifdef GEOSX_USE_HYPRE_CUDA
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetPrintLevel( mgrData.coarseSolver.ptr, 1 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, toUnderlying( hypre::AMGCoarseningType::PMIS ) ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, hypre::getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( mgrData.coarseSolver.ptr, toUnderlying( AMGCoarseningType::PMIS ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( mgrData.coarseSolver.ptr, getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType::l1jacobi ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetNumSweeps( mgrData.coarseSolver.ptr, 2 ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxRowSum( mgrData.coarseSolver.ptr, 1.0 ) );
 #else

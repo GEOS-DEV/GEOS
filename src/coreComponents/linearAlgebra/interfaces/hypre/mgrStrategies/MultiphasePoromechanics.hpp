@@ -72,22 +72,22 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = hypre::MGRFRelaxationMethod::amgVCycle;
-    m_levelInterpType[0]       = hypre::MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = hypre::MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = hypre::MGRCoarseGridMethod::nonGalerkin;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::nonGalerkin;
 
     // Level 1
-    m_levelFRelaxMethod[1]     = hypre::MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
-    m_levelInterpType[1]       = hypre::MGRInterpolationType::jacobi;
-    m_levelRestrictType[1]     = hypre::MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[1] = hypre::MGRCoarseGridMethod::galerkin;
+    m_levelFRelaxMethod[1]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelInterpType[1]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[1]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[1] = MGRCoarseGridMethod::galerkin;
 
     // Level 2
-    m_levelFRelaxMethod[2]     = hypre::MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
-    m_levelInterpType[2]       = hypre::MGRInterpolationType::jacobi;
-    m_levelRestrictType[2]     = hypre::MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[2] = hypre::MGRCoarseGridMethod::galerkin;
+    m_levelFRelaxMethod[2]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelInterpType[2]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[2]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[2] = MGRCoarseGridMethod::galerkin;
 
     m_numGlobalSmoothSweeps = 0;
   }

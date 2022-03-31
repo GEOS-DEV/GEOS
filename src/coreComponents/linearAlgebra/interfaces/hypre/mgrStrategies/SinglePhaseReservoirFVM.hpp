@@ -61,10 +61,10 @@ public:
     setupLabels();
 
     // Level 0
-    m_levelFRelaxMethod[0]     = hypre::MGRFRelaxationMethod::amgVCycle;
-    m_levelInterpType[0]       = hypre::MGRInterpolationType::jacobi;
-    m_levelRestrictType[0]     = hypre::MGRRestrictionType::injection;
-    m_levelCoarseGridMethod[0] = hypre::MGRCoarseGridMethod::galerkin;
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::amgVCycle;
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
     m_numGlobalSmoothSweeps = 0;
   }

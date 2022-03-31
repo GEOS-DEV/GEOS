@@ -82,17 +82,17 @@ protected:
   HYPRE_Int m_numLabels[numLevels]{ -1 };              ///< Number of dof labels kept
   HYPRE_Int * m_ptrLabels[numLevels]{ nullptr };       ///< Pointers to each level's labels, as consumed by MGR
 
-  hypre::MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation method for each level
-  hypre::MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
-  hypre::MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
-  hypre::MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
+  MGRFRelaxationMethod m_levelFRelaxMethod[numLevels];    ///< F-relaxation method for each level
+  MGRInterpolationType m_levelInterpType[numLevels];      ///< Interpolation type for each level
+  MGRRestrictionType m_levelRestrictType[numLevels];      ///< Restriction type for each level
+  MGRCoarseGridMethod m_levelCoarseGridMethod[numLevels]; ///< Coarse grid method for each level
 
   HYPRE_Int m_numRestrictSweeps{ -1 }; ///< Number of restrict sweeps
   HYPRE_Int m_numInterpSweeps{ -1 };   ///< Number of interpolation sweeps
 
   HYPRE_Int m_numRelaxSweeps{ -1 }; ///< F-relaxation number of sweeps
 
-  hypre::MGRGlobalSmootherType m_globalSmoothType{ hypre::MGRGlobalSmootherType::blockJacobi }; ///< Global smoothing type
+  MGRGlobalSmootherType m_globalSmoothType{ MGRGlobalSmootherType::blockJacobi }; ///< Global smoothing type
   HYPRE_Int m_numGlobalSmoothSweeps{ -1 }; ///< Global smoothing number of iterations
 
   /**
@@ -104,10 +104,10 @@ protected:
   {
     for( HYPRE_Int i = 0; i < numLevels; ++i )
     {
-      m_levelFRelaxMethod[i]     = hypre::MGRFRelaxationMethod::singleLevel;
-      m_levelInterpType[i]       = hypre::MGRInterpolationType::jacobi;
-      m_levelRestrictType[i]     = hypre::MGRRestrictionType::injection;
-      m_levelCoarseGridMethod[i] = hypre::MGRCoarseGridMethod::galerkin;
+      m_levelFRelaxMethod[i]     = MGRFRelaxationMethod::singleLevel;
+      m_levelInterpType[i]       = MGRInterpolationType::jacobi;
+      m_levelRestrictType[i]     = MGRRestrictionType::injection;
+      m_levelCoarseGridMethod[i] = MGRCoarseGridMethod::galerkin;
     }
   }
 
