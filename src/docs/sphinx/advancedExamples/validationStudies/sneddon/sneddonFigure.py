@@ -40,7 +40,7 @@ def getFracturePressureFromXML( xmlFilePath ):
     pressure = 0.0
     found_traction = False
     for elem in param:
-        if elem.get("fieldName") == "fractureTraction" and elem.get("component") == "0":
+        if elem.get("fieldName") == "traction" and elem.get("component") == "0":
             pressure = float(elem.get("scale"))*(-1)
             found_traction = True
         if found_traction: break

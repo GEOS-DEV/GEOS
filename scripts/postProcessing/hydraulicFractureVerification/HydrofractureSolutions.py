@@ -295,7 +295,7 @@ if __name__ == "__main__":
     hfsolns = KGDSolutions()
 
     radTimes = np.array([100.0,time[-1]])
-    print "radTimes = ", radTimes
+    print("radTimes = ", radTimes)
     
     solns = hfsolns.Solutions( mu, E, q, KI, time, radTimes )
     
