@@ -74,7 +74,7 @@ void CompositionalMultiphaseReservoir::addCouplingSparsityPattern( DomainPartiti
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   // TODO: remove this and just call SolverBase::setupSystem when DofManager can handle the coupling
@@ -181,7 +181,7 @@ void CompositionalMultiphaseReservoir::assembleCouplingTerms( real64 const time_
   using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
-  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel const & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
   ElementRegionManager const & elemManager = meshLevel.getElemManager();
 
   localIndex constexpr MAX_NUM_COMP = MultiFluidBase::MAX_NUM_COMPONENTS;

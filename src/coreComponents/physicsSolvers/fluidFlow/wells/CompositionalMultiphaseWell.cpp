@@ -1480,7 +1480,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
   fieldNames["elems"].emplace_back( extrinsicMeshData::well::deltaGlobalCompDensity::key() );
   fieldNames["elems"].emplace_back( extrinsicMeshData::well::deltaMixtureConnectionRate::key() );
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                       domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                                       domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                                                        domain.getNeighbors(),
                                                        true );
 }

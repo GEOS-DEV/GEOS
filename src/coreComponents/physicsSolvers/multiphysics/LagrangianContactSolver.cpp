@@ -1230,7 +1230,7 @@ void LagrangianContactSolver::createPreconditioner( DomainPartition const & doma
     {
       if( m_solidSolver->getRigidBodyModes().empty() )
       {
-        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+        MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
         LAIHelperFunctions::computeRigidBodyModes( mesh,
                                                    m_dofManager,
                                                    { keys::TotalDisplacement },

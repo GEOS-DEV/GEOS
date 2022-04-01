@@ -301,7 +301,7 @@ void ProblemManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
 
   MeshManager & meshManager = this->getGroup< MeshManager >( groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
   elementManager.generateDataStructureSkeleton( 0 );
   schemaUtilities::SchemaConstruction( elementManager, schemaRoot, targetChoiceNode, documentationType );
 
@@ -584,7 +584,7 @@ void ProblemManager::generateMesh()
 
       faceManager.setIsExternal();
       edgeManager.setIsExternal( faceManager );
-      });
+    } );
   } );
 
 }

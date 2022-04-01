@@ -688,8 +688,8 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getFaceManager();
-  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getNodeManager();
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getFaceManager();
+  NodeManager const & nodeManager = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getNodeManager();
 
   string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
@@ -719,7 +719,7 @@ void SolidMechanicsLagrangianFEM::applyChomboPressure( DofManager const & dofMan
                                                        DomainPartition & domain,
                                                        arrayView1d< real64 > const & localRhs )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
   FaceManager & faceManager = mesh.getFaceManager();
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -1022,7 +1022,7 @@ SolidMechanicsLagrangianFEM::
                            arrayView1d< real64 > const & localRhs )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
 
   FaceManager & faceManager = mesh.getFaceManager();
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
@@ -1071,7 +1071,7 @@ SolidMechanicsLagrangianFEM::
 {
   GEOSX_MARK_FUNCTION;
 
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
   NodeManager const & nodeManager = mesh.getNodeManager();
 
   arrayView1d< globalIndex const > const
@@ -1166,7 +1166,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( keys::TotalDisplacement );
 
   CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                       domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                                       domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                                                        domain.getNeighbors(),
                                                        true );
 }
@@ -1183,7 +1183,7 @@ void SolidMechanicsLagrangianFEM::solveSystem( DofManager const & dofManager,
 void SolidMechanicsLagrangianFEM::resetStateToBeginningOfStep( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
   NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & incdisp  = nodeManager.incrementalDisplacement();
@@ -1210,7 +1210,7 @@ void SolidMechanicsLagrangianFEM::applyContactConstraint( DofManager const & dof
 
   if( m_contactRelationName != viewKeyStruct::noContactRelationNameString() )
   {
-    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
     FaceManager const & faceManager = mesh.getFaceManager();
     NodeManager & nodeManager = mesh.getNodeManager();
     ElementRegionManager & elemManager = mesh.getElemManager();

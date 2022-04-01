@@ -71,7 +71,7 @@ void LaplaceBaseH1::registerDataOnMesh( Group & meshBodies )
 {
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    NodeManager & nodes = meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getNodeManager();
+    NodeManager & nodes = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getNodeManager();
 
     nodes.registerWrapper< real64_array >( m_fieldName ).
       setApplyDefaultValue( 0.0 ).
@@ -147,7 +147,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
   fieldNames["node"].emplace_back( m_fieldName );
 
   getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                                              domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                                                               domain.getNeighbors(),
                                                               true );
 }

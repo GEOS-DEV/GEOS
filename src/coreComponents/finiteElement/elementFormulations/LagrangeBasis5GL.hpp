@@ -190,7 +190,7 @@ public:
     real64 lambda4=LagrangeBasis5GL::parentSupportCoord( 4 );
 
     return ((21.0/16.0)*sqrt__7_mins_sqrt7_div2__)*(xi*xi*xi*xi*xi-lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi+lambda4*(lambda3*lambda3+1)*xi*xi+
-                                                  lambda3*lambda3*xi-lambda4*lambda3*lambda3);
+                                                    lambda3*lambda3*xi-lambda4*lambda3*lambda3);
   }
 
 /**
@@ -209,7 +209,7 @@ public:
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
     return ((-21.0/16.0)*sqrt__7_plus_sqrt7_div2__)*(xi*xi*xi*xi*xi-lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi+lambda3*(lambda4*lambda4+1)*xi*xi+
-                                                   lambda4*lambda4*xi-lambda3*lambda4*lambda4);
+                                                     lambda4*lambda4*xi-lambda3*lambda4*lambda4);
   }
 
 /**
@@ -228,7 +228,7 @@ public:
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
     return ((21.0/16.0)*sqrt__7_plus_sqrt7_div2__)*(xi*xi*xi*xi*xi+lambda3*xi*xi*xi*xi-(lambda4*lambda4+1)*xi*xi*xi-lambda3*(lambda4*lambda4+1)*xi*xi+
-                                                  lambda4*lambda4*xi+lambda3*lambda4*lambda4);
+                                                    lambda4*lambda4*xi+lambda3*lambda4*lambda4);
   }
 
 /**
@@ -247,7 +247,7 @@ public:
     real64 lambda3=LagrangeBasis5GL::parentSupportCoord( 3 );
 
     return ((-21.0/16.0)*sqrt__7_mins_sqrt7_div2__)*(xi*xi*xi*xi*xi+lambda4*xi*xi*xi*xi-(lambda3*lambda3+1)*xi*xi*xi-lambda4*(lambda3*lambda3+1)*xi*xi+
-                                                   lambda3*lambda3*xi+lambda4*lambda3*lambda3);
+                                                     lambda3*lambda3*xi+lambda4*lambda3*lambda3);
   }
 
 /**

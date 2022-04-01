@@ -754,7 +754,7 @@ void importFieldOnCellElementSubRegion( int regionId,
 void VTKMeshGenerator::importFields( DomainPartition & domain ) const
 {
   // TODO Having CellElementSubRegion and ConstitutiveBase... here in a pure geometric module is problematic.
-  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
+  ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
 
   auto importFieldsForElementType = [&]( VTKCellType vtkCellType,
                                          std::map< int, std::vector< vtkIdType > > const & cellBlocks )
@@ -776,7 +776,8 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
     fieldNames["elems"].emplace_back( vtkArray->GetName() );
   }
 
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ), domain.getNeighbors(), false );
+  CommunicationTools::getInstance().synchronizeFields( fieldNames, domain.getMeshBody( this->getName() ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
+                                                       domain.getNeighbors(), false );
 }
 
 /**

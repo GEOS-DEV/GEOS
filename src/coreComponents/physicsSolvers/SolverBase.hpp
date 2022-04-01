@@ -598,7 +598,7 @@ public:
 //        lambda( meshBodyName, meshLevel, regionNames );
 //      } );
       lambda( meshBodyName,
-              meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+              meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
               regionNames );
 
     }
@@ -619,7 +619,7 @@ public:
 //      } );
 
       lambda( meshBodyName,
-              meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ),
+              meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
               regionNames );
 
     }

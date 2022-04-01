@@ -65,7 +65,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
   // 2) Register the face data
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
     FaceManager & faceManager = meshLevel.getFaceManager();
 
     // primary variables: face pressures changes

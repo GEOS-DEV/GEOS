@@ -60,7 +60,7 @@ void setupProblemFromXML( ProblemManager * const problemManager, char const * co
   MeshManager & meshManager = problemManager->getGroup< MeshManager >( problemManager->groupKeys.meshManager );
   meshManager.generateMeshLevels( domain );
 
-  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
+  ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ).getElemManager();
   xmlWrapper::xmlNode topLevelNode = xmlProblemNode.child( elementManager.getName().c_str() );
   elementManager.processInputFileRecursive( topLevelNode );
   elementManager.postProcessInputRecursive();

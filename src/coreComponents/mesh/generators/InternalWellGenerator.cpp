@@ -207,7 +207,7 @@ void InternalWellGenerator::generateMesh( DomainPartition & domain )
   }
 
   // get the element (sub) region to populate and save the well generator and constraints names
-  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & meshLevel = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
 
   ElementRegionManager & elemManager = meshLevel.getElemManager();
   WellElementRegion &
