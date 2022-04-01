@@ -19,7 +19,7 @@ def getParametersFromXML( xmlFilePath ):
             source = [float(i) for i in source[1:-1].split(",")]
             x_source = round(source[0])
             found_source = True
-        if found_source: break
+        if found_source: break  
 
     tree = ElementTree.parse(xmlFilePath + "_base.xml")
 
@@ -40,18 +40,18 @@ def getParametersFromXML( xmlFilePath ):
 
 
 def main():
-    xmlFilePathPrefix = "../../../../../../inputFiles/hydraulicFracturing/pennyShapedToughnessDominated"   
+    xmlFilePathPrefix = "../../../../../../inputFiles/hydraulicFracturing/pennyShapedViscosityDominated"    
 
     tMax, E, nu, KIC, mu, Q0, xSource = getParametersFromXML( xmlFilePathPrefix )
     Ep = E / ( 1.0 - nu**2.0 )
 
-    t = np.arange(0.0, tMax, 0.01*tMax)
+    t = np.arange( 0.01*tMax, tMax, 0.01*tMax )   
     radTimes = np.array([tMax])
     hfsolns = HydrofractureSolutions.PennySolutions()
     pennyFrac = hfsolns.Solutions( mu, Ep, Q0, KIC, t, radTimes, xSource )
-    inletPressure = pennyFrac[5]
-    fracRadius = pennyFrac[6]
-    inletAperture = pennyFrac[7]
+    inletPressure = pennyFrac[8]
+    fracRadius = pennyFrac[9]
+    inletAperture = pennyFrac[10]
 
     # Load GEOSX results
     t_sim, p0_sim, w0_sim, fracArea_sim = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
@@ -64,15 +64,15 @@ def main():
     lw=8
     mew=2
     malpha = 1.0
-    lablelist = ['Asymptotic ( $\mu$ => 0, $C_{L}$ => 0 )', 'GEOSX ( $\mu$ => 0, $C_{L}$ => 0 )']
+    lablelist = ['Asymptotic ( $K_{IC}$ => 0, $C_{L}$ => 0 )', 'GEOSX ( $K_{IC}$ => 0, $C_{L}$ => 0 )']
     
     fig, ax = plt.subplots(2,2,figsize=(24, 18))
     cmap = plt.get_cmap("tab10")
 
     ax[0,0].plot(t, fracRadius, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
-    ax[0,0].plot(t_sim, Radius_sim, 'o', color=cmap(0), mec = cmap(0), fillstyle='none', markersize=msize, mew=mew, label=lablelist[1], alpha=malpha )
+    ax[0,0].plot(t_sim, Radius_sim, 'D', color=cmap(0), mec = cmap(0), fillstyle='none', markersize=msize, mew=mew, label=lablelist[1], alpha=malpha )
     ax[0,0].set_xlim([min(t_sim), max(t_sim)])
-    ax[0,0].set_ylim(0, 60)
+    ax[0,0].set_ylim(0, 80)
     ax[0,0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
     ax[0,0].set_ylabel(r'Fracture Radius (m)', size=fsize, weight="bold")
     ax[0,0].legend(loc='lower right',fontsize=fsize*0.7)
@@ -82,7 +82,7 @@ def main():
 
 
     ax[0,1].plot(t, inletAperture*1000, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
-    ax[0,1].plot(t_sim, w0_sim*1000, 'o', color=cmap(0), mec = cmap(0), fillstyle='none', markersize=msize, mew=mew, label=lablelist[1], alpha=malpha )
+    ax[0,1].plot(t_sim, w0_sim*1000, 'D', color=cmap(0), mec = cmap(0), fillstyle='none', markersize=msize, mew=mew, label=lablelist[1], alpha=malpha )
     ax[0,1].set_xlim([min(t_sim), max(t_sim)])
     ax[0,1].set_ylim(0, 2.0)
     ax[0,1].set_xlabel(r'Time (s)', size=fsize, weight="bold")
@@ -94,9 +94,9 @@ def main():
 
 
     ax[1,0].plot(t, inletPressure/1.0e6, lw=lw, alpha=0.8, color=cmap(0), label=lablelist[0])
-    ax[1,0].plot(t_sim, p0_sim/1.0e6, 'o', color=cmap(0), mec = cmap(0), fillstyle='none', markersize=msize, mew=mew, label=lablelist[1], alpha=malpha )
+    ax[1,0].plot(t_sim, p0_sim/1.0e6, 'D', color=cmap(0), mec = cmap(0), fillstyle='none', markersize=msize, mew=mew, label=lablelist[1], alpha=malpha )
     ax[1,0].set_xlim([min(t_sim), max(t_sim)])
-    ax[1,0].set_ylim(0, 1)
+    ax[1,0].set_ylim(0, 1.5)
     ax[1,0].set_xlabel(r'Time (s)', size=fsize, weight="bold")
     ax[1,0].set_ylabel(r'Net Pressure at Well (MPa)', size=fsize, weight="bold")
     ax[1,0].legend(loc='lower right',fontsize=fsize*0.7)
