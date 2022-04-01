@@ -184,7 +184,7 @@ void testKernelDriver()
       {
         for( int i = 0; i < 3; ++i )
         {
-          if( abs( dNdX[a][i] )<1e-9 )
+          if( fabs( dNdX[a][i] )<1e-9 )
           {
             viewdNdX( q, a, i ) = 0;
           }

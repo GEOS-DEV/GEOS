@@ -536,39 +536,34 @@ void ProblemManager::generateMesh()
     ElementRegionManager & elemManager = baseMesh.getElemManager();
     elemManager.generateWells( meshManager, baseMesh );
 
-    meshBody.deregisterGroup( keys::cellManager );
-
   } );
 
-//  for( auto const & discretizationPair: discretizations )
-//  {
-//    string const & meshBodyName = discretizationPair.first.first;
-//    FiniteElementDiscretization const & discretization = *(discretizationPair.first.second);
-//    string const & discretizationName = discretization.getName();
-//    arrayView1d< string const > const regionNames = discretizationPair.second;
-//    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
-//
-//    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-//
-//    MeshLevel & mesh = meshBody.createMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
-//                                                 discretizationName,
-//                                                 discretization.getOrder() );
-//
-//    this->generateDiscretization( mesh,
-//                                  cellBlockManager,
-//                                  &discretization,
-//                                  regionNames );
-//
-//    FaceManager & faceManager = mesh.getFaceManager();
-//    EdgeManager & edgeManager = mesh.getEdgeManager();
-//    Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
-//    integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
-//    domain.setupCommunications( useNonblockingMPI );
-//    faceManager.setIsExternal();
-//    edgeManager.setIsExternal( faceManager );
-//  }
-//
-//
+  for( auto const & discretizationPair: discretizations )
+  {
+    string const & meshBodyName = discretizationPair.first.first;
+    FiniteElementDiscretization const & discretization = *(discretizationPair.first.second);
+    int const order = discretization.getOrder();
+
+    if( order > 1 )
+    {
+      string const & discretizationName = discretization.getName();
+      arrayView1d< string const > const regionNames = discretizationPair.second;
+      MeshBody & meshBody = domain.getMeshBody( meshBodyName );
+
+      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
+
+      MeshLevel & mesh = meshBody.createMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
+                                                   discretizationName,
+                                                   discretization.getOrder() );
+
+      this->generateDiscretization( mesh,
+                                    cellBlockManager,
+                                    &discretization,
+                                    regionNames );
+    }
+  }
+
+
 
   Group const & commandLine = this->getGroup< Group >( groupKeys.commandLine );
   integer const useNonblockingMPI = commandLine.getReference< integer >( viewKeys.useNonblockingMPI );
@@ -576,14 +571,20 @@ void ProblemManager::generateMesh()
 
   domain.forMeshBodies( [&]( MeshBody & meshBody )
   {
-    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
-    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
 
-    FaceManager & faceManager = meshLevel.getFaceManager();
-    EdgeManager & edgeManager = meshLevel.getEdgeManager();
+    meshBody.deregisterGroup( keys::cellManager );
 
-    faceManager.setIsExternal();
-    edgeManager.setIsExternal( faceManager );
+//    GEOSX_THROW_IF_NE( meshBody.getMeshLevels().numSubGroups(), 1, InputError );
+    meshBody.forMeshLevels( [&]( MeshLevel & meshLevel )
+    {
+//    MeshLevel & meshLevel = meshBody.getMeshLevel(MeshLevel::groupStructKeys::baseDiscretizationString() );
+
+      FaceManager & faceManager = meshLevel.getFaceManager();
+      EdgeManager & edgeManager = meshLevel.getEdgeManager();
+
+      faceManager.setIsExternal();
+      edgeManager.setIsExternal( faceManager );
+      });
   } );
 
 }
