@@ -192,9 +192,9 @@ void getFaceNodes( ElementType const & elementType,
         {
           nodeIndices.resize( 4 );
           nodeIndices[0] = elementToNodes[iElement][0];
-          nodeIndices[1] = elementToNodes[iElement][1];
-          nodeIndices[2] = elementToNodes[iElement][2];
-          nodeIndices[3] = elementToNodes[iElement][3];
+          nodeIndices[1] = elementToNodes[iElement][2];
+          nodeIndices[2] = elementToNodes[iElement][3];
+          nodeIndices[3] = elementToNodes[iElement][1];
           break;
         }
         case 1:
@@ -208,15 +208,15 @@ void getFaceNodes( ElementType const & elementType,
         case 2:
         {
           nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][1];
-          nodeIndices[1] = elementToNodes[iElement][2];
-          nodeIndices[2] = elementToNodes[iElement][4];
+          nodeIndices[0] = elementToNodes[iElement][0];
+          nodeIndices[1] = elementToNodes[iElement][4];
+          nodeIndices[2] = elementToNodes[iElement][2];
           break;
         }
         case 3:
         {
           nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][2];
+          nodeIndices[0] = elementToNodes[iElement][1];
           nodeIndices[1] = elementToNodes[iElement][3];
           nodeIndices[2] = elementToNodes[iElement][4];
           break;
@@ -224,9 +224,9 @@ void getFaceNodes( ElementType const & elementType,
         case 4:
         {
           nodeIndices.resize( 3 );
-          nodeIndices[0] = elementToNodes[iElement][3];
-          nodeIndices[1] = elementToNodes[iElement][0];
-          nodeIndices[2] = elementToNodes[iElement][4];
+          nodeIndices[0] = elementToNodes[iElement][2];
+          nodeIndices[1] = elementToNodes[iElement][4];
+          nodeIndices[2] = elementToNodes[iElement][3];
           break;
         }
         default:
