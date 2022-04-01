@@ -204,8 +204,6 @@ public:
    */
   ///@{
 
-  std::set< string > getPackingExclusionList() const override;
-
   /**
    * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
    * @details Packed data are meant to be communicated to other MPI ranks
@@ -519,15 +517,15 @@ private:
 
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occured if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
 
 

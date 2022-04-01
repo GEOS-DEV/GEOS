@@ -139,6 +139,14 @@ set( physicsSolvers_sources
    )
 
 set( dependencyList constitutive mesh linearAlgebra discretizationMethods events )
+if( ENABLE_PYGEOSX )
+  list( APPEND physicsSolvers_headers
+	python/PySolver.hpp 
+	python/PySolverType.hpp ) 
+  list( APPEND physicsSolvers_sources
+	python/PySolver.cpp ) 
+  list( APPEND dependencyList Python3::Python pylvarray )
+endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
@@ -158,6 +166,3 @@ endif()
 
 geosx_add_code_checks( PREFIX physicsSolvers )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( python )
-endif()

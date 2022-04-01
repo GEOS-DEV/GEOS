@@ -37,8 +37,7 @@ The XML file considered here follows the typical structure of the GEOSX input fi
  #. :ref:`ElementRegions <ElementRegions_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`Constitutive <Constitutive_tag_dead_oil_bottom_layers_spe10>`
  #. :ref:`FieldSpecifications <FieldSpecifications_tag_dead_oil_bottom_layers_spe10>`
- #. :ref:`Outputs <Outputs_tag_dead_oil_bottom_layers_spe10>`
- #. :ref:`Tasks <Tasks_tag_dead_oil_bottom_layers_spe10>`    
+ #. :ref:`Outputs <Outputs_tag_dead_oil_bottom_layers_spe10>`   
 
 .. _Solver_tag_dead_oil_bottom_layers_spe10:
 

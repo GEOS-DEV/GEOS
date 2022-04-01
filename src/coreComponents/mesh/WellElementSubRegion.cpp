@@ -45,6 +45,8 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString() } );
+
   m_numNodesPerElement = 2;
   m_numFacesPerElement = 0;
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
@@ -843,37 +845,31 @@ bool WellElementSubRegion::isLocallyOwned() const
   return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOSX );
 }
 
-std::set< string > WellElementSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( viewKeyStruct::nodeListString() );
-  return result;
-}
 
 localIndex WellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex WellElementSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
                                                  arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex WellElementSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                        arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex WellElementSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                     arrayView1d< localIndex const > const & packList ) const
 {
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > const nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
-  return bufferOps::Pack< DOPACK >( buffer,
-                                    nodeList().base().toViewConst(),
-                                    m_unmappedGlobalIndicesInNodelist,
-                                    packList,
-                                    localToGlobal.toSliceConst(),
-                                    nodeLocalToGlobal );
+  return bufferOps::Pack< DO_PACKING >( buffer,
+                                        nodeList().base().toViewConst(),
+                                        m_unmappedGlobalIndicesInNodelist,
+                                        packList,
+                                        localToGlobal.toSliceConst(),
+                                        nodeLocalToGlobal );
 }
 
 localIndex WellElementSubRegion::unpackUpDownMaps( buffer_unit_type const * & buffer,

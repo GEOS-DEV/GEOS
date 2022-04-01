@@ -1675,11 +1675,23 @@ PresTempCompFracInitializationKernel::
                   "Invalid well initialization: negative pressure was found",
                   InputError );
 
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
+
   // estimate the pressures in the well elements using this avgDens
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPres[iwelem] = pressureControl + avgTotalMassDens * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    if( wellElemPres[iwelem] <= 0 )
+    {
+      foundNegativePressure.max( 1 );
+    }
+
   } );
+
+  GEOSX_THROW_IF( foundNegativePressure.get() == 1,
+                  "Invalid well initialization: negative pressure was found",
+                  InputError );
+
 }
 
 /******************************** CompDensInitializationKernel ********************************/
