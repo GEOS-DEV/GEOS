@@ -165,7 +165,7 @@ struct PrecomputeSourceAndReceiverKernel
           arrayView2d< real64 > const sourceValue,
           real64 const dt,
           real64 const timeSourceFrequency,
-          localIndex const rickerOrder)
+          localIndex const rickerOrder )
   {
 
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
@@ -322,8 +322,8 @@ template< typename FE_TYPE >
 struct DampingMatrixKernel
 {
   DampingMatrixKernel( FE_TYPE const & finiteElement )
-   : m_finiteElement( finiteElement )
-   {}
+    : m_finiteElement( finiteElement )
+  {}
   /**
    * @brief Launches the precomputation of the damping matrix
    * @param[in]  X coordinates of the nodes
@@ -344,8 +344,8 @@ struct DampingMatrixKernel
   void
   launch( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X,
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
-          SortedArrayView< localIndex const > const  targetSet,
-          arrayView2d< localIndex const > const  faceToElemIndex,
+          SortedArrayView< localIndex const > const targetSet,
+          arrayView2d< localIndex const > const faceToElemIndex,
           ArrayOfArraysView< localIndex const > const facesToNodes,
           arrayView2d< real64 const > const faceNormal,
           arrayView1d< real64 const > const density,
@@ -353,7 +353,7 @@ struct DampingMatrixKernel
           arrayView1d< real64 > const velocityVs,
           arrayView1d< real64 > const damping_x,
           arrayView1d< real64 > const damping_y,
-          arrayView1d< real64 > const damping_z)
+          arrayView1d< real64 > const damping_z )
   {
     localIndex const numNodesPerFace = 4;
 
@@ -406,7 +406,7 @@ struct DampingMatrixKernel
 
 
           // Damping in x=xpos direction
-          if ( faceNormal[kf][0] > 0.0 )
+          if( faceNormal[kf][0] > 0.0 )
           {
             real64 const alpha_x = density[k] * velocityVp[k];
             real64 const alpha_y = density[k] * velocityVs[k];
@@ -417,7 +417,7 @@ struct DampingMatrixKernel
           }
 
           // Damping in x=xneg direction
-          if ( faceNormal[kf][0] < 0.0 )
+          if( faceNormal[kf][0] < 0.0 )
           {
             real64 const alpha_x = density[k] * velocityVp[k];
             real64 const alpha_y = density[k] * velocityVs[k];
@@ -427,7 +427,7 @@ struct DampingMatrixKernel
             damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
           }
           //Damping in y=ypos direction
-          if ( faceNormal[kf][1] > 0.0 )
+          if( faceNormal[kf][1] > 0.0 )
           {
             real64 const alpha_x = density[k] * velocityVs[k];
             real64 const alpha_y = density[k] * velocityVp[k];
@@ -438,7 +438,7 @@ struct DampingMatrixKernel
           }
 
           //Damping in y=yneg direction
-          if ( faceNormal[kf][1] < 0.0 )
+          if( faceNormal[kf][1] < 0.0 )
           {
             real64 const alpha_x = density[k] * velocityVs[k];
             real64 const alpha_y = density[k] * velocityVp[k];
@@ -449,7 +449,7 @@ struct DampingMatrixKernel
           }
 
           //Damping in z=zpos direction
-          if ( faceNormal[kf][2] > 0.0 )
+          if( faceNormal[kf][2] > 0.0 )
           {
             real64 const alpha_x = density[k] * velocityVs[k];
             real64 const alpha_y = density[k] * velocityVs[k];
@@ -459,7 +459,7 @@ struct DampingMatrixKernel
             damping_z[numNodeGl] += alpha_z*detJ*ds*N[a];
           }
           //Damping in z=zneg direction
-          if ( faceNormal[kf][2] < 0.0 )
+          if( faceNormal[kf][2] < 0.0 )
           {
             real64 const alpha_x = density[k] * velocityVs[k];
             real64 const alpha_y = density[k] * velocityVs[k];
@@ -499,10 +499,10 @@ template< typename SUBREGION_TYPE,
           typename CONSTITUTIVE_TYPE,
           typename FE_TYPE >
 class ExplicitElasticSEM : public finiteElement::KernelBase< SUBREGION_TYPE,
-                                                                         CONSTITUTIVE_TYPE,
-                                                                         FE_TYPE,
-                                                                         1,
-                                                                         1 >
+                                                             CONSTITUTIVE_TYPE,
+                                                             FE_TYPE,
+                                                             1,
+                                                             1 >
 {
 public:
 
@@ -535,14 +535,14 @@ public:
    * @param dt The time interval for the step.
    *   elements to be processed during this kernel launch.
    */
-   ExplicitElasticSEM( NodeManager & nodeManager,
-                                   EdgeManager const & edgeManager,
-                                   FaceManager const & faceManager,
-                                   localIndex const targetRegionIndex,
-                                   SUBREGION_TYPE const & elementSubRegion,
-                                   FE_TYPE const & finiteElementSpace,
-                                   CONSTITUTIVE_TYPE & inputConstitutiveType,
-                                   real64 const dt ):
+  ExplicitElasticSEM( NodeManager & nodeManager,
+                      EdgeManager const & edgeManager,
+                      FaceManager const & faceManager,
+                      localIndex const targetRegionIndex,
+                      SUBREGION_TYPE const & elementSubRegion,
+                      FE_TYPE const & finiteElementSpace,
+                      CONSTITUTIVE_TYPE & inputConstitutiveType,
+                      real64 const dt ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -576,7 +576,7 @@ public:
   {
 public:
     GEOSX_HOST_DEVICE
-     StackVariables():
+    StackVariables():
       xLocal()
     {}
     /// C-array stack storage for element local the nodal positions.
@@ -630,7 +630,7 @@ public:
 
     for( localIndex i=0; i<numNodesPerElem; ++i )
     {
-      for(localIndex j=0; j<numNodesPerElem; ++j)
+      for( localIndex j=0; j<numNodesPerElem; ++j )
       {
         real64 const Rxx_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][2]*gradN[i][2]);
         real64 const Ryy_ij = detJ* ((stack.lambda+2.0*stack.mu)*gradN[j][1]*gradN[i][1] + stack.mu * gradN[j][0]*gradN[i][0] + stack.mu * gradN[j][2]*gradN[i][2]);
@@ -682,10 +682,10 @@ protected:
   arrayView1d< real64 const > const m_density;
 
   /// The array containing the P-wavespeed
-  arrayView1d < real64 const > const m_velocityVp;
+  arrayView1d< real64 const > const m_velocityVp;
 
   /// The array containing the S-wavespeed
-  arrayView1d < real64 const > const m_velocityVs;
+  arrayView1d< real64 const > const m_velocityVs;
 
   /// The time increment for this time integration step.
   real64 const m_dt;
@@ -696,7 +696,7 @@ protected:
 
 /// The factory used to construct a ExplicitAcousticWaveEquation kernel.
 using ExplicitElasticSEMFactory = finiteElement::KernelFactory< ExplicitElasticSEM,
-                                                                real64>;
+                                                                real64 >;
 
 } // namespace ElasticWaveEquationSEMKernels
 

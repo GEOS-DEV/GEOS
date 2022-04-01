@@ -32,10 +32,10 @@ namespace geosx
 using namespace dataRepository;
 
 ElasticWaveEquationSEM::ElasticWaveEquationSEM( const std::string & name,
-                                                  Group * const parent ):
+                                                Group * const parent ):
 
   WaveSolverBase( name,
-              parent )
+                  parent )
 {
 
   registerWrapper( viewKeyStruct::sourceNodeIdsString(), &m_sourceNodeIds ).
@@ -199,7 +199,7 @@ void ElasticWaveEquationSEM::postProcessInput()
 }
 
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames)
+void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager const & nodeManager = mesh.getNodeManager();
   FaceManager const & faceManager = mesh.getFaceManager();
@@ -282,14 +282,14 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         sourceValue,
         dt,
         timeSourceFrequency,
-        rickerOrder);
+        rickerOrder );
     } );
   } );
 
 }
 
 
-void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs)
+void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumber, arrayView1d< real64 > const rhs )
 {
   arrayView2d< localIndex const > const sourceNodeIds = m_sourceNodeIds.toViewConst();
   arrayView2d< real64 const > const sourceConstants   = m_sourceConstants.toViewConst();
@@ -310,7 +310,7 @@ void ElasticWaveEquationSEM::addSourceToRightHandSide( integer const & cycleNumb
 }
 
 void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 >
-    const displacement_np1, arrayView1d< real64 > const displacement_n)
+                                                 const displacement_np1, arrayView1d< real64 > const displacement_n )
 {
   real64 const timeSeismo = m_dtSeismoTrace*iSeismo;
   real64 const timeNp1 = time_n+dt;
@@ -364,13 +364,12 @@ void ElasticWaveEquationSEM::computeSeismoTrace( real64 const time_n, real64 con
   }
 }
 
-void ElasticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valDisplacement, string const & filename)
+void ElasticWaveEquationSEM::saveSeismo( localIndex iseismo, real64 valDisplacement, string const & filename )
 {
   std::ofstream f( filename, std::ios::app );
   f<< iseismo << " " << valDisplacement << std::endl;
   f.close();
 }
-
 
 
 
@@ -406,7 +405,7 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
-      arrayView1d< real64 > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity>();
+      arrayView1d< real64 > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
 
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
@@ -546,7 +545,7 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
 
         arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
 
-        arrayView1d< real64 > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity>();
+        arrayView1d< real64 > const density = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity >();
         arrayView1d< real64 > const velocityVp = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVp >();
         arrayView1d< real64 > const velocityVs = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumVelocityVs >();
 
@@ -556,24 +555,24 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
 
         finiteElement::dispatch3D( fe,
                                    [&]
-                                   ( auto const finiteElement )
+                                     ( auto const finiteElement )
         {
           using FE_TYPE = TYPEOFREF( finiteElement );
 
 
-           elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernel( finiteElement );
-            kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >(X,
-                                                                 elemsToNodes,
-                                                                 targetSet,
-                                                                 faceToElemIndex,
-                                                                 facesToNodes,
-                                                                 faceNormal,
-                                                                 density,
-                                                                 velocityVp,
-                                                                 velocityVs,
-                                                                 damping_x,
-                                                                 damping_y,
-                                                                 damping_z );
+          elasticWaveEquationSEMKernels::DampingMatrixKernel< FE_TYPE > kernel( finiteElement );
+          kernel.template launch< EXEC_POLICY, ATOMIC_POLICY >( X,
+                                                                elemsToNodes,
+                                                                targetSet,
+                                                                faceToElemIndex,
+                                                                facesToNodes,
+                                                                faceNormal,
+                                                                density,
+                                                                velocityVp,
+                                                                velocityVs,
+                                                                damping_x,
+                                                                damping_y,
+                                                                damping_z );
 
 
         } );
@@ -584,17 +583,17 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
 
 
 real64 ElasticWaveEquationSEM::solverStep( real64 const & time_n,
-                                            real64 const & dt,
-                                            integer const cycleNumber,
-                                            DomainPartition & domain )
+                                           real64 const & dt,
+                                           integer const cycleNumber,
+                                           DomainPartition & domain )
 {
   return explicitStep( time_n, dt, cycleNumber, domain );
 }
 
 real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
-                                              real64 const & dt,
-                                              integer const cycleNumber,
-                                              DomainPartition & domain )
+                                             real64 const & dt,
+                                             integer const cycleNumber,
+                                             DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -612,9 +611,9 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     arrayView1d< real64 const > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
     arrayView1d< real64 const > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
     arrayView1d< real64 const > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
-    arrayView1d< real64  > const stiffnessVector_x = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_x >();
-    arrayView1d< real64  > const stiffnessVector_y = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_y >();
-    arrayView1d< real64  > const stiffnessVector_z = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_z >();
+    arrayView1d< real64 > const stiffnessVector_x = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_x >();
+    arrayView1d< real64 > const stiffnessVector_y = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_y >();
+    arrayView1d< real64 > const stiffnessVector_z = nodeManager.getExtrinsicData< extrinsicMeshData::StiffnessVector_z >();
 
 
     arrayView1d< real64 > const ux_nm1 = nodeManager.getExtrinsicData< extrinsicMeshData::Displacementx_nm1 >();
@@ -635,19 +634,19 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
     arrayView1d< real64 > const rhs = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS >();
 
-    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory(dt);
+    auto kernelFactory = elasticWaveEquationSEMKernels::ExplicitElasticSEMFactory( dt );
 
     finiteElement::
-    regionBasedKernelApplication< EXEC_POLICY,
-                                  constitutive::NullModel,
-                                  CellElementSubRegion >( mesh,
-                                                          regionNames,
-                                                          getDiscretizationName(),
-                                                          "",
-                                                          kernelFactory );
+      regionBasedKernelApplication< EXEC_POLICY,
+                                    constitutive::NullModel,
+                                    CellElementSubRegion >( mesh,
+                                                            regionNames,
+                                                            getDiscretizationName(),
+                                                            "",
+                                                            kernelFactory );
 
 
-    addSourceToRightHandSide( cycleNumber, rhs);
+    addSourceToRightHandSide( cycleNumber, rhs );
 
     real64 dt2 = dt*dt;
     forAll< serialPolicy >( nodeManager.size(), [=] ( localIndex const a )
@@ -655,21 +654,21 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
       if( freeSurfaceNodeIndicator[a]!=1 )
       {
 
-         ux_np1[a] = ux_n[a];
-         ux_np1[a] *= 2.0*mass[a];
-         ux_np1[a] -= (mass[a]-0.5*dt*damping_x[a])*ux_nm1[a];
-         ux_np1[a] += dt2*(rhs[a]-stiffnessVector_x[a]);
-         ux_np1[a] /= mass[a]+0.5*dt*damping_x[a];
-         uy_np1[a] = uy_n[a];
-         uy_np1[a] *= 2.0*mass[a];
-         uy_np1[a] -= (mass[a]-0.5*dt*damping_y[a])*uy_nm1[a];
-         uy_np1[a] += dt2*(rhs[a]-stiffnessVector_y[a]);
-         uy_np1[a] /= mass[a]+0.5*dt*damping_y[a];
-         uz_np1[a] = uz_n[a];
-         uz_np1[a] *= 2.0*mass[a];
-         uz_np1[a] -= (mass[a]-0.5*dt*damping_z[a])*uz_nm1[a];
-         uz_np1[a] += dt2*(rhs[a]-stiffnessVector_z[a]);
-         uz_np1[a] /= mass[a]+0.5*dt*damping_z[a];
+        ux_np1[a] = ux_n[a];
+        ux_np1[a] *= 2.0*mass[a];
+        ux_np1[a] -= (mass[a]-0.5*dt*damping_x[a])*ux_nm1[a];
+        ux_np1[a] += dt2*(rhs[a]-stiffnessVector_x[a]);
+        ux_np1[a] /= mass[a]+0.5*dt*damping_x[a];
+        uy_np1[a] = uy_n[a];
+        uy_np1[a] *= 2.0*mass[a];
+        uy_np1[a] -= (mass[a]-0.5*dt*damping_y[a])*uy_nm1[a];
+        uy_np1[a] += dt2*(rhs[a]-stiffnessVector_y[a]);
+        uy_np1[a] /= mass[a]+0.5*dt*damping_y[a];
+        uz_np1[a] = uz_n[a];
+        uz_np1[a] *= 2.0*mass[a];
+        uz_np1[a] -= (mass[a]-0.5*dt*damping_z[a])*uz_nm1[a];
+        uz_np1[a] += dt2*(rhs[a]-stiffnessVector_z[a]);
+        uz_np1[a] /= mass[a]+0.5*dt*damping_z[a];
       }
     } );
 

@@ -36,13 +36,13 @@ public:
   using EXEC_POLICY = parallelDevicePolicy< 32 >;
   using ATOMIC_POLICY = parallelDeviceAtomic;
 
-   /**
+  /**
    * @brief Safeguard for timeStep. Used to avoid memory issue due to too small value.
    */
-  static constexpr real64 epsilonLoc = 1e-8; 
+  static constexpr real64 epsilonLoc = 1e-8;
 
   ElasticWaveEquationSEM( const std::string & name,
-                           Group * const parent );
+                          Group * const parent );
 
   virtual ~ElasticWaveEquationSEM() override;
 
@@ -94,7 +94,7 @@ public:
    * @param pressure_np1 the array to save the pressure value at the receiver position
    * @param pressure_n the array to save the pressure value at the receiver position
    */
-  void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const displacement_np1, arrayView1d< real64 > const displacement_n) override;
+  void computeSeismoTrace( real64 const time_n, real64 const dt, localIndex const iSeismo, arrayView1d< real64 > const displacement_np1, arrayView1d< real64 > const displacement_n ) override;
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
@@ -119,12 +119,12 @@ protected:
 
 private:
 
-    /**
+  /**
    * @brief Locate sources and receivers position in the mesh elements, evaluate the basis functions at each point and save them to the
    * corresponding elements nodes.
    * @param mesh mesh of the computational domain
    */
-  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh,arrayView1d< string const > const & regionNames ) override;
+  virtual void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) override;
 
   /**
    * @brief Apply free surface condition to the face define in the geometry box from the xml
@@ -133,7 +133,7 @@ private:
    */
   virtual void applyFreeSurfaceBC( real64 const time, DomainPartition & domain ) override;
 
-      /**
+  /**
    * @brief Apply ansorbing boundary condition to the face define in the geometry box from the xml
    * @param time the time to apply the BC
    * @param domain the partition domain
