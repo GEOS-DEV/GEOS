@@ -36,8 +36,10 @@ Validation and Verification Studies
    kgdViscosityDominated/Example
 
    kgdValidation/Example 
-   
+ 
    pennyFracToughnessDominated/Example
+
+   pennyFracViscosityDominated/Example
  
    proppantSlotTest/Example
 
