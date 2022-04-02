@@ -541,7 +541,7 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedron:   return { 1, 0, 2, 3 };
+    case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
     case ElementType::Prism:         return { 0, 3, 2, 5, 1, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
