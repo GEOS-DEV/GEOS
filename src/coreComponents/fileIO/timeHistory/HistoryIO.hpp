@@ -23,7 +23,6 @@
 
 namespace geosx
 {
-class DataSpec;
 
 /**
  * @class BufferedHistoryIO
