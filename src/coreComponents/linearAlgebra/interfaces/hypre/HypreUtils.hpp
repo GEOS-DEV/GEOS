@@ -22,6 +22,9 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
+#include "codingUtilities/Utilities.hpp"
+#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
+
 #include <HYPRE_krylov.h>
 #include <HYPRE_parcsr_ls.h>
 
@@ -60,16 +63,16 @@ struct HyprePrecWrapper
 };
 
 /**
- * @brief Contains some hypre-specific functions
+ * @brief Contains some hypre-specific functions.
  */
 namespace hypre
 {
 
 /**
- * @brief @return Hypre memory location corresponding to a given LvArray memory space
+ * @brief @return Hypre memory location corresponding to a given LvArray memory space.
  * @param space the space
  */
-constexpr HYPRE_MemoryLocation getHypreMemoryLocation( LvArray::MemorySpace const space )
+constexpr HYPRE_MemoryLocation getMemoryLocation( LvArray::MemorySpace const space )
 {
   switch( space )
   {
@@ -82,7 +85,7 @@ constexpr HYPRE_MemoryLocation getHypreMemoryLocation( LvArray::MemorySpace cons
 }
 
 /**
- * @brief @return LvArray memory space corresponding to hypre's memory location
+ * @brief @return LvArray memory space corresponding to hypre's memory location.
  * @param location the location
  */
 constexpr LvArray::MemorySpace getLvArrayMemorySpace( HYPRE_MemoryLocation const location )
@@ -159,7 +162,7 @@ static_assert( std::is_same< HYPRE_Real, geosx::real64 >::value,
                "HYPRE_Real and geosx::real64 must be the same type" );
 
 /**
- * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt
+ * @brief Converts a non-const array from GEOSX globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -169,7 +172,7 @@ inline HYPRE_BigInt * toHypreBigInt( geosx::globalIndex * const index )
 }
 
 /**
- * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt
+ * @brief Converts a const array from GEOSX globalIndex type to HYPRE_BigInt.
  * @param[in] index the input array
  * @return the converted array
  */
@@ -179,7 +182,7 @@ inline HYPRE_BigInt const * toHypreBigInt( geosx::globalIndex const * const inde
 }
 
 /**
- * @brief Gather a parallel vector on a every rank
+ * @brief Gather a parallel vector on a every rank.
  * @param vec the vector to gather
  * @return A newly allocated serial vector (may be null on ranks that don't have any elements)
  *
@@ -190,11 +193,11 @@ HYPRE_Vector parVectorToVectorAll( HYPRE_ParVector const vec );
 
 /**
  * @brief Dummy function that does nothing but conform to hypre's signature for preconditioner setup/apply functions.
- * @return always 0 (success).
+ * @return always 0 (success)
  *
  * Typical use is to prevent hypre from calling preconditioner setup when we have already called it on out side.
  */
-HYPRE_Int DummySetup( HYPRE_Solver,
+HYPRE_Int dummySetup( HYPRE_Solver,
                       HYPRE_ParCSRMatrix,
                       HYPRE_ParVector,
                       HYPRE_ParVector );
@@ -225,7 +228,7 @@ HYPRE_Int SuperLUDistDestroy( HYPRE_Solver solver );
  * @param type hypre's internal identifier of the relaxation type
  * @return always 0
  */
-HYPRE_Int RelaxationCreate( HYPRE_Solver & solver,
+HYPRE_Int relaxationCreate( HYPRE_Solver & solver,
                             HYPRE_Int const type );
 
 /**
@@ -236,7 +239,7 @@ HYPRE_Int RelaxationCreate( HYPRE_Solver & solver,
  * @param x the solution vector (unused)
  * @return hypre error code
  */
-HYPRE_Int RelaxationSetup( HYPRE_Solver solver,
+HYPRE_Int relaxationSetup( HYPRE_Solver solver,
                            HYPRE_ParCSRMatrix A,
                            HYPRE_ParVector b,
                            HYPRE_ParVector x );
@@ -249,7 +252,7 @@ HYPRE_Int RelaxationSetup( HYPRE_Solver solver,
  * @param x the solution vector (unused)
  * @return hypre error code
  */
-HYPRE_Int RelaxationSolve( HYPRE_Solver solver,
+HYPRE_Int relaxationSolve( HYPRE_Solver solver,
                            HYPRE_ParCSRMatrix A,
                            HYPRE_ParVector b,
                            HYPRE_ParVector x );
@@ -259,7 +262,238 @@ HYPRE_Int RelaxationSolve( HYPRE_Solver solver,
  * @param solver the solver
  * @return always 0
  */
-HYPRE_Int RelaxationDestroy( HYPRE_Solver solver );
+HYPRE_Int relaxationDestroy( HYPRE_Solver solver );
+
+/**
+ * @brief Returns hypre's identifier of the AMG cycle type.
+ * @param type AMG cycle type
+ * @return hypre AMG cycle type identifier code
+ */
+inline HYPRE_Int getAMGCycleType( LinearSolverParameters::AMG::CycleType const & type )
+{
+  static map< LinearSolverParameters::AMG::CycleType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::CycleType::V, 1 },
+    { LinearSolverParameters::AMG::CycleType::W, 2 },
+  };
+  return findOption( typeMap, type, "multigrid cycle", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the AMG smoother type.
+ * @param type AMG smoother type
+ * @return hypre AMG smoother type identifier code
+ */
+inline HYPRE_Int getAMGRelaxationType( LinearSolverParameters::AMG::SmootherType const & type )
+{
+  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::SmootherType::default_, -1 },
+#ifdef GEOSX_USE_HYPRE_CUDA
+    { LinearSolverParameters::AMG::SmootherType::jacobi, 7 },
+#else
+    { LinearSolverParameters::AMG::SmootherType::jacobi, 0 },
+#endif
+    { LinearSolverParameters::AMG::SmootherType::fgs, 3 },
+    { LinearSolverParameters::AMG::SmootherType::bgs, 4 },
+    { LinearSolverParameters::AMG::SmootherType::sgs, 6 },
+    { LinearSolverParameters::AMG::SmootherType::l1sgs, 8 },
+    { LinearSolverParameters::AMG::SmootherType::chebyshev, 16 },
+    { LinearSolverParameters::AMG::SmootherType::l1jacobi, 18 },
+  };
+  return findOption( typeMap, type, "multigrid relaxation", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the AMG ILU smoother type.
+ * @param type AMG ILU smoother type
+ * @return hypre AMG ILU smoother type identifier code
+ */
+inline HYPRE_Int getILUType( LinearSolverParameters::AMG::SmootherType const type )
+{
+  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
+    { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
+  };
+  return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the AMG coarse solver type.
+ * @param type AMG coarse solver type
+ * @return hypre AMG coarse solver type identifier code
+ */
+inline HYPRE_Int getAMGCoarseType( LinearSolverParameters::AMG::CoarseType const & type )
+{
+  static map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::AMG::CoarseType::default_, -1 },
+#ifdef GEOSX_USE_HYPRE_CUDA
+    { LinearSolverParameters::AMG::CoarseType::jacobi, 7 },
+#else
+    { LinearSolverParameters::AMG::CoarseType::jacobi, 0 },
+#endif
+    { LinearSolverParameters::AMG::CoarseType::fgs, 3 },
+    { LinearSolverParameters::AMG::CoarseType::bgs, 4 },
+    { LinearSolverParameters::AMG::CoarseType::sgs, 6 },
+    { LinearSolverParameters::AMG::CoarseType::l1sgs, 8 },
+    { LinearSolverParameters::AMG::CoarseType::direct, 9 },
+    { LinearSolverParameters::AMG::CoarseType::chebyshev, 16 },
+    { LinearSolverParameters::AMG::CoarseType::l1jacobi, 18 },
+  };
+  return findOption( typeMap, type, "multigrid coarse solver", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the AMG coarsening type.
+ * @param type AMG coarsening type
+ * @return hypre AMG coarsening type identifier code
+ */
+inline HYPRE_Int getAMGCoarseningType( string const & type )
+{
+  static map< string, HYPRE_Int > const typeMap =
+  {
+    { "CLJP", 0 },
+    { "Ruge-Stueben", 3 },
+    { "Falgout", 6 },
+    { "CLJPDebug", 7 },
+    { "PMIS", 8 },
+    { "PMISDebug", 9 },
+    { "HMIS", 10 },
+    { "CGC", 21 },
+    { "CGC-E", 22 }
+  };
+  return findOption( typeMap, type, "multigrid coarsening", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the relaxation preconditioner type.
+ * @param type relaxation preconditioner type
+ * @return hypre relaxation preconditioner type identifier code
+ */
+inline HYPRE_Int getRelaxationType( LinearSolverParameters::PreconditionerType const type )
+{
+  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
+  {
+#ifdef GEOSX_USE_HYPRE_CUDA
+    { LinearSolverParameters::PreconditionerType::jacobi, 7 },
+#else
+    { LinearSolverParameters::PreconditionerType::jacobi, 0 },
+#endif
+    { LinearSolverParameters::PreconditionerType::fgs, 3 },
+    { LinearSolverParameters::PreconditionerType::bgs, 4 },
+    { LinearSolverParameters::PreconditionerType::sgs, 6 },
+    { LinearSolverParameters::PreconditionerType::l1sgs, 8 },
+    { LinearSolverParameters::PreconditionerType::chebyshev, 16 },
+    { LinearSolverParameters::PreconditionerType::l1jacobi, 18 },
+  };
+  return findOption( typeMap, type, "relaxation", "HyprePreconditioner" );
+}
+
+/**
+ * @brief Returns hypre's identifier of the ILU preconditioner type.
+ * @param type ILU preconditioner type
+ * @return hypre ILU preconditioner type identifier code
+ */
+inline HYPRE_Int getILUType( LinearSolverParameters::PreconditionerType const type )
+{
+  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
+  {
+    { LinearSolverParameters::PreconditionerType::iluk, 0 },
+    { LinearSolverParameters::PreconditionerType::ilut, 1 },
+  };
+  return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
+}
+
+/**
+ * @enum AMGCoarseningType
+ * @brief This enum class specifies the AMG parallel coarsening algorithm.
+ */
+enum class AMGCoarseningType : HYPRE_Int
+{
+  CLJP = 0,         //!< Parallel coarsening algorithm using independent sets
+  Ruge_Stueben = 3, //!< Classical Ruge-Stueben coarsening on each processor
+  Falgout = 6,      //!< Uses @p Ruge_Stueben first, followed by @p CLJP
+  CLJPDebug = 7,    //!< Using a fixed random vector, for debugging purposes only
+  PMIS = 8,         //!< Parallel coarsening algorithm using independent sets
+  PMISDebug = 9,    //!< Using a fixed random vector, for debugging purposes only
+  HMIS = 10,        //!< Uses one pass @p Ruge-Stueben on each processor independently, followed by @p PMIS
+  CGC = 21,         //!< Coarsening by M. Griebel, B. Metsch and A. Schweitzer
+  CGC_E = 22        //!< Coarsening by M. Griebel, B. Metsch and A. Schweitzer
+};
+
+/**
+ * @enum MGRInterpolationType
+ * @brief This enum class specifies the strategy for computing the level intepolation operator in MGR.
+ */
+enum class MGRInterpolationType : HYPRE_Int
+{
+  injection = 0,                      //!< Injection \f$[0  I]^{T}\f$
+  jacobi = 2,                         //!< Diagonal scaling
+  classicalModifiedInterpolation = 3, //!< Classical modified interpolation
+  approximateInverse = 4              //!< Approximate inverse
+};
+
+/**
+ * @enum MGRRestrictionType
+ * @brief This enum class specifies the strategy for computing the level restriction operator in MGR.
+ *
+ */
+enum class MGRRestrictionType : HYPRE_Int
+{
+  injection = 0,         //!< Injection \f$[0  I]\f$
+  jacobi = 2,            //!< Diagonal scaling
+  approximateInverse = 3 //!< Approximate inverse
+};
+
+/**
+ * @enum MGRCoarseGridMethod
+ * @brief This enum class specifies the strategy for level coarse grid computation in MGR.
+ */
+enum class MGRCoarseGridMethod : HYPRE_Int
+{
+  galerkin = 0,   //!< Galerkin coarse grid computation using RAP
+  nonGalerkin = 1 //!< Non-Galerkin coarse grid computation with dropping strategy
+};
+
+/**
+ * @enum MGRFRelaxationMethod
+ * @brief This enum class specifies the F-relaxation strategy.
+ */
+enum class MGRFRelaxationMethod : HYPRE_Int
+{
+  singleLevel = 0, //!< single-level relaxation
+  multilevel = 1,  //!< multilevel relaxation
+  amgVCycle = 2    //!< multilevel relaxation
+};
+
+/**
+ * @enum MGRFRelaxationType
+ * @brief This enum class specifies the F-relaxation type.
+ */
+enum class MGRFRelaxationType : HYPRE_Int
+{
+  jacobi = 0,                       //!< Jacobi
+  forwardHybridGaussSeidel = 3,     //!< hybrid Gauss-Seidel or SOR, forward solve
+  backwardHybridGaussSeidel = 4,    //!< hybrid Gauss-Seidel or SOR, backward solve
+  hybridSymmetricGaussSeidel = 6,   //!< hybrid symmetric Gauss-Seidel or SSOR
+  l1hybridSymmetricGaussSeidel = 8, //!< \f$\ell_1\f$-scaled hybrid symmetric Gauss-Seidel
+  l1forwardGaussSeidel = 13,        //!< \f$\ell_1\f$ Gauss-Seidel, forward solve
+  l1backwardGaussSeidel = 14,       //!< \f$\ell_1\f$ Gauss-Seidel, backward solve
+  l1jacobi = 18,                    //!< \f$\ell_1\f$-scaled Jacobi
+};
+
+/**
+ * @enum MGRGlobalSmootherType
+ * @brief This enum class specifies the global smoother type.
+ */
+enum class MGRGlobalSmootherType : HYPRE_Int
+{
+  blockJacobi = 0, //!< block Jacobi (default)
+  jacobi = 1,      //!< Jacobi
+  ilu0 = 16        //!< incomplete LU factorization
+};
 
 } // namespace hypre
 
