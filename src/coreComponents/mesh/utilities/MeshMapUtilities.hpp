@@ -128,7 +128,7 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
                                     ToCellRelation< ArrayOfArrays< localIndex > > const & srcMap,
                                     ToElementRelation< ArrayOfArrays< localIndex > > & dstMap )
 {
-  GEOSX_ASSERT_EQ( blockToSubRegion.size(), 2 );
+  GEOSX_ASSERT_EQ( blockToSubRegion.size( 1 ), 2 );
   localIndex const numObjects = srcMap.toCellIndex.size();
 
   localIndex const * offsets = srcMap.toCellIndex.toViewConst().getOffsets();
@@ -168,12 +168,12 @@ void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & bloc
  * @param srcMap source map (object-to-cells)
  * @param dstMap target map (object-to-elements)
  */
-template< typename POLICY, typename PERM >
+template< typename POLICY, typename PERM1, typename PERM2 >
 void transformCellBlockToRegionMap( arrayView2d< localIndex const > const & blockToSubRegion,
-                                    ToCellRelation< array2d< localIndex, PERM > > const & srcMap,
-                                    ToElementRelation< array2d< localIndex, PERM > > & dstMap )
+                                    ToCellRelation< array2d< localIndex, PERM1 > > const & srcMap,
+                                    ToElementRelation< array2d< localIndex, PERM2 > > & dstMap )
 {
-  GEOSX_ASSERT_EQ( blockToSubRegion.size(), 2 );
+  GEOSX_ASSERT_EQ( blockToSubRegion.size( 1 ), 2 );
   localIndex const numObjects = srcMap.toCellIndex.size( 0 );
   localIndex const maxCellsPerObject = srcMap.toCellIndex.size( 1 );
 
