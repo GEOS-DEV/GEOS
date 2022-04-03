@@ -147,30 +147,28 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
                                                    ArrayOfArraysView< localIndex const > const & map,
                                                    const string & setName )
 {
-  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
-  newset.clear();
+  SortedArray< localIndex > & newSet = m_sets.getReference< SortedArray< localIndex > >( setName );
+  newSet.clear();
 
   localIndex const numObjects = size();
-  GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOSX_ERROR_IF_NE_MSG( map.size(), numObjects, "Map size does not match number of objects." );
 
   if( setName == "all" )
   {
-    newset.reserve( numObjects );
-
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    newSet.reserve( numObjects );
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
-      newset.insert( ka );
+      newSet.insert( ka );
     }
   }
   else
   {
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
-      localIndex const * const values = map[ka];
-      localIndex const numValues = map.sizeOfArray( ka );
-      if( std::all_of( values, values + numValues, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      arraySlice1d< localIndex const > const values = map[ka];
+      if( std::all_of( values.begin(), values.end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
-        newset.insert( ka );
+        newSet.insert( ka );
       }
     }
   }

@@ -129,11 +129,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
           {
             faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
 
-            localIndex const faceID = elemsToFaces[elementIndex][a];
-            localIndex const numEdges = faceToEdges.sizeOfArray( faceID );
+            localIndex const faceIndex = elemsToFaces[elementIndex][a];
+            localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
             for( localIndex b=0; b<numEdges; ++b )
             {
-              edgeAdjacencySet.insert( faceToEdges( faceID, b ));
+              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ));
             }
 
           }

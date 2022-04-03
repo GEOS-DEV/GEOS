@@ -271,11 +271,11 @@ void CellElementSubRegion::fixUpDownMaps( bool const clearIfUnmapped )
                                     clearIfUnmapped );
 }
 
-void CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
-                                         localIndex const localFaceIndex,
-                                         array1d< localIndex > & nodeIndices ) const
+localIndex CellElementSubRegion::getFaceNodes( localIndex const elementIndex,
+                                               localIndex const localFaceIndex,
+                                               Span< localIndex > const nodeIndices ) const
 {
-  geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
+  return geosx::getFaceNodes( m_elementType, elementIndex, localFaceIndex, m_toNodesRelation, nodeIndices );
 }
 
 void CellElementSubRegion::
@@ -325,7 +325,9 @@ void CellElementSubRegion::
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
                                                                 FaceManager const & GEOSX_UNUSED_PARAM( faceManager ) )
 {
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  GEOSX_MARK_FUNCTION;
+
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition();
 
   forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {

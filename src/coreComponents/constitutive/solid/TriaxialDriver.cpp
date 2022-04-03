@@ -157,9 +157,10 @@ void TriaxialDriver::postProcessInput()
 
 
 template< typename SOLID_TYPE >
-void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
+void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table )
 {
   typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
+  localIndex const numSteps = m_numSteps;
 
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
@@ -167,7 +168,7 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
     real64 strainIncrement[6] = {};
     real64 stiffness[6][6] = {{}};
 
-    for( integer n=1; n<=m_numSteps; ++n )
+    for( integer n = 1; n <= numSteps; ++n )
     {
       strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
       strainIncrement[1] = table( n, EPS1 )-table( n-1, EPS1 );
@@ -187,9 +188,13 @@ void TriaxialDriver::runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real
 
 
 template< typename SOLID_TYPE >
-void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
+void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table )
 {
   typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
+  integer const numSteps = m_numSteps;
+  integer const maxIter = m_maxIter;
+  integer const maxCuts = m_maxCuts;
+  real64 const newtonTol = m_newtonTol;
 
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
@@ -199,13 +204,13 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
     real64 stiffness[6][6] = {{}};
 
     real64 scale = 0;
-    for( integer n=1; n<=m_numSteps; ++n )
+    for( integer n = 1; n <= numSteps; ++n )
     {
       scale += fabs( table( n, SIG0 )) + fabs( table( n, SIG1 )) + fabs( table( n, SIG2 ));
     }
-    scale = 3*m_numSteps / scale;
+    scale = 3 * numSteps / scale;
 
-    for( integer n=1; n<=m_numSteps; ++n )
+    for( integer n=1; n<=numSteps; ++n )
     {
       strainIncrement[0] = table( n, EPS0 )-table( n-1, EPS0 );
       strainIncrement[1] = 0;
@@ -215,7 +220,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       integer k = 0;
       integer cuts = 0;
 
-      for(; k<m_maxIter; ++k )
+      for(; k < maxIter; ++k )
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
@@ -226,11 +231,11 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
           normZero = norm;
         }
 
-        if( norm < m_newtonTol ) // success
+        if( norm < newtonTol ) // success
         {
           break;
         }
-        else if( k > 0 && norm > normZero && cuts < m_maxCuts ) // backtrack by half delta
+        else if( k > 0 && norm > normZero && cuts < maxCuts ) // backtrack by half delta
         {
           cuts++;
           deltaStrainIncrement *= 0.5;
@@ -254,7 +259,7 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
       table( n, ITER ) = k;
       table( n, NORM ) = norm;
 
-      if( norm > m_newtonTol )
+      if( norm > newtonTol )
       {
         break;
       }
@@ -264,9 +269,13 @@ void TriaxialDriver::runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real6
 
 
 template< typename SOLID_TYPE >
-void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table )
+void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table )
 {
   typename SOLID_TYPE::KernelWrapper updates = solid.createKernelUpdates();
+  integer const numSteps = m_numSteps;
+  integer const maxIter = m_maxIter;
+  integer const maxCuts = m_maxCuts;
+  real64 const newtonTol = m_newtonTol;
 
   forAll< parallelDevicePolicy<> >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
@@ -279,13 +288,13 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
     real64 jacobian[2][2] = {{}};
 
     real64 scale = 0;
-    for( integer n=1; n<=m_numSteps; ++n )
+    for( integer n = 1; n <= numSteps; ++n )
     {
       scale += fabs( table( n, SIG0 )) + fabs( table( n, SIG1 )) + fabs( table( n, SIG2 ));
     }
-    scale = 3*m_numSteps / scale;
+    scale = 3 * numSteps / scale;
 
-    for( integer n=1; n<=m_numSteps; ++n )
+    for( integer n = 1; n <= numSteps; ++n )
     {
       //   std::cout<<"time step="<<n<<std::endl;
       strainIncrement[0] = 0;
@@ -296,7 +305,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       integer k = 0;
       integer cuts = 0;
 
-      for(; k<m_maxIter; ++k )
+      for(; k < maxIter; ++k )
       {
         updates.smallStrainUpdate( ei, 0, strainIncrement, stress, stiffness );
 
@@ -312,11 +321,11 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
           normZero = norm;
         }
 
-        if( norm < m_newtonTol ) // success
+        if( norm < newtonTol ) // success
         {
           break;
         }
-        else if( k > 0 && norm > normZero && cuts < m_maxCuts ) // backtrack by half delta
+        else if( k > 0 && norm > normZero && cuts < maxCuts ) // backtrack by half delta
         {
           cuts++;
           deltaStrainIncrement[0] *= 0.5;
@@ -354,7 +363,7 @@ void TriaxialDriver::runStressControlTest( SOLID_TYPE & solid, arrayView2d< real
       table( n, ITER ) = k;
       table( n, NORM ) = norm;
 
-      if( norm > m_newtonTol )
+      if( norm > newtonTol )
       {
         break;
       }
