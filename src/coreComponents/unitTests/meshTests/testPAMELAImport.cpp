@@ -65,7 +65,7 @@ void TestMeshImport( string const & inputStringMesh,
   elemManager.postProcessInputRecursive();
 
   CellBlockManager & cellBlockManager = meshBody.getGroup< CellBlockManager >( keys::cellManager );
-  nodeManager.setGeometricalRelations( cellBlockManager );
+  nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
 
   elemManager.generateMesh( cellBlockManager );
 

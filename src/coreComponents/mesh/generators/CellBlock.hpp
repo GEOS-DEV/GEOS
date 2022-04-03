@@ -37,25 +37,12 @@ public:
    */
   ///@{
 
-  CellBlock() = delete;
-
   /**
    * @brief Constructor for this class.
    * @param[in] name the name of this object manager
    * @param[in] parent the parent Group
    */
   CellBlock( string const & name, Group * const parent );
-
-  /**
-   * @brief Copy constructor.
-   * @param[in] init the source to copy
-   */
-  CellBlock( const CellBlock & init ) = delete;
-
-  /**
-   * @brief Default destructor.
-   */
-  ~CellBlock() override = default;
 
   ///@}
 
@@ -94,26 +81,34 @@ public:
   { return size(); }
 
   /**
-   * @brief Puts the nodes of face @p iFace of element @p iElement inside vector @p nodesInFaces.
-   * @param[in] iElement The element index.
-   * @param[in] iFace The local face index (not the global index). E.g. an hexahedron have face 6 indices from 0 to 5.
-   * @param[out] nodesInFaces The result vector gets resized to the appropriate dimensions before getting filled.
+   * @brief Puts the nodes of face @p faceNum of element @p cellIndex inside vector @p nodesInFaces.
+   * @param[in] cellIndex The element index.
+   * @param[in] faceNum the face number within an element
+   * @param[out] nodesInFace space for result, must have enough space to fit all nodes
+   * @return the number of nodes written into @p nodesInFace
    *
    * @p nodesInFaces is sorted from lower to larger node indices values.
    * @p nodesInFaces is exactly the size of the number of nodes.
    */
-  void getFaceNodes( localIndex iElement,
-                     localIndex iFace,
-                     array1d< localIndex > & nodesInFaces ) const;
+  localIndex getFaceNodes( localIndex const cellIndex,
+                           localIndex const faceNum,
+                           Span< localIndex > nodesInFace ) const;
 
   /**
    * @brief Get the element to nodes mapping, non-const version.
-   * @return The mapping relationship as a array.
+   * @return The mapping relationship as an array.
    *
    * @deprecated This accessor is meant to be used like a setter even though it's a bit like having public attribute...
    * Use a real setter instead.
    */
-  array2d< localIndex, cells::NODE_MAP_PERMUTATION > & getElemToNode()
+  arrayView2d< localIndex, cells::NODE_MAP_USD > getElemToNode()
+  { return m_elementsToNodes; }
+
+  /**
+   * @brief Get the element to nodes mapping, const version.
+   * @return The mapping relationship as an array view
+   */
+  arrayView2d< localIndex const, cells::NODE_MAP_USD > getElemToNode() const
   { return m_elementsToNodes; }
 
   array2d< localIndex, cells::NODE_MAP_PERMUTATION > getElemToNodes() const override
@@ -134,45 +129,45 @@ public:
 
   /**
    * @brief Sets an entry in the element to faces mapping.
-   * @param[in] iElement Index of the element
-   * @param[in] iFaceLoc Local index of the face of the element @p iElement (typically from 0 to 5 for an hexahedron).
-   * @param[in] iFace The face index.
+   * @param[in] cellIndex Index of the element
+   * @param[in] faceNum Local index of the face of the element @p iElement (typically from 0 to 5 for an hexahedron).
+   * @param[in] faceIndex The face index.
    */
-  void setElementToFaces( localIndex iElement,
-                          localIndex iFaceLoc,
-                          localIndex iFace )
+  void setElementToFaces( localIndex const cellIndex,
+                          localIndex const faceNum,
+                          localIndex const faceIndex )
   {
-    m_elementsToFaces( iElement, iFaceLoc ) = iFace;
+    m_elementsToFaces( cellIndex, faceNum ) = faceIndex;
   }
 
   /**
    * @brief Sets an entry in the element to edges mapping.
-   * @param[in] iElement Index of the element.
-   * @param[in] iEdgeLoc Local index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
-   * @param[in] iEdge Index of the edge.
+   * @param[in] cellIndex Index of the element.
+   * @param[in] edgeNum Local index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
+   * @param[in] edgeIndex Index of the edge.
    *
    * In the element to edges mapping, element @p iElement has a given number of edges (typically 12 for a hexahedron).
-   * Then edge @p iEdgeLoc of this local indexing (typically 0 to 11) is meant to have global indexing of @p iEdge.
+   * Then edge @p edgeNum of this local indexing (typically 0 to 11) is meant to have global indexing of @p edgeIndex.
    */
-  void setElementToEdges( localIndex iElement,
-                          localIndex iEdgeLoc,
-                          localIndex iEdge )
+  void setElementToEdges( localIndex const cellIndex,
+                          localIndex const edgeNum,
+                          localIndex const edgeIndex )
   {
-    m_elementsToEdges( iElement, iEdgeLoc ) = iEdge;
+    m_elementsToEdges( cellIndex, edgeNum ) = edgeIndex;
   }
 
   /**
-   * @brief Checks if edge @p iEdge of element @p iElement has been defined.
-   * @param[in] iElement Index of the element
-   * @param[in] iEdgeLoc Index of the edge of the element @p iElement (typically from 0 to 11 for an hexahedron).
-   * @param[in] iEdge The edge index.
+   * @brief Checks if edge @p edgeIndex of element @p cellIndex has been defined.
+   * @param[in] cellIndex Index of the element
+   * @param[in] edgeNum Index of the edge of the element @p cellIndex (typically from 0 to 11 for an hexahedron).
+   * @param[in] edgeIndex The edge index.
    * @return True if the entry is already there in the mapping. False otherwise.
    */
-  bool hasElementToEdges( localIndex iElement,
-                          localIndex iEdgeLoc,
-                          localIndex iEdge ) const
+  bool hasElementToEdges( localIndex const cellIndex,
+                          localIndex const edgeNum,
+                          localIndex const edgeIndex ) const
   {
-    return m_elementsToEdges( iElement, iEdgeLoc ) == iEdge;
+    return m_elementsToEdges( cellIndex, edgeNum ) == edgeIndex;
   }
 
   /**

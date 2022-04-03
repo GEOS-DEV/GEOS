@@ -59,11 +59,7 @@ void ElementRegionManager::setMaxGlobalIndex()
     m_localMaxGlobalIndex = std::max( m_localMaxGlobalIndex, subRegion.maxGlobalIndex() );
   } );
 
-  MpiWrapper::allReduce( &m_localMaxGlobalIndex,
-                         &m_maxGlobalIndex,
-                         1,
-                         MPI_MAX,
-                         MPI_COMM_GEOSX );
+  m_maxGlobalIndex = MpiWrapper::max( m_localMaxGlobalIndex, MPI_COMM_GEOSX );
 }
 
 
@@ -625,6 +621,33 @@ ElementRegionManager::unpackFracturedElements( buffer_unit_type const * & buffer
   }
 
   return unpackedSize;
+}
+
+array2d< localIndex >
+ElementRegionManager::getCellBlockToSubRegionMap( CellBlockManagerABC const & cellBlockManager ) const
+{
+  array2d< localIndex > blockMap( cellBlockManager.getCellBlocks().numSubGroups(), 2 );
+  blockMap.setValues< serialPolicy >( -1 );
+
+  Group::subGroupMap const & cellBlocks = cellBlockManager.getCellBlocks().getSubGroups();
+
+  forElementSubRegionsComplete< CellElementSubRegion >( [blockMap = blockMap.toView(),
+                                                         &cellBlocks]( localIndex const er,
+                                                                       localIndex const esr,
+                                                                       ElementRegionBase const & region,
+                                                                       CellElementSubRegion const & subRegion )
+  {
+    localIndex const blockIndex = cellBlocks.getIndex( subRegion.getName() );
+    GEOSX_ERROR_IF( blockIndex == Group::subGroupMap::KeyIndex::invalid_index,
+                    GEOSX_FMT( "Cell block not found for subregion {}/{}", region.getName(), subRegion.getName() ) );
+    GEOSX_ERROR_IF( blockMap( blockIndex, 1 ) != -1,
+                    GEOSX_FMT( "Cell block {} mapped to more than one subregion", subRegion.getName() ) );
+
+    blockMap( blockIndex, 0 ) = er;
+    blockMap( blockIndex, 1 ) = esr;
+  } );
+
+  return blockMap;
 }
 
 
