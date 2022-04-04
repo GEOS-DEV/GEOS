@@ -53,14 +53,14 @@ public:
    *
    * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getEdgeMapOverallocation()
-  { return CellBlockManagerABC::getEdgeMapOverallocation(); }
+  static constexpr localIndex edgeMapOverallocation()
+  { return CellBlockManagerABC::edgeMapExtraSpacePerNode(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  inline localIndex getElemMapOverAllocation()
+  static constexpr localIndex elemMapOverallocation()
   { return 8; }
 
 
@@ -76,36 +76,6 @@ public:
    */
   EmbeddedSurfaceNodeManager( string const & name,
                               dataRepository::Group * const parent );
-
-  /**
-   * @brief The default EmbeddedSurfaceNodeManager destructor.
-   */
-  ~EmbeddedSurfaceNodeManager() override;
-
-  /// @cond DO_NOT_DOCUMENT
-  /**
-   * @brief deleted constructor
-   */
-  EmbeddedSurfaceNodeManager() = delete;
-
-  /**
-   * @brief deleted copy constructor
-   */
-  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager const & init ) = delete;
-
-  /**
-   * @brief Default move constructor.
-   */
-  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager && ) = delete;
-
-  /**
-   * @brief deleted assignement operator
-   */
-  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager const & ) = delete;
-
-
-  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager && ) = delete;
-  /// @endcond
 
   ///@}
 
@@ -132,8 +102,8 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the EmbeddedSurfaceNodeManager catalog name
    */
-  const string getCatalogName() const override final
-  { return EmbeddedSurfaceNodeManager::catalogName(); }
+  string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
 
