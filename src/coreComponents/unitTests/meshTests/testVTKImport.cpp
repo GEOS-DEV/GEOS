@@ -36,7 +36,7 @@ using namespace geosx::dataRepository;
 template< class V >
 void TestMeshImport( string const & meshFilePath, V const & validate )
 {
-  string const meshNode = "<Mesh ><VTKMesh name=\"mesh\" file=\"" + meshFilePath + "\" /></Mesh>";
+  string const meshNode = GEOSX_FMT( R"(<Mesh><VTKMesh name="mesh" file="{}" useGraphPartitioning="0"/></Mesh>)", meshFilePath );
   xmlWrapper::xmlDocument xmlDocument;
   xmlDocument.load_buffer( meshNode.c_str(), meshNode.size() );
   xmlWrapper::xmlNode xmlMeshNode = xmlDocument.child( "Mesh" );

@@ -128,6 +128,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * useGraphPartitioningString() { return "useGraphPartitioning"; }
   };
   /// @endcond
 
@@ -139,6 +140,9 @@ private:
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Whether to use graph partitioning to improve parallel mesh distribution
+  integer m_useGraphPartitioning;
 
   /// Lists of VTK cell ids, organized by element type, then by region
   CellMapType m_cellMap;

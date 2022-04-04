@@ -767,6 +767,8 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
 		<!--translate => Translate the coordinates of the vertices by a given vector (prior to scaling)-->
 		<xsd:attribute name="translate" type="R1Tensor" default="{0,0,0}" />
+		<!--useGraphPartitioning => Whether to use graph partitioning to improve parallel mesh distribution-->
+		<xsd:attribute name="useGraphPartitioning" type="integer" default="1" />
 		<!--name => A name is required for any non-unique nodes-->
 		<xsd:attribute name="name" type="string" use="required" />
 	</xsd:complexType>
