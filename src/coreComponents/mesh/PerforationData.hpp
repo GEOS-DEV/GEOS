@@ -99,7 +99,7 @@ public:
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return catalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
