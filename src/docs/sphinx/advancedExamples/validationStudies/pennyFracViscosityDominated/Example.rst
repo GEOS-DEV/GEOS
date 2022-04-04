@@ -41,11 +41,11 @@ The fluid injected in the fracture follows the lubrication equation resulting fr
 
 We set up and solve a hydraulic fracture model to obtain the evolution with time of the fracture radius :math:`R`, the net pressure :math:`p_0` and the fracture aperture :math:`w_0` at the injection point for the penny-shaped fracture developed in viscosity-storage-dominated regime. `Savitski and Detournay (2002)  <https://www.sciencedirect.com/science/article/pii/S0020768302004924>`__ presented the corresponding asymptotic solutions, used here to validate the results of our GEOSX simulations:
 
-.. math:: R(t) = 0.6955 (\frac{ E_p Q_0^3 t^4 }{ m_p })^{ 1/9 }
+.. math:: R(t) = 0.6955 (\frac{ E_p Q_0^3 t^4 }{ M_p })^{ 1/9 }
 
-.. math:: w_0(t) = 1.1977 (\frac{ m_p^2 Q_0^3 t }{ E_p^2 })^{ 1/9 } 
+.. math:: w_0(t) = 1.1977 (\frac{ M_p^2 Q_0^3 t }{ E_p^2 })^{ 1/9 } 
 
-.. math:: p_0( \Pi, t ) = {\Pi}_{mo} (\xi) (\frac{ E_p^2 m_p }{ t })^{ 1/3 } 
+.. math:: p_0( \Pi, t ) = {\Pi}_{mo} (\xi) (\frac{ E_p^2 M_p }{ t })^{ 1/3 } 
 
 where the plane modulus :math:`E_p` is related to Young's modulus :math:`E` and Poisson's ratio :math:`\nu`:
 
