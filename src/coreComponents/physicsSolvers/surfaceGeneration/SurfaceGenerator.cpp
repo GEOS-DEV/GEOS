@@ -39,7 +39,7 @@ namespace geosx
 using namespace dataRepository;
 using namespace constitutive;
 
-constexpr real64 SurfaceGenerator::m_nonRuptureTime;
+//constexpr real64 SurfaceGenerator::m_nonRuptureTime;
 
 void ModifiedObjectLists::clearNewFromModified()
 {

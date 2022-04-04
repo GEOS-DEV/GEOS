@@ -56,6 +56,10 @@ if( ENABLE_CUDA )
 
   set( BLT_CUDA_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE )
   set( BLT_CUDA_RUNTIME_LIBRARIES "${_cuda_libraries}" CACHE STRING "" FORCE )
+elseif( ENABLE_HIP )
+
+#  set_property(TARGET blt_hip APPEND PROPERTY INTERFACE_COMPILE_OPTIONS "-fgpu-rdc")
+#  set_property(TARGET blt_hip APPEND PROPERTY LINK_OPTIONS "-fgpu-rdc")
 endif()
 
 ################################
@@ -121,7 +125,7 @@ if( ENABLE_CUDA )
 endif()
 
 if( ENABLE_HIP )
-  set( extraComponentsLinkList ${extraComponentsLinkList} ) # blt::hip blt::hip_runtime )
+  set( extraComponentsLinkList ${extraComponentsLinkList} blt::hip ) #blt::hip_runtime )
 endif()
 
 if ( GEOSX_BUILD_SHARED_LIBS )

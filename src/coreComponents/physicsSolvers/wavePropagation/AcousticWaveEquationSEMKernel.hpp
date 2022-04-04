@@ -46,6 +46,7 @@ struct PrecomputeSourceAndReceiverKernel
    */
   template< typename FE_TYPE >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static bool
   computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
                                         real64 const (&elemCenter)[3],
@@ -250,9 +251,9 @@ struct MassAndDampingMatrixKernel
           arrayView1d< real64 > const mass,
           arrayView1d< real64 > const damping )
   {
+    auto finiteElement = m_finiteElement;
     forAll< EXEC_POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-
       constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
       constexpr localIndex numQuadraturePointsPerElem = FE_TYPE::numQuadraturePoints;
 
@@ -272,7 +273,7 @@ struct MassAndDampingMatrixKernel
       for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
       {
         FE_TYPE::calcN( q, N );
-        real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+        real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
         for( localIndex a = 0; a < numNodesPerElem; ++a )
         {
@@ -293,7 +294,7 @@ struct MassAndDampingMatrixKernel
           for( localIndex q = 0; q < numQuadraturePointsPerElem; ++q )
           {
             FE_TYPE::calcN( q, N );
-            real64 const detJ = m_finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
+            real64 const detJ = finiteElement.template getGradN< FE_TYPE >( k, q, xLocal, gradN );
 
             real64 invJ[3][3]{};
             FE_TYPE::invJacobianTransformation( q, xLocal, invJ );

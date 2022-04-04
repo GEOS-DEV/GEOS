@@ -95,9 +95,9 @@ struct DeformationUpdateKernel
 
 struct FluidMassResidualDerivativeAssemblyKernel
 {
-
   template< typename CONTACT_WRAPPER >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE // required or hip-clang 13 balks when parsing operations on the arrayviews?
   static void
   computeAccumulationDerivative( CONTACT_WRAPPER const & contactWrapper,
                                  localIndex const numNodesPerFace,
@@ -119,6 +119,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
         for( int i = 0; i < 3; ++i )
         {
           nodeDOF[kf * 3 * numNodesPerFace + 3 * a + i] = dispDofNumber[faceToNodeMap( elemsToFaces[kf], a )] + i;
+	  
           real64 const dGap_dU = kfSign[kf] * Nbar[i] / numNodesPerFace;
 
           real64 dHydraulicAperture_dAperture = 0;
@@ -134,6 +135,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
 
   template< typename CONTACT_WRAPPER >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE // required or hip-clang 13 balks when parsing operations on the arrayviews?
   static void
   computeFluxDerivative( CONTACT_WRAPPER const & contactWrapper,
                          localIndex const kfe2,
@@ -200,6 +202,8 @@ struct FluidMassResidualDerivativeAssemblyKernel
       globalIndex const rowNumber = presDofNumber[ei] - rankOffset;
       globalIndex nodeDOF[8 * 3];
       stackArray1d< real64, 24 > dRdU( 2 * numNodesPerFace * 3 );
+
+      constexpr integer kfSign[2] = { -1, 1 };
 
       computeAccumulationDerivative( contactWrapper,
                                      numNodesPerFace,

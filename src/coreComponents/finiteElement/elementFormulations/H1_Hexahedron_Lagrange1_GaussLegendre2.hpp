@@ -85,6 +85,7 @@ public:
   USING_FINITEELEMENTBASE
   /** @endcond Doxygen_Suppress */
 
+  GEOSX_HOST_DEVICE
   virtual ~H1_Hexahedron_Lagrange1_GaussLegendre2() override
   {}
 

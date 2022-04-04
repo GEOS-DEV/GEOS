@@ -460,6 +460,7 @@ ProppantSlurryFluidUpdate::
   }
 }
 
+GEOSX_HOST_DEVICE
 void
 ProppantSlurryFluidUpdate::
   compute( real64 const & proppantConcentration,

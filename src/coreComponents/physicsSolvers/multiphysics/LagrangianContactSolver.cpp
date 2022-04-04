@@ -56,8 +56,7 @@ using namespace interpolation;
 using namespace finiteElement;
 
 constexpr integer LagrangianContactSolver::FractureState::STICK;
-constexpr integer LagrangianContactSolver::FractureState::SLIP;
-constexpr integer LagrangianContactSolver::FractureState::NEW_SLIP;
+constexpr integer LagrangianContactSolver::FractureState::SLIP;constexpr integer LagrangianContactSolver::FractureState::NEW_SLIP;
 constexpr integer LagrangianContactSolver::FractureState::OPEN;
 
 LagrangianContactSolver::LagrangianContactSolver( const string & name,

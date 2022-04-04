@@ -227,9 +227,10 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
   // note: column indexing should be kept consistent with output file header below.
 
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
+  auto numSteps = m_numSteps;
   forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
   {
-    for( integer n=0; n<=m_numSteps; ++n )
+    for( integer n=0; n<=numSteps; ++n )
     {
       kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition );
       table( n, TEMP+1 ) = totalDensity( ei, 0 );

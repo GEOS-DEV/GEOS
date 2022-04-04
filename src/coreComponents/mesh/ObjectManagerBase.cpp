@@ -848,7 +848,7 @@ void ObjectManagerBase::copyObject( const localIndex source, const localIndex de
   {
     SortedArray< localIndex > & targetSet = m_sets.getReference< SortedArray< localIndex > >( i );
 
-#if !defined(__CUDA_ARCH__)
+#if !defined(GEOSX_DEVICE_COMPILE)
     targetSet.move( LvArray::MemorySpace::host, true );
 #endif
 

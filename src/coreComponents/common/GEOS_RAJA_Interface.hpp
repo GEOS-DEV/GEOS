@@ -84,12 +84,12 @@ RAJA_INLINE parallelDeviceEvent forAll( RESOURCE && stream, const localIndex end
                                  std::forward< LAMBDA >( body ) );
 }
 
-#elif defined(GESOX_USE_HIP)
+#elif defined(GEOSX_USE_HIP)
 
-template< unsigned long BLOCK_SIZE = 0 >
-using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >
+template< unsigned long BLOCK_SIZE = 128 >
+using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 
-template< unsigned long BLOCK_SIZE = 0 >
+template< unsigned long BLOCK_SIZE = 128 >
 using parallelDeviceAsyncPolicy = RAJA::hip_exec_async< BLOCK_SIZE >;
 
 using parallelDeviceStream = RAJA::resources::Hip;

@@ -24,6 +24,11 @@
 #ifndef GEOSX_COMMON_GEOSXMACROS_HPP_
 #define GEOSX_COMMON_GEOSXMACROS_HPP_
 
+#if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
+  #define GEOSX_DEVICE_COMPILE
+#endif
+
+
 /**
  * @name Host-device markers
  *
@@ -33,7 +38,7 @@
  */
 ///@{
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define GEOSX_HOST __host__
 #define GEOSX_DEVICE __device__
 #define GEOSX_HOST_DEVICE __host__ __device__

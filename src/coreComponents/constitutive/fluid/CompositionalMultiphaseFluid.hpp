@@ -160,7 +160,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
            arraySlice2d< real64, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
            real64 & totalDens ) const
 {
-#if defined(__CUDA_ARCH__)
+#if defined(GEOSX_DEVICE_COMPILE)
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
 
@@ -172,7 +172,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
   // 1. Convert input mass fractions to mole fractions and keep derivatives
 
   std::vector< double > compMoleFrac( numComp );
-
   if( m_useMass )
   {
     convertToMoleFractions< maxNumComp >( composition,
@@ -187,7 +186,6 @@ CompositionalMultiphaseFluid::KernelWrapper::
   }
 
   // 2. Trigger PVTPackage compute and get back phase split
-
   m_fluid.Update( pressure, temperature, compMoleFrac );
 
   GEOSX_WARNING_IF( !m_fluid.hasSucceeded(),
@@ -257,7 +255,7 @@ CompositionalMultiphaseFluid::KernelWrapper::
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
-#if defined(__CUDA_ARCH__)
+#if defined(GEOSX_DEVICE_COMPILE)
   GEOSX_ERROR( "This function cannot be used on GPU" );
 #else
 

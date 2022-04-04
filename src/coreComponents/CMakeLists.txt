@@ -58,7 +58,7 @@ if ( ENABLE_CUDA )
 endif()
 
 if( ENABLE_HIP )
-  set( commonDeps ${commonDeps} blt::hip ) #blt::hip blt::hip_runtime )
+  set( commonDeps ${commonDeps} blt::hip ) #blt::hip_runtime )
 endif()
 
 if( ENABLE_MPI )
