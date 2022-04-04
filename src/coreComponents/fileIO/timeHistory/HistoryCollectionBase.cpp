@@ -21,7 +21,7 @@ void HistoryCollectionBase::initializePostSubGroups()
   m_bufferCalls.resize( m_collectionCount );
 }
 
-localIndex HistoryCollectionBase::getCollectionCount() const
+localIndex HistoryCollectionBase::numCollectors() const
 {
   return m_collectionCount;
 }
@@ -29,17 +29,17 @@ localIndex HistoryCollectionBase::getCollectionCount() const
 void HistoryCollectionBase::registerBufferCall( localIndex collectionIdx,
                                                 std::function< buffer_unit_type *() > bufferCall )
 {
-  GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= this->getCollectionCount(), "Invalid collection index specified." );
+  GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= this->numCollectors(), "Invalid collection index specified." );
   m_bufferCalls[collectionIdx] = bufferCall;
 }
 
-HistoryCollection & HistoryCollectionBase::getMetaCollector( localIndex metaIdx )
+HistoryCollection & HistoryCollectionBase::getMetaDataCollector( localIndex metaIdx )
 {
   GEOSX_ASSERT_MSG( metaIdx >= 0 && metaIdx < numMetaDataCollectors(), "Requesting nonexistent meta collector index." );
   return *m_metaDataCollectors[ metaIdx ].get( );
 }
 
-HistoryMetadata HistoryCollectionBase::getTimeMetadata() const
+HistoryMetadata HistoryCollectionBase::getTimeMetaData() const
 {
   return HistoryMetadata( this->getTargetName() + " Time", 1, std::type_index( typeid( real64 ) ) );
 }
@@ -56,7 +56,7 @@ bool HistoryCollectionBase::execute( real64 const time_n,
                                      real64 const eventProgress,
                                      DomainPartition & domain )
 {
-  for( localIndex collectionIdx = 0; collectionIdx < getCollectionCount(); ++collectionIdx )
+  for( localIndex collectionIdx = 0; collectionIdx < numCollectors(); ++collectionIdx )
   {
     // std::function defines the == and =! comparable against nullptr_t to check the
     // function pointer is actually assigned (an error would be thrown on the call attempt even so)

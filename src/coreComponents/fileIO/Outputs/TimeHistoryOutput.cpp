@@ -61,34 +61,34 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   string const outputFile = joinPath( outputDirectory, m_filename );
 
   localIndex ioCount = 0;
-  for( localIndex ii = 0; ii < collector.getCollectionCount(); ++ii, ++ioCount )
+  for( localIndex ii = 0; ii < collector.numCollectors(); ++ii, ++ioCount )
   {
-    HistoryMetadata metadata = collector.getMetadata( domain, ii );
+    HistoryMetadata metadata = collector.getMetaData( domain, ii );
 
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
     collector.registerBufferCall( ii, [this, ii, ioCount, &domain, &collector]()
     {
       collector.updateSetsIndices( domain );
-      HistoryMetadata md = collector.getMetadata( domain, ii );
+      HistoryMetadata md = collector.getMetaData( domain, ii );
       m_io[ioCount]->updateCollectingCount( md.size( 0 ) );
       return m_io[ioCount]->getBufferHead();
     } );
     m_io.back()->init( !freshInit );
   }
 
-  localIndex metaCollectorCount = collector.numMetaDataCollectors();
-  for( localIndex metaIdx = 0; metaIdx < metaCollectorCount; ++metaIdx )
+  localIndex metaDataCollectorCount = collector.numMetaDataCollectors();
+  for( localIndex metaIdx = 0; metaIdx < metaDataCollectorCount; ++metaIdx )
   {
-    HistoryCollection & metaCollector = collector.getMetaCollector( metaIdx );
-    for( localIndex ii = 0; ii < metaCollector.getCollectionCount(); ++ii, ++ioCount )
+    HistoryCollection & metaDataCollector = collector.getMetaDataCollector( metaIdx );
+    for( localIndex ii = 0; ii < metaDataCollector.numCollectors(); ++ii, ++ioCount )
     {
-      HistoryMetadata metaMetadata = metaCollector.getMetadata( domain, ii );
+      HistoryMetadata metaMetadata = metaDataCollector.getMetaData( domain, ii );
       metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName() );
       m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, m_recordCount ) );
-      metaCollector.registerBufferCall( ii, [this, ii, ioCount, &domain, &metaCollector] ()
+      metaDataCollector.registerBufferCall( ii, [this, ii, ioCount, &domain, &metaDataCollector] ()
       {
-        metaCollector.updateSetsIndices( domain );
-        HistoryMetadata md = metaCollector.getMetadata( domain, ii );
+        metaDataCollector.updateSetsIndices( domain );
+        HistoryMetadata md = metaDataCollector.getMetaData( domain, ii );
         m_io[ioCount]->updateCollectingCount( md.size( 0 ) );
         return m_io[ioCount]->getBufferHead();
       } );
@@ -102,7 +102,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   // rank == 0 does time output for the collector
   if( MpiWrapper::commRank() == 0 )
   {
-    HistoryMetadata timeMetadata = collector.getTimeMetadata();
+    HistoryMetadata timeMetadata = collector.getTimeMetaData();
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferCall( [this, idx = m_io.size() - 1]() { return m_io[idx]->getBufferHead(); } );

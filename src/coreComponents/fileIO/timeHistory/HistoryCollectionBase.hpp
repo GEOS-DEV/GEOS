@@ -37,7 +37,7 @@ public:
 
   void initializePostSubGroups() override;
 
-  localIndex getCollectionCount() const override;
+  localIndex numCollectors() const override;
 
   virtual bool execute( real64 const time_n,
                         real64 const dt,
@@ -48,11 +48,11 @@ public:
 
   void registerBufferCall( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferCall ) override;
 
-  HistoryMetadata getTimeMetadata() const override;
+  HistoryMetadata getTimeMetaData() const override;
 
   void registerTimeBufferCall( std::function< buffer_unit_type *() > timeBufferCall ) override;
 
-  HistoryCollection & getMetaCollector( localIndex metaIdx ) override;
+  HistoryCollection & getMetaDataCollector( localIndex metaIdx ) override;
 
   /**
    * @brief Return PyHistoryCollection type.

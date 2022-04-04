@@ -44,7 +44,7 @@ public:
   /// @copydoc geosx::dataRepository::Group::Group(string const & name, Group * const parent)
   HistoryCollection( string const & name, Group * parent ):
     TaskBase( name, parent )
-  {   }
+  {}
 
   // Forwarding public...
   void initializePostSubGroups() override {};
@@ -53,7 +53,7 @@ public:
    * @brief Get the number of discrete collection operations this collector conducts.
    * @return The number of collection operations for this collector.
    */
-  virtual localIndex getCollectionCount() const = 0;
+  virtual localIndex numCollectors() const = 0;
 
   /**
    * @brief Get the metadata for what this collector collects.
@@ -61,7 +61,7 @@ public:
    * @param collectionIdx Which collected item to get metadata for.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
-  virtual HistoryMetadata getMetadata( DomainPartition const & domain, localIndex collectionIdx ) = 0;
+  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) = 0;
 
   /**
    * @brief Get the name of the object being targeted for collection.
@@ -82,7 +82,7 @@ public:
    * @brief Get a metadata object relating the the Time variable itself.
    * @return A HistroyMetadata object describing the Time variable.
    */
-  virtual HistoryMetadata getTimeMetadata() const = 0;
+  virtual HistoryMetadata getTimeMetaData() const = 0;
 
   /**
    * @brief Register a callback that gives the current head of the time data buffer.
@@ -104,7 +104,7 @@ public:
    * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
    * immediately after being used to perform output during simulation initialization.
    */
-  virtual HistoryCollection & getMetaCollector( localIndex metaIdx ) = 0;
+  virtual HistoryCollection & getMetaDataCollector( localIndex metaIdx ) = 0;
 
   /**
    * @brief Update the indices from the sets being collected.

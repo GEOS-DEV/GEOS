@@ -57,7 +57,7 @@ void PackCollection::initializePostSubGroups( )
   }
 }
 
-HistoryMetadata PackCollection::getMetadata( DomainPartition const & domain, localIndex collectionIdx )
+HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, localIndex collectionIdx )
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
@@ -225,7 +225,7 @@ void PackCollection::collect( DomainPartition & domain,
                               buffer_unit_type * & buffer )
 {
   GEOSX_MARK_FUNCTION;
-  GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= getCollectionCount( ), "Attempting to collection from an invalid collection index!" );
+  GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= numCollectors(), "Attempting to collection from an invalid collection index!" );
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
   // if we have any indices to collect, and we're either collecting every time or we're only collecting when the set changes and the set has
