@@ -3,7 +3,7 @@
 namespace geosx
 {
 PackCollection::PackCollection ( string const & name, Group * parent )
-  : HistoryCollection( name, parent )
+  : HistoryCollectionBase( name, parent )
   , m_setsIndices( )
   , m_objectPath( )
   , m_fieldName( )
@@ -44,7 +44,7 @@ void PackCollection::initializePostSubGroups( )
     m_targetIsMeshObject = objectManagerTarget != nullptr;
     // update sets after we know whether to filter ghost indices ( m_targetIsMeshObject )
     updateSetsIndices( domain );
-    HistoryCollection::initializePostSubGroups( );
+    HistoryCollectionBase::initializePostSubGroups();
     // build any persistent meta collectors that are required
     buildMetaDataCollectors();
     for( auto & metaCollector : m_metaDataCollectors )

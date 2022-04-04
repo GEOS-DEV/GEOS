@@ -19,7 +19,7 @@
 #ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 #define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
-#include "TimeHistoryCollection.hpp"
+#include "HistoryCollectionBase.hpp"
 
 namespace geosx
 {
@@ -31,7 +31,7 @@ class DomainPartition;
  *
  * A task class for serializing history information using the MPI communication packing routines.
  */
-class PackCollection : public HistoryCollection
+class PackCollection : public HistoryCollectionBase
 {
 public:
   /**

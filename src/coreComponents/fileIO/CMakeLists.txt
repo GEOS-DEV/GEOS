@@ -10,6 +10,7 @@ set( fileIO_headers
      Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
+     timeHistory/HistoryCollectionBase.hpp
      timeHistory/HistoryIO.hpp
      timeHistory/PackCollection.hpp
      timeHistory/TimeHistHDF.hpp
@@ -28,6 +29,7 @@ set( fileIO_sources
      Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      silo/SiloFile.cpp
+     timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
      timeHistory/TimeHistHDF.cpp
    )
