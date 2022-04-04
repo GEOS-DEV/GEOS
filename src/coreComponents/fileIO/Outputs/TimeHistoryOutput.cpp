@@ -60,40 +60,44 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   string const outputDirectory = getOutputDirectory();
   string const outputFile = joinPath( outputDirectory, m_filename );
 
+  // TODO Is HistoryCollection a Collection or a Collector?
+
   localIndex ioCount = 0;
-  for( localIndex ii = 0; ii < collector.numCollectors(); ++ii, ++ioCount )
+
+  auto registerBufferCalls = [&]( HistoryCollection & hc )
   {
-    HistoryMetadata metadata = collector.getMetaData( domain, ii );
-
-    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-    collector.registerBufferCall( ii, [this, ii, ioCount, &domain, &collector]()
+    for( localIndex collectorIdx = 0; collectorIdx < hc.numCollectors(); ++collectorIdx, ++ioCount )
     {
-      collector.updateSetsIndices( domain );
-      HistoryMetadata md = collector.getMetaData( domain, ii );
-      m_io[ioCount]->updateCollectingCount( md.size( 0 ) );
-      return m_io[ioCount]->getBufferHead();
-    } );
-    m_io.back()->init( !freshInit );
-  }
+      HistoryMetadata metadata = hc.getMetaData( domain, collectorIdx );
 
-  localIndex metaDataCollectorCount = collector.numMetaDataCollectors();
+      // FIXME Deal with ioCount as `m_io.size() - 1` not to rely on side effect?
+      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
+      hc.registerBufferCall( collectorIdx, [this, collectorIdx, ioCount, &domain, &hc]()
+      {
+        hc.updateSetsIndices( domain ); // FIXME `why` should we provide `hc` to the lambda if the lambda is registered in hc. We could get this in a different way...
+        HistoryMetadata hmd = hc.getMetaData( domain, collectorIdx );
+        m_io[ioCount]->updateCollectingCount( hmd.size( 0 ) );
+        return m_io[ioCount]->getBufferHead();
+      } );
+      m_io.back()->init( !freshInit );
+    }
+  };
+
+  // FIXME Why stop (pseudo) recursion at one single level?
+  registerBufferCalls( collector );
+
+  localIndex const metaDataCollectorCount = collector.numMetaDataCollectors();
   for( localIndex metaIdx = 0; metaIdx < metaDataCollectorCount; ++metaIdx )
   {
     HistoryCollection & metaDataCollector = collector.getMetaDataCollector( metaIdx );
     for( localIndex ii = 0; ii < metaDataCollector.numCollectors(); ++ii, ++ioCount )
     {
+      // TODO Better naming management? Deal with this somewhere else? (wait for tests)
       HistoryMetadata metaMetadata = metaDataCollector.getMetaData( domain, ii );
       metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName() );
-      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metaMetadata, m_recordCount ) );
-      metaDataCollector.registerBufferCall( ii, [this, ii, ioCount, &domain, &metaDataCollector] ()
-      {
-        metaDataCollector.updateSetsIndices( domain );
-        HistoryMetadata md = metaDataCollector.getMetaData( domain, ii );
-        m_io[ioCount]->updateCollectingCount( md.size( 0 ) );
-        return m_io[ioCount]->getBufferHead();
-      } );
-      m_io.back()->init( !freshInit );
     }
+
+    registerBufferCalls( metaDataCollector );
   }
 
   // do the time output last so its at the end of the m_io list, since writes are parallel we need
