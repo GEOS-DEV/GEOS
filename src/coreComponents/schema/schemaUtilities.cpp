@@ -171,7 +171,7 @@ void SchemaConstruction( Group & group,
           Group & subGroup = group.getGroup( subName );
           InputFlags subSchemaType = subGroup.getInputFlags();
 
-          if((subSchemaType == InputFlags::REQUIRED_NONUNIQUE) || (subSchemaType == InputFlags::OPTIONAL_NONUNIQUE))
+          if( ( documentationType == 0 ) & (( subSchemaType == InputFlags::REQUIRED_NONUNIQUE ) || ( subSchemaType == InputFlags::OPTIONAL_NONUNIQUE )))
           {
             // Enforce uniqueness of element names
             // Note: this must be done at the parent element level
@@ -183,7 +183,7 @@ void SchemaConstruction( Group & group,
             xmlWrapper::xmlNode uniqueNameField = uniqueNameNode.append_child( "xsd:field" );
             uniqueNameField.append_attribute( "xpath" ) = "@name";
           }
-          
+
           SchemaConstruction( subGroup, schemaRoot, targetChoiceNode, documentationType );
         }
       }
