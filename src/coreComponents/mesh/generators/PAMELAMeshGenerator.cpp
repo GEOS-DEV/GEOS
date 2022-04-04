@@ -162,7 +162,7 @@ real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
                     CellBlockManager & cellBlockManager )
 {
   cellBlockManager.setNumNodes( srcMesh.get_PointCollection()->size_all() );
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodesPositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodePositions();
 
   arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
