@@ -57,7 +57,7 @@ The term :math:`M_p` is proportional to the fluid viscosity :math:`\mu`:
 
 The viscosity scaling function :math:`{\Pi}_{mo}` is given as:
 
-.. math:: {\Pi}_{mo} (\xi) = A_1 [ 2.479 - \frac{ 2 }{ 3 ( 1 - \xi )^{ 1/3 } } ] - B [ text{ln}(\frac{ \xi }{ 2 }) + 1] 
+.. math:: {\Pi}_{mo} (\xi) = A_1 [ 2.479 - \frac{ 2 }{ 3 ( 1 - \xi )^{ 1/3 } } ] - B [ \text{ln}(\frac{ \xi }{ 2 }) + 1] 
 
 with :math:`A_1 = 0.3581`, :math:`B = 0.09269`, :math:`c_1 = 0.6846`, :math:`c_2 = 0.07098`, and :math:`\xi = r/R(t)` denoting a dimensionless radial coordinate along the fracture.
 
