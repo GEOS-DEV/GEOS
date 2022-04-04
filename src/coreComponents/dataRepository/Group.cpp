@@ -156,12 +156,14 @@ void Group::processInputFileRecursive( xmlWrapper::xmlNode & targetNode )
     {
       childName = childNode.name();
     }
-
-    // Make sure child names are not duplicated
-    GEOSX_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
-                    GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
-                               getPath(), childName ) );
-    childNames.emplace_back( childName );
+    else
+    {
+      // Make sure child names are not duplicated
+      GEOSX_ERROR_IF( std::find( childNames.begin(), childNames.end(), childName ) != childNames.end(),
+                      GEOSX_FMT( "Error: An XML block cannot contain children with duplicated names ({}/{}). ",
+                                 getPath(), childName ) );
+      childNames.emplace_back( childName );
+    }
 
     // Create children
     Group * newChild = createChild( childNode.name(), childName );
