@@ -200,7 +200,7 @@ public:
     // Computing stabilization flux requires quantities already computed in the base computeFlux,
     // such as potGrad, phaseFlux, and the indices of the upwind cell
     // We use the lambda below (called **inside** the phase loop of the base computeFlux) to access these variables
-    Base::computeFlux( iconn, stack, [=] GEOSX_HOST_DEVICE ( integer const ip,
+    Base::computeFlux( iconn, stack, [&] GEOSX_HOST_DEVICE ( integer const ip,
                                                              localIndex const k_up,
                                                              localIndex const er_up,
                                                              localIndex const esr_up,
@@ -218,7 +218,8 @@ public:
       real64 dPresGradStab{};
 
       real64 tauStab = 0.0; 
-      tauStab = 9.6344e-12;
+      // tauStab = 9.6344e-12;
+      // tauStab = 100.;
 
 
       // compute potential difference MPFA-style
@@ -228,10 +229,12 @@ public:
         localIndex const esr = m_sesri( iconn, i );
         localIndex const ei  = m_sei( iconn, i );
 
-        // tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
+        tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
 
         dPresGradStab += tauStab * m_stabWeights(iconn, i) * m_dPres[er][esr][ei];
+
+        // std::cout << m_dPres[er][esr][ei] << std::endl;
 
       }
 
@@ -253,6 +256,8 @@ public:
                                                                            * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
 
         }
+
+        // std::cout << "Compute \t" << ip << "\t" << ic << "\t" << dPresGradStab << "\t" << m_phaseDensOld[er_up][esr_up][ei_up][ip] << "\t" << m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic] << "\t" << m_phaseVolFracOld[er_up][esr_up][ei_up][ip] << "\t" << stack.stabFlux[ic] << std::endl;
       }
 
 
@@ -261,8 +266,11 @@ public:
     // populate local flux vector and derivatives
     for( integer ic = 0; ic < numComp; ++ic )
     {
+
+      // std::cout << "Populate   " << ic << "   " << stack.stabFlux[ic] << std::endl;
+
       stack.localFlux[ic]           +=  stack.stabFlux[ic]; // does sign need to flip here?
-      stack.localFlux[numComp + ic] += -stack.compFlux[ic];
+      stack.localFlux[numComp + ic] += -stack.stabFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
@@ -271,6 +279,8 @@ public:
         stack.localFluxJacobian[numComp + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
 
       }
+
+      // std::cout << ic << "   " << stack.localFlux[ic] << std::endl;
     }
 
     
