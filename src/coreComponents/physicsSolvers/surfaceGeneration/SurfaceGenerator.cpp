@@ -2100,7 +2100,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                                         getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
             arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion.getElementCenter();
 
-            faceManager.sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
+            FaceManager::sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ] );
 
             //Face normal need to be updated here
             real64 fCenter[ 3 ];
