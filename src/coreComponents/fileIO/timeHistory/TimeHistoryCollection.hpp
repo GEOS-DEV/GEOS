@@ -61,7 +61,7 @@ public:
    * @param collectionIdx Which collected item to get metadata for.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
-  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) = 0;
+  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const = 0;
 
   /**
    * @brief Get the name of the object being targeted for collection.

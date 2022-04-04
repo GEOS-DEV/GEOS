@@ -49,7 +49,7 @@ public:
   virtual void initializePostSubGroups() override;
 
   /// @copydoc geosx::HistoryCollection::getMetaData
-  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) override;
+  virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
   virtual const string & getTargetName( ) const override

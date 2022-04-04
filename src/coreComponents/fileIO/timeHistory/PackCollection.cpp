@@ -57,7 +57,7 @@ void PackCollection::initializePostSubGroups( )
   }
 }
 
-HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, localIndex collectionIdx )
+HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );

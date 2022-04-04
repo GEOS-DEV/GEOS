@@ -74,7 +74,7 @@ protected:
    *        object path is relative, it searches relative to the mesh in the same way the fieldSpecification does,
    *        so any objectPath that works in fieldSpecification will also work here.
    */
-  dataRepository::Group const * getTargetObject( DomainPartition const & domain, string const & objectPath );
+  dataRepository::Group const * getTargetObject( DomainPartition const & domain, string const & objectPath ) const;
 
   /**
    * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::execute .

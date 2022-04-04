@@ -81,7 +81,7 @@ bool HistoryCollectionBase::execute( real64 const time_n,
   return false;
 }
 
-dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPartition const & domain, string const & objectPath )
+dataRepository::Group const * HistoryCollectionBase::getTargetObject( DomainPartition const & domain, string const & objectPath ) const
 {
   // absolute objectPaths can be used to target anything in the data repo that is packable
   if( objectPath[0] == '/' )
