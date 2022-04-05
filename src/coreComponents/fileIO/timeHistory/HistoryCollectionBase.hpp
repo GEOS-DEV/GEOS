@@ -32,7 +32,7 @@ public:
     m_targetIsMeshObject( false ),
     m_collectionCount( 1 ),
     m_timeBufferCall(),
-    m_bufferCalls()
+    m_bufferProviders()
   {   }
 
   void initializePostSubGroups() override;
@@ -46,7 +46,7 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  void registerBufferCall( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferCall ) override;
+  void registerBufferProvider( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferCall ) override;
 
   HistoryMetadata getTimeMetaData() const override;
 
@@ -100,7 +100,7 @@ protected:
   std::function< buffer_unit_type *() > m_timeBufferCall;
 
   /// Callbacks to get the current buffer head to write history data into
-  std::vector< std::function< buffer_unit_type *() > > m_bufferCalls;
+  std::vector< std::function< buffer_unit_type *() > > m_bufferProviders;
 
   /// The set of metadata collectors for this collector ( currently only used to collect coordinates of mesh objects when collecting field data )
   std::vector< std::unique_ptr< HistoryCollectionBase > > m_metaDataCollectors;

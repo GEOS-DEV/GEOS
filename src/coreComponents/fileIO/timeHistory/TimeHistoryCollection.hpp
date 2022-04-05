@@ -70,13 +70,13 @@ public:
   virtual const string & getTargetName() const = 0;
 
   /**
-   * @brief Register a callback that gives the current head of the time history data buffer.
+   * @brief Register a callback that provides the current head of the time history data buffer.
    * @param collectionIdx Which collection item to register the buffer callback for.
-   * @param bufferCall A functional that when invoked returns a pointer to the head of a buffer at least large enough to
-   *                    serialize one timestep of history data into.
-   * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
+   * @param bufferProvider A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   *                       serialize one time step of history data into.
+   * @note This is typically meant to callback to BufferedHistoryIO::getBufferHead( )
    */
-  virtual void registerBufferCall( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferCall ) = 0;
+  virtual void registerBufferProvider( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferProvider ) = 0;
 
   /**
    * @brief Get a metadata object relating the the Time variable itself.
@@ -110,7 +110,7 @@ public:
    * @brief Update the indices from the sets being collected.
    * @param domain The DomainPartition of the problem.
    */
-  virtual void updateSetsIndices( DomainPartition & domain ) = 0;
+  virtual void updateSetsIndices( DomainPartition const & domain ) = 0;
 };
 
 }

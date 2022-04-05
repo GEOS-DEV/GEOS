@@ -83,7 +83,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 
 // if we add a check for the setsizes changing we can use that data to determine whether the metadata collector
 //  should only collect on size changes, otherwise not collect anything
-void PackCollection::updateSetsIndices( DomainPartition & domain )
+void PackCollection::updateSetsIndices( DomainPartition const & domain )
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );

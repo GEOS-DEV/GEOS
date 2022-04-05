@@ -67,7 +67,7 @@ public:
    *       from SortedArrayView instead of only ArrayViews will remove this
    *       duplication.
    */
-  virtual void updateSetsIndices( DomainPartition & domain ) override final;
+  virtual void updateSetsIndices( DomainPartition const & domain ) override final;
 
   virtual localIndex numMetaDataCollectors( ) const override final;
 

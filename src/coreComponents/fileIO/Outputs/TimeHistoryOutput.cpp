@@ -72,7 +72,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
 
       // FIXME Deal with ioCount as `m_io.size() - 1` not to rely on side effect?
       m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-      hc.registerBufferCall( collectorIdx, [this, collectorIdx, ioCount, &domain, &hc]()
+      hc.registerBufferProvider( collectorIdx, [this, collectorIdx, ioCount, &domain, &hc]()
       {
         hc.updateSetsIndices( domain ); // FIXME `why` should we provide `hc` to the lambda if the lambda is registered in hc. We could get this in a different way...
         HistoryMetadata hmd = hc.getMetaData( domain, collectorIdx );

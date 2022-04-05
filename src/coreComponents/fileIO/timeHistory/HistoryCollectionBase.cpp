@@ -18,7 +18,7 @@ namespace geosx {
 
 void HistoryCollectionBase::initializePostSubGroups()
 {
-  m_bufferCalls.resize( m_collectionCount );
+  m_bufferProviders.resize( m_collectionCount );
 }
 
 localIndex HistoryCollectionBase::numCollectors() const
@@ -26,11 +26,11 @@ localIndex HistoryCollectionBase::numCollectors() const
   return m_collectionCount;
 }
 
-void HistoryCollectionBase::registerBufferCall( localIndex collectionIdx,
-                                                std::function< buffer_unit_type *() > bufferCall )
+void HistoryCollectionBase::registerBufferProvider( localIndex collectionIdx,
+                                                    std::function< buffer_unit_type *() > bufferProvider )
 {
   GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= this->numCollectors(), "Invalid collection index specified." );
-  m_bufferCalls[collectionIdx] = bufferCall;
+  m_bufferProviders[collectionIdx] = bufferProvider;
 }
 
 HistoryCollection & HistoryCollectionBase::getMetaDataCollector( localIndex metaIdx )
@@ -60,12 +60,12 @@ bool HistoryCollectionBase::execute( real64 const time_n,
   {
     // std::function defines the == and =! comparable against nullptr_t to check the
     // function pointer is actually assigned (an error would be thrown on the call attempt even so)
-    GEOSX_ERROR_IF( m_bufferCalls[collectionIdx] == nullptr,
+    GEOSX_ERROR_IF( m_bufferProviders[collectionIdx] == nullptr,
                     "History collection buffer retrieval function is unassigned, did you declare a related TimeHistoryOutput event?" );
     // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
     // we don't explicitly update the index sets here as they are updated in the buffer callback (see
     // TimeHistoryOutput.cpp::initCollectorParallel( ) )
-    buffer_unit_type * buffer = m_bufferCalls[collectionIdx]();
+    buffer_unit_type * buffer = m_bufferProviders[collectionIdx]();
     collect( domain, time_n, dt, collectionIdx, buffer );
   }
   for( auto & metaCollector: m_metaDataCollectors )
