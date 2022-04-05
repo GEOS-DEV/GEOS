@@ -113,8 +113,8 @@ static localIndex getFaceNodesPrism( localIndex const faceNum,
     {
       GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[0];
-      faceNodes[1] = elemNodes[2];
-      faceNodes[2] = elemNodes[4];
+      faceNodes[1] = elemNodes[4];
+      faceNodes[2] = elemNodes[2];
       return 3;
     }
     case 3:
@@ -129,9 +129,9 @@ static localIndex getFaceNodesPrism( localIndex const faceNum,
     {
       GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
       faceNodes[0] = elemNodes[2];
-      faceNodes[1] = elemNodes[3];
+      faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[5];
-      faceNodes[3] = elemNodes[4];
+      faceNodes[3] = elemNodes[3];
       return 4;
     }
     default:
