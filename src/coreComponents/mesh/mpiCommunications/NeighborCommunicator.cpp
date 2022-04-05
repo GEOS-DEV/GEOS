@@ -578,7 +578,8 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
                                                 MeshLevel & mesh,
                                                 int const commID,
                                                 bool onDevice,
-                                                parallelDeviceEvents & events )
+                                                parallelDeviceEvents & events,
+                                                MPI_Op op)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -598,7 +599,7 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
 
   if( fieldNames.count( "node" ) > 0 )
   {
-    unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
+    unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events, op );
   }
 
   if( fieldNames.count( "edge" ) > 0 )

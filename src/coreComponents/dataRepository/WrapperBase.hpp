@@ -344,7 +344,8 @@ public:
                                     arrayView1d< localIndex const > const & unpackIndices,
                                     bool withMetadata,
                                     bool onDevice,
-                                    parallelDeviceEvents & events ) = 0;
+                                    parallelDeviceEvents & events,
+                                    MPI_Op op=MPI_REPLACE) = 0;
 
   ///@}
 

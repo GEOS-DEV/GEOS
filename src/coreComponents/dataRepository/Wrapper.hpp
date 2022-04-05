@@ -427,7 +427,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   /// @copydoc WrapperBase::unpackByIndex
   virtual
-  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
+  localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events, MPI_Op op ) override final
   {
     localIndex unpackedSize = 0;
     if( sizedFromParent()==1 )
@@ -442,11 +442,11 @@ public:
       {
         if( withMetadata )
         {
-          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
         }
         else
         {
-          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
+          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events, op );
         }
       }
       else
