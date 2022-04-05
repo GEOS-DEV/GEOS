@@ -64,6 +64,7 @@ public:
   template< typename ... PARAMS >
   DamageUpdates( arrayView2d< real64 > const & inputDamage,
                  arrayView2d< real64 > const & inputStrainEnergyDensity,
+                 arrayView2d< real64 > const & inputExtDrivingForce, 
                  real64 const & inputLengthScale,
                  real64 const & inputCriticalFractureEnergy,
                  real64 const & inputcriticalStrainEnergy,
@@ -71,6 +72,7 @@ public:
     UPDATE_BASE( std::forward< PARAMS >( baseParams )... ),
     m_damage( inputDamage ),
     m_strainEnergyDensity( inputStrainEnergyDensity ),
+    m_extDrivingForce ( inputExtDrivingForce ), 
     m_lengthScale( inputLengthScale ),
     m_criticalFractureEnergy( inputCriticalFractureEnergy ),
     m_criticalStrainEnergy( inputcriticalStrainEnergy )
@@ -148,6 +150,15 @@ public:
   }
 
   GEOSX_HOST_DEVICE
+  virtual real64 getExtDrivingForce( localIndex const k, 
+                                     localIndex const q ) const
+  {
+    m_extDrivingForce( k, q ) = 0.0;
+
+    return m_extDrivingForce( k, q );  
+  }
+
+  GEOSX_HOST_DEVICE
   real64 getRegularizationLength() const
   {
     return m_lengthScale;
@@ -171,6 +182,7 @@ public:
 
   arrayView2d< real64 > const m_damage;
   arrayView2d< real64 > const m_strainEnergyDensity;
+  arrayView2d< real64 > const m_extDrivingForce; 
   real64 const m_lengthScale;
   real64 const m_criticalFractureEnergy;
   real64 const m_criticalStrainEnergy;
@@ -205,6 +217,7 @@ public:
   {
     return BASE::template createDerivedKernelUpdates< KernelWrapper >( m_damage.toView(),
                                                                        m_strainEnergyDensity.toView(),
+                                                                       m_extDrivingForce.toView(), 
                                                                        m_lengthScale,
                                                                        m_criticalFractureEnergy,
                                                                        m_criticalStrainEnergy );
@@ -214,6 +227,7 @@ public:
   {
     static constexpr char const * damageString() { return "damage"; }
     static constexpr char const * strainEnergyDensityString() { return "strainEnergyDensity"; }
+    static constexpr char const * extDrivingForceString() { return "extDrivingForce"; }
     /// string/key for regularization length
     static constexpr char const * lengthScaleString() { return "lengthScale"; }
     /// string/key for Gc
@@ -226,6 +240,7 @@ public:
 protected:
   array2d< real64 > m_damage;
   array2d< real64 > m_strainEnergyDensity;
+  array2d< real64 > m_extDrivingForce; 
   real64 m_lengthScale;
   real64 m_criticalFractureEnergy;
   real64 m_criticalStrainEnergy;
