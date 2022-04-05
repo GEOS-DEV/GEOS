@@ -32,6 +32,7 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
   BASE( name, parent ),
   m_damage(),
   m_strainEnergyDensity(),
+  m_extDrivingForce(), 
   m_lengthScale(),
   m_criticalFractureEnergy(),
   m_criticalStrainEnergy()
@@ -45,6 +46,11 @@ Damage< BASE >::Damage( string const & name, Group * const parent ):
     setApplyDefaultValue( 0.0 ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setDescription( "Strain Energy Density" );
+
+  this->registerWrapper( viewKeyStruct::extDrivingForceString(), &m_extDrivingForce ).
+    setApplyDefaultValue( 0.0 ).
+    setPlotLevel( PlotLevel::LEVEL_0 ).
+    setDescription( "External Driving Force" );
 
   this->registerWrapper( viewKeyStruct::lengthScaleString(), &m_lengthScale ).
     setInputFlag( InputFlags::REQUIRED ).
@@ -72,6 +78,7 @@ void Damage< BASE >::allocateConstitutiveData( dataRepository::Group & parent,
 {
   m_damage.resize( 0, numConstitutivePointsPerParentIndex );
   m_strainEnergyDensity.resize( 0, numConstitutivePointsPerParentIndex );
+  m_extDrivingForce.resize( 0, numConstitutivePointsPerParentIndex ); 
   BASE::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
