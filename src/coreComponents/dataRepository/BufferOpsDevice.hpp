@@ -110,7 +110,8 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
-                      parallelDeviceEvents & events );
+                      parallelDeviceEvents & events,
+                      MPI_Op op=MPI_REPLACE);
 
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
@@ -118,7 +119,8 @@ localIndex
 UnpackByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
                      T & GEOSX_UNUSED_PARAM( var ),
                      T_INDICES const & GEOSX_UNUSED_PARAM( indices ),
-                     parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+                     parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ),
+                     MPI_Op op=MPI_REPLACE)
 {
   GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;
@@ -206,7 +208,8 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,
-                          parallelDeviceEvents & events );
+                          parallelDeviceEvents & events,
+                          MPI_Op op=MPI_REPLACE );
 
 //------------------------------------------------------------------------------
 template< typename T, typename T_INDICES >
@@ -214,7 +217,8 @@ localIndex
 UnpackDataByIndexDevice( buffer_unit_type const * & GEOSX_UNUSED_PARAM( buffer ),
                          T & GEOSX_UNUSED_PARAM( var ),
                          T_INDICES const & GEOSX_UNUSED_PARAM( indices ),
-                         parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ) )
+                         parallelDeviceEvents & GEOSX_UNUSED_PARAM( events ),
+                         MPI_Op op=MPI_REPLACE )
 {
   GEOSX_ERROR( "Trying to unpack data type (" << LvArray::system::demangleType< T >() << ") but type is not packable by index." );
   return 0;

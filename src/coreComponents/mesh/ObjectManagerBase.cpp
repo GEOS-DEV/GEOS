@@ -328,7 +328,8 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
                                       arrayView1d< localIndex > & packList,
                                       integer const recursive,
                                       bool onDevice,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op)
 {
   localIndex unpackedSize = 0;
   string groupName;
@@ -355,7 +356,7 @@ localIndex ObjectManagerBase::unpack( buffer_unit_type const * & buffer,
       unpackedSize += bufferOps::Unpack( buffer, wrapperName );
       if( wrapperName != "nullptr" )
       {
-        unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events );
+        unpackedSize += this->getWrapperBase( wrapperName ).unpackByIndex( buffer, packList, true, onDevice, events, op );
       }
     }
   }

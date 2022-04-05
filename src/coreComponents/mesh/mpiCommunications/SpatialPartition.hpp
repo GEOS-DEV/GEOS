@@ -39,6 +39,26 @@ public:
   void setSizes( real64 const ( &min )[ 3 ],
                  real64 const ( &max )[ 3 ] ) override;
 
+  real64* getLocalMin()
+  {
+    return m_min;
+  }
+
+  real64* getLocalMax()
+  {
+    return m_max;
+  }
+
+  real64* getGlobalMin()
+  {
+    return m_gridMin;
+  }
+
+  real64* getGlobalMax()
+  {
+    return m_gridMax;
+  }
+
   void setPartitions( unsigned int xPartitions,
                       unsigned int yPartitions,
                       unsigned int zPartitions ) override;

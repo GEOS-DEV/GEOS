@@ -92,7 +92,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events ) override;
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE) override;
 
   /**
    * @brief Packs the elements of each set that actually are in @p packList.

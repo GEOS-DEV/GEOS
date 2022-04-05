@@ -760,12 +760,12 @@ UnpackDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & )
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
-{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events ); }
+UnpackByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op=MPI_REPLACE )
+{ return bufferOps::UnpackByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents & )
+UnpackByIndexDevice( buffer_unit_type const * &, T &, IDX &, parallelDeviceEvents &, MPI_Op op=MPI_REPLACE )
 { return 0; }
 
 
@@ -799,12 +799,12 @@ UnpackDataDevice( buffer_unit_type const * &, T const &, parallelDeviceEvents & 
 
 template< typename T, typename IDX >
 inline std::enable_if_t< bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events )
-{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events ); }
+UnpackDataByIndexDevice( buffer_unit_type const * & buffer, T const & var, IDX & idx, parallelDeviceEvents & events, MPI_Op op )
+{ return bufferOps::UnpackDataByIndexDevice( buffer, var, idx, events, op ); }
 
 template< typename T, typename IDX >
 inline std::enable_if_t< !bufferOps::is_container< T >, localIndex >
-UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents & )
+UnpackDataByIndexDevice( buffer_unit_type const * &, T const &, IDX &, parallelDeviceEvents &, MPI_Op op )
 { return 0; }
 #if defined(GEOSX_USE_PYGEOSX)
 

@@ -210,7 +210,8 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
                           ArrayView< T, NDIM, USD > const & var,
                           T_INDICES const & indices,
-                          parallelDeviceEvents & events )
+                          parallelDeviceEvents & events,
+                          MPI_Op op)
 {
   localIndex numIndices = indices.size();
   localIndex sliceSize = var.size() / var.size( 0 );
@@ -220,11 +221,22 @@ UnpackDataByIndexDevice ( buffer_unit_type const * & buffer,
   events.emplace_back( forAll< parallelDeviceAsyncPolicy<> >( stream, numIndices, [=] GEOSX_DEVICE ( localIndex const ii )
   {
     T const * threadBuffer = &devBuffer[ ii * sliceSize ];
-    LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
+    if(op == MPI_SUM)
     {
-      value = *threadBuffer;
-      ++threadBuffer;
-    } );
+      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
+      {
+        value += *threadBuffer;
+        ++threadBuffer;
+      } );
+    }
+    else if(op == MPI_REPLACE) // TODO: Add other types of syncs?
+    {
+      LvArray::forValuesInSlice( var[ indices[ ii ] ], [&threadBuffer] GEOSX_DEVICE ( T & value )
+      {
+        value = *threadBuffer;
+        ++threadBuffer;
+      } );
+    }
   } ) );
 
   buffer += unpackSize;
@@ -236,7 +248,8 @@ typename std::enable_if< can_memcpy< T >, localIndex >::type
 UnpackByIndexDevice ( buffer_unit_type const * & buffer,
                       ArrayView< T, NDIM, USD > const & var,
                       T_INDICES const & indices,
-                      parallelDeviceEvents & events )
+                      parallelDeviceEvents & events,
+                      MPI_Op op)
 {
   size_t typeSize = sizeof( T );
   localIndex strides[NDIM];
@@ -248,7 +261,7 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
     buffer += typeSize - misalignment;
   }
   unpackSize += typeSize - 1;
-  unpackSize += UnpackDataByIndexDevice( buffer, var, indices, events );
+  unpackSize += UnpackDataByIndexDevice( buffer, var, indices, events, op );
   return unpackSize;
 }
 
@@ -279,7 +292,8 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
     ( buffer_unit_type const * & buffer, \
     ArrayView< TYPE, NDIM, USD > const & var, \
     arrayView1d< const localIndex > const & indices, \
-    parallelDeviceEvents & events ); \
+    parallelDeviceEvents & events, \
+    MPI_Op op); \
     \
   template localIndex PackDataDevice< true, TYPE, NDIM, USD > \
     ( buffer_unit_type * &buffer, \
@@ -307,7 +321,8 @@ UnpackByIndexDevice ( buffer_unit_type const * & buffer,
     ( buffer_unit_type const * & buffer, \
     ArrayView< TYPE, NDIM, USD > const & var, \
     arrayView1d< const localIndex > const & indices, \
-    parallelDeviceEvents & events )
+    parallelDeviceEvents & events, \
+    MPI_Op op)
 
 #define DECLARE_PACK_UNPACK_UP_TO_2D( TYPE ) \
   DECLARE_PACK_UNPACK( TYPE, 1, 0 ); \

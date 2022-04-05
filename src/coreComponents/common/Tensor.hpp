@@ -121,6 +121,11 @@ public:
     return SIZE;
   }
 
+  /// Declare assignment operators
+  Tensor<T, SIZE_TPARAM> & operator=( const double& rhs );
+  Tensor<T, SIZE_TPARAM> & operator+=( const double& rhs );
+  Tensor<T, SIZE_TPARAM> & operator+=( const Tensor<T, SIZE_TPARAM>& rhs );
+
   /// Underlying array
   T data[SIZE] = {};
 
@@ -143,6 +148,61 @@ private:
     return os;
   }
 };
+
+// *****************************************************************************
+// ****************************** END DECLARATION ******************************
+// *****************************************************************************
+
+/**
+ * @brief Assigns all tensor components to a single input value
+ * @param rhs the input value
+ * @return The updated tensor.
+ */
+template< typename T, int SIZE_TPARAM >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE Tensor<T, SIZE_TPARAM> &
+Tensor<T, SIZE_TPARAM>::operator=( const double& rhs )
+{
+  for( int i = 0; i < SIZE_TPARAM; ++i )
+  {
+    data[i] = rhs;
+  }
+  return *this;
+}
+
+/**
+ * @brief Adds a single value to all tensor components
+ * @param rhs the input value
+ * @return The updated tensor.
+ */
+template< typename T, int SIZE_TPARAM >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE Tensor<T, SIZE_TPARAM> &
+Tensor<T, SIZE_TPARAM>::operator+=( const double& rhs )
+{
+  for( int i = 0; i < SIZE_TPARAM; ++i )
+  {
+    data[i] += rhs;
+  }
+  return *this;
+}
+
+/**
+ * @brief Component-wise addition of two tensors
+ * @param rhs the tensor being added to 'this' one
+ * @return The updated tensor.
+ */
+template< typename T, int SIZE_TPARAM >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE Tensor<T, SIZE_TPARAM> &
+Tensor<T, SIZE_TPARAM>::operator+=( const Tensor<T, SIZE_TPARAM>& rhs )
+{
+  for( int i = 0; i < SIZE_TPARAM; ++i )
+  {
+    data[i] += rhs.data[i];
+  }
+  return *this;
+}
 
 }
 
