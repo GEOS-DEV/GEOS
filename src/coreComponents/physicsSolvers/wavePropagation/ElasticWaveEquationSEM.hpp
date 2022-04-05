@@ -133,7 +133,7 @@ private:
 
   /// Locates the source term and precomputes the constant part of the source term
   /// And locate receivers and pre_evaluate the basis functions at each receiver coordinate
-  void precomputeSourceAndReceiverTerm( MeshLevel & mesh );
+  void precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames );
 
   /// Multiply the precomputed term by the ricker and add to the right-hand side
   void addSourceToRightHandSide( real64 const & time, arrayView1d< real64 > const rhs_x, arrayView1d< real64 > const rhs_y, arrayView1d< real64 > const rhs_z);
@@ -205,7 +205,7 @@ bool ElasticWaveEquationSEM::computeCoordinatesOnReferenceElement( real64 const 
                                                                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
                                                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
 {
-  if( computationalGeometry::IsPointInsidePolyhedron( X, faceNodes, coords ) )
+  if( computationalGeometry::isPointInsidePolyhedron( X, faceNodes, coords ) )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
     real64 xLocal[numNodesPerElem][3];

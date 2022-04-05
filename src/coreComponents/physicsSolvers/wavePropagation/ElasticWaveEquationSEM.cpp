@@ -194,7 +194,7 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 }
 
 
-void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
+void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
 
@@ -220,12 +220,12 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
   receiverConstants.setValues< serialPolicy >( -1 );
   receiverIsLocal.setValues< serialPolicy >( 0 );
 
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
-  {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
+  // forTargetRegionsComplete( mesh, [&]( localIndex const,
+  //                                      localIndex const,
+  //                                      ElementRegionBase & elemRegion )
+  // {
+  mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                        CellElementSubRegion & elementSubRegion )
     {
 
       GEOSX_THROW_IF( elementSubRegion.getElementType() != ElementType::Hexahedron,
@@ -345,7 +345,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh )
         } );// End loop over elements
       } );
     } );
-  } );
+  //} );
 }
 
 
@@ -474,12 +474,15 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
   arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
 
 
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
+  // forTargetRegionsComplete( mesh, [&]( localIndex const,
+  //                                      localIndex const,
+  //                                      ElementRegionBase & elemRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )                                     
   {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
+    mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion & elementSubRegion )
     {
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -654,14 +657,18 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
 
     if( functionName.empty() || functionManager.getGroup< FunctionBase >( functionName ).isFunctionOfTime() == 2 )
     {
-
-      forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
+      forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+      // forTargetRegionsComplete( mesh, [&]( localIndex const,
+      //                                  localIndex const,
+      //                                  ElementRegionBase & elemRegion )
       {
 
-        elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
+        // elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
+        //                                                                CellElementSubRegion & elementSubRegion )
+        mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+        CellElementSubRegion & elementSubRegion )
         {
 
           arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
@@ -897,12 +904,17 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   arrayView1d< real64 > const rhs_y = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_y >();
   arrayView1d< real64 > const rhs_z = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_z >();
 
-  forTargetRegionsComplete( mesh, [&]( localIndex const,
-                                       localIndex const,
-                                       ElementRegionBase & elemRegion )
+  // forTargetRegionsComplete( mesh, [&]( localIndex const,
+  //                                      localIndex const,
+  //                                      ElementRegionBase & elemRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )                                     
   {
-    elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
-                                                                       CellElementSubRegion & elementSubRegion )
+    // elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
+    //                                                                    CellElementSubRegion & elementSubRegion )
+     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          CellElementSubRegion & elementSubRegion )
     {
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
