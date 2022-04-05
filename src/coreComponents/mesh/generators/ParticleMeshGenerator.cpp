@@ -106,80 +106,80 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   // Get MPI rank
   int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
-  if(mpiRank==0) // Only rank 0 should read the particle and header file (for now).
+  // Get and process header and particle files
+  std::ifstream headerFile(m_headerFilePath);
+  std::ifstream particleFile(m_particleFilePath);
+  std::string line; // initialize line variable
+
+  // Read in number of materials and particle types
+  std::getline(headerFile, line); // get a line
+  std::istringstream iss1(line); // turn the line into a stream
+  iss1 >> numMaterials >> numParticleTypes;
+  particleTypes.resize(numParticleTypes);
+
+  GEOSX_LOG_RANK_0("Number of particle materials: " << numMaterials);
+  GEOSX_LOG_RANK_0("Number of particle types: " << numParticleTypes);
+
+  // Read in material key
+  for(int i=0; i<numMaterials; i++)
   {
-    // Get and process header and particle files
-    std::ifstream headerFile(m_headerFilePath);
-    std::ifstream particleFile(m_particleFilePath);
-    std::string line; // initialize line variable
+    std::getline(headerFile, line);
+    std::istringstream iss2(line);
+    std::string key; // Material name
+    int value; // Material ID
+    iss2 >> key >> value;
+    materialMap[key] = value;
+    GEOSX_LOG_RANK_0("Material name/ID: " + key + "/" << value);
+  }
 
-    // Read in number of materials and particle types
-    std::getline(headerFile, line); // get a line
-    std::istringstream iss1(line); // turn the line into a stream
-    iss1 >> numMaterials >> numParticleTypes;
-    particleTypes.resize(numParticleTypes);
+  // Read in particle type key
+  for(int i=0; i<numParticleTypes; i++)
+  {
+    std::getline(headerFile, line);
+    std::istringstream iss2(line);
+    std::string particleType; // Particle type
+    int np; // Number of particles of that type
+    iss2 >> particleType >> np;
+    numParticles += np;
+    particleTypeMap[particleType] = np;
+    particleTypes[i] = particleType;
+  }
 
-    std::cout << "Number of particle materials: " << numMaterials << std::endl;
-    std::cout << "Number of particle types: " << numParticleTypes << std::endl;
-
-    // Read in material key
-    for(int i=0; i<numMaterials; i++)
+  // Read in particle data
+  for(size_t i=0; i<particleTypes.size(); i++)
+  {
+    for(int j=0; j<particleTypeMap[particleTypes[i]]; j++)
     {
-      std::getline(headerFile, line);
-      std::istringstream iss2(line);
-      std::string key; // Material name
-      int value; // Material ID
-      iss2 >> key >> value;
-      materialMap[key] = value;
-      std::cout << "Material name/ID: " + key + "/" << value << std::endl;
-    }
+      std::getline(particleFile, line);
+      std::vector<double> lineData;
+      std::istringstream lineStream(line);
 
-    // Read in particle type key
-    for(int i=0; i<numParticleTypes; i++)
-    {
-      std::getline(headerFile, line);
-      std::istringstream iss2(line);
-      std::string particleType; // Particle type
-      int np; // Number of particles of that type
-      iss2 >> particleType >> np;
-      numParticles += np;
-      particleTypeMap[particleType] = np;
-      particleTypes[i] = particleType;
-    }
-
-    // Read in particle data
-    for(size_t i=0; i<particleTypes.size(); i++)
-    {
-      for(int j=0; j<particleTypeMap[particleTypes[i]]; j++)
+      double value;
+      int positionComponent = 0;
+      bool inPartition = true;
+      while(lineStream >> value)
       {
-        std::getline(particleFile, line);
-        std::vector<double> lineData;
-        std::istringstream lineStream(line);
-
-        double value;
-        int positionComponent = 0;
-        bool inPartition = true;
-        while(lineStream >> value)
+        lineData.push_back(value);
+        if(positionComponent<3) // first three values are the particle position, check for partition membership
         {
-          lineData.push_back(value);
-          if(positionComponent<3) // first three values are the particle position, check for partition membership
+          inPartition = inPartition && partition.isCoordInPartition(value, positionComponent);
+          if(!inPartition) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next line
           {
-            inPartition = inPartition && partition.isCoordInPartition(value, positionComponent);
-            if(!inPartition) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next line
-            {
-              break;
-            }
+            break;
           }
-          positionComponent++;
         }
-        if(inPartition)
-        {
-          particleData[particleTypes[i]].push_back(lineData);
-        }
+        positionComponent++;
+      }
+      if(inPartition)
+      {
+        particleData[particleTypes[i]].push_back(lineData);
       }
     }
+  }
 
-    // Print out particle data
+  // Print out particle data
+//  if(mpiRank==0)
+//  {
 //    for(size_t i=0; i<particleTypes.size(); i++)
 //    {
 //      std::string particleType = particleTypes[i];
@@ -195,13 +195,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
 //        std::cout << std::endl;
 //      }
 //    }
-  }
-
-  // Rank 0 will have to broadcast the particle information to all ranks at some point, probably here. Let's skip this for now and get serial MPM working.
-  // All ranks should, for now, read in the entire particle file and throw out what they don't need. Ultimately, probably better to have separate files for each rank.
-  // Each rank will have its own version of particleData containing only the particles in the partition associated with that rank.
-
-  particleManager.resize( numParticles ); // All this does is change m_size for the particleManager, gives a convenient way to get the total number of particles
+//  }
 
   // Get map from particle blocks to particle regions (more specifically the regions' associated materials)
   map < std::string, int > blockMaterialMap;
@@ -297,7 +291,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
         particleRVectors[index][2][0] = x3;
         particleRVectors[index][2][1] = y3;
         particleRVectors[index][2][2] = z3;
-        particleVolume[index] = std::fabs(-(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3);
+        particleVolume[index] = 8.0*std::fabs(-(x3*y2*z1) + x2*y3*z1 + x3*y1*z2 - x1*y3*z2 - x2*y1*z3 + x1*y2*z3);
       }
       else
       {
@@ -314,7 +308,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   } // loop over particle blocks
 
   // Resize particle regions
-  int numParticlesCheck = 0;
+  int numParticles2 = 0;
   particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
   {
     string_array particleBlockNames = particleRegion.getParticleBlockNames();
@@ -324,14 +318,12 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     {
       size += sizeMap[particleBlockNames[i]];
     }
-    numParticlesCheck += size;
+    numParticles2 += size;
     particleRegion.resize(size);
     GEOSX_LOG_RANK("Particle region " << particleRegion.getName() << " contains " << size << " particles on this rank.");
   } );
 
-
-  //GEOSX_ERROR_IF(numParticlesCheck != numParticles, "Inconsistency detected between MPM particle file and GEOSX input file! Check if you've correctly allocated all particle blocks.");
-
+  particleManager.resize(numParticles2); // All this does is change m_size for the particleManager, gives a convenient way to get the total number of particles
   GEOSX_LOG_RANK( "Total number of particles on this rank: " << particleManager.size() );
 }
 

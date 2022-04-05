@@ -31,6 +31,8 @@
 namespace geosx
 {
 
+class SpatialPartition;
+
 
 /**
  * @class SolidMechanicsMPM
@@ -209,18 +211,9 @@ public:
     return m_rigidBodyModes;
   }
 
-  std::vector<int> getNodes(std::vector<int> const & cellID);
-
-  std::vector<real64> getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
-                                 std::vector<int> const & cellID,
-                                 arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X);
-
-  std::vector< std::vector<real64> > getGradWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
-                                                    std::vector<int> const & cellID,
-                                                    arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X);
-
   void initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X,
-                  ParticleManager & particleManager);
+                  ParticleManager & particleManager,
+                  SpatialPartition & partition);
 
 protected:
   virtual void postProcessInput() override final;
@@ -241,16 +234,20 @@ protected:
   string m_contactRelationName;
   MPI_iCommData m_iComm;
 
-  std::vector<real64> m_hx{DBL_MAX,DBL_MAX,DBL_MAX};    // Grid spacing in x-y-z
-  std::vector<real64> m_xMin{DBL_MAX,DBL_MAX,DBL_MAX};  // Minimum grid coordinate
-  std::vector<real64> m_xMax{DBL_MIN,DBL_MIN,DBL_MIN};  // Maximum grid coordinate
-  std::vector<real64> m_domainL{0.0,0.0,0.0};           // Length of each edge of grid
-  std::vector<int> m_nEl{0,0,0};                        // Number of elements in each grid direction
-  std::vector<std::vector<std::vector<int>>> m_ijkMap;  // Map from cell-spaced coordinates to cell ID
+  std::array<real64, 3> m_hx = {DBL_MAX,DBL_MAX,DBL_MAX};         // Grid spacing in x-y-z
+  std::array<real64, 3> m_xLocalMin = {DBL_MAX,DBL_MAX,DBL_MAX};  // Minimum local grid coordinate including ghost nodes
+  std::array<real64, 3> m_xLocalMax = {DBL_MIN,DBL_MIN,DBL_MIN};  // Maximum local grid coordinate including ghost nodes
+  std::array<real64, 3> m_xLocalMinNoGhost = {0.0,0.0,0.0};       // Minimum local grid coordinate EXCLUDING ghost nodes
+  std::array<real64, 3> m_xLocalMaxNoGhost = {0.0,0.0,0.0};       // Maximum local grid coordinate EXCLUDING ghost nodes
+  std::array<real64, 3> m_xGlobalMin = {0.0,0.0,0.0};             // Minimum global grid coordinate
+  std::array<real64, 3> m_xGlobalMax = {0.0,0.0,0.0};             // Maximum global grid coordinate
+  std::array<real64, 3> m_domainL = {0.0,0.0,0.0};                // Length of each edge of grid
+  std::array<int, 3> m_nEl = {0,0,0};                             // Number of elements in each grid direction
+  std::vector<std::vector<std::vector<int>>> m_ijkMap;            // Map from cell-spaced coordinates to cell ID
 
-  std::vector< std::vector<int> > m_voigtMap = { {0, 5, 4},
-                                                 {5, 1, 3},
-                                                 {4, 3, 2} };
+  int m_voigtMap[3][3] = { {0, 5, 4},
+                           {5, 1, 3},
+                           {4, 3, 2} };
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;

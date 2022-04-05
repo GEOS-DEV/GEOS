@@ -30,6 +30,7 @@
 #include "finiteElement/Kinematics.h"
 #include "LvArray/src/output.hpp"
 #include "mesh/DomainPartition.hpp"
+#include "mesh/mpiCommunications/SpatialPartition.hpp"
 #include "mainInterface/ProblemManager.hpp"
 #include "discretizationMethods/NumericalMethodsManager.hpp"
 #include "fieldSpecification/FieldSpecificationManager.hpp"
@@ -269,7 +270,7 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I
     }
     else // Particle field registration? TODO: What goes here?
     {
-      std::cout << "Registering particle fields, I guess" << std::endl;
+      GEOSX_LOG_RANK_0("Registering particle fields, I guess");
     }
 
   } );
@@ -398,17 +399,24 @@ real64 SolidMechanicsMPM::solverStep( real64 const & time_n,
   return dtReturn;
 }
 
-void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X, ParticleManager & particleManager)
+void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X, ParticleManager & particleManager, SpatialPartition & partition)
 {
-  // Get domain extent
+  // Get global domain extent
   for(int i=0; i<g_X.size()/3; i++)
   {
     for(int j=0; j<3; j++)
     {
-      m_xMin[j] = std::fmin(m_xMin[j],g_X[i][j]);
-      m_xMax[j] = std::fmax(m_xMax[j],g_X[i][j]);
-      m_domainL[j] = m_xMax[j] - m_xMin[j];
+      m_xLocalMin[j] = std::min(m_xLocalMin[j],g_X[i][j]);
+      m_xLocalMax[j] = std::max(m_xLocalMax[j],g_X[i][j]);
     }
+  }
+  for(int i=0; i<3; i++)
+  {
+    m_xLocalMinNoGhost[i] = partition.getLocalMin()[i];
+    m_xLocalMaxNoGhost[i] = partition.getLocalMax()[i];
+    m_xGlobalMin[i] = partition.getGlobalMin()[i];
+    m_xGlobalMax[i] = partition.getGlobalMax()[i];
+    m_domainL[i] = m_xLocalMax[i] - m_xLocalMin[i];
   }
 
   // Get element size
@@ -416,10 +424,10 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
   {
     for(int j=0; j<3; j++)
     {
-      real64 test = g_X[i][j] - m_xMin[j]; // By definition, this should always be positive
+      real64 test = g_X[i][j] - m_xLocalMin[j]; // By definition, this should always be positive. Furthermore, the g_X should only be those on the local partition
       if(test > 0.0) // We're looking for the smallest nonzero distance from the "min" node. TODO: Could be vulnerable to a finite precision bug.
       {
-        m_hx[j] = std::fmin(test,m_hx[j]);
+        m_hx[j] = std::fmin(test, m_hx[j]);
       }
     }
   }
@@ -427,7 +435,7 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
   // Get number of elements in each direction
   for(int i=0; i<3; i++)
   {
-      m_nEl[i] = std::round(m_domainL[i]/m_hx[i]);
+    m_nEl[i] = std::round(m_domainL[i]/m_hx[i]);
   }
 
   // Create element map
@@ -442,9 +450,9 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
   }
   for( int ii = 0 ; ii < g_X.size()/3 ; ii++ )
   {
-    int i = std::round( ( g_X[ii][0] - m_xMin[0] ) / m_hx[0] ) ;
-    int j = std::round( ( g_X[ii][1] - m_xMin[1] ) / m_hx[1] ) ;
-    int k = std::round( ( g_X[ii][2] - m_xMin[2] ) / m_hx[2] ) ;
+    int i = std::round( ( g_X[ii][0] - m_xLocalMin[0] ) / m_hx[0] ) ;
+    int j = std::round( ( g_X[ii][1] - m_xLocalMin[1] ) / m_hx[1] ) ;
+    int k = std::round( ( g_X[ii][2] - m_xLocalMin[2] ) / m_hx[2] ) ;
     m_ijkMap[i][j][k] = ii;
   }
 
@@ -504,6 +512,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Constitutive manager
   //ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
 
+  // Spatial Partition
+  SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
 
   // Get node and particle managers. ***** We implicitly assume that there are exactly two mesh bodies, and that one has particles and one does not. *****
   Group & meshBodies = domain.getMeshBodies();
@@ -514,7 +524,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   MeshBody & grid = !meshBody1.m_hasParticles ? meshBody1 : meshBody2;
 
   ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
-  NodeManager & nodeManager = grid.getMeshLevel(0).getNodeManager();
+  MeshLevel & mesh = grid.getMeshLevel(0);
+  NodeManager & nodeManager = mesh.getNodeManager();
 
 
   // Get nodal fields
@@ -533,7 +544,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // At time step zero, perform initialization calculations
   if(cycleNumber == 0)
   {
-    initialize(g_X, particleManager);
+    initialize(g_X, particleManager, partition);
   }
 
 
@@ -568,7 +579,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       gradWeights.resize(3);
       subRegion.getAllWeights(p,
                               p_x,
-                              m_xMin,
+                              m_xLocalMin,
                               m_hx,
                               m_ijkMap,
                               g_X,
@@ -594,6 +605,84 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
     } // particle loop
   } ); // subregion loop
+
+
+
+
+  // Grid MPI operations
+
+  // (1) Initialize
+  std::map< string, string_array > fieldNames;
+  fieldNames["node"].emplace_back( keys::Mass );
+  fieldNames["node"].emplace_back( keys::Velocity );
+  fieldNames["node"].emplace_back( keys::Acceleration );
+  std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
+  m_iComm.resize( neighbors.size() );
+  int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+
+  // (1) Additive sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+  parallelDeviceEvents packEvents;
+  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+  waitAllDeviceEvents( packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
+  parallelDeviceEvents unpackEvents;
+  CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
+
+  // (2) Swap send and receive indices
+  for(size_t n=0; n<neighbors.size(); n++)
+  {
+    int const neighborRank = neighbors[n].neighborRank();
+    array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
+    array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
+    array1d< localIndex > temp = nodeGhostsToSend;
+
+//    if(mpiRank==0 && cycleNumber==0)
+//    {
+//      std::cout << "Ghosts to receive:" << std::endl;
+//      for(int i=0; i<nodeGhostsToReceive.size(); i++)
+//      {
+//        std::cout << nodeGhostsToReceive[i] << " ";
+//      }
+//      std::cout << std::endl;
+//      std::cout << "Ghosts to send:" << std::endl;
+//      for(int i=0; i<nodeGhostsToSend.size(); i++)
+//      {
+//        std::cout << nodeGhostsToSend[i] << " ";
+//      }
+//      std::cout << std::endl;
+//    }
+
+    nodeGhostsToSend = nodeGhostsToReceive;
+    nodeGhostsToReceive = temp;
+
+//    if(mpiRank==0 && cycleNumber==0)
+//    {
+//      std::cout << "Ghosts to receive:" << std::endl;
+//      for(int i=0; i<nodeGhostsToReceive.size(); i++)
+//      {
+//        std::cout << nodeGhostsToReceive[i] << " ";
+//      }
+//      std::cout << std::endl;
+//      std::cout << "Ghosts to send:" << std::endl;
+//      for(int i=0; i<nodeGhostsToSend.size(); i++)
+//      {
+//        std::cout << nodeGhostsToSend[i] << " ";
+//      }
+//      std::cout << std::endl;
+//    }
+  }
+
+
+
+  // (3) Perform sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+  parallelDeviceEvents packEvents2;
+  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents2 );
+  waitAllDeviceEvents( packEvents2 );
+  CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents2 );
+  parallelDeviceEvents unpackEvents2;
+  CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents2 );
 
 
   // Grid update
@@ -678,7 +767,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       gradWeights.resize(3);
       subRegion.getAllWeights(p,
                               p_x,
-                              m_xMin,
+                              m_xLocalMin,
                               m_hx,
                               m_ijkMap,
                               g_X,
@@ -823,88 +912,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   } );
 
   return m_cflFactor*length/wavespeed;
-}
-
-std::vector<int> SolidMechanicsMPM::getNodes(std::vector<int> const & cellID)
-{
-  std::vector<int> nodeIDs;
-
-  for(int i=0; i<2; i++)
-  {
-    for(int j=0; j<2; j++)
-    {
-      for(int k=0; k<2; k++)
-      {
-        nodeIDs.push_back(m_ijkMap[cellID[0]+i][cellID[1]+j][cellID[2]+k]);
-      }
-    }
-  }
-
-  return nodeIDs;
-}
-
-std::vector<real64> SolidMechanicsMPM::getWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
-                                                  std::vector<int> const & cellID,
-                                                  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X)
-{
-  std::vector<real64> weights;
-
-  int corner = m_ijkMap[cellID[0]][cellID[1]][cellID[2]];
-  auto corner_x = g_X[corner];
-  real64 xRel = (p_x[0] - corner_x[0])/m_hx[0];
-  real64 yRel = (p_x[1] - corner_x[1])/m_hx[1];
-  real64 zRel = (p_x[2] - corner_x[2])/m_hx[2];
-
-  for(int i=0; i<2; i++)
-  {
-    real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
-    for(int j=0; j<2; j++)
-    {
-      real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
-      for(int k=0; k<2; k++)
-      {
-        real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
-        weights.push_back(xWeight*yWeight*zWeight);
-      }
-    }
-  }
-
-  return weights;
-}
-
-std::vector< std::vector<real64> > SolidMechanicsMPM::getGradWeights(LvArray::ArraySlice<double, 1, 0, long> const & p_x,
-                                                                     std::vector<int> const & cellID,
-                                                                     arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X)
-{
-  std::vector< std::vector<real64> > gradWeights;
-  gradWeights.resize(3);
-
-  int corner = m_ijkMap[cellID[0]][cellID[1]][cellID[2]];
-  auto corner_x = g_X[corner];
-  real64 xRel = (p_x[0] - corner_x[0])/m_hx[0];
-  real64 yRel = (p_x[1] - corner_x[1])/m_hx[1];
-  real64 zRel = (p_x[2] - corner_x[2])/m_hx[2];
-
-  for(int i=0; i<2; i++)
-  {
-    real64 xWeight = i*xRel + (1-i)*(1.0-xRel);
-    real64 dxWeight = i/m_hx[0] - (1-i)/m_hx[0];
-    for(int j=0; j<2; j++)
-    {
-      real64 yWeight = j*yRel + (1-j)*(1.0-yRel);
-      real64 dyWeight = j/m_hx[1] - (1-j)/m_hx[1];
-      for(int k=0; k<2; k++)
-      {
-        real64 zWeight = k*zRel + (1-k)*(1.0-zRel);
-        real64 dzWeight = k/m_hx[2] - (1-k)/m_hx[2];
-        gradWeights[0].push_back(dxWeight*yWeight*zWeight);
-        gradWeights[1].push_back(xWeight*dyWeight*zWeight);
-        gradWeights[2].push_back(xWeight*yWeight*dzWeight);
-      }
-    }
-  }
-
-  return gradWeights;
 }
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const

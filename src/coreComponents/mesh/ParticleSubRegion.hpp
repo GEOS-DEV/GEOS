@@ -105,8 +105,8 @@ public:
 
   void getAllWeights(int const p,
                      LvArray::ArraySlice<double, 1, 0, int> const & p_x,
-                     std::vector<real64> const & xMin,
-                     std::vector<real64> const & hx,
+                     std::array<real64, 3> const & xMin,
+                     std::array<real64, 3> const & hx,
                      std::vector<std::vector<std::vector<int>>> const & ijkMap,
                      arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & g_X,
                      std::vector<int> & nodeIDs,
@@ -186,9 +186,9 @@ public:
 
         for(int i=0; i<3; i++)
         {
-          p_r1[i] = 0.5*m_particleRVectors[p][0][i];
-          p_r2[i] = 0.5*m_particleRVectors[p][1][i];
-          p_r3[i] = 0.5*m_particleRVectors[p][2][i];
+          p_r1[i] = m_particleRVectors[p][0][i];
+          p_r2[i] = m_particleRVectors[p][1][i];
+          p_r3[i] = m_particleRVectors[p][2][i];
         }
 
         alpha[0][0] = one_over_V * ( p_r1[2] * p_r2[1] - p_r1[1] * p_r2[2] - p_r1[2] * p_r3[1] + p_r2[2] * p_r3[1] + p_r1[1] * p_r3[2] - p_r2[1] * p_r3[2] );
@@ -227,8 +227,8 @@ public:
           cellID[cell].resize(3);
           for(int i=0; i<3; i++)
           {
-            real64 CPDIcorner = p_x[i] + 0.5*(signs[cell][0]*m_particleRVectors[p][0][i] + signs[cell][1]*m_particleRVectors[p][1][i] + signs[cell][2]*m_particleRVectors[p][2][i]); // using full r-vectors, hence the 0.5
-            cellID[cell][i] = std::floor((CPDIcorner - xMin[i])/hx[i]);
+            real64 CPDIcorner = p_x[i] + signs[cell][0]*m_particleRVectors[p][0][i] + signs[cell][1]*m_particleRVectors[p][1][i] + signs[cell][2]*m_particleRVectors[p][2][i];
+            cellID[cell][i] = std::floor((CPDIcorner - xMin[i])/hx[i]); // TODO: Temporarily store the CPDI corners since they're re-used below?
           }
         }
 
@@ -254,9 +254,9 @@ public:
           auto corner_x = g_X[corner];
 
           real64 x, y, z;
-          x = p_x[0] + 0.5*(signs[cell][0]*m_particleRVectors[p][0][0] + signs[cell][1]*m_particleRVectors[p][1][0] + signs[cell][2]*m_particleRVectors[p][2][0]);
-          y = p_x[1] + 0.5*(signs[cell][0]*m_particleRVectors[p][0][1] + signs[cell][1]*m_particleRVectors[p][1][1] + signs[cell][2]*m_particleRVectors[p][2][1]);
-          z = p_x[2] + 0.5*(signs[cell][0]*m_particleRVectors[p][0][2] + signs[cell][1]*m_particleRVectors[p][1][2] + signs[cell][2]*m_particleRVectors[p][2][2]);
+          x = p_x[0] + signs[cell][0]*m_particleRVectors[p][0][0] + signs[cell][1]*m_particleRVectors[p][1][0] + signs[cell][2]*m_particleRVectors[p][2][0];
+          y = p_x[1] + signs[cell][0]*m_particleRVectors[p][0][1] + signs[cell][1]*m_particleRVectors[p][1][1] + signs[cell][2]*m_particleRVectors[p][2][1];
+          z = p_x[2] + signs[cell][0]*m_particleRVectors[p][0][2] + signs[cell][1]*m_particleRVectors[p][1][2] + signs[cell][2]*m_particleRVectors[p][2][2];
 
           real64 xRel = (x - corner_x[0])/hx[0];
           real64 yRel = (y - corner_x[1])/hx[1];

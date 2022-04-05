@@ -467,7 +467,8 @@ localIndex Group::unpack( buffer_unit_type const * & buffer,
                           arrayView1d< localIndex > & packList,
                           integer const recursive,
                           bool onDevice,
-                          parallelDeviceEvents & events )
+                          parallelDeviceEvents & events,
+                          MPI_Op op)
 {
   localIndex unpackedSize = 0;
   string groupName;

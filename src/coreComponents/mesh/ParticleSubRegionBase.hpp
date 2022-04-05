@@ -301,10 +301,10 @@ protected:
   /// Type of particles in this subregion.
   ParticleType m_particleType;
 
-  /// current R-vectors
+  /// current half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors;
 
-  /// initial R-vectors
+  /// initial half-R-vectors (center to face)
   array3d< real64 > m_particleRVectors0;
 
 };

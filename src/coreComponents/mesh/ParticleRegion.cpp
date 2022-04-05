@@ -88,7 +88,7 @@ array2d< real64 > ParticleRegion::getParticleCoordinates() const
         {
           for(int i=0; i<3; i++)
           {
-            coords[index][i] = particleCenter[p][i] + 0.5*(signs[corner][0]*particleRVectors[p][0][i] + signs[corner][1]*particleRVectors[p][1][i] + signs[corner][2]*particleRVectors[p][2][i]);
+            coords[index][i] = particleCenter[p][i] + signs[corner][0]*particleRVectors[p][0][i] + signs[corner][1]*particleRVectors[p][1][i] + signs[corner][2]*particleRVectors[p][2][i];
           }
           index++;
         }

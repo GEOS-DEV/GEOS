@@ -863,7 +863,8 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       MPI_iCommData & icomm,
                                       bool onDevice,
-                                      parallelDeviceEvents & events )
+                                      parallelDeviceEvents & events,
+                                      MPI_Op op)
 {
   GEOSX_MARK_FUNCTION;
 
@@ -879,7 +880,7 @@ bool CommunicationTools::asyncUnpack( MeshLevel & mesh,
   for( int recvIdx = 0; recvIdx < recvCount; ++recvIdx )
   {
     NeighborCommunicator & neighbor = neighbors[ neighborIndices[ recvIdx ] ];
-    neighbor.unpackBufferForSync( icomm.getFieldNames(), mesh, icomm.commID(), onDevice, events );
+    neighbor.unpackBufferForSync( icomm.getFieldNames(), mesh, icomm.commID(), onDevice, events, op );
   }
 
   // we don't want to check if the request has completed,
@@ -904,12 +905,13 @@ void CommunicationTools::finalizeUnpack( MeshLevel & mesh,
                                          std::vector< NeighborCommunicator > & neighbors,
                                          MPI_iCommData & icomm,
                                          bool onDevice,
-                                         parallelDeviceEvents & events )
+                                         parallelDeviceEvents & events,
+                                         MPI_Op op)
 {
   GEOSX_MARK_FUNCTION;
 
   // poll mpi for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
-  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events ) );
+  GEOSX_ASYNC_WAIT( 6000000000, 10, asyncUnpack( mesh, neighbors, icomm, onDevice, events, op ) );
   if( onDevice )
   {
     waitAllDeviceEvents( events );

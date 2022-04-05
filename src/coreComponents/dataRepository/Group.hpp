@@ -986,7 +986,8 @@ public:
                              arrayView1d< localIndex > & packList,
                              integer const recursive,
                              bool onDevice,
-                             parallelDeviceEvents & events );
+                             parallelDeviceEvents & events,
+                             MPI_Op op=MPI_REPLACE);
 
   ///@}
 
