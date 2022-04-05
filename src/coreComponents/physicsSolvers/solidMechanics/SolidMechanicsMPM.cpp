@@ -607,8 +607,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   } ); // subregion loop
 
 
-
-
   // Grid MPI operations
 
   // (1) Initialize
@@ -618,71 +616,35 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   fieldNames["node"].emplace_back( keys::Acceleration );
   std::vector< NeighborCommunicator > & neighbors = domain.getNeighbors();
   m_iComm.resize( neighbors.size() );
-  int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
 
-  // (1) Additive sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+  // (2) Additive sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents;
-  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents );
   waitAllDeviceEvents( packEvents );
-  CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents );
   parallelDeviceEvents unpackEvents;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents, MPI_SUM ); // needs an extra argument to indicate additive unpack
 
-  // (2) Swap send and receive indices
+  // (3) Swap send and receive indices
   for(size_t n=0; n<neighbors.size(); n++)
   {
     int const neighborRank = neighbors[n].neighborRank();
     array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( neighborRank ).ghostsToReceive();
     array1d< localIndex > & nodeGhostsToSend = nodeManager.getNeighborData( neighborRank ).ghostsToSend();
     array1d< localIndex > temp = nodeGhostsToSend;
-
-//    if(mpiRank==0 && cycleNumber==0)
-//    {
-//      std::cout << "Ghosts to receive:" << std::endl;
-//      for(int i=0; i<nodeGhostsToReceive.size(); i++)
-//      {
-//        std::cout << nodeGhostsToReceive[i] << " ";
-//      }
-//      std::cout << std::endl;
-//      std::cout << "Ghosts to send:" << std::endl;
-//      for(int i=0; i<nodeGhostsToSend.size(); i++)
-//      {
-//        std::cout << nodeGhostsToSend[i] << " ";
-//      }
-//      std::cout << std::endl;
-//    }
-
     nodeGhostsToSend = nodeGhostsToReceive;
     nodeGhostsToReceive = temp;
-
-//    if(mpiRank==0 && cycleNumber==0)
-//    {
-//      std::cout << "Ghosts to receive:" << std::endl;
-//      for(int i=0; i<nodeGhostsToReceive.size(); i++)
-//      {
-//        std::cout << nodeGhostsToReceive[i] << " ";
-//      }
-//      std::cout << std::endl;
-//      std::cout << "Ghosts to send:" << std::endl;
-//      for(int i=0; i<nodeGhostsToSend.size(); i++)
-//      {
-//        std::cout << nodeGhostsToSend[i] << " ";
-//      }
-//      std::cout << std::endl;
-//    }
   }
 
-
-
-  // (3) Perform sync
-  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+  // (4) Perform sync
+  CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, neighbors, m_iComm, true );
   parallelDeviceEvents packEvents2;
-  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents2 );
+  CommunicationTools::getInstance().asyncPack( fieldNames, mesh, neighbors, m_iComm, true, packEvents2 );
   waitAllDeviceEvents( packEvents2 );
-  CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents2 );
+  CommunicationTools::getInstance().asyncSendRecv( neighbors, m_iComm, true, packEvents2 );
   parallelDeviceEvents unpackEvents2;
-  CommunicationTools::getInstance().finalizeUnpack( mesh, domain.getNeighbors(), m_iComm, true, unpackEvents2 );
+  CommunicationTools::getInstance().finalizeUnpack( mesh, neighbors, m_iComm, true, unpackEvents2 );
 
 
   // Grid update
@@ -696,18 +658,18 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         g_V[i][j] /= g_M[i]; // g_V holds the nodal momenta before this update, divide by mass to obtain velocity
         g_V[i][j] += g_A[i][j]*dt;
       }
-      // hard-coded rotation about z-axis passing thru mesh center
-//      double xRel = g_X[i][0] - 0.5*(m_xMax[0] - m_xMin[0]);
-//      double yRel = g_X[i][1] - 0.5*(m_xMax[1] - m_xMin[1]);
+//      // hard-coded rotation about z-axis passing thru mesh center
+//      double xRel = g_X[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]);
+//      double yRel = g_X[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]);
 //      double theta = atan2(yRel,xRel);
 //      double r = hypot(xRel,yRel);
 //      g_V[i][0] = -r*sin(theta)*50.0;
 //      g_V[i][1] = r*cos(theta)*50.0;
 //      g_V[i][2] = 0.0;
-      // hard-coded simple shear
-//        g_V[i][0] = 50.0*(g_X[i][1] - 0.5*(m_xMax[1] - m_xMin[1]));
-//        g_V[i][1] = 25.0*(g_X[i][0] - 0.5*(m_xMax[0] - m_xMin[0]));
-//        g_V[i][2] = 0.0;
+//      // hard-coded simple shear
+//      g_V[i][0] = 50.0*(g_X[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]));
+//      g_V[i][1] = 25.0*(g_X[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]));
+//      g_V[i][2] = 0.0;
     }
     else
     {
@@ -789,17 +751,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
           }
         }
       }
-//      if(p==0)
-//      {
-//        for(int i=0; i<3; i++)
-//        {
-//          for(int j=0; j<3; j++)
-//          {
-//            std::cout << p_L[i][j] << ", ";
-//          }
-//          std::cout << std::endl;
-//        }
-//      }
 
       // Particle kinematic update - TODO: surely there's a nicer way to do this with LvArray
       // Add identity tensor to velocity gradient and multiply by dt
@@ -843,9 +794,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
            EG[i][j] = p_F[0][i]*p_F[0][j] + p_F[1][i]*p_F[1][j] + p_F[2][i]*p_F[2][j];
          }
          EG[i][j] *= 0.5;
-         //std::cout << EG[i][j] << "\t";
        }
-       //std::cout << std::endl;
       }
 
       // Get PK2 stress
@@ -862,9 +811,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
           {
             PK2[i][j] = 2.0*shearModulus[p]*EG[i][j];
           }
-          //std::cout << PK2[i][j] << "\t";
         }
-        //std::cout << std::endl;
       }
 
       // Partially convert to Cauchy stress
@@ -873,9 +820,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         for(int j=0; j<3; j++)
         {
           sigTemp[i][j] = (p_F[i][0]*PK2[0][j] + p_F[i][1]*PK2[1][j] + p_F[i][2]*PK2[2][j])/detF;
-          //std::cout << sigTemp[i][j] << "\t";
         }
-        //std::cout << std::endl;
       }
 
       // Finish conversion to Cauchy stress
@@ -884,11 +829,9 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
         for(int j=i; j<3; j++) // symmetric update, yes this works, I checked it
         {
           int voigt = m_voigtMap[i][j];
-          //std::cout << "i: " << i << ", j:" << j << ", Voigt: " << voigt << std::endl;
           p_stress[voigt] = (sigTemp[i][0]*p_F[j][0] + sigTemp[i][1]*p_F[j][1] + sigTemp[i][2]*p_F[j][2]);
         }
       }
-      //std::cout << p_stress[0] << ", " << p_stress[1] << ", " << p_stress[2] << ", " << p_stress[3] << ", " << p_stress[4] << ", " << p_stress[5] << std::endl;
 
     } // particle loop
   } ); // subregion loop

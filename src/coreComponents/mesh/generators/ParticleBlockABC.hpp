@@ -57,6 +57,10 @@ public:
    */
   virtual ParticleType getParticleType() const = 0;
 
+  virtual array1d< int > getParticleID() const = 0;
+
+  virtual void setParticleID(array1d< int > const particleID) = 0;
+
   virtual array2d< real64 > getParticleCenter() const = 0;
 
   virtual void setParticleCenter(array2d< real64 > const particleCenter) = 0;

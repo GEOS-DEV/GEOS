@@ -81,6 +81,12 @@ public:
   ParticleType getParticleType() const override
   { return m_particleType; }
 
+  array1d< int > getParticleID() const override
+  { return m_particleID; }
+
+  void setParticleID(array1d< int > const particleID) override
+  { m_particleID = particleID; }
+
   array2d< real64 > getParticleCenter() const override
   { return m_particleCenter; }
 
@@ -91,25 +97,25 @@ public:
   { return m_particleVelocity; }
 
   void setParticleVelocity(array2d< real64 > const particleVelocity) override
-    { m_particleVelocity = particleVelocity; }
+  { m_particleVelocity = particleVelocity; }
 
   array1d< real64 > getParticleVolume() const override
   { return m_particleVolume; }
 
   void setParticleVolume(array1d< real64 > const particleVolume) override
-    { m_particleVolume = particleVolume; }
+  { m_particleVolume = particleVolume; }
 
   array3d< real64 > getParticleRVectors() const override
   { return m_particleRVectors; }
 
   void setParticleRVectors(array3d< real64 > const particleRVectors) override
-    { m_particleRVectors = particleRVectors; }
+  { m_particleRVectors = particleRVectors; }
 
   array3d< real64 > getParticleRVectors0() const override
   { return m_particleRVectors0; }
 
   void setParticleRVectors0(array3d< real64 > const particleRVectors0) override
-    { m_particleRVectors0 = particleRVectors0; }
+  { m_particleRVectors0 = particleRVectors0; }
 
   bool hasRVectors() const override
   { return m_hasRVectors; }
@@ -152,6 +158,9 @@ private:
 
   /// Name of the properties registered from an external mesh
   string_array m_externalPropertyNames;
+
+  /// Member level field for the particle global ID.
+  array1d< int > m_particleID;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;

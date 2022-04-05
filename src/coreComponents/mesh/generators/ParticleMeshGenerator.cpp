@@ -177,26 +177,6 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
   }
 
-  // Print out particle data
-//  if(mpiRank==0)
-//  {
-//    for(size_t i=0; i<particleTypes.size(); i++)
-//    {
-//      std::string particleType = particleTypes[i];
-//      std::cout << "Printing out data for all particles of type: " << particleType << std::endl;
-//
-//      std::vector<std::vector<double>> & temp = particleData[particleType];
-//      for(size_t j=0; j<temp.size(); j++)
-//      {
-//        for(size_t k=0; k<temp[j].size(); k++)
-//        {
-//          std::cout << temp[j][k] << "\t";
-//        }
-//        std::cout << std::endl;
-//      }
-//    }
-//  }
-
   // Get map from particle blocks to particle regions (more specifically the regions' associated materials)
   map < std::string, int > blockMaterialMap;
   particleManager.forParticleRegions< ParticleRegion >( [&]( auto & particleRegion )
@@ -215,16 +195,14 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
   for( auto & particleBlockName : m_blockNames )
   {
     ParticleBlock & particleBlock = particleBlockManager.getParticleBlock( particleBlockName );
-    std::string s = particleBlock.hasRVectors() ? " does " : " doesn't ";
     std::string particleType = EnumStrings< ParticleType >::toString( particleBlock.getParticleType() );
-    GEOSX_LOG_RANK( "Particle block " << particleBlock.getName() << " is of type " << particleType << " and hence" << s << "have r-vectors!");
 
     int numThisType = particleData[particleType].size(); // I hope this returns zero when particleType isn't in the map...
     int materialID;
     int np = 0; // Number of particles in this particle block
     for(localIndex i=0; i<numThisType; i++) // Find out which particles belong to the current particle block
     {
-      materialID = particleData[particleType][i][6]; // The particle file is configured such that the 7th column has the material ID
+      materialID = particleData[particleType][i][7]; // The particle file is configured such that the 8th column has the material ID
       if(materialID == blockMaterialMap[particleBlock.getName()])
       {
         np++;
@@ -233,8 +211,8 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     }
     sizeMap[particleBlock.getName()] = np;
     particleBlock.resize(np);
-    //std::cout << "Particle block " << particleBlock.getName() << " contains " << particleBlock.size() << " particles." << std::endl;
 
+    array1d< int > particleID(np);
     array2d< real64 > particleCenter(np,3);
     array2d< real64 > particleVelocity(np,3);
     array1d< real64 > particleVolume(np);
@@ -245,20 +223,23 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
     int index = 0;
     for(int i : indices)
     {
+      // Global ID
+      particleID[index] = particleData[particleType][i][0];
+
       // Position
-      particleCenter[index][0] = particleData[particleType][i][0];
-      particleCenter[index][1] = particleData[particleType][i][1];
-      particleCenter[index][2] = particleData[particleType][i][2];
+      particleCenter[index][0] = particleData[particleType][i][1];
+      particleCenter[index][1] = particleData[particleType][i][2];
+      particleCenter[index][2] = particleData[particleType][i][3];
 
        // Velocity
-      particleVelocity[index][0] = particleData[particleType][i][3];
-      particleVelocity[index][1] = particleData[particleType][i][4];
-      particleVelocity[index][2] = particleData[particleType][i][5];
+      particleVelocity[index][0] = particleData[particleType][i][4];
+      particleVelocity[index][1] = particleData[particleType][i][5];
+      particleVelocity[index][2] = particleData[particleType][i][6];
 
       // Volume and R-Vectors
-      if(particleType == "SinglePoint") // I'm sure there's a better way to handle this case switching
+      if(particleType == "SinglePoint")
       {
-        particleVolume[index] = particleData[particleType][i][7];
+        particleVolume[index] = particleData[particleType][i][8];
         double a = std::pow(particleVolume[index],1.0/3.0);
         particleRVectors[index][0][0] = a;
         particleRVectors[index][0][1] = 0.0;
@@ -273,15 +254,15 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       else if(particleType == "CPDI")
       {
         double x1, y1, z1, x2, y2, z2, x3, y3, z3;
-        x1 = particleData[particleType][i][7];
-        y1 = particleData[particleType][i][8];
-        z1 = particleData[particleType][i][9];
-        x2 = particleData[particleType][i][10];
-        y2 = particleData[particleType][i][11];
-        z2 = particleData[particleType][i][12];
-        x3 = particleData[particleType][i][13];
-        y3 = particleData[particleType][i][14];
-        z3 = particleData[particleType][i][15];
+        x1 = particleData[particleType][i][8];
+        y1 = particleData[particleType][i][9];
+        z1 = particleData[particleType][i][10];
+        x2 = particleData[particleType][i][11];
+        y2 = particleData[particleType][i][12];
+        z2 = particleData[particleType][i][13];
+        x3 = particleData[particleType][i][14];
+        y3 = particleData[particleType][i][15];
+        z3 = particleData[particleType][i][16];
         particleRVectors[index][0][0] = x1;
         particleRVectors[index][0][1] = y1;
         particleRVectors[index][0][2] = z1;
@@ -301,6 +282,7 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       // Increment index
       index++;
     }
+    particleBlock.setParticleID(particleID);
     particleBlock.setParticleCenter(particleCenter);
     particleBlock.setParticleVelocity(particleVelocity);
     particleBlock.setParticleVolume(particleVolume);
