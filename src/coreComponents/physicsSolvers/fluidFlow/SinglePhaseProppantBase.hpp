@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -54,19 +54,19 @@ public:
    */
   virtual ~SinglePhaseProppantBase();
 
-  virtual void updateFluidModel( Group & dataGroup, localIndex const targetIndex ) const override;
+  virtual void updateFluidModel( ObjectManagerBase & dataGroup ) const override;
+
+  virtual void updatePorosityAndPermeability( SurfaceElementSubRegion & subRegion ) const override;
 
 protected:
 
-  virtual void validateFluidModels( DomainPartition const & domain ) const override;
+  virtual void validateFluidModels( DomainPartition & domain ) const override;
 
   virtual FluidPropViews getFluidProperties( constitutive::ConstitutiveBase const & fluid ) const override;
 
-  virtual arrayView1d< real64 const > getPoreVolumeMult( ElementSubRegionBase const & subRegion ) const override;
-
 private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
-  virtual void resetViewsPrivate( ElementRegionManager const & elemManager ) override;
 
 };
 }

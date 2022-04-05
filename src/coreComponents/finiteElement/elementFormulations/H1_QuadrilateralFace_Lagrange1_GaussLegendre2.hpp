@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -50,6 +50,8 @@ class H1_QuadrilateralFace_Lagrange1_GaussLegendre2 final : public FiniteElement
 public:
   /// The number of nodes/support points per element.
   constexpr static localIndex numNodes = 4;
+  /// The maximum number of support points per element.
+  constexpr static localIndex maxSupportPoints = numNodes;
 
   /// The number of quadrature points per element.
   constexpr static localIndex numQuadraturePoints = 4;
@@ -58,15 +60,75 @@ public:
   virtual ~H1_QuadrilateralFace_Lagrange1_GaussLegendre2() override
   {}
 
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override
   {
     return numQuadraturePoints;
   }
 
+  /**
+   * @brief Get the number of quadrature points.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @return The number of quadrature points.
+   */
+  GEOSX_HOST_DEVICE
+  static localIndex getNumQuadraturePoints( StackVariables const & stack )
+  {
+    GEOSX_UNUSED_VAR( stack );
+    return numQuadraturePoints;
+  }
+
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override
   {
     return numNodes;
   }
+
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override
+  {
+    return maxSupportPoints;
+  }
+
+  /**
+   * @brief Get the number of support points.
+   * @param stack Object that holds stack variables.
+   * @return The number of support points.
+   */
+  GEOSX_HOST_DEVICE
+  static localIndex getNumSupportPoints( StackVariables const & stack )
+  {
+    GEOSX_UNUSED_VAR( stack );
+    return numNodes;
+  }
+
+  /**
+   * @brief Method to fill a MeshData object.
+   * @param nodeManager The node manager.
+   * @param edgeManager The edge manager.
+   * @param faceManager The face manager.
+   * @param cellSubRegion The cell sub-region for which the element has to be initialized.
+   * @param meshData MeshData struct to be filled.
+   */
+  template< typename SUBREGION_TYPE >
+  static void fillMeshData( NodeManager const & nodeManager,
+                            EdgeManager const & edgeManager,
+                            FaceManager const & faceManager,
+                            SUBREGION_TYPE const & cellSubRegion,
+                            MeshData< SUBREGION_TYPE > & meshData );
+
+  /**
+   * @brief Empty setup method.
+   * @param cellIndex The index of the cell with respect to the cell sub region.
+   * @param meshData MeshData struct filled by @ref fillMeshData.
+   * @param stack Object that holds stack variables.
+   */
+  template< typename SUBREGION_TYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void setupStack( localIndex const & cellIndex,
+                          MeshData< SUBREGION_TYPE > const & meshData,
+                          StackVariables & stack );
 
   /**
    * @brief Calculate shape functions values for each support point at a
@@ -80,6 +142,20 @@ public:
                      real64 ( &N )[numNodes] );
 
   /**
+   * @brief Calculate shape functions values for each support point at a
+   *   quadrature point.
+   * @param q Index of the quadrature point.
+   * @param stack Variables allocated on the stack as filled by @ref setupStack.
+   * @param N An array to pass back the shape function values for each support
+   *   point.
+   */
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void calcN( localIndex const q,
+                     StackVariables const & stack,
+                     real64 ( &N )[numNodes] );
+
+  /**
    * @brief Calculate the integration weights for a quadrature point.
    * @param q Index of the quadrature point.
    * @param X Array containing the coordinates of the support points.
@@ -89,6 +165,19 @@ public:
   GEOSX_HOST_DEVICE
   static real64 transformedQuadratureWeight( localIndex const q,
                                              real64 const (&X)[numNodes][3] );
+
+  /**
+   * @brief Empty method, here for compatibility with methods that require a stabilization of the
+   * grad-grad bilinear form.
+   * @tparam MATRIXTYPE The type of @p matrix.
+   * @param stack Stack variables as filled by @ref setupStack.
+   * @param matrix The matrix that needs to be stabilized.
+   */
+  template< typename MATRIXTYPE >
+  GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
+  static void addGradGradStabilization( StackVariables const & stack,
+                                        MATRIXTYPE & matrix );
 
 private:
   /// The area of the element in the parent configuration.
@@ -145,6 +234,35 @@ private:
 
 };
 
+/// @cond Doxygen_Suppress
+
+template< typename SUBREGION_TYPE >
+GEOSX_FORCE_INLINE
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                SUBREGION_TYPE const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData ) )
+{}
+
+template< typename SUBREGION_TYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+              MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
+              StackVariables & GEOSX_UNUSED_PARAM( stack ) )
+{}
+
+template< typename MATRIXTYPE >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  addGradGradStabilization( StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+                            MATRIXTYPE & GEOSX_UNUSED_PARAM( matrix ) )
+{}
+
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void
@@ -158,6 +276,16 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
            ( 1 + quadratureFactor*parentCoords0( q )*parentCoords0( a ) ) *
            ( 1 + quadratureFactor*parentCoords1( q )*parentCoords1( a ) );
   }
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
+  calcN( localIndex const q,
+         StackVariables const & GEOSX_UNUSED_PARAM( stack ),
+         real64 ( & N )[numNodes] )
+{
+  return calcN( q, N );
 }
 
 //*************************************************************************************************
@@ -205,6 +333,8 @@ H1_QuadrilateralFace_Lagrange1_GaussLegendre2::
 
   return sqrt( detJ ) * weight;
 }
+
+/// @endcond
 
 }
 }

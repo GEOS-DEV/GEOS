@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -82,14 +82,6 @@ public:
   ///@}
 
   void initializationOrder( string_array & order ) override final;
-
-  /**
-   * @brief Build all the sets of the DomainPartition.
-   *
-   * A domain contain sets of nodes or elements (that can be used to defined boundary conditions, etc.).
-   * This member functions build those sets.
-   */
-  void generateSets();
 
   /**
    * @name MPI functionality
@@ -201,6 +193,46 @@ public:
   template< typename KEY_TYPE >
   MeshBody & getMeshBody( KEY_TYPE const & key )
   { return getMeshBodies().getGroup< MeshBody >( key ); }
+
+
+  /**
+   * @brief Apply the given functor to all meshBodies.
+   * @tparam FUNCTION the type of functor to call
+   * @param[in] function  the functor to call
+   */
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodies( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroups< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodiesIndex( FUNCTION && function ) const
+  {
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
+  /**
+   * @copydoc forMeshBodies(FUNCTION &&) const
+   */
+  template< typename FUNCTION >
+  void forMeshBodiesIndex( FUNCTION && function )
+  {
+    getMeshBodies().forSubGroupsIndex< MeshBody >( std::forward< FUNCTION >( function ) );
+  }
+
 
   /**
    * @brief Get the metis neighbors indices.  @see DomainPartition#m_metisNeighborList

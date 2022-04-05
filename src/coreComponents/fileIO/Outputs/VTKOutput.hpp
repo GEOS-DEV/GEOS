@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -77,8 +77,8 @@ public:
     static constexpr auto plotFileRoot = "plotFileRoot";
     static constexpr auto writeFEMFaces = "writeFEMFaces";
     static constexpr auto plotLevel = "plotLevel";
-    static constexpr auto binaryString = "writeBinaryData";
-
+    static constexpr auto binaryString = "format";
+    static constexpr auto outputRegionTypeString = "outputRegionType";
   } vtkOutputViewKeys;
   /// @endcond
 
@@ -87,7 +87,12 @@ private:
   string m_plotFileRoot;
   integer m_writeFaceMesh;
   integer m_plotLevel;
-  integer m_writeBinaryData;
+
+  /// VTK output mode
+  vtk::VTKOutputMode m_writeBinaryData = vtk::VTKOutputMode::BINARY;
+
+  /// VTK output region filter
+  vtk::VTKRegionTypes m_outputRegionType = vtk::VTKRegionTypes::ALL;
 
   vtk::VTKPolyDataWriterInterface m_writer;
 

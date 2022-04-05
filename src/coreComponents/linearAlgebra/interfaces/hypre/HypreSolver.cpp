@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -195,19 +195,21 @@ void HypreSolver::setup( HypreMatrix const & mat )
 
   m_precond.setup( mat );
   m_componentFilterTime = m_precond.componentFilterTime();
+  m_makeRestrictorTime = m_precond.makeRestrictorTime();
+  m_computeAuuTime = m_precond.computeAuuTime();
 
   m_solver = std::make_unique< HypreSolverWrapper >();
-  createHypreKrylovSolver( m_params, mat.getComm(), *m_solver );
+  createHypreKrylovSolver( m_params, mat.comm(), *m_solver );
 
   // Set the preconditioner
   GEOSX_LAI_CHECK_ERROR( m_solver->setPrecond( m_solver->ptr,
                                                m_precond.unwrapped().solve,
-                                               hypre::HYPRE_DummySetup,
+                                               hypre::dummySetup,
                                                m_precond.unwrapped().ptr ) );
 
   // Setup the solver (need a dummy vector for rhs/sol to avoid hypre segfaulting in setup)
   HypreVector dummy;
-  dummy.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+  dummy.create( mat.numLocalRows(), mat.comm() );
   GEOSX_LAI_CHECK_ERROR( m_solver->setup( m_solver->ptr,
                                           mat.unwrapped(),
                                           dummy.unwrapped(),
@@ -220,7 +222,9 @@ int HypreSolver::doSolve( HypreVector const & rhs,
   GEOSX_LAI_ASSERT( ready() );
   GEOSX_LAI_ASSERT( sol.ready() );
   GEOSX_LAI_ASSERT( rhs.ready() );
-  return m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
+  HYPRE_Int const result = m_solver->solve( m_solver->ptr, matrix().unwrapped(), rhs.unwrapped(), sol.unwrapped() );
+  sol.touch();
+  return result;
 }
 
 void HypreSolver::apply( HypreVector const & rhs,
@@ -264,6 +268,8 @@ void HypreSolver::solve( HypreVector const & rhs,
     GEOSX_LOG_RANK_0( "\t\tLinear Solver | " << m_result.status <<
                       " | Iterations: " << m_result.numIterations <<
                       " | Final Rel Res: " << m_result.residualReduction <<
+                      " | Make Restrictor Time: " << m_makeRestrictorTime <<
+                      " | Compute Auu Time: " << m_computeAuuTime <<
                       " | SC Filter Time: " << m_componentFilterTime <<
                       " | Setup Time: " << m_result.setupTime << " s" <<
                       " | Solve Time: " << m_result.solveTime << " s" );

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -23,10 +23,13 @@
 #include "linearAlgebra/interfaces/hypre/HypreMatrix.hpp"
 #include "linearAlgebra/interfaces/hypre/HyprePreconditioner.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreSolver.hpp"
+#include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
 
 #include "HYPRE_utilities.h"
+#if defined(GEOSX_USE_HYPRE_CUDA)
 #include "_hypre_utilities.h"
 #include "_hypre_utilities.hpp"
+#endif
 
 namespace geosx
 {
@@ -38,6 +41,7 @@ void HypreInterface::initialize()
   hypre_HandleDefaultExecPolicy( hypre_handle() ) = HYPRE_EXEC_DEVICE;
   hypre_HandleSpgemmUseCusparse( hypre_handle() ) = 0;
 #endif
+  HYPRE_SetMemoryLocation( hypre::memoryLocation );
 }
 
 void HypreInterface::finalize()

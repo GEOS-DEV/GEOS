@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -47,7 +47,7 @@ public:
   ConstitutiveBase( string const & name,
                     Group * const parent );
 
-  virtual ~ConstitutiveBase() override;
+  virtual ~ConstitutiveBase() override = default;
 
   /**
    * @brief create a clone of this constitutive model
@@ -58,17 +58,6 @@ public:
   virtual std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
                                                             Group * const parent ) const;
 
-
-  virtual void stateUpdatePointPressure( real64 const & GEOSX_UNUSED_PARAM( pres ),
-                                         localIndex const GEOSX_UNUSED_PARAM( k ),
-                                         localIndex const GEOSX_UNUSED_PARAM( q ) ) {}
-
-  virtual void stateUpdateBatchPressure( arrayView1d< real64 const > const & pres,
-                                         arrayView1d< real64 const > const & dPres )
-  {
-    GEOSX_UNUSED_VAR( pres )
-    GEOSX_UNUSED_VAR( dPres )
-  }
 
   /// Save state data in preparation for next timestep
   virtual void saveConvergedState() const
@@ -94,6 +83,12 @@ public:
    */
   virtual string getCatalogName() const = 0;
 
+  /**
+   * @brief Get full name of the model.
+   * @return full name, consisting of XML (catalog) name and actual model name
+   */
+  string getFullName() const { return getCatalogName() + " " + getName(); }
+
   ///@}
 
   /**
@@ -109,24 +104,60 @@ public:
                                          localIndex const numConstitutivePointsPerParentIndex );
 
   struct viewKeyStruct
-  {
-    static constexpr char const * poreVolumeMultiplierString() { return "poreVolumeMultiplier"; }
-    static constexpr char const * dPVMult_dPresString() { return "dPVMult_dDensity"; }
-  };
+  {};
 
   localIndex numQuadraturePoints() const { return m_numQuadraturePoints; }
 
-protected:
+  virtual std::vector< string > getSubRelationNames() const { return {}; }
+
+  /**
+   * @brief Helper function to register extrinsic data on a constitutive model
+   * @tparam TRAIT the type of extrinsic data
+   * @param[in] extrinsicData the extrinsic data struct corresponding to the object being registered
+   * @param[in] newObject a pointer to the object that is being registered
+   * @return A reference to the newly registered/created Wrapper
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & registerExtrinsicData( TRAIT const & extrinsicDataTrait,
+                                                                           typename TRAIT::type * newObject )
+  {
+    return registerWrapper( extrinsicDataTrait.key(), newObject ).
+             setApplyDefaultValue( extrinsicDataTrait.defaultValue() ).
+             setPlotLevel( TRAIT::plotLevel ).
+             setRestartFlags( TRAIT::restartFlag ).
+             setDescription( TRAIT::description );
+  }
+
+  /**
+   * @brief Get a wrapper associated with a trait from the constitutive model
+   * @tparam TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this constitutive model
+   * @return A const reference to a view to const wrapper.
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > const & getExtrinsicData() const
+  {
+    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+  }
+
+  /**
+   * @brief Get a wrapper associated with a trait from the constitutive model
+   * @tparam TRAIT The trait that holds the type and key of the data
+   *   to be retrieved from this constitutive model
+   * @return A reference to the wrapper.
+   * TODO: move up to Group
+   */
+  template< typename TRAIT >
+  dataRepository::Wrapper< typename TRAIT::type > & getExtrinsicData()
+  {
+    return this->getWrapper< typename TRAIT::type >( TRAIT::key() );
+  }
 
 private:
+
   localIndex m_numQuadraturePoints;
-  Group * m_constitutiveDataGroup = nullptr;
-
-  ConstitutiveBase( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase( ConstitutiveBase && ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase const & ) = delete;
-  ConstitutiveBase const & operator=( ConstitutiveBase && ) = delete;
-
 };
 
 

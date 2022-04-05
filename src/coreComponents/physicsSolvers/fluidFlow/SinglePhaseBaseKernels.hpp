@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -27,7 +27,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseBaseKernels
+namespace singlePhaseBaseKernels
 {
 
 /******************************** MobilityKernel ********************************/
@@ -130,129 +130,39 @@ struct MobilityKernel
 };
 
 /******************************** AccumulationKernel ********************************/
-
-template< bool ISPORO >
-struct AssembleAccumulationTermsHelper;
-
-template<>
-struct AssembleAccumulationTermsHelper< true >
-{
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  porosityUpdate( real64 & poro,
-                  real64 & dPoro_dPres,
-                  real64 const biotCoefficient,
-                  real64 const poroOld,
-                  real64 const bulkModulus,
-                  real64 const totalMeanStress,
-                  real64 const oldTotalMeanStress,
-                  real64 const dPres,
-                  real64 const GEOSX_UNUSED_PARAM( poroRef ),
-                  real64 const GEOSX_UNUSED_PARAM( pvmult ),
-                  real64 const GEOSX_UNUSED_PARAM( dPVMult_dPres ) )
-  {
-    dPoro_dPres = (biotCoefficient - poroOld) / bulkModulus;
-    poro = poroOld + dPoro_dPres * (totalMeanStress - oldTotalMeanStress + dPres);
-  }
-};
-
-template<>
-struct AssembleAccumulationTermsHelper< false >
-{
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  porosityUpdate( real64 & poro,
-                  real64 & dPoro_dPres,
-                  real64 const GEOSX_UNUSED_PARAM( biotCoefficient ),
-                  real64 const GEOSX_UNUSED_PARAM( poroOld ),
-                  real64 const GEOSX_UNUSED_PARAM( bulkModulus ),
-                  real64 const GEOSX_UNUSED_PARAM( totalMeanStress ),
-                  real64 const GEOSX_UNUSED_PARAM( oldTotalMeanStress ),
-                  real64 const GEOSX_UNUSED_PARAM( dPres ),
-                  real64 const poroRef,
-                  real64 const pvmult,
-                  real64 const dPVMult_dPres )
-  {
-    poro = poroRef * pvmult;
-    dPoro_dPres = dPVMult_dPres * poroRef;
-  }
-};
-
-
-template< typename REGIONTYPE >
 struct AccumulationKernel
-{};
-
-template<>
-struct AccumulationKernel< CellElementSubRegion >
 {
-  template< bool COUPLED >
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
   static void
-  compute( real64 const & dPres,
-           real64 const & densNew,
+  compute( real64 const & densNew,
            real64 const & densOld,
            real64 const & dDens_dPres,
-           real64 const & volume,
-           real64 const & dVol,
-           real64 const & poroRef,
-           real64 const & poroOld,
-           real64 const & pvMult,
-           real64 const & dPVMult_dPres,
-           real64 const & biotCoefficient,
-           real64 const & bulkModulus,
-           real64 const & totalMeanStress,
-           real64 const & oldTotalMeanStress,
-           real64 & poroNew,
+           real64 const & poreVolNew,
+           real64 const & poreVolOld,
+           real64 const & dPoreVol_dPres,
            real64 & localAccum,
            real64 & localAccumJacobian )
   {
-    real64 const volNew = volume + dVol;
-
-    // TODO porosity update needs to be elsewhere...
-    real64 dPoro_dPres;
-    AssembleAccumulationTermsHelper< COUPLED >::porosityUpdate( poroNew,
-                                                                dPoro_dPres,
-                                                                biotCoefficient,
-                                                                poroOld,
-                                                                bulkModulus,
-                                                                totalMeanStress,
-                                                                oldTotalMeanStress,
-                                                                dPres,
-                                                                poroRef,
-                                                                pvMult,
-                                                                dPVMult_dPres );
-
     // Residual contribution is mass conservation in the cell
-    localAccum = poroNew * densNew * volNew - poroOld * densOld * volume;
+    localAccum = poreVolNew * densNew - poreVolOld * densOld;
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian = (dPoro_dPres * densNew + dDens_dPres * poroNew) * volNew;
+    localAccumJacobian = dPoreVol_dPres * densNew + dDens_dPres * poreVolNew;
   }
 
-  template< bool COUPLED, typename POLICY >
+  template< typename POLICY >
   static void launch( localIndex const size,
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & elemGhostRank,
-                      arrayView1d< real64 const > const & dPres,
-                      arrayView1d< real64 const > const & densOld,
-                      arrayView1d< real64 >       const & poro,
-                      arrayView1d< real64 const > const & poroOld,
-                      arrayView1d< real64 const > const & poroRef,
                       arrayView1d< real64 const > const & volume,
-                      arrayView1d< real64 const > const & dVol,
+                      arrayView2d< real64 const > const & porosityOld,
+                      arrayView2d< real64 const > const & porosityNew,
+                      arrayView2d< real64 const > const & dPoro_dPres,
+                      arrayView1d< real64 const > const & densOld,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & dDens_dPres,
-                      arrayView2d< real64 const > const & pvmult,
-                      arrayView2d< real64 const > const & dPVMult_dPres,
-                      arrayView1d< real64 const > const & oldTotalMeanStress,
-                      arrayView1d< real64 const > const & totalMeanStress,
-                      arrayView1d< real64 const > const & bulkModulus,
-                      real64 const biotCoefficient,
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
   {
@@ -262,23 +172,18 @@ struct AccumulationKernel< CellElementSubRegion >
       {
         real64 localAccum, localAccumJacobian;
 
-        compute< COUPLED >( dPres[ei],
-                            dens[ei][0],
-                            densOld[ei],
-                            dDens_dPres[ei][0],
-                            volume[ei],
-                            dVol[ei],
-                            poroRef[ei],
-                            poroOld[ei],
-                            pvmult[ei][0],
-                            dPVMult_dPres[ei][0],
-                            biotCoefficient,
-                            bulkModulus[ei],
-                            totalMeanStress[ei],
-                            oldTotalMeanStress[ei],
-                            poro[ei],
-                            localAccum,
-                            localAccumJacobian );
+        real64 const poreVolNew = volume[ei] * porosityNew[ei][0];
+        real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
+        real64 const dPoreVol_dPres = volume[ei] * dPoro_dPres[ei][0];
+
+        compute( dens[ei][0],
+                 densOld[ei],
+                 dDens_dPres[ei][0],
+                 poreVolNew,
+                 poreVolOld,
+                 dPoreVol_dPres,
+                 localAccum,
+                 localAccumJacobian );
 
         globalIndex const elemDOF = dofNumber[ei];
         localIndex const localElemDof = elemDOF - rankOffset;
@@ -289,46 +194,22 @@ struct AccumulationKernel< CellElementSubRegion >
       }
     } );
   }
-};
-
-
-template<>
-struct AccumulationKernel< SurfaceElementSubRegion >
-{
-  GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  compute( real64 const & densNew,
-           real64 const & densOld,
-           real64 const & dDens_dPres,
-           real64 const & volume,
-           real64 const & dVol,
-           real64 & localAccum,
-           real64 & localAccumJacobian )
-  {
-    real64 const volNew = volume + dVol;
-
-    // Residual contribution is mass conservation in the cell
-    localAccum = densNew * volNew - densOld * volume;
-
-    // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian =  dDens_dPres * volNew;
-  }
-
-  template< bool COUPLED, typename POLICY >
+  template< typename POLICY >
   static void launch( localIndex const size,
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & elemGhostRank,
-                      arrayView1d< real64 const > const & densOld,
                       arrayView1d< real64 const > const & volume,
-                      arrayView1d< real64 const > const & dVol,
+                      arrayView1d< real64 const > const & deltaVolume,
+                      arrayView2d< real64 const > const & porosityOld,
+                      arrayView2d< real64 const > const & porosityNew,
+                      arrayView2d< real64 const > const & dPoro_dPres,
+                      arrayView1d< real64 const > const & densOld,
                       arrayView2d< real64 const > const & dens,
                       arrayView2d< real64 const > const & dDens_dPres,
-                      arrayView1d< real64 const > const & poroMultiplier,
-#if ALLOW_CREATION_MASS
+  #if ALLOW_CREATION_MASS
                       arrayView1d< real64 const > const & creationMass,
-#endif
+  #endif
                       CRSMatrixView< real64, globalIndex const > const & localMatrix,
                       arrayView1d< real64 > const & localRhs )
   {
@@ -338,22 +219,26 @@ struct AccumulationKernel< SurfaceElementSubRegion >
       {
         real64 localAccum, localAccumJacobian;
 
-        real64 const effectiveVolume = volume[ei] * poroMultiplier[ei];
+        real64 const poreVolNew = ( volume[ei] + deltaVolume[ei] ) * porosityNew[ei][0];
+        real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
+
+        real64 const dPoreVol_dPres = ( volume[ei] + deltaVolume[ei] ) * dPoro_dPres[ei][0];
 
         compute( dens[ei][0],
                  densOld[ei],
                  dDens_dPres[ei][0],
-                 effectiveVolume,
-                 dVol[ei],
+                 poreVolNew,
+                 poreVolOld,
+                 dPoreVol_dPres,
                  localAccum,
                  localAccumJacobian );
 
-#if ALLOW_CREATION_MASS
+  #if ALLOW_CREATION_MASS
         if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
         {
           localAccum += creationMass[ei] * 0.25;
         }
-#endif
+  #endif
 
         globalIndex const elemDOF = dofNumber[ei];
         localIndex const localElemDof = elemDOF - rankOffset;
@@ -394,9 +279,9 @@ struct ResidualNormKernel
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & presDofNumber,
                       arrayView1d< integer const > const & ghostRank,
-                      arrayView1d< real64 const > const & refPoro,
                       arrayView1d< real64 const > const & volume,
                       arrayView1d< real64 const > const & densOld,
+                      arrayView2d< real64 const > const & poroOld,
                       real64 * localResidualNorm )
   {
     RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
@@ -410,7 +295,7 @@ struct ResidualNormKernel
         localIndex const lid = presDofNumber[a] - rankOffset;
         real64 const val = localResidual[lid];
         localSum += val * val;
-        normSum += refPoro[a] * densOld[a] * volume[a];
+        normSum += poroOld[a][0] * densOld[a] * volume[a];
         count += 1;
       }
     } );
@@ -455,9 +340,176 @@ struct SolutionCheckKernel
 
 };
 
+/******************************** HydrostaticPressureKernel ********************************/
+
+struct HydrostaticPressureKernel
+{
+
+  template< typename FLUID_WRAPPER >
+  static bool
+  computeHydrostaticPressure( integer const maxNumEquilIterations,
+                              real64 const & equilTolerance,
+                              real64 const (&gravVector)[ 3 ],
+                              FLUID_WRAPPER fluidWrapper,
+                              real64 const & refElevation,
+                              real64 const & refPres,
+                              real64 const & refDens,
+                              real64 const & newElevation,
+                              real64 & newPres,
+                              real64 & newDens )
+  {
+    // Step 1: guess the pressure with the refDensity
+
+    real64 const gravCoef = gravVector[2] * ( refElevation - newElevation );
+    real64 pres0 = refPres - refDens * gravCoef;
+    real64 pres1 = 0.0;
+
+    // Step 2: compute the mass density at this elevation using the guess, and update pressure
+
+    real64 dens = 0.0;
+    real64 visc = 0.0;
+    fluidWrapper.compute( pres0, dens, visc );
+    pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
+
+    // Step 3: fixed-point iteration until convergence
+
+    bool equilHasConverged = false;
+    for( localIndex eqIter = 0; eqIter < maxNumEquilIterations; ++eqIter )
+    {
+
+      // check convergence
+      equilHasConverged = ( LvArray::math::abs( pres0 - pres1 ) < equilTolerance );
+      pres0 = pres1;
+
+      // if converged, move on
+      if( equilHasConverged )
+      {
+        break;
+      }
+
+      // compute the density at this elevation using the previous pressure, and compute the new pressure
+      fluidWrapper.compute( pres0, dens, visc );
+      pres1 = refPres - 0.5 * ( refDens + dens ) * gravCoef;
+    }
+
+    // Step 4: save the hydrostatic pressure and the corresponding density
+
+    newPres = pres1;
+    newDens = dens;
+
+    return equilHasConverged;
+  }
 
 
-} // namespace SinglePhaseBaseKernels
+  template< typename FLUID_WRAPPER >
+  static bool
+  launch( localIndex const size,
+          integer const maxNumEquilIterations,
+          real64 const equilTolerance,
+          real64 const (&gravVector)[ 3 ],
+          real64 const & minElevation,
+          real64 const & elevationIncrement,
+          real64 const & datumElevation,
+          real64 const & datumPres,
+          FLUID_WRAPPER fluidWrapper,
+          arrayView1d< arrayView1d< real64 > const > elevationValues,
+          arrayView1d< real64 > pressureValues )
+  {
+    bool hasConverged = true;
+
+    // Step 1: compute the mass density at the datum elevation
+
+    real64 datumDens = 0.0;
+    real64 datumVisc = 0.0;
+    fluidWrapper.compute( datumPres,
+                          datumDens,
+                          datumVisc );
+
+    // Step 2: find the closest elevation to datumElevation
+
+    forAll< parallelHostPolicy >( size, [=] ( localIndex const i )
+    {
+      real64 const elevation = minElevation + i * elevationIncrement;
+      elevationValues[0][i] = elevation;
+    } );
+    integer const iRef = LvArray::sortedArrayManipulation::find( elevationValues[0].begin(),
+                                                                 elevationValues[0].size(),
+                                                                 datumElevation );
+
+
+    // Step 3: compute the mass density and pressure at the reference elevation
+
+    array1d< real64 > dens( pressureValues.size() );
+
+    bool const hasConvergedRef =
+      computeHydrostaticPressure( maxNumEquilIterations,
+                                  equilTolerance,
+                                  gravVector,
+                                  fluidWrapper,
+                                  datumElevation,
+                                  datumPres,
+                                  datumDens,
+                                  elevationValues[0][iRef],
+                                  pressureValues[iRef],
+                                  dens[iRef] );
+    if( !hasConvergedRef )
+    {
+      return false;
+    }
+
+
+    // Step 4: for each elevation above the reference elevation, compute the pressure
+
+    localIndex const numEntriesAboveRef = size - iRef - 1;
+    forAll< serialPolicy >( numEntriesAboveRef, [=, &hasConverged] ( localIndex const i )
+    {
+      bool const hasConvergedAboveRef =
+        computeHydrostaticPressure( maxNumEquilIterations,
+                                    equilTolerance,
+                                    gravVector,
+                                    fluidWrapper,
+                                    elevationValues[0][iRef+i],
+                                    pressureValues[iRef+i],
+                                    dens[iRef+i],
+                                    elevationValues[0][iRef+i+1],
+                                    pressureValues[iRef+i+1],
+                                    dens[iRef+i+1] );
+      if( !hasConvergedAboveRef )
+      {
+        hasConverged = false;
+      }
+
+
+    } );
+
+    // Step 5: for each elevation below the reference elevation, compute the pressure
+
+    localIndex const numEntriesBelowRef = iRef;
+    forAll< serialPolicy >( numEntriesBelowRef, [=, &hasConverged] ( localIndex const i )
+    {
+      bool const hasConvergedBelowRef =
+        computeHydrostaticPressure( maxNumEquilIterations,
+                                    equilTolerance,
+                                    gravVector,
+                                    fluidWrapper,
+                                    elevationValues[0][iRef-i],
+                                    pressureValues[iRef-i],
+                                    dens[iRef-i],
+                                    elevationValues[0][iRef-i-1],
+                                    pressureValues[iRef-i-1],
+                                    dens[iRef-i-1] );
+      if( !hasConvergedBelowRef )
+      {
+        hasConverged = false;
+      }
+    } );
+
+    return hasConverged;
+  }
+};
+
+
+} // namespace singlePhaseBaseKernels
 
 } // namespace geosx
 

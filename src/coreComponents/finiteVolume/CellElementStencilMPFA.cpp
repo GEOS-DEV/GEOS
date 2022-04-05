@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,11 +22,6 @@
 namespace geosx
 {
 
-CellElementStencilMPFA::CellElementStencilMPFA():
-  StencilBase< CellElementStencilMPFA_Traits, CellElementStencilMPFA >()
-{}
-
-
 void CellElementStencilMPFA::reserve( localIndex const size )
 {
   m_elementRegionIndices.reserve( size * 9 );
@@ -42,7 +37,7 @@ void CellElementStencilMPFA::add( localIndex const numPts,
                                   real64 const * const weights,
                                   localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
 
   m_elementRegionIndices.appendArray( elementRegionIndices, elementRegionIndices + numPts );
   m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );

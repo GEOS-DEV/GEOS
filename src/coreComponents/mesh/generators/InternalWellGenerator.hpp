@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -203,6 +203,8 @@ public:
     constexpr static char const * polylineNodeCoordsString() { return "polylineNodeCoords"; }
     constexpr static char const * polylineSegmentConnString() { return "polylineSegmentConn"; }
     constexpr static char const * numElementsPerSegmentString() { return "numElementsPerSegment"; }
+    constexpr static char const * minSegmentLengthString() { return "minSegmentLength"; }
+    constexpr static char const * minElementLengthString() { return "minElementLength"; }
     constexpr static char const * radiusString() { return "radius"; }
     constexpr static char const * wellRegionNameString() { return "wellRegionName"; }
     constexpr static char const * wellControlsNameString() { return "wellControlsName"; }
@@ -279,6 +281,12 @@ private:
 
   /// Number of well elements per polyline interval
   int m_numElemsPerSegment;
+
+  /// Min segment length
+  real64 m_minSegmentLength;
+
+  /// Min well element length
+  real64 m_minElemLength;
 
   /// Radius area of the well (assumed to be valid for the entire well)
   real64 m_radius;

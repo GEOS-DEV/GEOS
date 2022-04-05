@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -257,9 +257,10 @@ TYPED_TEST_P( MatrixTest, RectangularMatrixOperations )
   A.open();
   for( globalIndex i = A.ilower(); i < A.iupper(); ++i )
   {
-    real64 const entry = static_cast< real64 >( i + 1 );
-    A.insert( i, 2 * i, entry );
-    A.insert( i, 2 * i + 1, -entry );
+    real64 const entry0 = static_cast< real64 >( i + 1 );
+    real64 const entry1 = -entry0;
+    A.insert( i, 2 * i, entry0 );
+    A.insert( i, 2 * i + 1, entry1 );
   }
   A.close();
 

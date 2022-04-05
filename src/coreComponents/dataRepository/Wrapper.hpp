@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -262,7 +262,7 @@ public:
   virtual
   HistoryMetadata getHistoryMetadata( localIndex const packCount = -1 ) const override final
   {
-    return geosx::getHistoryMetadata( getName(), referenceAsView( ), packCount );
+    return geosx::getHistoryMetadata( getName(), referenceAsView( ), numArrayComp(), packCount );
   }
 
   /**
@@ -284,114 +284,6 @@ public:
     {
       return bufferOps::is_packable< T >;
     }
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::pack
-  virtual
-  localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
-    if( onDevice )
-    {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackDevice< true >( buffer, reference(), events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataDevice< true >( buffer, reference(), events );
-      }
-    }
-    else
-    {
-      packedSize += bufferOps::Pack< true >( buffer, *m_data );
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::packByIndex
-  virtual
-  localIndex packByIndex( buffer_unit_type * & buffer, arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    localIndex packedSize = 0;
-    if( sizedFromParent() == 1 )
-    {
-      if( withMetadata ) packedSize += bufferOps::Pack< true >( buffer, getName() );
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< true >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< true >( buffer, reference(), packList, events );
-        }
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackByIndex< true >( buffer, *m_data, packList );
-      }
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::packSize
-  virtual
-  localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    buffer_unit_type * buffer = nullptr;
-    localIndex packedSize = 0;
-    if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
-    if( onDevice )
-    {
-      if( withMetadata )
-      {
-        packedSize += wrapperHelpers::PackDevice< false >( buffer, reference(), events );
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackDataDevice< false >( buffer, reference(), events );
-      }
-    }
-    else
-    {
-      packedSize += bufferOps::Pack< false >( buffer, *m_data );
-    }
-    return packedSize;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////////////////////////
-  /// @copydoc WrapperBase::packByIndexSize
-  virtual
-  localIndex packByIndexSize( arrayView1d< localIndex const > const & packList, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const override final
-  {
-    localIndex packedSize = 0;
-    buffer_unit_type * buffer = nullptr;
-    if( sizedFromParent() == 1 )
-    {
-      if( withMetadata ) packedSize += bufferOps::Pack< false >( buffer, getName() );
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          packedSize += wrapperHelpers::PackByIndexDevice< false >( buffer, reference(), packList, events );
-        }
-        else
-        {
-          packedSize += wrapperHelpers::PackDataByIndexDevice< false >( buffer, reference(), packList, events );
-        }
-      }
-      else
-      {
-        packedSize += wrapperHelpers::PackByIndex< false >( buffer, *m_data, packList );
-      }
-    }
-    return packedSize;
   }
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -430,30 +322,29 @@ public:
   localIndex unpackByIndex( buffer_unit_type const * & buffer, arrayView1d< localIndex const > const & unpackIndices, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) override final
   {
     localIndex unpackedSize = 0;
-    if( sizedFromParent()==1 )
+
+    if( withMetadata )
+    {
+      string name;
+      unpackedSize += bufferOps::Unpack( buffer, name );
+      GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
+    }
+    if( onDevice )
     {
       if( withMetadata )
       {
-        string name;
-        unpackedSize += bufferOps::Unpack( buffer, name );
-        GEOSX_ERROR_IF( name != getName(), "buffer unpack leads to wrapper names that don't match" );
-      }
-      if( onDevice )
-      {
-        if( withMetadata )
-        {
-          unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-        }
-        else
-        {
-          unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
-        }
+        unpackedSize += wrapperHelpers::UnpackByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
       }
       else
       {
-        unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+        unpackedSize += wrapperHelpers::UnpackDataByIndexDevice( buffer, referenceAsView(), unpackIndices, events );
       }
     }
+    else
+    {
+      unpackedSize += wrapperHelpers::UnpackByIndex( buffer, *m_data, unpackIndices );
+    }
+
     return unpackedSize;
   }
 
@@ -541,10 +432,7 @@ public:
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   virtual void copy( localIndex const sourceIndex, localIndex const destIndex ) override
   {
-    if( sizedFromParent() )
-    {
-      copy_wrapper::copy( reference(), sourceIndex, destIndex );
-    }
+    copy_wrapper::copy( reference(), sourceIndex, destIndex );
   }
 
 
@@ -703,13 +591,8 @@ public:
    */
   virtual string getDefaultValueString() const override
   {
-    // Find the dimensionality of the wrapper value
-    string const typeName = LvArray::system::demangleType< T >();
-    int valueDim = numArrayDims() + ( typeName.find( "Tensor" ) != string::npos );
-
-    // Compose the default string
     std::ostringstream ss;
-    ss << std::string( valueDim, '{' ) << m_default << std::string( valueDim, '}' );
+    ss << std::string( numArrayDims(), '{' ) << m_default << std::string( numArrayDims(), '}' );
     return ss.str();
   }
 
@@ -725,10 +608,10 @@ public:
                                                                      targetNode,
                                                                      inputFlag == InputFlags::REQUIRED );
         GEOSX_THROW_IF( !m_successfulReadFromInput,
-                        "Input variable " << getName() << " is required in " << targetNode.path() <<
-                        ". Available options are: \n" << dumpInputOptions( true ) <<
-                        "\nFor more details, please refer to documentation at: \n" <<
-                        "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html \n",
+                        GEOSX_FMT( "XML Node '{}' with name='{}' is missing required attribute '{}'."
+                                   "Available options are:\n{}\nFor more details, please refer to documentation at:\n"
+                                   "http://geosx-geosx.readthedocs-hosted.com/en/latest/docs/sphinx/userGuide/Index.html",
+                                   targetNode.path(), targetNode.attribute( "name" ).value(), getName(), dumpInputOptions( true ) ),
                         InputError );
       }
       else
@@ -917,6 +800,138 @@ public:
 #endif
 
 private:
+
+  /**
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   * @note The @p Impl suffix was used to prevent from a name conflict.
+   */
+  template< bool DO_PACKING >
+  localIndex packImpl( buffer_unit_type * & buffer,
+                       bool withMetadata,
+                       bool onDevice,
+                       parallelDeviceEvents & events ) const
+  {
+    localIndex packedSize = 0;
+
+    if( withMetadata )
+    { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
+    if( onDevice )
+    {
+      if( withMetadata )
+      {
+        packedSize += wrapperHelpers::PackDevice< DO_PACKING >( buffer, reference(), events );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackDataDevice< DO_PACKING >( buffer, reference(), events );
+      }
+    }
+    else
+    {
+      packedSize += bufferOps::Pack< DO_PACKING >( buffer, *m_data );
+    }
+
+    return packedSize;
+  }
+
+  /**
+   * @brief Concrete implementation of the packing by index method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] packList The element we want packed. If empty, no element will be packed.
+   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
+   */
+  template< bool DO_PACKING >
+  localIndex packByIndexImpl( buffer_unit_type * & buffer,
+                              arrayView1d< localIndex const > const & packList,
+                              bool withMetadata,
+                              bool onDevice,
+                              parallelDeviceEvents & events ) const
+  {
+    localIndex packedSize = 0;
+
+    if( withMetadata )
+    { packedSize += bufferOps::Pack< DO_PACKING >( buffer, getName() ); }
+    if( onDevice )
+    {
+      if( withMetadata )
+      {
+        packedSize += wrapperHelpers::PackByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
+      }
+      else
+      {
+        packedSize += wrapperHelpers::PackDataByIndexDevice< DO_PACKING >( buffer, reference(), packList, events );
+      }
+    }
+    else
+    {
+      packedSize += wrapperHelpers::PackByIndex< DO_PACKING >( buffer, *m_data, packList );
+    }
+
+    return packedSize;
+  }
+
+  /**
+   * @copydoc WrapperBase::packPrivate
+   */
+  localIndex packPrivate( buffer_unit_type * & buffer,
+                          bool withMetadata,
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const override final
+  {
+    return this->packImpl< true >( buffer, withMetadata, onDevice, events );
+  }
+
+  /**
+   * @copydoc WrapperBase::packByIndexPrivate
+   */
+  localIndex packByIndexPrivate( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList,
+                                 bool withMetadata,
+                                 bool onDevice,
+                                 parallelDeviceEvents & events ) const override final
+  {
+    return this->packByIndexImpl< true >( buffer, packList, withMetadata, onDevice, events );
+  }
+
+  /**
+   * @copydoc WrapperBase::packSizePrivate
+   */
+  localIndex packSizePrivate( bool withMetadata,
+                              bool onDevice,
+                              parallelDeviceEvents & events ) const override final
+  {
+    buffer_unit_type * dummy;
+    return this->packImpl< false >( dummy, withMetadata, onDevice, events );
+  }
+
+  /**
+   * @copydoc WrapperBase::packByIndexSizePrivate
+   */
+  localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList,
+                                     bool withMetadata,
+                                     bool onDevice,
+                                     parallelDeviceEvents & events ) const override final
+  {
+    buffer_unit_type * dummy;
+    return this->packByIndexImpl< false >( dummy, packList, withMetadata, onDevice, events );
+  }
+
   /// flag to indicate whether or not this wrapper is responsible for allocation/deallocation of the object at the
   /// address of m_data
   bool m_ownsData;
@@ -932,8 +947,10 @@ private:
 };
 
 }
-} /* namespace geosx */
 
+} // end of namespace geosx
+
+// Do not remove the following commented code since it's used for debugging with TotalView.
 //template< typename T >
 //int TV_ttf_display_type( geosx::dataRepository::Wrapper<T> const * wrapper)
 //{
@@ -948,6 +965,5 @@ private:
 //{
 //  TV_ttf_display_type<T>(this);
 //}
-
 
 #endif /* GEOSX_DATAREPOSITORY_WRAPPER_HPP_ */

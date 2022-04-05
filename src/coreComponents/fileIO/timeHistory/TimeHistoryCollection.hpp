@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -23,6 +23,10 @@
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "events/tasks/TaskBase.hpp"
 #include "mesh/DomainPartition.hpp"
+
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyHistoryCollectionType.hpp"
+#endif
 
 #include <functional>
 
@@ -179,6 +183,15 @@ public:
    * @param domain The DomainPartition of the problem.
    */
   virtual void updateSetsIndices ( DomainPartition & domain ) = 0;
+
+  /**
+   * @brief Return PyHistoryCollection type.
+   * @return Return PyHistoryCollection type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override
+  { return python::getPyHistoryCollectionType(); }
+#endif
 
 protected:
 

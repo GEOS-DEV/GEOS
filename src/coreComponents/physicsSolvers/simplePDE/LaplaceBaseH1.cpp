@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -111,7 +111,7 @@ void LaplaceBaseH1::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n
                                        DomainPartition & domain )
 {
   // Computation of the sparsity pattern
-  setupSystem( domain, m_dofManager, m_localMatrix, m_localRhs, m_localSolution );
+  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
 }
 
 void LaplaceBaseH1::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
@@ -125,7 +125,7 @@ void LaplaceBaseH1::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( domai
   dofManager.addField( m_fieldName,
                        DofManager::Location::Node,
                        1,
-                       targetRegionNames() );
+                       m_meshTargets );
 
   dofManager.addCoupling( m_fieldName,
                           m_fieldName,
@@ -150,6 +150,11 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                                               domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                               domain.getNeighbors(),
                                                               true );
+}
+
+void LaplaceBaseH1::updateState( DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR( domain );
 }
 
 /*
@@ -191,9 +196,15 @@ void LaplaceBaseH1::
                         Group & targetGroup,
                         string const & GEOSX_UNUSED_PARAM( fieldName ) )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual, parallelDevicePolicy< 32 > >
-      ( targetSet, time, targetGroup, m_fieldName, dofManager.getKey( m_fieldName ),
-      dofManager.rankOffset(), localMatrix, localRhs );
+    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                       parallelDevicePolicy< 32 > >( targetSet,
+                                                                     time,
+                                                                     targetGroup,
+                                                                     m_fieldName,
+                                                                     dofManager.getKey( m_fieldName ),
+                                                                     dofManager.rankOffset(),
+                                                                     localMatrix,
+                                                                     localRhs );
   } );
 }
 
@@ -202,14 +213,14 @@ void LaplaceBaseH1::
    This method is simply initiating the solution and right-hand side
    and pass it to the base class solver.
  */
-void LaplaceBaseH1::solveSystem( DofManager const & dofManager,
-                                 ParallelMatrix & matrix,
-                                 ParallelVector & rhs,
-                                 ParallelVector & solution )
+void LaplaceBaseH1::solveLinearSystem( DofManager const & dofManager,
+                                       ParallelMatrix & matrix,
+                                       ParallelVector & rhs,
+                                       ParallelVector & solution )
 {
   rhs.scale( -1.0 ); // TODO decide if we want this here
   solution.zero();
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void LaplaceBaseH1::resetStateToBeginningOfStep( DomainPartition & GEOSX_UNUSED_PARAM( domain ) )

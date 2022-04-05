@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -77,7 +77,9 @@ public:
 
   virtual ~FlashModelBase() = default;
 
-  using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase, string_array const &,
+  using CatalogInterface = dataRepository::CatalogInterface< FlashModelBase,
+                                                             string const &,
+                                                             string_array const &,
                                                              string_array const &,
                                                              string_array const &,
                                                              array1d< real64 > const & >;

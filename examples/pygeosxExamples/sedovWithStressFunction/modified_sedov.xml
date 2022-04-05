@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <!-- SPHINX_SEDOV_INCLUDED -->
+  <Included>
+    <File
+      name="../../../inputFiles/solidMechanics/sedov.xml"/>
+  </Included>
+
+  <!-- SPHINX_SEDOV_INCLUDED_END -->
+  <!-- SPHINX_SEDOV_EVENTS_OUTPUTS -->
+  <Events>
+    <PeriodicEvent
+      name="python"
+      cycleFrequency="5"
+      target="/Outputs/pythonOutput"/>
+  </Events>
+
+  <Outputs>
+    <Python
+      name="pythonOutput"/>
+  </Outputs>
+
+  <!-- SPHINX_SEDOV_EVENTS_OUTPUTS_END -->
+</Problem>

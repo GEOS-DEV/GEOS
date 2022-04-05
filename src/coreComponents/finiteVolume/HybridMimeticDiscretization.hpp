@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -78,15 +78,9 @@ public:
 
 protected:
 
-  /// @copydoc geosx::dataRepository::Group::registerDataOnMesh
-  virtual void registerDataOnMesh( Group & meshBodies ) override;
-
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
 private:
-
-  /// name of the coefficient field
-  string m_coeffName;
 
   /// type of of inner product used in the hybrid FVM solver
   string m_innerProductType;

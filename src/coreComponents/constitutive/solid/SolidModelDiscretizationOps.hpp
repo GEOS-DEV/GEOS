@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -35,6 +35,23 @@ namespace constitutive
  */
 struct SolidModelDiscretizationOps
 {
+  /**
+   * @brief Compute inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @tparam CBF Callback function
+   * @param gradN Finite Element shape function gradients
+   * @param elementStiffness Local stiffness matrix
+   * @param callbackFunction The callback function
+   */
+  template< int NUM_SUPPORT_POINTS,
+            typename BASIS_GRADIENT,
+            typename CBF >
+  GEOSX_HOST_DEVICE
+  void BTDB( BASIS_GRADIENT const & gradN,
+             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+             CBF && callbackFunction );
+
   /**
    * @brief Compute upper portion of inner product matrix for solid mechanics, assuming D is symmetric
    * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
@@ -97,6 +114,30 @@ struct SolidModelDiscretizationOps
                        CBF && callbackFunction );
 
 };
+
+
+/// @copydoc SolidModelDiscretizationOps::BTDB
+template< int NUM_SUPPORT_POINTS,
+          typename BASIS_GRADIENT,
+          typename CBF >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOps::BTDB( BASIS_GRADIENT const & gradN,
+                                        real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3],
+                                        CBF && callbackFunction )
+{
+  for( int a=0; a<NUM_SUPPORT_POINTS; ++a )
+  {
+    for( int b=0; b<NUM_SUPPORT_POINTS; ++b )
+    {
+      real64 const gradNa_gradNb[3][3] =
+      { { gradN[a][0] * gradN[b][0], gradN[a][0] * gradN[b][1], gradN[a][0] * gradN[b][2] },
+        { gradN[a][1] * gradN[b][0], gradN[a][1] * gradN[b][1], gradN[a][1] * gradN[b][2] },
+        { gradN[a][2] * gradN[b][0], gradN[a][2] * gradN[b][1], gradN[a][2] * gradN[b][2] } };
+      callbackFunction( a, b, gradNa_gradNb, elementStiffness );
+    }
+  }
+}
 
 
 /// @copydoc SolidModelDiscretizationOps::upperBTDB

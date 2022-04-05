@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -102,9 +102,9 @@ public:
   /**
    * @brief @return the communicator
    */
-  MPI_Comm getComm() const override
+  MPI_Comm comm() const override
   {
-    return m_matrix.getComm();
+    return m_matrix.comm();
   }
 
 private:

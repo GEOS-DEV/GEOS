@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -69,23 +69,23 @@ public:
    * @tparam OFFSET_TYPE row pointer offset type
    * @tparam COLUMN_TYPE column index type
    * @param mat the source matrix
-   * @param rowOffsets pointer to user-managed array of row pointers
-   * @param colIndices pointer to user-managed array of column indices
-   * @param values pointer to user-managed array of matrix values
+   * @param rowOffsets array view to user-managed array of row pointers
+   * @param colIndices array view to user-managed array of column indices
+   * @param values array view to user-managed array of matrix values
    *
    * This function must be called on all ranks in the matrix's communicator.
    * Only target rank needs to provide meaningful pointer parameters when doing single-rank export.
    */
   template< typename OFFSET_TYPE, typename COLUMN_TYPE >
   void exportCRS( PetscMatrix const & mat,
-                  OFFSET_TYPE * rowOffsets,
-                  COLUMN_TYPE * colIndices,
-                  real64 * values ) const;
+                  arrayView1d< OFFSET_TYPE > const & rowOffsets,
+                  arrayView1d< COLUMN_TYPE > const & colIndices,
+                  arrayView1d< real64 > const & values ) const;
 
   /**
    * @brief Export the target vector into an array provided by the user.
    * @param vec the source vector, must be compatible with matrix row distribution
-   * @param values pointer to user-managed array of vector values
+   * @param values array view to user-managed array of vector values
    *
    * This method can be used to extract data from vectors associated with the original matrix.
    * It is mostly useful for single-rank export (gather) of vector values.
@@ -94,11 +94,12 @@ public:
    * This function must be called on all ranks in the matrix/vector communicator.
    * Only target rank needs to provide meaningful pointer parameter when doing single-rank export.
    */
-  void exportVector( PetscVector const & vec, real64 * values ) const;
+  void exportVector( PetscVector const & vec,
+                     arrayView1d< real64 > const & values ) const;
 
   /**
    * @brief Import the target vector from an array provided by the user.
-   * @param values pointer to user-managed array of vector values
+   * @param values array view to user-managed array of vector values
    * @param vec the target vector, must be compatible with matrix row distribution
    *
    * This method can be used to populate data into vectors associated with the original matrix.
@@ -108,7 +109,8 @@ public:
    * This function must be called on all ranks in the matrix/vector communicator.
    * Only target rank needs to provide meaningful pointer parameter when doing single-rank import.
    */
-  void importVector( real64 const * values, PetscVector & vec ) const;
+  void importVector( arrayView1d< const real64 > const & values,
+                     PetscVector & vec ) const;
 
 private:
 

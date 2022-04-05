@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -79,16 +79,16 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string catalogName()
+  static string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::catalogName();
+    return catalogName();
   }
 
   ///@}
@@ -106,9 +106,6 @@ public:
   EmbeddedSurfaceSubRegion( string const & name,
                             dataRepository::Group * const parent );
 
-  /// @brief Destructor
-  virtual ~EmbeddedSurfaceSubRegion() override;
-
   ///@}
 
   /**
@@ -117,15 +114,24 @@ public:
   ///@{
 
   virtual void calculateElementGeometricQuantities( NodeManager const & nodeManager,
-                                                    FaceManager const & facemanager ) override;
+                                                    FaceManager const & facemanager ) override final;
 
   /**
    * @brief Function to compute the geometric quantities of a specific embedded surface element.
    * @param intersectionPoints array containing the nodes defining the embedded surface elements
-   * @param k index of the face element
+   * @param k index of the embedded surface element
    */
-  void CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
+  void calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                             localIndex k );
+  /**
+   * @brief computes the connectivityIndex of the embedded surface element.
+   * @param k element index
+   * @param cellToNodes cell to nodes map
+   * @param nodesCoord cordinates of the nodes
+   */
+  void computeConnectivityIndex( localIndex const k,
+                                 arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
+                                 arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord );
 
   /**
    * @brief Function to add a new embedded surface element.
@@ -163,9 +169,6 @@ public:
   real64 computeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
 
-
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
@@ -196,33 +199,8 @@ public:
     /// @return Connectivity index string
     static constexpr char const * connectivityIndexString() { return "connectivityIndex"; }
 
-    /// @return Displacement jump string
-    static constexpr char const * dispJumpString()          { return "displacementJump"; }
-
-    /// @return Delta displacement jump string
-    static constexpr char const * deltaDispJumpString()     { return "deltaDisplacementJump"; }
-
-    /// @return Fracture traction string
-    static constexpr char const * fractureTractionString()  { return "fractureTraction"; }
-
-    /// @return Fracture traction derivative w.r.t. jump string
-    static constexpr char const * dTraction_dJumpString()   { return "dTraction_dJump"; }
-
     /// @return surfaces with ghost nodes list string
     static constexpr char const * surfaceWithGhostNodesString() { return "surfaceWithGhostNodes"; }
-
-    /// Displacement jump key
-    dataRepository::ViewKey dispJump        = { dispJumpString() };
-
-    /// Delta displacement jump key
-    dataRepository::ViewKey deltaDispJump   = { deltaDispJumpString() };
-
-    /// traction vector key
-    dataRepository::ViewKey tractionVector  = { fractureTractionString() };
-
-    /// dTraction_dJump key
-    dataRepository::ViewKey dTraction_dJump = { dTraction_dJumpString() };
-
   }
   /// viewKey struct for the EmbeddedSurfaceSubRegion class
   viewKeys;
@@ -271,6 +249,13 @@ public:
   arraySlice1d< real64 const > getNormalVector( localIndex k ) const { return m_normalVector[k]; }
 
   /**
+   * @brief Get the name of the bounding plate that was used to generate fracture element k.
+   * @param k the index of the embedded surface element
+   * @return the name of the bounded plane, the element was generated from
+   */
+  string const & getFractureName( localIndex k ) const { return m_parentPlaneName[k]; }
+
+  /**
    * @brief Get an array of the first tangent vector of the embedded surface elements.
    * @return an array of the first tangent vector of the embedded surface elements
    */
@@ -316,7 +301,6 @@ public:
    */
   arraySlice1d< real64 const > getTangentVector2( localIndex k ) const { return m_tangentVector2[k];}
 
-
   /**
    * @brief Get the connectivity index of the  embedded surface element.
    * @return the connectivity index
@@ -327,71 +311,6 @@ public:
    * @copydoc getConnectivityIndex()
    */
   array1d< real64 > const & getConnectivityIndex() const { return m_connectivityIndex;}
-
-
-  /**
-   * @brief Get a mutable displacement jump array.
-   * @return the displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the displacement jump does not exist
-   */
-  array2d< real64 > & displacementJump()
-  { return getReference< array2d< real64 > >( viewKeys.dispJump ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the displacement jump array.
-   * @return immutable arrayView of the displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the displacement jump does not exist
-   */
-  arrayView2d< real64 const > displacementJump() const
-  {return getReference< array2d< real64 > >( viewKeys.dispJump ); }
-
-  /**
-   * @brief Get a mutable incremental displacement jump array.
-   * @return the incremental displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the incremental displacement jump does not exist
-   */
-  array2d< real64 > & incrementalDisplacementJump()
-  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the incremental displacement jump array.
-   * @return immutable arrayView of the incremental displacement jump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the incremental displacement jump does not exist
-   */
-  arrayView2d< real64 const > incrementalDisplacementJump() const
-  { return getReference< array2d< real64 > >( viewKeys.deltaDispJump ); }
-
-  /**
-   * @brief Get a mutable traction array.
-   * @return the traction array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the traction does not exist
-   */
-  array2d< real64 > & tractionVector()
-  { return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the traction array.
-   * @return immutable arrayView of the traction array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the traction does not exist
-   */
-  arrayView2d< real64 const > tractionVector() const
-  {return getReference< array2d< real64 > >( viewKeys.tractionVector ); }
-
-  /**
-   * @brief Get a mutable dTraction_dJump array.
-   * @return the dTraction_dJump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the dTraction_dJump does not exist
-   */
-  array3d< real64 > & dTraction_dJump()
-  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
-
-  /**
-   * @brief Provide an immutable arrayView to the dTraction_dJump array.
-   * @return immutable arrayView of the dTraction_dJump array if it exists, or an error is thrown if it does not exist
-   * @note An error is thrown if the dTraction_dJump does not exist
-   */
-  arrayView3d< real64 const > dTraction_dJump() const
-  { return getReference< array3d< real64 > >( viewKeys.dTraction_dJump ); }
 
   /**
    * @brief accessor to the m_surfaceWithGhostNodes list
@@ -410,9 +329,9 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /// normal vector to the embedded surface element
   array2d< real64 > m_normalVector;
@@ -428,6 +347,9 @@ private:
 
   /// The CI of the cells
   array1d< real64 > m_connectivityIndex;
+
+  // Indices of geometric objects the element belongs to
+  array1d< string > m_parentPlaneName;
 
   /// Surfaces with ghost nodes
   std::vector< struct surfaceWithGhostNodes > m_surfaceWithGhostNodes;

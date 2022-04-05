@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -16,23 +16,48 @@
 #ifndef GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 #define GEOSX_MESH_CELLELEMENTSUBREGION_HPP_
 
-#include "CellBlock.hpp"
+#include "mesh/generators/CellBlockABC.hpp"
+#include "mesh/NodeManager.hpp"
+#include "mesh/FaceManager.hpp"
+#include "mesh/utilities/ComputationalGeometry.hpp"
+#include "ElementSubRegionBase.hpp"
+
 
 namespace geosx
 {
 
+class MeshLevel;
+
 /**
  * @class CellElementSubRegion
- * Class deriving from CellBlock further specializing the element subregion
- * for a cell element. This is the class used in the physics solvers to
- * represent a collection of mesh cell elements
+ * Class specializing the element subregion for a cell element.
+ * This is the class used in the physics solvers to represent a collection of mesh cell elements
  */
-class CellElementSubRegion : public CellBlock
+class CellElementSubRegion : public ElementSubRegionBase
 {
 public:
 
+  /// Alias for the type of the element-to-node map
+  using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
+  /// Alias for the type of the element-to-edge map
+  using EdgeMapType = FixedOneToManyRelation;
+  /// Alias for the type of the element-to-face map
+  using FaceMapType = FixedOneToManyRelation;
   /// Type of map between cell blocks and embedded elements
   using EmbSurfMapType = InterObjectRelation< ArrayOfArrays< localIndex > >;
+
+  /**
+   * @brief Const getter for the catalog name.
+   * @return the name of this type in the catalog
+   */
+  static string catalogName()
+  { return "CellElementSubRegion"; }
+
+  /**
+   * @copydoc catalogName()
+   */
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   /**
    * @name Constructor / Destructor
@@ -46,11 +71,6 @@ public:
    */
   CellElementSubRegion( string const & name, Group * const parent );
 
-  /**
-   * @brief Destructor.
-   */
-  virtual ~CellElementSubRegion() override;
-
   ///@}
 
   /**
@@ -60,9 +80,9 @@ public:
 
   /**
    * @brief Fill the CellElementSubRegion by copying those of the source CellBlock
-   * @param source the CellBlock whose properties (connectivity info) will be copied
+   * @param cellBlock the CellBlock which properties (connectivity info) will be copied.
    */
-  void copyFromCellBlock( CellBlock & source );
+  void copyFromCellBlock( CellBlockABC & cellBlock );
 
   ///@}
 
@@ -78,8 +98,6 @@ public:
    * @name Overriding packing / Unpacking functions
    */
   ///@{
-
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -152,7 +170,7 @@ public:
    * @brief struct to serve as a container for variable strings and keys
    * @struct viewKeyStruct
    */
-  struct viewKeyStruct : public CellBlock::viewKeyStruct
+  struct viewKeyStruct : public ElementSubRegionBase::viewKeyStruct
   {
     /// @return String key for the constitutive point volume fraction
     static constexpr char const * constitutivePointVolumeFractionString() { return "ConstitutivePointVolumeFraction"; }
@@ -179,6 +197,72 @@ public:
 
   virtual viewKeyStruct & viewKeys() override { return m_CellBlockSubRegionViewKeys; }
   virtual viewKeyStruct const & viewKeys() const override { return m_CellBlockSubRegionViewKeys; }
+
+  /**
+   * @brief Get the local indices of the nodes in a face of the element.
+   * @param[in] elementIndex The local index of the target element.
+   * @param[in] localFaceIndex The local index of the target face in the element (this will be [0, numFacesInElement[)
+   * @param[out] nodeIndices Memory to which node indices for the face will be written, must have sufficient size.
+   * @return tne number of values written into @p nodeIndices
+   * @deprecated This method will be removed soon.
+   */
+  localIndex getFaceNodes( localIndex const elementIndex,
+                           localIndex const localFaceIndex,
+                           Span< localIndex > const nodeIndices ) const;
+
+  /**
+   * @brief Get the element-to-node map.
+   * @return a reference to the element-to-node map
+   */
+  NodeMapType & nodeList() { return m_toNodesRelation; }
+
+  /**
+   * @copydoc nodeList()
+   */
+  NodeMapType const & nodeList() const { return m_toNodesRelation; }
+
+  /**
+   * @brief Get the local index of the a-th node of the k-th element.
+   * @param[in] k the index of the element
+   * @param[in] a the index of the node in the element
+   * @return a reference to the local index of the node
+   */
+  localIndex & nodeList( localIndex k, localIndex a ) { return m_toNodesRelation( k, a ); }
+
+  /**
+   * @copydoc nodeList( localIndex const k, localIndex a )
+   */
+  localIndex const & nodeList( localIndex k, localIndex a ) const { return m_toNodesRelation( k, a ); }
+
+  /**
+   * @brief Get the element-to-edge map.
+   * @return a reference to element-to-edge map
+   */
+  FixedOneToManyRelation & edgeList() { return m_toEdgesRelation; }
+
+  /**
+   * @copydoc edgeList()
+   */
+  FixedOneToManyRelation const & edgeList() const { return m_toEdgesRelation; }
+
+  /**
+   * @brief Get the element-to-face map.
+   * @return a reference to the element to face map
+   */
+  FixedOneToManyRelation & faceList() { return m_toFacesRelation; }
+
+  /**
+   * @copydoc faceList()
+   */
+  FixedOneToManyRelation const & faceList() const { return m_toFacesRelation; }
+
+  /**
+   * @brief Get the local index of the a-th face of the k-th element.
+   * @param[in] k the index of the element
+   * @param[in] a the index of the face in the element
+   * @return a const reference to the local index of the face
+   */
+  localIndex faceList( localIndex k, localIndex a ) const { return m_toFacesRelation( k, a ); }
 
   /**
    * @brief @return The array of shape function derivatives.
@@ -247,13 +331,36 @@ public:
     } );
   }
 
+  void calculateElementGeometricQuantities( NodeManager const & nodeManager,
+                                            FaceManager const & faceManager ) override;
+
+private:
+
   /// Map used for constitutive grouping
   map< string, localIndex_array > m_constitutiveGrouping;
 
   /// Array of constitutive point volume fraction
   array3d< real64 > m_constitutivePointVolumeFraction;
 
-private:
+  /// Element-to-node relation
+  NodeMapType m_toNodesRelation;
+
+  /// Element-to-edge relation
+  EdgeMapType m_toEdgesRelation;
+
+  /// Element-to-face relation
+  FaceMapType m_toFacesRelation;
+
+  /// Name of the properties registered from an external mesh
+  string_array m_externalPropertyNames;
+
+  /**
+   * @brief Compute the volume of the k-th element in the subregion.
+   * @param[in] k the index of the element in the subregion
+   * @param[in] X an arrayView of (const) node positions
+   */
+  void calculateElementCenterAndVolume( localIndex const k,
+                                        arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const;
 
   /// The array of shape function derivaties.
   array4d< real64 > m_dNdX;
@@ -278,20 +385,27 @@ private:
 
   /**
    * @brief Pack element-to-node and element-to-face maps
-   * @tparam the flag for the bufferOps::Pack function
+   * @tparam DO_PACKING the flag for the bufferOps::Pack function
    * @param buffer the buffer used in the bufferOps::Pack function
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
-  template< bool DOPACK >
-  localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                           arrayView1d< localIndex const > const & packList,
-                                           arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+  /**
+   * @brief Links the managers to their mappings.
+   * @param[in] mesh Holds the node/edge/face managers.
+   *
+   * Defines links the element to nodes, edges and faces to their respective node/edge/face managers.
+   */
+  void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
+  template< bool DO_PACKING >
+  localIndex packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                        arrayView1d< localIndex const > const & packList,
+                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 };
 
 } /* namespace geosx */

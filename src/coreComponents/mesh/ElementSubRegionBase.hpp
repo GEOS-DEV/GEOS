@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -116,60 +116,10 @@ public:
   virtual localIndex numNodesPerElement( localIndex const k ) const { GEOSX_UNUSED_VAR( k ); return m_numNodesPerElement; }
 
   /**
-   * @brief Set the number of nodes per element.
-   * @param[in] numNodes the number of nodes per element
-   */
-  void setNumNodesPerElement( localIndex numNodes )
-  {
-    m_numNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Get the number of independent nodes per element.
-   * @return numNodes the number of independent nodes per element
-   *
-   * Currently, the number of independent nodes per element is always
-   * equal to the number of nodes per element, except for the case
-   * of a triangular prism
-   */
-  localIndex const & numIndependentNodesPerElement() const { return m_numIndependentNodesPerElement; }
-
-  /**
-   * @brief Set the number of independent nodes per element.
-   * @param[in] numNodes the number of independent nodes per element
-   */
-  void setNumIndependentNodesPerElement( localIndex const numNodes )
-  {
-    m_numIndependentNodesPerElement = numNodes;
-  }
-
-  /**
-   * @brief Get the number of edges per element.
-   * @return the number of edges per element
-   */
-  localIndex const & numEdgesPerElement() const { return m_numEdgesPerElement; }
-
-  /**
-   * @brief Set the number of edges per element.
-   * @param[in] numEdges the number of edges per element
-   */
-  void setNumEdgesPerElement( localIndex const numEdges )
-  {
-    m_numEdgesPerElement = numEdges;
-  }
-
-  /**
    * @brief Get the number of faces per element.
    * @return number of faces per element
    */
   localIndex const & numFacesPerElement() const { return m_numFacesPerElement; }
-
-  /**
-   * @brief Set the number of faces per element.
-   * @param[in] numFaces the number of faces per element
-   */
-  void setNumFacesPerElement( localIndex const numFaces )
-  { m_numFacesPerElement = numFaces; }
 
   /**
    * @brief Get the center of each element in this subregion.
@@ -221,20 +171,12 @@ public:
   T & getConstitutiveModel( string const & name )
   { return m_constitutiveModels.getGroup< T >( name ); }
 
-
   /**
    * @brief Get the type of element in this subregion.
    * @return the type of element in this subregion
    */
   ElementType getElementType() const
   { return m_elementType; }
-
-  /**
-   * @brief Set the type of element in this subregion.
-   * @param[in] elementType the element type
-   */
-  virtual void setElementType( ElementType const elementType )
-  { m_elementType = elementType; }
 
   ///@}
 
@@ -280,9 +222,6 @@ protected:
   /// Number of nodes per element in this subregion.
   localIndex m_numNodesPerElement;
 
-  /// Number of independent nodes per element in this subregion.
-  localIndex m_numIndependentNodesPerElement;
-
   /// Number of edges per element in this subregion.
   localIndex m_numEdgesPerElement;
 
@@ -298,7 +237,6 @@ protected:
   /// Type of element in this subregion.
   ElementType m_elementType;
 };
-
 
 } /* namespace geosx */
 

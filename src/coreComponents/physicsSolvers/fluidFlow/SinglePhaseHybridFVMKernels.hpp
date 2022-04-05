@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -29,12 +29,12 @@
 #include "finiteVolume/mimeticInnerProducts/SimpleInnerProduct.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
 #include "mesh/MeshLevel.hpp"
-#include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/HybridFVMHelperKernels.hpp"
 
 namespace geosx
 {
-namespace SinglePhaseHybridFVMKernels
+namespace singlePhaseHybridFVMKernels
 {
 
 /******************************** AssemblerKernelHelper ********************************/
@@ -523,6 +523,7 @@ struct FluxKernel
           localIndex esr,
           CellElementSubRegion const & subRegion,
           constitutive::SingleFluidBase const & fluid,
+          constitutive::PermeabilityBase const & permeabilityModel,
           SortedArrayView< localIndex const > const & regionFilter,
           arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodePosition,
           arrayView2d< localIndex const > const & elemRegionList,
@@ -533,7 +534,6 @@ struct FluxKernel
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
           arrayView1d< real64 const > const & dFacePres,
-          arrayView3d< real64 const > const & elemPerm,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
           ElementViewConst< arrayView1d< real64 const > > const & mob,
@@ -553,19 +553,23 @@ struct FluxKernel
 
     // get the cell-centered pressures
     arrayView1d< real64 const > const elemPres  =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::pressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
     arrayView1d< real64 const > const dElemPres =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::deltaPressureString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
     // get the element data needed for transmissibility computation
     arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( CellBlock::viewKeyStruct::elementCenterString() );
+      subRegion.getReference< array2d< real64 > >( CellElementSubRegion::viewKeyStruct::elementCenterString() );
     arrayView1d< real64 const > const elemVolume =
-      subRegion.getReference< array1d< real64 > >( CellBlock::viewKeyStruct::elementVolumeString() );
+      subRegion.getReference< array1d< real64 > >( CellElementSubRegion::viewKeyStruct::elementVolumeString() );
+
+    arrayView3d< real64 const > const elemPerm = permeabilityModel.permeability();
+    // TODO add this dependency to the compute function
+    //arrayView3d< real64 const > const elemdPermdPres = permeabilityModel.dPerm_dPressure();
 
     // get the cell-centered depth
     arrayView1d< real64 const > const elemGravCoef =
-      subRegion.getReference< array1d< real64 > >( SinglePhaseBase::viewKeyStruct::gravityCoefString() );
+      subRegion.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
 
     // get the fluid data
     arrayView2d< real64 const > const elemDens = fluid.density();
@@ -595,7 +599,7 @@ struct FluxKernel
                                        transMatrix );
 
       // perform flux assembly in this element
-      SinglePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
+      singlePhaseHybridFVMKernels::AssemblerKernel::compute< NF >( er, esr, ei,
                                                                    regionFilter,
                                                                    elemRegionList,
                                                                    elemSubRegionList,
@@ -720,7 +724,7 @@ void KernelLaunchSelector( localIndex numFacesInElem, ARGS && ... args )
 }
 
 
-} // namespace SinglePhaseHybridFVMKernels
+} // namespace singlePhaseHybridFVMKernels
 
 } // namespace geosx
 

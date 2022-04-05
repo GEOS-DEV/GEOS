@@ -18,8 +18,23 @@ Because Delft-Egg is frequently used for hard rocks, GEOSX uses a linear model f
 Parameters
 ~~~~~~~~~~~~~~~~~~~~
 
-The following attributes are supported:
-
-.. include:: /coreComponents/schema/docs/DelftEgg.rst
+The supported attributes will be documented soon.
 
 
+Example
+~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: xml
+
+  <Constitutive>
+     <DelftEgg
+      name="DE"
+      defaultDensity="2700"
+      defaultBulkModulus="10.0e9"
+      defaultShearModulus="6.0e9"     
+      defaultPreConsolidationPressure="-20.0e6"
+      defaultShapeParameter="6.5"
+      defaultCslSlope="1.2"
+      defaultVirginCompressionIndex="0.005"
+      defaultRecompressionIndex="0.001"/>
+  </Constitutive>

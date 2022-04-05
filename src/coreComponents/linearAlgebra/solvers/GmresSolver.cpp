@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,11 +33,8 @@ GmresSolver< VECTOR >::GmresSolver( LinearSolverParameters params,
   m_kspace( m_params.krylov.maxRestart + 1 ),
   m_kspaceInitialized( false )
 {
-  GEOSX_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of restart iterations must be positive." );
+  GEOSX_ERROR_IF_LE_MSG( m_params.krylov.maxRestart, 0, "GMRES: max number of iterations until restart must be positive." );
 }
-
-template< typename VECTOR >
-GmresSolver< VECTOR >::~GmresSolver() = default;
 
 namespace
 {
@@ -70,14 +67,14 @@ void ApplyGivensRotation( real64 const c, real64 const s, real64 & dx, real64 & 
   dx = temp;
 }
 
-void Backsolve( localIndex const k,
+void Backsolve( integer const k,
                 arraySlice2d< real64 const, MatrixLayout::COL_MAJOR > const & H,
                 arraySlice1d< real64 > const & g )
 {
-  for( localIndex j = k - 1; j >= 0; --j )
+  for( integer j = k - 1; j >= 0; --j )
   {
     g[j] /= H( j, j );
-    for( localIndex i = j - 1; i >= 0; --i )
+    for( integer i = j - 1; i >= 0; --i )
     {
       g[i] -= H( i, j ) * g[j];
     }
@@ -85,27 +82,24 @@ void Backsolve( localIndex const k,
 
 }
 
-}
+} // namespace
 
 template< typename VECTOR >
 void GmresSolver< VECTOR >::solve( Vector const & b,
                                    Vector & x ) const
 {
   // We create Krylov subspace vectors once using the size and partitioning of b.
-  // It is assumed that on every repeated call to solve() input vectors will keep
-  // the same (or at least compatible) size and partitioning.
+  // On repeated calls to solve() input vectors must have the same size and partitioning.
   if( !m_kspaceInitialized )
   {
-    for( localIndex i = 0; i < m_params.krylov.maxRestart + 1; ++i )
+    for( VectorTemp & kv : m_kspace )
     {
-      m_kspace[i] = createTempVector( b );
+      kv = createTempVector( b );
     }
+    m_kspaceInitialized = true;
   }
 
-  Stopwatch watch( m_result.solveTime );
-
-  // Compute the target absolute tolerance
-  real64 const absTol = b.norm2() * m_params.krylov.relTolerance;
+  Stopwatch watch;
 
   // Define vectors
   VectorTemp r = createTempVector( b );
@@ -115,6 +109,10 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   // Compute initial rk
   m_operator.residual( x, b, r );
 
+  // Compute the target absolute tolerance
+  real64 const rnorm0 = r.norm2();
+  real64 const absTol = rnorm0 * m_params.krylov.relTolerance;
+
   // Create upper Hessenberg matrix
   array2d< real64, MatrixLayout::COL_MAJOR_PERM > H( m_params.krylov.maxRestart + 1, m_params.krylov.maxRestart );
 
@@ -123,28 +121,32 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
   array1d< real64 > s( m_params.krylov.maxRestart + 1 );
   array1d< real64 > g( m_params.krylov.maxRestart + 1 );
 
+  // Initialize iteration state
   m_result.status = LinearSolverResult::Status::NotConverged;
-  m_residualNorms.resize( m_params.krylov.maxIterations + 1 );
+  m_residualNorms.clear();
 
-  localIndex k = 0;
-  real64 rnorm = 0.0;
-
+  integer & k = m_result.numIterations;
   while( k <= m_params.krylov.maxIterations && m_result.status == LinearSolverResult::Status::NotConverged )
   {
     // Re-initialize Krylov subspace
     g.zero();
-    g[0] = r.norm2();
-    m_kspace[0].axpby( 1.0 / g[0], r, 0.0 );
+    g[0] = k > 0 ? r.norm2() : rnorm0;
+    m_kspace[0].copy( r );
+    if( g[0] > 0 )
+    {
+      m_kspace[0].scale( 1.0 / g[0] );
+    }
 
-    localIndex j;
-    for( j = 0; j < m_params.krylov.maxRestart && k <= m_params.krylov.maxIterations; ++j, ++k )
+    integer j = 0;
+    for(; j < m_params.krylov.maxRestart && k <= m_params.krylov.maxIterations; ++j, ++k )
     {
       // Record iteration progress
-      rnorm = std::fabs( g[j] );
-      logProgress( k, rnorm );
+      real64 const rnorm = std::fabs( g[j] );
+      m_residualNorms.emplace_back( rnorm );
+      logProgress();
 
       // Convergence check
-      if( rnorm < absTol )
+      if( rnorm <= absTol )
       {
         m_result.status = LinearSolverResult::Status::Success;
         break;
@@ -155,18 +157,18 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
       m_operator.apply( z, w );
 
       // Orthogonalization
-      for( localIndex i = 0; i <= j; ++i )
+      for( integer i = 0; i <= j; ++i )
       {
         H( i, j ) = w.dot( m_kspace[i] );
         w.axpby( -H( i, j ), m_kspace[i], 1.0 );
       }
 
       H( j+1, j ) = w.norm2();
-      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j + 1, j ) )
+      GEOSX_KRYLOV_BREAKDOWN_IF_ZERO( H( j+1, j ) )
       m_kspace[j+1].axpby( 1.0 / H( j+1, j ), w, 0.0 );
 
       // Apply all previous rotations to the new column
-      for( localIndex i = 0; i < j; ++i )
+      for( integer i = 0; i < j; ++i )
       {
         ApplyGivensRotation( c[i], s[i], H( i, j ), H( i+1, j ) );
       }
@@ -180,7 +182,7 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
     // Regardless of how we quit out of inner loop, j is the actual size of H
     Backsolve( j, H, g );
     w.zero();
-    for( localIndex i = 0; i < j; ++i )
+    for( integer i = 0; i < j; ++i )
     {
       w.axpy( g[i], m_kspace[i] );
     }
@@ -191,11 +193,9 @@ void GmresSolver< VECTOR >::solve( Vector const & b,
     m_operator.residual( x, b, r );
   }
 
-  m_result.numIterations = k;
-  m_result.residualReduction = rnorm / absTol * m_params.krylov.relTolerance;
-
+  m_result.residualReduction = rnorm0 > 0.0 ? m_residualNorms.back() / rnorm0 : 0.0;
+  m_result.solveTime = watch.elapsedTime();
   logResult();
-  m_residualNorms.resize( m_result.numIterations + 1 );
 }
 
 // -----------------------

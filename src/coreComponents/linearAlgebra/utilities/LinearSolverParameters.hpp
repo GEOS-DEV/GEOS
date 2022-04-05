@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -53,7 +53,7 @@ struct LinearSolverParameters
     none,      ///< No preconditioner
     jacobi,    ///< Jacobi smoothing
     l1jacobi,  ///< l1-Jacobi smoothing
-    gs,        ///< Gauss-Seidel smoothing
+    fgs,       ///< Gauss-Seidel smoothing (forward sweep)
     sgs,       ///< Symmetric Gauss-Seidel smoothing
     l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
     chebyshev, ///< Chebyshev polynomial smoothing
@@ -64,7 +64,8 @@ struct LinearSolverParameters
     amg,       ///< Algebraic Multigrid
     mgr,       ///< Multigrid reduction (Hypre only)
     block,     ///< Block preconditioner
-    direct     ///< Direct solver as preconditioner
+    direct,    ///< Direct solver as preconditioner
+    bgs,       ///< Gauss-Seidel smoothing (backward sweep)
   };
 
   integer logLevel = 0;     ///< Output level [0=none, 1=basic, 2=everything]
@@ -153,7 +154,8 @@ struct LinearSolverParameters
       default_,  ///< Use LAI's default option
       jacobi,    ///< Jacobi smoothing
       l1jacobi,  ///< l1-Jacobi smoothing
-      gs,        ///< Gauss-Seidel smoothing
+      fgs,       ///< Gauss-Seidel smoothing (forward sweep)
+      bgs,       ///< Gauss-Seidel smoothing (backward sweep)
       sgs,       ///< Symmetric Gauss-Seidel smoothing
       l1sgs,     ///< l1-Symmetric Gauss-Seidel smoothing
       chebyshev, ///< Chebyshev polynomial smoothing
@@ -169,11 +171,12 @@ struct LinearSolverParameters
       default_,  ///< Use LAI's default option
       jacobi,    ///< Jacobi
       l1jacobi,  ///< l1-Jacobi
-      gs,        ///< Gauss-Seidel
+      fgs,       ///< Gauss-Seidel (forward sweep)
       sgs,       ///< Symmetric Gauss-Seidel
       l1sgs,     ///< l1-Symmetric Gauss-Seidel
       chebyshev, ///< Chebyshev polynomial
-      direct     ///< Direct solver as preconditioner
+      direct,    ///< Direct solver as preconditioner
+      bgs,       ///< Gauss-Seidel smoothing (backward sweep)
     };
 
     /// Null space type
@@ -185,7 +188,7 @@ struct LinearSolverParameters
 
     integer maxLevels = 20;                         ///< Maximum number of coarsening levels
     CycleType cycleType = CycleType::V;             ///< AMG cycle type
-    SmootherType smootherType = SmootherType::gs;   ///< Smoother type
+    SmootherType smootherType = SmootherType::fgs;  ///< Smoother type
     CoarseType coarseType = CoarseType::direct;     ///< Coarse-level solver/smoother
     string coarseningType = "HMIS";                 ///< Coarsening algorithm
     integer interpolationType = 6;                  ///< Coarsening algorithm
@@ -208,18 +211,20 @@ struct LinearSolverParameters
     enum class StrategyType : integer
     {
       invalid,                                   ///< default value, to ensure solver sets something
-      singlePhaseReservoirFVM,                   ///< fininte volume single-phase flow with wells
+      singlePhaseReservoirFVM,                   ///< finite volume single-phase flow with wells
       singlePhaseHybridFVM,                      ///< hybrid finite volume single-phase flow
       singlePhaseReservoirHybridFVM,             ///< hybrid finite volume single-phase flow with wells
       singlePhasePoromechanics,                  ///< single phase poromechanics with finite volume single phase flow
       hybridSinglePhasePoromechanics,            ///< single phase poromechanics with hybrid finite volume single phase flow
-      compositionalMultiphaseFVM,                ///< finite volume compositional muliphase flow
-      compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional muliphase flow
+      singlePhasePoromechanicsEmbeddedFractures, ///< single phase poromechanics with finite volume single phase flow and embedded fractures
+      compositionalMultiphaseFVM,                ///< finite volume compositional multiphase flow
+      compositionalMultiphaseHybridFVM,          ///< hybrid finite volume compositional multiphase flow
       compositionalMultiphaseReservoirFVM,       ///< finite volume compositional multiphase flow with wells
       compositionalMultiphaseReservoirHybridFVM, ///< hybrid finite volume compositional multiphase flow with wells
       multiphasePoromechanics,                   ///< multiphase poromechanics with finite volume compositional multiphase flow
       hydrofracture,                             ///< hydrofracture
       lagrangianContactMechanics,                ///< Lagrangian contact mechanics
+      solidMechanicsEmbeddedFractures            ///< Embedded fractures mechanics
     };
 
     StrategyType strategy = StrategyType::invalid; ///< Predefined MGR solution strategy (solver specific)
@@ -257,10 +262,10 @@ ENUM_STRINGS( LinearSolverParameters::SolverType,
 ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "none",
               "jacobi",
-              "l1-jacobi",
-              "gs",
+              "l1jacobi",
+              "fgs",
               "sgs",
-              "l1-sgs",
+              "l1sgs",
               "chebyshev",
               "iluk",
               "ilut",
@@ -269,7 +274,8 @@ ENUM_STRINGS( LinearSolverParameters::PreconditionerType,
               "amg",
               "mgr",
               "block",
-              "direct" );
+              "direct",
+              "bgs" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::Direct::ColPerm,
@@ -293,13 +299,15 @@ ENUM_STRINGS( LinearSolverParameters::MGR::StrategyType,
               "singlePhaseReservoirHybridFVM",
               "singlePhasePoromechanics",
               "hybridSinglePhasePoromechanics",
+              "singlePhasePoromechanicsEmbeddedFractures",
               "compositionalMultiphaseFVM",
               "compositionalMultiphaseHybridFVM",
               "compositionalMultiphaseReservoirFVM",
               "compositionalMultiphaseReservoirHybridFVM",
               "multiphasePoromechanics",
               "hydrofracture",
-              "lagrangianContactMechanics" );
+              "lagrangianContactMechanics",
+              "solidMechanicsEmbeddedFractures" );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::CycleType,
@@ -317,7 +325,8 @@ ENUM_STRINGS( LinearSolverParameters::AMG::SmootherType,
               "default",
               "jacobi",
               "l1jacobi",
-              "gs",
+              "fgs",
+              "bgs",
               "sgs",
               "l1sgs",
               "chebyshev",
@@ -331,11 +340,12 @@ ENUM_STRINGS( LinearSolverParameters::AMG::CoarseType,
               "default",
               "jacobi",
               "l1jacobi",
-              "gs",
+              "fgs",
               "sgs",
               "l1sgs",
               "chebyshev",
-              "direct" );
+              "direct",
+              "bgs", );
 
 /// Declare strings associated with enumeration values.
 ENUM_STRINGS( LinearSolverParameters::AMG::NullSpaceType,

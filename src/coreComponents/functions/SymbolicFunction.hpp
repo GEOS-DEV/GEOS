@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -59,7 +59,7 @@ public:
   inline void evaluate( dataRepository::Group const & group,
                         real64 const time,
                         SortedArrayView< localIndex const > const & set,
-                        real64_array & result ) const override final
+                        arrayView1d< real64 > const & result ) const override final
   {
     FunctionBase::evaluateT< SymbolicFunction >( group, time, set, result );
   }
@@ -79,13 +79,13 @@ public:
    * @brief Set the symbolic variable names
    * @param variableNames An array of variable names used in the expression
    */
-  void setSymbolicVariableNames( string_array variableNames ) { m_variableNames = variableNames; }
+  void setSymbolicVariableNames( string_array variableNames ) { m_variableNames = std::move( variableNames ); }
 
   /**
    * @brief Set the symbolic expression
    * @param expression A string containing the symbolic expression
    */
-  void setSymbolicExpression( string expression ) { m_expression = expression; }
+  void setSymbolicExpression( string expression ) { m_expression = std::move( expression ); }
 
 
 

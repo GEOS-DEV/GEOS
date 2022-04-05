@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -81,7 +81,7 @@ protected:
 
   void test( LinearSolverParameters const & params )
   {
-    sol_true.rand();
+    sol_true.rand( 1984 );
     sol_comp.zero();
     matrix.apply( sol_true, rhs_true );
 
@@ -127,9 +127,9 @@ protected:
     this->precond.setup( this->matrix );
 
     // Set up vectors
-    this->sol_true.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
-    this->sol_comp.createWithGlobalSize( this->matrix.numGlobalCols(), MPI_COMM_GEOSX );
-    this->rhs_true.createWithGlobalSize( this->matrix.numGlobalRows(), MPI_COMM_GEOSX );
+    this->sol_true.create( this->matrix.numLocalCols(), MPI_COMM_GEOSX );
+    this->sol_comp.create( this->matrix.numLocalCols(), MPI_COMM_GEOSX );
+    this->rhs_true.create( this->matrix.numLocalRows(), MPI_COMM_GEOSX );
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2
     this->cond_est = 1.5 * 4.0 * n * n / std::pow( M_PI, 2 );
@@ -216,9 +216,9 @@ protected:
 
     for( localIndex i = 0; i < 2; ++i )
     {
-      this->sol_true.block( i ).createWithGlobalSize( laplace2D.numGlobalCols(), MPI_COMM_GEOSX );
-      this->sol_comp.block( i ).createWithGlobalSize( laplace2D.numGlobalCols(), MPI_COMM_GEOSX );
-      this->rhs_true.block( i ).createWithGlobalSize( laplace2D.numGlobalRows(), MPI_COMM_GEOSX );
+      this->sol_true.block( i ).create( laplace2D.numLocalCols(), MPI_COMM_GEOSX );
+      this->sol_comp.block( i ).create( laplace2D.numLocalCols(), MPI_COMM_GEOSX );
+      this->rhs_true.block( i ).create( laplace2D.numLocalRows(), MPI_COMM_GEOSX );
     }
 
     // Condition number for the Laplacian matrix estimate: 4 * n^2 / pi^2

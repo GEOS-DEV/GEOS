@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -30,7 +30,7 @@ namespace conversions
 {
 
 /// @namespace Bulk modulus and shear modulus as input
-namespace BulkModAndShearMod
+namespace bulkModAndShearMod
 {
 
 /**
@@ -41,7 +41,7 @@ namespace BulkModAndShearMod
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod( real64 const & K, real64 const & G )
+real64 toYoungMod( real64 const & K, real64 const & G )
 {
   return 9 * K * G / ( 3 * K + G );
 }
@@ -72,10 +72,10 @@ real64 toFirstLame( real64 const & K, real64 const & G )
   return K - 2 * G / 3;
 }
 
-} /* namespace BulkModeAndShearMod */
+} /* namespace bulkModeAndShearMod */
 
 /// @namespace Young's modulus and Poisson ratio as input
-namespace YoungsModAndPoissonRatio
+namespace youngModAndPoissonRatio
 {
 
 /**
@@ -104,10 +104,10 @@ real64 toShearMod( real64 const & E, real64 const & nu )
   return E / (2 * ( 1 + nu ) );
 }
 
-} /* namespace YoungsModAndPoissonRatio*/
+} /* namespace youngModAndPoissonRatio*/
 
 /// @namespace Shear modulus and Poisson's ratio as input
-namespace ShearModAndPoissonRatio
+namespace shearModAndPoissonRatio
 {
 
 /**
@@ -131,15 +131,15 @@ real64 toBulkMod( real64 const & G, real64 const & nu )
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod( real64 const & G, real64 const & nu )
+real64 toYoungMod( real64 const & G, real64 const & nu )
 {
   return 2 * G * ( 1 + nu );
 }
 
-} /* namespace ShearModAndPoissonRatio*/
+} /* namespace shearModAndPoissonRatio*/
 
 /// @namespace Bulk modulus and Poisson's ratio as input
-namespace BulkModAndPoissonRatio
+namespace bulkModAndPoissonRatio
 {
 
 /**
@@ -150,7 +150,7 @@ namespace BulkModAndPoissonRatio
  */
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
-real64 toYoungsMod( real64 const & K, real64 const & nu )
+real64 toYoungMod( real64 const & K, real64 const & nu )
 {
   return 3 * K * ( 1 - 2 * nu );
 }
@@ -168,10 +168,10 @@ real64 toShearMod( real64 const & K, real64 const & nu )
   return 3 * K * ( 1 - 2 * nu) / ( 2 * ( 1 + nu ) );
 }
 
-} /* namespace BulkModAndPoissonRatio */
+} /* namespace bulkModAndPoissonRatio */
 
 /// @namespace Bulk modulus and Young's modulus
-namespace BulkModAndYoungsMod
+namespace bulkModAndYoungMod
 {
 
 /**
@@ -200,10 +200,10 @@ real64 toPoissonRatio( real64 const & K, real64 const & E )
   return ( 3 * K - E ) / ( 6 * K);
 }
 
-} /* namespace BulkModAndYoungsMod */
+} /* namespace bulkModAndYoungMod */
 
 /// @namespace Shear modulus and Young's modulus
-namespace ShearModAndYoungsMod
+namespace shearModAndYoungMod
 {
 /**
  * @brief Compute Poisson ratio
@@ -231,7 +231,7 @@ real64 toBulkMod( real64 const & G, real64 const & E )
   return E * G / ( 3 * ( 3 * G - E ) );
 }
 
-} /* namespace ShearModAndYoungsMod*/
+} /* namespace shearModAndYoungMod*/
 
 } /* namespace conversions */
 

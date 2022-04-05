@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -43,11 +43,13 @@ public:
    */
   static string catalogName() { return "MultiphasePoromechanics"; }
 
+  virtual void registerDataOnMesh( Group & MeshBodies ) override;
+
   virtual void setupSystem( DomainPartition & domain,
                             DofManager & dofManager,
                             CRSMatrix< real64, globalIndex > & localMatrix,
-                            array1d< real64 > & localRhs,
-                            array1d< real64 > & localSolution,
+                            ParallelVector & rhs,
+                            ParallelVector & solution,
                             bool const setSparsity = true ) override;
 
   virtual void
@@ -81,10 +83,10 @@ public:
                          arrayView1d< real64 const > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
@@ -106,6 +108,8 @@ public:
               int const cycleNumber,
               DomainPartition & domain ) override;
 
+  virtual void updateState( DomainPartition & domain ) override;
+
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     constexpr static char const * solidSolverNameString() { return "solidSolverName"; }
@@ -114,16 +118,14 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
   };
 
-  arrayView1d< string const > porousMaterialNames() const { return m_porousMaterialNames; }
-
 protected:
 
   virtual void postProcessInput() override;
 
+  virtual void initializePreSubGroups() override;
+
   string m_solidSolverName;
   string m_flowSolverName;
-
-  array1d< string > m_porousMaterialNames;
 
   // pointer to the flow sub-solver
   CompositionalMultiphaseBase * m_flowSolver;

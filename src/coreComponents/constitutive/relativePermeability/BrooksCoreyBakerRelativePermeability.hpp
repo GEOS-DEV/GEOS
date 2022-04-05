@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -54,9 +54,9 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                        arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
-                        arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const override;
+  void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
+                arraySlice1d< real64, relperm::USD_RELPERM - 2 > const & phaseRelPerm,
+                arraySlice2d< real64, relperm::USD_RELPERM_DS - 2 > const & dPhaseRelPerm_dPhaseVolFrac ) const;
 
   GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
@@ -109,8 +109,6 @@ class BrooksCoreyBakerRelativePermeability : public RelativePermeabilityBase
 public:
 
   BrooksCoreyBakerRelativePermeability( string const & name, dataRepository::Group * const parent );
-
-  virtual ~BrooksCoreyBakerRelativePermeability() override;
 
   static string catalogName() { return "BrooksCoreyBakerRelativePermeability"; }
 

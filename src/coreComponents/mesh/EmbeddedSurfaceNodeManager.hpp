@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,20 +19,15 @@
 #ifndef GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 #define GEOSX_MESH_EMBEDDEDSURFACENODEMANAGER_HPP_
 
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include <string.h>
-#include "CellBlockManager.hpp"
 #include "ToElementRelation.hpp"
-
-class SiloFile;
 
 namespace geosx
 {
 
-class CellBlock;
 class EdgeManager;
 class ElementRegionManager;
-
 
 /**
  * @class EmbeddedSurfaceNodeManager
@@ -55,15 +50,17 @@ public:
   /**
    * @brief return default size of the value array in the node-to-edge mapping
    * @return default size of value array in the node-to-edge mapping
+   *
+   * @note Value forwarding is due to refactoring.
    */
-  inline localIndex getEdgeMapOverallocation()
-  { return 8; }
+  static constexpr localIndex edgeMapOverallocation()
+  { return CellBlockManagerABC::edgeMapExtraSpacePerNode(); }
 
   /**
    * @brief return default size of the value array in the node-to-element mapping
    * @return default size of value array in the node-to-element mapping
    */
-  inline localIndex getElemMapOverAllocation()
+  static constexpr localIndex elemMapOverallocation()
   { return 8; }
 
 
@@ -79,36 +76,6 @@ public:
    */
   EmbeddedSurfaceNodeManager( string const & name,
                               dataRepository::Group * const parent );
-
-  /**
-   * @brief The default EmbeddedSurfaceNodeManager destructor.
-   */
-  ~EmbeddedSurfaceNodeManager() override;
-
-  /// @cond DO_NOT_DOCUMENT
-  /**
-   * @brief deleted constructor
-   */
-  EmbeddedSurfaceNodeManager() = delete;
-
-  /**
-   * @brief deleted copy constructor
-   */
-  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager const & init ) = delete;
-
-  /**
-   * @brief Default move constructor.
-   */
-  EmbeddedSurfaceNodeManager( EmbeddedSurfaceNodeManager && ) = delete;
-
-  /**
-   * @brief deleted assignement operator
-   */
-  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager const & ) = delete;
-
-
-  EmbeddedSurfaceNodeManager & operator=( EmbeddedSurfaceNodeManager && ) = delete;
-  /// @endcond
 
   ///@}
 
@@ -135,8 +102,8 @@ public:
    * @brief Provide a virtual access to catalogName().
    * @return string that contains the EmbeddedSurfaceNodeManager catalog name
    */
-  const string getCatalogName() const override final
-  { return EmbeddedSurfaceNodeManager::catalogName(); }
+  string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
 
@@ -174,45 +141,39 @@ public:
    */
   ///@{
 
+  /**
+   * @brief Computes the pack size of the global maps elements in the @ packList.
+   * @param packList The element we want packed.
+   * @return The packed size.
+   */
+  localIndex packNewNodesGlobalMapsSize( arrayView1d< localIndex const > const & packList ) const;
 
   /**
-   * @brief Creates an array listing all excluded local indices values.
-   * @param [in,out] exclusionList Sorted array with excluded local indices
+   * @brief Packs the global maps for the nodes in the @ packList.
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @return The packed size.
    */
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
+  localIndex packNewNodesGlobalMaps( buffer_unit_type * & buffer,
+                                     arrayView1d< localIndex const > const & packList ) const;
 
-
-  /**
-   * @brief Calculate the size that a list would have if it were packed, but without actually packing it.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] packList the list of node indices that we wish to get the size of after packing
-   * @return a localIndex value representing the size of packList if it were packed
-   * @note This function does not perform any packing, it just evaluates and returns the possible packed size.
-   */
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
 
-  /**
-   * @brief Packs an array of node indices into a buffer.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in,out] buffer buffer to pack the node index data into
-   * @param [in] packList the indices of nodes that should be packed
-   * @return a localIndex value representing the size of the packed data
-   */
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
                                      arrayView1d< localIndex const > const & packList ) const override;
 
   /**
-   * @brief Unpack a buffer to an array of node indices.
-   * @details Packed data are meant to be communicated to other MPI ranks
-   * @param [in] buffer buffer with the packed data
-   * @param [inout] packList an array of localIndex values that we wish to unpack to
-   * @param [in] overwriteUpMaps boolean: true to overwrite the previous Up maps
-   * @param [in] overwriteDownMaps boolean: true to overwrite the previous Down maps
-   * @return a localIndex value representing the size of the unpacked list
+   * @brief Unpacks the global maps from @p buffer and cleans them up from duplicated nodes.
+   * @param buffer The buffer containing the packed data.
+   * @param packList The (un)packed element.
+   * @return The unpacked size.
    */
+  localIndex unpackNewNodesGlobalMaps( buffer_unit_type const * & buffer,
+                                       localIndex_array & packList );
+
   virtual localIndex unpackUpDownMaps( buffer_unit_type const * & buffer,
-                                       localIndex_array & packList,
+                                       array1d< localIndex > & packList,
                                        bool const overwriteUpMaps,
                                        bool const overwriteDownMaps ) override;
 
@@ -377,15 +338,34 @@ private:
 
   /**
    * @brief Pack the upward and downward pointing maps into a buffer.
-   * @tparam DOPACK template argument to determine whether or not to pack the buffer. If false, the buffer is not
-   *                packed and the function returns the size of the packing that would have occured if set to TRUE.
+   * @tparam DO_PACKING template argument to determine whether or not to pack the buffer. If false, the buffer is not
+   *                    packed and the function returns the size of the packing that would have occured if set to TRUE.
    * @param buffer the buffer to pack data into
    * @param packList the indices of nodes that should be packed.
    * @return size of data packed in terms of number of chars
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
+
+  /**
+   * @brief Packing global maps.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param buffer The buffer that will receive the packed data.
+   * @param packList The element we want packed.
+   * @return The packed size.
+   */
+  template< bool DO_PACKING >
+  localIndex packNewNodesGlobalMapsImpl( buffer_unit_type * & buffer,
+                                         arrayView1d< localIndex const > const & packList ) const;
+
+  /**
+   * @brief Checks if a node already exists on this rank and returns its local index.
+   * @param[in] nodeCoord the coordinates of the node.
+   * @param[out] nodeIndexOnThisRank the local index of the node (if it exists).
+   */
+  void nodeExistsOnThisRank( real64 const (&nodeCoord)[3],
+                             localIndex & nodeIndexOnThisRank ) const;
 
   /// reference position of the nodes
   array2d< real64, nodes::REFERENCE_POSITION_PERM > m_referencePosition;

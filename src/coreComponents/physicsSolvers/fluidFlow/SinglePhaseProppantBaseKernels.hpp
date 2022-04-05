@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -24,7 +24,7 @@
 namespace geosx
 {
 
-namespace SinglePhaseProppantBaseKernels
+namespace singlePhaseProppantBaseKernels
 {
 
 /******************************** FluidUpdateKernel ********************************/
@@ -56,7 +56,7 @@ struct FluidUpdateKernel
   }
 };
 
-} //namespace SinglePhaseProppantBaseKernels
+} // namespace singlePhaseProppantBaseKernels
 
 } //namespace geosx
 

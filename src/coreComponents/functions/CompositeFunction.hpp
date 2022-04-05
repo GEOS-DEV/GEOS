@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -64,7 +64,7 @@ public:
   virtual void evaluate( dataRepository::Group const & group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
-                         real64_array & result ) const override final;
+                         arrayView1d< real64 > const & result ) const override final;
 
   /**
    * @brief Method to evaluate a function

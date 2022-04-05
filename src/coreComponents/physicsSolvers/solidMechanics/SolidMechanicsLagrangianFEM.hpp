@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -115,8 +115,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = false ) override;
 
   virtual void
@@ -128,16 +128,22 @@ public:
                   arrayView1d< real64 > const & localRhs ) override;
 
   virtual void
-  solveSystem( DofManager const & dofManager,
-               ParallelMatrix & matrix,
-               ParallelVector & rhs,
-               ParallelVector & solution ) override;
+  solveLinearSystem( DofManager const & dofManager,
+                     ParallelMatrix & matrix,
+                     ParallelVector & rhs,
+                     ParallelVector & solution ) override;
 
   virtual void
   applySystemSolution( DofManager const & dofManager,
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
+
+  virtual void updateState( DomainPartition & domain ) override final
+  {
+    // There should be nothing to update
+    GEOSX_UNUSED_VAR( domain );
+  };
 
   virtual void applyBoundaryConditions( real64 const time,
                                         real64 const dt,
@@ -174,7 +180,6 @@ public:
   real64 explicitKernelDispatch( MeshLevel & mesh,
                                  arrayView1d< string const > const & targetRegions,
                                  string const & finiteElementName,
-                                 arrayView1d< string const > const & constitutiveNames,
                                  real64 const dt,
                                  std::string const & elementListName );
 
@@ -235,6 +240,11 @@ public:
     static constexpr char const * elemsAttachedToSendOrReceiveNodesString() { return "elemsAttachedToSendOrReceiveNodes"; }
     static constexpr char const * elemsNotAttachedToSendOrReceiveNodesString() { return "elemsNotAttachedToSendOrReceiveNodes"; }
 
+    static constexpr char const * sendOrReceiveNodesString() { return "sendOrReceiveNodes";}
+    static constexpr char const * nonSendOrReceiveNodesString() { return "nonSendOrReceiveNodes";}
+    static constexpr char const * targetNodesString() { return "targetNodes";}
+
+
     dataRepository::ViewKey vTilde = { vTildeString() };
     dataRepository::ViewKey uhatTilde = { uhatTildeString() };
     dataRepository::ViewKey newmarkGamma = { newmarkGammaString() };
@@ -245,7 +255,6 @@ public:
     dataRepository::ViewKey timeIntegrationOption = { timeIntegrationOptionString() };
   } solidMechanicsViewKeys;
 
-  arrayView1d< string const > solidMaterialNames() const { return m_solidMaterialNames; }
 
   SortedArray< localIndex > & getElemsAttachedToSendOrReceiveNodes( ElementSubRegionBase & subRegion )
   {
@@ -274,6 +283,8 @@ protected:
 
   virtual void initializePostInitialConditionsPreSubGroups() override final;
 
+  virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
+
   real64 m_newmarkGamma;
   real64 m_newmarkBeta;
   real64 m_massDamping;
@@ -283,15 +294,14 @@ protected:
   real64 m_maxForce = 0.0;
   integer m_maxNumResolves;
   integer m_strainTheory;
-  array1d< string > m_solidMaterialNames;
   string m_contactRelationName;
-  SortedArray< localIndex > m_sendOrReceiveNodes;
-  SortedArray< localIndex > m_nonSendOrReceiveNodes;
-  SortedArray< localIndex > m_targetNodes;
   MPI_iCommData m_iComm;
 
   /// Rigid body modes
   array1d< ParallelVector > m_rigidBodyModes;
+
+private:
+  virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
 
 };
 
@@ -315,30 +325,34 @@ void SolidMechanicsLagrangianFEM::assemblyLaunch( DomainPartition & domain,
                                                   PARAMS && ... params )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager const & nodeManager = mesh.getNodeManager();
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+  {
+    NodeManager const & nodeManager = mesh.getNodeManager();
 
-  string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
-  arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
+    string const dofKey = dofManager.getKey( dataRepository::keys::TotalDisplacement );
+    arrayView1d< globalIndex const > const & dofNumber = nodeManager.getReference< globalIndex_array >( dofKey );
 
-  real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
+    real64 const gravityVectorData[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( gravityVector() );
 
-  KERNEL_WRAPPER kernelWrapper( dofNumber,
-                                dofManager.rankOffset(),
-                                localMatrix,
-                                localRhs,
-                                gravityVectorData,
-                                std::forward< PARAMS >( params )... );
+    KERNEL_WRAPPER kernelWrapper( dofNumber,
+                                  dofManager.rankOffset(),
+                                  localMatrix,
+                                  localRhs,
+                                  gravityVectorData,
+                                  std::forward< PARAMS >( params )... );
 
-  m_maxForce = finiteElement::
-                 regionBasedKernelApplication< parallelDevicePolicy< 32 >,
-                                               CONSTITUTIVE_BASE,
-                                               CellElementSubRegion >( mesh,
-                                                                       targetRegionNames(),
-                                                                       this->getDiscretizationName(),
-                                                                       m_solidMaterialNames,
-                                                                       kernelWrapper );
+    m_maxForce = finiteElement::
+                   regionBasedKernelApplication< parallelDevicePolicy< 32 >,
+                                                 CONSTITUTIVE_BASE,
+                                                 CellElementSubRegion >( mesh,
+                                                                         regionNames,
+                                                                         this->getDiscretizationName(),
+                                                                         viewKeyStruct::solidMaterialNamesString(),
+                                                                         kernelWrapper );
+  } );
 
 
   applyContactConstraint( dofManager, domain, localMatrix, localRhs );

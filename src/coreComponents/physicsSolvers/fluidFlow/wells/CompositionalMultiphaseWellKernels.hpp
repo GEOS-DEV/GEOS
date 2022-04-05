@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,107 +22,83 @@
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "constitutive/fluid/MultiFluidBase.hpp"
-#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
+#include "constitutive/fluid/MultiFluidExtrinsicData.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityBase.hpp"
+#include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ObjectManagerBase.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+#include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
 
 namespace geosx
 {
 
-namespace CompositionalMultiphaseWellKernels
+namespace compositionalMultiphaseWellKernels
 {
 
 using namespace constitutive;
 
 static constexpr real64 minDensForDivision = 1e-10;
 
+// tag to access well and reservoir elements in perforation rates computation
+struct SubRegionTag
+{
+  static constexpr integer RES  = 0;
+  static constexpr integer WELL = 1;
+};
+
+// tag to access the next and current well elements of a connection
+struct ElemTag
+{
+  static constexpr integer CURRENT = 0;
+  static constexpr integer NEXT    = 1;
+};
+
+// define the column offset of the derivatives
+struct ColOffset
+{
+  static constexpr integer DPRES = 0;
+  static constexpr integer DCOMP = 1;
+};
+
+// define the row offset of the residual equations
+struct RowOffset
+{
+  static constexpr integer CONTROL = 0;
+  static constexpr integer MASSBAL = 1;
+};
+
 /******************************** ControlEquationHelper ********************************/
 
 struct ControlEquationHelper
 {
 
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
   GEOSX_HOST_DEVICE
   static void
-  Switch( WellControls::Type const & wellType,
-          WellControls::Control const & currentControl,
-          localIndex const phasePhaseIndex,
-          real64 const & targetBHP,
-          real64 const & targetPhaseRate,
-          real64 const & targetTotalRate,
-          real64 const & currentBHP,
-          arrayView1d< real64 const > const & currentPhaseVolRate,
-          real64 const & currentTotalVolRate,
-          WellControls::Control & newControl )
-  {
-    // if isViable is true at the end of the following checks, no need to switch
-    bool controlIsViable = false;
+  switchControl( bool const isProducer,
+                 WellControls::Control const & currentControl,
+                 integer const phasePhaseIndex,
+                 real64 const & targetBHP,
+                 real64 const & targetPhaseRate,
+                 real64 const & targetTotalRate,
+                 real64 const & currentBHP,
+                 arrayView1d< real64 const > const & currentPhaseVolRate,
+                 real64 const & currentTotalVolRate,
+                 WellControls::Control & newControl );
 
-    // The limiting flow rates are treated as upper limits, while the pressure limits
-    // are treated as lower limits in production wells and upper limits in injectors.
-    // The well changes its mode of control whenever the existing control mode would
-    // violate one of these limits.
-
-    // Currently, the available constraints are:
-    //   - Producer: BHP, PHASEVOLRATE
-    //   - Injector: BHP, TOTALVOLRATE
-
-    // TODO: support GRAT, WRAT, LIQUID for producers and check if any of the active constraint is violated
-
-    // BHP control
-    if( currentControl == WellControls::Control::BHP )
-    {
-      // the control is viable if the reference oil rate is below the max rate for producers
-      if( wellType == WellControls::Type::PRODUCER )
-      {
-        controlIsViable = ( fabs( currentPhaseVolRate[phasePhaseIndex] ) <= fabs( targetPhaseRate ) );
-      }
-      // the control is viable if the reference total rate is below the max rate for injectors
-      else
-      {
-        controlIsViable = ( fabs( currentTotalVolRate ) <= fabs( targetTotalRate ) );
-      }
-    }
-    else // rate control
-    {
-      // the control is viable if the reference pressure is below/above the max/min pressure
-      if( wellType == WellControls::Type::PRODUCER )
-      {
-        // targetBHP specifies a min pressure here
-        controlIsViable = ( currentBHP >= targetBHP );
-      }
-      else
-      {
-        // targetBHP specifies a max pressure here
-        controlIsViable = ( currentBHP <= targetBHP );
-      }
-    }
-
-    if( controlIsViable )
-    {
-      newControl = currentControl;
-    }
-    else
-    {
-      if( wellType == WellControls::Type::PRODUCER )
-      {
-        newControl = ( currentControl == WellControls::Control::BHP )
-                   ? WellControls::Control::PHASEVOLRATE
-                   : WellControls::Control::BHP;
-      }
-      else
-      {
-        newControl = ( currentControl == WellControls::Control::BHP )
-                   ? WellControls::Control::TOTALVOLRATE
-                   : WellControls::Control::BHP;
-      }
-    }
-  }
-
+  template< integer NC >
   GEOSX_HOST_DEVICE
   static void
   compute( globalIndex const rankOffset,
-           localIndex const numComponents,
            WellControls::Control const currentControl,
-           localIndex const targetPhaseIndex,
+           integer const targetPhaseIndex,
            real64 const & targetBHP,
            real64 const & targetPhaseRate,
            real64 const & targetTotalRate,
@@ -137,87 +113,9 @@ struct ControlEquationHelper
            real64 const & dCurrentTotalVolRate_dPres,
            arrayView1d< real64 const > const & dCurrentTotalVolRate_dCompDens,
            real64 const & dCurrentTotalVolRate_dRate,
-           globalIndex const wellElemDofNumber,
+           globalIndex const dofNumber,
            CRSMatrixView< real64, globalIndex const > const & localMatrix,
-           arrayView1d< real64 > const & localRhs )
-  {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-    localIndex const NC = numComponents;
-
-    localIndex const eqnRowIndex = wellElemDofNumber + CompositionalMultiphaseWell::RowOffset::CONTROL - rankOffset;
-    globalIndex const presDofColIndex = wellElemDofNumber + CompositionalMultiphaseWell::ColOffset::DPRES;
-    globalIndex const rateDofColIndex = wellElemDofNumber + CompositionalMultiphaseWell::ColOffset::DCOMP + numComponents;
-    stackArray1d< globalIndex, maxNumComp > compDofColIndices( NC );
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      compDofColIndices[ ic ] = presDofColIndex + ic + 1;
-    }
-
-    real64 controlEqn = 0;
-    real64 dControlEqn_dPres = 0;
-    real64 dControlEqn_dRate = 0;
-    stackArray1d< real64, maxNumComp > dControlEqn_dComp( NC );
-
-    // Note: We assume in the computation of currentBHP that the reference elevation
-    //       is in the top well element. This is enforced by a check in the solver.
-    //       If we wanted to allow the reference elevation to be outside the top
-    //       well element, it would make more sense to check the BHP constraint in
-    //       the well element that contains the reference elevation.
-
-    // BHP control
-    if( currentControl == WellControls::Control::BHP )
-    {
-      // control equation is a difference between current BHP and target BHP
-      controlEqn = currentBHP - targetBHP;
-      dControlEqn_dPres = dCurrentBHP_dPres;
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        dControlEqn_dComp[ic] = dCurrentBHP_dCompDens[ic];
-      }
-    }
-    // Oil volumetric rate control
-    else if( currentControl == WellControls::Control::PHASEVOLRATE )
-    {
-      controlEqn = currentPhaseVolRate[targetPhaseIndex] - targetPhaseRate;
-      dControlEqn_dPres = dCurrentPhaseVolRate_dPres[targetPhaseIndex];
-      dControlEqn_dRate = dCurrentPhaseVolRate_dRate[targetPhaseIndex];
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        dControlEqn_dComp[ic] = dCurrentPhaseVolRate_dCompDens[targetPhaseIndex][ic];
-      }
-    }
-    // Total volumetric rate control
-    else if( currentControl == WellControls::Control::TOTALVOLRATE )
-    {
-      controlEqn = currentTotalVolRate - targetTotalRate;
-      dControlEqn_dPres = dCurrentTotalVolRate_dPres;
-      dControlEqn_dRate = dCurrentTotalVolRate_dRate;
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        dControlEqn_dComp[ic] = dCurrentTotalVolRate_dCompDens[ic];
-      }
-    }
-    else
-    {
-      GEOSX_ERROR_IF( ( currentControl != WellControls::Control::BHP )
-                      && ( currentControl != WellControls::Control::PHASEVOLRATE )
-                      && ( currentControl != WellControls::Control::TOTALVOLRATE ),
-                      "This constraint is not supported in CompositionalMultiphaseWell" );
-    }
-    localRhs[eqnRowIndex] += controlEqn;
-    localMatrix.addToRow< serialAtomic >( eqnRowIndex,
-                                          &presDofColIndex,
-                                          &dControlEqn_dPres,
-                                          1 );
-    localMatrix.addToRow< serialAtomic >( eqnRowIndex,
-                                          &rateDofColIndex,
-                                          &dControlEqn_dRate,
-                                          1 );
-    localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( eqnRowIndex,
-                                                              compDofColIndices.data(),
-                                                              dControlEqn_dComp.data(),
-                                                              NC );
-  }
+           arrayView1d< real64 > const & localRhs );
 
 };
 
@@ -226,12 +124,38 @@ struct ControlEquationHelper
 struct FluxKernel
 {
 
-  template< typename POLICY >
+  using TAG = compositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  template< integer NC >
+  GEOSX_HOST_DEVICE
+  static void
+    computeExit( real64 const & dt,
+                 real64 const ( &compFlux )[NC],
+                 real64 const ( &dCompFlux_dRate )[NC],
+                 real64 const ( &dCompFlux_dPresUp )[NC],
+                 real64 const ( &dCompFlux_dCompDensUp )[NC][NC],
+                 real64 ( &oneSidedFlux )[NC],
+                 real64 ( &oneSidedFluxJacobian_dRate )[NC][1],
+                 real64 ( &oneSidedFluxJacobian_dPresCompUp )[NC][NC + 1] );
+
+  template< integer NC >
+  GEOSX_HOST_DEVICE
+  static void
+    compute( real64 const & dt,
+             real64 const ( &compFlux )[NC],
+             real64 const ( &dCompFlux_dRate )[NC],
+             real64 const ( &dCompFlux_dPresUp )[NC],
+             real64 const ( &dCompFlux_dCompDensUp )[NC][NC],
+             real64 ( &localFlux )[2*NC],
+             real64 ( &localFluxJacobian_dRate )[2*NC][1],
+             real64 ( &localFluxJacobian_dPresCompUp )[2*NC][NC + 1] );
+
+  template< integer NC >
   static void
   launch( localIndex const size,
           globalIndex const rankOffset,
-          localIndex const numComponents,
-          localIndex const numDofPerResElement,
           WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -241,235 +165,7 @@ struct FluxKernel
           arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs )
-  {
-    localIndex const NC = numComponents;
-    localIndex const resNDOF = numDofPerResElement;
-
-    WellControls::Type const wellType = wellControls.getType();
-    arrayView1d< real64 const > const & injection = wellControls.getInjectionStream();
-
-    // loop over the well elements to compute the fluxes between elements
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-      localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-      localIndex constexpr maxNumDof  = maxNumComp + 1;
-
-      // create local work arrays
-      stackArray1d< real64, maxNumComp > compFracUp( NC );
-      stackArray2d< real64, maxNumComp * maxNumComp > dCompFrac_dCompDensUp( NC, NC );
-
-      stackArray1d< real64, maxNumComp > compFlux( NC );
-      stackArray1d< real64, maxNumComp > dCompFlux_dRate( NC );
-      stackArray1d< real64, maxNumComp > dCompFlux_dPresUp( NC );
-      stackArray2d< real64, maxNumComp * maxNumComp > dCompFlux_dCompDensUp( NC, NC );
-
-      // Step 1) decide the upwind well element
-
-      /*  currentConnRate < 0 flow from iwelem to iwelemNext
-       *  currentConnRate > 0 flow from iwelemNext to iwelem
-       *  With this convention, currentConnRate < 0 at the last connection for a producer
-       *                        currentConnRate > 0 at the last connection for a injector
-       */
-
-      localIndex const iwelemNext = nextWellElemIndex[iwelem];
-      real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
-      localIndex iwelemUp = -1;
-
-      if( iwelemNext < 0 && wellType == WellControls::Type::INJECTOR ) // exit connection, injector
-      {
-        // we still need to define iwelemUp for Jacobian assembly
-        iwelemUp = iwelem;
-
-        // just copy the injection stream into compFrac
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          compFracUp[ic] = injection[ic];
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dCompFrac_dCompDensUp[ic][jc] = 0.0;
-          }
-        }
-      }
-      else
-      {
-        // first set iwelemUp to the upstream cell
-        if( ( iwelemNext < 0 && wellType == WellControls::Type::PRODUCER )  // exit connection, producer
-            || currentConnRate < 0 ) // not an exit connection, iwelem is upstream
-        {
-          iwelemUp = iwelem;
-        }
-        else // not an exit connection, iwelemNext is upstream
-        {
-          iwelemUp = iwelemNext;
-        }
-        // copy the vars of iwelemUp into compFrac
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          compFracUp[ic] = wellElemCompFrac[iwelemUp][ic];
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dCompFrac_dCompDensUp[ic][jc] = dWellElemCompFrac_dCompDens[iwelemUp][ic][jc];
-          }
-        }
-      }
-
-      // Step 2) compute upstream transport coefficient
-
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        compFlux[ic] = compFracUp[ic] * currentConnRate;
-        dCompFlux_dRate[ic] = compFracUp[ic];
-        dCompFlux_dPresUp[ic] = 0.0; // none of these quantities depend on pressure
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          dCompFlux_dCompDensUp[ic][jc] = dCompFrac_dCompDensUp[ic][jc] * currentConnRate;
-        }
-      }
-
-      globalIndex const offsetUp = wellElemDofNumber[iwelemUp];
-      globalIndex const offsetCurrent = wellElemDofNumber[iwelem];
-
-      if( iwelemNext < 0 )  // exit connection
-      {
-        // for this case, we only need NC mass conservation equations
-        // so we do not use the arrays initialized before the loop
-        stackArray1d< real64, maxNumComp > oneSidedFlux( NC );
-        stackArray2d< real64, maxNumComp > oneSidedFluxJacobian_dRate( NC, 1 );
-        stackArray2d< real64, maxNumComp * maxNumDof > oneSidedFluxJacobian_dPresCompUp( NC, resNDOF );
-
-        stackArray1d< globalIndex, maxNumComp > oneSidedEqnRowIndices( NC );
-        stackArray1d< globalIndex, maxNumDof > oneSidedDofColIndices_dPresCompUp( resNDOF );
-        globalIndex oneSidedDofColIndices_dRate = 0;
-
-        // flux terms
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          oneSidedFlux[ic] = -dt * compFlux[ic];
-
-          // derivative with respect to rate
-          oneSidedFluxJacobian_dRate( ic, 0 ) = -dt * dCompFlux_dRate[ic];
-
-          // derivative with respect to upstream pressure
-          oneSidedFluxJacobian_dPresCompUp[ic][0] = -dt * dCompFlux_dPresUp[ic];
-
-          // derivatives with respect to upstream component densities
-          for( localIndex jdof = 0; jdof < NC; ++jdof )
-          {
-            oneSidedFluxJacobian_dPresCompUp[ic][jdof + 1] = -dt * dCompFlux_dCompDensUp[ic][jdof];
-          }
-
-        }
-
-        // jacobian indices
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          // mass balance equations for all components
-          oneSidedEqnRowIndices[ic] = offsetUp + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic - rankOffset;
-        }
-
-        // in the dof ordering used in this class, there are 1 pressure dofs
-        // and NC compDens dofs before the rate dof in this block
-        localIndex const dRateColOffset = CompositionalMultiphaseWell::ColOffset::DCOMP + NC;
-        oneSidedDofColIndices_dRate = offsetCurrent + dRateColOffset;
-
-        for( localIndex jdof = 0; jdof < resNDOF; ++jdof )
-        {
-          // dofs are the **upstream** pressure and component densities
-          oneSidedDofColIndices_dPresCompUp[jdof] = offsetUp + CompositionalMultiphaseWell::ColOffset::DPRES + jdof;
-        }
-
-        for( localIndex i = 0; i < oneSidedFlux.size(); ++i )
-        {
-          if( oneSidedEqnRowIndices[i] >= 0 && oneSidedEqnRowIndices[i] < localMatrix.numRows() )
-          {
-            localMatrix.addToRow< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
-                                                          &oneSidedDofColIndices_dRate,
-                                                          oneSidedFluxJacobian_dRate.data() + i,
-                                                          1 );
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( oneSidedEqnRowIndices[i],
-                                                                              oneSidedDofColIndices_dPresCompUp.data(),
-                                                                              oneSidedFluxJacobian_dPresCompUp.data() + i * resNDOF,
-                                                                              resNDOF );
-            atomicAdd( parallelDeviceAtomic{}, &localRhs[oneSidedEqnRowIndices[i]], oneSidedFlux[i] );
-          }
-        }
-      }
-      else // not an exit connection
-      {
-        stackArray1d< real64, 2 * maxNumComp > localFlux( 2 * NC );
-        stackArray2d< real64, 2 * maxNumComp > localFluxJacobian_dRate( 2 * NC, 1 );
-        stackArray2d< real64, 2 * maxNumComp * maxNumDof > localFluxJacobian_dPresCompUp( 2 * NC, resNDOF );
-
-        stackArray1d< globalIndex, 2 * maxNumComp > eqnRowIndices( 2 * NC );
-        stackArray1d< globalIndex, maxNumDof > dofColIndices_dPresCompUp( resNDOF );
-        globalIndex dofColIndices_dRate = 0;
-
-        globalIndex const offsetNext = wellElemDofNumber[iwelemNext];
-
-        // flux terms
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          localFlux[WellSolverBase::ElemTag::NEXT * NC + ic] = dt * compFlux[ic];
-          localFlux[WellSolverBase::ElemTag::CURRENT * NC + ic] = -dt * compFlux[ic];
-
-          // derivative with respect to rate
-          localFluxJacobian_dRate( WellSolverBase::ElemTag::NEXT * NC + ic, 0 ) = dt * dCompFlux_dRate[ic];
-          localFluxJacobian_dRate( WellSolverBase::ElemTag::CURRENT * NC + ic, 0 ) = -dt * dCompFlux_dRate[ic];
-
-          // derivative with respect to upstream pressure
-          localFluxJacobian_dPresCompUp[WellSolverBase::ElemTag::NEXT * NC + ic][0] = dt * dCompFlux_dPresUp[ic];
-          localFluxJacobian_dPresCompUp[WellSolverBase::ElemTag::CURRENT * NC + ic][0] = -dt * dCompFlux_dPresUp[ic];
-
-          // derivatives with respect to upstream component densities
-          for( localIndex jdof = 0; jdof < NC; ++jdof )
-          {
-            localFluxJacobian_dPresCompUp[WellSolverBase::ElemTag::NEXT * NC + ic][jdof + 1] =
-              dt * dCompFlux_dCompDensUp[ic][jdof];
-            localFluxJacobian_dPresCompUp[WellSolverBase::ElemTag::CURRENT * NC + ic][jdof + 1] =
-              -dt * dCompFlux_dCompDensUp[ic][jdof];
-          }
-        }
-
-        // jacobian indices
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          // mass balance equations for all components
-          eqnRowIndices[WellSolverBase::ElemTag::NEXT * NC + ic] = offsetNext
-                                                                   + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic - rankOffset;
-          eqnRowIndices[WellSolverBase::ElemTag::CURRENT * NC + ic] = offsetCurrent
-                                                                      + CompositionalMultiphaseWell::RowOffset::MASSBAL + ic - rankOffset;
-        }
-
-        // in the dof ordering used in this class, there are 1 pressure dofs
-        // and NC compDens dofs before the rate dof in this block
-        localIndex const dRateColOffset = CompositionalMultiphaseWell::ColOffset::DCOMP + NC;
-        dofColIndices_dRate = offsetCurrent + dRateColOffset;
-
-        for( localIndex jdof = 0; jdof < resNDOF; ++jdof )
-        {
-          // dofs are the **upstream** pressure and component densities
-          dofColIndices_dPresCompUp[jdof] = offsetUp + CompositionalMultiphaseWell::ColOffset::DPRES + jdof;
-        }
-
-        for( localIndex i = 0; i < localFlux.size(); ++i )
-        {
-          if( eqnRowIndices[i] >= 0 && eqnRowIndices[i] < localMatrix.numRows() )
-          {
-            localMatrix.addToRow< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                          &dofColIndices_dRate,
-                                                          localFluxJacobian_dRate.data() + i,
-                                                          1 );
-            localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndices[i],
-                                                                              dofColIndices_dPresCompUp.data(),
-                                                                              localFluxJacobian_dPresCompUp.data() + i * resNDOF,
-                                                                              resNDOF );
-            atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndices[i]], localFlux[i] );
-          }
-        }
-      }
-    } );
-  }
+          arrayView1d< real64 > const & localRhs );
 
 };
 
@@ -478,16 +174,37 @@ struct FluxKernel
 struct PressureRelationKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
-  static localIndex
+  using TAG = compositionalMultiphaseWellKernels::ElemTag;
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  template< integer NC >
+  GEOSX_HOST_DEVICE
+  static void
+    compute( real64 const & gravCoef,
+             real64 const & gravCoefNext,
+             real64 const & pres,
+             real64 const & presNext,
+             real64 const & dPres,
+             real64 const & dPresNext,
+             real64 const & totalMassDens,
+             real64 const & totalMassDensNext,
+             real64 const & dTotalMassDens_dPres,
+             real64 const & dTotalMassDens_dPresNext,
+             arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDens,
+             arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dTotalMassDens_dCompDensNext,
+             real64 & localPresRel,
+             real64 ( &localPresRelJacobian )[2*(NC+1)] );
+
+  template< integer NC >
+  static void
   launch( localIndex const size,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
-          localIndex const numComponents,
-          localIndex const targetPhaseIndex,
-          localIndex const numDofPerResElement,
+          integer const targetPhaseIndex,
           WellControls const & wellControls,
+          real64 const & timeAtEndOfStep,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
@@ -496,163 +213,9 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
+          bool & controlHasSwitched,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs )
-  {
-    localIndex const NC = numComponents;
-    localIndex const resNDOF = numDofPerResElement;
-
-    // static well control data
-    WellControls::Type const wellType = wellControls.getType();
-    WellControls::Control const currentControl = wellControls.getControl();
-    real64 const targetBHP = wellControls.getTargetBHP();
-    real64 const targetTotalRate = wellControls.getTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
-
-    // dynamic well control data
-    real64 const & currentBHP =
-      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentBHPString() );
-    real64 const & dCurrentBHP_dPres =
-      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHP_dPresString() );
-    arrayView1d< real64 const > const & dCurrentBHP_dCompDens =
-      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentBHP_dCompDensString() );
-
-    arrayView1d< real64 const > const & currentPhaseVolRate =
-      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::currentPhaseVolRateString() );
-    arrayView1d< real64 const > const & dCurrentPhaseVolRate_dPres =
-      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dPresString() );
-    arrayView2d< real64 const > const & dCurrentPhaseVolRate_dCompDens =
-      wellControls.getReference< array2d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dCompDensString() );
-    arrayView1d< real64 const > const & dCurrentPhaseVolRate_dRate =
-      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentPhaseVolRate_dRateString() );
-
-    real64 const & currentTotalVolRate =
-      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::currentTotalVolRateString() );
-    real64 const & dCurrentTotalVolRate_dPres =
-      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dPresString() );
-    arrayView1d< real64 const > const & dCurrentTotalVolRate_dCompDens =
-      wellControls.getReference< array1d< real64 > >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dCompDensString() );
-    real64 const & dCurrentTotalVolRate_dRate =
-      wellControls.getReference< real64 >( CompositionalMultiphaseWell::viewKeyStruct::dCurrentTotalVolRate_dRateString() );
-
-    RAJA::ReduceMax< REDUCE_POLICY, localIndex > switchControl( 0 );
-
-    // loop over the well elements to compute the pressure relations between well elements
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-      localIndex const iwelemNext = nextWellElemIndex[iwelem];
-
-      if( iwelemNext < 0 && isLocallyOwned ) // if iwelemNext < 0, form control equation
-      {
-        WellControls::Control newControl = currentControl;
-        ControlEquationHelper::Switch( wellType,
-                                       currentControl,
-                                       targetPhaseIndex,
-                                       targetBHP,
-                                       targetPhaseRate,
-                                       targetTotalRate,
-                                       currentBHP,
-                                       currentPhaseVolRate,
-                                       currentTotalVolRate,
-                                       newControl );
-        if( currentControl != newControl )
-        {
-          switchControl.max( 1 );
-        }
-
-        ControlEquationHelper::compute( rankOffset,
-                                        NC,
-                                        newControl,
-                                        targetPhaseIndex,
-                                        targetBHP,
-                                        targetPhaseRate,
-                                        targetTotalRate,
-                                        currentBHP,
-                                        dCurrentBHP_dPres,
-                                        dCurrentBHP_dCompDens,
-                                        currentPhaseVolRate,
-                                        dCurrentPhaseVolRate_dPres,
-                                        dCurrentPhaseVolRate_dCompDens,
-                                        dCurrentPhaseVolRate_dRate,
-                                        currentTotalVolRate,
-                                        dCurrentTotalVolRate_dPres,
-                                        dCurrentTotalVolRate_dCompDens,
-                                        dCurrentTotalVolRate_dRate,
-                                        wellElemDofNumber[iwelemControl],
-                                        localMatrix,
-                                        localRhs );
-      }
-      else if( iwelemNext >= 0 ) // if iwelemNext >= 0, form momentum equation
-      {
-        localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-        localIndex constexpr maxNumDof  = maxNumComp + 1;
-
-        // local working variables and arrays
-        stackArray1d< globalIndex, 2 * maxNumDof > dofColIndices( 2 * resNDOF );
-        stackArray1d< real64, 2 * maxNumDof > localPresRelJacobian( 2 * resNDOF );
-
-        stackArray1d< real64, maxNumComp > dAvgMassDens_dCompCurrent( NC );
-        stackArray1d< real64, maxNumComp > dAvgMassDens_dCompNext( NC );
-
-        // compute the average density at the interface between well elements
-        real64 const avgMassDens = 0.5 * ( wellElemTotalMassDens[iwelemNext] + wellElemTotalMassDens[iwelem] );
-        real64 const dAvgMassDens_dPresNext = 0.5 * dWellElemTotalMassDens_dPres[iwelemNext];
-        real64 const dAvgMassDens_dPresCurrent = 0.5 * dWellElemTotalMassDens_dPres[iwelem];
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          dAvgMassDens_dCompNext[ic] = 0.5 * dWellElemTotalMassDens_dCompDens[iwelemNext][ic];
-          dAvgMassDens_dCompCurrent[ic] = 0.5 * dWellElemTotalMassDens_dCompDens[iwelem][ic];
-        }
-
-        // compute depth diff times acceleration
-        real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
-
-        // compute the current pressure in the two well elements
-        real64 const pressureNext = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
-        real64 const pressureCurrent = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
-
-        // compute momentum flux and derivatives
-        localIndex const localDofIndexPresNext = WellSolverBase::ElemTag::NEXT * resNDOF;
-        localIndex const localDofIndexPresCurrent = WellSolverBase::ElemTag::CURRENT * resNDOF;
-
-        globalIndex const offsetNext = wellElemDofNumber[iwelemNext];
-        globalIndex const offsetCurrent = wellElemDofNumber[iwelem];
-
-        globalIndex const eqnRowIndex = offsetCurrent + CompositionalMultiphaseWell::RowOffset::CONTROL - rankOffset;
-        dofColIndices[localDofIndexPresNext] = offsetNext + CompositionalMultiphaseWell::ColOffset::DPRES;
-        dofColIndices[localDofIndexPresCurrent] = offsetCurrent + CompositionalMultiphaseWell::ColOffset::DPRES;
-
-        real64 const localPresRel = ( pressureNext - pressureCurrent - avgMassDens * gravD );
-
-        localPresRelJacobian[localDofIndexPresNext] = ( 1 - dAvgMassDens_dPresNext * gravD );
-        localPresRelJacobian[localDofIndexPresCurrent] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
-
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          localIndex const localDofIndexCompNext = localDofIndexPresNext + ic + 1;
-          localIndex const localDofIndexCompCurrent = localDofIndexPresCurrent + ic + 1;
-
-          dofColIndices[localDofIndexCompNext] = offsetNext + CompositionalMultiphaseWell::ColOffset::DCOMP + ic;
-          dofColIndices[localDofIndexCompCurrent] = offsetCurrent + CompositionalMultiphaseWell::ColOffset::DCOMP + ic;
-
-          localPresRelJacobian[localDofIndexCompNext] = -dAvgMassDens_dCompNext[ic] * gravD;
-          localPresRelJacobian[localDofIndexCompCurrent] = -dAvgMassDens_dCompCurrent[ic] * gravD;
-        }
-
-        // TODO: add friction and acceleration terms
-
-        if( eqnRowIndex >= 0 && eqnRowIndex < localMatrix.numRows() )
-        {
-          localMatrix.addToRowBinarySearchUnsorted< parallelDeviceAtomic >( eqnRowIndex,
-                                                                            dofColIndices.data(),
-                                                                            localPresRelJacobian.data(),
-                                                                            2 * resNDOF );
-          atomicAdd( parallelDeviceAtomic{}, &localRhs[eqnRowIndex], localPresRel );
-        }
-      }
-    } );
-    return switchControl.get();
-  }
+          arrayView1d< real64 > const & localRhs );
 
 };
 
@@ -660,6 +223,31 @@ struct PressureRelationKernel
 
 struct PerforationKernel
 {
+
+  using TAG = compositionalMultiphaseWellKernels::SubRegionTag;
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::phaseVolumeFraction,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
+                      extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
+                      extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >;
+
+  using MultiFluidAccessors =
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseDensity,
+                              extrinsicMeshData::multifluid::dPhaseDensity,
+                              extrinsicMeshData::multifluid::phaseViscosity,
+                              extrinsicMeshData::multifluid::dPhaseViscosity,
+                              extrinsicMeshData::multifluid::phaseCompFraction,
+                              extrinsicMeshData::multifluid::dPhaseCompFraction >;
+
+  using RelPermAccessors =
+    StencilMaterialAccessors< RelativePermeabilityBase,
+                              extrinsicMeshData::relperm::phaseRelPerm,
+                              extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -671,25 +259,57 @@ struct PerforationKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY >
+
+  template< integer NC, integer NP >
+  GEOSX_HOST_DEVICE
+  static void
+  compute( bool const & disableReservoirToWellFlow,
+           real64 const & resPres,
+           real64 const & dResPres,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
+           arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dResPhaseVolFrac_dComp,
+           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dResCompFrac_dCompDens,
+           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & resPhaseDens,
+           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dResPhaseDens,
+           arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & resPhaseVisc,
+           arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dResPhaseVisc,
+           arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & resPhaseCompFrac,
+           arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dResPhaseCompFrac,
+           arraySlice1d< real64 const, relperm::USD_RELPERM - 2 > const & resPhaseRelPerm,
+           arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dResPhaseRelPerm_dPhaseVolFrac,
+           real64 const & wellElemGravCoef,
+           real64 const & wellElemPres,
+           real64 const & dWellElemPres,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompDens,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dWellElemCompDens,
+           real64 const & wellElemTotalMassDens,
+           real64 const & dWellElemTotalMassDens_dPres,
+           arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dWellElemTotalMassDens_dCompDens,
+           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompFrac,
+           arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dWellElemCompFrac_dCompDens,
+           real64 const & perfGravCoef,
+           real64 const & trans,
+           arraySlice1d< real64 > const & compPerfRate,
+           arraySlice2d< real64 > const & dCompPerfRate_dPres,
+           arraySlice3d< real64 > const & dCompPerfRate_dComp );
+
+  template< integer NC, integer NP >
   static void
   launch( localIndex const size,
-          localIndex const numComponents,
-          localIndex const numPhases,
+          bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
           ElementViewConst< arrayView1d< real64 const > > const & dResPres,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const & dResCompFrac_dCompDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & resPhaseDens,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dResPhaseDens_dPres,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dResPhaseDens_dComp,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dResPhaseDens,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & resPhaseVisc,
-          ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & dResPhaseVisc_dPres,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dResPhaseVisc_dComp,
+          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dResPhaseVisc,
           ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & resPhaseCompFrac,
-          ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_COMP > > const & dResPhaseCompFrac_dPres,
-          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dResPhaseCompFrac_dComp,
+          ElementViewConst< arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > > const & dResPhaseCompFrac,
           ElementViewConst< arrayView3d< real64 const, relperm::USD_RELPERM > > const & resPhaseRelPerm,
           ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
@@ -710,336 +330,58 @@ struct PerforationKernel
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView2d< real64 > const & compPerfRate,
           arrayView3d< real64 > const & dCompPerfRate_dPres,
-          arrayView4d< real64 > const & dCompPerfRate_dComp )
-  {
-    localIndex const NC = numComponents;
-    localIndex const NP = numPhases;
-
-    // loop over the perforations to compute the perforation rates
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
-    {
-      localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-
-      // local working variables and arrays
-      stackArray1d< real64, maxNumComp > dPhaseCompFrac_dCompDens( NC );
-
-      real64 pres[ 2 ] = { 0.0 };
-      real64 dPres_dP[ 2 ] = { 0.0 };
-      stackArray2d< real64, 2 * maxNumComp > dPres_dC( 2, NC );
-
-      real64 dFlux_dP[ 2 ] = { 0.0 };
-      stackArray2d< real64, 2 * maxNumComp > dFlux_dC( 2, NC );
-
-      real64 dMult_dP[ 2 ] = { 0.0 };
-      stackArray2d< real64, 2 * maxNumComp > dMult_dC( 2, NC );
-
-      stackArray1d< real64, maxNumComp > dResTotalMob_dC( NC );
-
-      stackArray2d< real64, 2 * maxNumComp > phaseCompFrac( 2, NC );
-      stackArray2d< real64, 2 * maxNumComp > dPhaseCompFrac_dP( 2, NC );
-      stackArray3d< real64, 2 * maxNumComp * maxNumComp > dPhaseCompFrac_dC( 2, NC, NC );
-
-      stackArray1d< real64, maxNumComp > dDens_dC( NC );
-      stackArray1d< real64, maxNumComp > dVisc_dC( NC );
-      stackArray1d< real64, maxNumComp > dRelPerm_dC( NC );
-      stackArray1d< real64, maxNumComp > dMob_dC( NC );
-
-      real64 dPotDiff_dP[ 2 ] = { 0.0 };
-      stackArray2d< real64, 2 * maxNumComp > dPotDiff_dC( 2, NC );
-
-      real64 multiplier[ 2 ] = { 0.0 };
-
-      // reset the perforation rates
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        compPerfRate[iperf][ic] = 0.0;
-        for( localIndex ke = 0; ke < 2; ++ke )
-        {
-          dCompPerfRate_dPres[iperf][ke][ic] = 0.0;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dCompPerfRate_dComp[iperf][ke][ic][jc] = 0.0;
-          }
-        }
-      }
-
-      // 1) copy the variables from the reservoir and well element
-
-      // a) get reservoir variables
-
-      // get the reservoir (sub)region and element indices
-      localIndex const er  = resElementRegion[iperf];
-      localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei  = resElementIndex[iperf];
-      // get the index of the well elem
-      localIndex const iwelem = perfWellElemIndex[iperf];
-
-      pres[CompositionalMultiphaseWell::SubRegionTag::RES] = resPres[er][esr][ei] + dResPres[er][esr][ei];
-      dPres_dP[CompositionalMultiphaseWell::SubRegionTag::RES] = 1.0;
-
-      // Here in the absence of a buoyancy term we assume that the reservoir cell is perforated at its center
-      // TODO: add a buoyancy term for the reservoir side here
-
-      multiplier[CompositionalMultiphaseWell::SubRegionTag::RES] = 1.0;
-
-      // b) get well variables
-
-      pres[CompositionalMultiphaseWell::SubRegionTag::WELL] = wellElemPres[iwelem] + dWellElemPres[iwelem];
-      dPres_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] = 1.0;
-
-      multiplier[CompositionalMultiphaseWell::SubRegionTag::WELL] = -1.0;
-
-      real64 const gravD = ( perfGravCoef[iperf] - wellElemGravCoef[iwelem] );
-
-      pres[CompositionalMultiphaseWell::SubRegionTag::WELL] += wellElemTotalMassDens[iwelem] * gravD;
-      dPres_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] += dWellElemTotalMassDens_dPres[iwelem] * gravD;
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        dPres_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] += dWellElemTotalMassDens_dCompDens[iwelem][ic] * gravD;
-      }
-
-      // get transmissibility at the interface
-      real64 const trans = perfTrans[iperf];
-
-      // 2) compute potential difference
-
-      real64 potDiff = 0.0;
-
-      for( localIndex i = 0; i < 2; ++i )
-      {
-        potDiff += multiplier[i] * trans * pres[i];
-        dPotDiff_dP[i] += multiplier[i] * trans * dPres_dP[i];
-
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          dPotDiff_dC[i][ic] += multiplier[i] * trans * dPres_dC[i][ic];
-        }
-      }
-
-      real64 flux = 0.0;
-
-      // 3) upwinding
-
-      if( potDiff >= 0 )  // ** reservoir cell is upstream **
-      {
-
-        // loop over phases, compute and upwind phase flux
-        // and sum contributions to each component's perforation rate
-        for( localIndex ip = 0; ip < NP; ++ip )
-        {
-
-          // density
-          real64 const resDens = resPhaseDens[er][esr][ei][0][ip];
-          real64 const dResDens_dP  = dResPhaseDens_dPres[er][esr][ei][0][ip];
-          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
-                          dResPhaseDens_dComp[er][esr][ei][0][ip],
-                          dDens_dC );
-
-          // viscosity
-          real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
-          real64 const dResVisc_dP  = dResPhaseVisc_dPres[er][esr][ei][0][ip];
-          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
-                          dResPhaseVisc_dComp[er][esr][ei][0][ip],
-                          dVisc_dC );
-
-          // relative permeability
-          real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
-          real64 dResRelPerm_dP = 0.0;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dRelPerm_dC[jc] = 0;
-          }
-
-          for( localIndex jp = 0; jp < NP; ++jp )
-          {
-            real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
-
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
-            }
-          }
-
-          // compute the reservoir phase mobility, including phase density
-          real64 const resPhaseMob = resDens * resRelPerm / resVisc;
-          real64 const dResPhaseMob_dPres = dResRelPerm_dP * resDens / resVisc
-                                            + resPhaseMob * (dResDens_dP / resDens - dResVisc_dP / resVisc);
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dMob_dC[jc] = dRelPerm_dC[jc] * resDens / resVisc
-                          + resPhaseMob * (dDens_dC[jc] / resDens - dVisc_dC[jc] / resVisc);
-          }
-
-          // compute the phase flux and derivatives using upstream cell mobility
-          flux = resPhaseMob * potDiff;
-
-          dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::RES] =
-            dResPhaseMob_dPres * potDiff + resPhaseMob * dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::RES];
-
-          dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] =
-            resPhaseMob *  dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::WELL];
-
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic] =
-              dMob_dC[ic] * potDiff
-              + resPhaseMob * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic];
-
-            dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] =
-              resPhaseMob * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic];
-          }
-
-          // increment component fluxes
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            compPerfRate[iperf][ic] += flux * resPhaseCompFrac[er][esr][ei][0][ip][ic];
-
-            dCompPerfRate_dPres[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic] +=
-              resPhaseCompFrac[er][esr][ei][0][ip][ic] * dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::RES];
-
-            dCompPerfRate_dPres[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic] +=
-              dResPhaseCompFrac_dPres[er][esr][ei][0][ip][ic] * flux;
-
-            dCompPerfRate_dPres[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic] +=
-              resPhaseCompFrac[er][esr][ei][0][ip][ic] * dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::WELL];
-
-            applyChainRule( NC,
-                            dResCompFrac_dCompDens[er][esr][ei],
-                            dResPhaseCompFrac_dComp[er][esr][ei][0][ip][ic],
-                            dPhaseCompFrac_dCompDens );
-
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
-                dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][jc]
-                * resPhaseCompFrac[er][esr][ei][0][ip][ic];
-
-              dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
-                flux * dPhaseCompFrac_dCompDens[jc];
-
-              dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
-                dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][jc]
-                * resPhaseCompFrac[er][esr][ei][0][ip][ic];
-            }
-          }
-        }
-      }
-      else // ** well is upstream **
-      {
-
-        real64 resTotalMob     = 0.0;
-        real64 dResTotalMob_dP = 0.0;
-
-        // we re-compute here the total mass (when useMass == 1) or molar (when useMass == 0) density
-        real64 wellElemTotalDens = 0;
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          wellElemTotalDens += wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
-        }
-
-        // first, compute the reservoir total mobility (excluding phase density)
-        for( localIndex ip = 0; ip < NP; ++ip )
-        {
-          // viscosity
-          real64 const resVisc = resPhaseVisc[er][esr][ei][0][ip];
-          real64 const dResVisc_dP  = dResPhaseVisc_dPres[er][esr][ei][0][ip];
-          applyChainRule( NC, dResCompFrac_dCompDens[er][esr][ei],
-                          dResPhaseVisc_dComp[er][esr][ei][0][ip],
-                          dVisc_dC );
-
-          // relative permeability
-          real64 const resRelPerm = resPhaseRelPerm[er][esr][ei][0][ip];
-          real64 dResRelPerm_dP = 0.0;
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dRelPerm_dC[jc] = 0;
-          }
-
-          for( localIndex jp = 0; jp < NP; ++jp )
-          {
-            real64 const dResRelPerm_dS = dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0][ip][jp];
-            dResRelPerm_dP += dResRelPerm_dS * dResPhaseVolFrac_dPres[er][esr][ei][jp];
-
-            for( localIndex jc = 0; jc < NC; ++jc )
-            {
-              dRelPerm_dC[jc] += dResRelPerm_dS * dResPhaseVolFrac_dComp[er][esr][ei][jp][jc];
-            }
-          }
-
-          // increment total mobility
-          resTotalMob     += resRelPerm / resVisc;
-          dResTotalMob_dP += ( dResRelPerm_dP * resVisc - resRelPerm * dResVisc_dP )
-                             / ( resVisc * resVisc );
-          for( localIndex ic = 0; ic < NC; ++ic )
-          {
-            dResTotalMob_dC[ic] += ( dRelPerm_dC[ic] * resVisc - resRelPerm * dVisc_dC[ic] )
-                                   / ( resVisc * resVisc );
-          }
-        }
-
-        // compute a potdiff multiplier = wellElemTotalDens * resTotalMob
-        // wellElemTotalDens is a mass density if useMass == 1 and a molar density otherwise
-        real64 const mult = wellElemTotalDens * resTotalMob;
-        dMult_dP[CompositionalMultiphaseWell::SubRegionTag::RES] = wellElemTotalDens * dResTotalMob_dP;
-        dMult_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] = 0; // because totalDens does not depend on pressure
-
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          dMult_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic] =
-            wellElemTotalDens * dResTotalMob_dC[ic];
-
-          dMult_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] = resTotalMob;
-        }
-
-        // compute the volumetric flux and derivatives using upstream cell mobility
-        flux = mult * potDiff;
-
-        dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::RES] =
-          dMult_dP[CompositionalMultiphaseWell::SubRegionTag::RES] * potDiff
-          + mult * dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::RES];
-
-        dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] =
-          dMult_dP[CompositionalMultiphaseWell::SubRegionTag::WELL] * potDiff
-          + mult * dPotDiff_dP[CompositionalMultiphaseWell::SubRegionTag::WELL];
-
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic] =
-            dMult_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic] * potDiff
-            + mult * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::RES][ic];
-
-          dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] =
-            dMult_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic] * potDiff
-            + mult * dPotDiff_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][ic];
-        }
-
-        // compute component fluxes
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          compPerfRate[iperf][ic] += wellElemCompFrac[iwelem][ic] * flux;
-
-          dCompPerfRate_dPres[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic] =
-            wellElemCompFrac[iwelem][ic] * dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::RES];
-
-          dCompPerfRate_dPres[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic] =
-            wellElemCompFrac[iwelem][ic] * dFlux_dP[CompositionalMultiphaseWell::SubRegionTag::WELL];
-
-          for( localIndex jc = 0; jc < NC; ++jc )
-          {
-            dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::RES][ic][jc] +=
-              wellElemCompFrac[iwelem][ic] * dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::RES][jc];
-
-            dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
-              wellElemCompFrac[iwelem][ic] * dFlux_dC[CompositionalMultiphaseWell::SubRegionTag::WELL][jc];
-
-            dCompPerfRate_dComp[iperf][CompositionalMultiphaseWell::SubRegionTag::WELL][ic][jc] +=
-              dWellElemCompFrac_dCompDens[iwelem][ic][jc] * flux;
-          }
-        }
-      }
-    } );
-  }
+          arrayView4d< real64 > const & dCompPerfRate_dComp );
+
+};
+
+/******************************** AccumulationKernel ********************************/
+
+struct AccumulationKernel
+{
+
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  template< integer NC >
+  GEOSX_HOST_DEVICE
+  static void
+    compute( integer const numPhases,
+             real64 const & volume,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dCompDens,
+             arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const & dCompFrac_dCompDens,
+             arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & phaseDens,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens,
+             arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
+             arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dPhaseCompFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDensOld,
+             arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFracOld,
+             real64 ( &localAccum )[NC],
+             real64 ( &localAccumJacobian )[NC][NC + 1] );
+
+  template< integer NC >
+  static void
+  launch( localIndex const size,
+          integer const numPhases,
+          globalIndex const rankOffset,
+          arrayView1d< globalIndex const > const & wellElemDofNumber,
+          arrayView1d< integer const > const & wellElemGhostRank,
+          arrayView1d< real64 const > const & wellElemVolume,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & dWellElemPhaseVolFrac_dPres,
+          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac_dCompDens,
+          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
+          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens,
+          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens,
+          arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac,
+          arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFracOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFracOld,
+          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+          arrayView1d< real64 > const & localRhs );
 
 };
 
@@ -1048,12 +390,24 @@ struct PerforationKernel
 struct VolumeBalanceKernel
 {
 
-  template< typename POLICY >
+  using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+  using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
+  template< integer NC >
+  GEOSX_HOST_DEVICE
+  static void
+    compute( integer const numPhases,
+             real64 const & volume,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dPhaseVolFrac_dPres,
+             arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dPhaseVolFrac_dComp,
+             real64 & localVolBalance,
+             real64 ( &localVolBalanceJacobian )[NC+1] );
+
+  template< integer NC >
   static void
   launch( localIndex const size,
-          localIndex const numComponents,
-          localIndex const numPhases,
-          localIndex const numDofPerWellElement,
+          integer const numPhases,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
@@ -1062,70 +416,25 @@ struct VolumeBalanceKernel
           arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dWellElemPhaseVolFrac_dComp,
           arrayView1d< real64 const > const & wellElemVolume,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
-          arrayView1d< real64 > const & localRhs )
-  {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-    localIndex constexpr maxNumDof  = maxNumComp + 1;
-
-    localIndex const NC        = numComponents;
-    localIndex const NP        = numPhases;
-    localIndex const welemNDOF = numDofPerWellElement;
-
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-
-      if( wellElemGhostRank[iwelem] >= 0 )
-      {
-        return;
-      }
-
-      stackArray1d< globalIndex, maxNumDof > localVolBalanceDOF( welemNDOF );
-      stackArray1d< real64, maxNumDof > localVolBalanceJacobian( welemNDOF );
-
-      // get equation/dof indices
-      globalIndex const offset = wellElemDofNumber[iwelem];
-      localIndex const volBalRowOffset = CompositionalMultiphaseWell::RowOffset::MASSBAL + NC;
-      globalIndex const localVolBalanceEqnIndex = LvArray::integerConversion< localIndex >( offset - rankOffset ) + volBalRowOffset;
-      for( localIndex jdof = 0; jdof < welemNDOF; ++jdof )
-      {
-        localVolBalanceDOF[jdof] = offset + CompositionalMultiphaseWell::ColOffset::DPRES + jdof;
-      }
-
-      real64 localVolBalance = 1.0;
-
-      // sum contributions to component accumulation from each phase
-      for( localIndex ip = 0; ip < NP; ++ip )
-      {
-        localVolBalance -= wellElemPhaseVolFrac[iwelem][ip];
-        localVolBalanceJacobian[0] -= dWellElemPhaseVolFrac_dPres[iwelem][ip];
-
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          localVolBalanceJacobian[jc + 1] -= dWellElemPhaseVolFrac_dComp[iwelem][ip][jc];
-        }
-      }
-
-      // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
-      for( localIndex idof = 0; idof < welemNDOF; ++idof )
-      {
-        localVolBalanceJacobian[idof] *= wellElemVolume[iwelem];
-      }
-      localVolBalance *= wellElemVolume[iwelem];
-
-      localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localVolBalanceEqnIndex,
-                                                                localVolBalanceDOF.data(),
-                                                                localVolBalanceJacobian.data(),
-                                                                welemNDOF );
-      localRhs[localVolBalanceEqnIndex] += localVolBalance;
-    } );
-  }
+          arrayView1d< real64 > const & localRhs );
 
 };
 
-/******************************** PresCompFracInitializationKernel ********************************/
+/******************************** PresTempCompFracInitializationKernel ********************************/
 
-struct PresCompFracInitializationKernel
+struct PresTempCompFracInitializationKernel
 {
+
+  using CompFlowAccessors =
+    StencilAccessors< extrinsicMeshData::flow::pressure,
+                      extrinsicMeshData::flow::temperature,
+                      extrinsicMeshData::flow::globalCompDensity,
+                      extrinsicMeshData::flow::phaseVolumeFraction >;
+
+  using MultiFluidAccessors =
+    StencilMaterialAccessors< MultiFluidBase,
+                              extrinsicMeshData::multifluid::phaseMassDensity >;
+
 
   /**
    * @brief The type for element-based non-constitutive data parameters.
@@ -1137,15 +446,16 @@ struct PresCompFracInitializationKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY >
   static void
   launch( localIndex const perforationSize,
           localIndex const subRegionSize,
-          localIndex const numComponents,
-          localIndex const numPhases,
+          integer const numComponents,
+          integer const numPhases,
           localIndex const numPerforations,
           WellControls const & wellControls,
-          ElementViewConst< arrayView1d< real64 const > > const & resPressure,
+          real64 const & currentTime,
+          ElementViewConst< arrayView1d< real64 const > > const & resPres,
+          ElementViewConst< arrayView1d< real64 const > > const & resTemp,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const & resCompDens,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & resPhaseMassDens,
@@ -1153,130 +463,9 @@ struct PresCompFracInitializationKernel
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
           arrayView1d< real64 const > const & wellElemGravCoef,
-          arrayView1d< real64 > const & wellElemPressure,
-          arrayView2d< real64, compflow::USD_COMP > const & wellElemCompFrac )
-  {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-    localIndex const NC = numComponents;
-    localIndex const NP = numPhases;
-
-    real64 const targetBHP = wellControls.getTargetBHP();
-    real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
-    WellControls::Control const currentControl = wellControls.getControl();
-    WellControls::Type const wellType = wellControls.getType();
-
-    // loop over all perforations to compute an average total mass density and component fraction
-    RAJA::ReduceSum< parallelDeviceReduce, real64 > sumTotalMassDens( 0 );
-    RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPressure( 1e10 );
-    RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPressure( 0 );
-    forAll< POLICY >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
-    {
-      // get the reservoir (sub)region and element indices
-      localIndex const er = resElementRegion[iperf];
-      localIndex const esr = resElementSubRegion[iperf];
-      localIndex const ei = resElementIndex[iperf];
-
-      minResPressure.min( resPressure[er][esr][ei] );
-      maxResPressure.max( resPressure[er][esr][ei] );
-
-      // increment the average total mass density
-      for( localIndex ip = 0; ip < NP; ++ip )
-      {
-        sumTotalMassDens += resPhaseVolFrac[er][esr][ei][ip] * resPhaseMassDens[er][esr][ei][0][ip];
-      }
-    } );
-
-    // TODO: there must a better way to do what is below
-    // I would like to define an array of RAJA::ReduceSum to be able to do sum[ic] += ...
-    // and put back what is below in the previous kernel.
-    stackArray1d< real64, maxNumComp > sumCompFrac( NC );
-    for( localIndex ic = 0; ic < NC; ++ic )
-    {
-      RAJA::ReduceSum< parallelDeviceReduce, real64 > sum( 0.0 );
-      forAll< POLICY >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
-      {
-        // get the reservoir (sub)region and element indices
-        localIndex const er = resElementRegion[iperf];
-        localIndex const esr = resElementSubRegion[iperf];
-        localIndex const ei = resElementIndex[iperf];
-
-        real64 perfTotalDens = 0.0;
-        for( localIndex jc = 0; jc < NC; ++jc )
-        {
-          perfTotalDens += resCompDens[er][esr][ei][jc];
-        }
-        sum += resCompDens[er][esr][ei][ic] / perfTotalDens;
-      } );
-      sumCompFrac[ic] = sum.get();
-    }
-
-    real64 const pres = ( wellControls.getType() == WellControls::Type::PRODUCER )
-                        ? MpiWrapper::min( minResPressure.get() )
-                        : MpiWrapper::max( maxResPressure.get() );
-    real64 const avgTotalMassDens = MpiWrapper::sum( sumTotalMassDens.get() ) / numPerforations;
-
-    stackArray1d< real64, maxNumComp > avgCompFrac( NC );
-    // compute average component fraction
-    if( wellControls.getType() == WellControls::Type::PRODUCER )
-    {
-      // use average comp frac from reservoir
-      real64 compFracSum = 0;
-      real64 const tol = 1e-13;
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        avgCompFrac[ic] = MpiWrapper::sum( sumCompFrac[ic] ) / numPerforations;
-        compFracSum += avgCompFrac[ic];
-      }
-      GEOSX_ERROR_IF( compFracSum < 1 - tol || compFracSum > 1 + tol,
-                      "Invalid well initialization: sum of component fractions should be between 0 and 1" );
-    }
-    else // injector
-    {
-      // use average comp frac from XML file
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        avgCompFrac[ic] = wellControls.getInjectionStream()[ic];
-      }
-    }
-
-    // set the global component fractions to avgCompFrac
-    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-      for( localIndex ic = 0; ic < NC; ++ic )
-      {
-        wellElemCompFrac[iwelem][ic] = avgCompFrac[ic];
-      }
-    } );
-
-    real64 pressureControl = 0.0;
-    real64 const gravCoefControl = refWellElemGravCoef;
-    // initialize the pressure in the element where the BHP is controlled)
-    if( currentControl == WellControls::Control::BHP )
-    {
-      // if pressure constraint, initialize the pressure at the constraint
-      pressureControl = targetBHP;
-    }
-    else // rate control
-    {
-      // initialize the pressure in the element where the BHP is controlled slightly
-      // above/below the target pressure depending on well type.
-      // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
-      //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
-      //       be used for initialization
-      pressureControl = ( wellType == WellControls::Type::PRODUCER )
-                      ? 0.5 * pres
-                      : 2.0 * pres;
-    }
-
-    GEOSX_ERROR_IF( pressureControl <= 0, "Invalid well initialization: negative pressure was found" );
-
-    // estimate the pressures in the well elements using this avgDens
-    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-      wellElemPressure[iwelem] = pressureControl
-                                 + avgTotalMassDens * ( wellElemGravCoef[iwelem] - gravCoefControl );
-    } );
-  }
+          arrayView1d< real64 > const & wellElemPres,
+          arrayView1d< real64 > const & wellElemTemp,
+          arrayView2d< real64, compflow::USD_COMP > const & wellElemCompFrac );
 
 };
 
@@ -1285,22 +474,12 @@ struct PresCompFracInitializationKernel
 struct CompDensInitializationKernel
 {
 
-  template< typename POLICY >
   static void
   launch( localIndex const subRegionSize,
-          localIndex const numComponents,
+          integer const numComponents,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac,
           arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens,
-          arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens )
-  {
-    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-      for( localIndex ic = 0; ic < numComponents; ++ic )
-      {
-        wellElemCompDens[iwelem][ic] = wellElemCompFrac[iwelem][ic] * wellElemTotalDens[iwelem][0];
-      }
-    } );
-  }
+          arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens );
 
 };
 
@@ -1309,107 +488,171 @@ struct CompDensInitializationKernel
 struct RateInitializationKernel
 {
 
-  template< typename POLICY >
   static void
   launch( localIndex const subRegionSize,
-          localIndex const targetPhaseIndex,
+          integer const targetPhaseIndex,
           WellControls const & wellControls,
+          real64 const & currentTime,
           arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseDens,
           arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens,
-          arrayView1d< real64 > const & connRate )
-  {
-    WellControls::Control const control = wellControls.getControl();
-    WellControls::Type const wellType = wellControls.getType();
-    real64 const targetTotalRate = wellControls.getTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
-
-    // Estimate the connection rates
-    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-    {
-      if( control == WellControls::Control::BHP )
-      {
-        // if BHP constraint set rate below the absolute max rate
-        // with the appropriate sign (negative for prod, positive for inj)
-        if( wellType == WellControls::Type::PRODUCER )
-        {
-          connRate[iwelem] = LvArray::math::max( 0.1 * targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex], -1e3 );
-        }
-        else
-        {
-          connRate[iwelem] = LvArray::math::min( 0.1 * targetTotalRate * totalDens[iwelem][0], 1e3 );
-        }
-      }
-      else
-      {
-        if( wellType == WellControls::Type::PRODUCER )
-        {
-          connRate[iwelem] = targetPhaseRate * phaseDens[iwelem][0][targetPhaseIndex];
-        }
-        else
-        {
-          connRate[iwelem] = targetTotalRate * totalDens[iwelem][0];
-        }
-      }
-    } );
-  }
+          arrayView1d< real64 > const & connRate );
 
 };
 
 
 /******************************** TotalMassDensityKernel ****************************/
 
-struct TotalMassDensityKernel
+/**
+ * @class TotalMassDensityKernel
+ * @tparam NUM_COMP number of fluid components
+ * @tparam NUM_PHASE number of fluid phases
+ * @brief Define the interface for the property kernel in charge of computing the total mass density
+ */
+template< integer NUM_COMP, integer NUM_PHASE >
+class TotalMassDensityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
+public:
 
-  template< typename POLICY >
-  static void
-  launch( localIndex const subRegionSize,
-          localIndex const numComponents,
-          localIndex const numPhases,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & phaseVolFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & dPhaseVolFrac_dPres,
-          arrayView3d< real64 const, compflow::USD_PHASE_DC > const & dPhaseVolFrac_dCompDens,
-          arrayView3d< real64 const, compflow::USD_COMP_DC > const & dCompFrac_dCompDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & phaseMassDens,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & dPhaseMassDens_dPres,
-          arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dPhaseMassDens_dComp,
-          arrayView1d< real64 > const & totalMassDens,
-          arrayView1d< real64 > const & dTotalMassDens_dPres,
-          arrayView2d< real64, compflow::USD_FLUID_DC > const & dTotalMassDens_dCompDens )
+  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+
+  using Base::numComp;
+
+  /// Compile time value for the number of phases
+  static constexpr integer numPhase = NUM_PHASE;
+
+  /**
+   * @brief Constructor
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  TotalMassDensityKernel( ObjectManagerBase & subRegion,
+                          MultiFluidBase const & fluid )
+    : Base(),
+    m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::well::phaseVolumeFraction >() ),
+    m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dPressure >() ),
+    m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dPhaseVolumeFraction_dGlobalCompDensity >() ),
+    m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >() ),
+    m_phaseMassDens( fluid.phaseMassDensity() ),
+    m_dPhaseMassDens( fluid.dPhaseMassDensity() ),
+    m_totalMassDens( subRegion.getExtrinsicData< extrinsicMeshData::well::totalMassDensity >() ),
+    m_dTotalMassDens_dPres( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >() ),
+    m_dTotalMassDens_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >() )
+  {}
+
+  /**
+   * @brief Compute the total mass density in an element
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[in] totalMassDensityKernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void compute( localIndex const ei,
+                FUNC && totalMassDensityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
-    localIndex constexpr maxNumComp = constitutive::MultiFluidBase::MAX_NUM_COMPONENTS;
-    localIndex const NC = numComponents;
-    localIndex const NP = numPhases;
+    using Deriv = multifluid::DerivativeOffset;
 
-    stackArray1d< real64, maxNumComp > dMassDens_dC( NC );
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
+    arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
+    arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseMassDens = m_phaseMassDens[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseMassDens = m_dPhaseMassDens[ei][0];
+    real64 & totalMassDens = m_totalMassDens[ei];
+    real64 & dTotalMassDens_dPres = m_dTotalMassDens_dPres[ei];
+    arraySlice1d< real64, compflow::USD_FLUID_DC - 1 > dTotalMassDens_dCompDens = m_dTotalMassDens_dCompDens[ei];
 
-    forAll< POLICY >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
+    real64 dMassDens_dC[numComp]{};
+
+    totalMassDens = 0.0;
+    dTotalMassDens_dPres = 0.0;
+    for( integer ic = 0; ic < numComp; ++ic )
     {
-      totalMassDens[iwelem] = 0.0;
-      dTotalMassDens_dPres[iwelem] = 0.0;
-      for( localIndex ic = 0; ic < NC; ++ic )
+      dTotalMassDens_dCompDens[ic] = 0.0;
+    }
+
+    for( integer ip = 0; ip < numPhase; ++ip )
+    {
+      totalMassDens += phaseVolFrac[ip] * phaseMassDens[ip];
+      dTotalMassDens_dPres += dPhaseVolFrac_dPres[ip] * phaseMassDens[ip] + phaseVolFrac[ip] * dPhaseMassDens[ip][Deriv::dP];
+
+      applyChainRule( numComp, dCompFrac_dCompDens, dPhaseMassDens[ip], dMassDens_dC, Deriv::dC );
+      for( integer ic = 0; ic < numComp; ++ic )
       {
-        dTotalMassDens_dCompDens[iwelem][ic] = 0.0;
+        dTotalMassDens_dCompDens[ic] += dPhaseVolFrac_dCompDens[ip][ic] * phaseMassDens[ip]
+                                        + phaseVolFrac[ip] * dMassDens_dC[ic];
       }
 
-      for( localIndex ip = 0; ip < NP; ++ip )
-      {
-        totalMassDens[iwelem] += phaseVolFrac[iwelem][ip] * phaseMassDens[iwelem][0][ip];
-        dTotalMassDens_dPres[iwelem] += dPhaseVolFrac_dPres[iwelem][ip] * phaseMassDens[iwelem][0][ip]
-                                        + phaseVolFrac[iwelem][ip] * dPhaseMassDens_dPres[iwelem][0][ip];
-
-        applyChainRule( NC, dCompFrac_dCompDens[iwelem], dPhaseMassDens_dComp[iwelem][0][ip], dMassDens_dC );
-        for( localIndex ic = 0; ic < NC; ++ic )
-        {
-          dTotalMassDens_dCompDens[iwelem][ic] += dPhaseVolFrac_dCompDens[iwelem][ip][ic] * phaseMassDens[iwelem][0][ip]
-                                                  + phaseVolFrac[iwelem][ip] * dMassDens_dC[ic];
-        }
-      }
-
-    } );
+      totalMassDensityKernelOp( ip, totalMassDens, dTotalMassDens_dPres, dTotalMassDens_dCompDens );
+    }
   }
 
+protected:
+
+  // inputs
+
+  /// Views on phase volume fractions
+  arrayView2d< real64 const, compflow::USD_PHASE > m_phaseVolFrac;
+  arrayView2d< real64 const, compflow::USD_PHASE > m_dPhaseVolFrac_dPres;
+  arrayView3d< real64 const, compflow::USD_PHASE_DC > m_dPhaseVolFrac_dCompDens;
+  arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
+
+  /// Views on phase mass densities
+  arrayView3d< real64 const, multifluid::USD_PHASE > m_phaseMassDens;
+  arrayView4d< real64 const, multifluid::USD_PHASE_DC > m_dPhaseMassDens;
+
+  // outputs
+
+  /// Views on total mass densities
+  arrayView1d< real64 > m_totalMassDens;
+  arrayView1d< real64 > m_dTotalMassDens_dPres;
+  arrayView2d< real64, compflow::USD_FLUID_DC > m_dTotalMassDens_dCompDens;
+
 };
+
+/**
+ * @class TotalMassDensityKernelFactory
+ */
+class TotalMassDensityKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] numComp the number of fluid components
+   * @param[in] numPhase the number of fluid phases
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( integer const numComp,
+                   integer const numPhase,
+                   ObjectManagerBase & subRegion,
+                   MultiFluidBase const & fluid )
+  {
+    if( numPhase == 2 )
+    {
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 2 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+    else if( numPhase == 3 )
+    {
+      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      {
+        integer constexpr NUM_COMP = NC();
+        TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
+        TotalMassDensityKernel< NUM_COMP, 3 >::template launch< POLICY >( subRegion.size(), kernel );
+      } );
+    }
+  }
+};
+
 
 /******************************** ResidualNormKernel ********************************/
 
@@ -1422,23 +665,28 @@ struct ResidualNormKernel
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
-          localIndex const numDofPerWellElement,
-          localIndex const targetPhaseIndex,
+          integer const numComponents,
+          integer const numDofPerWellElement,
+          integer const targetPhaseIndex,
           WellControls const & wellControls,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
-          arrayView3d< real64 const, multifluid::USD_PHASE > const & wellElemPhaseDens,
-          arrayView2d< real64 const, multifluid::USD_FLUID > const & wellElemTotalDens,
+          arrayView1d< real64 const > wellElemVolume,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld,
+          arrayView1d< real64 const > const & wellElemTotalDensOld,
+          real64 const & timeAtEndOfStep,
           real64 const dt,
           real64 * localResidualNorm )
   {
-    WellControls::Type const wellType = wellControls.getType();
+    using ROFFSET = compositionalMultiphaseWellKernels::RowOffset;
+
+    bool const isProducer = wellControls.isProducer();
     WellControls::Control const currentControl = wellControls.getControl();
-    real64 const targetBHP = wellControls.getTargetBHP();
-    real64 const targetTotalRate = wellControls.getTargetTotalRate();
-    real64 const targetPhaseRate = wellControls.getTargetPhaseRate();
-    real64 const absTargetTotalRate = fabs( targetTotalRate );
-    real64 const absTargetPhaseRate = fabs( targetPhaseRate );
+    real64 const targetBHP = wellControls.getTargetBHP( timeAtEndOfStep );
+    real64 const targetTotalRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
+    real64 const targetPhaseRate = wellControls.getTargetPhaseRate( timeAtEndOfStep );
+    real64 const absTargetTotalRate = LvArray::math::abs( targetTotalRate );
+    real64 const absTargetPhaseRate = LvArray::math::abs( targetPhaseRate );
 
     RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
 
@@ -1447,10 +695,13 @@ struct ResidualNormKernel
       if( wellElemGhostRank[iwelem] < 0 )
       {
         real64 normalizer = 0.0;
-        for( localIndex idof = 0; idof < numDofPerWellElement; ++idof )
+        for( integer idof = 0; idof < numDofPerWellElement; ++idof )
         {
+
+          // Step 1: compute a normalizer for the control or pressure equation
+
           // for the control equation, we distinguish two cases
-          if( idof == CompositionalMultiphaseWell::RowOffset::CONTROL )
+          if( idof == ROFFSET::CONTROL )
           {
             // for the top well element, normalize using the current control
             if( isLocallyOwned && iwelem == iwelemControl )
@@ -1461,11 +712,11 @@ struct ResidualNormKernel
               }
               else if( currentControl == WellControls::Control::TOTALVOLRATE )
               {
-                normalizer = absTargetTotalRate;
+                normalizer = LvArray::math::max( absTargetTotalRate, 1e-12 );
               }
               else if( currentControl == WellControls::Control::PHASEVOLRATE )
               {
-                normalizer = absTargetPhaseRate;
+                normalizer = LvArray::math::max( absTargetPhaseRate, 1e-12 );
               }
             }
             // for the pressure difference equation, always normalize by the BHP
@@ -1474,23 +725,44 @@ struct ResidualNormKernel
               normalizer = targetBHP;
             }
           }
-          else
+          // Step 2: compute a normalizer for the mass balance equations
+
+          else if( idof >= ROFFSET::MASSBAL && idof < ROFFSET::MASSBAL + numComponents )
           {
-            // did not seem to make sense to use the mass in the well elem for the normalization
-            // since there is no accumulation in the well model. Hence the rates are used here.
-            // TODO: use old densities for the normalization
-            if( wellType == WellControls::Type::PRODUCER ) // only PHASEVOLRATE is supported for now
+            if( isProducer ) // only PHASEVOLRATE is supported for now
             {
-              normalizer = dt * absTargetPhaseRate * wellElemPhaseDens[iwelem][0][targetPhaseIndex];
+              normalizer = dt * absTargetPhaseRate * wellElemPhaseDensOld[iwelem][targetPhaseIndex];
             }
             else // Type::INJECTOR, only TOTALVOLRATE is supported for now
             {
-              normalizer = dt * absTargetTotalRate * wellElemTotalDens[iwelem][0];
+              normalizer = dt * absTargetTotalRate * wellElemTotalDensOld[iwelem];
             }
+
+            // to make sure that everything still works well if the rate is zero, we add this check
+            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDensOld[iwelem] );
           }
+          // Step 3: compute a normalizer for the volume balance equations
+
+          else
+          {
+            if( isProducer ) // only PHASEVOLRATE is supported for now
+            {
+              normalizer = dt * absTargetPhaseRate;
+            }
+            else // Type::INJECTOR, only TOTALVOLRATE is supported for now
+            {
+              normalizer = dt * absTargetTotalRate;
+            }
+
+            // to make sure that everything still works well if the rate is zero, we add this check
+            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] );
+          }
+
+          // Step 4: compute the contribution to the residual
+
           localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
           real64 const val = localResidual[lid] / normalizer;
-          sumScaled += val * val; // get something dimensionless
+          sumScaled += val * val;
         }
       }
     } );
@@ -1507,7 +779,7 @@ struct SolutionScalingKernel
   static real64
   launch( LOCAL_VECTOR const localSolution,
           globalIndex const rankOffset,
-          localIndex const numComponents,
+          integer const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemPres,
@@ -1529,10 +801,10 @@ struct SolutionScalingKernel
         // the scaling of the pressures is particularly useful for the beginning of the simulation
         // with active rate control, but is useless otherwise
         real64 const pres = wellElemPres[iwelem] + dWellElemPres[iwelem];
-        real64 const absPresChange = fabs( localSolution[wellElemDofNumber[iwelem] - rankOffset] );
+        real64 const absPresChange = LvArray::math::abs( localSolution[wellElemDofNumber[iwelem] - rankOffset] );
         if( pres < eps )
         {
-          real64 const relativePresChange = fabs( absPresChange ) / pres;
+          real64 const relativePresChange = LvArray::math::abs( absPresChange ) / pres;
           if( relativePresChange > maxRelativePresChange )
           {
             minVal.min( maxRelativePresChange / relativePresChange );
@@ -1540,17 +812,17 @@ struct SolutionScalingKernel
         }
 
         real64 prevTotalDens = 0;
-        for( localIndex ic = 0; ic < numComponents; ++ic )
+        for( integer ic = 0; ic < numComponents; ++ic )
         {
           prevTotalDens += wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
         }
 
-        for( localIndex ic = 0; ic < numComponents; ++ic )
+        for( integer ic = 0; ic < numComponents; ++ic )
         {
           localIndex const lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
 
           // compute scaling factor based on relative change in component densities
-          real64 const absCompDensChange = fabs( localSolution[lid] );
+          real64 const absCompDensChange = LvArray::math::abs( localSolution[lid] );
           real64 const maxAbsCompDensChange = maxCompFracChange * prevTotalDens;
 
           // This actually checks the change in component fraction, using a lagged total density
@@ -1580,7 +852,7 @@ struct SolutionCheckKernel
   static localIndex
   launch( LOCAL_VECTOR const localSolution,
           globalIndex const rankOffset,
-          localIndex const numComponents,
+          integer const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemPressure,
@@ -1590,6 +862,8 @@ struct SolutionCheckKernel
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
+    using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
+
     real64 constexpr eps = minDensForDivision;
 
     RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
@@ -1599,7 +873,7 @@ struct SolutionCheckKernel
       if( wellElemGhostRank[iwelem] < 0 )
       {
         // pressure
-        localIndex lid = wellElemDofNumber[iwelem] + CompositionalMultiphaseWell::ColOffset::DPRES - rankOffset;
+        localIndex lid = wellElemDofNumber[iwelem] + COFFSET::DPRES - rankOffset;
         real64 const newPres = wellElemPressure[iwelem] + dWellElemPressure[iwelem]
                                + scalingFactor * localSolution[lid];
 
@@ -1614,7 +888,7 @@ struct SolutionCheckKernel
         // will be chopped (i.e., set to zero) in applySystemSolution
         if( !allowCompDensChopping )
         {
-          for( localIndex ic = 0; ic < numComponents; ++ic )
+          for( integer ic = 0; ic < numComponents; ++ic )
           {
             lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
             real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
@@ -1629,7 +903,7 @@ struct SolutionCheckKernel
         else
         {
           real64 totalDens = 0.0;
-          for( localIndex ic = 0; ic < numComponents; ++ic )
+          for( integer ic = 0; ic < numComponents; ++ic )
           {
             lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
             real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
@@ -1649,7 +923,7 @@ struct SolutionCheckKernel
 };
 
 
-} // end namespace CompositionalMultiphaseWellKernels
+} // end namespace compositionalMultiphaseWellKernels
 
 } // end namespace geosx
 

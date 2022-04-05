@@ -153,7 +153,7 @@ In the approximation of the flux term at the interface between two control volum
 the calculation of the pressure stencil is general and will ultimately support a
 Multi-Point Flux Approximation (MPFA) approach. The current implementation of the
 transmissibility calculation is reviewed in the section about
-:doc:`/coreComponents/finiteVolume/docs/FiniteVolume`.
+:doc:`/coreComponents/discretizationMethods/docs/NumericalMethodsManager`.
 
 The approximation of the dynamic transport coefficients multiplying the discrete
 potential difference (e.g., the phase mobilities) is performed with a first-order
@@ -189,7 +189,7 @@ The following attributes are supported:
 Example
 =========================
 
-.. literalinclude:: ../integratedTests/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
+.. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseFlow/deadoil_3ph_staircase_3d.xml
    :language: xml
    :start-after: <!-- START_SPHINX_INCLUDE_SOLVER_BLOCK -->
    :end-before: <!-- END_SPHINX_INCLUDE_SOLVER_BLOCK -->

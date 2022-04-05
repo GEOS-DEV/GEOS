@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -24,7 +24,7 @@
 
 #include <Epetra_Map.h>
 #include <Epetra_FECrsMatrix.h>
-#include <Epetra_FEVector.h>
+#include <Epetra_Vector.h>
 #include <Epetra_Import.h>
 
 namespace geosx
@@ -37,7 +37,7 @@ EpetraExport::EpetraExport( EpetraMatrix const & mat,
   : m_targetRank( targetRank )
 {
   globalIndex const numGlobalRows = mat.numGlobalRows();
-  localIndex const numLocalRows = ( m_targetRank == MpiWrapper::commRank( mat.getComm() ) ) ? numGlobalRows : 0;
+  localIndex const numLocalRows = ( m_targetRank == MpiWrapper::commRank( mat.comm() ) ) ? numGlobalRows : 0;
   m_serialMap = std::make_unique< Epetra_Map >( numGlobalRows, numLocalRows, 0, mat.unwrapped().Comm() );
   m_serialImport = std::make_unique< Epetra_Import >( *m_serialMap, mat.unwrapped().RowMap() );
 }
@@ -46,19 +46,22 @@ EpetraExport::~EpetraExport() = default;
 
 template< typename OFFSET_TYPE, typename COLUMN_TYPE >
 void EpetraExport::exportCRS( EpetraMatrix const & mat,
-                              OFFSET_TYPE * const rowOffsets,
-                              COLUMN_TYPE * const colIndices,
-                              real64 * const values ) const
+                              arrayView1d< OFFSET_TYPE > const & rowOffsets,
+                              arrayView1d< COLUMN_TYPE > const & colIndices,
+                              arrayView1d< real64 > const & values ) const
 {
-  int const rank = MpiWrapper::commRank( mat.getComm() );
+
+  int const rank = MpiWrapper::commRank( mat.comm() );
   Epetra_CrsMatrix const * localMatrix = &mat.unwrapped();
+
+  rowOffsets.move( LvArray::MemorySpace::host, false );
+  colIndices.move( LvArray::MemorySpace::host, false );
+  values.move( LvArray::MemorySpace::host, false );
 
   // import on target rank if needed
   std::unique_ptr< Epetra_CrsMatrix > serialMatrix;
   if( m_targetRank >= 0 )
   {
-    GEOSX_ERROR_IF( rank == m_targetRank && !( rowOffsets && colIndices && values ),
-                    "EpetraExport: must pass non-null pointers on the target rank" );
     serialMatrix = std::make_unique< Epetra_CrsMatrix >( mat.unwrapped(), *m_serialImport, m_serialMap.get() );
     localMatrix = serialMatrix.get();
   }
@@ -73,49 +76,47 @@ void EpetraExport::exportCRS( EpetraMatrix const & mat,
 
     // contains the global ID of local columns
     globalIndex const * const globalColumns = localMatrix->ColMap().MyGlobalElements64();
-    std::transform( ia, ia + localMatrix->NumMyRows() + 1, rowOffsets, LvArray::integerConversion< OFFSET_TYPE, int > );
-    std::transform( ja, ja + localMatrix->NumMyNonzeros(), colIndices,
+    std::transform( ia, ia + localMatrix->NumMyRows() + 1, rowOffsets.data(), LvArray::integerConversion< OFFSET_TYPE, int > );
+    std::transform( ja, ja + localMatrix->NumMyNonzeros(), colIndices.data(),
                     [globalColumns]( int const i ){ return LvArray::integerConversion< COLUMN_TYPE >( globalColumns[i] ); } );
-    std::copy( va, va + localMatrix->NumMyNonzeros(), values );
+    std::copy( va, va + localMatrix->NumMyNonzeros(), values.data() );
   }
 }
 
 void EpetraExport::exportVector( EpetraVector const & vec,
-                                 real64 * values ) const
+                                 arrayView1d< real64 > const & values ) const
 {
+  values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "EpetraExport: must pass non-null pointers on the target rank" );
-
     // Create a local vector that directly wraps the user-provided buffer and gather
-    Epetra_MultiVector localVec( View, *m_serialMap, values, 0, 1 );
+    Epetra_MultiVector localVec( View, *m_serialMap, values.data(), 0, 1 );
     localVec.Import( vec.unwrapped(), *m_serialImport, Insert );
   }
   else
   {
-    real64 const * const data = vec.extractLocalVector();
-    std::copy( data, data + vec.localSize(), values );
+    arrayView1d< real64 const > const data = vec.values();
+    data.move( LvArray::MemorySpace::host, false );
+    std::copy( data.begin(), data.end(), values.data() );
   }
 }
 
-void EpetraExport::importVector( real64 const * values,
+void EpetraExport::importVector( arrayView1d< const real64 > const & values,
                                  EpetraVector & vec ) const
 {
+  values.move( LvArray::MemorySpace::host, false );
   if( m_targetRank >= 0 )
   {
-    int const rank = MpiWrapper::commRank( vec.getComm() );
-    GEOSX_ERROR_IF( rank == m_targetRank && !values, "EpetraExport: must pass non-null pointers on the target rank" );
-
     // HACK: const_cast required in order to create an Epetra vector that wraps user data;
     //       we promise the values won't be changed since the only thing we do is scatter.
-    Epetra_MultiVector localVector( View, *m_serialMap, const_cast< real64 * >( values ), LvArray::integerConversion< int >( vec.globalSize() ), 1 );
+    Epetra_MultiVector localVector( View, *m_serialMap, const_cast< real64 * >( values.data() ), LvArray::integerConversion< int >( vec.globalSize() ), 1 );
     vec.unwrapped().Export( localVector, *m_serialImport, Insert );
   }
   else
   {
-    real64 * const data = vec.extractLocalVector();
-    std::copy( values, values + vec.localSize(), data );
+    arrayView1d< real64 > const data = vec.open();
+    std::copy( values.data(), values.data() + vec.localSize(), data.begin() );
+    vec.close();
   }
 }
 
@@ -128,9 +129,9 @@ void EpetraExport::importVector( real64 const * values,
 #define INST_EPETRA_EXPORT_CRS( OFFSET_TYPE, COLUMN_TYPE ) \
   template void \
   EpetraExport::exportCRS< OFFSET_TYPE, COLUMN_TYPE >( EpetraMatrix const &, \
-                                                       OFFSET_TYPE * const, \
-                                                       COLUMN_TYPE * const, \
-                                                       real64 * const ) const
+                                                       arrayView1d< OFFSET_TYPE > const &, \
+                                                       arrayView1d< COLUMN_TYPE > const &, \
+                                                       arrayView1d< real64 > const & ) const
 
 // Add other instantiations as needed (only use built-in types)
 INST_EPETRA_EXPORT_CRS( int, int );

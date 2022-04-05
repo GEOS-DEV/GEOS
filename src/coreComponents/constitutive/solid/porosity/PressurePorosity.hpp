@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,12 +33,14 @@ public:
   PressurePorosityUpdates( arrayView2d< real64 > const & newPorosity,
                            arrayView2d< real64 > const & oldPorosity,
                            arrayView2d< real64 > const & dPorosity_dPressure,
+                           arrayView2d< real64 > const & initialPorosity,
                            arrayView1d< real64 > const & referencePorosity,
                            real64 const & referencePressure,
                            real64 const & compressibility ):
     PorosityBaseUpdates( newPorosity,
                          oldPorosity,
                          dPorosity_dPressure,
+                         initialPorosity,
                          referencePorosity ),
     m_referencePressure( referencePressure ),
     m_compressibility( compressibility )
@@ -51,14 +53,18 @@ public:
                         real64 const & referencePorosity ) const
   {
 
-    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
-    dPorosity_dPressure =  m_compressibility * porosity;
+    // TODO use full exponential.
+//    porosity            =  referencePorosity * exp( m_compressibility * (pressure - m_referencePressure) );
+//    dPorosity_dPressure =  m_compressibility * porosity;
+    porosity = referencePorosity * ( m_compressibility * (pressure - m_referencePressure) + 1 );
+    dPorosity_dPressure = m_compressibility * referencePorosity;
+
   }
 
   GEOSX_HOST_DEVICE
-  virtual void updatePorosity( localIndex const k,
-                               localIndex const q,
-                               real64 const & pressure ) const
+  virtual void updateFromPressure( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & pressure ) const override final
   {
     computePorosity( pressure,
                      m_newPorosity[k][q],
@@ -71,7 +77,6 @@ private:
   real64 m_referencePressure;
 
   real64 m_compressibility;
-
 };
 
 
@@ -79,11 +84,6 @@ class PressurePorosity : public PorosityBase
 {
 public:
   PressurePorosity( string const & name, Group * const parent );
-
-  virtual ~PressurePorosity() override;
-
-  std::unique_ptr< ConstitutiveBase > deliverClone( string const & name,
-                                                    Group * const parent ) const override;
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
@@ -109,6 +109,7 @@ public:
     return KernelWrapper( m_newPorosity,
                           m_oldPorosity,
                           m_dPorosity_dPressure,
+                          m_initialPorosity,
                           m_referencePorosity,
                           m_referencePressure,
                           m_compressibility );

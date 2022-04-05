@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /**
@@ -54,8 +54,8 @@ public:
                             FE_TYPE >;
 
   using Base::numNodesPerElem;
-  using Base::numTestSupportPointsPerElem;
-  using Base::numTrialSupportPointsPerElem;
+  using Base::maxNumTestSupportPointsPerElem;
+  using Base::maxNumTrialSupportPointsPerElem;
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
 
@@ -88,8 +88,8 @@ public:
                    CONSTITUTIVE_TYPE & inputConstitutiveType,
                    arrayView1d< globalIndex const > const & inputDofNumber,
                    globalIndex const rankOffset,
-                   CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                   arrayView1d< real64 > const & inputRhs,
+                   CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                   arrayView1d< real64 > const inputRhs,
                    real64 const (&inputGravityVector)[3],
                    real64 const inputNewmarkGamma,
                    real64 const inputNewmarkBeta,
@@ -129,8 +129,8 @@ public:
   struct StackVariables : public Base::StackVariables
   {
 public:
-    using Base::StackVariables::numRows;
-    using Base::StackVariables::numCols;
+    using Base::StackVariables::maxNumRows;
+    using Base::StackVariables::maxNumCols;
 
     /// Constructor.
     GEOSX_HOST_DEVICE
@@ -142,7 +142,7 @@ public:
     {}
 
     /// Stack storage for the Inertial damping contributions to the Jacobian
-    real64 dRdU_InertiaMassDamping[ numRows ][ numCols ];
+    real64 dRdU_InertiaMassDamping[ maxNumRows ][ maxNumCols ];
 
     /// Stack storage for the velocity predictor.
     real64 vtilde_local[numNodesPerElem][numDofPerTrialSupportPoint];
@@ -253,9 +253,9 @@ public:
       }
     }
 
-    for( int a=0; a<stack.numRows; ++a )
+    for( int a=0; a<stack.maxNumRows; ++a )
     {
-      for( int b=0; b<stack.numCols; ++b )
+      for( int b=0; b<stack.maxNumCols; ++b )
       {
         stack.localJacobian[a][b] += stack.localJacobian[a][b] * (1.0 + m_stiffnessDamping * m_newmarkGamma / ( m_newmarkBeta * m_dt ) )
                                      + stack.dRdU_InertiaMassDamping[ a ][ b ];
@@ -295,8 +295,8 @@ protected:
 using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
                                                              arrayView1d< globalIndex const > const &,
                                                              globalIndex,
-                                                             CRSMatrixView< real64, globalIndex const > const &,
-                                                             arrayView1d< real64 > const &,
+                                                             CRSMatrixView< real64, globalIndex const > const,
+                                                             arrayView1d< real64 > const,
                                                              real64 const (&)[3],
                                                              real64,
                                                              real64,
@@ -304,7 +304,7 @@ using ImplicitNewmarkFactory = finiteElement::KernelFactory< ImplicitNewmark,
                                                              real64,
                                                              real64 >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

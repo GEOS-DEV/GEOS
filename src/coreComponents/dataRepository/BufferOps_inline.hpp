@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -406,7 +406,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 {
   ArrayOfArrays< T > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
-  var.assimilate( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
+  var.template assimilate< parallelHostPolicy >( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
   return sizeOfUnpackedChars;
 }
 
@@ -531,7 +531,7 @@ UnpackArray( buffer_unit_type const * & buffer,
 template< typename T, int NDIM, int USD, typename T_indices >
 localIndex
 UnpackByIndex( buffer_unit_type const * & buffer,
-               ArrayView< T, NDIM, USD > & var,
+               ArrayView< T, NDIM, USD > const & var,
                const T_indices & indices )
 {
   localIndex strides[NDIM];
@@ -1088,7 +1088,7 @@ Pack( buffer_unit_type * & buffer,
     else
     {
       sizeOfPackedChars += Pack< DO_PACKING >( buffer,
-                                               localIndex( -1 ) );
+                                               globalIndex( -1 ) );
     }
   }
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -52,32 +52,38 @@ public:
                                    localIndex const q,
                                    real64 const & porosity ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( porosity );
-  }
-
-  GEOSX_HOST_DEVICE
-  virtual void updateFromPressureStrain( localIndex const k,
-                                         localIndex const q,
-                                         real64 const & pressure,
-                                         real64 const & volStrain ) const
-  {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( pressure );
-    GEOSX_UNUSED_VAR( volStrain );
+    GEOSX_UNUSED_VAR( k, q, porosity );
   }
 
   GEOSX_HOST_DEVICE
   virtual void updateFromAperture( localIndex const k,
                                    localIndex const q,
-                                   real64 const & aperture ) const
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const
   {
-    GEOSX_UNUSED_VAR( k );
-    GEOSX_UNUSED_VAR( q );
-    GEOSX_UNUSED_VAR( aperture );
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndProppantVolumeFraction ( localIndex const k,
+                                                             localIndex const q,
+                                                             real64 const & oldHydraulicAperture,
+                                                             real64 const & newHydraulicAperture,
+                                                             real64 const & proppantPackVolumeFraction ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, oldHydraulicAperture, newHydraulicAperture, proppantPackVolumeFraction );
+  }
+
 
 protected:
 
@@ -91,7 +97,6 @@ protected:
 
   arrayView3d< real64 > m_dPerm_dPressure;
 };
-
 
 class PermeabilityBase : public ConstitutiveBase
 {
@@ -113,12 +118,8 @@ public:
 
   arrayView3d< real64 const > dPerm_dPressure() const { return m_dPerm_dPressure; }
 
-  struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
-  {
-    static constexpr char const * permeabilityString() { return "permeability"; }
-    static constexpr char const * dPerm_dPressureString() { return "dPerm_dPressure"; }
-    static constexpr char const * dPerm_dApertureString() { return "dPerm_dAperture"; }
-  } viewKeys;
+  virtual void initializeState() const
+  {}
 
 protected:
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -48,7 +48,7 @@ public:
    */
   explicit TransposeOperator( Matrix const & mat )
     : Base(),
-    m_matrix( &mat )
+    m_matrix( mat )
   { }
 
   /**
@@ -108,9 +108,9 @@ public:
    * @brief Get the MPI communicator the matrix was created with
    * @return MPI communicator of the underlying matrix
    */
-  virtual MPI_Comm getComm() const override
+  virtual MPI_Comm comm() const override
   {
-    return m_matrix.getComm();
+    return m_matrix.comm();
   }
 
 private:

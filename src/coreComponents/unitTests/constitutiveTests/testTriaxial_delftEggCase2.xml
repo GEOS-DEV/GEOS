@@ -1,0 +1,71 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Tasks>
+    <TriaxialDriver
+      name="triaxialDriver"
+      material="DE"
+      mode="mixedControl"
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-4.6e6"
+      steps="50"
+      baseline="testTriaxial_delftEggCase2.txt"
+      output="none"/>
+  </Tasks>
+
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="triaxialDriver"
+      target="/Tasks/triaxialDriver"/>
+  </Events>
+
+  <Constitutive>
+    <DelftEgg
+      name="DE"
+      defaultDensity="2700"
+      defaultBulkModulus="10.15e9"
+      defaultShearModulus="5.54e9"
+      defaultPreConsolidationPressure="-34.0e6"
+      defaultShapeParameter="9.5"
+      defaultCslSlope="1.2"
+      defaultVirginCompressionIndex="0.008"
+      defaultRecompressionIndex="0.001"/>
+  </Constitutive>
+
+  <Functions>
+    <TableFunction
+      name="strainFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 0, -0.004 }"/>
+
+    <TableFunction
+      name="stressFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ -4.6e6, -4.6e6 }"/>
+  </Functions>
+
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+</Problem>

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -28,8 +28,26 @@ using namespace finiteElement;
 
 class TestFiniteElementBase final : public FiniteElementBase
 {
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumQuadraturePoints() const override {return 8;};
+  GEOSX_HOST_DEVICE
   virtual localIndex getNumSupportPoints() const override {return 8;};
+  GEOSX_HOST_DEVICE
+  virtual localIndex getMaxSupportPoints() const override {return 8;};
+  template< typename SUBREGION_TYPE >
+  static void fillMeshData( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
+                            EdgeManager const & GEOSX_UNUSED_PARAM( edgeManager ),
+                            FaceManager const & GEOSX_UNUSED_PARAM( faceManager ),
+                            CellElementSubRegion const & GEOSX_UNUSED_PARAM( cellSubRegion ),
+                            MeshData< SUBREGION_TYPE > & GEOSX_UNUSED_PARAM( meshData )
+                            )
+  {}
+  template< typename SUBREGION_TYPE >
+  GEOSX_HOST_DEVICE
+  static void setupStack( localIndex const & GEOSX_UNUSED_PARAM( cellIndex ),
+                          MeshData< SUBREGION_TYPE > const & GEOSX_UNUSED_PARAM( meshData ),
+                          StackVariables & GEOSX_UNUSED_PARAM( stack ) )
+  {}
 };
 
 TEST( FiniteElementBase, test_setGradNView )

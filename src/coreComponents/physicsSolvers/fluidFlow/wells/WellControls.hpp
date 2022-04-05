@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,6 +22,7 @@
 
 #include "codingUtilities/EnumStrings.hpp"
 #include "dataRepository/Group.hpp"
+#include "functions/TableFunction.hpp"
 
 namespace geosx
 {
@@ -116,12 +117,6 @@ public:
   ///@{
 
   /**
-   * @brief Get the well type (injector or producer).
-   * @return a well Type enum
-   */
-  Type getType() const { return m_type; }
-
-  /**
    * @brief Set the control type to BHP and set a numerical value for the control.
    * @param[in] val value for the BHP control
    */
@@ -164,24 +159,31 @@ public:
 
 
   /**
-   * @brief Get the target Bottom Hole Pressure value.
-   * @return a value for the target Bottom Hole Pressure
+   * @brief Get the target bottom hole pressure value.
+   * @return a value for the target bottom hole pressure
    */
-  const real64 & getTargetBHP() const { return m_targetBHP; }
-
+  real64 getTargetBHP( real64 const & currentTime ) const
+  {
+    return m_targetBHPTable->evaluate( &currentTime );
+  }
 
   /**
    * @brief Get the target total rate
    * @return the target total rate
    */
-  const real64 & getTargetTotalRate() const { return m_targetTotalRate; }
+  real64 getTargetTotalRate( real64 const & currentTime ) const
+  {
+    return m_targetTotalRateTable->evaluate( &currentTime );
+  }
 
   /**
    * @brief Get the target phase rate
    * @return the target phase rate
    */
-  const real64 & getTargetPhaseRate() const { return m_targetPhaseRate; }
-
+  real64 getTargetPhaseRate( real64 const & currentTime ) const
+  {
+    return m_targetPhaseRateTable->evaluate( &currentTime );
+  }
   /**
    * @brief Get the target phase name
    * @return the target phase name
@@ -189,10 +191,16 @@ public:
   const string & getTargetPhaseName() const { return m_targetPhaseName; }
 
   /**
-   * @brief Const accessor for the composition of the injection rate
+   * @brief Const accessor for the composition of the injection stream
    * @return a global component fraction vector
    */
   arrayView1d< real64 const > getInjectionStream() const { return m_injectionStream; }
+
+  /**
+   * @brief Const accessor for the temperature of the injection stream
+   * @return the temperature of the injection stream
+   */
+  real64 getInjectionTemperature() const { return m_injectionTemperature; }
 
   /**
    * @brief Getter for the flag specifying whether we check rates at surface or reservoir conditions
@@ -212,6 +220,30 @@ public:
    */
   const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
 
+  /**
+   * @brief Is the well an injector?
+   * @return a boolean
+   */
+  bool isInjector() const { return ( m_type == Type::INJECTOR ); }
+
+  /**
+   * @brief Is the well a producer?
+   * @return a boolean
+   */
+  bool isProducer() const { return ( m_type == Type::PRODUCER ); }
+
+  /**
+   * @brief Is the well open (or shut) at @p currentTime?
+   * @param[in] currentTime the current time
+   * @return a boolean
+   */
+  bool isWellOpen( real64 const & currentTime ) const;
+
+  /**
+   * @brief Getter for the flag to enable crossflow
+   * @return the flag deciding whether crossflow is allowed or not
+   */
+  bool isCrossflowEnabled() const { return m_isCrossflowEnabled; }
 
   ///@}
 
@@ -237,35 +269,22 @@ public:
     static constexpr char const * targetPhaseNameString() { return "targetPhaseName"; }
     /// String key for the well injection stream
     static constexpr char const * injectionStreamString() { return "injectionStream"; }
+    /// String key for the well injection temperature
+    static constexpr char const * injectionTemperatureString() { return "injectionTemperature"; }
     /// String key for checking the rates at surface conditions
     static constexpr char const * useSurfaceConditionsString() { return "useSurfaceConditions"; }
     /// String key for the surface pressure
     static constexpr char const * surfacePressureString() { return "surfacePressure"; }
     /// String key for the surface temperature
     static constexpr char const * surfaceTemperatureString() { return "surfaceTemperature"; }
-    /// ViewKey for the reference elevation
-    dataRepository::ViewKey referenceElevation   = { refElevString() };
-    /// ViewKey for the well type
-    dataRepository::ViewKey type                 = { typeString() };
-    /// ViewKey for the well control
-    dataRepository::ViewKey control              = { controlString() };
-    /// ViewKey for the well target BHP
-    dataRepository::ViewKey targetBHP            = { targetBHPString() };
-    /// ViewKey for the well target rate
-    dataRepository::ViewKey targetTotalRate      = { targetTotalRateString() };
-    /// ViewKey for the well target phase rate
-    dataRepository::ViewKey targetPhaseRate      = { targetPhaseRateString() };
-    /// ViewKey for the well target phase name
-    dataRepository::ViewKey targetPhaseName      = { targetPhaseNameString() };
-    /// ViewKey for the well injection stream
-    dataRepository::ViewKey injectionStream      = { injectionStreamString() };
-    /// ViewKey for the surface conditions flag
-    dataRepository::ViewKey useSurfaceConditions = { useSurfaceConditionsString() };
-    /// ViewKey for the surface pressure
-    dataRepository::ViewKey surfacePressure      = { surfacePressureString() };
-    /// ViewKey for the surface temperature
-    dataRepository::ViewKey surfaceTemperature   = { surfaceTemperatureString() };
-
+    /// string key for total rate table name
+    static constexpr char const * targetTotalRateTableNameString() { return "targetTotalRateTableName"; }
+    /// string key for phase rate table name
+    static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
+    /// string key for BHP table name
+    static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
+    /// string key for the crossflow flag
+    static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -274,7 +293,7 @@ protected:
 
   virtual void postProcessInput() override;
 
-  virtual void initializePostInitialConditionsPreSubGroups() override;
+  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -303,7 +322,10 @@ private:
   string m_targetPhaseName;
 
   /// Vector with global component fractions at the injector
-  array1d< real64 >  m_injectionStream;
+  array1d< real64 > m_injectionStream;
+
+  /// Temperature at the injector
+  real64 m_injectionTemperature;
 
   /// Flag to decide whether rates are controlled at rates or surface conditions
   integer m_useSurfaceConditions;
@@ -314,6 +336,26 @@ private:
   /// Surface temperature
   real64 m_surfaceTemp;
 
+  /// Total rate table name
+  string m_targetTotalRateTableName;
+
+  /// Phase rate table name
+  string m_targetPhaseRateTableName;
+
+  /// BHP table name
+  string m_targetBHPTableName;
+
+  /// Flag to enable crossflow
+  integer m_isCrossflowEnabled;
+
+  /// Total rate table
+  TableFunction * m_targetTotalRateTable;
+
+  /// Phase rate table
+  TableFunction * m_targetPhaseRateTable;
+
+  /// BHP table
+  TableFunction * m_targetBHPTable;
 };
 
 ENUM_STRINGS( WellControls::Type,

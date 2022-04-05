@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -51,13 +51,61 @@ using ArraySliceOrRef = typename ArraySliceOrRefHelper< T, DIM, USD >::type;
  * @brief Helper struct used to represent a variable and its compositional derivatives
  * @tparam DIM number of dimensions
  */
-template< int DIM, int USD, int USD_DC >
-struct CompositionalVarContainer
+template< typename T, int DIM, int USD, int USD_DC >
+struct MultiFluidVarSlice
 {
-  internal::ArraySliceOrRef< real64, DIM, USD > const & value; // variable value
-  internal::ArraySliceOrRef< real64, DIM, USD > const & dPres; // derivative w.r.t. pressure
-  internal::ArraySliceOrRef< real64, DIM, USD > const & dTemp; // derivative w.r.t. temperature
-  internal::ArraySliceOrRef< real64, DIM + 1, USD_DC > const & dComp; // derivative w.r.t. composition
+  internal::ArraySliceOrRef< T, DIM, USD > value;        /// variable value
+  internal::ArraySliceOrRef< T, DIM + 1, USD_DC > derivs; /// derivative w.r.t. pressure, temperature, compositions
+};
+
+/**
+ * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
+ * @tparam NDIM number of dimensions
+ * @tparam USD unit-stride-dim of primary property
+ * @tparam USD_DC unit-stride-dim of derivatives
+ */
+template< typename T, int NDIM, int USD, int USD_DC >
+struct MultiFluidVarView
+{
+  ArrayView< T, NDIM, USD > value;        ///< View into property values
+  ArrayView< T, NDIM + 1, USD_DC > derivs; ///< View into property derivatives w.r.t. pressure, temperature, compositions
+
+  using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
+
+  GEOSX_HOST_DEVICE
+  SliceType operator()( localIndex const k, localIndex const q ) const
+  {
+    return { value[k][q], derivs[k][q] };
+  }
+};
+
+/**
+ * @brief Struct holding views into fluid data, used to simplify parameter passing in kernel wrapper constructors.
+ * @tparam NDIM number of dimensions
+ * @tparam PERM unit-stride-dim of primary property
+ * @tparam PERM_DC unit-stride-dim of derivatives
+ */
+template< typename T, int NDIM, typename PERM, typename PERM_DC >
+struct MultiFluidVar
+{
+  Array< real64, NDIM, PERM > value;        ///< Property values
+  Array< real64, NDIM + 1, PERM_DC > derivs; ///< Property derivatives w.r.t. pressure, temperature, compositions
+
+  using ViewType = MultiFluidVarView< T, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
+  using ViewTypeConst = MultiFluidVarView< T const, NDIM, getUSD< PERM >, getUSD< PERM_DC > >;
+
+  using SliceType = typename ViewType::SliceType;
+  using SliceTypeConst = typename ViewTypeConst::SliceType;
+
+  ViewType toView()
+  {
+    return { value.toView(), derivs.toView() };
+  }
+
+  ViewTypeConst toViewConst() const
+  {
+    return { value.toViewConst(), derivs.toViewConst() };
+  }
 };
 
 } // namespace constitutive

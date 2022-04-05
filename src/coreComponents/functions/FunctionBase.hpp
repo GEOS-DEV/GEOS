@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #define GEOSX_FUNCTIONS_FUNCTIONBASE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/TypeDispatch.hpp"
 #include "dataRepository/Group.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -46,6 +47,10 @@ string const inputVarNames( "inputVarNames" );
 class FunctionBase : public dataRepository::Group
 {
 public:
+
+  /// Maximum total number of independent variables (including components of multidimensional variables)
+  static constexpr int MAX_VARS = 4;
+
   /// @copydoc geosx::dataRepository::Group::Group( string const & name, Group * const parent )
   FunctionBase( const string & name,
                 dataRepository::Group * const parent );
@@ -53,7 +58,7 @@ public:
   /**
    * @brief destructor
    */
-  virtual ~FunctionBase() override;
+  virtual ~FunctionBase() override = default;
 
   /**
    * @brief Static Factory Catalog Functions
@@ -85,7 +90,7 @@ public:
   virtual void evaluate( dataRepository::Group const & group,
                          real64 const time,
                          SortedArrayView< localIndex const > const & set,
-                         real64_array & result ) const = 0;
+                         arrayView1d< real64 > const & result ) const = 0;
 
   /**
    * @brief Method to evaluate a function
@@ -122,7 +127,7 @@ public:
    * @brief Set the input variable names
    * @param inputVarNames A list of input variable names
    */
-  void setInputVarNames( string_array inputVarNames ) { m_inputVarNames = inputVarNames; }
+  void setInputVarNames( string_array inputVarNames ) { m_inputVarNames = std::move( inputVarNames ); }
 
 
 protected:
@@ -137,76 +142,77 @@ protected:
    * @param[in] set the subset of nodes to apply the function to
    * @param[out] result the results
    */
-  template< typename LEAF >
+  template< typename LEAF, typename POLICY = serialPolicy >
   void evaluateT( dataRepository::Group const & group,
                   real64 const time,
                   SortedArrayView< localIndex const > const & set,
-                  real64_array & result ) const;
+                  arrayView1d< real64 > const & result ) const;
 
   virtual void postProcessInput() override { initializeFunction(); }
 
 };
 
-template< typename LEAF >
+template< typename LEAF, typename POLICY >
 void FunctionBase::evaluateT( dataRepository::Group const & group,
                               real64 const time,
                               SortedArrayView< localIndex const > const & set,
-                              real64_array & result ) const
+                              arrayView1d< real64 > const & result ) const
 {
-  real64 const * input_ptrs[4];
-  localIndex varSize[4] = {0, 0, 0, 0};
-  int timeVar[4] = {1, 1, 1, 1};
+  real64 const * inputPtrs[MAX_VARS]{};
+  localIndex varSize[MAX_VARS]{};
+  localIndex varStride[MAX_VARS][2]{};
 
-  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-  localIndex const numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
-  localIndex groupSize = group.size();
+  integer const numVars = LvArray::integerConversion< integer >( m_inputVarNames.size() );
   localIndex totalVarSize = 0;
-  for( auto varIndex=0; varIndex<numVars; ++varIndex )
+  for( integer varIndex = 0; varIndex < numVars; ++varIndex )
   {
-    string const & varName = inputVarNames[varIndex];
+    string const & varName = m_inputVarNames[varIndex];
 
-    if( varName=="time" )
+    if( varName == "time" )
     {
-      input_ptrs[varIndex] = &time;
+      inputPtrs[varIndex] = &time;
       varSize[varIndex] = 1;
-      timeVar[varIndex] = 0;
-      ++totalVarSize;
     }
-    else if( groupSize > 0 )
+    else
     {
-      // Should we throw a warning if the group is zero-length?
       dataRepository::WrapperBase const & wrapper = group.getWrapperBase( varName );
-      input_ptrs[ varIndex ] = reinterpret_cast< double const * >( wrapper.voidPointer() );
+      varSize[varIndex] = wrapper.numArrayComp();
 
-      localIndex wrapperSize = LvArray::integerConversion< localIndex >( wrapper.size() );
-      varSize[varIndex] = wrapperSize / groupSize;
-      totalVarSize += varSize[varIndex];
+      using Types = types::ArrayTypes< types::RealTypes, types::DimsUpTo< 2 > >;
+      types::dispatch( Types{}, wrapper.getTypeId(), true, [&]( auto array )
+      {
+        using ArrayType = decltype( array );
+        auto const view = dataRepository::Wrapper< ArrayType >::cast( wrapper ).reference().toViewConst();
+        view.move( LvArray::MemorySpace::host, false );
+        for( int dim = 0; dim < ArrayType::NDIM; ++dim )
+        {
+          varStride[varIndex][dim] = view.strides()[dim];
+        }
+        inputPtrs[varIndex] = view.data();
+      } );
     }
+    totalVarSize += varSize[varIndex];
   }
 
   // Make sure the inputs do not exceed the maximum length
-  GEOSX_ERROR_IF( totalVarSize > 4, "Function input size is: " << totalVarSize );
+  GEOSX_ERROR_IF_GT_MSG( totalVarSize, MAX_VARS, "Function input size exceeded" );
 
   // Make sure the result / set size match
-  GEOSX_ERROR_IF( result.size() != set.size(), "To apply a function to a set, the size of the result and set must match" );
+  GEOSX_ERROR_IF_NE_MSG( result.size(), set.size(), "To apply a function to a set, the size of the result and set must match" );
 
-
-  forAll< serialPolicy >( set.size(), [&, set]( localIndex const i )
+  forAll< POLICY >( set.size(), [=]( localIndex const i )
   {
-    localIndex const index = set[ i ];
-    double input[4];
-    int c = 0;
-    for( int a=0; a<numVars; ++a )
+    localIndex const index = set[i];
+    real64 input[MAX_VARS]{};
+    int offset = 0;
+    for( integer varIndex = 0; varIndex < numVars; ++varIndex )
     {
-      for( int b=0; b<varSize[a]; ++b )
+      for( localIndex compIndex = 0; compIndex < varSize[varIndex]; ++compIndex )
       {
-        input[c] = input_ptrs[a][(index*varSize[a]+b)*timeVar[a]];
-        ++c;
+        input[offset++] = inputPtrs[varIndex][index * varStride[varIndex][0] + compIndex * varStride[varIndex][1]];
       }
     }
-
-    // Note: we expect that result is the same size as the set
-    result[i] = static_cast< LEAF const * >(this)->evaluate( input );
+    result[i] = static_cast< LEAF const * >( this )->evaluate( input );
   } );
 }
 } /* namespace geosx */

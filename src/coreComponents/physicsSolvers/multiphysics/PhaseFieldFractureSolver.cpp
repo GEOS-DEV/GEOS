@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -64,9 +64,11 @@ PhaseFieldFractureSolver::PhaseFieldFractureSolver( const string & name,
 
 void PhaseFieldFractureSolver::registerDataOnMesh( Group & meshBodies )
 {
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  forMeshTargets( meshBodies, [&] ( string const &,
+                                    MeshLevel & meshLevel,
+                                    arrayView1d< string const > const & )
   {
-    ElementRegionManager & elemManager = meshBody.getMeshLevel( 0 ).getElemManager();
+    ElementRegionManager & elemManager = meshLevel.getElemManager();
 
     elemManager.forElementSubRegions< CellElementSubRegion,
                                       FaceElementSubRegion >( [&] ( auto & elementSubRegion )
@@ -84,20 +86,24 @@ void PhaseFieldFractureSolver::implicitStepSetup( real64 const & GEOSX_UNUSED_PA
                                                   DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-
-  //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [ &]( localIndex const er, localIndex const esr, localIndex const k )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
+
+    //***** loop over all elements and initialize the derivative arrays *****
+    forAllElemsInMesh( mesh, [ &]( localIndex const er, localIndex const esr, localIndex const k )
+    {
+      oldTotalMeanStress[er][esr][k] = totalMeanStress[er][esr][k];
+    } );
   } );
 }
 
@@ -135,21 +141,25 @@ PhaseFieldFractureSolver::~PhaseFieldFractureSolver()
 
 void PhaseFieldFractureSolver::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
-    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
-
-  ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
-    elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
-
-  //***** loop over all elements and initialize the derivative arrays *****
-  forAllElemsInMesh( mesh, [ &]( localIndex const er,
-                                 localIndex const esr,
-                                 localIndex const k )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > const totalMeanStress =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::totalMeanStressString() );
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 > > oldTotalMeanStress =
+      elemManager.constructViewAccessor< array1d< real64 >, arrayView1d< real64 > >( viewKeyStruct::oldTotalMeanStressString() );
+
+    //***** loop over all elements and initialize the derivative arrays *****
+    forAllElemsInMesh( mesh, [ &]( localIndex const er,
+                                   localIndex const esr,
+                                   localIndex const k )
+    {
+      totalMeanStress[er][esr][k] = oldTotalMeanStress[er][esr][k];
+    } );
   } );
 }
 
@@ -189,15 +199,15 @@ real64 PhaseFieldFractureSolver::splitOperatorStep( real64 const & time_n,
   damageSolver.setupSystem( domain,
                             damageSolver.getDofManager(),
                             damageSolver.getLocalMatrix(),
-                            damageSolver.getLocalRhs(),
-                            damageSolver.getLocalSolution(),
+                            damageSolver.getSystemRhs(),
+                            damageSolver.getSystemSolution(),
                             true );
 
   solidSolver.setupSystem( domain,
                            solidSolver.getDofManager(),
                            solidSolver.getLocalMatrix(),
-                           solidSolver.getLocalRhs(),
-                           solidSolver.getLocalSolution() );
+                           solidSolver.getSystemRhs(),
+                           solidSolver.getSystemSolution() );
 
   damageSolver.implicitStepSetup( time_n, dt, domain );
 
@@ -287,77 +297,76 @@ void PhaseFieldFractureSolver::mapDamageToQuadrature( DomainPartition & domain )
 {
 
   GEOSX_MARK_FUNCTION;
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  NodeManager & nodeManager = mesh.getNodeManager();
-
-  SolidMechanicsLagrangianFEM &
-  solidSolver = this->getParent().getGroup< SolidMechanicsLagrangianFEM >( m_solidSolverName );
-
-  PhaseFieldDamageFEM const &
-  damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
-
-  string const & damageFieldName = damageSolver.getFieldName();
-
-  //should get reference to damage field here.
-  arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
-
-  ElementRegionManager & elemManager = mesh.getElemManager();
-
-  ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
-
-  ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
-  constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
-
-
-  // begin region loop
-  forTargetSubRegionsComplete< CellElementSubRegion >( mesh, [this, &solidSolver, nodalDamage]
-                                                         ( localIndex const targetIndex, localIndex, localIndex, ElementRegionBase &,
-                                                         CellElementSubRegion & elementSubRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    constitutive::ConstitutiveBase &
-    solidModel = elementSubRegion.getConstitutiveModel< constitutive::ConstitutiveBase >( solidSolver.solidMaterialNames()[targetIndex] );
+    NodeManager & nodeManager = mesh.getNodeManager();
 
-    ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
+    PhaseFieldDamageFEM const &
+    damageSolver = this->getParent().getGroup< PhaseFieldDamageFEM >( m_damageSolverName );
+
+    string const & damageFieldName = damageSolver.getFieldName();
+
+    //should get reference to damage field here.
+    arrayView1d< real64 const > const nodalDamage = nodeManager.getReference< array1d< real64 > >( damageFieldName );
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+    ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
+
+    ElementRegionManager::ConstitutiveRelationAccessor< ConstitutiveBase >
+    constitutiveRelations = elemManager.constructFullConstitutiveAccessor< ConstitutiveBase >( constitutiveManager );
+    // begin region loop
+    elemManager.forElementSubRegions< CellElementSubRegion >( regionNames, [this, nodalDamage]
+                                                                ( localIndex const,
+                                                                CellElementSubRegion & elementSubRegion )
     {
-      using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
-      typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
+      string const & solidModelName = elementSubRegion.getReference< string >( SolidMechanicsLagrangianFEM::viewKeyStruct::solidMaterialNamesString());
+      constitutive::SolidBase &
+      solidModel = elementSubRegion.getConstitutiveModel< constitutive::SolidBase >( solidModelName );
 
-      arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
-      arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
-
-      finiteElement::FiniteElementBase const &
-      fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
-
-      finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
+      ConstitutivePassThru< DamageBase >::execute( solidModel, [this, &elementSubRegion, nodalDamage]( auto & damageModel )
       {
-        using FE_TYPE = TYPEOFREF( finiteElement );
-        constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
-        constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
+        using CONSTITUTIVE_TYPE = TYPEOFREF( damageModel );
+        typename CONSTITUTIVE_TYPE::KernelWrapper constitutiveUpdate = damageModel.createKernelUpdates();
 
-        forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
+        arrayView2d< real64 > const damageFieldOnMaterial = constitutiveUpdate.m_damage;
+        arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemNodes = elementSubRegion.nodeList();
+
+        finiteElement::FiniteElementBase const &
+        fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( m_discretizationName );
+
+        finiteElement::dispatch3D( fe, [nodalDamage, &elementSubRegion, damageFieldOnMaterial, elemNodes]( auto & finiteElement )
         {
-          for( localIndex q = 0; q < n_q_points; ++q )
-          {
-            real64 N[ numNodesPerElement ];
-            FE_TYPE::calcN( q, N );
+          using FE_TYPE = TYPEOFREF( finiteElement );
+          constexpr localIndex numNodesPerElement = FE_TYPE::numNodes;
+          constexpr localIndex n_q_points = FE_TYPE::numQuadraturePoints;
 
-            damageFieldOnMaterial( k, q ) = 0;
-            for( localIndex a = 0; a < numNodesPerElement; ++a )
+          forAll< serialPolicy >( elementSubRegion.size(), [nodalDamage, damageFieldOnMaterial, elemNodes] ( localIndex const k )
+          {
+            for( localIndex q = 0; q < n_q_points; ++q )
             {
-              damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemNodes( k, a )];
-              //solution is probably not going to work because the solution of the coupled solver
-              //has both damage and displacements. Using the damageResult field from the Damage solver
-              //is probably better
-              //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
-              // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+              real64 N[ numNodesPerElement ];
+              FE_TYPE::calcN( q, N );
+
+              damageFieldOnMaterial( k, q ) = 0;
+              for( localIndex a = 0; a < numNodesPerElement; ++a )
+              {
+                damageFieldOnMaterial( k, q ) += N[a] * nodalDamage[elemNodes( k, a )];
+                //solution is probably not going to work because the solution of the coupled solver
+                //has both damage and displacements. Using the damageResult field from the Damage solver
+                //is probably better
+                //            std::cout<<"q, N, Dnode = "<<q<<", "<<feDiscretization->m_finiteElement->value(a, q)<<",
+                // "<<nodalDamage[elemNodes(k, a)]<<std::endl;
+              }
+              //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
             }
-            //          std::cout<<"damage("<<k<<","<<q<<") = "<<damageFieldOnMaterial(k,q)<<std::endl;
-          }
+          } );
         } );
       } );
     } );
   } );
-
 
 }
 

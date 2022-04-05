@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -119,9 +119,11 @@ int TrilinosSolver::doSolve( EpetraVector const & rhs,
   GEOSX_LAI_ASSERT( rhs.ready() );
 
   // HACK: Epetra is not const-correct, so we need the cast. The vector is not actually modified.
-  GEOSX_LAI_CHECK_ERROR( m_solver->SetRHS( &const_cast< Epetra_FEVector & >( rhs.unwrapped() ) ) );
+  GEOSX_LAI_CHECK_ERROR( m_solver->SetRHS( &const_cast< Epetra_Vector & >( rhs.unwrapped() ) ) );
   GEOSX_LAI_CHECK_ERROR( m_solver->SetLHS( &sol.unwrapped() ) );
-  return m_solver->Iterate( m_params.krylov.maxIterations, m_params.krylov.relTolerance );
+  int const result = m_solver->Iterate( m_params.krylov.maxIterations, m_params.krylov.relTolerance );
+  sol.touch();
+  return result;
 }
 
 void TrilinosSolver::apply( EpetraVector const & rhs,

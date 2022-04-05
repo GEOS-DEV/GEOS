@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -13,6 +13,11 @@
  */
 
 // Source includes
-#include "PyGroup.hpp"
+#ifndef GEOSX_PYGEOSX_PYGEOSX_HPP_
+#define GEOSX_PYGEOSX_PYGEOSX_HPP_
+
 #include "LvArray/src/python/pythonForwardDeclarations.hpp"
 #include "mainInterface/GeosxState.hpp"
+#include "mainInterface/ProblemManager.hpp"
+
+#endif

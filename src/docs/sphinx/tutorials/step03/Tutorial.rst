@@ -1,8 +1,8 @@
 .. _TutorialFieldCase:
 
-#########################################
-Tutorial 3: A simple field case
-#########################################
+###############################################
+Tutorial 3: Regions and Property Specifications
+###############################################
 
 **Context**
 
@@ -21,15 +21,19 @@ At the end of this tutorial you will know:
 
 **Input file**
 
-The xml input file for this test case is located at:
+The XML input file for this test case is located at:
 
 .. code-block:: console
 
-  src/coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+  inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
+
+.. code-block:: console
+
+  inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
 
 We consider the following mesh as a numerical support to the simulations in this tutorial:
 
-.. image:: mesh.png
+.. image:: full_mesh.png
    :width: 600px
 
 This mesh contains three continuous regions:
@@ -38,12 +42,11 @@ This mesh contains three continuous regions:
   - a Middle region (reservoir layer, elementary tag = `Reservoir`)
   - a Bottom region (underburden, elementary tag = `Underburden`)
 
+  .. image:: reservoir_transparent.png
+     :width: 600px
+
 The mesh is defined using the GMSH file format (see :ref:`Meshes` for more information on
 the supported mesh file format). Each tetrahedron is associated to a unique tag.
-
-------------------------------------
-GEOSX input files
-------------------------------------
 
 The XML file considered here follows the typical structure of the GEOSX input files:
 
@@ -61,12 +64,13 @@ The XML file considered here follows the typical structure of the GEOSX input fi
 
 .. _Solver_tag_field_case:
 
-Defining a solver
------------------
+--------------------
+Single-phase solver
+--------------------
 
 Let us inspect the **Solver** XML tags.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_SOLVER -->
   :end-before: <!-- SPHINX_FIELD_CASE_SOLVER_END -->
@@ -75,7 +79,7 @@ Let us inspect the **Solver** XML tags.
 This node gathers all the information previously defined.
 We use a classical ``SinglePhaseFVM`` Finite Volume Method,
 with the two-point flux approximation
-as will be defined in the **NumericalMethod** tag.
+as will be defined in the **NumericalMethods** tag.
 The ``targetRegions`` refers only
 to the Reservoir region because we only solve for flow in this region.
 The ``fluidNames`` and ``solidNames`` refer the materials defined
@@ -87,14 +91,15 @@ numerical solver parameters such as the linear and nonlinear tolerances, the pre
 
 .. _Mesh_tag_field_case:
 
-Specifying a computational mesh
-----------------------------------
+-------
+Mesh
+-------
 
-Here, we use the ``PAMELAMeshGenerator`` to load the mesh (see :ref:`ImportingExternalMesh`).
+Here, we use the ``PAMELAMesh`` to load the mesh (see :ref:`ImportingExternalMesh`).
 The syntax to import external meshes is simple : in the XML file,
-the mesh ``file`` is included with its relative or absolute path to the location of the geosx XML file and a user-specified ``name`` label for the mesh object.
+the mesh ``file`` is included with its relative or absolute path to the location of the GEOSX XML file and a user-specified ``name`` label for the mesh object.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_MESH -->
   :end-before: <!-- SPHINX_FIELD_CASE_MESH_END -->
@@ -102,12 +107,13 @@ the mesh ``file`` is included with its relative or absolute path to the location
 
 .. _Geometry_tag_field_case:
 
-Geometry tag
------------------
+----------
+Geometry
+----------
 
         Here, we are using definition of ``source`` and ``sink`` boxes in addition to the ``all`` box in order to flag sets of nodes or cells which will act as injection or production.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_GEOMETRY -->
   :end-before: <!-- SPHINX_FIELD_CASE_GEOMETRY_END -->
@@ -116,13 +122,19 @@ In order to define a box, the user defines ``xMax`` and ``xMin``, two diagonally
 
 .. _Events_tag_field_case:
 
-Specifying events
-------------------------
+
+.. image:: reservoir_structure.png
+   :width: 600px
+
+
+-------
+Events
+-------
 
 The events are used here to guide the simulation through time,
 and specify when outputs must be triggered.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_EVENTS -->
   :end-before: <!-- SPHINX_FIELD_CASE_EVENTS_END -->
@@ -132,17 +144,18 @@ If this time is ever reached or exceeded, the simulation ends.
 
 Two ``PeriodicEvent`` are defined.
 - The first one, ``solverApplications``, is associated with the solver. The  ``forceDt`` keyword means that there will always be time-steps of 23 days (2 000 000 seconds).
-- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds). The ``targetExactTimestep`` is set to 1, meaning that the Event Manager will impose this event will be triggered exactly every 116 days, constraining schedule decided by application to match this date.
+- The second, ``outputs``, is associated with the output. The ``timeFrequency`` keyword means that it will be executed every 116 days (10 000 000 seconds).
 
 
 .. _NumericalMethods_tag_field_case:
 
-Defining Numerical Methods
-----------------------------------
+------------------
+Numerical methods
+------------------
 
 Defining the numerical method used in the solver, we will provide information on how to discretize our equations. Here a classical two-point flux approximation (TPFA) scheme is used to discretize water fluxes over faces.
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_NUMERICAL -->
   :end-before: <!-- SPHINX_FIELD_CASE_NUMERICAL_END -->
@@ -155,8 +168,9 @@ The field under ``coefficientName`` is used during TPFA transmissibilities const
 
 .. _ElementRegions_tag_field_case:
 
-Defining regions in the mesh
------------------------------------
+--------
+Regions
+--------
 
 Assuming that the overburden and the underburden are impermeable,
 and flow only takes place in the reservoir, we need to define regions.
@@ -167,20 +181,21 @@ There are two methods to achieve this regional solve.
 
         .. code-block:: xml
 
-                <ElementRegion>
-                <CellElementRegion name="ReservoirLayer"
-                                   cellBlocks="{Reservoir_TETRA}"
-                                   materialList="{water, rock}">
-                </ElementRegion>
+                <ElementRegions>
+                  <CellElementRegion
+                    name="Reservoir"
+                    cellBlocks="{Reservoir_TETRA}"
+                    materialList="{ water, rock, rockPerm, rockPorosity, nullSolid }"/>
+                </ElementRegions>
 
-- The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegion** tag is :
+- The second solution is to define all the ``CellElementRegions`` as they are in the GMSH file, but defining the solvers only on the reservoir layer. In this case, the **ElementRegions** tag is :
 
-        .. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+        .. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
                 :language: xml
                 :start-after: <!-- SPHINX_FIELD_CASE_REGION -->
                 :end-before: <!-- SPHINX_FIELD_CASE_REGION_END -->
 
-We opt for the latest as it allows to visualize over- and underburdens and to change regions handling in ther tag without needing to amend the **ElementRegion** tag.
+We opt for the latest as it allows to visualize over- and underburdens and to change regions handling in their tag without needing to amend the **ElementRegion** tag.
 
 .. note::
   The material list here was set for a single-phase flow problem. This list is subject
@@ -188,12 +203,13 @@ We opt for the latest as it allows to visualize over- and underburdens and to ch
 
 .. _Constitutive_tag_field_case:
 
-Defining material properties with constitutive laws
--------------------------------------------------------
+--------------------
+Constitutive models
+--------------------
 
-We simulate a single-phase flow in the reservoir layer, hence with two types of materials, a fluid (water) and solid (rock).
+We simulate a single-phase flow in the reservoir layer, hence with multiple types of materials, a fluid (water) and solid (rock permeability and porosity).
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE -->
   :end-before: <!-- SPHINX_FIELD_CASE_CONSTITUTIVE_END -->
@@ -203,10 +219,15 @@ The constitutive parameters such as the density, the viscosity, and the compress
 .. note::
   To consider an incompressible fluid, the user has to set the compressibility to 0.
 
+.. note::
+  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field.
+
+
 .. _FieldSpecifications_tag_field_case:
 
-Defining properties with the FieldSpecifications
----------------------------------------------------------------------
+--------------------
+Defining properties
+--------------------
 
 The next step is to specify fields, including:
 
@@ -214,7 +235,7 @@ The next step is to specify fields, including:
   - The static properties (here, we have to define the permeability tensor and the porosity)
   - The boundary conditions (here, the injection and production pressure have to be set)
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_FIELD -->
   :end-before: <!-- SPHINX_FIELD_CASE_FIELD_END -->
@@ -226,18 +247,16 @@ You may note :
  - The ``setName`` field points to the box previously defined to apply the fields,
  - ``name`` and ``fieldName`` have a different meaning: ``name`` is used to give a name to the XML block. This ``name`` must be unique. ``fieldName`` is the name of the field registered in GEOSX. This value has to be set according to the expected input fields of each solver.
 
-.. note::
-  GEOSX handles permeability as a diagonal matrix, so the three values of the permeability tensor are set individually using the ``component`` field,
-
 .. _Outputs_tag_field_case:
 
-Specifying the output formats
-----------------------------------
+-------
+Output
+-------
 
 The **Outputs** XML tag is used to trigger the writing of visualization files.
-Here, we write files in a format natively readable by Paraview under the tar *VTK*
+Here, we write files in a format natively readable by Paraview under the tag *VTK*:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_OUTPUT -->
   :end-before: <!-- SPHINX_FIELD_CASE_OUTPUT_END -->
@@ -247,13 +266,13 @@ Here, we write files in a format natively readable by Paraview under the tar *VT
 
 .. _Functions_tag_field_case:
 
-------------------------------------------------
-Using Functions to specify dependent properties
-------------------------------------------------
+---------------------------------------
+Using functions to specify properties
+---------------------------------------
 
 Eventually, one can define varying properties using ``TableFunction`` (:ref:`FunctionManager`) under the **Functions** tag:
 
-.. literalinclude:: ../../../../coreComponents/physicsSolvers/multiphysics/integratedTests/FieldCaseTutorial1.xml
+.. literalinclude:: ../../../../../inputFiles/singlePhaseFlow/FieldCaseTutorial3_base.xml
   :language: xml
   :start-after: <!-- SPHINX_FIELD_CASE_TFUNC -->
   :end-before: <!-- SPHINX_FIELD_CASE_TFUNC_END -->
@@ -287,7 +306,7 @@ One can notice the correct load of the field function among the starting output 
 
 .. code-block:: console
 
-        Adding Mesh: PAMELAMeshGenerator, SyntheticMesh
+        Adding Mesh: PAMELAMesh, SyntheticMesh
         Adding Solver of type SinglePhaseFVM, named SinglePhaseFlow
         Adding Geometric Object: Box, all
         Adding Geometric Object: Box, source
@@ -308,20 +327,16 @@ Visualization of results
 ------------------------------------
 
 We can open the file `syntheticReservoirVizFile.pvd` with Paraview to visualize the simulation
-results. The initial pressure field in the reservoir region is provided below as an example.
-
-.. image:: pressureField_initial.png
-   :width: 600px
-
-Since, in the event block, we have asked for the output to be generated at regular
-intervals throughout the simulation, we can also visualize the pressure
+results. In the event block, we have asked for the output to be generated at regular
+intervals throughout the simulation, we can thus visualize the pressure
 distribution at different simulation times, showing the variation in the injection control.
 
-.. image:: pressureField_2e8.png
+
+.. image:: pressure_1e7.png
    :width: 600px
 
-.. image:: pressureField_5e8.png
-   :width: 600px
+.. image:: pressure_1e8.png
+  :width: 600px
 
 -----------------------------------
 To go further
@@ -330,11 +345,6 @@ To go further
 
 This concludes this tutorial. For any feedback, please submit a `GitHub issue on
 the project's GitHub page <https://github.com/GEOSX/GEOSX/issues>`_.
-
-**Next tutorial**
-
-In the next tutorial :ref:`TutorialDeadOilBottomLayersSPE10`, we will learn how
-to run a dead oil case on a SPE10 channelized layer.
 
 **For more details**
 

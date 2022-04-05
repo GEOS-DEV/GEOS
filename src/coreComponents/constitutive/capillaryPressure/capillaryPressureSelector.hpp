@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,8 @@
 
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/capillaryPressure/BrooksCoreyCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/JFunctionCapillaryPressure.hpp"
+#include "constitutive/capillaryPressure/TableCapillaryPressure.hpp"
 #include "constitutive/capillaryPressure/VanGenuchtenCapillaryPressure.hpp"
 
 namespace geosx
@@ -34,6 +36,8 @@ void constitutiveUpdatePassThru( CapillaryPressureBase const & capPres,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< BrooksCoreyCapillaryPressure,
+                               JFunctionCapillaryPressure,
+                               TableCapillaryPressure,
                                VanGenuchtenCapillaryPressure >::execute( capPres, std::forward< LAMBDA >( lambda ) );
 }
 
@@ -42,6 +46,8 @@ void constitutiveUpdatePassThru( CapillaryPressureBase & capPres,
                                  LAMBDA && lambda )
 {
   ConstitutivePassThruHandler< BrooksCoreyCapillaryPressure,
+                               JFunctionCapillaryPressure,
+                               TableCapillaryPressure,
                                VanGenuchtenCapillaryPressure >::execute( capPres, std::forward< LAMBDA >( lambda ) );
 }
 

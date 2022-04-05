@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,9 +33,9 @@ public:
   /// Alias for the type of the element-to-node map
   using NodeMapType = InterObjectRelation< array2d< localIndex, cells::NODE_MAP_PERMUTATION > >;
   /// Alias for the type of the element-to-edge map
-  using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
+  using EdgeMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::generateAdjacencyLists
   /// Alias for the type of the element-to-face map
-  using FaceMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::GenerateAdjacencyLists
+  using FaceMapType = FixedOneToManyRelation; // unused but needed in MeshLevel::generateAdjacencyLists
 
   /**
    * @brief enumeration for values in segmentStatusList parameter of Generate()
@@ -61,11 +61,6 @@ public:
   WellElementSubRegion( string const & name,
                         Group * const parent );
 
-  /**
-   * @brief Default destructor.
-   */
-  virtual ~WellElementSubRegion() override;
-
   ///@}
 
   /**
@@ -77,12 +72,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string catalogName() { return "wellElementSubRegion"; }
+  static string catalogName() { return "wellElementSubRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return WellElementSubRegion::catalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -257,8 +252,6 @@ public:
    */
   ///@{
 
-  virtual void viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const override;
-
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
   virtual localIndex packUpDownMaps( buffer_unit_type * & buffer,
@@ -420,9 +413,9 @@ private:
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /// Map of unmapped global indices in the element-to-node map
   map< localIndex, array1d< globalIndex > > m_unmappedGlobalIndicesInNodelist;
@@ -434,10 +427,10 @@ private:
   NodeMapType m_toNodesRelation;
 
   /// Element-to-edge relation
-  EdgeMapType m_toEdgesRelation;  // unused but needed in MeshLevel::GenerateAdjacencyLists
+  EdgeMapType m_toEdgesRelation;  // unused but needed in MeshLevel::generateAdjacencyLists
 
   /// Element-to-face relation
-  FaceMapType m_toFacesRelation;  // unused but needed in MeshLevel::GenerateAdjacencyLists
+  FaceMapType m_toFacesRelation;  // unused but needed in MeshLevel::generateAdjacencyLists
 
   /// Local indices of the next well element (used in solvers)
   array1d< localIndex > m_nextWellElementIndex;

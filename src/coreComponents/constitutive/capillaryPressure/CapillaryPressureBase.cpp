@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,6 +17,7 @@
  */
 
 #include "CapillaryPressureBase.hpp"
+#include "CapillaryPressureExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -25,31 +26,6 @@ using namespace dataRepository;
 
 namespace constitutive
 {
-
-namespace
-{
-
-integer toPhaseType( string const & lookup, string const & groupName )
-{
-  static std::unordered_map< string, integer > const phaseDict =
-  {
-    { "gas", CapillaryPressureBase::PhaseType::GAS },
-    { "oil", CapillaryPressureBase::PhaseType::OIL },
-    { "water", CapillaryPressureBase::PhaseType::WATER }
-  };
-  auto const it = phaseDict.find( lookup );
-  if( it == phaseDict.end() )
-  {
-    std::vector< string > phaseNames;
-    std::transform( phaseDict.begin(), phaseDict.end(), std::back_inserter( phaseNames ), []( auto const & p ){ return p.first; } );
-    GEOSX_THROW( groupName << ": phase '" << lookup << "' not supported.\n" <<
-                 "Please use one of the following: " << stringutilities::join( phaseNames.begin(), phaseNames.end(), ", " ),
-                 InputError );
-  }
-  return it->second;
-}
-
-} // namespace
 
 CapillaryPressureBase::CapillaryPressureBase( string const & name,
                                               Group * const parent )
@@ -66,10 +42,9 @@ CapillaryPressureBase::CapillaryPressureBase( string const & name,
   registerWrapper( viewKeyStruct::phaseOrderString(), &m_phaseOrder ).
     setSizedFromParent( 0 );
 
-  registerWrapper( viewKeyStruct::phaseCapPressureString(), &m_phaseCapPressure ).
-    setPlotLevel( PlotLevel::LEVEL_0 );
+  registerExtrinsicData( extrinsicMeshData::cappres::phaseCapPressure{}, &m_phaseCapPressure );
+  registerExtrinsicData( extrinsicMeshData::cappres::dPhaseCapPressure_dPhaseVolFraction{}, &m_dPhaseCapPressure_dPhaseVolFrac );
 
-  registerWrapper( viewKeyStruct::dPhaseCapPressure_dPhaseVolFractionString(), &m_dPhaseCapPressure_dPhaseVolFrac );
 }
 
 void CapillaryPressureBase::postProcessInput()
@@ -77,22 +52,32 @@ void CapillaryPressureBase::postProcessInput()
   ConstitutiveBase::postProcessInput();
 
   integer const numPhases = numFluidPhases();
-  GEOSX_THROW_IF( numPhases< 2 || numPhases > MAX_NUM_PHASES,
-                  getName() << ": number of fluid phases must be between 2 and " << MAX_NUM_PHASES << ", got " << numPhases,
-                  InputError );
+  GEOSX_THROW_IF_LT_MSG( numPhases, 2,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
+  GEOSX_THROW_IF_GT_MSG( numPhases, MAX_NUM_PHASES,
+                         GEOSX_FMT( "{}: invalid number of phases", getFullName() ),
+                         InputError );
 
   m_phaseTypes.resize( numPhases );
   m_phaseOrder.resizeDefault( MAX_NUM_PHASES, -1 );
 
+  auto const toPhaseType = [&]( string const & lookup )
+  {
+    static unordered_map< string, integer > const phaseDict =
+    {
+      { "gas", PhaseType::GAS },
+      { "oil", PhaseType::OIL },
+      { "water", PhaseType::WATER }
+    };
+    return findOption( phaseDict, lookup, viewKeyStruct::phaseNamesString(), getFullName() );
+  };
+
   for( integer ip = 0; ip < numPhases; ++ip )
   {
-    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip], getName() );
-    m_phaseOrder[m_phaseTypes[ip]] = LvArray::integerConversion< integer >( ip );
-
+    m_phaseTypes[ip] = toPhaseType( m_phaseNames[ip] );
+    m_phaseOrder[m_phaseTypes[ip]] = ip;
   }
-
-  GEOSX_THROW_IF( m_phaseOrder[CapillaryPressureBase::REFERENCE_PHASE] < 0,
-                  "CapillaryPressureBase: reference oil phase has not been defined and should be included in model", InputError );
 
   // call to correctly set member array tertiary sizes on the 'main' material object
   resizeFields( 0, 0 );
@@ -112,7 +97,7 @@ void CapillaryPressureBase::resizeFields( localIndex const size,
 
 void CapillaryPressureBase::setLabels()
 {
-  getWrapper< array3d< real64, cappres::LAYOUT_CAPPRES > >( viewKeyStruct::phaseCapPressureString() ).
+  getExtrinsicData< extrinsicMeshData::cappres::phaseCapPressure >().
     setDimLabels( 2, m_phaseNames );
 }
 

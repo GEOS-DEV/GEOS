@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -26,35 +26,6 @@
 #include <cstdlib>
 
 using namespace geosx;
-
-#ifndef GTEST_SKIP
-#define GTEST_SKIP() return
-#endif
-
-#define SKIP_TEST_IF( COND, REASON ) \
-  do \
-  { \
-    if( COND ) \
-    { \
-      GEOSX_WARNING( "This test is currently known to fail when " #COND " because:\n" REASON "\n" \
-                                                                                             "Therefore, we skip it entirely for this run (may show as PASSED or SKIPPED)" ); \
-      GTEST_SKIP(); \
-    } \
-  } while( 0 )
-
-#define SKIP_TEST_IN_SERIAL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize == 1, REASON ); \
-  } while( 0 )
-
-#define SKIP_TEST_IN_PARALLEL( REASON ) \
-  do \
-  { \
-    int const mpiSize = MpiWrapper::commSize( MPI_COMM_GEOSX ); \
-    SKIP_TEST_IF( mpiSize != 1, REASON ); \
-  } while( 0 )
 
 real64 drand( real64 min = 0.0, real64 max = 1.0 )
 {

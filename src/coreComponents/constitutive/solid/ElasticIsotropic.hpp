@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -119,6 +119,7 @@ public:
 
   GEOSX_HOST_DEVICE
   virtual void getElasticStiffness( localIndex const k,
+                                    localIndex const q,
                                     real64 ( &stiffness )[6][6] ) const override;
 
   GEOSX_HOST_DEVICE
@@ -163,10 +164,12 @@ protected:
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
 void ElasticIsotropicUpdates::getElasticStiffness( localIndex const k,
+                                                   localIndex const q,
                                                    real64 ( & stiffness )[6][6] ) const
 {
+  GEOSX_UNUSED_VAR( q );
   real64 const G = m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], G );
 
   LvArray::tensorOps::fill< 6, 6 >( stiffness, 0 );
 
@@ -194,8 +197,8 @@ void ElasticIsotropicUpdates::getElasticStrain( localIndex const k,
                                                 localIndex const q,
                                                 real64 ( & elasticStrain)[6] ) const
 {
-  real64 const E = conversions::BulkModAndShearMod::toYoungsMod( m_bulkModulus[k], m_shearModulus[k] );
-  real64 const nu = conversions::BulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const E = conversions::bulkModAndShearMod::toYoungMod( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const nu = conversions::bulkModAndShearMod::toPoissonRatio( m_bulkModulus[k], m_shearModulus[k] );
 
   elasticStrain[0] = (    m_newStress[k][q][0] - nu*m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
   elasticStrain[1] = (-nu*m_newStress[k][q][0] +    m_newStress[k][q][1] - nu*m_newStress[k][q][2])/E;
@@ -217,7 +220,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate_StressOnly( localIndex co
   GEOSX_UNUSED_VAR( q );
 
   real64 const twoG   = 2 * m_shearModulus[k];
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], m_shearModulus[k] );
   real64 const vol    = lambda * ( totalStrain[0] + totalStrain[1] + totalStrain[2] );
 
   stress[0] = vol + twoG * totalStrain[0];
@@ -239,7 +242,7 @@ void ElasticIsotropicUpdates::smallStrainNoStateUpdate( localIndex const k,
                                                         real64 ( & stiffness )[6][6] ) const
 {
   smallStrainNoStateUpdate_StressOnly( k, q, totalStrain, stress );
-  getElasticStiffness( k, stiffness );
+  getElasticStiffness( k, q, stiffness );
 }
 
 
@@ -279,7 +282,7 @@ void ElasticIsotropicUpdates::smallStrainUpdate( localIndex const k,
                                                  real64 ( & stiffness )[6][6] ) const
 {
   smallStrainUpdate_StressOnly( k, q, strainIncrement, stress );
-  getElasticStiffness( k, stiffness );
+  getElasticStiffness( k, q, stiffness );
 }
 
 
@@ -408,7 +411,7 @@ public:
     static constexpr char const * defaultShearModulusString() { return "defaultShearModulus"; }
 
     /// string/key for default Young's modulus
-    static constexpr char const * defaultYoungsModulusString() { return "defaultYoungsModulus"; }
+    static constexpr char const * defaultYoungModulusString() { return "defaultYoungModulus"; }
 
     /// string/key for bulk modulus
     static constexpr char const * bulkModulusString() { return "bulkModulus"; }
@@ -487,7 +490,6 @@ public:
                           m_oldStress );
   }
 
-
 protected:
 
   /// Post-process XML data
@@ -507,7 +509,7 @@ protected:
 
 };
 
-}
+} /* namespace constitutive */
 
 } /* namespace geosx */
 

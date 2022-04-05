@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -63,7 +63,7 @@ public:
 
     PreconditionerBase< LAI >::setup( mat );
 
-    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.getComm() );
+    m_blockDiag.createWithLocalSize( mat.numLocalRows(), mat.numLocalCols(), m_blockSize, mat.comm() );
     m_blockDiag.open();
 
     array1d< globalIndex > idxBlk( m_blockSize );
@@ -78,7 +78,7 @@ public:
       {
         globalIndex const iRow = i + LvArray::integerConversion< globalIndex >( j );
         idxBlk[j] = iRow;
-        localIndex const rowLength = mat.globalRowLength( iRow );
+        localIndex const rowLength = mat.rowLength( iRow );
         cols.resize( rowLength );
         vals.resize( rowLength );
         mat.getRowCopy( iRow, cols, vals );

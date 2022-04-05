@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -29,16 +29,10 @@ namespace constitutive
 ConstitutiveBase::ConstitutiveBase( string const & name,
                                     Group * const parent ):
   Group( name, parent ),
-  m_numQuadraturePoints( 1 ),
-  m_constitutiveDataGroup( nullptr )
+  m_numQuadraturePoints( 1 )
 {
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
-
-ConstitutiveBase::~ConstitutiveBase()
-{}
-
-
 
 ConstitutiveBase::CatalogInterface::CatalogType & ConstitutiveBase::getCatalog()
 {
@@ -50,7 +44,6 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
                                                  localIndex const numConstitutivePointsPerParentIndex )
 {
   m_numQuadraturePoints = numConstitutivePointsPerParentIndex;
-  m_constitutiveDataGroup = &parent;
 
   for( auto & group : this->getSubGroups() )
   {
@@ -59,7 +52,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
       if( wrapper.second->sizedFromParent() )
       {
         string const wrapperName = makeFieldName( this->getName(), wrapper.first );
-        parent.registerWrapper( wrapperName, wrapper.second->clone( wrapper.first, parent ) ).
+        parent.registerWrapper( wrapper.second->clone( wrapperName, parent ) ).
           setRestartFlags( RestartFlags::NO_WRITE );
       }
     }
@@ -70,7 +63,7 @@ void ConstitutiveBase::allocateConstitutiveData( dataRepository::Group & parent,
     if( wrapper.second->sizedFromParent() )
     {
       string const wrapperName = makeFieldName( this->getName(), wrapper.first );
-      parent.registerWrapper( wrapperName, wrapper.second->clone( wrapper.first, parent ) ).
+      parent.registerWrapper( wrapper.second->clone( wrapperName, parent ) ).
         setRestartFlags( RestartFlags::NO_WRITE );
     }
   }

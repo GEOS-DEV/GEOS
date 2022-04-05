@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -27,28 +27,21 @@
 
 using namespace geosx;
 
-#define STRINGIFY2( X ) #X
-#define STRINGIFY( X ) STRINGIFY2( X )
+constexpr double maxCoordInX = 1.0;
+constexpr double maxCoordInY = 2.0;
+constexpr double maxCoordInZ = 3.0;
 
-#define NX 10
-#define NY 11
-#define NZ 12
+constexpr localIndex numElemsInX = 10;
+constexpr localIndex numElemsInY = 11;
+constexpr localIndex numElemsInZ = 12;
 
-#define MAX_COORD_X 1.0
-#define MAX_COORD_Y 2.0
-#define MAX_COORD_Z 3.0
+constexpr localIndex numNodesInX = numElemsInX + 1;
+constexpr localIndex numNodesInY = numElemsInY + 1;
+constexpr localIndex numNodesInZ = numElemsInZ + 1;
 
-constexpr localIndex numElemsInX = NX;
-constexpr localIndex numElemsInY = NY;
-constexpr localIndex numElemsInZ = NZ;
-
-constexpr localIndex numNodesInX = NX + 1;
-constexpr localIndex numNodesInY = NY + 1;
-constexpr localIndex numNodesInZ = NZ + 1;
-
-constexpr double dx = MAX_COORD_X / NX;
-constexpr double dy = MAX_COORD_Y / NY;
-constexpr double dz = MAX_COORD_Z / NZ;
+constexpr double dx = maxCoordInX / numElemsInX;
+constexpr double dy = maxCoordInY / numElemsInY;
+constexpr double dz = maxCoordInZ / numElemsInZ;
 
 constexpr localIndex node_dI = numNodesInY * numNodesInZ;
 constexpr localIndex node_dJ = numNodesInZ;
@@ -62,63 +55,60 @@ protected:
 
   void SetUp() override
   {
-    m_nodeManager = &getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getNodeManager();
-    m_faceManager = &getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
-    m_edgeManager = &getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getEdgeManager();
+    DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
+    MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-    ElementRegionManager & elemManager = getGlobalState().getProblemManager().getDomainPartition().getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
-    GEOSX_ERROR_IF_NE_MSG( elemManager.getRegions().size(), 1, "Only one region should exist." );
+    m_nodeManager = &mesh.getNodeManager();
+    m_faceManager = &mesh.getFaceManager();
+    m_edgeManager = &mesh.getEdgeManager();
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+    ASSERT_EQ( elemManager.getRegions().size(), 1 );
 
     ElementRegionBase & elemRegion = elemManager.getRegion( 0 );
-    GEOSX_ERROR_IF_NE_MSG( elemRegion.getSubRegions().size(), 1, "Only one subregion should exist." );
+    ASSERT_EQ( elemRegion.getSubRegions().size(), 1 );
 
     m_subRegion = &elemRegion.getSubRegion< CellElementSubRegion >( 0 );
   }
 
-  NodeManager * m_nodeManager;
-  FaceManager * m_faceManager;
-  EdgeManager * m_edgeManager;
-  CellElementSubRegion * m_subRegion;
+  NodeManager * m_nodeManager{};
+  FaceManager * m_faceManager{};
+  EdgeManager * m_edgeManager{};
+  CellElementSubRegion * m_subRegion{};
 
   static void SetUpTestCase()
   {
-    string const inputStream =
+    string const inputStream = GEOSX_FMT(
       "<Problem>"
       "  <Mesh>"
-      "    <InternalMesh name=\"mesh1\""
-      "                  elementTypes=\"{C3D8}\""
-      "                  xCoords=\"{0, " STRINGIFY( MAX_COORD_X ) "}\""
-                                                                  "                  yCoords=\"{0, " STRINGIFY( MAX_COORD_Y ) "}\""
-                                                                                                                              "                  zCoords=\"{0, "
-      STRINGIFY( MAX_COORD_Z ) "}\""
-                               "                  nx=\"{"
-      STRINGIFY( NX ) "}\""
-                      "                  ny=\"{"
-      STRINGIFY( NY ) "}\""
-                      "                  nz=\"{"
-      STRINGIFY( NZ ) "}\""
-                      "                  cellBlockNames=\"{cb1}\"/>"
-                      "  </Mesh>"
-                      "  <ElementRegions>"
-                      "    <CellElementRegion name=\"region1\" cellBlocks=\"{cb1}\" materialList=\"{dummy_material}\" />"
-                      "  </ElementRegions>"
-                      "</Problem>";
+      "    <InternalMesh"
+      "      name=\"mesh1\""
+      "      elementTypes=\"{{C3D8}}\""
+      "      xCoords=\"{{0,{}}}\""
+      "      yCoords=\"{{0,{}}}\""
+      "      zCoords=\"{{0,{}}}\""
+      "      nx=\"{{{}}}\""
+      "      ny=\"{{{}}}\""
+      "      nz=\"{{{}}}\""
+      "      cellBlockNames=\"{{cb1}}\"/>"
+      "  </Mesh>"
+      "  <ElementRegions>"
+      "    <CellElementRegion name=\"region1\" cellBlocks=\"{{cb1}}\" materialList=\"{{}}\"/>"
+      "  </ElementRegions>"
+      "</Problem>",
+      maxCoordInX, maxCoordInY, maxCoordInZ, numElemsInX, numElemsInY, numElemsInZ );
 
     xmlWrapper::xmlDocument xmlDocument;
     xmlWrapper::xmlResult xmlResult = xmlDocument.load_buffer( inputStream.c_str(), inputStream.size() );
-    if( !xmlResult )
-    {
-      GEOSX_LOG_RANK_0( "XML parsed with errors!" );
-      GEOSX_LOG_RANK_0( "Error description: " << xmlResult.description());
-      GEOSX_LOG_RANK_0( "Error offset: " << xmlResult.offset );
-    }
+    ASSERT_TRUE( xmlResult );
 
-    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( "Problem" );
-    getGlobalState().getProblemManager().processInputFileRecursive( xmlProblemNode );
+    xmlWrapper::xmlNode xmlProblemNode = xmlDocument.child( dataRepository::keys::ProblemManager );
+    ProblemManager & problemManager = getGlobalState().getProblemManager();
+    problemManager.processInputFileRecursive( xmlProblemNode );
 
     // Open mesh levels
-    DomainPartition & domain = getGlobalState().getProblemManager().getDomainPartition();
-    MeshManager & meshManager = getGlobalState().getProblemManager().getGroup< MeshManager >( getGlobalState().getProblemManager().groupKeys.meshManager );
+    DomainPartition & domain = problemManager.getDomainPartition();
+    MeshManager & meshManager = problemManager.getGroup< MeshManager >( problemManager.groupKeys.meshManager );
     meshManager.generateMeshLevels( domain );
 
     ElementRegionManager & elementManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getElemManager();
@@ -126,8 +116,8 @@ protected:
     elementManager.processInputFileRecursive( topLevelNode );
     elementManager.postProcessInputRecursive();
 
-    getGlobalState().getProblemManager().problemSetup();
-    getGlobalState().getProblemManager().applyInitialConditions();
+    problemManager.problemSetup();
+    problemManager.applyInitialConditions();
   }
 };
 
@@ -157,17 +147,17 @@ TEST_F( MeshGenerationTest, nodePositions )
 {
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X = m_nodeManager->referencePosition();
 
-  localIndex nodeID = 0;
+  localIndex nodeIndex = 0;
   for( localIndex i = 0; i < numNodesInX; ++i )
   {
     for( localIndex j = 0; j < numNodesInY; ++j )
     {
       for( localIndex k = 0; k < numNodesInZ; ++k )
       {
-        EXPECT_DOUBLE_EQ( X( nodeID, 0 ), i * dx );
-        EXPECT_DOUBLE_EQ( X( nodeID, 1 ), j * dy );
-        EXPECT_DOUBLE_EQ( X( nodeID, 2 ), k * dz );
-        ++nodeID;
+        EXPECT_DOUBLE_EQ( X( nodeIndex, 0 ), i * dx );
+        EXPECT_DOUBLE_EQ( X( nodeIndex, 1 ), j * dy );
+        EXPECT_DOUBLE_EQ( X( nodeIndex, 2 ), k * dz );
+        ++nodeIndex;
       }
     }
   }
@@ -230,7 +220,7 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
 {
   ArrayOfArraysView< localIndex const > const & nodeToElemMap = m_nodeManager->elementList().toViewConst();
 
-  localIndex nodeID = 0;
+  localIndex nodeIndex = 0;
   for( localIndex i = 0; i < numNodesInX; ++i )
   {
     for( localIndex j = 0; j < numNodesInY; ++j )
@@ -265,9 +255,9 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
         }
 
         localIndex const numElems = expectedElems.size();
-        ASSERT_EQ( numElems, nodeToElemMap.sizeOfArray( nodeID ) );
+        ASSERT_EQ( numElems, nodeToElemMap.sizeOfArray( nodeIndex ) );
 
-        localIndex const * const nodeElems = nodeToElemMap[ nodeID ];
+        localIndex const * const nodeElems = nodeToElemMap[ nodeIndex ];
         std::vector< localIndex > elems( nodeElems, nodeElems + numElems );
 
         std::sort( elems.begin(), elems.end() );
@@ -278,7 +268,7 @@ TEST_F( MeshGenerationTest, nodeToElemMap )
           EXPECT_EQ( elems[ a ], expectedElems[ a ] );
         }
 
-        ++nodeID;
+        ++nodeIndex;
       }
     }
   }
@@ -308,17 +298,17 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
           m_subRegion->getFaceNodes( elemID, f, faceNodesFromElem );
           ASSERT_EQ( faceNodesFromElem.size(), 4 );
 
-          localIndex const faceID = elementToFaceMap( elemID, f );
+          localIndex const faceIndex = elementToFaceMap( elemID, f );
 
-          ASSERT_EQ( faceToNodeMap.sizeOfArray( faceID ), 4 );
+          ASSERT_EQ( faceToNodeMap.sizeOfArray( faceIndex ), 4 );
           for( localIndex a = 0; a < 4; ++a )
           {
-            faceNodesFromFace[ a ] = faceToNodeMap( faceID, a );
+            faceNodesFromFace[ a ] = faceToNodeMap( faceIndex, a );
           }
 
-          if( elemID != faceToElementMap( faceID, 0 ) )
+          if( elemID != faceToElementMap( faceIndex, 0 ) )
           {
-            EXPECT_EQ( elemID, faceToElementMap( faceID, 1 ) );
+            EXPECT_EQ( elemID, faceToElementMap( faceIndex, 1 ) );
           }
 
           std::sort( faceNodesFromElem.begin(), faceNodesFromElem.end() );
@@ -331,7 +321,7 @@ TEST_F( MeshGenerationTest, faceNodeMaps )
 
           for( localIndex a = 0; a < 4; ++a )
           {
-            EXPECT_TRUE( nodeToFaceMap.contains( faceNodesFromElem[ a ], faceID ) );
+            EXPECT_TRUE( nodeToFaceMap.contains( faceNodesFromElem[ a ], faceIndex ) );
           }
         }
         ++elemID;
@@ -358,9 +348,9 @@ TEST_F( MeshGenerationTest, faceElementMaps )
       {
         for( localIndex f = 0; f < 6; ++f )
         {
-          localIndex const faceID = elementToFaceMap( elemID, f );
+          localIndex const faceIndex = elementToFaceMap( elemID, f );
 
-          if( elemID == faceToElementMap( faceID, 0 ) )
+          if( elemID == faceToElementMap( faceIndex, 0 ) )
           {
             bool external = false;
             if( f == 0 && j == 0 )
@@ -378,17 +368,17 @@ TEST_F( MeshGenerationTest, faceElementMaps )
 
             if( external )
             {
-              EXPECT_EQ( -1, faceToElementMap( faceID, 1 ) );
+              EXPECT_EQ( -1, faceToElementMap( faceIndex, 1 ) );
             }
             else
             {
-              EXPECT_EQ( elemID + elemIDOffset[ f ], faceToElementMap( faceID, 1 ) );
+              EXPECT_EQ( elemID + elemIDOffset[ f ], faceToElementMap( faceIndex, 1 ) );
             }
           }
           else
           {
-            EXPECT_EQ( elemID, faceToElementMap( faceID, 1 ) );
-            EXPECT_EQ( elemID + elemIDOffset[ f ], faceToElementMap( faceID, 0 ) );
+            EXPECT_EQ( elemID, faceToElementMap( faceIndex, 1 ) );
+            EXPECT_EQ( elemID + elemIDOffset[ f ], faceToElementMap( faceIndex, 0 ) );
           }
         }
         ++elemID;
@@ -402,17 +392,17 @@ bool walkEdgesToFindNeighbor( localIndex const node0,
                               arraySlice1d< localIndex const > const & nodeEdges,
                               arrayView2d< localIndex const > const & edgeToNodeMap )
 {
-  for( localIndex const edgeID : nodeEdges )
+  for( localIndex const edgeIndex : nodeEdges )
   {
-    if( edgeToNodeMap[ edgeID ][ 0 ] == node0 )
+    if( edgeToNodeMap[ edgeIndex ][ 0 ] == node0 )
     {
-      if( edgeToNodeMap[ edgeID ][ 1 ] == node1 )
+      if( edgeToNodeMap[ edgeIndex ][ 1 ] == node1 )
         return true;
     }
     else
     {
-      EXPECT_EQ( edgeToNodeMap[ edgeID ][ 1 ], node0 );
-      if( edgeToNodeMap[ edgeID ][ 0 ] == node1 )
+      EXPECT_EQ( edgeToNodeMap[ edgeIndex ][ 1 ], node0 );
+      if( edgeToNodeMap[ edgeIndex ][ 0 ] == node1 )
         return true;
     }
   }
@@ -427,7 +417,7 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
 
   GEOSX_ERROR_IF_NE( edgeToNodeMap.size( 1 ), 2 );
 
-  localIndex nodeID = 0;
+  localIndex nodeIndex = 0;
   for( localIndex i = 0; i < numNodesInX; ++i )
   {
     for( localIndex j = 0; j < numNodesInY; ++j )
@@ -437,37 +427,37 @@ TEST_F( MeshGenerationTest, edgeNodeMaps )
         localIndex numEdges = 0;
         if( i != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - node_dI, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - node_dI, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( i != numNodesInX - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + node_dI, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + node_dI, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( j != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - node_dJ, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - node_dJ, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( j != numNodesInY - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + node_dJ, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + node_dJ, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( k != 0 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID - 1, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex - 1, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
           ++numEdges;
         }
         if( k != numNodesInZ - 1 )
         {
-          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeID, nodeID + 1, nodeToEdgeMap[ nodeID ], edgeToNodeMap ) );
+          EXPECT_TRUE( walkEdgesToFindNeighbor( nodeIndex, nodeIndex + 1, nodeToEdgeMap[ nodeIndex ], edgeToNodeMap ) );
           ++numEdges;
         }
 
-        EXPECT_EQ( numEdges, nodeToEdgeMap.sizeOfSet( nodeID ) );
-        ++nodeID;
+        EXPECT_EQ( numEdges, nodeToEdgeMap.sizeOfSet( nodeIndex ) );
+        ++nodeIndex;
       }
     }
   }
@@ -492,26 +482,26 @@ TEST_F( MeshGenerationTest, edgeFaceMaps )
       {
         for( localIndex f = 0; f < 6; ++f )
         {
-          localIndex const faceID = elementToFaceMap( elemID, f );
+          localIndex const faceIndex = elementToFaceMap( elemID, f );
 
-          ASSERT_EQ( faceToNodeMap.sizeOfArray( faceID ), 4 );
-          ASSERT_EQ( faceToEdgeMap.sizeOfArray( faceID ), 4 );
+          ASSERT_EQ( faceToNodeMap.sizeOfArray( faceIndex ), 4 );
+          ASSERT_EQ( faceToEdgeMap.sizeOfArray( faceIndex ), 4 );
 
           for( localIndex a = 0; a < 4; ++a )
           {
-            localIndex node0 = faceToNodeMap( faceID, a );
-            localIndex node1 = faceToNodeMap( faceID, ( a + 1 ) % 4 );
+            localIndex node0 = faceToNodeMap( faceIndex, a );
+            localIndex node1 = faceToNodeMap( faceIndex, ( a + 1 ) % 4 );
             if( node0 > node1 )
               std::swap( node0, node1 );
 
-            localIndex const edgeID = faceToEdgeMap( faceID, a );
-            EXPECT_EQ( edgeToNodeMap( edgeID, 0 ), node0 );
-            EXPECT_EQ( edgeToNodeMap( edgeID, 1 ), node1 );
+            localIndex const edgeIndex = faceToEdgeMap( faceIndex, a );
+            EXPECT_EQ( edgeToNodeMap( edgeIndex, 0 ), node0 );
+            EXPECT_EQ( edgeToNodeMap( edgeIndex, 1 ), node1 );
 
             bool foundFace = false;
-            for( localIndex const id : edgeToFaceMap[ edgeID ] )
+            for( localIndex const id : edgeToFaceMap[ edgeIndex ] )
             {
-              if( id == faceID )
+              if( id == faceIndex )
                 foundFace = true;
             }
 

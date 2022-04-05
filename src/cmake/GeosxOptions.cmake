@@ -78,6 +78,18 @@ option( GEOSX_BUILD_OBJ_LIBS "Builds coreComponent modules as object libraries" 
 
 option( GEOSX_BUILD_SHARED_LIBS "Builds geosx_core as a shared library " OFF )
 
+set( GEOSX_PARALLEL_COMPILE_JOBS "" CACHE STRING "Maximum number of concurrent compilation jobs" )
+if( GEOSX_PARALLEL_COMPILE_JOBS )
+    set_property( GLOBAL APPEND PROPERTY JOB_POOLS compile_job_pool=${GEOSX_PARALLEL_COMPILE_JOBS} )
+    set( CMAKE_JOB_POOL_COMPILE compile_job_pool )
+endif()
+
+set( GEOSX_PARALLEL_LINK_JOBS "" CACHE STRING "Maximum number of concurrent link jobs" )
+if( GEOSX_PARALLEL_LINK_JOBS )
+    set_property( GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${GEOSX_PARALLEL_LINK_JOBS} )
+    set( CMAKE_JOB_POOL_LINK link_job_pool )
+endif()
+
 #set(CMAKE_POSITION_INDEPENDENT_CODE ON  CACHE BOOL "" FORCE)
 #blt_append_custom_compiler_flag(FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT -rdynamic)
 #set(CMAKE_EXE_LINKER_FLAGS "-rdynamic")
@@ -96,7 +108,7 @@ message( "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS DEFAULT "${OpenMP_CXX_FLAGS}" )
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS
                                  GNU   "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
-                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wcast-align -Wcast-qual"
+                                 CLANG "-Wall -Wextra -Wpedantic -pedantic-errors -Wshadow -Wfloat-equal -Wno-cast-align -Wcast-qual"
                                )
 
 blt_append_custom_compiler_flag( FLAGS_VAR CMAKE_CXX_FLAGS_DEBUG
@@ -127,9 +139,9 @@ endif()
 
 if( ENABLE_HYPRE AND ENABLE_HYPRE_CUDA )
     set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
-    set( GEOSX_GLOBALINDEX_TYPE "int" CACHE STRING "" )
+    set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 else()
-    set( GEOSX_LOCALINDEX_TYPE "std::ptrdiff_t" CACHE STRING "" )
+    set( GEOSX_LOCALINDEX_TYPE "int" CACHE STRING "" )
     set( GEOSX_GLOBALINDEX_TYPE "long long int" CACHE STRING "" )
 endif()
 

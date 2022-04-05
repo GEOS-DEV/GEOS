@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -30,6 +30,21 @@ namespace constitutive
 /// Isotropic implementation of the DiscOps concept
 struct SolidModelDiscretizationOpsIsotropic : public SolidModelDiscretizationOps
 {
+  /**
+   * @brief Compute inner product matrix for solid mechanics
+   * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
+   * @tparam BASIS_GRADIENT Finite element shape function gradients type
+   * @param gradN Finite Element shape function gradients
+   * @param detJxW Element transformation determinant times the quadrature weight
+   * @param elementStiffness Local stiffness matrix
+   */
+  template< int NUM_SUPPORT_POINTS,
+            typename BASIS_GRADIENT >
+  GEOSX_HOST_DEVICE
+  void BTDB( BASIS_GRADIENT const & gradN,
+             real64 const & detJxW,
+             real64 ( &elementStiffness )[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] );
+
   /**
    * @brief Compute upper portion of inner product matrix for solid mechanics, assuming D is symmetric
    * @tparam NUM_SUPPORT POINTS Number of support points (nodes) for this element
@@ -100,6 +115,43 @@ template< int NUM_SUPPORT_POINTS,
           typename BASIS_GRADIENT >
 GEOSX_HOST_DEVICE
 GEOSX_FORCE_INLINE
+void SolidModelDiscretizationOpsIsotropic::BTDB( BASIS_GRADIENT const & gradN,
+                                                 real64 const & detJxW,
+                                                 real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
+{
+  real64 const G = this->m_shearModulus * detJxW;
+  real64 const K = this->m_bulkModulus * detJxW;
+
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda2G = lambda + 2*G;
+
+  SolidModelDiscretizationOps::BTDB< NUM_SUPPORT_POINTS >( gradN,
+                                                           elementStiffness,
+                                                           [ lambda,
+                                                             G,
+                                                             lambda2G ] GEOSX_HOST_DEVICE
+                                                             ( int const a,
+                                                             int const b,
+                                                             real64 const (&gradNa_gradNb)[3][3],
+                                                             real64 (& elementStiffness)[NUM_SUPPORT_POINTS*3][NUM_SUPPORT_POINTS*3] )
+  {
+    elementStiffness[a*3+0][b*3+0] = elementStiffness[a*3+0][b*3+0] + gradNa_gradNb[1][1] * G + gradNa_gradNb[2][2] * G + gradNa_gradNb[0][0] * lambda2G;
+    elementStiffness[a*3+0][b*3+1] = elementStiffness[a*3+0][b*3+1] + gradNa_gradNb[1][0] * G + gradNa_gradNb[0][1] * lambda;
+    elementStiffness[a*3+0][b*3+2] = elementStiffness[a*3+0][b*3+2] + gradNa_gradNb[2][0] * G + gradNa_gradNb[0][2] * lambda;
+    elementStiffness[a*3+1][b*3+0] = elementStiffness[a*3+1][b*3+0] + gradNa_gradNb[0][1] * G + gradNa_gradNb[1][0] * lambda;
+    elementStiffness[a*3+1][b*3+1] = elementStiffness[a*3+1][b*3+1] + gradNa_gradNb[0][0] * G + gradNa_gradNb[2][2] * G + gradNa_gradNb[1][1] * lambda2G;
+    elementStiffness[a*3+1][b*3+2] = elementStiffness[a*3+1][b*3+2] + gradNa_gradNb[2][1] * G + gradNa_gradNb[1][2] * lambda;
+    elementStiffness[a*3+2][b*3+0] = elementStiffness[a*3+2][b*3+0] + gradNa_gradNb[0][2] * G + gradNa_gradNb[2][0] * lambda;
+    elementStiffness[a*3+2][b*3+1] = elementStiffness[a*3+2][b*3+1] + gradNa_gradNb[1][2] * G + gradNa_gradNb[2][1] * lambda;
+    elementStiffness[a*3+2][b*3+2] = elementStiffness[a*3+2][b*3+2] + gradNa_gradNb[0][0] * G + gradNa_gradNb[1][1] * G + gradNa_gradNb[2][2] * lambda2G;
+  } );
+}
+
+
+template< int NUM_SUPPORT_POINTS,
+          typename BASIS_GRADIENT >
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gradN,
                                                       real64 const & detJxW,
                                                       real64 (& elementStiffness)[NUM_SUPPORT_POINTS *3][NUM_SUPPORT_POINTS *3] )
@@ -107,7 +159,7 @@ void SolidModelDiscretizationOpsIsotropic::upperBTDB( BASIS_GRADIENT const & gra
   real64 const G = this->m_shearModulus * detJxW;
   real64 const K = this->m_bulkModulus * detJxW;
 
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::upperBTDB< NUM_SUPPORT_POINTS >( gradN,
@@ -144,7 +196,7 @@ void SolidModelDiscretizationOpsIsotropic::diagBTDB( BASIS_GRADIENT const & grad
   real64 const G = this->m_shearModulus * detJxW;
   real64 const K = this->m_bulkModulus * detJxW;
 
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::diagBTDB< NUM_SUPPORT_POINTS >( gradN,
@@ -175,7 +227,7 @@ void SolidModelDiscretizationOpsIsotropic::diagRowSumBTDB( BASIS_GRADIENT const 
   real64 const G = this->m_shearModulus * detJxW;
   real64 const K = this->m_bulkModulus * detJxW;
 
-  real64 const lambda = conversions::BulkModAndShearMod::toFirstLame( K, G );
+  real64 const lambda = conversions::bulkModAndShearMod::toFirstLame( K, G );
   real64 const lambda2G = lambda + 2*G;
 
   SolidModelDiscretizationOps::diagRowSumBTDB< NUM_SUPPORT_POINTS >( gradN,

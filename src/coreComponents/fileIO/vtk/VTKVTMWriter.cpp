@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -50,6 +50,21 @@ void VTKVTMWriter::addBlock( string const & blockName ) const
   auto vtkMultiBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" );
   auto blockNode = vtkMultiBlockNode.append_child( "Block" );
   blockNode.append_attribute( "name" ) = blockName.c_str();
+}
+
+bool VTKVTMWriter::hasBlock( string const & blockName ) const
+{
+  bool hasChild = false;
+  auto vtkMultiBlockNode = m_vtmFile.child( "VTKFile" ).child( "vtkMultiBlockDataSet" );
+  for( xmlWrapper::xmlNode childNode : vtkMultiBlockNode.children() )
+  {
+    string childName = childNode.attribute( "name" ).value();
+    if( childName == blockName )
+    {
+      hasChild = true;
+    }
+  }
+  return hasChild;
 }
 
 void VTKVTMWriter::addSubBlock( string const & blockName, string const & subBlockName ) const

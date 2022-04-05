@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -45,6 +45,11 @@ Cylinder::Cylinder( const string & name, Group * const parent ):
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Radius of the cylinder" );
 
+  registerWrapper( viewKeyStruct::innerRadiusString(), &m_innerRadius ).
+    setApplyDefaultValue( -1 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Inner radius of the anulus" );
+
 }
 
 Cylinder::~Cylinder()
@@ -68,7 +73,9 @@ bool Cylinder::isCoordInObject( real64 const ( &coord ) [3] ) const
   real64 distance[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( coord_minus_point1 );
   LvArray::tensorOps::subtract< 3 >( distance, projection );
 
-  if( LvArray::tensorOps::l2Norm< 3 >( distance ) < m_radius && LvArray::tensorOps::l2Norm< 3 >( projection ) < height )
+  if( LvArray::tensorOps::l2Norm< 3 >( distance ) < m_radius &&
+      LvArray::tensorOps::l2Norm< 3 >( distance ) >= m_innerRadius &&
+      LvArray::tensorOps::l2Norm< 3 >( projection ) < height )
   {
     rval = true;
   }

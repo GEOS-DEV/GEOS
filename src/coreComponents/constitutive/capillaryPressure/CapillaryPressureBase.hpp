@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -76,11 +76,6 @@ protected:
 private:
 
   GEOSX_HOST_DEVICE
-  virtual void compute( arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction,
-                        arraySlice1d< real64, cappres::USD_CAPPRES - 2 > const & phaseCapPres,
-                        arraySlice2d< real64, cappres::USD_CAPPRES_DS - 2 > const & dPhaseCapPres_dPhaseVolFrac ) const = 0;
-
-  GEOSX_HOST_DEVICE
   virtual void update( localIndex const k,
                        localIndex const q,
                        arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const = 0;
@@ -108,16 +103,54 @@ public:
   CapillaryPressureBase( string const & name,
                          dataRepository::Group * const parent );
 
-  virtual ~CapillaryPressureBase() override = default;
-
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
                                          localIndex const numConstitutivePointsPerParentIndex ) override;
 
+  /**
+   * @brief Initialize the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
+   * @param[in] initialPorosity the initial porosity field after reservoir initialization
+   * @param[in] initialPermeability the initial permeability field
+   */
+  virtual void initializeRockState( arrayView2d< real64 const > const & initialPorosity,
+                                    arrayView3d< real64 const > const & initialPermeability ) const
+  { GEOSX_UNUSED_VAR( initialPorosity, initialPermeability ); }
+
+  /**
+   * @brief Save the capillary pressure state (needed when capillary pressure depends on porosity and permeability)
+   * @param[in] convergedPorosity the converged porosity field after reservoir initialization
+   * @param[in] convergedPermeability the converged permeability field
+   *
+   * Note: for now, this function is only used to save the porosity and permeability.
+   *       But, once hysteresis is implemented, it will also be used to save the max historical saturation
+   *       At this point, it will makes sense to just rename this function to "saveConvergedState"
+   *       (this will require changes in ConstitutiveBase, SolidBase, PorosityBase, etc)
+   */
+  virtual void saveConvergedRockState( arrayView2d< real64 const > const & convergedPorosity,
+                                       arrayView3d< real64 const > const & convergedPermeability ) const
+  { GEOSX_UNUSED_VAR( convergedPorosity, convergedPermeability ); }
+
+  /*
+   * @brief Getter for the number of fluid phases
+   * @return the number of fluid phases
+   */
   integer numFluidPhases() const { return LvArray::integerConversion< integer >( m_phaseNames.size() ); }
 
+  /*
+   * @brief Getter for the phase names
+   * @return an array of phase names
+   */
   arrayView1d< string const > phaseNames() const { return m_phaseNames; }
 
+  /*
+   * @brief Getter for the cell-wise phase capillary pressures
+   * @return an array of cell-wise phase capillary pressures
+   */
   arrayView3d< real64 const, cappres::USD_CAPPRES > phaseCapPressure() const { return m_phaseCapPressure; }
+
+  /*
+   * @brief Getter for the cell-wise derivatives of phase capillary pressures wrt phase volume fractions
+   * @return an array of cell-wise derivatives of phase capillary pressures wrt phase volume fractions
+   */
   arrayView4d< real64 const, cappres::USD_CAPPRES_DS > dPhaseCapPressure_dPhaseVolFraction() const { return m_dPhaseCapPressure_dPhaseVolFrac; }
 
   struct viewKeyStruct : ConstitutiveBase::viewKeyStruct
@@ -125,9 +158,6 @@ public:
     static constexpr char const * phaseNamesString() { return "phaseNames"; }
     static constexpr char const * phaseTypesString() { return "phaseTypes"; }
     static constexpr char const * phaseOrderString() { return "phaseOrder"; }
-
-    static constexpr char const * phaseCapPressureString() { return "phaseCapPressure"; }
-    static constexpr char const * dPhaseCapPressure_dPhaseVolFractionString() { return "dPhaseCapPressure_dPhaseVolFraction"; }
   };
 
 private:

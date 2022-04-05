@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -172,9 +172,15 @@ RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 }
 
 template< typename POLICY, typename LAMBDA >
-RAJA_INLINE void forAll( const localIndex end, LAMBDA && body )
+RAJA_INLINE void forAll( localIndex const end, LAMBDA && body )
 {
   RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
+}
+
+template< typename POLICY, typename INDEX, typename LAMBDA >
+RAJA_INLINE void forRange( INDEX const begin, INDEX const end, LAMBDA && body )
+{
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( begin, end ), std::forward< LAMBDA >( body ) );
 }
 
 } // namespace geosx

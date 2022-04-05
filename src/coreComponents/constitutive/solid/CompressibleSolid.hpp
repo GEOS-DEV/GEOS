@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -51,14 +51,39 @@ public:
   {}
 
   GEOSX_HOST_DEVICE
-  void pressureUpdate( localIndex const k,
-                       localIndex const q,
-                       real64 const & pressure,
-                       real64 const & deltaPressure ) const
+  virtual void updateStateFromPressure( localIndex const k,
+                                        localIndex const q,
+                                        real64 const & pressure,
+                                        real64 const & deltaPressure ) const override final
   {
-    m_porosityUpdate.updatePorosity( k, q, pressure, deltaPressure );
+    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
+  }
+
+  GEOSX_HOST_DEVICE
+  void updateStateFromPressureAndAperture( localIndex const k,
+                                           localIndex const q,
+                                           real64 const & pressure,
+                                           real64 const & deltaPressure,
+                                           real64 const & oldHydraulicAperture,
+                                           real64 const & newHydraulicAperture ) const
+  {
+    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
+  }
+
+  GEOSX_HOST_DEVICE
+  void updateStateFromPressureApertureAndJump( localIndex const k,
+                                               localIndex const q,
+                                               real64 const & pressure,
+                                               real64 const & deltaPressure,
+                                               real64 const & oldHydraulicAperture,
+                                               real64 const & newHydraulicAperture,
+                                               real64 const ( &dispJump )[3] ) const
+  {
+    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
   }
 
 private:
@@ -67,6 +92,14 @@ private:
   using CoupledSolidUpdates< NullModel, PORO_TYPE, PERM_TYPE >::m_permUpdate;
 
 };
+
+
+/**
+ * @brief CompressibleSolidBase class used for dispatch of all Compressible solids.
+ */
+class CompressibleSolidBase
+{};
+
 
 /**
  * @brief Class to represent a porous material for flow simulations.
@@ -83,6 +116,10 @@ class CompressibleSolid : public CoupledSolid< NullModel, PORO_TYPE, PERM_TYPE >
 {
 public:
 
+
+  /// Alias for ElasticIsotropicUpdates
+  using KernelWrapper = CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >;
+
   /**
    * @brief Constructor
    * @param name Object name
@@ -97,7 +134,7 @@ public:
    * @brief Catalog name
    * @return Static catalog string
    */
-  static string catalogName() { return string( "CompressibleSolid" ) + PORO_TYPE::catalogName() + PERM_TYPE::catalogName(); }
+  static string catalogName() { return string( "CompressibleSolid" ) + PERM_TYPE::catalogName(); }
 
   /**
    * @brief Get catalog name
@@ -111,7 +148,7 @@ public:
    *        that refers to the data in this.
    * @return An instantiation of CompressibleSolidUpdates.
    */
-  CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE > createKernelUpdates() const
+  KernelWrapper createKernelUpdates() const
   {
 
     return CompressibleSolidUpdates< PORO_TYPE, PERM_TYPE >( getSolidModel(),

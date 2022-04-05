@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -55,7 +55,7 @@ localIndex Pack( buffer_unit_type * & buffer,
       }
       else
       {
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemIndex );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, globalIndex( elemIndex ) );
       }
     }
   }
@@ -168,6 +168,7 @@ localIndex Pack( buffer_unit_type * & buffer,
   {
     localIndex index = packList[a];
     sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, var.m_toElementRegion.size( 1 ) );
+
     for( localIndex b=0; b<var.m_toElementRegion.size( 1 ); ++b )
     {
       localIndex elemRegionIndex    = var.m_toElementRegion[index][b];
@@ -185,7 +186,7 @@ localIndex Pack( buffer_unit_type * & buffer,
       }
       else
       {
-        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, elemIndex );
+        sizeOfPackedChars += bufferOps::Pack< DO_PACKING >( buffer, globalIndex( elemIndex ) );
       }
     }
   }
@@ -220,6 +221,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
   {
     localIndex index = packList[a];
     localIndex numSubIndicesUnpacked;
+
     sizeOfUnpackedChars += bufferOps::Unpack( buffer, numSubIndicesUnpacked );
     GEOSX_ERROR_IF( numSubIndicesUnpacked != var.m_toElementRegion.size( 1 ), "" );
 

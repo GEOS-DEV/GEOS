@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -21,6 +21,7 @@
 
 #include "PVTFunctionBase.hpp"
 
+#include "constitutive/fluid/layouts.hpp"
 #include "constitutive/fluid/PVTFunctions/PVTFunctionHelpers.hpp"
 #include "functions/TableFunction.hpp"
 
@@ -53,18 +54,14 @@ public:
                 real64 & value,
                 bool useMass ) const;
 
-  template< int USD1, int USD2, int USD3, int USD4 >
+  template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                 real64 & value,
-                real64 & dValue_dPressure,
-                real64 & dValue_dTemperature,
-                arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                arraySlice1d< real64, USD3 > const & dValue,
                 bool useMass ) const;
 
   virtual void move( LvArray::MemorySpace const space, bool const touch ) override
@@ -87,11 +84,10 @@ class SpanWagnerCO2Density : public PVTFunctionBase
 {
 public:
 
-  SpanWagnerCO2Density( string_array const & inputParams,
+  SpanWagnerCO2Density( string const &,
+                        string_array const & inputParams,
                         string_array const & componentNames,
                         array1d< real64 > const & componentMolarWeight );
-
-  virtual ~SpanWagnerCO2Density() override = default;
 
   static string catalogName() { return "SpanWagnerCO2Density"; }
 
@@ -109,10 +105,11 @@ public:
    * @brief Create an update kernel wrapper.
    * @return the wrapper
    */
-  KernelWrapper createKernelWrapper();
+  KernelWrapper createKernelWrapper() const;
 
   static
-  void calculateCO2Density( real64 const & tolerance,
+  void calculateCO2Density( string const & functionName,
+                            real64 const & tolerance,
                             PVTProps::PTTableCoordinates const & tableCoords,
                             array1d< real64 > const & densities );
 
@@ -137,8 +134,7 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
   GEOSX_UNUSED_VAR( phaseComposition );
 
   real64 const input[2] = { pressure, temperature };
-  real64 densityDeriv[2];
-  m_CO2DensityTable.compute( input, value, densityDeriv );
+  value = m_CO2DensityTable.compute( input );
 
   if( !useMass )
   {
@@ -146,39 +142,35 @@ void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
   }
 }
 
-template< int USD1, int USD2, int USD3, int USD4 >
+template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
 void SpanWagnerCO2DensityUpdate::compute( real64 const & pressure,
                                           real64 const & temperature,
                                           arraySlice1d< real64 const, USD1 > const & phaseComposition,
-                                          arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dPressure,
-                                          arraySlice1d< real64 const, USD2 > const & dPhaseComposition_dTemperature,
-                                          arraySlice2d< real64 const, USD3 > const & dPhaseComposition_dGlobalCompFraction,
+                                          arraySlice2d< real64 const, USD2 > const & dPhaseComposition,
                                           real64 & value,
-                                          real64 & dValue_dPressure,
-                                          real64 & dValue_dTemperature,
-                                          arraySlice1d< real64, USD4 > const & dValue_dGlobalCompFraction,
+                                          arraySlice1d< real64, USD3 > const & dValue,
                                           bool useMass ) const
 {
-  GEOSX_UNUSED_VAR( phaseComposition,
-                    dPhaseComposition_dPressure,
-                    dPhaseComposition_dTemperature,
-                    dPhaseComposition_dGlobalCompFraction )
+  GEOSX_UNUSED_VAR( phaseComposition, dPhaseComposition );
+
+  using Deriv = multifluid::DerivativeOffset;
 
   real64 const input[2] = { pressure, temperature };
-  real64 densityDeriv[2];
-  m_CO2DensityTable.compute( input, value, densityDeriv );
-  dValue_dPressure = densityDeriv[0];
-  dValue_dTemperature = densityDeriv[1];
+  real64 densityDeriv[2]{};
+  value = m_CO2DensityTable.compute( input, densityDeriv );
+
+  LvArray::forValuesInSlice( dValue, []( real64 & val ){ val = 0.0; } );
+  dValue[Deriv::dP] = densityDeriv[0];
+  dValue[Deriv::dT] = densityDeriv[1];
 
   if( !useMass )
   {
     value /= m_componentMolarWeight[m_CO2Index];
-    dValue_dPressure /= m_componentMolarWeight[m_CO2Index];
-    dValue_dTemperature /= m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dP] /= m_componentMolarWeight[m_CO2Index];
+    dValue[Deriv::dT] /= m_componentMolarWeight[m_CO2Index];
   }
 
-  LvArray::forValuesInSlice( dValue_dGlobalCompFraction, []( real64 & val ){ val = 0.0; } );
 }
 
 } // end namespace PVTProps

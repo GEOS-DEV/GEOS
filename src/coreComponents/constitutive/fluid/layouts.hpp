@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,6 +19,7 @@
 #ifndef GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
 #define GEOSX_CONSTITUTIVE_FLUID_LAYOUTS_HPP
 
+#include "common/DataTypes.hpp"
 #include "common/GeosxConfig.hpp"
 
 #include "LvArray/src/typeManipulation.hpp"
@@ -30,6 +31,17 @@ namespace constitutive
 {
 namespace multifluid
 {
+
+/// indices of pressure, temperature, and composition derivatives
+struct DerivativeOffset
+{
+  /// index of derivative wrt pressure
+  static integer constexpr dP = 0;
+  /// index of derivative wrt temperature
+  static integer constexpr dT = 1;
+  /// index of first derivative wrt compositions
+  static integer constexpr dC = 2;
+};
 
 #if defined( GEOSX_USE_CUDA )
 

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -18,13 +18,14 @@
 
 #include "InternalMeshGenerator.hpp"
 
-#include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "mesh/DomainPartition.hpp"
-#include "mesh/MeshBody.hpp"
 #include "mesh/mpiCommunications/PartitionBase.hpp"
 #include "mesh/mpiCommunications/SpatialPartition.hpp"
+#include "mesh/MeshBody.hpp"
+#include "CellBlockManager.hpp"
 
+#include "common/DataTypes.hpp"
+#include "common/TimingMacros.hpp"
 
 #include <cmath>
 
@@ -119,7 +120,7 @@ static int getNumElemPerBox( ElementType const elementType )
   {
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
-    case ElementType::Tetrahedron:    return 6;
+    case ElementType::Tetrahedron:   return 6;
     case ElementType::Prism:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;
@@ -129,23 +130,6 @@ static int getNumElemPerBox( ElementType const elementType )
       return 0;
     }
   }
-}
-
-static int getElementDim( ElementType const elementType )
-{
-  switch( elementType )
-  {
-    case ElementType::Line:          return 1;
-    case ElementType::Triangle:
-    case ElementType::Quadrilateral:
-    case ElementType::Polygon:       return 2;
-    case ElementType::Tetrahedron:
-    case ElementType::Pyramid:
-    case ElementType::Prism:
-    case ElementType::Hexahedron:
-    case ElementType::Polyhedron:    return 3;
-  }
-  return 0;
 }
 
 void InternalMeshGenerator::postProcessInput()
@@ -238,12 +222,6 @@ void InternalMeshGenerator::postProcessInput()
   }
 
   m_fPerturb = 0.0;
-}
-
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                            string const & GEOSX_UNUSED_PARAM( childName ) )
-{
-  return nullptr;
 }
 
 /**
@@ -566,35 +544,30 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
-  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
+  MeshBody & meshBody = domain.getMeshBody( this->getName() );
 
   // Make sure that the node manager fields are initialized
 
-  CellBlockManager & elementManager = domain.getGroup< CellBlockManager >( keys::cellManager );
-  Group & nodeSets = nodeManager.sets();
+  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+  auto & nodeSets = cellBlockManager.getNodeSets();
 
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
-
-//  bool isRadialWithOneThetaPartition = false;
 
   // This should probably handled elsewhere:
   int aa = 0;
   for( auto & cellBlockName : m_regionNames )
   {
-    CellBlock & cellBlock = elementManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+    CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
     cellBlock.setElementType( EnumStrings< ElementType >::fromString( m_elementType[aa++] ) );
   }
 
-  SortedArray< localIndex > & xnegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xneg" ) ).reference();
-  SortedArray< localIndex > & xposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "xpos" ) ).reference();
-  SortedArray< localIndex > & ynegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "yneg" ) ).reference();
-  SortedArray< localIndex > & yposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "ypos" ) ).reference();
-  SortedArray< localIndex > & znegNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zneg" ) ).reference();
-  SortedArray< localIndex > & zposNodes = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "zpos" ) ).reference();
-  SortedArray< localIndex > & allNodes  = nodeSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  SortedArray< localIndex > & xnegNodes = nodeSets["xneg"];
+  SortedArray< localIndex > & xposNodes = nodeSets["xpos"];
+  SortedArray< localIndex > & ynegNodes = nodeSets["yneg"];
+  SortedArray< localIndex > & yposNodes = nodeSets["ypos"];
+  SortedArray< localIndex > & znegNodes = nodeSets["zneg"];
+  SortedArray< localIndex > & zposNodes = nodeSets["zpos"];
+  SortedArray< localIndex > & allNodes = nodeSets["all"];
 
   // Partition based on even spacing to get load balance
   // Partition geometrical boundaries will be corrected in the end.
@@ -756,10 +729,11 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   reduceNumNodesForPeriodicBoundary( partition, numNodesInDir );
   numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
 
-  nodeManager.resize( numNodes );
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  cellBlockManager.setNumNodes( numNodes );
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodePositions();
+
+  arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
   {
     localIndex localNodeIndex = 0;
@@ -779,8 +753,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
           getNodePosition( globalIJK, m_trianglePattern, X[localNodeIndex] );
 
           // Alter global node map for radial mesh
-          setNodeGlobalIndicesOnPeriodicBoundary( partition,
-                                                  globalIJK );
+          setNodeGlobalIndicesOnPeriodicBoundary( partition, globalIJK );
 
           nodeLocalToGlobal[localNodeIndex] = nodeGlobalIndex( globalIJK );
 
@@ -834,12 +807,24 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       localElemIndexInRegion[numElemsInRegion.first] = 0;
     }
 
-    elementManager.resize( numElements, elementRegionNames );
+    cellBlockManager.resize( numElements, elementRegionNames );
 
     // Assign global numbers to elements
     regionOffset = 0;
     SortedArray< string > processedRegionNames;
     localIndex iR = 0;
+
+    // Reset the number of nodes in each dimension in case of periodic BCs so the element firstNodeIndex
+    //  calculation is correct? Not actually needed in parallel since we still have ghost nodes in that case and
+    //  the count has not been altered due to periodicity.
+    if( std::any_of( partition.m_Periodic.begin(), partition.m_Periodic.end(), []( int & dimPeriodic ) { return dimPeriodic == 1; } ) )
+    {
+      for( int i = 0; i < m_dim; ++i )
+      {
+        numNodesInDir[i] = lastElemIndexInPartition[i] - firstElemIndexInPartition[i] + 2;
+      }
+      numNodes = numNodesInDir[0] * numNodesInDir[1] * numNodesInDir[2];
+    }
 
     for( int iblock = 0; iblock < m_nElems[0].size(); ++iblock )
     {
@@ -849,12 +834,12 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
         {
           ElementType const elementType = EnumStrings< ElementType >::fromString( m_elementType[iR] );
 
-          CellBlock & elemRegion =  elementManager.getRegion( m_regionNames[ regionOffset ] );
-          int const numNodesPerElem = LvArray::integerConversion< int >( elemRegion.numNodesPerElement());
+          CellBlock & cellBlock = cellBlockManager.getCellBlock( m_regionNames[regionOffset] );
+          int const numNodesPerElem = LvArray::integerConversion< int >( cellBlock.numNodesPerElement());
           integer nodeIDInBox[ 8 ];
 
-          arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = elemRegion.nodeList();
-          arrayView1d< globalIndex > const & elemLocalToGlobal = elemRegion.localToGlobalMap();
+          arrayView2d< localIndex, cells::NODE_MAP_USD > elemsToNodes = cellBlock.getElemToNode();
+          arrayView1d< globalIndex > const & elemLocalToGlobal = cellBlock.localToGlobalMap();
 
           int numElemsInDirForBlock[3] =
           { lastElemIndexForBlockInPartition[0][iblock] - firstElemIndexForBlockInPartition[0][iblock] + 1,
@@ -952,7 +937,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
   if( m_fPerturb > 0 )
   {
 
-    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
+    for( localIndex iN = 0; iN != numNodes; ++iN )
     {
 
       for( int i = 0; i < m_dim; ++i )
@@ -970,14 +955,20 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   if( std::fabs( m_skewAngle ) > 0.0 )
   {
-    for( localIndex iN = 0; iN != nodeManager.size(); ++iN )
+    for( localIndex iN = 0; iN != numNodes; ++iN )
     {
       X[iN][0] -= ( X[iN][1] - m_skewCenter[1] ) * std::tan( m_skewAngle );
     }
   }
 
-  coordinateTransformation( nodeManager );
+  coordinateTransformation( X, nodeSets );
 
+  cellBlockManager.buildMaps();
+
+  GEOSX_LOG_RANK_0( "Total number of nodes:" << ( m_numElemsTotal[0] + 1 ) * ( m_numElemsTotal[1] + 1 ) * ( m_numElemsTotal[2] + 1 ) );
+  GEOSX_LOG_RANK_0( "Total number of elems:" << m_numElemsTotal[0] * m_numElemsTotal[1] * m_numElemsTotal[2] );
+
+  GEOSX_LOG_RANK( "Total number of nodes:" << numNodes );
 }
 
 void
@@ -990,8 +981,8 @@ InternalMeshGenerator::
 {
   // Condition is:
   // 1) element is last index in component direction
-  // 2) first element in partition is zero
-  if( ( globalIJK[component] == m_numElemsTotal[component]-1 )&&
+  // 2) first local element in component partition is zero
+  if( ( globalIJK[component] == m_numElemsTotal[component] - 1 ) &&
       ( firstElemIndexInPartition[component] == 0) )
   {
     // Last set of nodes

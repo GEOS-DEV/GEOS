@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,8 +20,7 @@
 #ifndef GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 #define GEOSX_CONSTITUTIVE_SOLID_COUPLEDSOLID_HPP_
 
-#include "constitutive/ConstitutiveBase.hpp"
-#include "constitutive/solid/SolidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
 
 namespace geosx
 {
@@ -53,6 +52,13 @@ public:
     m_permUpdate( permModel.createKernelWrapper() )
   {}
 
+  /**
+   * @brief Get number of gauss points per element.
+   * @return number of gauss points per element
+   */
+  GEOSX_HOST_DEVICE
+  localIndex numGauss() const { return m_porosityUpdate.numGauss(); }
+
   GEOSX_HOST_DEVICE
   real64 getOldPorosity( localIndex const k,
                          localIndex const q ) const
@@ -65,6 +71,22 @@ public:
                       localIndex const q ) const
   {
     return m_porosityUpdate.getPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
+  real64 getInitialPorosity( localIndex const k,
+                             localIndex const q ) const
+  {
+    return m_porosityUpdate.getInitialPorosity( k, q );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateStateFromPressure( localIndex const k,
+                                        localIndex const q,
+                                        real64 const & pressure,
+                                        real64 const & deltaPressure ) const
+  {
+    GEOSX_UNUSED_VAR( k, q, pressure, deltaPressure );
   }
 
 protected:
@@ -85,10 +107,12 @@ protected:
  * @tparam PORO_TYPE type of porosity model
  * @tparam PERM_TYPE type of permeability model
  */
+//START_SPHINX_INCLUDE_00
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
-class CoupledSolid : public ConstitutiveBase
+class CoupledSolid : public CoupledSolidBase
+//END_SPHINX_INCLUDE_00
 {
 public:
 
@@ -102,26 +126,7 @@ public:
   /// Destructor
   virtual ~CoupledSolid() override;
 
-  /**
-   * @brief Catalog name
-   * @return Static catalog string
-   */
-  static string catalogName() { return string( "Coupled" ) + SOLID_TYPE::m_catalogNameString; }
-
-  /**
-   * @brief Get catalog name
-   * @return Catalog name string
-   */
-  virtual string getCatalogName() const override { return catalogName(); }
-
-  virtual void initializePreSubGroups() override final;
-
-  struct viewKeyStruct
-  {
-    static constexpr char const * solidModelNameString() { return "solidModelName"; }
-    static constexpr char const * porosityModelNameString() { return "porosityModelName"; }
-    static constexpr char const * permeabilityModelNameString() { return "permeabilityModelName"; }
-  };
+  virtual void initializePreSubGroups() override;
 
   /**
    * @brief Create a instantiation of the PorousSolidUpdates class
@@ -136,18 +141,8 @@ public:
                                                                     getPermModel() );
   }
 
-  arrayView2d< real64 const > const  dPorosity_dPressure() const
-  { return getPorosityModel().dPorosity_dPressure(); }
-
-  virtual void saveConvergedState() const override final
-  {
-    // getSolidModel().saveConvergedState();
-
-    getPorosityModel().saveConvergedState();
-  }
-
+  //START_SPHINX_INCLUDE_01
 protected:
-
   SOLID_TYPE const & getSolidModel() const
   { return this->getParent().template getGroup< SOLID_TYPE >( m_solidModelName ); }
 
@@ -156,15 +151,8 @@ protected:
 
   PERM_TYPE const & getPermModel() const
   { return this->getParent().template getGroup< PERM_TYPE >( m_permeabilityModelName ); }
+  //END_SPHINX_INCLUDE_01
 
-  // the name of the solid model
-  string m_solidModelName;
-
-  // the name of the porosity model
-  string m_porosityModelName;
-
-  // the name of the porosity model
-  string m_permeabilityModelName;
 };
 
 
@@ -172,28 +160,13 @@ template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
 CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::CoupledSolid( string const & name, Group * const parent ):
-  ConstitutiveBase( name, parent ),
-  m_solidModelName(),
-  m_porosityModelName()
-{
-  registerWrapper( viewKeyStruct::solidModelNameString(), &m_solidModelName ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the solid model." );
-
-  registerWrapper( viewKeyStruct::porosityModelNameString(), &m_porosityModelName ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the porosity model." );
-
-  registerWrapper( viewKeyStruct::permeabilityModelNameString(), &m_permeabilityModelName ).
-    setInputFlag( dataRepository::InputFlags::REQUIRED ).
-    setDescription( "Name of the permeability model." );
-}
+  CoupledSolidBase( name, parent )
+{}
 
 template< typename SOLID_TYPE,
           typename PORO_TYPE,
           typename PERM_TYPE >
-CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid()
-{}
+CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::~CoupledSolid() = default;
 
 
 template< typename SOLID_TYPE,
@@ -201,13 +174,6 @@ template< typename SOLID_TYPE,
           typename PERM_TYPE >
 void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
 {
-  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
-  {
-    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
-                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
-                 " but the specified solid model \""<<m_solidModelName<<
-                 "\" is of type" << getSolidModel().getCatalogName() );
-  }
   if( PORO_TYPE::catalogName() != getPorosityModel().getCatalogName() )
   {
     GEOSX_ERROR( " The coupled solid "<< this->getName()<<
@@ -221,6 +187,13 @@ void CoupledSolid< SOLID_TYPE, PORO_TYPE, PERM_TYPE >::initializePreSubGroups()
                  " expects a permeability model of type "<<PERM_TYPE::catalogName()<<
                  " but the specified permeability model \""<<m_permeabilityModelName<<
                  "\" is of type " << getPermModel().getCatalogName() );
+  }
+  if( SOLID_TYPE::catalogName() != getSolidModel().getCatalogName() )
+  {
+    GEOSX_ERROR( " The coupled solid "<<this->getName()<<
+                 " expects a solid model of type "<<SOLID_TYPE::catalogName()<<
+                 " but the specified solid model \""<<this->m_solidModelName<<
+                 "\" is of type" << getSolidModel().getCatalogName() );
   }
 }
 

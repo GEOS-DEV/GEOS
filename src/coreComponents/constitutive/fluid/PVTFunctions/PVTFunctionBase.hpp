@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -30,7 +30,7 @@ namespace constitutive
 namespace PVTProps
 {
 
-enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY };
+enum class PVTFunctionType { UNKNOWN, DENSITY, VISCOSITY, ENTHALPY, INTERNAL_ENERGY };
 
 class PVTFunctionBaseUpdate
 {
@@ -75,7 +75,9 @@ public:
 
   virtual ~PVTFunctionBase() = default;
 
-  using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase, array1d< string > const &,
+  using CatalogInterface = dataRepository::CatalogInterface< PVTFunctionBase,
+                                                             string const &,
+                                                             array1d< string > const &,
                                                              array1d< string > const &,
                                                              array1d< real64 > const & >;
   static typename CatalogInterface::CatalogType & getCatalog()

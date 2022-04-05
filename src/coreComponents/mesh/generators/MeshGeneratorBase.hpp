@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -49,11 +49,6 @@ public:
                               Group * const parent );
 
   /**
-   * @brief Destructor for MeshGenerator
-   */
-  virtual ~MeshGeneratorBase();
-
-  /**
    * @brief Return the name of the MeshGenerator in object catalog.
    * @return string that contains the catalog name of the MeshGenerator
    */
@@ -61,6 +56,14 @@ public:
 
   /// using alias for templated Catalog meshGenerator type
   using CatalogInterface = dataRepository::CatalogInterface< MeshGeneratorBase, string const &, Group * const >;
+
+  /**
+   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
+   * @param childKey the catalog key of the new geometric object to create
+   * @param childName the name of the new geometric object in the repository
+   * @return the group child
+   */
+  virtual Group * createChild( string const & childKey, string const & childName ) override;
 
   /**
    * @brief Accessor for the singleton Catalog object
@@ -80,7 +83,7 @@ public:
    */
   virtual void importFields( DomainPartition & domain ) const
   {
-    GEOSX_UNUSED_VAR( domain )
+    GEOSX_UNUSED_VAR( domain );
   }
 
   /**

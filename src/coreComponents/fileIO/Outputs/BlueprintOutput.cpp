@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -57,6 +57,7 @@ static std::vector< int > getBlueprintNodeOrdering( ElementType const elementTyp
   // Same as VTK, but kept separate for flexibility
   switch( elementType )
   {
+    case ElementType::Vertex:        return { 0 };
     case ElementType::Line:          return { 0, 1 };
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
@@ -163,10 +164,7 @@ bool BlueprintOutput::execute( real64 const time,
   GEOSX_ASSERT_MSG( conduit::blueprint::mesh::index::verify( index, info ), info.to_json() );
 
   /// Write out the root index file, then write out the mesh.
-  char buffer[ 128 ];
-  GEOSX_ERROR_IF_GE( snprintf( buffer, 128, "blueprintFiles/cycle_%07d", cycle ), 128 );
-
-  string const completePath = joinPath( OutputBase::getOutputDirectory(), buffer );
+  string const completePath = GEOSX_FMT( "{}/blueprintFiles/cycle_{:07}", OutputBase::getOutputDirectory(), cycle );
   string const filePathForRank = dataRepository::writeRootFile( fileRoot, completePath );
   conduit::relay::io::save( meshRoot, filePathForRank, "hdf5" );
 
@@ -294,7 +292,7 @@ void BlueprintOutput::writeOutConstitutiveData( dataRepository::Group const & co
     if( wrapper.getPlotLevel() <= m_plotLevel && wrapper.sizedFromParent() )
     {
       string const fieldName = constitutiveModel.getName() + "-quadrature-averaged-" + wrapper.getName();
-      averagedConstitutiveData.registerWrapper( fieldName, wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
+      averagedConstitutiveData.registerWrapper( wrapper.averageOverSecondDim( fieldName, averagedConstitutiveData ) )
         .addBlueprintField( fields, fieldName, topology );
     }
   } );

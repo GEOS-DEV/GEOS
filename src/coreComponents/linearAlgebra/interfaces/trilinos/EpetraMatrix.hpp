@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -202,6 +202,10 @@ public:
                        localIndex const numRows,
                        localIndex const numCols ) override;
 
+  virtual void insert( arrayView1d< globalIndex const > const & rowIndices,
+                       arrayView1d< globalIndex const > const & colIndices,
+                       arrayView1d< real64 const > const & values ) override;
+
   virtual void apply( EpetraVector const & src,
                       EpetraVector & dst ) const override;
 
@@ -239,34 +243,46 @@ public:
   virtual void leftRightScale( EpetraVector const & vecLeft,
                                EpetraVector const & vecRight ) override;
 
+  virtual void rescaleRows( arrayView1d< globalIndex const > const & rowIndices,
+                            RowSumType const rowSumType ) override;
+
   virtual void transpose( EpetraMatrix & dst ) const override;
+
+  virtual void separateComponentFilter( EpetraMatrix & dst,
+                                        integer const dofsPerNode ) const override;
 
   virtual real64 clearRow( globalIndex const row,
                            bool const keepDiag = false,
                            real64 const diagValue = 0.0 ) override;
 
   virtual void addEntries( EpetraMatrix const & src,
-                           real64 const scale = 1.0,
-                           bool const samePattern = true ) override;
+                           MatrixPatternOp const op,
+                           real64 const scale ) override;
 
-  virtual void addDiagonal( EpetraVector const & src ) override;
+  virtual void addDiagonal( EpetraVector const & src,
+                            real64 const scale ) override;
+
+  virtual void clampEntries( real64 const lo,
+                             real64 const hi,
+                             bool const excludeDiag ) override;
 
   /**
    * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::maxRowLength
    */
   virtual localIndex maxRowLength() const override;
 
-  virtual localIndex localRowLength( localIndex localRowIndex ) const override;
+  virtual localIndex rowLength( globalIndex const globalRowIndex ) const override;
 
-  virtual localIndex globalRowLength( globalIndex globalRowIndex ) const override;
+  virtual void getRowLengths( arrayView1d< localIndex > const & lengths ) const override;
 
   virtual void getRowCopy( globalIndex globalRow,
                            arraySlice1d< globalIndex > const & colIndices,
                            arraySlice1d< real64 > const & values ) const override;
 
-  virtual real64 getDiagValue( globalIndex globalRow ) const override;
-
   virtual void extractDiagonal( EpetraVector & dst ) const override;
+
+  virtual void getRowSums( EpetraVector & dst,
+                           RowSumType const rowSumType ) const override;
 
   /**
    * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::numGlobalRows
@@ -333,14 +349,21 @@ public:
    */
   virtual real64 normFrobenius() const override;
 
+  /**
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::normMax
+   */
+  virtual real64 normMax() const override;
+
+  virtual real64 normMax( arrayView1d< globalIndex const > const & rowIndices ) const override;
+
   virtual localIndex getLocalRowID( globalIndex const index ) const override;
 
   virtual globalIndex getGlobalRowID( localIndex const index ) const override;
 
   /**
-   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::getComm
+   * @copydoc MatrixBase<EpetraMatrix,EpetraVector>::comm
    */
-  virtual MPI_Comm getComm() const override;
+  virtual MPI_Comm comm() const override;
 
   virtual void print( std::ostream & os = std::cout ) const override;
 

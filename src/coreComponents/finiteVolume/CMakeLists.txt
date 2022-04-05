@@ -5,10 +5,12 @@ set( finiteVolume_headers
      BoundaryStencil.hpp
      CellElementStencilMPFA.hpp
      CellElementStencilTPFA.hpp
-     FaceElementStencil.hpp
+     SurfaceElementStencil.hpp
+     EmbeddedSurfaceToCellStencil.hpp
+     FaceElementToCellStencil.hpp
      FiniteVolumeManager.hpp
      FluxApproximationBase.hpp
-     FluxStencil.hpp
+     ProjectionEDFMHelper.hpp
      HybridMimeticDiscretization.hpp
      MimeticInnerProductDispatch.hpp 
      StencilBase.hpp    
@@ -28,11 +30,14 @@ set( finiteVolume_sources
      BoundaryStencil.cpp
      CellElementStencilMPFA.cpp
      CellElementStencilTPFA.cpp
-     FaceElementStencil.cpp
+     SurfaceElementStencil.cpp
+     FaceElementToCellStencil.cpp
+     EmbeddedSurfaceToCellStencil.cpp
      FiniteVolumeManager.cpp
      FluxApproximationBase.cpp
-     HybridMimeticDiscretization.cpp
      TwoPointFluxApproximation.cpp
+     ProjectionEDFMHelper.cpp
+     HybridMimeticDiscretization.cpp
    )
 
 set( dependencyList mesh codingUtilities fieldSpecification )

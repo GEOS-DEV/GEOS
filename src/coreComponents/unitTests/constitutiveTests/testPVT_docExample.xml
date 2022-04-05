@@ -1,0 +1,76 @@
+<?xml version="1.0" ?>
+
+<!-- Simple PVTDriver example with sphinx markup for use on our doc pages -->
+<Problem>
+  <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_START -->
+  <Constitutive>
+    <CO2BrinePhillipsFluid
+      name="co2Mixture"
+      phaseNames="{ gas, water }"
+      componentNames="{ co2, water }"
+      componentMolarWeight="{ 44e-3, 18e-3 }"
+      phasePVTParaFiles="{ testPVT_data/carbonDioxidePVT.txt, testPVT_data/brinePVT.txt }"
+      flashModelParaFile="testPVT_data/carbonDioxideFlash.txt"/>
+  </Constitutive>
+
+  <!-- SPHINX_PVTDRIVER_CONSTITUTIVE_END -->
+  <!-- SPHINX_PVTDRIVER_FUNCTIONS_START -->
+  <Functions>
+    <TableFunction
+      name="pressureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 1e6, 50e6 }"/>
+
+    <TableFunction
+      name="temperatureFunction"
+      inputVarNames="{ time }"
+      coordinates="{ 0.0, 1.0 }"
+      values="{ 350, 350 }"/>
+  </Functions>
+
+  <!-- SPHINX_PVTDRIVER_FUNCTIONS_END -->
+  <!-- SPHINX_PVTDRIVER_TASKS_START -->
+  <Tasks>
+    <PVTDriver
+      name="testCO2"
+      fluid="co2Mixture"
+      feedComposition="{ 1.0, 0.0 }"
+      pressureControl="pressureFunction"
+      temperatureControl="temperatureFunction"
+      steps="49"
+      output="pvtOutput.txt"
+      logLevel="1"/>
+  </Tasks>
+
+  <!-- SPHINX_PVTDRIVER_TASKS_END -->
+  <!-- SPHINX_PVTDRIVER_EVENTS_START -->
+  <Events
+    maxTime="1">
+    <SoloEvent
+      name="eventA"
+      target="/Tasks/testCO2"/>
+  </Events>
+
+  <!-- SPHINX_PVTDRIVER_EVENTS_END -->
+  <!-- Mesh is not used, but GEOSX throws an error without one.  Will resolve soon-->
+  <Mesh>
+    <InternalMesh
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      xCoords="{ 0, 1 }"
+      yCoords="{ 0, 1 }"
+      zCoords="{ 0, 1 }"
+      nx="{ 1 }"
+      ny="{ 1 }"
+      nz="{ 1 }"
+      cellBlockNames="{ cellBlock01 }"/>
+  </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
+</Problem>

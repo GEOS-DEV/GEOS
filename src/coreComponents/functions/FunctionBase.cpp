@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -38,37 +38,14 @@ FunctionBase::FunctionBase( const string & name,
     setDescription( "Name of fields are input to function." );
 }
 
-
-FunctionBase::~FunctionBase()
-{}
-
 integer FunctionBase::isFunctionOfTime() const
 {
-  integer rval=0;
-  arrayView1d< string const > const & inputVarNames = this->getReference< string_array >( dataRepository::keys::inputVarNames );
-  localIndex numVars = LvArray::integerConversion< localIndex >( inputVarNames.size());
-
-  if( numVars==1 )
+  if( std::find( m_inputVarNames.begin(), m_inputVarNames.end(), "time" ) != m_inputVarNames.end() )
   {
-    if( inputVarNames[0]=="time" )
-    {
-      rval = 2;
-    }
+    return 1 + ( m_inputVarNames.size() == 1 );
   }
-  else
-  {
-    for( auto varIndex=0; varIndex<numVars; ++varIndex )
-    {
-      if( inputVarNames[varIndex]=="time" )
-      {
-        rval = 1;
-        break;
-      }
-    }
-  }
-  return rval;
+  return 0;
 }
-
 
 real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
                                           real64 const time,
@@ -94,4 +71,4 @@ real64_array FunctionBase::evaluateStats( dataRepository::Group const & group,
 }
 
 
-} /* namespace ANST */
+} // end of namespace geosx

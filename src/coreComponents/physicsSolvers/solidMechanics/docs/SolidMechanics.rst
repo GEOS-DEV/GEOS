@@ -206,7 +206,7 @@ Example
 
 An example of a valid XML block is given here:
 
-.. literalinclude:: ../integratedTests/sedov.xml
+.. literalinclude:: ../../../../../inputFiles/solidMechanics/sedov_finiteStrain_smoke.xml
   :language: xml
   :start-after: <!-- SPHINX_SOLID_MECHANICS_SOLVER -->
   :end-before: <!-- SPHINX_SOLID_MECHANICS_SOLVER_END -->

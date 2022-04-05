@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -15,33 +15,13 @@
 #include "initialization.hpp"
 
 #include "common/DataTypes.hpp"
-#include "common/TimingMacros.hpp"
 #include "common/Path.hpp"
 #include "LvArray/src/system.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
-#include "common/MpiWrapper.hpp"
+#include "mainInterface/GeosxVersion.hpp"
 
 // TPL includes
 #include <optionparser.h>
-#include <umpire/ResourceManager.hpp>
-
-#if defined( GEOSX_USE_CALIPER )
-#include <caliper/cali-manager.h>
-#include <adiak.hpp>
-#endif
-
-// System includes
-#include <iomanip>
-
-#if defined( GEOSX_USE_OPENMP )
-#include <omp.h>
-#endif
-
-#if defined( GEOSX_USE_CUDA )
-#include <cuda.h>
-#endif
-
-#include <fenv.h>
 
 namespace geosx
 {
@@ -119,6 +99,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     OUTPUTDIR,
     TIMERS,
     SUPPRESS_MOVE_LOGGING,
+    PAUSE_FOR,
   };
 
   const option::Descriptor usage[] =
@@ -137,6 +118,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
     { OUTPUTDIR, 0, "o", "output", Arg::nonEmpty, "\t-o, --output, \t Directory to put the output files" },
     { TIMERS, 0, "t", "timers", Arg::nonEmpty, "\t-t, --timers, \t String specifying the type of timer output." },
     { SUPPRESS_MOVE_LOGGING, 0, "", "suppress-move-logging", Arg::None, "\t--suppress-move-logging \t Suppress logging of host-device data migration" },
+    { PAUSE_FOR, 0, "", "pause-for", Arg::numeric, "\t--pause-for, \t Pause geosx for a given number of seconds before starting execution" },
     { 0, 0, nullptr, nullptr, nullptr, nullptr }
   };
 
@@ -182,7 +164,7 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
       case RESTART:
       {
         commandLineOptions->restartFileName = opt.arg;
-        commandLineOptions->beginFromRestart = 1;
+        commandLineOptions->beginFromRestart = true;
       }
       break;
       case XPAR:
@@ -238,10 +220,18 @@ std::unique_ptr< CommandLineOptions > parseCommandLineOptions( int argc, char * 
         commandLineOptions->suppressMoveLogging = true;
       }
       break;
+      case PAUSE_FOR:
+      {
+        // we should store this in commandLineOptions and sleep in main
+        integer const duration = std::stoi( opt.arg );
+        GEOSX_LOG_RANK_0( "Paused for " << duration << " s" );
+        std::this_thread::sleep_for( std::chrono::seconds( duration ) );
+      }
+      break;
     }
   }
 
-  if( commandLineOptions->problemName == "" && options[INPUT].count() > 0 )
+  if( commandLineOptions->problemName.empty() && options[INPUT].count() > 0 )
   {
     string & inputFileName = commandLineOptions->inputFileNames[0];
     if( inputFileName.length() > 4 && inputFileName.substr( inputFileName.length() - 4, 4 ) == ".xml" )
@@ -284,6 +274,16 @@ void basicCleanup()
 {
   finalizeLAI();
   cleanupEnvironment();
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+string getVersion()
+{
+#if defined(GEOSX_GIT_BRANCH) && defined(GEOSX_GIT_HASH)
+  return GEOSX_VERSION_FULL " (" GEOSX_GIT_BRANCH ", sha1: " GEOSX_GIT_HASH ")";
+#else
+  return GEOSX_VERSION_FULL;
+#endif
 }
 
 

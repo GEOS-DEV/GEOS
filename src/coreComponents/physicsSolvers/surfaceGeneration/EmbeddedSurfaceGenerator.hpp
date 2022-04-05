@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -40,9 +40,7 @@ struct NewObjectLists
 class SpatialPartition;
 
 class NodeManager;
-class EdgeManager;
 class FaceManager;
-class ExternalFaceManager;
 class ElementRegionManager;
 class ElementRegionBase;
 
@@ -121,8 +119,6 @@ private:
     constexpr static char const * rockToughnessString() {return "rockToughness"; }
   };
 
-  // solid solver name
-  array1d< string > m_solidMaterialNames;
   // fracture region name
   string m_fractureRegionName;
   // Flag for consistent communication ordering

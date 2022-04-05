@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -77,8 +77,10 @@ public:
   using Base::m_constitutiveUpdate;
   using Base::m_finiteElementSpace;
 
-  /// The number of nodes per element.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   /**
    * @brief Constructor
@@ -93,11 +95,11 @@ public:
                           SUBREGION_TYPE const & elementSubRegion,
                           FE_TYPE const & finiteElementSpace,
                           CONSTITUTIVE_TYPE & inputConstitutiveType,
-                          arrayView1d< globalIndex const > const & inputDofNumber,
+                          arrayView1d< globalIndex const > const inputDofNumber,
                           globalIndex const rankOffset,
-                          CRSMatrixView< real64, globalIndex const > const & inputMatrix,
-                          arrayView1d< real64 > const & inputRhs,
-                          string const & fieldName,
+                          CRSMatrixView< real64, globalIndex const > const inputMatrix,
+                          arrayView1d< real64 > const inputRhs,
+                          string const fieldName,
                           int const localDissipationOption ):
     Base( nodeManager,
           edgeManager,
@@ -288,11 +290,11 @@ protected:
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
-                                                                    arrayView1d< globalIndex const > const &,
+                                                                    arrayView1d< globalIndex const > const,
                                                                     globalIndex,
-                                                                    CRSMatrixView< real64, globalIndex const > const &,
-                                                                    arrayView1d< real64 > const &,
-                                                                    string const &,
+                                                                    CRSMatrixView< real64, globalIndex const > const,
+                                                                    arrayView1d< real64 > const,
+                                                                    string const,
                                                                     int >;
 
 } // namespace geosx

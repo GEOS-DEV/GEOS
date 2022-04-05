@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -59,11 +59,6 @@ public:
                LinearOperator< Vector > const & matrix,
                LinearOperator< Vector > const & precond );
 
-  /**
-   * @brief Virtual destructor.
-   */
-  virtual ~GmresSolver() override;
-
   ///@}
 
   /**
@@ -103,7 +98,7 @@ protected:
   array1d< VectorTemp > m_kspace;
 
   /// Flag indicating whether kspace vectors have been created
-  bool m_kspaceInitialized;
+  bool mutable m_kspaceInitialized;
 };
 
 } // namespace geosx

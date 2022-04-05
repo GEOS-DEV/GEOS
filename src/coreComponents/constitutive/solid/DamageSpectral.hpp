@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -138,7 +138,7 @@ public:
     real64 traceOfStrain = strain[0] + strain[1] + strain[2];
 
     real64 mu = m_shearModulus[k];
-    real64 lambda = conversions::BulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
+    real64 lambda = conversions::bulkModAndShearMod::toFirstLame( m_bulkModulus[k], mu );
     real64 damageFactor = getDegradationValue( k, q );
 
     // get eigenvalues and eigenvectors

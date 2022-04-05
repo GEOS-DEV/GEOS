@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -253,64 +253,48 @@ public:
   virtual bool isPackable( bool onDevice ) const = 0;
 
   /**
-   * @brief Pack the entire wrapped object into a buffer.
-   * @param[in,out] buffer the binary buffer pointer, advanced upon completion
-   * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all
-   *                         events are finalized )
-   * @return               the number of @p buffer_unit_type units packed
+   * @brief Concrete implementation of the packing method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
    */
-  virtual localIndex pack( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
+  template< bool DO_PACKING >
+  localIndex pack( buffer_unit_type * & buffer,
+                   bool withMetadata,
+                   bool onDevice,
+                   parallelDeviceEvents & events ) const
+  {
+    return DO_PACKING ? packPrivate( buffer, withMetadata, onDevice, events ) : packSizePrivate( withMetadata, onDevice, events );
+  }
 
   /**
-   * @brief For indexable types, pack selected indices of wrapped object into a buffer.
-   * @param[in,out] buffer the binary buffer pointer, advanced upon completion
-   * @param[in] packList the list of indices to pack
-   * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all
-   *                         events are finalized )
-   * @return               the number of @p buffer_unit_type units packed
+   * @brief Concrete implementation of the packing by index method.
+   * @tparam DO_PACKING A template parameter to discriminate between actually packing or only computing the packing size.
+   * @param[in,out] buffer The buffer that will receive the packed data.
+   * @param[in] packList The element we want packed.
+   * @param[in] withMetadata Whether to pack string metadata with the underlying data.
+   * @param[in] onDevice Whether to use device-based packing functions
+   *                     (buffer must be either pinned or a device pointer)
+   * @param[out] events A collection of events to poll for completion of async
+   *                    packing kernels ( device packing is incomplete until all
+   *                    events are finalized )
+   * @return The packed size.
    */
-  virtual localIndex packByIndex( buffer_unit_type * & buffer,
-                                  arrayView1d< localIndex const > const & packList,
-                                  bool withMetadata,
-                                  bool onDevice,
-                                  parallelDeviceEvents & events ) const = 0;
-
-  /**
-   * @brief Get the buffer size needed to pack the entire wrapped object.
-   * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         this matters as the size on device differs from the size on host
-   *                         as we pack less metadata on device
-   * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all
-   *                         events are finalized )
-   * @return the number of @p buffer_unit_type units needed to pack
-   */
-  virtual localIndex packSize( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
-
-  /**
-   * @brief Get the buffer size needed to pack the selected indices wrapped object.
-   * @param[in] packList the list of indices to pack
-   * @param[in] withMetadata whether to pack string metadata with the underlying data
-   * @param[in] onDevice    whether to use device-based packing functions
-   *                         (buffer must be either pinned or a device pointer)
-   * @param[out] events      a collection of events to poll for completion of async
-   *                         packing kernels ( device packing is incomplete until all
-   *                         events are finalized )
-   * @return             the number of @p buffer_unit_type units needed to pack
-   */
-  virtual localIndex packByIndexSize( arrayView1d< localIndex const > const & packList,
-                                      bool withMetadata,
-                                      bool onDevice,
-                                      parallelDeviceEvents & events ) const = 0;
+  template< bool DO_PACKING >
+  localIndex packByIndex( buffer_unit_type * & buffer,
+                          arrayView1d< localIndex const > const & packList,
+                          bool withMetadata,
+                          bool onDevice,
+                          parallelDeviceEvents & events ) const
+  {
+    return DO_PACKING ? packByIndexPrivate( buffer, packList, withMetadata, onDevice, events ) : packByIndexSizePrivate( packList, withMetadata, onDevice, events );
+  }
 
   /**
    * @brief Unpack the entire wrapped object from a buffer.
@@ -653,6 +637,69 @@ protected:
 
   /// A reference to the corresponding conduit::Node.
   conduit::Node & m_conduitNode;
+
+private:
+
+  /**
+   * @brief Pack the entire wrapped object into a buffer.
+   * @param[in,out] buffer the binary buffer pointer, advanced upon completion
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return               the number of @p buffer_unit_type units packed
+   */
+  virtual localIndex packPrivate( buffer_unit_type * & buffer, bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
+
+  /**
+   * @brief Get the buffer size needed to pack the entire wrapped object.
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
+   *                         this matters as the size on device differs from the size on host
+   *                         as we pack less metadata on device
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return the number of @p buffer_unit_type units needed to pack
+   */
+  virtual localIndex packSizePrivate( bool withMetadata, bool onDevice, parallelDeviceEvents & events ) const = 0;
+
+
+  /**
+   * @brief For indexable types, pack selected indices of wrapped object into a buffer.
+   * @param[in,out] buffer the binary buffer pointer, advanced upon completion
+   * @param[in] packList the list of indices to pack
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return               the number of @p buffer_unit_type units packed
+   */
+  virtual localIndex packByIndexPrivate( buffer_unit_type * & buffer,
+                                         arrayView1d< localIndex const > const & packList,
+                                         bool withMetadata,
+                                         bool onDevice,
+                                         parallelDeviceEvents & events ) const = 0;
+
+  /**
+   * @brief Get the buffer size needed to pack the selected indices wrapped object.
+   * @param[in] packList the list of indices to pack
+   * @param[in] withMetadata whether to pack string metadata with the underlying data
+   * @param[in] onDevice    whether to use device-based packing functions
+   *                         (buffer must be either pinned or a device pointer)
+   * @param[out] events      a collection of events to poll for completion of async
+   *                         packing kernels ( device packing is incomplete until all
+   *                         events are finalized )
+   * @return             the number of @p buffer_unit_type units needed to pack
+   */
+  virtual localIndex packByIndexSizePrivate( arrayView1d< localIndex const > const & packList,
+                                             bool withMetadata,
+                                             bool onDevice,
+                                             parallelDeviceEvents & events ) const = 0;
 };
 
 } /// namespace dataRepository

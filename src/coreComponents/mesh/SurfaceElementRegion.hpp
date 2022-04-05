@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -84,11 +84,11 @@ public:
    * @brief Get the key name for the SurfaceElementRegion in the object catalog.
    * @return A string containing the key name.
    */
-  static const string catalogName()
+  static string catalogName()
   { return "SurfaceElementRegion"; }
 
-  virtual const string getCatalogName() const override final
-  { return SurfaceElementRegion::catalogName(); }
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   ///@}
 

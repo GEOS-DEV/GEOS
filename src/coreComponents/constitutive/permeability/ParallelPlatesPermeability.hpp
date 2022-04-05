@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -33,29 +33,69 @@ public:
 
   ParallelPlatesPermeabilityUpdate( arrayView3d< real64 > const & permeability,
                                     arrayView3d< real64 > const & dPerm_dPressure,
-                                    arrayView3d< real64 > const & dPerm_dAperture )
+                                    arrayView4d< real64 > const & dPerm_dDispJump )
     : PermeabilityBaseUpdate( permeability, dPerm_dPressure ),
-    m_dPerm_dAperture( dPerm_dAperture )
+    m_dPerm_dDispJump( dPerm_dDispJump )
   {}
 
   GEOSX_HOST_DEVICE
-  void compute( real64 const & effectiveAperture,
+  void compute( real64 const & oldHydraulicAperture,
+                real64 const & newHydraulicAperture,
                 arraySlice1d< real64 > const & permeability,
-                arraySlice1d< real64 > const & dPerm_dAperture ) const;
+                arraySlice2d< real64 > const & dPerm_dDispJump ) const
+  {
+    // TODO: maybe move to this computation or have the possibility of choosing.
+//    real64 const perm  = newHydraulicAperture*newHydraulicAperture*newHydraulicAperture / 12.0;
+//    real64 const dPerm = newHydraulicAperture*newHydraulicAperture / 4.0;
+
+    real64 const perm = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture*oldHydraulicAperture +
+                                 oldHydraulicAperture*oldHydraulicAperture*newHydraulicAperture +
+                                 oldHydraulicAperture*newHydraulicAperture*newHydraulicAperture +
+                                 newHydraulicAperture*newHydraulicAperture*newHydraulicAperture ) / 12;
+
+    real64 const dPerm  = 0.25 * ( oldHydraulicAperture*oldHydraulicAperture +
+                                   2*oldHydraulicAperture*newHydraulicAperture +
+                                   3*newHydraulicAperture*newHydraulicAperture ) / 12;
+
+
+    for( int dim=0; dim < 3; dim++ )
+    {
+      permeability[dim]     = perm;
+      dPerm_dDispJump[dim][0]  = dPerm;
+      dPerm_dDispJump[dim][1]  = 0.0;
+      dPerm_dDispJump[dim][2]  = 0.0;
+    }
+  }
 
   GEOSX_HOST_DEVICE
-  void updateFromAperture( localIndex const k,
-                           localIndex const q,
-                           real64 const & effectiveAperture ) const override
+  virtual void updateFromAperture( localIndex const k,
+                                   localIndex const q,
+                                   real64 const & oldHydraulicAperture,
+                                   real64 const & newHydraulicAperture ) const override final
   {
-    compute( effectiveAperture,
-             m_permeability[k][q],
-             m_dPerm_dAperture[k][q] );
+    GEOSX_UNUSED_VAR( q );
+
+    compute( oldHydraulicAperture,
+             newHydraulicAperture,
+             m_permeability[k][0],
+             m_dPerm_dDispJump[k][0] );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual void updateFromApertureAndShearDisplacement( localIndex const k,
+                                                       localIndex const q,
+                                                       real64 const & oldHydraulicAperture,
+                                                       real64 const & newHydraulicAperture,
+                                                       real64 const ( &dispJump )[3] ) const override final
+  {
+    GEOSX_UNUSED_VAR( dispJump );
+
+    updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
 private:
 
-  arrayView3d< real64 > m_dPerm_dAperture;
+  arrayView4d< real64 > m_dPerm_dDispJump;
 
 };
 
@@ -87,7 +127,7 @@ public:
   {
     return KernelWrapper( m_permeability,
                           m_dPerm_dPressure,
-                          m_dPerm_dAperture );
+                          m_dPerm_dDispJump );
   }
 
 
@@ -98,26 +138,10 @@ private:
 
   array3d< real64 > m_dPerm_dAperture;
 
+  /// Derivative of fracture permeability w.r.t. displacement jump
+  array4d< real64 > m_dPerm_dDispJump;
+
 };
-
-
-GEOSX_HOST_DEVICE
-void ParallelPlatesPermeabilityUpdate::compute( real64 const & effectiveAperture,
-                                                arraySlice1d< real64 > const & permeability,
-                                                arraySlice1d< real64 > const & dPerm_dAperture ) const
-{
-  // Technically this is not a permeability but it's convenient to definite like this.
-  real64 const perm  = effectiveAperture*effectiveAperture*effectiveAperture / 12.0;
-  real64 const dPerm = 3*effectiveAperture*effectiveAperture / 12.0;
-
-  for( int dim=0; dim < 3; dim++ )
-  {
-    permeability[dim]     = perm;
-    dPerm_dAperture[dim]  = dPerm;
-  }
-}
-
-
 
 }/* namespace constitutive */
 

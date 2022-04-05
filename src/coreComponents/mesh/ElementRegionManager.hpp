@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -19,10 +19,10 @@
 #ifndef GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 #define GEOSX_MESH_ELEMENTREGIONMANAGER_HPP
 
-#include "CellBlock.hpp"
 #include "constitutive/ConstitutiveManager.hpp"
 #include "CellElementRegion.hpp"
 #include "CellElementSubRegion.hpp"
+#include "mesh/generators/CellBlockManagerABC.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "SurfaceElementRegion.hpp"
@@ -105,15 +105,15 @@ public:
    * @brief The function is to return the name of the ElementRegionManager in the object catalog
    * @return string that contains the catalog name used to register/lookup this class in  the object catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "ZoneManager"; }
 
   /**
    * @brief Virtual access to catalogName()
    * @return string that contains the catalog name used to register/lookup this class in the object catalog
    */
-  virtual const string getCatalogName() const override final
-  { return ElementRegionManager::catalogName(); }
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   /**
    * @brief Constructor.
@@ -135,33 +135,18 @@ public:
   localIndex getNumberOfElements() const
   {
     localIndex numElem = 0;
-    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & cellBlock )
+    this->forElementSubRegions< T >( [&]( ElementSubRegionBase const & elementSubRegion )
     {
-      numElem += cellBlock.size();
+      numElem += elementSubRegion.size();
     } );
     return numElem;
   }
 
-//  void Initialize(  ){}
-
   /**
    * @brief Generate the mesh.
-   * @param [in] cellBlockManager pointer to the CellBlockManager
+   * @param [in,out] cellBlockManager Reference to the abstract cell block manager.
    */
-  void generateMesh( Group & cellBlockManager );
-
-  /**
-   * @brief Generate the cell-to-edge map
-   * @param [in] faceManager pointer to the FaceManager
-   */
-  void generateCellToEdgeMaps( FaceManager const & faceManager );
-
-  /**
-   * @brief Generate the aggregates.
-   * @param [in] faceManager pointer to the FaceManager
-   * @param [in] nodeManager pointer to the NodeManager
-   */
-  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
+  void generateMesh( CellBlockManagerABC & cellBlockManager );
 
   /**
    * @brief Generate the wells.
@@ -169,6 +154,13 @@ public:
    * @param [in] meshLevel pointer to meshLevel
    */
   void generateWells( MeshManager & meshManager, MeshLevel & meshLevel );
+
+  /**
+   * @brief Build sets from the node sets
+   * @param[in] nodeManager The node manager that will provide the node sets.
+   * @note ElementRegionManager's sub-regions need to be properly defined.
+   */
+  void buildSets( NodeManager const & nodeManager );
 
   /**
    * @brief Create a new ElementRegion object as a child of this group.
@@ -252,6 +244,18 @@ public:
   }
 
   /**
+   * @brief Determines if an ElementRegion with the input name exists.
+   * @tparam T The type of ElementRegion. May be a specific derived type of ElementRegionBase.
+   * @param name The name/key of the ElementRegion
+   * @return true if the region exists, false if not.
+   */
+  template< typename T=ElementRegionBase >
+  bool hasRegion( string const & name ) const
+  {
+    return this->getGroup( groupKeyStruct::elementRegionsGroup() ).hasGroup< T >( name );
+  }
+
+  /**
    * @brief Get number of the regions.
    * @return number of the regions
    */
@@ -261,10 +265,12 @@ public:
   }
 
   /**
-   * @brief Get number of the cell blocks.
-   * @return number of the cell blocks
+   * @brief Produce a map from cell block indices to element region and subregion indices
+   * @param cellBlockManager the CellBlocKManager
+   * @return a (numBlock x 2) array with each row corresponding to a cell block and containing
+   *         region (first entry) and subregion (second entry) indices, or -1 if block was not used.
    */
-  localIndex numCellBlocks() const;
+  array2d< localIndex > getCellBlockToSubRegionMap( CellBlockManagerABC const & cellBlockManager ) const;
 
   /**
    * @brief This function is used to launch kernel function over all the element regions with region type =
@@ -699,14 +705,17 @@ public:
     {
       localIndex const er = elementRegion.getIndexInParent();
 
-      for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+      if( er>-1 )
       {
-        ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
-
-        Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+        for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
         {
-          lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
-        } );
+          ElementSubRegionBase & subRegion = elementRegion.getSubRegion( esr );
+
+          Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto & castedSubRegion )
+          {
+            lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
+          } );
+        }
       }
     } );
   }
@@ -726,17 +735,31 @@ public:
     {
       localIndex const er = elementRegion.getIndexInParent();
 
-      for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
+      if( er>-1 )
       {
-        ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
-
-        Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+        for( localIndex esr=0; esr<elementRegion.numSubRegions(); ++esr )
         {
-          lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
-        } );
+          ElementSubRegionBase const & subRegion = elementRegion.getSubRegion( esr );
+
+          Group::applyLambdaToContainer< SUBREGIONTYPE, SUBREGIONTYPES... >( subRegion, [&]( auto const & castedSubRegion )
+          {
+            lambda( targetIndex, er, esr, elementRegion, castedSubRegion );
+          } );
+        }
       }
     } );
   }
+
+
+  /**
+   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @tparam TRAIT data type
+   * @param neighborName neighbor data name
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructExtrinsicAccessor( string const & neighborName = string() ) const;
 
   /**
    * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
@@ -770,7 +793,7 @@ public:
    * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
    */
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
@@ -822,10 +845,40 @@ public:
   /**
    * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
    * regions/materials.
+   * @tparam TRAIT mesh data trait
+   * @param regionNames list of region names
+   * @param materialNames list of corresponding material names
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam TRAIT mesh data trait
+   * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
+   * list
+   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   */
+  template< typename MATERIALTYPE, typename TRAIT >
+  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  constructMaterialExtrinsicAccessor( bool const allowMissingViews = false ) const;
+
+
+  /**
+   * @brief This is a const function to construct a MaterialViewAccessor to access the material data for specified
+   * regions/materials.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ElementViewAccessor that contains VIEWTYPE data
@@ -834,7 +887,7 @@ public:
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+                                 string const & materialKeyName,
                                  bool const allowMissingViews = false ) const;
 
   /**
@@ -843,7 +896,7 @@ public:
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
    * @return ElementViewAccessor that contains VIEWTYPE data
@@ -852,7 +905,7 @@ public:
   ElementViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
-                                 arrayView1d< string const > const & materialNames,
+                                 string const & materialKeyName,
                                  bool const allowMissingViews = false );
 
   /**
@@ -862,16 +915,42 @@ public:
    * @tparam PERM layout permutation sequence type
    * @param viewName view name of the data
    * @param regionNames list of region names
-   * @param materialNames list of corresponding material names
+   * @param materialKeyName key of the wrapper that holds the material name on the subRegion.
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material list
    * @return MaterialViewAccessor that contains the data views
    */
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
+                                      string const & materialKeyName,
                                       bool const allowMissingViews = false ) const;
+
+  /**
+   * @brief Construct a const view accessor to material data for specified material type.
+   * @tparam MATERIALTYPE base type of material model
+   * @tparam VIEWTYPE data type
+   * @param viewName view name of the data
+   * @return ElementViewAccessor that contains VIEWTYPE data. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS=VIEWTYPE >
+  ElementViewAccessor< LHS >
+  constructMaterialViewAccessor( string const & viewName ) const;
+
+  /**
+   * @brief Construct a const view accessor for material data, assuming array as storage type
+   * @tparam MATERIALTYPE
+   * @tparam T underlying data type
+   * @tparam NDIM number of array dimensions
+   * @tparam PERM layout permutation sequence type
+   * @param viewName view name of the data
+   * @return MaterialViewAccessor that contains the data views. Empty views are returned
+   *         for subregions that don't contain a model derived from MODELTYPE.
+   */
+  template< typename MATERIALTYPE, typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
+  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  constructMaterialArrayViewAccessor( string const & viewName ) const;
 
   /**
    * @brief Construct a ConstitutiveRelationAccessor.
@@ -904,23 +983,19 @@ public:
   using ObjectManagerBase::unpackUpDownMaps;
 
   /**
-   * @brief Get the buffer size needed to pack a list of wrappers.
-   * @param wrapperNames list of wrapper names
+   * @brief Get the buffer size needed to pack all the wrappers of all the sub regions of all the regions.
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  int PackSize( string_array const & wrapperNames,
-                ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
-   * @brief Pack a list of wrappers to a buffer.
+   * @brief Pack all the wrappers of all the sub regions of all the regions.
    * @param buffer pointer to the buffer to be packed
-   * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
    * @return the size of data packed to the buffer
    */
-  int Pack( buffer_unit_type * & buffer,
-            string_array const & wrapperNames,
+  int pack( buffer_unit_type * & buffer,
             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /// @copydoc dataRepository::Group::unpack
@@ -932,7 +1007,7 @@ public:
    * @param packList list of indices to unpack
    * @return the size of data unpacked
    */
-  int Unpack( buffer_unit_type const * & buffer,
+  int unpack( buffer_unit_type const * & buffer,
               ElementViewAccessor< arrayView1d< localIndex > > & packList );
 
   /**
@@ -941,7 +1016,7 @@ public:
    * @param packList list of indices to unpack
    * @return the size of data unpacked.
    */
-  int Unpack( buffer_unit_type const * & buffer,
+  int unpack( buffer_unit_type const * & buffer,
               ElementReferenceAccessor< array1d< localIndex > > & packList );
 
   /**
@@ -949,7 +1024,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack a buffer.
@@ -957,7 +1032,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMaps( buffer_unit_type * & buffer,
+  int packGlobalMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -966,7 +1041,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of the data unpacked
    */
-  int UnpackGlobalMaps( buffer_unit_type const * & buffer,
+  int unpackGlobalMaps( buffer_unit_type const * & buffer,
                         ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
   /**
@@ -974,14 +1049,14 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int packUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Get the buffer size needed to pack element-to-node and element-to-face maps.
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
+  int packUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack element-to-node and element-to-face maps.
@@ -989,7 +1064,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
+  int packUpDownMaps( buffer_unit_type * & buffer,
                       ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
@@ -998,7 +1073,7 @@ public:
    * @param packList list of indices to pack
    * @return the size of data packed.
    */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
+  int packUpDownMaps( buffer_unit_type * & buffer,
                       ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
 
   /**
@@ -1008,7 +1083,7 @@ public:
    * @param overwriteMap flag to indicate whether to overwrite the local map
    * @return the size of data packed.
    */
-  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
+  int unpackUpDownMaps( buffer_unit_type const * & buffer,
                         ElementReferenceAccessor< localIndex_array > & packList,
                         bool const overwriteMap );
 
@@ -1049,14 +1124,12 @@ private:
   /**
    * @brief Pack a list of wrappers or get the buffer size needed to pack.
    * @param buffer pointer to the buffer to be packed
-   * @param wrapperNames list of wrapper names
    * @param packList list of indices to pack
    * @return the size of the buffer required to pack the wrappers
    */
-  template< bool DOPACK >
-  int PackPrivate( buffer_unit_type * & buffer,
-                   string_array const & wrapperNames,
-                   ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+  template< bool DO_PACKING >
+  int packImpl( buffer_unit_type * & buffer,
+                ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack a buffer or get the buffer size.
@@ -1064,9 +1137,9 @@ private:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  template< bool DOPACK >
-  int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+  template< bool DO_PACKING >
+  int packGlobalMapsImpl( buffer_unit_type * & buffer,
+                          ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack element-to-node and element-to-face maps to a buffer or get the buffer size.
@@ -1074,10 +1147,10 @@ private:
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  template< bool DOPACK, typename T >
+  template< bool DO_PACKING, typename T >
   int
-  packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         T const & packList ) const;
+  packUpDownMapsImpl( buffer_unit_type * & buffer,
+                      T const & packList ) const;
   /**
    * @brief Unpack element-to-node and element-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
@@ -1085,8 +1158,8 @@ private:
    * @return the size of the data unpacked
    */
   template< typename T >
-  int unpackPrivate( buffer_unit_type const * & buffer,
-                     T & packList );
+  int unpackImpl( buffer_unit_type const * & buffer,
+                  T & packList );
 
   /**
    * @brief Pack set of fractured elements and map toEmbSurfaces to a buffer or get the buffer size.
@@ -1095,11 +1168,10 @@ private:
    * @param fractureRegionName name of the fracture region
    * @return the size of the data packed
    */
-  template< bool DOPACK >
-  int
-  packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                ElementViewAccessor< arrayView1d< localIndex > > const & packList,
-                                string const fractureRegionName ) const;
+  template< bool DO_PACKING >
+  int packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                 ElementViewAccessor< arrayView1d< localIndex > > const & packList,
+                                 string const fractureRegionName ) const;
 
   /**
    * @brief Copy constructor.
@@ -1111,6 +1183,8 @@ private:
    * @return reference to this object
    */
   ElementRegionManager & operator=( const ElementRegionManager & );
+
+
 };
 
 
@@ -1176,14 +1250,24 @@ ElementRegionManager::
   return viewAccessor;
 }
 
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructExtrinsicAccessor( string const & neighborName ) const
+{
+  return constructViewAccessor< typename TRAIT::type,
+                                traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
+}
+
+
 template< typename T, int NDIM, typename PERM >
-ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ElementRegionManager::
   constructArrayViewAccessor( string const & name, string const & neighborName ) const
 {
   return constructViewAccessor< Array< T, NDIM, PERM >,
-         ArrayView< T const, NDIM, getUSD( PERM{} ) >
-         >( name, neighborName );
+                                ArrayView< T const, NDIM, getUSD< PERM > >
+                                >( name, neighborName );
 }
 
 template< typename VIEWTYPE >
@@ -1326,10 +1410,9 @@ template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+                                                     string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
-  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
   ElementViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
@@ -1345,25 +1428,28 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   for( localIndex k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
-    GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-    ElementRegionBase const & region = getRegion( er );
-
-    region.forElementSubRegionsIndex( [&]( localIndex const esr,
-                                           ElementSubRegionBase const & subRegion )
+    if( er >=0 )
     {
-      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
-      dataRepository::Group const & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      ElementRegionBase const & region = getRegion( er );
 
-      dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
-      if( wrapper )
+      region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                             ElementSubRegionBase const & subRegion )
       {
-        accessor[er][esr] = wrapper->reference();
-      }
-      else
-      {
-        GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
-      }
-    } );
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
+
+        dataRepository::Wrapper< VIEWTYPE > const * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
+        if( wrapper )
+        {
+          accessor[er][esr] = wrapper->reference();
+        }
+        else
+        {
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialKeyName[k] << " does not contain " << viewName );
+        }
+      } );
+    }
   }
   return accessor;
 }
@@ -1372,10 +1458,9 @@ template< typename VIEWTYPE, typename LHS >
 ElementRegionManager::ElementViewAccessor< LHS >
 ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
-                                                     arrayView1d< string const > const & materialNames,
+                                                     string const & materialKeyName,
                                                      bool const allowMissingViews )
 {
-  GEOSX_ASSERT_EQ( regionNames.size(), materialNames.size() );
   ElementViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
@@ -1391,42 +1476,112 @@ ElementRegionManager::constructMaterialViewAccessor( string const & viewName,
   for( localIndex k = 0; k < regionNames.size(); ++k )
   {
     localIndex const er = regionMap.getIndex( regionNames[k] );
-    GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
-    ElementRegionBase & region = getRegion( er );
-
-    region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
+    if( er >=0 )
     {
-      dataRepository::Group & constitutiveGroup = subRegion.getConstitutiveModels();
-      dataRepository::Group & constitutiveRelation = constitutiveGroup.getGroup( materialNames[k] );
+      GEOSX_ERROR_IF_EQ_MSG( er, subGroupMap::KeyIndex::invalid_index, "Region not found: " << regionNames[k] );
+      ElementRegionBase & region = getRegion( er );
 
-      dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
-      if( wrapper )
+      region.forElementSubRegionsIndex( [&]( localIndex const esr, ElementSubRegionBase & subRegion )
       {
-        accessor[er][esr] = wrapper->reference();
-      }
-      else
+        string const & materialName = subRegion.getReference< string >( materialKeyName );
+        dataRepository::Group const & constitutiveRelation = subRegion.getConstitutiveModel( materialName );
+
+        dataRepository::Wrapper< VIEWTYPE > * const wrapper = constitutiveRelation.getWrapperPointer< VIEWTYPE >( viewName );
+        if( wrapper )
+        {
+          accessor[er][esr] = wrapper->reference();
+        }
+        else
+        {
+          GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialName << " does not contain " << viewName );
+        }
+      } );
+    }
+  }
+  return accessor;
+}
+
+template< typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+                                      arrayView1d< string const > const & materialNames,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(),
+                                                                                         regionNames,
+                                                                                         materialNames,
+                                                                                         allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename TRAIT >
+ElementRegionManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ElementRegionManager::
+  constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
+{
+  GEOSX_UNUSED_VAR( allowMissingViews );
+  return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
+                                        traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key() );
+}
+
+
+template< typename T, int NDIM, typename PERM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ElementRegionManager::
+  constructMaterialArrayViewAccessor( string const & viewName,
+                                      arrayView1d< string const > const & regionNames,
+                                      string const & materialKeyName,
+                                      bool const allowMissingViews ) const
+{
+  return constructMaterialViewAccessor< Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName,
+                                                                                                              regionNames,
+                                                                                                              materialKeyName,
+                                                                                                              allowMissingViews );
+}
+
+template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS >
+ElementRegionManager::ElementViewAccessor< LHS >
+ElementRegionManager::constructMaterialViewAccessor( string const & viewName ) const
+{
+  ElementViewAccessor< LHS > accessor( numRegions() );
+
+  // Resize the accessor to all regions and subregions
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    accessor[er].resize( getRegion( er ).numSubRegions() );
+  }
+
+  // Loop only over regions named and populate according to given material names
+  for( localIndex er = 0; er < numRegions(); ++er )
+  {
+    ElementRegionBase const & region = getRegion( er );
+
+    region.forElementSubRegionsIndex( [&]( localIndex const esr,
+                                           ElementSubRegionBase const & subRegion )
+    {
+      dataRepository::Group const & constitutiveGroup = subRegion.getConstitutiveModels();
+
+      string materialName;
+      constitutiveGroup.forSubGroups< MATERIALTYPE >( [&]( MATERIALTYPE const & constitutiveRelation )
       {
-        GEOSX_ERROR_IF( !allowMissingViews, "Material " << materialNames[k] << " does not contain " << viewName );
-      }
+        materialName = constitutiveRelation.getName();
+        if( constitutiveRelation.template hasWrapper( viewName ) )  //NOTE (matteo): I have added this check to allow for the view to be
+                                                                    // missing. I am not sure this is the default behaviour we want though.
+        {
+          accessor[er][esr] = constitutiveRelation.template getReference< VIEWTYPE >( viewName );
+        }
+      } );
     } );
   }
   return accessor;
 }
 
-template< typename T, int NDIM, typename PERM >
-ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD( PERM{} ) >>
-ElementRegionManager::
-  constructMaterialArrayViewAccessor( string const & viewName,
-                                      arrayView1d< string const > const & regionNames,
-                                      arrayView1d< string const > const & materialNames,
-                                      bool const allowMissingViews ) const
+template< typename MATERIALTYPE, typename T, int NDIM, typename PERM >
+ElementRegionManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ElementRegionManager::constructMaterialArrayViewAccessor( string const & viewName ) const
 {
-  return constructMaterialViewAccessor< Array< T, NDIM, PERM >,
-         ArrayView< T const, NDIM, getUSD( PERM{} ) >
-         >( viewName,
-            regionNames,
-            materialNames,
-            allowMissingViews );
+  return constructMaterialViewAccessor< MATERIALTYPE, Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName );
 }
 
 template< typename CONSTITUTIVE_TYPE >

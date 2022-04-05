@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -26,7 +26,7 @@ namespace geosx
 {
 
 /// Namespace to contain the solid mechanics kernels.
-namespace SolidMechanicsLagrangianFEMKernels
+namespace solidMechanicsLagrangianFEMKernels
 {
 
 /// If UPDATE_STRESS is undef, uses total displacement and stress is not
@@ -72,9 +72,10 @@ public:
                                           3,
                                           3 >;
 
-  /// Number of nodes per element...which is equal to the
-  /// numTestSupportPointPerElem and numTrialSupportPointPerElem by definition.
-  static constexpr int numNodesPerElem = Base::numTestSupportPointsPerElem;
+  /// Maximum number of nodes per element, which is equal to the maxNumTestSupportPointPerElem and
+  /// maxNumTrialSupportPointPerElem by definition. When the FE_TYPE is not a Virtual Element, this
+  /// will be the actual number of nodes per element.
+  static constexpr int numNodesPerElem = Base::maxNumTestSupportPointsPerElem;
 
   using Base::numDofPerTestSupportPoint;
   using Base::numDofPerTrialSupportPoint;
@@ -103,7 +104,7 @@ public:
                        FE_TYPE const & finiteElementSpace,
                        CONSTITUTIVE_TYPE & inputConstitutiveType,
                        real64 const dt,
-                       string const & elementListName ):
+                       string const elementListName ):
     Base( elementSubRegion,
           finiteElementSpace,
           inputConstitutiveType ),
@@ -342,9 +343,9 @@ protected:
 /// The factory used to construct a ExplicitSmallStrain kernel.
 using ExplicitSmallStrainFactory = finiteElement::KernelFactory< ExplicitSmallStrain,
                                                                  real64,
-                                                                 string const & >;
+                                                                 string const >;
 
-} // namespace SolidMechanicsLagrangianFEMKernels
+} // namespace solidMechanicsLagrangianFEMKernels
 
 } // namespace geosx
 

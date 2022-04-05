@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -90,7 +90,7 @@ std::string getAbsolutePath( std::string const & path );
  */
 inline bool isAbsolutePath( const std::string & path )
 {
-  return path[ 0 ] == '/';
+  return !path.empty() && path[ 0 ] == '/';
 }
 
 /*!
@@ -108,7 +108,7 @@ std::istream & operator>>( std::istream & is, Path & p );
  */
 inline std::string trimPath( std::string const & path )
 {
-  return path.back() == '/' ? path.substr( 0, path.size() - 1 ) : path;
+  return ( !path.empty() && path.back() == '/' ) ? path.substr( 0, path.size() - 1 ) : path;
 }
 
 /*!
@@ -117,17 +117,6 @@ inline std::string trimPath( std::string const & path )
  * @return a pair of strings, containing names of the directory and the file
  */
 std::pair< std::string, std::string > splitPath( std::string const & path );
-
-/*!
- * @brief Join two parts of a path
- * @param baseName base name (e.g. directory)
- * @param name name to add (e.g. relative path to file or directory)
- * @return the combined path
- */
-inline std::string joinPath( std::string const & baseName, std::string const & name )
-{
-  return trimPath( baseName ) + '/' + trimPath( name );
-}
 
 /*!
  * @brief Join parts of a path
@@ -142,11 +131,14 @@ inline std::string joinPath( ARGS const & ... args )
   static_assert( numParts > 0, "Must provide arguments" );
   std::string parts[numParts] { trimPath( args ) ... };
   std::ostringstream oss;
-  oss << parts[0];
-  for( size_t i = 1; i < numParts; ++i )
+  for( size_t i = 0; i < numParts - 1; ++i )
   {
-    oss << '/' << parts[i];
+    if( !parts[i].empty() )
+    {
+      oss << parts[i] << '/';
+    }
   }
+  oss << parts[numParts - 1];
   return oss.str();
 }
 

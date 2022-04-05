@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -709,7 +709,7 @@ private:
 /**
  * Namespace to hold some utilities needed by the functions in SiloFile.
  */
-namespace SiloFileUtilities
+namespace siloFileUtilities
 {
 /**
  * @tparam OUTTYPE the type of data to write out (int,float,real64)

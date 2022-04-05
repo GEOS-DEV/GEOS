@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -57,9 +57,6 @@ MeshLevel::MeshLevel( string const & name,
   registerWrapper< integer >( viewKeys.meshLevel );
 }
 
-MeshLevel::~MeshLevel()
-{}
-
 void MeshLevel::initializePostInitialConditionsPostSubGroups()
 {
   m_elementManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
@@ -68,7 +65,6 @@ void MeshLevel::initializePostInitialConditionsPostSubGroups()
   } );
 }
 
-
 void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
@@ -76,19 +72,16 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
                                         ElementRegionManager::ElementViewAccessor< ReferenceWrapper< localIndex_array > > & elementAdjacencyList,
                                         integer const depth )
 {
-  NodeManager & nodeManager = getNodeManager();
+  NodeManager const & nodeManager = getNodeManager();
 
   ArrayOfArraysView< localIndex const > const & nodeToElementRegionList = nodeManager.elementRegionList().toViewConst();
-
   ArrayOfArraysView< localIndex const > const & nodeToElementSubRegionList = nodeManager.elementSubRegionList().toViewConst();
-
   ArrayOfArraysView< localIndex const > const & nodeToElementList = nodeManager.elementList().toViewConst();
 
-
-  FaceManager & faceManager = this->getFaceManager();
+  FaceManager const & faceManager = this->getFaceManager();
   ArrayOfArraysView< localIndex const > const & faceToEdges = faceManager.edgeList().toViewConst();
 
-  ElementRegionManager & elemManager = this->getElemManager();
+  ElementRegionManager const & elemManager = this->getElemManager();
 
   std::set< localIndex > nodeAdjacencySet;
   std::set< localIndex > edgeAdjacencySet;
@@ -136,11 +129,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
           {
             faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
 
-            localIndex const faceID = elemsToFaces[elementIndex][a];
-            localIndex const numEdges = faceToEdges.sizeOfArray( faceID );
+            localIndex const faceIndex = elemsToFaces[elementIndex][a];
+            localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
             for( localIndex b=0; b<numEdges; ++b )
             {
-              edgeAdjacencySet.insert( faceToEdges( faceID, b ));
+              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ));
             }
 
           }

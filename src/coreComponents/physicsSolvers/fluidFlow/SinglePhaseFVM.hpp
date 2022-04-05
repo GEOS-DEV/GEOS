@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -45,56 +45,29 @@ public:
 
   // Aliasing public/protected members/methods of SolverBase so we don't
   // have to use this->member etc.
+  using BASE::forMeshTargets;
   using BASE::m_cflFactor;
   using BASE::m_maxStableDt;
   using BASE::m_nextDt;
   using BASE::m_discretizationName;
-  using BASE::targetRegionNames;
-  using BASE::forTargetRegions;
-  using BASE::forTargetRegionsComplete;
-  using BASE::forTargetSubRegions;
-  using BASE::forTargetSubRegionsComplete;
   using BASE::m_dofManager;
   using BASE::m_matrix;
   using BASE::m_rhs;
   using BASE::m_solution;
   using BASE::m_localMatrix;
-  using BASE::m_localRhs;
-  using BASE::m_localSolution;
   using BASE::m_linearSolverParameters;
   using BASE::m_nonlinearSolverParameters;
 
   // Aliasing public/protected members/methods of FlowSolverBase so we don't
   // have to use this->member etc.
-  using BASE::m_fluidModelNames;
-  using BASE::m_solidModelNames;
   using BASE::m_poroElasticFlag;
   using BASE::m_coupledWellsFlag;
   using BASE::m_numDofPerCell;
-  using BASE::m_derivativeFluxResidual_dAperture;
   using BASE::m_fluxEstimate;
-  using BASE::m_elemGhostRank;
-  using BASE::m_volume;
-  using BASE::m_gravCoef;
-  using BASE::m_porosityRef;
-  using BASE::m_elementArea;
-  using BASE::m_elementAperture0;
-  using BASE::m_elementAperture;
-  using BASE::m_effectiveAperture;
 
 
   // Aliasing public/protected members/methods of SinglePhaseBase so we don't
   // have to use this->member etc.
-  using BASE::m_pressure;
-  using BASE::m_deltaPressure;
-  using BASE::m_deltaVolume;
-  using BASE::m_mobility;
-  using BASE::m_dMobility_dPres;
-  using BASE::m_density;
-  using BASE::m_dDens_dPres;
-  using BASE::m_viscosity;
-  using BASE::m_dVisc_dPres;
-  using BASE::m_transTMultiplier;
 
   /**
    * @brief main constructor for Group Objects
@@ -160,8 +133,8 @@ public:
   setupSystem( DomainPartition & domain,
                DofManager & dofManager,
                CRSMatrix< real64, globalIndex > & localMatrix,
-               array1d< real64 > & localRhs,
-               array1d< real64 > & localSolution,
+               ParallelVector & rhs,
+               ParallelVector & solution,
                bool const setSparsity = true ) override;
 
   virtual void
@@ -182,16 +155,6 @@ public:
                        arrayView1d< real64 const > const & localSolution,
                        real64 const scalingFactor,
                        DomainPartition & domain ) override;
-
-  /**
-   * @brief assembles the flux terms for all cells
-   * @param time_n previous time value
-   * @param dt time step
-   * @param domain the physical domain object
-   * @param dofManager degree-of-freedom manager associated with the linear system
-   * @param localMatrix the system matrix
-   * @param localRhs the system right-hand side vector
-   */
   virtual void
   assembleFluxTerms( real64 const time_n,
                      real64 const dt,
@@ -200,11 +163,33 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) override;
 
-  virtual void setUpDflux_dApertureMatrix( DomainPartition & domain,
-                                           DofManager const & dofManager,
-                                           CRSMatrix< real64, globalIndex > & localMatrix ) override final;
+  virtual void
+  assemblePoroelasticFluxTerms( real64 const time_n,
+                                real64 const dt,
+                                DomainPartition const & domain,
+                                DofManager const & dofManager,
+                                CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                arrayView1d< real64 > const & localRhs,
+                                string const & jumpDofKey ) override final;
+
+  virtual void
+  assembleHydrofracFluxTerms( real64 const time_n,
+                              real64 const dt,
+                              DomainPartition const & domain,
+                              DofManager const & dofManager,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs,
+                              CRSMatrixView< real64, localIndex const > const & dR_dAper ) override final;
 
   /**@}*/
+
+  virtual void
+  applyAquiferBC( real64 const time,
+                  real64 const dt,
+                  DomainPartition & domain,
+                  DofManager const & dofManager,
+                  CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                  arrayView1d< real64 > const & localRhs ) const override;
 
   virtual void initializePreSubGroups() override;
 
@@ -229,7 +214,6 @@ private:
   // no data needed here, see SinglePhaseBase
 
 };
-
 
 } /* namespace geosx */
 

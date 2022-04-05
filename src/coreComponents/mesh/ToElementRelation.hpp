@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -39,11 +39,6 @@ public:
   /// The type of the underlying relationship storage object.
   using base_type = BASETYPE;
 
-  /// The default constructor
-  ToElementRelation();
-  /// The default destructor
-  ~ToElementRelation();
-
   /**
    * @brief Resize the underlying relationship storage.
    * @tparam DIMS The types of each dimensions resize parameter.
@@ -51,7 +46,12 @@ public:
    *                dimension of the relationship storage.
    */
   template< typename ... DIMS >
-  void resize( DIMS... newdims );
+  void resize( DIMS... newdims )
+  {
+    m_toElementRegion.resize( newdims ... );
+    m_toElementSubRegion.resize( newdims ... );
+    m_toElementIndex.resize( newdims ... );
+  }
 
   /**
    * @brief Get the current size of the relationship storage.
@@ -98,31 +98,8 @@ public:
   BASETYPE m_toElementIndex;
 
   /// The current ElementRegionManager
-  ElementRegionManager const * m_elemRegionManager;
+  ElementRegionManager const * m_elemRegionManager{};
 };
-
-/// @cond DO_NOT_DOCUMENT
-template< typename BASETYPE >
-ToElementRelation< BASETYPE >::ToElementRelation():
-  m_toElementRegion(),
-  m_toElementSubRegion(),
-  m_toElementIndex(),
-  m_elemRegionManager( nullptr )
-{}
-
-template< typename BASETYPE >
-ToElementRelation< BASETYPE >::~ToElementRelation()
-{}
-
-template< typename BASETYPE >
-template< typename ... DIMS >
-void ToElementRelation< BASETYPE >::resize( DIMS... newdims )
-{
-  m_toElementRegion.resize( newdims ... );
-  m_toElementSubRegion.resize( newdims ... );
-  m_toElementIndex.resize( newdims ... );
-}
-/// @endcond
 
 /// @brief A ToElementRelation where each object is related to the same number of elements.
 typedef ToElementRelation< array2d< localIndex > > FixedToManyElementRelation;

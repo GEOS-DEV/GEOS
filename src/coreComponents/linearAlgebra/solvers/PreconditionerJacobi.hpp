@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2019 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2019 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2019 Total, S.A
+ * Copyright (c) 2018-2019 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All right reserved
  *
@@ -46,7 +46,7 @@ public:
   virtual void setup( Matrix const & mat ) override
   {
     GEOSX_LAI_ASSERT( mat.ready() );
-    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.getComm() );
+    m_diagInv.createWithLocalSize( mat.numLocalRows(), mat.comm() );
     mat.extractDiagonal( m_diagInv );
     m_diagInv.reciprocal();
   }

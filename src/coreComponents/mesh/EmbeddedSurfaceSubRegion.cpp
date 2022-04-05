@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -44,7 +44,8 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
   m_tangentVector1(),
   m_tangentVector2(),
   m_numOfJumpEnrichments( 3 ),
-  m_connectivityIndex()
+  m_connectivityIndex(),
+  m_parentPlaneName()
 {
   m_elementType = ElementType::Polygon;
 
@@ -69,27 +70,26 @@ EmbeddedSurfaceSubRegion::EmbeddedSurfaceSubRegion( string const & name,
     setApplyDefaultValue( 1 ).
     setDescription( "Connectivity index of each EmbeddedSurface." );
 
+  registerWrapper( viewKeyStruct::surfaceElementToParentPlaneString(), &m_parentPlaneName ).
+    setDescription( "A map of surface element to the parent fracture name" );
+
   m_normalVector.resizeDimension< 1 >( 3 );
   m_tangentVector1.resizeDimension< 1 >( 3 );
   m_tangentVector2.resizeDimension< 1 >( 3 );
   m_surfaceElementsToCells.resize( 0, 1 );
 }
 
-
-EmbeddedSurfaceSubRegion::~EmbeddedSurfaceSubRegion()
-{}
-
 void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( NodeManager const & GEOSX_UNUSED_PARAM( nodeManager ),
                                                                     FaceManager const & GEOSX_UNUSED_PARAM( facemanager ) )
 {
   // loop over the elements
-  forAll< serialPolicy >( this->size(), [=] ( localIndex const k )
+  forAll< parallelHostPolicy >( this->size(), [=] ( localIndex const k )
   {
     m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
   } );
 }
 
-void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
+void EmbeddedSurfaceSubRegion::calculateElementGeometricQuantities( arrayView2d< real64 const > const intersectionPoints,
                                                                     localIndex const k )
 {
   for( localIndex p = 0; p < intersectionPoints.size( 0 ); p++ )
@@ -106,14 +106,41 @@ void EmbeddedSurfaceSubRegion::CalculateElementGeometricQuantities( arrayView2d<
   m_elementVolume[k] = m_elementAperture[k] * m_elementArea[k];
 }
 
-bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellIndex,
-                                                       localIndex const subRegionIndex,
-                                                       localIndex const regionIndex,
-                                                       NodeManager const & nodeManager,
-                                                       EmbeddedSurfaceNodeManager & embSurfNodeManager,
-                                                       EdgeManager const & edgeManager,
-                                                       FixedOneToManyRelation const & cellToEdges,
-                                                       BoundedPlane const * fracture )
+void EmbeddedSurfaceSubRegion::computeConnectivityIndex( localIndex const k,
+                                                         arrayView2d< localIndex const, cells::NODE_MAP_USD > const cellToNodes,
+                                                         arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const nodesCoord )
+{
+  // 1. Compute average distance
+  // TODO: This is a pretty bad approximation of the average distance and proper numerical integration should
+  // be implemented.
+  real64 averageDistance = 0.0;
+
+  localIndex const cellIndex = m_surfaceElementsToCells.m_toElementIndex[k][0];
+  localIndex const numOfNodes = cellToNodes.size( 1 );
+
+  real64 nodeToFracCenter[3];
+  for( localIndex a=0; a < numOfNodes; a++ )
+  {
+    localIndex const nodeIndex = cellToNodes[cellIndex][a];
+    LvArray::tensorOps::copy< 3 >( nodeToFracCenter, nodesCoord[nodeIndex] );
+    LvArray::tensorOps::subtract< 3 >( nodeToFracCenter, m_elementCenter[k] );
+    real64 distance = LvArray::tensorOps::AiBi< 3 >( nodeToFracCenter, m_normalVector[k] );
+    averageDistance += std::sqrt( distance * distance );
+  }
+  averageDistance /= numOfNodes;
+
+  //2. Compute connectivity index
+  m_connectivityIndex[k] = m_elementArea[ k ] / averageDistance;
+}
+
+bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface( localIndex const cellIndex,
+                                                      localIndex const regionIndex,
+                                                      localIndex const subRegionIndex,
+                                                      NodeManager const & nodeManager,
+                                                      EmbeddedSurfaceNodeManager & embSurfNodeManager,
+                                                      EdgeManager const & edgeManager,
+                                                      FixedOneToManyRelation const & cellToEdges,
+                                                      BoundedPlane const * fracture )
 {
   /* The goal is to add an embeddedSurfaceElem if it is contained within the BoundedPlane
    *
@@ -203,8 +230,9 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
     array2d< real64, nodes::REFERENCE_POSITION_PERM > & embSurfNodesPos =
       embSurfNodeManager.referencePosition();
 
+    // fill out elemNodes array with the previously found intersection points
+    // add new nodes to embSurfNodes
     bool isNew;
-    bool hasGhostNode = false;
     localIndex nodeIndex;
     array1d< localIndex > elemNodes( intersectionPoints.size( 0 ) );
 
@@ -228,37 +256,19 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
         globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ j ] ] ];
         nodeIndex = embSurfNodeManager.size();
 
-        if( pointGhostRank[ originalIndices[ j ] ] < 0 )
-        {
-          embSurfNodeManager.appendNode( intersectionPoints[ j ],
-                                         pointGhostRank[ originalIndices[ j ] ] );
+        embSurfNodeManager.appendNode( intersectionPoints[ j ],
+                                       pointGhostRank[ originalIndices[ j ] ] );
 
-          arrayView1d< localIndex > const & parentIndex =
-            embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+        arrayView1d< localIndex > const & parentIndex =
+          embSurfNodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
 
-          parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
+        parentIndex[nodeIndex] = pointParentIndex[ originalIndices[ j ] ];
 
-          array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
-          parentEdgeGlobalIndex[nodeIndex] = parentEdgeID;
-        }
-        else
-        {
-          hasGhostNode = true;
-        }
+        array1d< globalIndex > & parentEdgeGlobalIndex = embSurfNodeManager.getParentEdgeGlobalIndex();
+        parentEdgeGlobalIndex[nodeIndex] = parentEdgeID;
+
       }
       elemNodes[ j ] =  nodeIndex;
-    }
-
-    if( hasGhostNode )
-    {
-      localIndex surfWithGhostsIndex = m_surfaceWithGhostNodes.size();
-      m_surfaceWithGhostNodes.resize( surfWithGhostsIndex + 1 );
-      m_surfaceWithGhostNodes[ surfWithGhostsIndex ].surfaceIndex = surfaceIndex;
-      for( int ii = 0; ii < elemNodes.size(); ii++ )
-      {
-        globalIndex parentEdgeID = edgeLocalToGlobal[ pointParentIndex[ originalIndices[ ii ] ] ];
-        m_surfaceWithGhostNodes[ surfWithGhostsIndex ].insert( parentEdgeID );
-      }
     }
 
     m_toNodesRelation.resizeArray( surfaceIndex, elemNodes.size() );
@@ -267,13 +277,14 @@ bool EmbeddedSurfaceSubRegion::addNewEmbeddedSurface ( localIndex const cellInde
       m_toNodesRelation( surfaceIndex, inode ) = elemNodes[ inode ];
     }
 
-    m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]        = cellIndex;
-    m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0]    =  subRegionIndex;
-    m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]       =  regionIndex;
+    m_surfaceElementsToCells.m_toElementIndex[ surfaceIndex ][0]     = cellIndex;
+    m_surfaceElementsToCells.m_toElementSubRegion[ surfaceIndex ][0] =  subRegionIndex;
+    m_surfaceElementsToCells.m_toElementRegion[ surfaceIndex ][0]    =  regionIndex;
+    m_parentPlaneName[ surfaceIndex ] = fracture->getName();
     LvArray::tensorOps::copy< 3 >( m_normalVector[ surfaceIndex ], normalVector );
     LvArray::tensorOps::copy< 3 >( m_tangentVector1[ surfaceIndex ], fracture->getWidthVector());
     LvArray::tensorOps::copy< 3 >( m_tangentVector2[ surfaceIndex ], fracture->getLengthVector());
-    this->CalculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
+    this->calculateElementGeometricQuantities( intersectionPoints.toViewConst(), this->size()-1 );
   }
   return addEmbeddedElem;
 }
@@ -299,38 +310,37 @@ void EmbeddedSurfaceSubRegion::setupRelatedObjectsInRelations( MeshLevel const &
 localIndex EmbeddedSurfaceSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
+  return packUpDownMapsImpl< false >( junk, packList );
 }
 
 localIndex EmbeddedSurfaceSubRegion::packUpDownMaps( buffer_unit_type * & buffer,
                                                      arrayView1d< localIndex const > const & packList ) const
 {
-  return packUpDownMapsPrivate< true >( buffer, packList );
+  return packUpDownMapsImpl< true >( buffer, packList );
 }
 
-template< bool DOPACK >
-localIndex EmbeddedSurfaceSubRegion::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                                            arrayView1d< localIndex const > const & packList ) const
+template< bool DO_PACKING >
+localIndex EmbeddedSurfaceSubRegion::packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                                         arrayView1d< localIndex const > const & packList ) const
 {
   localIndex packedSize = 0;
 
   arrayView1d< globalIndex const > const localToGlobal = this->localToGlobalMap();
   arrayView1d< globalIndex const > nodeLocalToGlobal = nodeList().relatedObjectLocalToGlobal();
 
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::nodeListString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           nodeList().base().toViewConst(),
-                                           m_unmappedGlobalIndicesInToNodes,
-                                           packList,
-                                           localToGlobal,
-                                           nodeLocalToGlobal );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::nodeListString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               nodeList().base().toViewConst(),
+                                               m_unmappedGlobalIndicesInToNodes,
+                                               packList,
+                                               localToGlobal,
+                                               nodeLocalToGlobal );
 
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
-  packedSize += bufferOps::Pack< DOPACK >( buffer,
-                                           this->m_surfaceElementsToCells,
-                                           packList,
-                                           m_surfaceElementsToCells.getElementRegionManager() );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( viewKeyStruct::surfaceElementsToCellRegionsString() ) );
+  packedSize += bufferOps::Pack< DO_PACKING >( buffer,
+                                               this->m_surfaceElementsToCells,
+                                               packList,
+                                               m_surfaceElementsToCells.getElementRegionManager() );
 
   return packedSize;
 }
@@ -364,17 +374,6 @@ localIndex EmbeddedSurfaceSubRegion::unpackUpDownMaps( buffer_unit_type const * 
                                      overwriteUpMaps );
 
   return unPackedSize;
-}
-
-void EmbeddedSurfaceSubRegion::viewPackingExclusionList( SortedArray< localIndex > & exclusionList ) const
-{
-  ObjectManagerBase::viewPackingExclusionList( exclusionList );
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::nodeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::edgeListString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellSubRegionsString() ));
-  exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceElementsToCellIndexString() ));
-  //exclusionList.insert( this->getWrapperIndex( viewKeyStruct::surfaceWithGhostNodesString() ));
 }
 
 } /* namespace geosx */

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -113,16 +113,6 @@ private:
    * @param transpose whether to do a regular or a transpose solve
    */
   void doSolve( Vector const & b, Vector & x, bool transpose ) const;
-
-  /**
-   * @brief Convert input parameters into SuperLU_Dist options.
-   */
-  void setOptions();
-
-  /**
-   * @brief Perform symbolic/numeric factorization of the matrix.
-   */
-  void factorize();
 
   /**
    * @brief Estimates the condition number of the matrix using LU factors.

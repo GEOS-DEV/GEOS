@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -20,6 +20,7 @@
 #include "dataRepository/Wrapper.hpp"
 #include "fileIO/vtk/VTKPVDWriter.hpp"
 #include "fileIO/vtk/VTKVTMWriter.hpp"
+#include "codingUtilities/EnumStrings.hpp"
 
 class vtkUnstructuredGrid;
 class vtkPointData;
@@ -42,6 +43,26 @@ enum struct VTKOutputMode
   BINARY,
   ASCII
 };
+
+enum struct VTKRegionTypes
+{
+  CELL,
+  WELL,
+  SURFACE,
+  ALL
+};
+
+/// Declare strings associated with output enumeration values.
+ENUM_STRINGS( VTKOutputMode,
+              "binary",
+              "ascii" );
+
+/// Declare strings associated with region type enumeration values.
+ENUM_STRINGS( VTKRegionTypes,
+              "cell",
+              "well",
+              "surface",
+              "all" );
 
 /**
  * @brief Encapsulate output methods for vtk
@@ -73,6 +94,15 @@ public:
   void setOutputMode( VTKOutputMode mode )
   {
     m_outputMode = mode;
+  }
+
+  /**
+   * @brief Set the output region type
+   * @param[in] regionType output region type to be set
+   */
+  void setOutputRegionType( VTKRegionTypes regionType )
+  {
+    m_outputRegionType = regionType;
   }
 
   /**
@@ -127,19 +157,21 @@ private:
   /**
    * @brief Given a time-step \p time, returns the relative path
    * to the subfolder containing the files concerning this time-step
-   * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @return the relative path to the folder of the time step
    */
-  string getTimeStepSubFolder( real64 time ) const;
+  string getCycleSubFolder( integer const cycle ) const;
 
   /**
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the CellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeCellElementRegions( real64 time,
+                                integer const cycle,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
@@ -147,10 +179,12 @@ private:
    * @brief Writes the files containing the well representation
    * @details There will be one file written per WellElementRegion and per rank
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the WellElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeWellElementRegions( real64 time,
+                                integer const cycle,
                                 ElementRegionManager const & elemManager,
                                 NodeManager const & nodeManager ) const;
 
@@ -158,14 +192,26 @@ private:
    * @brief Writes the files containing the faces elements
    * @details There will be one file written per FaceElementRegion and per rank
    * @param[in] time the time-step
+   * @param[in] cycle the current cycle number
    * @param[in] elemManager the ElementRegionManager containing the FaceElementRegions to be output
    * @param[in] nodeManager the NodeManager containing the nodes of the domain to be output
    */
   void writeSurfaceElementRegions( real64 time,
+                                   integer const cycle,
                                    ElementRegionManager const & elemManager,
                                    NodeManager const & nodeManager,
                                    EmbeddedSurfaceNodeManager const & embSurfNodeManager ) const;
 
+  /**
+   * @brief Writes a VTM file for the time-step \p time.
+   * @details a VTM file is a VTK Multiblock file. It contains relative path to different files organized in blocks.
+   * @param[in] cycle the current cycle number
+   * @param[in] elemManager the ElementRegionManager containing all the regions to be output and referred to in the VTM file
+   * @param[in] vtmWriter a writer specialized for the VTM file format
+   */
+  void writeVtmFile( integer const cycle,
+                     ElementRegionManager const & elemManager,
+                     VTKVTMWriter const & vtmWriter ) const;
   /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
@@ -189,10 +235,10 @@ private:
    * it contains the cells connectivities and the vertices coordinates as long as the
    * data fields associated with it
    * @param[in] ug a VTK SmartPointer to the VTK unstructured grid.
-   * @param[in] time the current time-step
+   * @param[in] cycle the current cycle number
    * @param[in] name the name of the ElementRegionBase to be written
    */
-  void writeUnstructuredGrid( real64 time,
+  void writeUnstructuredGrid( integer const cycle,
                               string const & name,
                               vtkUnstructuredGrid & ug ) const;
 
@@ -216,6 +262,9 @@ private:
 
   /// Output mode, could be ASCII or BINARAY
   VTKOutputMode m_outputMode;
+
+  /// Region output type, could be CELL, WELL, SURFACE, or ALL
+  VTKRegionTypes m_outputRegionType;
 };
 
 } // namespace vtk

@@ -1,0 +1,171 @@
+<?xml version="1.0" ?>
+
+<Problem>
+  <Solvers
+    gravityVector="{ 0.0, 0.0, 0.0 }">
+    <PhaseFieldFracture
+      name="PhaseFieldSolve"
+      solidSolverName="SolidMechSolve"
+      damageSolverName="DamageSolve"
+      couplingTypeOption="FixedStress"
+      logLevel="2"
+      subcycling="0"
+      discretization="FE1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="100"/>
+    </PhaseFieldFracture>
+
+    <SolidMechanicsLagrangianSSLE
+      name="SolidMechSolve"
+      timeIntegrationOption="QuasiStatic"
+      logLevel="1"
+      discretization="FE1"
+      targetRegions="{ Region1 }"
+      >
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-12"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </SolidMechanicsLagrangianSSLE>
+
+    <PhaseFieldDamageFEM
+      name="DamageSolve"
+      discretization="FE1"
+      timeIntegrationOption="SteadyState"
+      fieldName="Damage"
+      
+      localDissipation="Quadratic"
+      logLevel="1"
+      targetRegions="{ Region1 }">
+      <NonlinearSolverParameters
+        newtonMaxIter="200"
+        newtonTol="1.0e-12"/>
+      <LinearSolverParameters
+        directParallel="0"/>
+    </PhaseFieldDamageFEM>
+  </Solvers>
+
+  <Mesh>
+    <PAMELAMesh
+      name="Mode2Notched"
+      file="Mode2CrackMesh/geo.msh"/>
+  </Mesh>
+
+  <Events
+    maxTime="30.0">
+    <!-- <SoloEvent name="siloOutput0"
+               target="/Outputs/SiloOutput"/> -->
+    <!-- This event is applied every cycle, and overrides the
+    solver time-step request -->
+    <PeriodicEvent
+      name="solverApplications"
+      forceDt="1.0"
+      target="/Solvers/PhaseFieldSolve"/>
+
+    <!-- This event is applied every 1.0s.  The targetExactTimestep
+    flag allows this event to request a dt modification to match an
+    integer multiple of the timeFrequency. -->
+    <PeriodicEvent
+      name="vtkOutput"
+      timeFrequency="1.0"
+      target="/Outputs/Mode2VolDev_VTKOutput"/>
+
+    <PeriodicEvent
+      name="siloOutputs"
+      timeFrequency="1.0"
+      target="/Outputs/Mode2VolDev_SiloOutput"/>
+
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="15.0"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+  </Events>
+
+  <NumericalMethods>
+    <FiniteElements>
+      <FiniteElementSpace
+        name="FE1"
+        order="1"/>
+    </FiniteElements>
+  </NumericalMethods>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="Region1"
+      cellBlocks="{ all_HEX }"
+      materialList="{ shale }"/>
+  </ElementRegions>
+
+  <Constitutive>
+    <DamageVolDevElasticIsotropic
+      name="shale"
+      defaultDensity="2700"
+      defaultBulkModulus="1.750e5"
+      defaultShearModulus="8.077e4"
+      lengthScale="0.25"
+      criticalFractureEnergy="54.0"
+      criticalStrainEnergy="14.88"/>
+  </Constitutive>
+
+  <FieldSpecifications>
+    <FieldSpecification
+      name="shearLoad"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      scale="1.00e-3"
+      functionName="f_b"
+      setNames="{ top }"/>
+
+    <FieldSpecification
+      name="fixedY"
+      fieldName="TotalDisplacement"
+      component="1"
+      objectPath="nodeManager"
+      setNames="{ top, bottom, left, right }"/>
+
+    <FieldSpecification
+      name="fixedX"
+      fieldName="TotalDisplacement"
+      component="0"
+      objectPath="nodeManager"
+      setNames="{ bottom }"/>
+
+    <FieldSpecification
+      name="fixedZ"
+      fieldName="TotalDisplacement"
+      component="2"
+      objectPath="nodeManager"
+      setNames="{ top, bottom, left, right }"/>
+  </FieldSpecifications>
+
+  <Functions>
+    <TableFunction
+      name="f_b"
+      inputVarNames="{ time }"
+      coordinates="{ 0, 101 }"
+      values="{ -1, 100 }"/>
+  </Functions>
+
+  <Outputs>
+    <Silo
+      name="Mode2VolDev_SiloOutput"/>
+
+    <VTK
+      name="Mode2VolDev_VTKOutput"
+      plotFileRoot="plot"/>
+
+    <Restart
+      name="restartOutput"/>
+  </Outputs>
+
+  <!-- <Geometry> -->
+  <!--   <Box name="bottom" xMin="{-0.51, -0.51, -0.01" xMax="0.51, -0.49, +0.11"/> -->
+  <!--   <Box name="top" xMin="{-0.51, 0.49, -0.01" xMax="0.51, 0.51, +0.11"/> -->
+  <!--   <Box name="left" xMin="{-0.51, -0.51, -0.01" xMax="-0.49, 0.51, +0.11"/> -->
+  <!--   <Box name="right" xMin="0.49, -0.51, -0.01" xMax="0.51, 0.51, +0.11"/> -->
+  <!-- </Geometry> -->
+</Problem>

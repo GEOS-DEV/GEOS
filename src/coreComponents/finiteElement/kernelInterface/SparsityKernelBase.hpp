@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -293,7 +293,7 @@ real64 fillSparsity( MeshLevel & mesh,
                                 REGION_TYPE >( mesh,
                                                targetRegions,
                                                discretizationName,
-                                               arrayView1d< string const >(),
+                                               string(),
                                                KernelFactory );
 
   return 0;

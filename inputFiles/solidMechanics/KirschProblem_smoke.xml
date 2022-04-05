@@ -1,0 +1,75 @@
+<?xml version="1.0" ?>
+
+
+<Problem>
+  <Included>
+    <File name="./KirschProblem_base.xml"/>
+  </Included>
+
+<!-- SPHINX_MESH -->
+  <Mesh>
+    <InternalWellbore
+      name="mesh1"
+      elementTypes="{ C3D8 }"
+      radius="{ 0.1, 5.0 }"
+      theta="{ 0, 180 }"
+      zCoords="{ -1, 1 }"
+      nr="{ 4 }"
+      nt="{ 4 }"
+      nz="{ 1 }"
+      trajectory="{ { 0.0, 0.0, -1.0 },
+                    { 0.0, 0.0, 1.0 } }"
+      autoSpaceRadialElems="{ 1 }"
+      useCartesianOuterBoundary="0"
+      cellBlockNames="{ cb1 }"/>
+  </Mesh>
+<!-- SPHINX_MESH_END -->
+
+  <Events maxTime="1.0">
+    <PeriodicEvent
+      name="solverApplications"
+      timeFrequency="1"
+      targetExactTimestep="1"
+      target="/Solvers/mechanicsSolver"
+    />
+
+    <PeriodicEvent
+      name="outputs"
+      timeFrequency="1"
+      targetExactTimestep="1"
+      target="/Outputs/vtkOutput"
+    />
+
+    <PeriodicEvent
+      name="outputs1"
+      target="/Outputs/siloOutput"
+    />
+    
+    <PeriodicEvent
+      name="restarts"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/restartOutput"/>
+
+    <PeriodicEvent
+      name="stressCollection"
+      timeFrequency="1"
+      targetExactTimestep="1"
+      target="/Tasks/stressCollection" />
+
+    <PeriodicEvent
+      name="stressOutput"
+      timeFrequency="1"
+      targetExactTimestep="0"
+      target="/Outputs/stressOutput"/>
+
+    <SoloEvent
+      name="displacementCollection" 
+      target="/Tasks/displacementCollection" />
+
+    <SoloEvent
+      name="displacementOutput" 
+      target="/Outputs/displacementOutput" />   
+  </Events>
+
+</Problem>

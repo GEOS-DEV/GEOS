@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -115,9 +115,9 @@ public:
    * @note when build without MPI, may return anything
    *       (MPI_Comm will be a mock type defined in MpiWrapper)
    */
-  virtual MPI_Comm getComm() const override
+  virtual MPI_Comm comm() const override
   {
-    return m_mat->getComm();
+    return m_mat->comm();
   }
 
   /**

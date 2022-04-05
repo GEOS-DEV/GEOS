@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -22,6 +22,8 @@
 #include "common/TypeDispatch.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
+#include "CellBlockManager.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
 
 // PAMELA includes
 #include "Elements/Element.hpp"
@@ -36,51 +38,15 @@ namespace geosx
 using namespace dataRepository;
 
 PAMELAMeshGenerator::PAMELAMeshGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent )
-{
-  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "path to the mesh file" );
-  registerWrapper( viewKeyStruct::fieldsToImportString(), &m_fieldsToImport ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Fields to be imported from the external mesh file" );
-  registerWrapper( viewKeyStruct::fieldNamesInGEOSXString(), &m_fieldNamesInGEOSX ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Name of the fields within GEOSX" );
-  registerWrapper( viewKeyStruct::scaleString(), &m_scale ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 1. ).setDescription( "Scale the coordinates of the vertices" );
-  registerWrapper( viewKeyStruct::reverseZString(), &m_isZReverse ).
-    setInputFlag( InputFlags::OPTIONAL ).
-    setDefaultValue( 0 ).setDescription( "0 : Z coordinate is upward, 1 : Z coordinate is downward" );
-}
-
-void PAMELAMeshGenerator::postProcessInput()
-{
-  GEOSX_THROW_IF_NE_MSG( m_fieldsToImport.size(), m_fieldNamesInGEOSX.size(),
-                         "Mismatch between number of values in " << viewKeyStruct::fieldsToImportString() <<
-                         " and " << viewKeyStruct::fieldNamesInGEOSXString() << " attrabutes",
-                         InputError );
-}
-
-Group * PAMELAMeshGenerator::createChild( string const & childKey, string const & childName )
-{
-  GEOSX_THROW( "Invalid child XML node " << childName << " of type " << childKey, InputError );
-}
+  ExternalMeshGeneratorBase( name, parent )
+{}
 
 namespace
 {
 
-string const & getNameSeparator()
-{
-  static string const separator( "_" );
-  return separator;
-}
-
 string makeRegionLabel( string const & regionName, string const & regionCellType )
 {
-  return regionName + getNameSeparator() + regionCellType;
+  return regionName + "_" + regionCellType;
 }
 
 /*!
@@ -91,17 +57,18 @@ string makeRegionLabel( string const & regionName, string const & regionCellType
  */
 string retrieveSurfaceOrRegionName( string const & pamelaLabel )
 {
-  string_array const splitLabel = stringutilities::tokenize( pamelaLabel, getNameSeparator() );
-
   // The PAMELA label looks like: PART00002_POLYGON_POLYGON_GROUP_Ovbd1_Ovbd2_14
-  // But we only want to keep Ovbd1_Ovbd2
-  // So we find the word GROUP, and then we keep what is after, except the last piece
-
-  auto const it = std::find( std::begin( splitLabel ), std::end( splitLabel ), "GROUP" );
-  GEOSX_THROW_IF( it == std::end( splitLabel ),
+  // (Ovbd1_Ovbd2 may or may not be present), we keep just the part following GROUP
+  // This can be done without splitting, but we want to keep flexibility to change.
+  array1d< string > const splitLabel = stringutilities::tokenize( pamelaLabel, "_" );
+  auto const it = std::find( splitLabel.begin(), splitLabel.end(), "GROUP" );
+  GEOSX_THROW_IF( it == splitLabel.end(),
                   "GEOSX assumes that PAMELA places the word GROUP before the region/surface name",
                   InputError );
-  return stringutilities::join( std::next( it ), std::prev( std::end( splitLabel ) ), getNameSeparator() );
+  // Handle both cases where region name is present and missing (keep the number in that case)
+  auto const first = it + 1;
+  auto const last = splitLabel.end() - 1;
+  return stringutilities::join( first, (first == last) ? last + 1 : last, "_" );
 }
 
 string const & getElementLabel( PAMELA::ELEMENTS::TYPE const type )
@@ -157,7 +124,8 @@ PAMELA::ELEMENTS::TYPE toPamelaElementType( ElementType const type )
   }
 }
 
-std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
+std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type,
+                                       bool const isZReverse )
 {
   switch( type )
   {
@@ -167,7 +135,19 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
     case PAMELA::ELEMENTS::TYPE::VTK_TETRA: return { 0, 1, 2, 3 };
     case PAMELA::ELEMENTS::TYPE::VTK_PYRAMID: return { 0, 1, 2, 3, 4 };
     case PAMELA::ELEMENTS::TYPE::VTK_WEDGE: return { 0, 3, 1, 4, 2, 5 };
-    case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON: return { 0, 1, 3, 2, 4, 5, 7, 6 };
+    case PAMELA::ELEMENTS::TYPE::VTK_HEXAHEDRON:
+    {
+      // if the reverseZ option is on, we have to switch the node ordering
+      // (top nodes become bottom nodes) to make sure that the hex volume is positive
+      if( isZReverse )
+      {
+        return { 4, 5, 7, 6, 0, 1, 3, 2 };
+      }
+      else
+      {
+        return { 0, 1, 3, 2, 4, 5, 7, 6 };
+      }
+    }
     default:
     {
       GEOSX_THROW( "Unsupported PAMELA element type", std::runtime_error );
@@ -177,15 +157,17 @@ std::vector< int > getPamelaNodeOrder( PAMELA::ELEMENTS::TYPE const type )
 
 /// @return mesh length scale
 real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
-                    real64 const scaleFactor[3],
-                    NodeManager & nodeManager )
+                    R1Tensor const & scale,
+                    R1Tensor const & translate,
+                    CellBlockManager & cellBlockManager )
 {
-  nodeManager.resize( LvArray::integerConversion< localIndex >( srcMesh.get_PointCollection()->size_all() ) );
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  cellBlockManager.setNumNodes( srcMesh.get_PointCollection()->size_all() );
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodePositions();
 
-  arrayView1d< globalIndex > const & nodeLocalToGlobal = nodeManager.localToGlobalMap();
+  arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 
-  SortedArray< localIndex > & allNodes = nodeManager.sets().registerWrapper< SortedArray< localIndex > >( "all" ).reference();
+  auto & nodeSets = cellBlockManager.getNodeSets();
+  SortedArray< localIndex > & allNodes = nodeSets["all"];
 
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
@@ -196,9 +178,9 @@ real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
   {
     localIndex const vertexLocalIndex = verticesIterator->get_localIndex();
     globalIndex const vertexGlobalIndex = verticesIterator->get_globalIndex();
-    X( vertexLocalIndex, 0 ) = verticesIterator->get_coordinates().x * scaleFactor[0];
-    X( vertexLocalIndex, 1 ) = verticesIterator->get_coordinates().y * scaleFactor[1];
-    X( vertexLocalIndex, 2 ) = verticesIterator->get_coordinates().z * scaleFactor[2];
+    X( vertexLocalIndex, 0 ) = ( verticesIterator->get_coordinates().x + translate[0] ) * scale[0];
+    X( vertexLocalIndex, 1 ) = ( verticesIterator->get_coordinates().y + translate[1] ) * scale[1];
+    X( vertexLocalIndex, 2 ) = ( verticesIterator->get_coordinates().z + translate[2] ) * scale[2];
     allNodes.insert( vertexLocalIndex );
     nodeLocalToGlobal[vertexLocalIndex] = vertexGlobalIndex;
     for( int i = 0; i < 3; ++i )
@@ -216,19 +198,18 @@ real64 importNodes( PAMELA::Mesh & srcMesh, // PAMELA is not const-correct,
 
 void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockPtr,
                       string const & cellBlockName,
+                      bool const isZReverse,
                       CellBlockManager & cellBlockManager )
 {
   GEOSX_ASSERT( cellBlockPtr != nullptr );
 
-  CellBlock & cellBlock = cellBlockManager.getGroup( keys::cellBlocks ).registerGroup< CellBlock >( cellBlockName );
+  CellBlock & cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
   cellBlock.setElementType( toGeosxElementType( cellBlockPtr->ElementType ) );
+  cellBlock.resize( LvArray::integerConversion< localIndex >( cellBlockPtr->SubCollection.size_owned() ) );
 
-  localIndex const nbCells = LvArray::integerConversion< localIndex >( cellBlockPtr->SubCollection.size_owned() );
-  cellBlock.resize( nbCells );
-
-  std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType );
-  arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.nodeList().toView();
-  arrayView1d< globalIndex > const & localToGlobal = cellBlock.localToGlobalMap();
+  std::vector< int > const nodeOrder = getPamelaNodeOrder( cellBlockPtr->ElementType, isZReverse );
+  arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.getElemToNode().toView();
+  arrayView1d< globalIndex > const localToGlobal = cellBlock.localToGlobalMap();
 
   // Iterate on cells
   auto & subCollection = cellBlockPtr->SubCollection;
@@ -251,17 +232,18 @@ void importCellBlock( PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockP
 }
 
 void importSurface( PAMELA::Part< PAMELA::Polygon * > * const surfacePtr,
-                    NodeManager & nodeManager )
+                    string const & surfaceName,
+                    CellBlockManager & cellBlockManager )
 {
   GEOSX_ASSERT( surfacePtr != nullptr );
-  string const surfaceName = retrieveSurfaceOrRegionName( surfacePtr->Label );
-  SortedArray< localIndex > & curNodeSet = nodeManager.sets().registerWrapper< SortedArray< localIndex > >( surfaceName ).reference();
+  SortedArray< localIndex > & curNodeSet = cellBlockManager.getNodeSets()[ surfaceName ];
 
   for( auto const & subPart : surfacePtr->SubParts )
   {
     PAMELA::SubPart< PAMELA::Polygon * > * const cellBlockPtr = subPart.second;
     GEOSX_ASSERT( cellBlockPtr != nullptr );
-    if( cellBlockPtr->ElementType == PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE || cellBlockPtr->ElementType == PAMELA::ELEMENTS::TYPE::VTK_QUAD )
+    if( cellBlockPtr->ElementType == PAMELA::ELEMENTS::TYPE::VTK_TRIANGLE ||
+        cellBlockPtr->ElementType == PAMELA::ELEMENTS::TYPE::VTK_QUAD )
     {
       auto & subCollection = cellBlockPtr->SubCollection;
       for( auto cellItr = subCollection.begin_owned(); cellItr != subCollection.end_owned(); cellItr++ )
@@ -282,7 +264,9 @@ void importSurface( PAMELA::Part< PAMELA::Polygon * > * const surfacePtr,
 
 void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
 {
-  GEOSX_LOG_RANK_0( "Reading external mesh from " << m_filePath );
+  GEOSX_MARK_FUNCTION;
+
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': reading mesh from {}", catalogName(), getName(), m_filePath ) );
   m_pamelaMesh = std::unique_ptr< PAMELA::Mesh >( PAMELA::MeshFactory::makeMesh( m_filePath ) );
   m_pamelaMesh->CreateFacesFromCells();
   m_pamelaMesh->PerformPolyhedronPartitioning( PAMELA::ELEMENTS::FAMILY::POLYGON,
@@ -292,22 +276,23 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
                                                                                                          PAMELA::ELEMENTS::FAMILY::POLYHEDRON,
                                                                                                          PAMELA::ELEMENTS::FAMILY::POLYGON ) );
 
-  GEOSX_LOG_RANK_0( "Writing into the GEOSX mesh data structure" );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': generating GEOSX mesh data structure", catalogName(), getName() ) );
+
   domain.getMetisNeighborList() = m_pamelaMesh->getNeighborList();
   Group & meshBodies = domain.getMeshBodies();
   MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-
   //TODO for the moment we only consider on mesh level "Level0"
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( "Level0" );
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  meshBody.createMeshLevel( 0 );
 
-  real64 const scaleFactor[3] = { m_scale, m_scale, m_scale * ( m_isZReverse ? -1 : 1 ) };
-  real64 const lengthScale = importNodes( *m_pamelaMesh, scaleFactor, nodeManager );
+  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
+
+  // Dealing with nodes
+  real64 const lengthScale = importNodes( *m_pamelaMesh, m_scale, m_translate, cellBlockManager );
   meshBody.setGlobalLengthScale( lengthScale );
 
   // Use the PartMap of PAMELA to get the mesh
-  PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
+  PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap =
+    std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
 
   // Import cell blocks
   for( auto const & polyhedronPart : polyhedronPartMap )
@@ -323,9 +308,14 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
       auto const elementFamily = PAMELA::ELEMENTS::TypeToFamily.at( static_cast< int >( subPart.second->ElementType ) );
       if( elementFamily == PAMELA::ELEMENTS::FAMILY::POLYHEDRON )
       {
-        string cellBlockName = makeRegionLabel( regionName, getElementLabel( subPart.second->ElementType ) );
-        importCellBlock( subPart.second, cellBlockName, cellBlockManager );
-        m_cellBlockRegions.emplace( std::move( cellBlockName ), polyhedronPart.first );
+        size_t const numGlobalCells = MpiWrapper::sum( subPart.second->SubCollection.size_owned() );
+        if( numGlobalCells > 0 )
+        {
+          string const cellBlockName = makeRegionLabel( regionName, getElementLabel( subPart.second->ElementType ) );
+          GEOSX_LOG_LEVEL_RANK_0( 1, "Importing cell block " << cellBlockName );
+          importCellBlock( subPart.second, cellBlockName, m_scale[2] < 0, cellBlockManager );
+          m_cellBlockRegions.emplace( cellBlockName, polyhedronPart.first );
+        }
       }
     }
   }
@@ -335,9 +325,12 @@ void PAMELAMeshGenerator::generateMesh( DomainPartition & domain )
   for( auto const & polygonPart : polygonPartMap )
   {
     PAMELA::Part< PAMELA::Polygon * > * const surfacePtr = polygonPart.second;
-    importSurface( surfacePtr, nodeManager );
+    string const surfaceName = retrieveSurfaceOrRegionName( surfacePtr->Label );
+    GEOSX_LOG_LEVEL_RANK_0( 1, "Importing surface " << surfaceName );
+    importSurface( surfacePtr, surfaceName, cellBlockManager );
   }
 
+  cellBlockManager.buildMaps();
 }
 
 void PAMELAMeshGenerator::freeResources()
@@ -364,13 +357,11 @@ void importRegularField( PAMELA::VariableDouble & source,
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
     localIndex const numComponentsDst = wrapperT.numArrayComp();
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
+                           "Mismatch in number of components for field " << source.Label );
 
-    // Sanity check, shouldn't happen
-    GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA mesh import: mismatch in size for field " << source.Label );
-
-    for( int i = 0; i < view.size( 0 ); ++i )
+    // the assumption here is that before this step, GEOSX has added ghost elements **at the end** of the view
+    localIndex const numCells = LvArray::integerConversion< localIndex >( indexMap.size() );
+    for( localIndex i = 0; i < numCells; ++i )
     {
       // get_data() currently returns a new vector for each cell, but auto const & makes sure
       // this code keeps working if/when PAMELA is fixed to return a more reasonable type (span/pointer)
@@ -397,15 +388,13 @@ void importMaterialField( PAMELA::VariableDouble & source,
     auto const view = wrapperT.reference().toView();
 
     localIndex const numComponentsSrc = LvArray::integerConversion< localIndex >( source.offset );
-    localIndex const numComponentsDst = view.size() / ( view.size( 0 ) * view.size( 1 ) );
+    localIndex const numComponentsDst = wrapperT.numArrayComp() / view.size( 1 );
     GEOSX_ERROR_IF_NE_MSG( numComponentsDst, numComponentsSrc,
-                           "PAMELA mesh import: mismatch in number of components for field " << source.Label );
+                           "Mismatch in number of components for field " << source.Label );
 
-    // Sanity check, shouldn't happen
-    GEOSX_ERROR_IF_NE_MSG( view.size( 0 ), LvArray::integerConversion< localIndex >( indexMap.size() ),
-                           "PAMELA mesh import: mismatch in size for field " << source.Label );
-
-    for( int i = 0; i < view.size( 0 ); ++i )
+    // the assumption here is that before this step, GEOSX has added ghost elements **at the end** of the view
+    localIndex const numCells = LvArray::integerConversion< localIndex >( indexMap.size() );
+    for( localIndex i = 0; i < numCells; ++i )
     {
       // get_data() currently returns a new vector for each cell, but auto const & makes sure
       // this code keeps working if/when PAMELA is fixed to return a more reasonable type (span/pointer)
@@ -443,58 +432,83 @@ std::unordered_set< string > getMaterialWrapperNames( ElementSubRegionBase const
 
 } // namespace
 
+void PAMELAMeshGenerator::importFieldsOnSubRegion( PAMELA::Part< PAMELA::Polyhedron * > & srcRegion,
+                                                   PAMELA::SubPart< PAMELA::Polyhedron * > & srcSubRegion,
+                                                   ElementRegionBase const & dstRegion,
+                                                   ElementSubRegionBase & dstSubRegion ) const
+{
+  // Make a list of material field wrapper names on current subregion
+  std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( dstSubRegion );
+
+  for( localIndex fieldIndex = 0; fieldIndex < m_fieldsToImport.size(); fieldIndex++ )
+  {
+    string const & sourceName = m_fieldsToImport[fieldIndex];
+    string const & wrapperName = m_fieldNamesInGEOSX[fieldIndex];
+
+    // Find destination
+    if( !dstSubRegion.hasWrapper( wrapperName ) )
+    {
+      // Skip - the user may have not enabled a particular physics model/solver on this dstRegion.
+      GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Skipping import of {} -> {} on {}/{} (field not found)",
+                                            sourceName, wrapperName, dstRegion.getName(), dstSubRegion.getName() ) );
+      continue;
+    }
+    WrapperBase & wrapper = dstSubRegion.getWrapperBase( wrapperName );
+
+    GEOSX_LOG_LEVEL_RANK_0( 1, GEOSX_FMT( "Importing field {} -> {} on {}/{}",
+                                          sourceName, wrapperName, dstRegion.getName(), dstSubRegion.getName() ) );
+
+    // Find source - and hard error if it doesn't exist
+    PAMELA::VariableDouble * const meshProperty = srcRegion.FindVariableByName( sourceName );
+    GEOSX_THROW_IF( meshProperty == nullptr,
+                    GEOSX_FMT( "Field not found in source dataset: {}", sourceName ),
+                    InputError );
+
+    // Decide if field is constitutive or not
+    if( materialWrapperNames.count( wrapperName ) > 0 && wrapper.numArrayDims() > 1 )
+    {
+      importMaterialField( *meshProperty, srcSubRegion.IndexMapping, wrapper );
+    }
+    else
+    {
+      importRegularField( *meshProperty, srcSubRegion.IndexMapping, wrapper );
+    }
+  }
+}
+
 void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
 {
-  GEOSX_LOG_RANK_0( "Importing field data from mesh dataset" );
+  GEOSX_LOG_RANK_0( GEOSX_FMT( "{} '{}': importing field data from mesh dataset", catalogName(), getName() ) );
   GEOSX_ASSERT_MSG( m_pamelaMesh, "Must call generateMesh() before importFields()" );
 
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
 
-  PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap = std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
+  PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap =
+    std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
 
-  elemManager.forElementSubRegions< CellElementSubRegion >( [&]( CellElementSubRegion & subRegion )
+  elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
+                                                                         localIndex,
+                                                                         ElementRegionBase const & region,
+                                                                         CellElementSubRegion & subRegion )
   {
     // Use stored map of names to get access to PAMELA region again
-    GEOSX_ASSERT_EQ( m_cellBlockRegions.count( subRegion.getName() ), 1 );
+    GEOSX_ERROR_IF_NE( m_cellBlockRegions.count( subRegion.getName() ), 1 );
     string const & srcRegionName = m_cellBlockRegions.at( subRegion.getName() );
     PAMELA::Part< PAMELA::Polyhedron * > * const regionPtr = polyhedronPartMap.at( srcRegionName );
-    GEOSX_ASSERT( regionPtr != nullptr );
+    GEOSX_ERROR_IF( regionPtr == nullptr, "Internal logic error (PAMELA region not found)" );
 
     // Use element type to get the PAMELA cell block (sub-part) corresponding to subregion
     PAMELA::ELEMENTS::TYPE const elemType = toPamelaElementType( subRegion.getElementType() );
     PAMELA::SubPart< PAMELA::Polyhedron * > * const cellBlockPtr = regionPtr->SubParts.at( static_cast< int >( elemType ) );
-    GEOSX_ASSERT( cellBlockPtr != nullptr );
+    GEOSX_ERROR_IF( cellBlockPtr == nullptr, "Internal logic error (PAMELA subregion not found)" );
 
-    // Make a list of material field wrapper names on current subregion
-    std::unordered_set< string > const materialWrapperNames = getMaterialWrapperNames( subRegion );
-
-    for( localIndex fieldIndex = 0; fieldIndex < m_fieldsToImport.size(); fieldIndex++ )
-    {
-      string const & sourceName = m_fieldsToImport[fieldIndex];
-      string const & wrapperName = m_fieldNamesInGEOSX[fieldIndex];
-
-      // Find source
-      PAMELA::VariableDouble * const meshProperty = regionPtr->FindVariableByName( sourceName );
-      GEOSX_ASSERT( meshProperty != nullptr );
-
-      // Find destination
-      GEOSX_THROW_IF( !subRegion.hasWrapper( wrapperName ),
-                      "PAMELA mesh import: target field not found: " << wrapperName << ".\n" <<
-                      "Please check the spelling in " << viewKeyStruct::fieldNamesInGEOSXString() << " attribute.",
-                      InputError );
-      WrapperBase & wrapper = subRegion.getWrapperBase( wrapperName );
-
-      // Decide if field is constitutive or not
-      if( materialWrapperNames.count( wrapperName ) > 0 )
-      {
-        importMaterialField( *meshProperty, cellBlockPtr->IndexMapping, wrapper );
-      }
-      else
-      {
-        importRegularField( *meshProperty, cellBlockPtr->IndexMapping, wrapper );
-      }
-    }
+    importFieldsOnSubRegion( *regionPtr, *cellBlockPtr, region, subRegion );
   } );
+
+  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+                                                       domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       false );
 }
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, PAMELAMeshGenerator, string const &, Group * const )

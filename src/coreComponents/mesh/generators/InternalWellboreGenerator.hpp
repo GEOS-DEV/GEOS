@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -51,20 +51,21 @@ public:
 
 protected:
 
-  virtual void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
-                                                  integer ( &numNodes )[3] ) override final;
+  void reduceNumNodesForPeriodicBoundary( SpatialPartition & partition,
+                                          integer ( &numNodes )[3] ) override final;
 
-  virtual void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
-                                                       int ( & index )[3] ) override final;
+  void setNodeGlobalIndicesOnPeriodicBoundary( SpatialPartition & partition,
+                                               int ( & index )[3] ) override final;
 
-  virtual void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
-                                                     integer const ( &numNodesInDir )[3],
-                                                     int const ( &firstElemIndexInPartition )[3],
-                                                     localIndex ( &nodeOfBox )[8] ) override final;
+  void setConnectivityForPeriodicBoundaries( int ( & globalIJK )[3],
+                                             integer const ( &numNodesInDir )[3],
+                                             int const ( &firstElemIndexInPartition )[3],
+                                             localIndex ( &nodeOfBox )[8] ) override final;
 
-  virtual void coordinateTransformation( NodeManager & nodeManager ) override final;
+  void coordinateTransformation( arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X,
+                                 std::map< string, SortedArray< localIndex > > & nodeSets ) override final;
 
-  virtual inline bool isCartesian() const override final
+  inline bool isCartesian() const override final
   {
     return false;
   }
@@ -80,7 +81,10 @@ protected:
     constexpr static char const * rBiasString() { return "rBias"; }
     constexpr static char const * trajectoryString() { return "trajectory"; }
     constexpr static char const * cartesianOuterBoundaryString() { return "useCartesianOuterBoundary"; }
+    constexpr static char const * cartesianMappingInnerRadiusString() { return "cartesianMappingInnerRadius"; }
     constexpr static char const * autoSpaceRadialElemsString() { return "autoSpaceRadialElems"; }
+    constexpr static char const * hardRadialCoordsString() { return "hardRadialCoords"; }
+
   };
   /// @endcond
 
@@ -94,11 +98,13 @@ private:
   /// Parameter defining whether or not the outer boundary is cartesian
   int m_cartesianOuterBoundary;
 
+  real64 m_cartesianMappingInnerRadius;
+
   /// Parameter defining whether or not the full wellbore geometry is considered: max theta = 360
   bool m_isFullAnnulus;
 
   /// Parameter for automatic increasing element size in the radial direction
-  array1d< int > m_autoSpaceRadialElems;
+  array1d< real64 > m_autoSpaceRadialElems;
 
   /// Radial coordinates defining the wellbore geometry
   array1d< real64 > & m_radialCoords;

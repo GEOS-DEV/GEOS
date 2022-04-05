@@ -5,12 +5,14 @@
     <TriaxialDriver
       name="triaxialDriver"
       material="drucker"
-      mode="triaxial"
-      strainFunction="strainFunction"
-      stressFunction="stressFunction"
+      mode="mixedControl"
+      axialControl="strainFunction"
+      radialControl="stressFunction"
+      initialStress="-1.0"
       steps="40"
+      output="none"
       baseline="testTriaxial_druckerPragerExtended.txt"
-      logLevel="1"/>
+      logLevel="0"/>
   </Tasks>
 
   <Events
@@ -60,4 +62,11 @@
       nz="{ 1 }"
       cellBlockNames="{ cellBlock01 }"/>
   </Mesh>
+
+  <ElementRegions>
+    <CellElementRegion
+      name="dummy"
+      cellBlocks="{ cellBlock01 }"
+      materialList="{ dummy }"/>
+  </ElementRegions>
 </Problem>
