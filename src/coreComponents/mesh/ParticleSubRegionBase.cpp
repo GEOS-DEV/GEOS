@@ -22,9 +22,10 @@ namespace geosx
 {
 using namespace dataRepository;
 
-ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ):
+ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ): // @suppress("Class members should be properly initialized")
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
+  m_particleID(),
   m_particleCenter(),
   m_particleVelocity(),
   m_particleVolume(),
@@ -36,6 +37,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
+
+  registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleCenterString(), &m_particleCenter ).
     setPlotLevel( PlotLevel::LEVEL_1 ).
@@ -53,6 +57,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 
   registerWrapper( viewKeyStruct::particleMassString(), &m_particleMass ).
     setPlotLevel( PlotLevel::LEVEL_1 );
+
+  // The only things that should be registered here are those that are read in from the input files. So e.g. particle mass shouldn't be here since it's not specified in any input file, whereas particle volume is.
+  // A solver(?) should then on the first cycle register particle mass and calculate it from volume and density. Same idea for other similarly post-processed and/or solver-specific fields.
 
   // idk what I'm doing
 //  registerWrapper( viewKeyStruct::particleDeformationGradientString(), &m_particleDeformationGradient ).

@@ -244,13 +244,15 @@ public:
    */
   struct viewKeyStruct : ObjectManagerBase::viewKeyStruct
   {
+    /// @return String key for the member level field for the particle global ID.
+    static constexpr char const * particleIDString() { return "particleID"; }
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
     /// @return String key for the member level field for the particle velocity.
     static constexpr char const * particleVelocityString() { return "particleVelocity"; }
-    /// @return String key for the member level field for the particle volume.
+    /// @return String key for the member level field for the current particle volume.
     static constexpr char const * particleVolumeString() { return "particleVolume"; }
-    /// @return String key for the member level field for the particle volume.
+    /// @return String key for the member level field for the initial particle volume.
     static constexpr char const * particleVolume0String() { return "particleVolume0"; }
     /// @return String key for the member level field for the particle volume.
     static constexpr char const * particleMassString() { return "particleMass"; }
@@ -279,6 +281,9 @@ private:
 protected:
   /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
   bool m_hasRVectors;
+
+  /// Member level field for the particle global ID.
+  array1d< int > m_particleID;
 
   /// Member level field for the particle center.
   array2d< real64 > m_particleCenter;
