@@ -61,11 +61,15 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   string const outputFile = joinPath( outputDirectory, m_filename );
 
   // TODO Is HistoryCollection a Collection or a Collector?
-  auto registerBufferCalls = [&]( HistoryCollection & hc )
+  auto registerBufferCalls = [&]( HistoryCollection & hc, string prefix = "" )
   {
     for( localIndex collectorIdx = 0; collectorIdx < hc.numCollectors(); ++collectorIdx )
     {
       HistoryMetadata metadata = hc.getMetaData( domain, collectorIdx );
+
+      // TODO Deal with this in PackCollection::buildMetaDataCollectors?
+      if( !prefix.empty() )
+      { metadata.setName( prefix + metadata.getName() ); }
 
       m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
@@ -80,18 +84,9 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   // FIXME Why stop (pseudo) recursion at one single level?
   registerBufferCalls( collector );
 
-  localIndex const metaDataCollectorCount = collector.numMetaDataCollectors();
-  for( localIndex metaIdx = 0; metaIdx < metaDataCollectorCount; ++metaIdx )
+  for( localIndex metaIdx = 0; metaIdx < collector.numMetaDataCollectors(); ++metaIdx )
   {
-    HistoryCollection & metaDataCollector = collector.getMetaDataCollector( metaIdx );
-    for( localIndex i = 0; i < metaDataCollector.numCollectors(); ++i )
-    {
-      // TODO Better naming management? Deal with this somewhere else? (wait for tests)
-      HistoryMetadata metaMetadata = metaDataCollector.getMetaData( domain, i );
-      metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName() );
-    }
-
-    registerBufferCalls( metaDataCollector );
+    registerBufferCalls( collector.getMetaDataCollector( metaIdx ), collector.getTargetName() + " " );
   }
 
   // do the time output last so its at the end of the m_io list, since writes are parallel we need
