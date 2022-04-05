@@ -192,6 +192,7 @@ public:
     real64 const ell = m_constitutiveUpdate.getRegularizationLength();
     real64 const Gc = m_constitutiveUpdate.getCriticalFractureEnergy();
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
+    real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q ); 
 
     real64 D = 0;                                                                   //max between threshold and
                                                                                     // Elastic energy
@@ -215,14 +216,16 @@ public:
       if( m_localDissipationOption == 1 )
       {
         stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
-                                             0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                             (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ));
+                                              0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
+                                              (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) - 
+                                              (extDrivingForce / 2 / Gc * ell * N[a])); // External driving force added 
       }
       else
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
-                                             (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                              N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) );
+                                              (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
+                                              N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) + 
+                                              (extDrivingForce / 2 / Gc * ell * N[a]) ); // External driving force added 
 
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
