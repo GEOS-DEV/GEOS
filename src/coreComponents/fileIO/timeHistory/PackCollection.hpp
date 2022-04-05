@@ -98,9 +98,7 @@ protected:
   }
 
   /// @copydoc geosx::HistoryCollection::collect
-  virtual void collect( DomainPartition & domain,
-                        real64 const time_n,
-                        real64 const dt,
+  virtual void collect( DomainPartition const & domain,
                         localIndex const collectionIdx,
                         buffer_unit_type * & buffer ) override;
 

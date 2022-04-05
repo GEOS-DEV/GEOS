@@ -68,7 +68,7 @@ bool HistoryCollectionBase::execute( real64 const time_n,
     this->updateSetsIndices( domain );
     HistoryMetadata hmd = this->getMetaData( domain, collectionIdx );
     buffer_unit_type * buffer = m_bufferProviders[collectionIdx]( hmd.size( 0 ) );
-    collect( domain, time_n, dt, collectionIdx, buffer );
+    collect( domain, collectionIdx, buffer );
   }
   for( auto & metaCollector: m_metaDataCollectors )
   {

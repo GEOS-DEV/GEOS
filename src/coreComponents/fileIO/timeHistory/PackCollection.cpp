@@ -218,10 +218,8 @@ void PackCollection::buildMetaDataCollectors( )
   }
 }
 
-void PackCollection::collect( DomainPartition & domain,
-                              real64 const GEOSX_UNUSED_PARAM( time_n ),
-                              real64 const GEOSX_UNUSED_PARAM( dt ),
-                              localIndex collectionIdx,
+void PackCollection::collect( DomainPartition const & domain,
+                              localIndex const collectionIdx,
                               buffer_unit_type * & buffer )
 {
   GEOSX_MARK_FUNCTION;

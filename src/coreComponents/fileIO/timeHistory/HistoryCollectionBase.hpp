@@ -85,14 +85,10 @@ protected:
   /**
    * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::execute .
    * @param domain The DomainPartition to collect time history on.
-   * @param time_n The current simulation time.
-   * @param dt The current simulation time delta.
    * @param collectionIdx The index of the collection operation to collect from the targeted collection event.
    * @param buffer A properly-sized buffer to serialize history data into.
    */
-  virtual void collect( DomainPartition & domain,
-                        real64 const time_n,
-                        real64 const dt,
+  virtual void collect( DomainPartition const & domain,
                         localIndex const collectionIdx,
                         buffer_unit_type * & buffer ) = 0;
 
