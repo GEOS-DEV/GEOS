@@ -63,10 +63,10 @@ static localIndex getFaceNodesHex( localIndex const faceNum,
     }
     case 4:
     {
-      faceNodes[0] = elemNodes[3];
-      faceNodes[1] = elemNodes[2];
-      faceNodes[2] = elemNodes[6];
-      faceNodes[3] = elemNodes[7];
+      faceNodes[0] = elemNodes[2];
+      faceNodes[1] = elemNodes[6];
+      faceNodes[2] = elemNodes[7];
+      faceNodes[3] = elemNodes[3];
       break;
     }
     case 5:
@@ -152,15 +152,15 @@ static localIndex getFaceNodesTet( localIndex const faceNum,
     case 0:
     {
       faceNodes[0] = elemNodes[0];
-      faceNodes[1] = elemNodes[2];
-      faceNodes[2] = elemNodes[1];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[3];
       break;
     }
     case 1:
     {
       faceNodes[0] = elemNodes[0];
-      faceNodes[1] = elemNodes[1];
-      faceNodes[2] = elemNodes[3];
+      faceNodes[1] = elemNodes[2];
+      faceNodes[2] = elemNodes[1];
       break;
     }
     case 2:
@@ -193,6 +193,14 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
   {
     case 0:
     {
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
+      faceNodes[0] = elemNodes[0];
+      faceNodes[1] = elemNodes[1];
+      faceNodes[2] = elemNodes[4];
+      return 3;
+    }
+    case 1:
+    {
       GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[2];
@@ -200,17 +208,9 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
       faceNodes[3] = elemNodes[1];
       return 4;
     }
-    case 1:
-    {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
-      faceNodes[0] = elemNodes[0];
-      faceNodes[1] = elemNodes[1];
-      faceNodes[2] = elemNodes[4];
-      return 3;
-    }
     case 2:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[0];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[2];
@@ -218,7 +218,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 3:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[1];
       faceNodes[1] = elemNodes[3];
       faceNodes[2] = elemNodes[4];
@@ -226,7 +226,7 @@ static localIndex getFaceNodesPyramid( localIndex const faceNum,
     }
     case 4:
     {
-      GEOSX_ERROR_IF_LT( faceNodes.size(), 4 );
+      GEOSX_ERROR_IF_LT( faceNodes.size(), 3 );
       faceNodes[0] = elemNodes[2];
       faceNodes[1] = elemNodes[4];
       faceNodes[2] = elemNodes[3];
