@@ -12,7 +12,7 @@
       contactRelationName="fractureContact"
       logLevel="1">
       <NonlinearSolverParameters
-        newtonTol="1.0e-6"
+        newtonTol="1.0e-2"
         newtonMaxIter="2"
         maxTimeStepCuts="1"/>
       <LinearSolverParameters
@@ -67,7 +67,7 @@
     <Coulomb
       name="fractureContact"
       penaltyStiffness="1.0e8"
-      shearStiffness="1.0e8"
+      shearStiffness="1.0e12"
       cohesion ="0.0"
       frictionCoefficient = "0.6"
       apertureTableName="apertureTable"/>
