@@ -80,7 +80,7 @@ public:
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the value will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
+   * @param mesh The MeshLevel object.
    * @param fieldPath The path to the object that contains the variable described in fieldName. This
    *                  path need not be the complete path, but rather the check that is performed is
    *                  that the fieldPath specified is contained in the string that specifies the
@@ -102,13 +102,13 @@ public:
    */
   template< typename POLICY=parallelHostPolicy >
   void applyFieldValue( real64 const time,
-                        DomainPartition & domain,
+                        MeshLevel & mesh,
                         string const & fieldPath,
                         string const & fieldName ) const
   {
     GEOSX_MARK_FUNCTION;
 
-    applyFieldValue< POLICY >( time, domain, fieldPath, fieldName,
+    applyFieldValue< POLICY >( time, mesh, fieldPath, fieldName,
                                [&]( FieldSpecificationBase const &,
                                     SortedArrayView< localIndex const > const & ){} );
   }
@@ -119,7 +119,7 @@ public:
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
+   * @param mesh The MeshLevel object.
    * @param fieldPath The path to the object that contains the variable described in fieldName. This
    *                  path need not be the complete path, but rather the check that is performed is
    *                  that the fieldPath specified is contained in the string that specifies the
@@ -144,7 +144,7 @@ public:
    */
   template< typename POLICY=parallelHostPolicy, typename LAMBDA=void >
   void applyFieldValue( real64 const time,
-                        DomainPartition & domain,
+                        MeshLevel & mesh,
                         string const & fieldPath,
                         string const & fieldName,
                         LAMBDA && lambda ) const;
@@ -185,7 +185,7 @@ public:
    */
   template< typename POLICY=parallelHostPolicy, typename PRELAMBDA=void, typename POSTLAMBDA=void >
   void applyFieldValue( real64 const time,
-                        DomainPartition & domain,
+                        MeshLevel & mesh,
                         string const & fieldPath,
                         string const & fieldName,
                         PRELAMBDA && preLambda,
@@ -196,7 +196,7 @@ public:
    * @brief function to apply initial conditions
    * @param domain the DomainPartition object
    */
-  void applyInitialConditions( DomainPartition & domain ) const;
+  void applyInitialConditions( MeshLevel & mesh ) const;
 
 
   /**
@@ -204,7 +204,7 @@ public:
    * @tparam LAMBDA The type of the lambda function
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
+   * @param mesh The MeshLevel object.
    * @param fieldPath The path to the object that contains the variable described in fieldName. This
    *                  path need not be the complete path, but rather the check that is performed is
    *                  that the fieldPath specified is contained in the string that specifies the
@@ -224,7 +224,7 @@ public:
    */
   template< typename BCTYPE = FieldSpecificationBase, typename LAMBDA >
   void apply( real64 const time,
-              DomainPartition & domain,
+              MeshLevel & meshLevel,
               string const & fieldPath,
               string const & fieldName,
               LAMBDA && lambda ) const
@@ -245,8 +245,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
-          dataRepository::Group * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
+          dataRepository::Group * targetGroup = &meshLevel;
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
             dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
@@ -321,14 +320,14 @@ template< typename POLICY, typename LAMBDA >
 void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
-                   DomainPartition & domain,
+                   MeshLevel & mesh,
                    string const & fieldPath,
                    string const & fieldName,
                    LAMBDA && lambda ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  apply( time, domain, fieldPath, fieldName,
+  apply( time, mesh, fieldPath, fieldName,
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
@@ -344,7 +343,7 @@ template< typename POLICY, typename PRELAMBDA, typename POSTLAMBDA >
 void
 FieldSpecificationManager::
   applyFieldValue( real64 const time,
-                   DomainPartition & domain,
+                   MeshLevel & mesh,
                    string const & fieldPath,
                    string const & fieldName,
                    PRELAMBDA && preLambda,
@@ -352,7 +351,7 @@ FieldSpecificationManager::
 {
   GEOSX_MARK_FUNCTION;
 
-  apply( time, domain, fieldPath, fieldName,
+  apply( time, mesh, fieldPath, fieldName,
          [&]( FieldSpecificationBase const & fs,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,

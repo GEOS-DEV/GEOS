@@ -766,188 +766,187 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
   // first compute the region filter
   std::set< string > regionFilter;
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel &,
+                                                MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
     for( string const & regionName : regionNames )
     {
       regionFilter.insert( regionName );
     }
-  } );
 
-
-  fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain,
-                                                  "ElementRegions",
-                                                  EquilibriumInitialCondition::catalogName(),
-                                                  [&] ( EquilibriumInitialCondition const & fs,
-                                                        string const &,
-                                                        SortedArrayView< localIndex const > const & targetSet,
-                                                        Group & subRegion,
-                                                        string const & )
-  {
-    // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
-
-    integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
-    real64 const equilTolerance = fs.getEquilibrationTolerance();
-    real64 const datumElevation = fs.getDatumElevation();
-    real64 const datumPressure = fs.getDatumPressure();
-    string const initPhaseName = fs.getInitPhaseName(); // will go away when GOC/WOC are implemented
-
-    localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
-    real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
-    real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
-    real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
-    localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
-
-    real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
-    GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
-                         CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                    << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
-                                                                    << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] <<
-                         "\n"
-                                                                    << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
-                                                                    << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
-
-    array1d< array1d< real64 > > elevationValues;
-    array1d< real64 > pressureValues;
-    elevationValues.resize( 1 );
-    elevationValues[0].resize( numPointsInTable );
-    pressureValues.resize( numPointsInTable );
-
-    // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
-
-    FunctionManager & functionManager = FunctionManager::getInstance();
-
-    array1d< TableFunction::KernelWrapper > compFracTableWrappers;
-    arrayView1d< string const > compFracTableNames = fs.getComponentFractionVsElevationTableNames();
-    for( integer ic = 0; ic < numComps; ++ic )
+    fsManager.apply< EquilibriumInitialCondition >( 0.0,
+                                                    mesh,
+                                                    "ElementRegions",
+                                                    EquilibriumInitialCondition::catalogName(),
+                                                    [&] ( EquilibriumInitialCondition const & fs,
+                                                          string const &,
+                                                          SortedArrayView< localIndex const > const & targetSet,
+                                                          Group & subRegion,
+                                                          string const & )
     {
-      TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( compFracTableNames[ic] );
-      compFracTableWrappers.emplace_back( compFracTable.createKernelWrapper() );
-    }
+      // Step 3.1: retrieve the data necessary to construct the pressure table in this subregion
 
-    string const tempTableName = fs.getTemperatureVsElevationTableName();
-    TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
-    TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
+      integer const maxNumEquilIterations = fs.getMaxNumEquilibrationIterations();
+      real64 const equilTolerance = fs.getEquilibrationTolerance();
+      real64 const datumElevation = fs.getDatumElevation();
+      real64 const datumPressure = fs.getDatumPressure();
+      string const initPhaseName = fs.getInitPhaseName(); // will go away when GOC/WOC are implemented
 
-    // Step 3.3: retrieve the fluid model to compute densities
-    // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
+      localIndex const equilIndex = equilNameToEquilId.at( fs.getName() );
+      real64 const minElevation = LvArray::math::min( globalMinElevation[equilIndex], datumElevation );
+      real64 const maxElevation = LvArray::math::max( globalMaxElevation[equilIndex], datumElevation );
+      real64 const elevationIncrement = LvArray::math::min( fs.getElevationIncrement(), maxElevation - minElevation );
+      localIndex const numPointsInTable = std::ceil( (maxElevation - minElevation) / elevationIncrement ) + 1;
 
-    Group const & region = subRegion.getParent().getParent();
-    auto itRegionFilter = regionFilter.find( region.getName() );
-    if( itRegionFilter == regionFilter.end() )
-    {
-      return; // the region is not in target, there is nothing to do
-    }
-    string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-    MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-
-    arrayView1d< string const > componentNames = fs.getComponentNames();
-    GEOSX_THROW_IF( fluid.componentNames().size() != componentNames.size(),
-                    "Mismatch in number of components between constitutive model "
-                    << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
-                    InputError );
-    for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
-    {
-      GEOSX_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
-                      "Mismatch in component names between constitutive model "
-                      << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
-                      InputError );
-    }
-
-    // Note: for now, we assume that the reservoir is in a single-phase state at initialization
-    arrayView1d< string const > phaseNames = fluid.phaseNames();
-    auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
-    GEOSX_THROW_IF( itPhaseNames == std::end( phaseNames ),
-                    CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
-                                                               << " not found in the phases of " << fluid.getName(),
-                    InputError );
-    integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
-
-    // Step 3.4: compute the hydrostatic pressure values
-
-    constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
-    {
-      using FluidType = TYPEOFREF( castedFluid );
-      typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
-
-      // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
-      HydrostaticPressureKernel::ReturnType const returnValue =
-        HydrostaticPressureKernel::launch( numPointsInTable,
-                                           numComps,
-                                           numPhases,
-                                           ipInit,
-                                           maxNumEquilIterations,
-                                           equilTolerance,
-                                           gravVector,
-                                           minElevation,
-                                           elevationIncrement,
-                                           datumElevation,
-                                           datumPressure,
-                                           fluidWrapper,
-                                           compFracTableWrappers.toViewConst(),
-                                           tempTableWrapper,
-                                           elevationValues.toNestedView(),
-                                           pressureValues.toView() );
-
-      GEOSX_THROW_IF( returnValue == HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
-                      CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                 << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n"
-                                                                 << "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
-                                                                 << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
-                      std::runtime_error );
-
-      GEOSX_LOG_RANK_0_IF( returnValue == HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+      real64 const eps = 0.1 * (maxElevation - minElevation); // we add a small buffer to only log in the pathological cases
+      GEOSX_LOG_RANK_0_IF( ( (datumElevation > globalMaxElevation[equilIndex]+eps)  || (datumElevation < globalMinElevation[equilIndex]-eps) ),
                            CompositionalMultiphaseBase::catalogName() << " " << getName()
-                                                                      << ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n"
-                                                                      << "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
-                                                                      << "Please make sure that only one phase is mobile at the beginning of the simulation. \n"
-                                                                      << "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+                                                                      << ": By looking at the elevation of the cell centers in this model, GEOSX found that "
+                                                                      << "the min elevation is " << globalMinElevation[equilIndex] << " and the max elevation is " << globalMaxElevation[equilIndex] <<
+                           "\n"
+                                                                      << "But, a datum elevation of " << datumElevation << " was specified in the input file to equilibrate the model.\n "
+                                                                      << "The simulation is going to proceed with this out-of-bound datum elevation, but the initial condition may be inaccurate." );
 
-    } );
+      array1d< array1d< real64 > > elevationValues;
+      array1d< real64 > pressureValues;
+      elevationValues.resize( 1 );
+      elevationValues[0].resize( numPointsInTable );
+      pressureValues.resize( numPointsInTable );
 
-    // Step 3.5: create hydrostatic pressure table
+      // Step 3.2: retrieve the user-defined tables (temperature and comp fraction)
 
-    string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
-    TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
-    presTable->setTableCoordinates( elevationValues );
-    presTable->setTableValues( pressureValues );
-    presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
-    TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
+      FunctionManager & functionManager = FunctionManager::getInstance();
 
-    // Step 4: assign pressure, temperature, and component fraction as a function of elevation
-    // TODO: this last step should probably be delayed to wait for the creation of FaceElements
-    // TODO: this last step should be modified to account for GOC and WOC
-    arrayView2d< real64 const > const elemCenter =
-      subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
-
-    arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-    arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
-    arrayView2d< real64, compflow::USD_COMP > const compFrac =
-      subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
-    arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
-      compFracTableWrappers.toViewConst();
-
-    forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
-                                                         elemCenter,
-                                                         presTableWrapper,
-                                                         tempTableWrapper,
-                                                         compFracTableWrappersViewConst,
-                                                         numComps,
-                                                         pres,
-                                                         temp,
-                                                         compFrac] GEOSX_HOST_DEVICE ( localIndex const i )
-    {
-      localIndex const k = targetSet[i];
-      real64 const elevation = elemCenter[k][2];
-
-      pres[k] = presTableWrapper.compute( &elevation );
-      temp[k] = tempTableWrapper.compute( &elevation );
+      array1d< TableFunction::KernelWrapper > compFracTableWrappers;
+      arrayView1d< string const > compFracTableNames = fs.getComponentFractionVsElevationTableNames();
       for( integer ic = 0; ic < numComps; ++ic )
       {
-        compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
+        TableFunction const & compFracTable = functionManager.getGroup< TableFunction >( compFracTableNames[ic] );
+        compFracTableWrappers.emplace_back( compFracTable.createKernelWrapper() );
       }
+
+      string const tempTableName = fs.getTemperatureVsElevationTableName();
+      TableFunction const & tempTable = functionManager.getGroup< TableFunction >( tempTableName );
+      TableFunction::KernelWrapper tempTableWrapper = tempTable.createKernelWrapper();
+
+      // Step 3.3: retrieve the fluid model to compute densities
+      // we end up with the same issue as in applyDirichletBC: there is not a clean way to retrieve the fluid info
+
+      Group const & region = subRegion.getParent().getParent();
+      auto itRegionFilter = regionFilter.find( region.getName() );
+      if( itRegionFilter == regionFilter.end() )
+      {
+        return; // the region is not in target, there is nothing to do
+      }
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+
+      arrayView1d< string const > componentNames = fs.getComponentNames();
+      GEOSX_THROW_IF( fluid.componentNames().size() != componentNames.size(),
+                      "Mismatch in number of components between constitutive model "
+                      << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
+                      InputError );
+      for( integer ic = 0; ic < fluid.numFluidComponents(); ++ic )
+      {
+        GEOSX_THROW_IF( fluid.componentNames()[ic] != componentNames[ic],
+                        "Mismatch in component names between constitutive model "
+                        << fluid.getName() << " and the Equilibrium initial condition " << fs.getName(),
+                        InputError );
+      }
+
+      // Note: for now, we assume that the reservoir is in a single-phase state at initialization
+      arrayView1d< string const > phaseNames = fluid.phaseNames();
+      auto const itPhaseNames = std::find( std::begin( phaseNames ), std::end( phaseNames ), initPhaseName );
+      GEOSX_THROW_IF( itPhaseNames == std::end( phaseNames ),
+                      CompositionalMultiphaseBase::catalogName() << " " << getName() << ": phase name " << initPhaseName
+                                                                 << " not found in the phases of " << fluid.getName(),
+                      InputError );
+      integer const ipInit = std::distance( std::begin( phaseNames ), itPhaseNames );
+
+      // Step 3.4: compute the hydrostatic pressure values
+
+      constitutiveUpdatePassThru( fluid, [&] ( auto & castedFluid )
+      {
+        using FluidType = TYPEOFREF( castedFluid );
+        typename FluidType::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
+
+        // note: inside this kernel, serialPolicy is used, and elevation/pressure values don't go to the GPU
+        HydrostaticPressureKernel::ReturnType const returnValue =
+          HydrostaticPressureKernel::launch( numPointsInTable,
+                                             numComps,
+                                             numPhases,
+                                             ipInit,
+                                             maxNumEquilIterations,
+                                             equilTolerance,
+                                             gravVector,
+                                             minElevation,
+                                             elevationIncrement,
+                                             datumElevation,
+                                             datumPressure,
+                                             fluidWrapper,
+                                             compFracTableWrappers.toViewConst(),
+                                             tempTableWrapper,
+                                             elevationValues.toNestedView(),
+                                             pressureValues.toView() );
+
+        GEOSX_THROW_IF( returnValue == HydrostaticPressureKernel::ReturnType::FAILED_TO_CONVERGE,
+                        CompositionalMultiphaseBase::catalogName() << " " << getName()
+                                                                   << ": hydrostatic pressure initialization failed to converge in region " << region.getName() << "! \n"
+                                                                   << "Try to loosen the equilibration tolerance, or increase the number of equilibration iterations. \n"
+                                                                   << "If nothing works, something may be wrong in the fluid model, see <Constitutive> ",
+                        std::runtime_error );
+
+        GEOSX_LOG_RANK_0_IF( returnValue == HydrostaticPressureKernel::ReturnType::DETECTED_MULTIPHASE_FLOW,
+                             CompositionalMultiphaseBase::catalogName() << " " << getName()
+                                                                        << ": currently, GEOSX assumes that there is only one mobile phase when computing the hydrostatic pressure. \n"
+                                                                        << "We detected multiple phases using the provided datum pressure, temperature, and component fractions. \n"
+                                                                        << "Please make sure that only one phase is mobile at the beginning of the simulation. \n"
+                                                                        << "If this is not the case, the problem will not be at equilibrium when the simulation starts" );
+
+      } );
+
+      // Step 3.5: create hydrostatic pressure table
+
+      string const tableName = fs.getName() + "_" + subRegion.getName() + "_" + phaseNames[ipInit] + "_table";
+      TableFunction * const presTable = dynamicCast< TableFunction * >( functionManager.createChild( TableFunction::catalogName(), tableName ) );
+      presTable->setTableCoordinates( elevationValues );
+      presTable->setTableValues( pressureValues );
+      presTable->setInterpolationMethod( TableFunction::InterpolationType::Linear );
+      TableFunction::KernelWrapper presTableWrapper = presTable->createKernelWrapper();
+
+      // Step 4: assign pressure, temperature, and component fraction as a function of elevation
+      // TODO: this last step should probably be delayed to wait for the creation of FaceElements
+      // TODO: this last step should be modified to account for GOC and WOC
+      arrayView2d< real64 const > const elemCenter =
+        subRegion.getReference< array2d< real64 > >( ElementSubRegionBase::viewKeyStruct::elementCenterString() );
+
+      arrayView1d< real64 > const pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+      arrayView1d< real64 > const temp = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::temperature::key() );
+      arrayView2d< real64, compflow::USD_COMP > const compFrac =
+        subRegion.getReference< array2d< real64, compflow::LAYOUT_COMP > >( extrinsicMeshData::flow::globalCompFraction::key() );
+      arrayView1d< TableFunction::KernelWrapper const > compFracTableWrappersViewConst =
+        compFracTableWrappers.toViewConst();
+
+      forAll< parallelDevicePolicy<> >( targetSet.size(), [targetSet,
+                                                           elemCenter,
+                                                           presTableWrapper,
+                                                           tempTableWrapper,
+                                                           compFracTableWrappersViewConst,
+                                                           numComps,
+                                                           pres,
+                                                           temp,
+                                                           compFrac] GEOSX_HOST_DEVICE ( localIndex const i )
+      {
+        localIndex const k = targetSet[i];
+        real64 const elevation = elemCenter[k][2];
+
+        pres[k] = presTableWrapper.compute( &elevation );
+        temp[k] = tempTableWrapper.compute( &elevation );
+        for( integer ic = 0; ic < numComps; ++ic )
+        {
+          compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
+        }
+      } );
     } );
   } );
 }
@@ -1168,7 +1167,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
@@ -1264,7 +1263,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 1. Check pressure Dirichlet BCs
   fsManager.apply( time,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const &,
@@ -1288,7 +1287,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 2. Check composition BC (global component fraction)
   fsManager.apply( time,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,
@@ -1371,7 +1370,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
   // 1. Apply pressure Dirichlet BCs, store in a separate field
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const & fs,
@@ -1396,7 +1395,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
   // 2. Apply composition BC (global component fraction) and store them for constitutive call
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,
@@ -1416,7 +1415,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
   // 3. Call constitutive update, back-calculate target global component densities and apply to the system
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&] ( FieldSpecificationBase const &,
