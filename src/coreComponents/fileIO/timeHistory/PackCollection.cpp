@@ -61,7 +61,13 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 {
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
-  if( m_setNames.size() != 0 )
+  if( m_setNames.empty() )
+  {
+    localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size();
+    return targetField.getHistoryMetadata( packCount );
+//    return targetField.getHistoryMetadata(2);
+  }
+  else
   {
     GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= m_setNames.size(), "Invalid collection index specified." );
     localIndex collectionSize = m_setsIndices[ collectionIdx ].size( );
@@ -72,12 +78,6 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
     HistoryMetadata metadata = targetField.getHistoryMetadata( collectionSize );
     metadata.setName( metadata.getName() + " " + m_setNames[ collectionIdx ] );
     return metadata;
-  }
-  else
-  {
-    localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size();
-    return targetField.getHistoryMetadata( packCount );
-//    return targetField.getHistoryMetadata(2);
   }
 }
 
