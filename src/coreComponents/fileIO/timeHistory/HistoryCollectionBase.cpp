@@ -27,7 +27,7 @@ localIndex HistoryCollectionBase::numCollectors() const
 }
 
 void HistoryCollectionBase::registerBufferProvider( localIndex collectionIdx,
-                                                    std::function< buffer_unit_type *() > bufferProvider )
+                                                    BufferProvider bufferProvider )
 {
   GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= this->numCollectors(), "Invalid collection index specified." );
   m_bufferProviders[collectionIdx] = bufferProvider;
@@ -44,9 +44,9 @@ HistoryMetadata HistoryCollectionBase::getTimeMetaData() const
   return HistoryMetadata( this->getTargetName() + " Time", 1, std::type_index( typeid( real64 ) ) );
 }
 
-void HistoryCollectionBase::registerTimeBufferCall( std::function< buffer_unit_type *() > timeBufferCall )
+void HistoryCollectionBase::registerTimeBufferProvider( TimeBufferProvider timeBufferProvider )
 {
-  m_timeBufferCall = timeBufferCall;
+  m_timeBufferProvider = timeBufferProvider;
 }
 
 bool HistoryCollectionBase::execute( real64 const time_n,
@@ -65,7 +65,9 @@ bool HistoryCollectionBase::execute( real64 const time_n,
     // using GEOSX_ERROR_IF_EQ caused type issues since the values are used in streams
     // we don't explicitly update the index sets here as they are updated in the buffer callback (see
     // TimeHistoryOutput.cpp::initCollectorParallel( ) )
-    buffer_unit_type * buffer = m_bufferProviders[collectionIdx]();
+    this->updateSetsIndices( domain );
+    HistoryMetadata hmd = this->getMetaData( domain, collectionIdx );
+    buffer_unit_type * buffer = m_bufferProviders[collectionIdx]( hmd.size( 0 ) );
     collect( domain, time_n, dt, collectionIdx, buffer );
   }
   for( auto & metaCollector: m_metaDataCollectors )
@@ -73,9 +75,9 @@ bool HistoryCollectionBase::execute( real64 const time_n,
     metaCollector->execute( time_n, dt, cycleNumber, eventCounter, eventProgress, domain );
   }
   int rank = MpiWrapper::commRank();
-  if( rank == 0 && m_timeBufferCall )
+  if( rank == 0 && m_timeBufferProvider )
   {
-    buffer_unit_type * timeBuffer = m_timeBufferCall();
+    buffer_unit_type * timeBuffer = m_timeBufferProvider();
     memcpy( timeBuffer, &time_n, sizeof( time_n ) );
   }
   return false;

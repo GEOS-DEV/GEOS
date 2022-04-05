@@ -31,7 +31,7 @@ public:
     HistoryCollection( name, parent ),
     m_targetIsMeshObject( false ),
     m_collectionCount( 1 ),
-    m_timeBufferCall(),
+    m_timeBufferProvider(),
     m_bufferProviders()
   {   }
 
@@ -46,11 +46,11 @@ public:
                         real64 const eventProgress,
                         DomainPartition & domain ) override;
 
-  void registerBufferProvider( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferCall ) override;
+  void registerBufferProvider( localIndex collectionIdx, BufferProvider bufferProvider ) override;
 
   HistoryMetadata getTimeMetaData() const override;
 
-  void registerTimeBufferCall( std::function< buffer_unit_type *() > timeBufferCall ) override;
+  void registerTimeBufferProvider( TimeBufferProvider timeBufferProvider ) override;
 
   HistoryCollection & getMetaDataCollector( localIndex metaIdx ) override;
 
@@ -64,6 +64,12 @@ public:
 #endif
 
 protected:
+
+  /**
+ * @brief Update the indices from the sets being collected.
+ * @param domain The DomainPartition of the problem.
+ */
+  virtual void updateSetsIndices( DomainPartition const & domain ) = 0;
 
   /**
    * @brief Retrieve the target object from the data repository.
@@ -97,10 +103,10 @@ protected:
   localIndex m_collectionCount;
 
   /// Callbacks to get the current time buffer head to write time data into
-  std::function< buffer_unit_type *() > m_timeBufferCall;
+  TimeBufferProvider m_timeBufferProvider;
 
   /// Callbacks to get the current buffer head to write history data into
-  std::vector< std::function< buffer_unit_type *() > > m_bufferProviders;
+  std::vector< BufferProvider > m_bufferProviders;
 
   /// The set of metadata collectors for this collector ( currently only used to collect coordinates of mesh objects when collecting field data )
   std::vector< std::unique_ptr< HistoryCollectionBase > > m_metaDataCollectors;

@@ -63,7 +63,7 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
   if( m_setNames.empty() )
   {
-    localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size();
+    localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size(); // TODO CHECK!
     return targetField.getHistoryMetadata( packCount );
 //    return targetField.getHistoryMetadata(2);
   }
@@ -91,11 +91,12 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   localIndex const numSets = m_setNames.size( );
   std::vector< localIndex > oldSetSizes( numSets == 0 ? 1 : numSets );
 
+  // If no set or "all" is specified we retrieve the entire field.
+  // If sets are specified we retrieve the field only from those sets.
   bool const collectAll = ( numSets == 0 ) or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
 
   if( collectAll )
   {
-    // if no set or "all" is specified we retrieve the entire field
     m_setsIndices.resize( 1 );
     m_setsIndices[0].resize( targetField.size() );
     for( localIndex ii = 0; ii < targetField.size(); ++ii )
@@ -108,11 +109,10 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   }
   else
   {
-    // if sets are specified we retrieve the field only from those sets
     Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
     m_setsIndices.resize( numSets ); // TODO Warning refactoring because of this `numSets`, check twice.
     localIndex setIdx = 0;
-    for( auto & setName : m_setNames )
+    for( auto const & setName : m_setNames )
     {
       if( setGroup.hasWrapper( setName ) )
       {
@@ -235,7 +235,6 @@ void PackCollection::collect( DomainPartition & domain,
   {
     if( ( (m_onlyOnSetChange != 0) && m_setChanged ) || (m_onlyOnSetChange == 0) )
     {
-
       target.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, true, events );
     }
   }

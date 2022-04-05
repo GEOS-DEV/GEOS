@@ -46,6 +46,9 @@ public:
     TaskBase( name, parent )
   {}
 
+  using BufferProvider = std::function< buffer_unit_type * ( localIndex ) >;
+  using TimeBufferProvider = std::function< buffer_unit_type *() >;
+
   // Forwarding public...
   void initializePostSubGroups() override {};
 
@@ -76,7 +79,7 @@ public:
    *                       serialize one time step of history data into.
    * @note This is typically meant to callback to BufferedHistoryIO::getBufferHead( )
    */
-  virtual void registerBufferProvider( localIndex collectionIdx, std::function< buffer_unit_type *() > bufferProvider ) = 0;
+  virtual void registerBufferProvider( localIndex collectionIdx, BufferProvider bufferProvider ) = 0;
 
   /**
    * @brief Get a metadata object relating the the Time variable itself.
@@ -86,11 +89,11 @@ public:
 
   /**
    * @brief Register a callback that gives the current head of the time data buffer.
-   * @param timeBufferCall A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   * @param timeBufferProvider A functional that when invoked returns a pointer to the head of a buffer at least large enough to
    *                       serialize one instance of the Time variable into.
    * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
    */
-  virtual void registerTimeBufferCall( std::function< buffer_unit_type *() > timeBufferCall ) = 0;
+  virtual void registerTimeBufferProvider( TimeBufferProvider timeBufferProvider ) = 0;
 
   /**
    * @brief Get the number of collectors of meta-information (set indices, etc) writing time-independent information during initialization.
@@ -105,12 +108,6 @@ public:
    * immediately after being used to perform output during simulation initialization.
    */
   virtual HistoryCollection & getMetaDataCollector( localIndex metaIdx ) = 0;
-
-  /**
-   * @brief Update the indices from the sets being collected.
-   * @param domain The DomainPartition of the problem.
-   */
-  virtual void updateSetsIndices( DomainPartition const & domain ) = 0;
 };
 
 }

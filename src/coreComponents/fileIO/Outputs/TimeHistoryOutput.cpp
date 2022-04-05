@@ -61,23 +61,17 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   string const outputFile = joinPath( outputDirectory, m_filename );
 
   // TODO Is HistoryCollection a Collection or a Collector?
-
-  localIndex ioCount = 0;
-
   auto registerBufferCalls = [&]( HistoryCollection & hc )
   {
-    for( localIndex collectorIdx = 0; collectorIdx < hc.numCollectors(); ++collectorIdx, ++ioCount )
+    for( localIndex collectorIdx = 0; collectorIdx < hc.numCollectors(); ++collectorIdx )
     {
       HistoryMetadata metadata = hc.getMetaData( domain, collectorIdx );
 
-      // FIXME Deal with ioCount as `m_io.size() - 1` not to rely on side effect?
       m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-      hc.registerBufferProvider( collectorIdx, [this, collectorIdx, ioCount, &domain, &hc]()
+      hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {
-        hc.updateSetsIndices( domain ); // FIXME `why` should we provide `hc` to the lambda if the lambda is registered in hc. We could get this in a different way...
-        HistoryMetadata hmd = hc.getMetaData( domain, collectorIdx );
-        m_io[ioCount]->updateCollectingCount( hmd.size( 0 ) );
-        return m_io[ioCount]->getBufferHead();
+        m_io[idx]->updateCollectingCount( count );
+        return m_io[idx]->getBufferHead();
       } );
       m_io.back()->init( !freshInit );
     }
@@ -90,10 +84,10 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   for( localIndex metaIdx = 0; metaIdx < metaDataCollectorCount; ++metaIdx )
   {
     HistoryCollection & metaDataCollector = collector.getMetaDataCollector( metaIdx );
-    for( localIndex ii = 0; ii < metaDataCollector.numCollectors(); ++ii, ++ioCount )
+    for( localIndex i = 0; i < metaDataCollector.numCollectors(); ++i )
     {
       // TODO Better naming management? Deal with this somewhere else? (wait for tests)
-      HistoryMetadata metaMetadata = metaDataCollector.getMetaData( domain, ii );
+      HistoryMetadata metaMetadata = metaDataCollector.getMetaData( domain, i );
       metaMetadata.setName( collector.getTargetName() + " " + metaMetadata.getName() );
     }
 
@@ -109,7 +103,8 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
     m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
-    collector.registerTimeBufferCall( [this, idx = m_io.size() - 1]() { return m_io[idx]->getBufferHead(); } );
+    collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]()
+                                          { return m_io[idx]->getBufferHead(); } );
     m_io.back()->init( !freshInit );
   }
 
