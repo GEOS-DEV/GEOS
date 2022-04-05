@@ -1033,9 +1033,7 @@ SolidMechanicsLagrangianFEM::
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
-  {
-    FaceManager & faceManager = mesh.getFaceManager();
-    
+  {    
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
     fsManager.apply( time_n + dt,
