@@ -92,7 +92,7 @@ TEST( VTKImport, cube )
 
     // The information in the tables is not filled yet. We can check the consistency of the sizes.
     ASSERT_EQ( cellBlockManager.getNodeToFaces().size(), expectedNumNodes );
-    ASSERT_EQ( cellBlockManager.getNodeToElements().size(), expectedNumNodes );
+    ASSERT_EQ( cellBlockManager.getNodeToElements().toCellIndex.size(), expectedNumNodes );
 
     // We have all the 4 x 4  x 4 = 64 nodes in the "all" set.
     SortedArray< localIndex > const & allNodes = cellBlockManager.getNodeSets().at( "all" );

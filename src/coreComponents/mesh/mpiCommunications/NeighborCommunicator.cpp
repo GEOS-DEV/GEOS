@@ -198,10 +198,10 @@ inline int GhostSize( NodeManager & nodeManager, arrayView1d< localIndex const >
   bufferSize += faceManager.packUpDownMapsSize( faceAdjacencyList );
   bufferSize += elemManager.packUpDownMapsSize( elementAdjacencyList );
   parallelDeviceEvents events;
-  bufferSize += nodeManager.packSize( {}, nodeAdjacencyList, 0, false, events );
-  bufferSize += edgeManager.packSize( {}, edgeAdjacencyList, 0, false, events );
-  bufferSize += faceManager.packSize( {}, faceAdjacencyList, 0, false, events );
-  bufferSize += elemManager.packSize( {}, elementAdjacencyList );
+  bufferSize += nodeManager.packSize( nodeAdjacencyList, 0, false, events );
+  bufferSize += edgeManager.packSize( edgeAdjacencyList, 0, false, events );
+  bufferSize += faceManager.packSize( faceAdjacencyList, 0, false, events );
+  bufferSize += elemManager.packSize( elementAdjacencyList );
   waitAllDeviceEvents( events );
   return bufferSize;
 }
@@ -222,10 +222,10 @@ inline int PackGhosts( buffer_unit_type * sendBufferPtr,
   packedSize += faceManager.packUpDownMaps( sendBufferPtr, faceAdjacencyList );
   packedSize += elemManager.packUpDownMaps( sendBufferPtr, elementAdjacencyList );
   parallelDeviceEvents events;
-  packedSize += nodeManager.pack( sendBufferPtr, {}, nodeAdjacencyList, 0, false, events );
-  packedSize += edgeManager.pack( sendBufferPtr, {}, edgeAdjacencyList, 0, false, events );
-  packedSize += faceManager.pack( sendBufferPtr, {}, faceAdjacencyList, 0, false, events );
-  packedSize += elemManager.pack( sendBufferPtr, {}, elementAdjacencyList );
+  packedSize += nodeManager.pack( sendBufferPtr, nodeAdjacencyList, 0, false, events );
+  packedSize += edgeManager.pack( sendBufferPtr, edgeAdjacencyList, 0, false, events );
+  packedSize += faceManager.pack( sendBufferPtr, faceAdjacencyList, 0, false, events );
+  packedSize += elemManager.pack( sendBufferPtr, elementAdjacencyList );
   waitAllDeviceEvents( events );
   return packedSize;
 }

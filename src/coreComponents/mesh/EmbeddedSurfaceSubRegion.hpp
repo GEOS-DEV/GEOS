@@ -79,16 +79,16 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string catalogName()
+  static string catalogName()
   { return "EmbeddedSurfaceSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual string getCatalogName() const override
   {
-    return EmbeddedSurfaceSubRegion::catalogName();
+    return catalogName();
   }
 
   ///@}
@@ -168,9 +168,6 @@ public:
    */
   real64 computeHeavisideFunction( ArraySlice< real64 const, 1, nodes::REFERENCE_POSITION_USD - 1 > const nodeCoord,
                                    localIndex const k ) const;
-
-
-  std::set< string > getPackingExclusionList() const override;
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
