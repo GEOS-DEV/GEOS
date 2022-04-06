@@ -17,6 +17,8 @@
 
 
 #include "PartitionBase.hpp"
+#include "mesh/DomainPartition.hpp"
+
 
 #include <map>
 
@@ -64,6 +66,8 @@ public:
                       unsigned int zPartitions ) override;
 
   int getColor() override;
+
+  void RepartitionMasterParticlesToNeighbors(DomainPartition & domain);
 
   /// number of partitions
   array1d< int > m_Partitions;
