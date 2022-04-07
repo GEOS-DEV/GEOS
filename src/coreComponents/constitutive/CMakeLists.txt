@@ -87,6 +87,7 @@ set( constitutive_headers
      solid/DamageSpectral.hpp
      solid/DamageSpectralUtilities.hpp
      solid/DamageVolDev.hpp
+     solid/DamageExtDrivingForce.hpp
      solid/DruckerPrager.hpp
      solid/DruckerPragerExtended.hpp
      solid/ModifiedCamClay.hpp
@@ -178,6 +179,7 @@ set( constitutive_sources
      solid/Damage.cpp
      solid/DamageSpectral.cpp
      solid/DamageVolDev.cpp
+     solid/DamageExtDrivingForce.cpp
      solid/DruckerPrager.cpp
      solid/DruckerPragerExtended.cpp
      solid/ModifiedCamClay.cpp
