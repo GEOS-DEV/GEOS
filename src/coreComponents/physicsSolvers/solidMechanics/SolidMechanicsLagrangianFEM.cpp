@@ -569,18 +569,18 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     m_iComm.resize( domain.getNeighbors().size() );
     CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Acceleration );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Acceleration );
 
     //3: v^{n+1/2} = v^{n} + a^{n} dt/2
     solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, vel, dt / 2 );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
 
     //4. x^{n+1} = x^{n} + v^{n+{1}/{2}} dt (x is displacement)
     solidMechanicsLagrangianFEMKernels::displacementUpdate( vel, uhat, u, dt );
 
     fsManager.applyFieldValue( time_n + dt,
-                               domain, "nodeManager",
+                               mesh, "nodeManager",
                                NodeManager::viewKeyStruct::totalDisplacementString(),
                                [&]( FieldSpecificationBase const & bc,
                                     SortedArrayView< localIndex const > const & targetSet )
@@ -621,7 +621,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     // apply this over a set
     solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_sendOrReceiveNodes.toViewConst() );
 
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
 
     parallelDeviceEvents packEvents;
     CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
@@ -638,7 +638,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     // apply this over a set
     solidMechanicsLagrangianFEMKernels::velocityUpdate( acc, mass, vel, dt / 2, m_nonSendOrReceiveNodes.toViewConst() );
-    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, domain, "nodeManager", keys::Velocity );
+    fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
 
     // this includes  a device sync after launching all the unpacking kernels
     parallelDeviceEvents unpackEvents;
@@ -661,25 +661,33 @@ void SolidMechanicsLagrangianFEM::applyDisplacementBCImplicit( real64 const time
 
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  fsManager.apply( time,
-                   domain,
-                   "nodeManager",
-                   keys::TotalDisplacement,
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & targetGroup,
-                        string const fieldName )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     fieldName,
-                                                                     dofKey,
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+
+
+    fsManager.apply( time,
+                     mesh,
+                     "nodeManager",
+                     keys::TotalDisplacement,
+                     [&]( FieldSpecificationBase const & bc,
+                          string const &,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & targetGroup,
+                          string const fieldName )
+    {
+      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                         parallelDevicePolicy< 32 > >( targetSet,
+                                                                       time,
+                                                                       targetGroup,
+                                                                       fieldName,
+                                                                       dofKey,
+                                                                       dofManager.rankOffset(),
+                                                                       localMatrix,
+                                                                       localRhs );
+    } );
+
   } );
 }
 
@@ -704,7 +712,7 @@ void SolidMechanicsLagrangianFEM::applyTractionBC( real64 const time,
     globalIndex const dofRankOffset = dofManager.rankOffset();
 
     fsManager.apply< TractionBoundaryCondition >( time,
-                                                  domain,
+                                                  mesh,
                                                   "faceManager",
                                                   TractionBoundaryCondition::catalogName(),
                                                   [&]( TractionBoundaryCondition const & bc,
@@ -1029,15 +1037,15 @@ SolidMechanicsLagrangianFEM::
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
-  {    
+  {
     string const dofKey = dofManager.getKey( keys::TotalDisplacement );
 
     fsManager.apply( time_n + dt,
-                     domain,
+                     mesh,
                      "nodeManager",
                      keys::Force,
                      [&]( FieldSpecificationBase const & bc,
@@ -1067,7 +1075,7 @@ SolidMechanicsLagrangianFEM::
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
-    fsManager.applyFieldValue( time_n, domain, "faceManager", "ChomboPressure" );
+    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( 0 ), "faceManager", "ChomboPressure" );
     applyChomboPressure( dofManager, domain, localRhs );
   }
 
