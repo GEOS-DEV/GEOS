@@ -33,7 +33,7 @@ template< typename BASE >
 DamageExtDrivingForce< BASE >::DamageExtDrivingForce( string const & name, Group * const parent ):
   Damage< BASE >( name, parent ),
   m_tensileStrength(), 
-  m_compressStrength(), 
+  m_compressStrength()
 {
   this->registerWrapper( viewKeyStruct::tensileStrengthString(), &m_tensileStrength ).
     setInputFlag( InputFlags::REQUIRED ).

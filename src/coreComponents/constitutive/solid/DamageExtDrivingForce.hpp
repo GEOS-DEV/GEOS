@@ -29,7 +29,7 @@
 
 #include "Damage.hpp"
 #include "InvariantDecompositions.hpp"
-#include "constitutive/solid/SolidBase.hpp"
+#include "SolidBase.hpp"
 
 namespace geosx
 {
@@ -83,11 +83,14 @@ public:
                                   localIndex const q,
                                   real64 const ( &strainIncrement )[6],
                                   real64 ( & stress )[6],
-                                  DiscretizationOps & stiffness ) const override final
+                                  DiscretizationOps & stiffness ) const final
   {
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
     real64 factor = getDegradationValue( k, q );
     LvArray::tensorOps::scale< 6 >( stress, factor );
+
+    real64 const mu    = stiffness.m_shearModulus; 
+    real64 const kappa = stiffness.m_bulkModulus; 
     stiffness.scaleParams( factor );
 
     // compute volumetric and deviatoric strain invariants
@@ -104,11 +107,8 @@ public:
                                        deviator );
 
     // compute invariants of degraded stress 
-    real64 mu    = m_shearModulus[k]; 
-    real64 kappa = m_bulkModulus[k]; 
-
-    real64 I1 = stiffness.m_bulkModulus * volStrain; 
-    real64 sqrt_J2 = sqrt(3.) * stiffness.m_shearModulus * devStrain; 
+    real64 I1 = factor * kappa * volStrain; 
+    real64 sqrt_J2 = sqrt(3) * factor * mu * devStrain; 
 
     // Calculate the external driving force according to Kumar et al. 
     real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale; 
@@ -123,7 +123,7 @@ public:
 
     real64 beta3 = (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy; 
 
-    m_extDrivingForce( k, q ) = 1 / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0); 
+    m_extDrivingForce( k, q ) = 1. / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0); 
   }
 
   GEOSX_HOST_DEVICE
@@ -146,12 +146,28 @@ public:
   /// @typedef Alias for LinearElasticIsotropicUpdates
   using KernelWrapper = DamageExtDrivForceUpdates< typename BASE::KernelWrapper >;
 
+  using Damage< BASE >::m_damage;
+  using Damage< BASE >::m_strainEnergyDensity;
+  using Damage< BASE >::m_extDrivingForce; 
+  using Damage< BASE >::m_criticalFractureEnergy;
+  using Damage< BASE >::m_lengthScale;
+  using Damage< BASE >::m_criticalStrainEnergy;
+
   DamageExtDrivingForce( string const & name, dataRepository::Group * const parent );
   virtual ~DamageExtDrivingForce() override = default;
 
   static string catalogName() { return string( "DamageExtDrivingForce" ) + BASE::m_catalogNameString; }
   virtual string getCatalogName() const override { return catalogName(); }
 
+  struct viewKeyStruct : public BASE::viewKeyStruct
+  {
+    /// string/key for the uniaxial tensile strength 
+    static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
+    /// string/key for the uniaxial compressive strength 
+    static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
+    /// string/key for a delta coefficient in computing the external driving force  
+    static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
+  };
 
   KernelWrapper createKernelUpdates() const
   {
@@ -166,24 +182,8 @@ public:
                                                                        m_deltaCoefficient);
   }
 
-  struct viewKeyStruct : public BASE::viewKeyStruct
-  {
-    /// string/key for the uniaxial tensile strength 
-    static constexpr char const * tensileStrengthString() { return "tensileStrength"; }
-    /// string/key for the uniaxial compressive strength 
-    static constexpr char const * compressStrengthString() { return "compressiveStrength"; }
-    /// string/key for a delta coefficient in computing the external driving force  
-    static constexpr char const * deltaCoefficientString() { return "deltaCoefficient"; }
-  };
-
 
 protected:
-  array2d< real64 > m_damage;
-  array2d< real64 > m_strainEnergyDensity;
-  array2d< real64 > m_extDrivingForce; 
-  real64 m_lengthScale;
-  real64 m_criticalFractureEnergy;
-  real64 m_criticalStrainEnergy;
   real64 m_tensileStrength; 
   real64 m_compressStrength; 
   real64 m_deltaCoefficient; 
