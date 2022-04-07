@@ -197,8 +197,10 @@ void ElasticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, arrayView1d< string const > const & regionNames )
 {
   NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
 
   arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+   ArrayOfArraysView< localIndex const > const & facesToNodes = faceManager.nodeList().toViewConst();
 
   arrayView2d< real64 const > const sourceCoordinates = m_sourceCoordinates.toViewConst();
   arrayView2d< localIndex > const sourceNodeIds = m_sourceNodeIds.toView();
@@ -234,6 +236,9 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
 
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
+      arrayView2d< localIndex const > const elemsToFaces = elementSubRegion.faceList();
+      arrayView2d< real64 > const elemCenter = elementSubRegion.getElementCenter();
+
       finiteElement::FiniteElementBase const &
       fe = elementSubRegion.getReference< finiteElement::FiniteElementBase >( getDiscretizationName() );
       finiteElement::dispatch3D( fe,
@@ -243,18 +248,21 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
         using FE_TYPE = TYPEOFREF( finiteElement );
 
         constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
-        localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
-        array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
+        //localIndex const numFacesPerElem = elementSubRegion.numFacesPerElement();
+        //array1d< array1d< localIndex > > faceNodes( numFacesPerElem );
 
         forAll< serialPolicy >( elementSubRegion.size(), [=, &elementSubRegion] ( localIndex const k )
         {
 
-          for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
-          {
-            elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
-          }
+          // for( localIndex kf = 0; kf < numFacesPerElem; ++kf )
+          // {
+          //   elementSubRegion.getFaceNodes( k, kf, faceNodes[kf] );
+          // }
 
           /// loop over all the source that haven't been found yet
+          real64 const center[3] = { elemCenter[k][0],
+                                 elemCenter[k][1],
+                                 elemCenter[k][2] };
           forAll< serialPolicy >( sourceCoordinates.size( 0 ), [=] ( localIndex const isrc )
           {
             if( sourceIsLocal[isrc] == 0 )
@@ -274,7 +282,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
               }
 
               real64 coordsOnRefElem[3]{};
-              bool const sourceFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, coordsOnRefElem, k, faceNodes, elemsToNodes, X );
+              bool const sourceFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, center, coordsOnRefElem, k, facesToNodes, elemsToNodes, elemsToFaces[k], X );
               if( sourceFound )
               {
                 sourceIsLocal[isrc] = 1;
@@ -325,7 +333,7 @@ void ElasticWaveEquationSEM::precomputeSourceAndReceiverTerm( MeshLevel & mesh, 
                                          receiverCoordinates[ircv][2] };
 
               real64 coordsOnRefElem[3]{};
-              bool const receiverFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, coordsOnRefElem, k, faceNodes, elemsToNodes, X );
+              bool const receiverFound = computeCoordinatesOnReferenceElement< FE_TYPE >( coords, center, coordsOnRefElem, k, facesToNodes, elemsToNodes, elemsToFaces[k], X );
               if( receiverFound )
               {
                 receiverIsLocal[ircv] = 1;
@@ -454,25 +462,12 @@ void ElasticWaveEquationSEM::initializePreSubGroups()
 void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
 {
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  //MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
   real64 const time = 0.0;
   applyFreeSurfaceBC( time, domain );
   applyABC( time, domain );
-  precomputeSourceAndReceiverTerm( mesh );
-
-  NodeManager & nodeManager = mesh.getNodeManager();
-  FaceManager & faceManager = mesh.getFaceManager();
-
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-
-  /// Get table containing all the face normals
-
-  arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
-
-  /// get array of indicators: 1 if face is on the free surface; 0 otherwise
-  arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
-
+ 
 
   // forTargetRegionsComplete( mesh, [&]( localIndex const,
   //                                      localIndex const,
@@ -481,10 +476,24 @@ void ElasticWaveEquationSEM::initializePostInitialConditionsPreSubGroups()
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )                                     
   {
+
+      NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+
+      arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+
+  /// Get table containing all the face normals
+
+  arrayView1d< real64 > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
+
+  /// get array of indicators: 1 if face is on the free surface; 0 otherwise
+  arrayView1d< localIndex const > const freeSurfaceFaceIndicator = faceManager.getExtrinsicData< extrinsicMeshData::FreeSurfaceFaceIndicator >();
+
+    precomputeSourceAndReceiverTerm( mesh , regionNames);
     mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           CellElementSubRegion & elementSubRegion )
     {
-
+      
       arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = elementSubRegion.nodeList();
 
       arrayView1d< real64 > const rho = elementSubRegion.getExtrinsicData< extrinsicMeshData::MediumDensity>();
@@ -614,31 +623,8 @@ void ElasticWaveEquationSEM::applyFreeSurfaceBC( real64 const time, DomainPartit
 void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & domain )
 {
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  //MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager & nodeManager = mesh.getNodeManager();
-  FaceManager & faceManager = mesh.getFaceManager();
-
-  /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
-  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
-  
-  /// Get table containing all the face normals
-  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
-
-  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
-  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
-
-
-  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
-
-  /// damping matrix to be computed for each dof in the boundary of the mesh
-  arrayView1d< real64 > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
-  arrayView1d< real64 > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
-  arrayView1d< real64 > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
-
-  damping_x.setValues< serialPolicy >( 0.0 );
-  damping_y.setValues< serialPolicy >( 0.0 );
-  damping_z.setValues< serialPolicy >( 0.0 );
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   FunctionManager const & functionManager = FunctionManager::getInstance();
@@ -664,6 +650,29 @@ void ElasticWaveEquationSEM::applyABC( real64 const time, DomainPartition & doma
       //                                  localIndex const,
       //                                  ElementRegionBase & elemRegion )
       {
+          NodeManager & nodeManager = mesh.getNodeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+
+  /// get the array of indicators: 1 if the face is on the boundary; 0 otherwise
+  arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X = nodeManager.referencePosition().toViewConst();
+  
+  /// Get table containing all the face normals
+  arrayView2d< real64 const > const faceNormal  = faceManager.faceNormal();
+
+  FaceManager::ElemMapType const & faceToElem = faceManager.toElementRelation();
+  arrayView2d< localIndex const > const & faceToElemIndex = faceToElem.m_toElementIndex;
+
+
+  ArrayOfArraysView< localIndex const > const facesToNodes = faceManager.nodeList().toViewConst();
+
+  /// damping matrix to be computed for each dof in the boundary of the mesh
+  arrayView1d< real64 > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
+  arrayView1d< real64 > const damping_y = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_y >();
+  arrayView1d< real64 > const damping_z = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_z >();
+
+  damping_x.setValues< serialPolicy >( 0.0 );
+  damping_y.setValues< serialPolicy >( 0.0 );
+  damping_z.setValues< serialPolicy >( 0.0 );
 
         // elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
         //                                                                CellElementSubRegion & elementSubRegion )
@@ -872,9 +881,17 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_UNUSED_VAR( time_n, dt, cycleNumber );
 
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
+  //MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
 
-  NodeManager & nodeManager = mesh.getNodeManager();
+
+  // forTargetRegionsComplete( mesh, [&]( localIndex const,
+  //                                      localIndex const,
+  //                                      ElementRegionBase & elemRegion )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )                                     
+  {
+       NodeManager & nodeManager = mesh.getNodeManager();
 
   arrayView1d< real64 const > const mass = nodeManager.getExtrinsicData< extrinsicMeshData::MassVector >();
   arrayView1d< real64 const > const damping_x = nodeManager.getExtrinsicData< extrinsicMeshData::DampingVector_x >();
@@ -904,13 +921,6 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
   arrayView1d< real64 > const rhs_y = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_y >();
   arrayView1d< real64 > const rhs_z = nodeManager.getExtrinsicData< extrinsicMeshData::ForcingRHS_z >();
 
-  // forTargetRegionsComplete( mesh, [&]( localIndex const,
-  //                                      localIndex const,
-  //                                      ElementRegionBase & elemRegion )
-  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )                                     
-  {
     // elemRegion.forElementSubRegionsIndex< CellElementSubRegion >( [&]( localIndex const,
     //                                                                    CellElementSubRegion & elementSubRegion )
      mesh.getElemManager().forElementSubRegions< CellElementSubRegion >( regionNames, [&]( localIndex const,
@@ -988,9 +998,8 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
 
       } );
     } );
-  } );
 
-  addSourceToRightHandSide( time_n, rhs_x, rhs_y, rhs_z );
+     addSourceToRightHandSide( time_n, rhs_x, rhs_y, rhs_z );
 
   /// Calculate your time integrators
   real64 dt2 = dt*dt;
@@ -1045,8 +1054,13 @@ real64 ElasticWaveEquationSEM::explicitStep( real64 const & time_n,
     rhs_y[a] = 0.0;
     rhs_z[a] = 0.0;
   }
+  
+    computeSismoTrace( cycleNumber, ux_np1, uy_np1, uz_np1 );
 
-  computeSismoTrace( cycleNumber, ux_np1, uy_np1, uz_np1 );
+
+  } );
+
+
 
 
   return dt;

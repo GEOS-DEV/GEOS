@@ -125,10 +125,12 @@ private:
    */
   template< typename FE_TYPE >
   bool computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                             real64 const (&elemCenter)[3],
                                              real64 ( &coordsOnRefElem )[3],
                                              localIndex const & indexElement,
-                                             array1d< array1d< localIndex > > const & faceNodes,
+                                             ArrayOfArraysView< localIndex const > const & facesToNodes,
                                              arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                             arraySlice1d< localIndex const > const elemsToFaces,
                                              arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X );
 
   /// Locates the source term and precomputes the constant part of the source term
@@ -199,13 +201,15 @@ private:
 
 template< typename FE_TYPE >
 bool ElasticWaveEquationSEM::computeCoordinatesOnReferenceElement( real64 const (&coords)[3],
+                                                                    real64 const (&elemCenter)[3],
                                                                     real64 (& coordsOnRefElem)[3],
                                                                     localIndex const & indexElement,
-                                                                    array1d< array1d< localIndex > > const & faceNodes,
+                                                                    ArrayOfArraysView< localIndex const > const & facesToNodes,
                                                                     arrayView2d< localIndex const, cells::NODE_MAP_USD > const elemsToNodes,
+                                                                    arraySlice1d< localIndex const > const elemsToFaces,
                                                                     arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const X )
 {
-  if( computationalGeometry::isPointInsidePolyhedron( X, faceNodes, coords ) )
+  if( computationalGeometry::isPointInsidePolyhedron( X, elemsToFaces, facesToNodes, elemCenter, coords ) )
   {
     constexpr localIndex numNodesPerElem = FE_TYPE::numNodes;
     real64 xLocal[numNodesPerElem][3];
