@@ -88,31 +88,52 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
-  localIndex const numSets = m_setNames.size( );
-  std::vector< localIndex > oldSetSizes( numSets == 0 ? 1 : numSets );
+//  localIndex const numSets = m_setNames.size( );
+//  std::vector< localIndex > oldSetSizes( numSets == 0 ? 1 : numSets );
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.
-  bool const collectAll = ( numSets == 0 ) or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
+  bool const collectAll = m_setNames.empty() or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
+
+//  std::set< string > setNames;
+//  { // scope protection
+//    Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+//    auto predicate = [&setGroup]( string const & setName )
+//    {
+//      return setGroup.hasWrapper( setName );
+//    };
+//    std::copy_if( m_setNames.begin(), m_setNames.end(), std::inserter( setNames, setNames.end() ), predicate );
+//  }
+
+  localIndex const numSets = collectAll ? 1 : m_setNames.size();
+//  localIndex const numSets = collectAll ? 1 : setNames.size();
+  std::vector< localIndex > oldSetSizes( numSets );
+  m_setsIndices.resize( numSets );
 
   if( collectAll )
   {
-    m_setsIndices.resize( 1 );
-    m_setsIndices[0].resize( targetField.size() );
-    for( localIndex ii = 0; ii < targetField.size(); ++ii )
+//    m_setsIndices.resize( numSets );
+//    m_setsIndices[0].resize( targetField.size() );
+//    for( localIndex ii = 0; ii < targetField.size(); ++ii )
+    auto & si = m_setsIndices.front();
+    oldSetSizes.front() = si.size( );
+    si.resize( targetObject->size() );
+    for( localIndex i = 0; i < targetObject->size(); ++i )
     {
-      m_setsIndices[0][ii] = ii;
+      si[i] = i;
     }
     // this causes the ghost nodes to be filtered when collecting all
 //    numSets = 1;
-    oldSetSizes[ 0 ] = m_setsIndices[ 0 ].size( );
+//    oldSetSizes[ 0 ] = si.size( );
+//    oldSetSizes.front() = si.size( );
   }
   else
   {
     Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-    m_setsIndices.resize( numSets ); // TODO Warning refactoring because of this `numSets`, check twice.
+//    m_setsIndices.resize( numSets ); // TODO Warning refactoring because of this `numSets`, check twice.
     localIndex setIdx = 0;
     for( auto const & setName : m_setNames )
+//    for( auto const & setName : setNames )
     {
       if( setGroup.hasWrapper( setName ) )
       {
@@ -137,7 +158,8 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   {
     ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
     arrayView1d< integer const > const ghostRank = objectManagerTarget->ghostRank( );
-    for( localIndex setIdx = 0; setIdx < numSets; ++setIdx )
+//    for( localIndex setIdx = 0; setIdx < numSets; ++setIdx )
+    for( std::size_t setIdx = 0; setIdx < m_setsIndices.size(); ++setIdx )
     {
       array1d< localIndex > ownedIndices( m_setsIndices[ setIdx ].size() );
       localIndex ownIdx = 0;
@@ -225,7 +247,7 @@ void PackCollection::collect( DomainPartition const & domain,
   GEOSX_MARK_FUNCTION;
   GEOSX_ERROR_IF( collectionIdx < 0 || collectionIdx >= numCollectors(), "Attempting to collection from an invalid collection index!" );
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
-  WrapperBase const & target = targetObject->getWrapperBase( m_fieldName );
+  WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
   // if we have any indices to collect, and we're either collecting every time or we're only collecting when the set changes and the set has
   // changed
   parallelDeviceEvents events;
@@ -233,7 +255,7 @@ void PackCollection::collect( DomainPartition const & domain,
   {
     if( ( (m_onlyOnSetChange != 0) && m_setChanged ) || (m_onlyOnSetChange == 0) )
     {
-      target.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, true, events );
+      targetField.packByIndex< true >( buffer, m_setsIndices[collectionIdx], false, true, events );
     }
   }
   // if we're not collecting from a set of indices, we're collecting the entire object
@@ -242,7 +264,7 @@ void PackCollection::collect( DomainPartition const & domain,
   //  non-mesh objects (that don't somehow have index sets) are packed in their entirety
   else if( !m_targetIsMeshObject && m_setNames.size() == 0 )
   {
-    target.pack< true >( buffer, false, true, events );
+    targetField.pack< true >( buffer, false, true, events );
   }
   m_setChanged = false;
   GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
