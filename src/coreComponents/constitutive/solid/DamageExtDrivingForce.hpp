@@ -97,18 +97,18 @@ public:
     real64 strain[6];
     UPDATE_BASE::getElasticStrain( k, q, strain );
 
-    real64 volStrain;
-    real64 devStrain;
+    real64 stressP;
+    real64 stressQ;
     real64 deviator[6];
 
-    twoInvariant::stressDecomposition( strain,
-                                       volStrain,
-                                       devStrain,
+    twoInvariant::stressDecomposition( stress,
+                                       stressP,
+                                       stressQ,
                                        deviator );
 
     // compute invariants of degraded stress 
-    real64 I1 = factor * kappa * volStrain; 
-    real64 sqrt_J2 = sqrt(3) * factor * mu * devStrain; 
+    real64 I1 = stressP; 
+    real64 sqrt_J2 = sqrt(3) * stressQ; 
 
     // Calculate the external driving force according to Kumar et al. 
     real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale; 
