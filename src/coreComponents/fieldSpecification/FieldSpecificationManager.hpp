@@ -156,7 +156,7 @@ public:
    * @tparam POSTLAMBDA The type of the lambda function to be called after the applyFieldValue
    * @param time The time at which the field will be evaluated. For instance if the
    *             field is a time dependent function, this is the evaluation time.
-   * @param domain The DomainPartition object.
+   * @param mesh The MeshLevel objectt.
    * @param fieldPath The path to the object that contains the variable described in fieldName. This
    *                  path need not be the complete path, but rather the check that is performed is
    *                  that the fieldPath specified is contained in the string that specifies the
@@ -194,7 +194,7 @@ public:
 
   /**
    * @brief function to apply initial conditions
-   * @param domain the DomainPartition object
+   * @param mesh the MeshLevel object
    */
   void applyInitialConditions( MeshLevel & mesh ) const;
 
@@ -224,7 +224,7 @@ public:
    */
   template< typename BCTYPE = FieldSpecificationBase, typename LAMBDA >
   void apply( real64 const time,
-              MeshLevel & meshLevel,
+              MeshLevel & mesh,
               string const & fieldPath,
               string const & fieldName,
               LAMBDA && lambda ) const
