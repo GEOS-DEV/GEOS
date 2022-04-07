@@ -81,6 +81,28 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   }
 }
 
+/**
+ * @brief Extracts the wrapper names that exist in the @p sets group of @p group.
+ * @param setNames The candidate wrapper names.
+ * @param group The group that which @p sets sub group may contain the @p setNames.
+ * @return The set names, guarantied to be unique.
+ */
+std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNames, Group const * group )
+{
+  std::vector< string > result;
+
+  Group const & setGroup = group->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
+  auto predicate = [&setGroup]( string const & setName )
+  {
+    return setGroup.hasWrapper( setName );
+  };
+  std::set< string > const tmp( setNames.begin(), setNames.end() );
+  std::copy_if( tmp.cbegin(), tmp.cend(), std::back_inserter( result ), predicate );
+
+  return result;
+}
+
+
 // if we add a check for the setsizes changing we can use that data to determine whether the metadata collector
 //  should only collect on size changes, otherwise not collect anything
 void PackCollection::updateSetsIndices( DomainPartition const & domain )
@@ -88,68 +110,52 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   Group const * targetObject = this->getTargetObject( domain, m_objectPath );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
-//  localIndex const numSets = m_setNames.size( );
-//  std::vector< localIndex > oldSetSizes( numSets == 0 ? 1 : numSets );
 
   // If no set or "all" is specified we retrieve the entire field.
   // If sets are specified we retrieve the field only from those sets.
   bool const collectAll = m_setNames.empty() or std::find( m_setNames.begin(), m_setNames.end(), "all" ) != m_setNames.end();
 
-//  std::set< string > setNames;
-//  { // scope protection
-//    Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-//    auto predicate = [&setGroup]( string const & setName )
-//    {
-//      return setGroup.hasWrapper( setName );
-//    };
-//    std::copy_if( m_setNames.begin(), m_setNames.end(), std::inserter( setNames, setNames.end() ), predicate );
-//  }
+  // In the wake of previous trick about `m_setNames`, another small trick not to compute the real set names if they are not needed.
+  // This is questionable but lets me define `setNames` as `const` variable.
+  std::vector< string > const setNames = collectAll ? std::vector< string >{} : getExistingWrapperNames( m_setNames.toViewConst(), targetObject );
 
-  localIndex const numSets = collectAll ? 1 : m_setNames.size();
-//  localIndex const numSets = collectAll ? 1 : setNames.size();
-  std::vector< localIndex > oldSetSizes( numSets );
+  std::size_t const numSets = collectAll ? 1 : setNames.size();
   m_setsIndices.resize( numSets );
+  // `oldSetSizes` will help us check if the sets have changed.
+  std::vector< localIndex > oldSetSizes( numSets );
+  for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
+  {
+    oldSetSizes[setIdx] = m_setsIndices[setIdx].size();
+  }
 
   if( collectAll )
   {
-//    m_setsIndices.resize( numSets );
-//    m_setsIndices[0].resize( targetField.size() );
-//    for( localIndex ii = 0; ii < targetField.size(); ++ii )
-    auto & si = m_setsIndices.front();
-    oldSetSizes.front() = si.size( );
-    si.resize( targetObject->size() );
+    // Here we only have one "all" field.
+    array1d< localIndex > & setIndices = m_setsIndices.front();
+    setIndices.resize( targetObject->size() );
     for( localIndex i = 0; i < targetObject->size(); ++i )
     {
-      si[i] = i;
+      setIndices[i] = i;
     }
-    // this causes the ghost nodes to be filtered when collecting all
-//    numSets = 1;
-//    oldSetSizes[ 0 ] = si.size( );
-//    oldSetSizes.front() = si.size( );
   }
   else
   {
     Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-//    m_setsIndices.resize( numSets ); // TODO Warning refactoring because of this `numSets`, check twice.
-    localIndex setIdx = 0;
-    for( auto const & setName : m_setNames )
-//    for( auto const & setName : setNames )
+    for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
-      if( setGroup.hasWrapper( setName ) )
+      string const & setName = setNames[setIdx];
+      array1d< localIndex > & setIndices = m_setsIndices[setIdx];
+
+      SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
+      localIndex setSize = set.size();
+      setIndices.resize( setSize );
+      if( setSize > 0 )
       {
-        SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
-        oldSetSizes[ setIdx ] = m_setsIndices[ setIdx ].size( );
-        localIndex setSize = set.size( );
-        m_setsIndices[ setIdx ].resize( setSize );
-        if( setSize > 0 )
+        for( localIndex idx = 0; idx < setSize; ++idx )
         {
-          for( localIndex idx = 0; idx < setSize; ++idx )
-          {
-            m_setsIndices[ setIdx ][ idx ] = set[ idx ];
-          }
+          setIndices[idx] = set[idx];
         }
       }
-      setIdx++;
     }
   }
 
@@ -158,20 +164,23 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   {
     ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
     arrayView1d< integer const > const ghostRank = objectManagerTarget->ghostRank( );
-//    for( localIndex setIdx = 0; setIdx < numSets; ++setIdx )
-    for( std::size_t setIdx = 0; setIdx < m_setsIndices.size(); ++setIdx )
+    for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
-      array1d< localIndex > ownedIndices( m_setsIndices[ setIdx ].size() );
+      array1d< localIndex > & setIndices = m_setsIndices[ setIdx ] ;
+      array1d< localIndex > ownedIndices( setIndices.size() );
+
       localIndex ownIdx = 0;
-      for( localIndex idx = 0; idx < m_setsIndices[ setIdx ].size(); ++idx )
+      for( localIndex idx = 0; idx < setIndices.size(); ++idx )
       {
-        if( ghostRank[ m_setsIndices[ setIdx ][ idx ] ] < 0 )
+        if( ghostRank[ setIndices[ idx ] ] < 0 )
         {
-          ownedIndices[ ownIdx ] = m_setsIndices[ setIdx ][ idx ];
+          ownedIndices[ ownIdx ] = setIndices[ idx ];
           ++ownIdx;
         }
       }
-      localIndex newSetSize = ownIdx;
+
+      localIndex const newSetSize = ownIdx;
+
       if( oldSetSizes[ setIdx ] != newSetSize )
       {
         m_setChanged = true;
@@ -180,17 +189,17 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
       {
         for( localIndex idx = 0; idx < ownedIndices.size(); ++idx )
         {
-          if( m_setsIndices[ setIdx ][ idx ] != ownedIndices[ idx ] )
+          if( setIndices[ idx ] != ownedIndices[ idx ] )
           {
             m_setChanged = true;
             break;
           }
         }
       }
-      m_setsIndices[ setIdx ].resize( newSetSize );
+      setIndices.resize( newSetSize );
       for( localIndex idx = 0; idx < newSetSize; ++idx )
       {
-        m_setsIndices[ setIdx ][ idx ] = ownedIndices[ idx ];
+        setIndices[ idx ] = ownedIndices[ idx ];
       }
     }
   }
