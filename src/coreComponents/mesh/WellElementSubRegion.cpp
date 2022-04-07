@@ -45,6 +45,8 @@ WellElementSubRegion::WellElementSubRegion( string const & name, Group * const p
 
   registerGroup( groupKeyStruct::perforationDataString(), &m_perforationData );
 
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString() } );
+
   m_numNodesPerElement = 2;
   m_numFacesPerElement = 0;
   m_toNodesRelation.resizeDimension< 1 >( this->numNodesPerElement() );
@@ -843,12 +845,6 @@ bool WellElementSubRegion::isLocallyOwned() const
   return m_topRank == MpiWrapper::commRank( MPI_COMM_GEOSX );
 }
 
-std::set< string > WellElementSubRegion::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( viewKeyStruct::nodeListString() );
-  return result;
-}
 
 localIndex WellElementSubRegion::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {

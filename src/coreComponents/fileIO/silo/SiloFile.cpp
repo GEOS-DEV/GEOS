@@ -1331,9 +1331,9 @@ static std::vector< int > getSiloNodeOrdering( ElementType const elementType )
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedron:   return { 1, 0, 2, 3 };
-    case ElementType::Pyramid:       return { 0, 3, 2, 1, 4, 0, 0, 0 };
-    case ElementType::Prism:         return { 1, 0, 2, 3, 5, 4, 0, 0 };
+    case ElementType::Tetrahedron:   return { 0, 1, 3, 2 };
+    case ElementType::Pyramid:       return { 0, 2, 3, 1, 4 };
+    case ElementType::Prism:         return { 1, 0, 2, 3, 5, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }

@@ -72,12 +72,12 @@ public:
    * @brief Get the catalog name.
    * @return the name of this class in the catalog
    */
-  static const string catalogName() { return "wellElementSubRegion"; }
+  static string catalogName() { return "wellElementSubRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override { return WellElementSubRegion::catalogName(); }
+  virtual string getCatalogName() const override { return catalogName(); }
 
   ///@}
 
@@ -251,8 +251,6 @@ public:
    * @name Overriding packing/unpacking functions
    */
   ///@{
-
-  std::set< string > getPackingExclusionList() const override;
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
