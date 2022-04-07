@@ -55,10 +55,17 @@ public:
     m_componentMolarWeight.move( space, touch );
   }
 
+  void computeLogActCoeff();
+
+
 protected:
 
   /// Array storing the component molar weights
   arrayView1d< real64 const > m_componentMolarWeight;
+
+  arrayView1d<real64>  m_coefficients;
+
+  arrayView1d<real64>  m_activityCoefficients;
 
 };
 
