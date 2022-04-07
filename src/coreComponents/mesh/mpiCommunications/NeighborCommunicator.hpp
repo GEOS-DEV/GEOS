@@ -21,7 +21,7 @@
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"
 #include "LvArray/src/limits.hpp"
-#include "mesh/DomainPartition.hpp"
+//#include "mesh/DomainPartition.hpp"
 
 namespace geosx
 {
