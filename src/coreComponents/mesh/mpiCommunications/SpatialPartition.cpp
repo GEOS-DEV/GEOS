@@ -275,159 +275,159 @@ void SpatialPartition::setContactGhostRange( const real64 bufferSize )
   LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
 }
 
-void SpatialPartition::RepartitionMasterParticlesToNeighbors(DomainPartition & domain)
-{
-  std::cout << "Hello world!" << std::endl;
-
-  //std::cout<<"XXX SpatialPartition::RepartitionMasterParticlesToNeighbors XXX"<<std::endl;
-  /*
-   * Search for any particles owned by this partition, which are no longer in the
-   * partition domain.  Send a copy of these particles to their new partition, but
-   * keep them as ghosts on the current partition.
-   *
-   * This assumes that particles have already been partitioned consistent with the background
-   * grid, but does not assume any specific partition topology, only that the neighbor list
-   * is complete, and each partition can evaluate its own isCoordinateInPartition() function.
-   *
-   * After this function, each particle should be in its correct partition, and the
-   * ghostRank of particles that were moved from the current partition will be correct,
-   * but the master-ghost map in the neighbor list still needs to updated.  Particles that
-   * were ghosts of an object that has been repartitioned will need to have their ghost
-   * rank updated, and may need to be deleted/added elsewhere.
-   *
-   */
-
-  // (1) Identify any particles that are master on the current partition, but whose center lies
-  // outside of the partition domain.  ghostRank() for particles is defined such that it always
-  // equals the rank of the owning process. Thus a particle is master iff ghostRank==partition.rank
-  //
-  // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
-  // requested by another partition, its ghost rank will be updated.  Any particle that still
-  // has a ghostRank=-1 at the end of this function is lost and needs to be deleted.  This
-  // should only happen if it has left the global domain (hopefully at an outflow b.c.).
-
-  dataRepository::Group & meshBodies = domain.getMeshBodies();
-
-  MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
-  MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
-  MeshBody & particles = meshBody1.m_hasParticles ? meshBody1 : meshBody2;
-  ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
-
-//  ParticleManager & p_x = domain.m_particleManager.GetFieldData<FieldInfo::currentPosition> ();
-//  Array1dT<int>&      p_ghostRank  = domain.m_particleManager.GetFieldData<FieldInfo::ghostRank> ();
-//  Array1dT<R1Tensor>   outOfDomainParticleCoordinates;  // This will be sent to neighbors.
-//  Array1dT<localIndex> outOfDomainParticleLocalIndices; // This will be used to map request lists to local indices.
-//  unsigned int nn = m_neighbors.size();
+//void SpatialPartition::RepartitionMasterParticlesToNeighbors(DomainPartition & domain)
+//{
+//  std::cout << "Hello world!" << std::endl;
 //
-//  // Number of partition neighbors.
-//  {
-//    for (localIndex pp = 0; pp < domain.m_particleManager.DataLengths(); pp++)
-//    {
-//      if( p_ghostRank[pp]==this->m_rank && !IsCoordInPartition( p_x[pp] ) )
-//      {
-//        outOfDomainParticleCoordinates.push_back(p_x[pp]);  // Store the coordinate of the out-of-domain particle
-//        outOfDomainParticleLocalIndices.push_back(pp);      // Store the local index "pp" for the current coordinate.
-//        p_ghostRank[pp] = -1;                               // Temporarily set ghostRank of out-of-domain particle to -1 until it is requested by someone.
-//      }
-//    }
-//  }
+//  //std::cout<<"XXX SpatialPartition::RepartitionMasterParticlesToNeighbors XXX"<<std::endl;
+//  /*
+//   * Search for any particles owned by this partition, which are no longer in the
+//   * partition domain.  Send a copy of these particles to their new partition, but
+//   * keep them as ghosts on the current partition.
+//   *
+//   * This assumes that particles have already been partitioned consistent with the background
+//   * grid, but does not assume any specific partition topology, only that the neighbor list
+//   * is complete, and each partition can evaluate its own isCoordinateInPartition() function.
+//   *
+//   * After this function, each particle should be in its correct partition, and the
+//   * ghostRank of particles that were moved from the current partition will be correct,
+//   * but the master-ghost map in the neighbor list still needs to updated.  Particles that
+//   * were ghosts of an object that has been repartitioned will need to have their ghost
+//   * rank updated, and may need to be deleted/added elsewhere.
+//   *
+//   */
 //
-//  // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
+//  // (1) Identify any particles that are master on the current partition, but whose center lies
+//  // outside of the partition domain.  ghostRank() for particles is defined such that it always
+//  // equals the rank of the owning process. Thus a particle is master iff ghostRank==partition.rank
+//  //
+//  // Temporarily set the ghost rank of any particle to be moved to "-1".  If the particle is
+//  // requested by another partition, its ghost rank will be updated.  Any particle that still
+//  // has a ghostRank=-1 at the end of this function is lost and needs to be deleted.  This
+//  // should only happen if it has left the global domain (hopefully at an outflow b.c.).
 //
-//  Array1dT<Array1dT<R1Tensor>> particleCoordinatesReceivedFromNeighbors(nn);
+//  dataRepository::Group & meshBodies = domain.getMeshBodies();
 //
-//  sendCoordinateListToNeighbors(outOfDomainParticleCoordinates,           // Single list of coordinates sent to all neighbors
-//                                particleCoordinatesReceivedFromNeighbors  // List of lists of coordinates received from each neighbor.
-//                                );
+//  MeshBody & meshBody1 = meshBodies.getGroup< MeshBody >(0);
+//  MeshBody & meshBody2 = meshBodies.getGroup< MeshBody >(1);
+//  MeshBody & particles = meshBody1.m_hasParticles ? meshBody1 : meshBody2;
+//  ParticleManager & particleManager = particles.getMeshLevel(0).getParticleManager();
 //
-//  // (3) check the received lists for particles that are in the domain of the
-//  //     current partition.  make a list of the locations in the coordinate list
-//  //     of the particles that are to be owned by the current partition.
-//
-//  Array1dT<Array1dT<unsigned long int>> particleListIndicesRequestingFromNeighbors(nn);
-//  for(localIndex n=0; n<nn; n++ )
-//  {
-//    // Loop through the unpacked list and make a list of the index of any point in partition interior domain
-//    for(localIndex i=0; i<particleCoordinatesReceivedFromNeighbors[n].size(); i++)
-//    {
-//      if( IsCoordInPartition(particleCoordinatesReceivedFromNeighbors[n][i]) )
-//      {
-//        // Request particle to be transferred, and take ownership
-//        particleListIndicesRequestingFromNeighbors[n].push_back(i);
-//      }
-//    }
-//  }
-//
-//  // (4) Pack and send/receive list of requested indices to each neighbor.  These are the indices
-//  //     in the list of coordinates, not the LocalIndices on the sending processor. Unpack it
-//  //     and store the request list.
-//
-//  Array1dT<Array1dT<localIndex>> particleListIndicesRequestedFromNeighbors(nn);
-//
-//  sendListOfLocalIndicesToNeighbors(particleListIndicesRequestingFromNeighbors,
-//                                    particleListIndicesRequestedFromNeighbors);
-//
-//  // (5) Update the ghost rank of the out-of-domain particles to be equal to the rank
-//  //     of the partition requesting to own the particle.
-//  Array1dT<Array1dT<unsigned long int>> particleLocalIndicesRequestedFromNeighbors(nn);
-//  {
-//    unsigned int numberOfRequestedParticles = 0;
-//    Array1dT<int> outOfDomainParticleRequests(outOfDomainParticleLocalIndices.size(),0);
-//
-//    for(localIndex n=0; n<nn; n++ )
-//    {
-//      int ni = particleListIndicesRequestedFromNeighbors[n].size();
-//      numberOfRequestedParticles += ni;
-//
-//      // The corresponding local index for each item in the request list is stored here:
-//      particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
-//
-//      for(int k=0; k<ni; k++)
-//      {
-//        int i = particleListIndicesRequestedFromNeighbors[n][k];
-//        outOfDomainParticleRequests[i] += 1;
-//        localIndex pp = outOfDomainParticleLocalIndices[i];
-//
-//        particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
-//        // Set ghost rank of the particle equal to neighbor rank.
-//        p_ghostRank[pp] = m_neighbors[n].NeighborRank();
-//      }
-//    }
-//
-//    // Check that there is exactly one processor requesting each out-of-domain particle.
-//    if (numberOfRequestedParticles != outOfDomainParticleLocalIndices.size())
-//    {
-//      std::cout<<"XXX Process "<< this->m_rank <<" has requests for "<<numberOfRequestedParticles<<" out of "<<outOfDomainParticleLocalIndices.size()<<" out-of-domain particles"<<std::endl;
-//    }
-//    for (localIndex i=0; i<outOfDomainParticleRequests.size(); i++)
-//    {
-//      if (outOfDomainParticleRequests[i] != 1)
-//      {
-//        std::cout<<"XXX Process "<< this->m_rank <<" particle as "<<outOfDomainParticleRequests[i]<<" != 1 requests!"<<std::endl;
-//      }
-//    }
-//  }
-//
-//  // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
-//  sendParticlesToNeighbor(domain.m_particleManager, particleLocalIndicesRequestedFromNeighbors);
-//
-//  // (7) Delete any out-of-domain particles that were not requested by a neighbor.  These particles
-//  //     will still have ghostRank=-1. This should only happen if the particle has left the global domain.
-//  //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
-//  //     the global domain, print a warning.
-//
-//  for (int  pp = domain.m_particleManager.DataLengths() - 1; pp>=0; pp--)
-//  {
-//    if( p_ghostRank[pp] == -1 )
-//    {
-//      std::cout<<"7. XXX Processor("<<this->m_rank<<") deleting orphan out-of-domain particle during repartition at p_x = "<<p_x[pp]<<"."<<std::endl;
-//      domain.m_particleManager.erase(pp);
-//    }
-//    else if( p_ghostRank[pp] != this->m_rank )
-//    {
-//      domain.m_particleManager.erase(pp);
-//    }
-//  }
-}
+////  ParticleManager & p_x = domain.m_particleManager.GetFieldData<FieldInfo::currentPosition> ();
+////  Array1dT<int>&      p_ghostRank  = domain.m_particleManager.GetFieldData<FieldInfo::ghostRank> ();
+////  Array1dT<R1Tensor>   outOfDomainParticleCoordinates;  // This will be sent to neighbors.
+////  Array1dT<localIndex> outOfDomainParticleLocalIndices; // This will be used to map request lists to local indices.
+////  unsigned int nn = m_neighbors.size();
+////
+////  // Number of partition neighbors.
+////  {
+////    for (localIndex pp = 0; pp < domain.m_particleManager.DataLengths(); pp++)
+////    {
+////      if( p_ghostRank[pp]==this->m_rank && !IsCoordInPartition( p_x[pp] ) )
+////      {
+////        outOfDomainParticleCoordinates.push_back(p_x[pp]);  // Store the coordinate of the out-of-domain particle
+////        outOfDomainParticleLocalIndices.push_back(pp);      // Store the local index "pp" for the current coordinate.
+////        p_ghostRank[pp] = -1;                               // Temporarily set ghostRank of out-of-domain particle to -1 until it is requested by someone.
+////      }
+////    }
+////  }
+////
+////  // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
+////
+////  Array1dT<Array1dT<R1Tensor>> particleCoordinatesReceivedFromNeighbors(nn);
+////
+////  sendCoordinateListToNeighbors(outOfDomainParticleCoordinates,           // Single list of coordinates sent to all neighbors
+////                                particleCoordinatesReceivedFromNeighbors  // List of lists of coordinates received from each neighbor.
+////                                );
+////
+////  // (3) check the received lists for particles that are in the domain of the
+////  //     current partition.  make a list of the locations in the coordinate list
+////  //     of the particles that are to be owned by the current partition.
+////
+////  Array1dT<Array1dT<unsigned long int>> particleListIndicesRequestingFromNeighbors(nn);
+////  for(localIndex n=0; n<nn; n++ )
+////  {
+////    // Loop through the unpacked list and make a list of the index of any point in partition interior domain
+////    for(localIndex i=0; i<particleCoordinatesReceivedFromNeighbors[n].size(); i++)
+////    {
+////      if( IsCoordInPartition(particleCoordinatesReceivedFromNeighbors[n][i]) )
+////      {
+////        // Request particle to be transferred, and take ownership
+////        particleListIndicesRequestingFromNeighbors[n].push_back(i);
+////      }
+////    }
+////  }
+////
+////  // (4) Pack and send/receive list of requested indices to each neighbor.  These are the indices
+////  //     in the list of coordinates, not the LocalIndices on the sending processor. Unpack it
+////  //     and store the request list.
+////
+////  Array1dT<Array1dT<localIndex>> particleListIndicesRequestedFromNeighbors(nn);
+////
+////  sendListOfLocalIndicesToNeighbors(particleListIndicesRequestingFromNeighbors,
+////                                    particleListIndicesRequestedFromNeighbors);
+////
+////  // (5) Update the ghost rank of the out-of-domain particles to be equal to the rank
+////  //     of the partition requesting to own the particle.
+////  Array1dT<Array1dT<unsigned long int>> particleLocalIndicesRequestedFromNeighbors(nn);
+////  {
+////    unsigned int numberOfRequestedParticles = 0;
+////    Array1dT<int> outOfDomainParticleRequests(outOfDomainParticleLocalIndices.size(),0);
+////
+////    for(localIndex n=0; n<nn; n++ )
+////    {
+////      int ni = particleListIndicesRequestedFromNeighbors[n].size();
+////      numberOfRequestedParticles += ni;
+////
+////      // The corresponding local index for each item in the request list is stored here:
+////      particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
+////
+////      for(int k=0; k<ni; k++)
+////      {
+////        int i = particleListIndicesRequestedFromNeighbors[n][k];
+////        outOfDomainParticleRequests[i] += 1;
+////        localIndex pp = outOfDomainParticleLocalIndices[i];
+////
+////        particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
+////        // Set ghost rank of the particle equal to neighbor rank.
+////        p_ghostRank[pp] = m_neighbors[n].NeighborRank();
+////      }
+////    }
+////
+////    // Check that there is exactly one processor requesting each out-of-domain particle.
+////    if (numberOfRequestedParticles != outOfDomainParticleLocalIndices.size())
+////    {
+////      std::cout<<"XXX Process "<< this->m_rank <<" has requests for "<<numberOfRequestedParticles<<" out of "<<outOfDomainParticleLocalIndices.size()<<" out-of-domain particles"<<std::endl;
+////    }
+////    for (localIndex i=0; i<outOfDomainParticleRequests.size(); i++)
+////    {
+////      if (outOfDomainParticleRequests[i] != 1)
+////      {
+////        std::cout<<"XXX Process "<< this->m_rank <<" particle as "<<outOfDomainParticleRequests[i]<<" != 1 requests!"<<std::endl;
+////      }
+////    }
+////  }
+////
+////  // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
+////  sendParticlesToNeighbor(domain.m_particleManager, particleLocalIndicesRequestedFromNeighbors);
+////
+////  // (7) Delete any out-of-domain particles that were not requested by a neighbor.  These particles
+////  //     will still have ghostRank=-1. This should only happen if the particle has left the global domain.
+////  //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
+////  //     the global domain, print a warning.
+////
+////  for (int  pp = domain.m_particleManager.DataLengths() - 1; pp>=0; pp--)
+////  {
+////    if( p_ghostRank[pp] == -1 )
+////    {
+////      std::cout<<"7. XXX Processor("<<this->m_rank<<") deleting orphan out-of-domain particle during repartition at p_x = "<<p_x[pp]<<"."<<std::endl;
+////      domain.m_particleManager.erase(pp);
+////    }
+////    else if( p_ghostRank[pp] != this->m_rank )
+////    {
+////      domain.m_particleManager.erase(pp);
+////    }
+////  }
+//}
 
 }
