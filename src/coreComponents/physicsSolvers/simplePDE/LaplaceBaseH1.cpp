@@ -188,7 +188,7 @@ void LaplaceBaseH1::
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & regionNames )
+                                               arrayView1d< string const > const & )
   {
 
     fsManager.apply( time,
