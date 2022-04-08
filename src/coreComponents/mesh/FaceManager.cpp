@@ -55,6 +55,12 @@ FaceManager::FaceManager( string const &, Group * const parent ):
   this->registerWrapper( viewKeyStruct::faceNormalString(), &m_faceNormal ).
     reference().resizeDimension< 1 >( 3 );
 
+  excludeWrappersFromPacking( { viewKeyStruct::nodeListString(),
+                                viewKeyStruct::edgeListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
+
   m_toElements.resize( 0, 2 );
 
 }
@@ -426,16 +432,6 @@ void FaceManager::extractMapFromObjectForAssignGlobalIndexNumbers( NodeManager c
   } );
 }
 
-std::set< string > FaceManager::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::nodeListString(),
-                   viewKeyStruct::edgeListString(),
-                   viewKeyStruct::elementRegionListString(),
-                   viewKeyStruct::elementSubRegionListString(),
-                   viewKeyStruct::elementListString() } );
-  return result;
-}
 
 localIndex FaceManager::packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const
 {
