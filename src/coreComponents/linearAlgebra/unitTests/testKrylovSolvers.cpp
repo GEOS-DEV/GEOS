@@ -41,6 +41,9 @@ LinearSolverParameters params_BiCGSTAB()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
+  //////////
+  parameters.logLevel = 2;
+  //////////
   parameters.solverType = geosx::LinearSolverParameters::SolverType::bicgstab;
   return parameters;
 }
@@ -50,6 +53,9 @@ LinearSolverParameters params_ExpBiCGSTAB()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
+  //////////
+  parameters.logLevel = 2;
+  //////////
   parameters.solverType = geosx::LinearSolverParameters::SolverType::expBicgstab;
   return parameters;
 }
@@ -90,7 +96,8 @@ protected:
 
   void test( LinearSolverParameters const & params )
   {
-    sol_true.rand( 1984 );
+    //sol_true.rand( 1984 );
+    sol_true.set( 0.2 );
     sol_comp.zero();
     matrix.apply( sol_true, rhs_true );
 
@@ -131,7 +138,7 @@ protected:
   void SetUp() override
   {
     // Compute matrix and preconditioner
-    globalIndex constexpr n = 100;
+    globalIndex constexpr n = 5; //100;
     geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
     this->precond.setup( this->matrix );
 

@@ -241,6 +241,20 @@ protected:
                       real64 const beta ) = 0;
 
   /**
+   * @brief Update vector <tt>z</tt> as <tt>z</tt> = <tt>alpha*x + beta*y</tt> + gamma*z</tt>.
+   * @param alpha scaling factor for first added vector
+   * @param x first vector to add
+   * @param beta scaling factor for second added vector
+   * @param y second vector to add
+   * @param gamma scaling factor for self vector
+   */
+  virtual void axpbypcz( real64 const alpha,
+                         Vector const & x,
+                         real64 const beta,
+                         Vector const & y,
+                         real64 const gamma ) = 0;
+   
+  /**
    * @brief Compute the component-wise multiplication <tt>y</tt> = <tt>v * x</tt>.
    * @param x first vector (input)
    * @param y second vector (output)

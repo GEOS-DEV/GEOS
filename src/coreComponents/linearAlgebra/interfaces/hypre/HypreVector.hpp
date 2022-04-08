@@ -139,6 +139,12 @@ public:
                       HypreVector const & x,
                       real64 const beta ) override;
 
+  virtual void axpbypcz( real64 const alpha,
+                         HypreVector const & x,
+                         real64 const beta,
+                         HypreVector const & y,
+                         real64 const gamma ) override;
+
   virtual void pointwiseProduct( HypreVector const & x,
                                  HypreVector & y ) const override;
 

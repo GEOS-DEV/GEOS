@@ -122,6 +122,12 @@ public:
                       EpetraVector const & x,
                       real64 const beta ) override;
 
+  virtual void axpbypcz( real64 const alpha,
+                         EpetraVector const & x,
+                         real64 const beta,
+                         EpetraVector const & y,
+                         real64 const gamma ) override;
+
   virtual void pointwiseProduct( EpetraVector const & x,
                                  EpetraVector & y ) const override;
 
