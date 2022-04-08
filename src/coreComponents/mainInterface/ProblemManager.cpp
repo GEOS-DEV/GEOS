@@ -817,7 +817,13 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
-  m_fieldSpecificationManager->applyInitialConditions( getDomainPartition() );
+  getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+    {
+      m_fieldSpecificationManager->applyInitialConditions( meshLevel );
+    } );
+  } );
   initializePostInitialConditions();
 }
 
