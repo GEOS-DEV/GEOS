@@ -245,7 +245,7 @@ public:
         if( ( isInitialCondition && fieldName=="" ) ||
             ( !isInitialCondition && time >= fs.getStartTime() && time < fs.getEndTime() && targetName==fieldName ) )
         {
-          dataRepository::Group * targetGroup = &meshLevel;
+          dataRepository::Group * targetGroup = &mesh;
           for( localIndex pathLevel=0; pathLevel<targetPathLength; ++pathLevel )
           {
             dataRepository::Group * const elemRegionSubGroup = targetGroup->getGroupPointer( ElementRegionManager::groupKeyStruct::elementRegionsGroup() );
