@@ -65,9 +65,9 @@ void FieldSpecificationManager::expandObjectCatalogs()
 }
 
 
-void FieldSpecificationManager::applyInitialConditions( DomainPartition & domain ) const
+void FieldSpecificationManager::applyInitialConditions( MeshLevel & mesh ) const
 {
-  apply( 0.0, domain, "", "",
+  apply( 0.0, mesh, "", "",
          [&]( FieldSpecificationBase const & bc,
               string const &,
               SortedArrayView< localIndex const > const & targetSet,
