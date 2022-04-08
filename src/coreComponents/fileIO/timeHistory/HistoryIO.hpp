@@ -48,12 +48,12 @@ public:
    * @note Depends on the virtual function resizeBuffer() being implemented correctly in
    *        an inheriting class.
    */
-  buffer_unit_type * getBufferHead( )
+  buffer_unit_type * getBufferHead()
   {
-    resizeBuffer( );
+    resizeBuffer();
     m_bufferedCount++;
     buffer_unit_type * const currentBufferHead = m_bufferHead;
-    m_bufferHead += getRowBytes( );
+    m_bufferHead += getRowBytes();
     return currentBufferHead;
   }
 
@@ -67,25 +67,19 @@ public:
   /**
    * @brief Write the buffered history data to the output target.
    */
-  virtual void write( ) = 0;
+  virtual void write() = 0;
 
   /**
    * @brief Ensure the repressentation of the data in the output target is dense and terse.
    * @note Typically the file will be oversized to receive data writes without constant resizing.
    */
-  virtual void compressInFile( ) = 0;
+  virtual void compressInFile() = 0;
 
   /**
    * @brief Update the number of items being stored for IO in this object.
    * @param count [in] The new number of items being collected
    */
   virtual void updateCollectingCount( localIndex count ) = 0;
-
-  /**
-   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
-   * @return The size in bytes.
-   */
-  virtual size_t getRowBytes( ) = 0;
 
   /**
    * @brief Query the number of history states currently stored in the internal buffer.
@@ -95,11 +89,18 @@ public:
    *        that should be operating at the same cadence (ie the time collector and the data
    *        collector).
    */
-  localIndex getBufferedCount( ) { return m_bufferedCount; }
+  localIndex getBufferedCount()
+  { return m_bufferedCount; }
 
 protected:
+  /**
+   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
+   * @return The size in bytes.
+   */
+  virtual size_t getRowBytes() = 0;
+
   /// @brief Resize the buffer to accomodate additional history collection.
-  virtual void resizeBuffer( ) = 0;
+  virtual void resizeBuffer() = 0;
 
   /// @brief Empty the history collection buffer
   void emptyBuffer( )
