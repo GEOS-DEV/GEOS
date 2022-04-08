@@ -65,7 +65,6 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
   {
     localIndex const packCount = m_setsIndices[0].size() == 0 ? 1 : m_setsIndices[0].size(); // TODO CHECK!
     return targetField.getHistoryMetadata( packCount );
-//    return targetField.getHistoryMetadata(2);
   }
   else
   {
@@ -207,8 +206,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
 
 localIndex PackCollection::numMetaDataCollectors( ) const
 {
-  return 1; // TODO This is unclear.
-//  return m_targetIsMeshObject && !m_disableCoordCollection ? 1 : 0;
+  return m_targetIsMeshObject && !m_disableCoordCollection ? 1 : 0;
 }
 
 void PackCollection::buildMetaDataCollectors( )
