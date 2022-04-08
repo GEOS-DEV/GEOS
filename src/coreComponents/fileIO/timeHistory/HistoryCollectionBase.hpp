@@ -105,7 +105,7 @@ protected:
   std::vector< BufferProvider > m_bufferProviders;
 
   /// The set of metadata collectors for this collector ( currently only used to collect coordinates of mesh objects when collecting field data )
-  std::vector< std::unique_ptr< HistoryCollectionBase > > m_metaDataCollectors;
+  std::vector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
 };
 
 }

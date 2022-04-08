@@ -51,7 +51,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 
 }
 
-void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, HistoryCollection & collector )
+void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
 {
   GEOSX_ASSERT( m_io.empty() );
 

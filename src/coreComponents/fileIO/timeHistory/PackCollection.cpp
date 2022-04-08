@@ -83,17 +83,17 @@ HistoryMetadata PackCollection::getMetaData( DomainPartition const & domain, loc
 /**
  * @brief Extracts the wrapper names that exist in the @p sets group of @p group.
  * @param setNames The candidate wrapper names.
- * @param group The group that which @p sets sub group may contain the @p setNames.
+ * @param omb The @p group (@p ObjectManagerBase) that which @p sets sub group may contain the @p setNames.
  * @return The set names, guarantied to be unique.
  */
-std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNames, Group const * group )
+std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNames, ObjectManagerBase const * omb )
 {
   std::vector< string > result;
 
-  Group const & setGroup = group->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
-  auto predicate = [&setGroup]( string const & setName )
+  Group const & sets = omb->sets(); // FIXME ObjectManagerBase
+  auto predicate = [&sets]( string const & setName )
   {
-    return setGroup.hasWrapper( setName );
+    return sets.hasWrapper( setName );
   };
   std::set< string > const tmp( setNames.begin(), setNames.end() );
   std::copy_if( tmp.cbegin(), tmp.cend(), std::back_inserter( result ), predicate );
@@ -106,7 +106,7 @@ std::vector< string > getExistingWrapperNames( arrayView1d< string const > setNa
 //  should only collect on size changes, otherwise not collect anything
 void PackCollection::updateSetsIndices( DomainPartition const & domain )
 {
-  Group const * targetObject = this->getTargetObject( domain, m_objectPath );
+  ObjectManagerBase const * targetObject = dynamicCast< ObjectManagerBase const * >( this->getTargetObject( domain, m_objectPath ) );
   WrapperBase const & targetField = targetObject->getWrapperBase( m_fieldName );
   GEOSX_ERROR_IF( !targetField.isPackable( false ), "The object targeted for collection must be packable!" );
 
@@ -139,13 +139,12 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   }
   else
   {
-    Group const & setGroup = targetObject->getGroup( ObjectManagerBase::groupKeyStruct::setsString() );
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
       string const & setName = setNames[setIdx];
       array1d< localIndex > & setIndices = m_setsIndices[setIdx];
 
-      SortedArrayView< localIndex const > const & set = setGroup.getReference< SortedArray< localIndex > >( setName );
+      SortedArrayView< localIndex const > const & set = targetObject->getSet( setName );
       localIndex setSize = set.size();
       setIndices.resize( setSize );
       if( setSize > 0 )
@@ -161,8 +160,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
   // filter out the ghost indices immediately when we update the index sets
   if( m_targetIsMeshObject )
   {
-    ObjectManagerBase const * objectManagerTarget = dynamic_cast< ObjectManagerBase const * >( targetObject );
-    arrayView1d< integer const > const ghostRank = objectManagerTarget->ghostRank( );
+    arrayView1d< integer const > const ghostRank = targetObject->ghostRank( );
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
       array1d< localIndex > & setIndices = m_setsIndices[ setIdx ] ;

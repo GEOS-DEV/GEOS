@@ -71,6 +71,8 @@ public:
 
   virtual localIndex numMetaDataCollectors( ) const override final;
 
+private:
+
   /// @cond DO_NOT_DOCUMENT
   struct viewKeysStruct
   {
@@ -86,23 +88,21 @@ public:
   } viewKeys;
   /// @endcond
 
-protected:
   /// Construct the metadata collectors for this collector.
-  void buildMetaDataCollectors( );
+  void buildMetaDataCollectors();
 
   /// Do not construct metadata collectors to collect coordinate information.
   ///   ( Prevents reccuring initialization of coordinate collection for coordinate collectors ).
-  void disableCoordCollection( )
+  void disableCoordCollection()
   {
     m_disableCoordCollection = true;
   }
 
   /// @copydoc geosx::HistoryCollection::collect
-  virtual void collect( DomainPartition const & domain,
-                        localIndex const collectionIdx,
-                        buffer_unit_type * & buffer ) override;
+  void collect( DomainPartition const & domain,
+                localIndex const collectionIdx,
+                buffer_unit_type * & buffer ) override;
 
-private:
   // todo : replace this with a vector of references to the actual set sortedarrays (after packing rework to allow sorted arrays to be used
   // for indexing)
   /// The indices for the specified sets to pack
