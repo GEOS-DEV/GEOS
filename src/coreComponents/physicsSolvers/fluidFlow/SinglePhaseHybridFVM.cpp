@@ -127,7 +127,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.apply( 0.0,
-                     domain,
+                     mesh,
                      "faceManager",
                      extrinsicMeshData::flow::pressure::key(),
                      [&] ( FieldSpecificationBase const & bc,
