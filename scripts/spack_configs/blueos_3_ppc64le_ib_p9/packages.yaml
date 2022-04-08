@@ -1,12 +1,11 @@
 packages:
   all:
-    target: [default]
+    target: [ppc64le]
     compiler: [gcc, clang]
     providers:
       mpi: [spectrum-mpi]
       blas: [essl]
       lapack: [essl]
-      gl: [mesa]
 
   spectrum-mpi:
     buildable: False
@@ -20,6 +19,7 @@ packages:
       - spec: spectrum-mpi@10.3.1.03rtm0 %clang@11.0.1
         prefix: /usr/tce/packages/spectrum-mpi/spectrum-mpi-rolling-release-clang-ibm-11.0.1/
 
+  # Lock down blas, lapack implementation
   essl:
     buildable: False
     externals:
@@ -33,44 +33,69 @@ packages:
       modules:
       - cuda/10.1.243
 
+  # System level packages to not build
   cmake:
     buildable: False
     externals:
     - spec: cmake@3.14.5
       prefix: /usr/tce/packages/cmake/cmake-3.14.5
-
   readline:
     buildable: False
     externals:
       - spec: readline@6.2
         prefix: /usr/lib64/
-
   zlib:
     buildable: False
     externals:
       - spec: zlib@1.2.7
         prefix: /usr/
-  
   m4:
     buildable: False
     externals:
       - spec: m4@1.4.16
         prefix: /usr/bin/
-  
+  perl:
+    buildable: false
+    externals:
+    - spec: perl@5.16.3
+      prefix: /usr
+  pkg-config:
+    buildable: false
+    externals:
+    - spec: pkg-config@0.27.1
+      prefix: /usr
   diffutils:
     buildable: False
     externals:
       - spec: diffutils@3.3
         prefix: /usr/bin/
-  
   python:
     buildable: False
     externals:
     - spec: python@3.8.2
       prefix: /usr/tce/packages/python/python-3.8.2/
-
-  mesa:
+  autoconf:
     buildable: False
     externals:
-    - spec: mesa@19.0.1
-      prefix: /usr/tce/packages/mesa3d/mesa-19.0.1/
+      - spec: autoconf@2.69
+        prefix: /usr
+  automake:
+    buildable: False
+    externals:
+      - spec: automake@1.13.4
+        prefix: /usr
+  libtool:
+    buildable: False
+    externals:
+      - spec: libtool@2.4.2
+        prefix: /usr
+  bison:
+    buildable: False
+    externals:
+      - spec: bison@3.0.4
+        prefix: /usr
+  flex:
+    buildable: False
+    externals:
+      - spec: flex@2.5.37
+        prefix: /usr
