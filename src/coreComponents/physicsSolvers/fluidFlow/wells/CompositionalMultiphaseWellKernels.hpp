@@ -658,9 +658,9 @@ public:
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static void
-  launch( LOCAL_VECTOR const localResidual,
+  launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -687,7 +687,7 @@ struct ResidualNormKernel
     real64 const absTargetTotalRate = LvArray::math::abs( targetTotalRate );
     real64 const absTargetPhaseRate = LvArray::math::abs( targetPhaseRate );
 
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
@@ -774,9 +774,9 @@ struct ResidualNormKernel
 
 struct SolutionScalingKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static real64
-  launch( LOCAL_VECTOR const localSolution,
+  launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           integer const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -790,7 +790,7 @@ struct SolutionScalingKernel
   {
     real64 constexpr eps = minDensForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, real64 > minVal( 1.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minVal( 1.0 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
@@ -847,9 +847,9 @@ struct SolutionScalingKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static localIndex
-  launch( LOCAL_VECTOR const localSolution,
+  launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           integer const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -865,7 +865,7 @@ struct SolutionCheckKernel
 
     real64 constexpr eps = minDensForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {

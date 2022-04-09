@@ -841,9 +841,11 @@ public:
    * @param[in] iconn the connection index
    * @param[inout] stack the stack variables
    */
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void complete( localIndex const iconn,
-                 StackVariables & stack ) const
+                 StackVariables & stack,
+                 FUNC && assemblyKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     using namespace compositionalMultiphaseUtilities;
 
@@ -875,6 +877,9 @@ public:
             stack.localFluxJacobian[i * numEqn + ic].dataIfContiguous(),
             stack.stencilSize * numDof );
         }
+
+        // call the lambda to assemble additional terms, such as thermal terms
+        assemblyKernelOp( i, localRow );
       }
     }
   }

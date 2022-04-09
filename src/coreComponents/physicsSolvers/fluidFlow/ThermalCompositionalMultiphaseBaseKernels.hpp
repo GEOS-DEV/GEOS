@@ -74,10 +74,10 @@ public:
     LvArray::forValuesInSlice( dPhaseVolFrac_dTemp, []( real64 & val ){ val = 0.0; } );
 
     // Call the base compute the compute the phase volume fraction
-    Base::compute( ei, [=] GEOSX_HOST_DEVICE ( localIndex const ip,
-                                               real64 const & phaseVolFrac,
-                                               real64 const & phaseDensInv,
-                                               real64 const & totalDensity )
+    Base::compute( ei, [&] ( localIndex const ip,
+                             real64 const & phaseVolFrac,
+                             real64 const & phaseDensInv,
+                             real64 const & totalDensity )
     {
       // when this lambda is called, we are in the phase loop
       // for each phase ip, compute the derivative of phase volume fraction wrt temperature
@@ -277,15 +277,11 @@ public:
   {
     using Deriv = multifluid::DerivativeOffset;
 
-    // I did not find another way to pass the stack.localResidual to the lambda
-    real64 * localResidualPtr = stack.localResidual;
-    real64 ( *localJacobianPtr )[numDof] = stack.localJacobian;
-
-    Base::computeAccumulation( ei, stack, [=] GEOSX_HOST_DEVICE ( integer const ip,
-                                                                  real64 const & phaseAmountNew,
-                                                                  real64 const & phaseAmountOld,
-                                                                  real64 const & dPhaseAmount_dP,
-                                                                  real64 const (&dPhaseAmount_dC)[numComp] )
+    Base::computeAccumulation( ei, stack, [&] ( integer const ip,
+                                                real64 const & phaseAmountNew,
+                                                real64 const & phaseAmountOld,
+                                                real64 const & dPhaseAmount_dP,
+                                                real64 const (&dPhaseAmount_dC)[numComp] )
     {
       // We are in the loop over phases, ip provides the current phase index.
       // We have to do two things:
@@ -312,8 +308,8 @@ public:
                                      * (dPhaseVolFrac_dTemp[ip] * phaseDens[ip] + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dT] );
       for( integer ic = 0; ic < numComp; ++ic )
       {
-        localJacobianPtr[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
-                                          + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dT];
+        stack.localJacobian[ic][numDof-1] += dPhaseAmount_dT * phaseCompFrac[ip][ic]
+                                             + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dT];
       }
 
       // Step 2: assemble the phase-dependent part of the accumulation term of the energy equation
@@ -326,18 +322,18 @@ public:
                                      + phaseAmountNew * dPhaseInternalEnergy[ip][Deriv::dT];
 
       // local accumulation
-      localResidualPtr[numEqn-1] += phaseEnergyNew - phaseEnergyOld;
+      stack.localResidual[numEqn-1] += phaseEnergyNew - phaseEnergyOld;
 
       // derivatives w.r.t. pressure and temperature
-      localJacobianPtr[numEqn-1][0]        += dPhaseEnergy_dP;
-      localJacobianPtr[numEqn-1][numDof-1] += dPhaseEnergy_dT;
+      stack.localJacobian[numEqn-1][0]        += dPhaseEnergy_dP;
+      stack.localJacobian[numEqn-1][numDof-1] += dPhaseEnergy_dT;
 
       // derivatives w.r.t. component densities
       applyChainRule( numComp, dCompFrac_dCompDens, dPhaseInternalEnergy[ip], dPhaseInternalEnergy_dC, Deriv::dC );
       for( integer jc = 0; jc < numComp; ++jc )
       {
-        localJacobianPtr[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
-                                              + dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
+        stack.localJacobian[numEqn-1][jc + 1] += phaseInternalEnergy[ip] * dPhaseAmount_dC[jc]
+                                                 + dPhaseInternalEnergy_dC[jc] * phaseAmountNew;
       }
     } );
 
@@ -360,9 +356,7 @@ public:
   void computeVolumeBalance( localIndex const ei,
                              StackVariables & stack ) const
   {
-    real64 ( *localJacobianPtr )[numDof] = stack.localJacobian;
-
-    Base::computeVolumeBalance( ei, stack, [=] GEOSX_HOST_DEVICE ( real64 const & oneMinusPhaseVolFraction )
+    Base::computeVolumeBalance( ei, stack, [&] ( real64 const & oneMinusPhaseVolFraction )
     {
       GEOSX_UNUSED_VAR( oneMinusPhaseVolFraction );
 
@@ -370,7 +364,7 @@ public:
 
       for( integer ip = 0; ip < m_numPhases; ++ip )
       {
-        localJacobianPtr[numEqn-2][numDof-1] -= dPhaseVolFrac_dTemp[ip];
+        stack.localJacobian[numEqn-2][numDof-1] -= dPhaseVolFrac_dTemp[ip];
       }
     } );
   }
@@ -556,7 +550,7 @@ struct SolidInternalEnergyUpdateKernel
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
                       integer const numComponents,
@@ -573,8 +567,8 @@ struct ResidualNormKernel
                       real64 & localFlowResidualNorm,
                       real64 & localEnergyResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > localFlowSum( 0.0 );
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > localEnergySum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localFlowSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localEnergySum( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {

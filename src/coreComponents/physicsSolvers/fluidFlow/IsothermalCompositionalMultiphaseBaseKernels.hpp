@@ -931,7 +931,7 @@ public:
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
                       integer const numComponents,
@@ -942,7 +942,7 @@ struct ResidualNormKernel
                       arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld,
                       real64 & localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -968,7 +968,7 @@ struct ResidualNormKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
@@ -984,7 +984,7 @@ struct SolutionCheckKernel
   {
     real64 constexpr eps = minDensForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {

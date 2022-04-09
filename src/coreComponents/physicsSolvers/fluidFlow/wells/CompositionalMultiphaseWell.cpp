@@ -1184,25 +1184,24 @@ CompositionalMultiphaseWell::calculateResidualNorm( DomainPartition const & doma
 
       WellControls const & wellControls = getWellControls( subRegion );
 
-      ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                  parallelDeviceReduce >( localRhs,
-                                                          dofManager.rankOffset(),
-                                                          subRegion.isLocallyOwned(),
-                                                          subRegion.getTopWellElementIndex(),
-                                                          m_numComponents,
-                                                          numDofPerWellElement(),
-                                                          m_targetPhaseIndex,
-                                                          wellControls,
-                                                          wellElemDofNumber,
-                                                          wellElemGhostRank,
-                                                          wellElemVolume,
-                                                          wellElemPhaseDensOld,
-                                                          wellElemTotalDensOld,
-                                                          m_currentTime + m_currentDt, // residual normalized with rate of the end of the
-                                                                                       // time
-                                                                                       // interval
-                                                          m_currentDt,
-                                                          &localResidualNorm );
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            dofManager.rankOffset(),
+                                                            subRegion.isLocallyOwned(),
+                                                            subRegion.getTopWellElementIndex(),
+                                                            m_numComponents,
+                                                            numDofPerWellElement(),
+                                                            m_targetPhaseIndex,
+                                                            wellControls,
+                                                            wellElemDofNumber,
+                                                            wellElemGhostRank,
+                                                            wellElemVolume,
+                                                            wellElemPhaseDensOld,
+                                                            wellElemTotalDensOld,
+                                                            m_currentTime + m_currentDt, // residual normalized with rate of the end of the
+                                                            // time
+                                                            // interval
+                                                            m_currentDt,
+                                                            &localResidualNorm );
     } );
   } );
   return sqrt( MpiWrapper::sum( localResidualNorm, MPI_COMM_GEOSX ) );
@@ -1253,18 +1252,17 @@ CompositionalMultiphaseWell::scalingForSystemSolution( DomainPartition const & d
 
 
       real64 const subRegionScalingFactor =
-        SolutionScalingKernel::launch< parallelDevicePolicy<>,
-                                       parallelDeviceReduce >( localSolution,
-                                                               dofManager.rankOffset(),
-                                                               numFluidComponents(),
-                                                               wellElemDofNumber,
-                                                               wellElemGhostRank,
-                                                               wellElemPressure,
-                                                               dWellElemPressure,
-                                                               wellElemCompDens,
-                                                               dWellElemCompDens,
-                                                               m_maxRelativePresChange,
-                                                               m_maxCompFracChange );
+        SolutionScalingKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 dofManager.rankOffset(),
+                                                                 numFluidComponents(),
+                                                                 wellElemDofNumber,
+                                                                 wellElemGhostRank,
+                                                                 wellElemPressure,
+                                                                 dWellElemPressure,
+                                                                 wellElemCompDens,
+                                                                 dWellElemCompDens,
+                                                                 m_maxRelativePresChange,
+                                                                 m_maxCompFracChange );
 
 
       if( subRegionScalingFactor < scalingFactor )
@@ -1316,18 +1314,17 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
         subRegion.getExtrinsicData< extrinsicMeshData::well::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
-        SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                     parallelDeviceReduce >( localSolution,
-                                                             dofManager.rankOffset(),
-                                                             numFluidComponents(),
-                                                             wellElemDofNumber,
-                                                             wellElemGhostRank,
-                                                             wellElemPressure,
-                                                             dWellElemPressure,
-                                                             wellElemCompDens,
-                                                             dWellElemCompDens,
-                                                             m_allowCompDensChopping,
-                                                             scalingFactor );
+        SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                               dofManager.rankOffset(),
+                                                               numFluidComponents(),
+                                                               wellElemDofNumber,
+                                                               wellElemGhostRank,
+                                                               wellElemPressure,
+                                                               dWellElemPressure,
+                                                               wellElemCompDens,
+                                                               dWellElemCompDens,
+                                                               m_allowCompDensChopping,
+                                                               scalingFactor );
 
       if( subRegionSolutionCheck == 0 )
       {

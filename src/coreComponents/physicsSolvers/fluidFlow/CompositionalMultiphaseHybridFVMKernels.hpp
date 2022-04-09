@@ -868,7 +868,7 @@ struct ResidualNormKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void
   launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
@@ -883,7 +883,7 @@ struct ResidualNormKernel
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMobOld,
           real64 & localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
@@ -933,7 +933,7 @@ struct ResidualNormKernel
 struct SolutionCheckKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
@@ -943,7 +943,7 @@ struct SolutionCheckKernel
           arrayView1d< real64 const > const & dFacePres,
           real64 const scalingFactor )
   {
-    RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {

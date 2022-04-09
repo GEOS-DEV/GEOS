@@ -354,37 +354,35 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 
         thermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernel::
-          launch< parallelDevicePolicy<>,
-                  parallelDeviceReduce >( localRhs,
-                                          rankOffset,
-                                          numFluidPhases(),
-                                          numFluidComponents(),
-                                          dofNumber,
-                                          elemGhostRank,
-                                          referencePorosity,
-                                          volume,
-                                          solidInternalEnergyOld,
-                                          phaseVolFracOld,
-                                          totalDensOld,
-                                          phaseDensOld,
-                                          phaseInternalEnergyOld,
-                                          subRegionFlowResidualNorm,
-                                          subRegionEnergyResidualNorm );
+          launch< parallelDevicePolicy<> >( localRhs,
+                                            rankOffset,
+                                            numFluidPhases(),
+                                            numFluidComponents(),
+                                            dofNumber,
+                                            elemGhostRank,
+                                            referencePorosity,
+                                            volume,
+                                            solidInternalEnergyOld,
+                                            phaseVolFracOld,
+                                            totalDensOld,
+                                            phaseDensOld,
+                                            phaseInternalEnergyOld,
+                                            subRegionFlowResidualNorm,
+                                            subRegionEnergyResidualNorm );
       }
       else
       {
         isothermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernel::
-          launch< parallelDevicePolicy<>,
-                  parallelDeviceReduce >( localRhs,
-                                          rankOffset,
-                                          numFluidComponents(),
-                                          dofNumber,
-                                          elemGhostRank,
-                                          referencePorosity,
-                                          volume,
-                                          totalDensOld,
-                                          subRegionFlowResidualNorm );
+          launch< parallelDevicePolicy<> >( localRhs,
+                                            rankOffset,
+                                            numFluidComponents(),
+                                            dofNumber,
+                                            elemGhostRank,
+                                            referencePorosity,
+                                            volume,
+                                            totalDensOld,
+                                            subRegionFlowResidualNorm );
       }
       localFlowResidualNorm   += subRegionFlowResidualNorm;
       localEnergyResidualNorm += subRegionEnergyResidualNorm;
@@ -528,18 +526,17 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
 
       localIndex const subRegionSolutionCheck =
         isothermalCompositionalMultiphaseBaseKernels::
-          SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                       parallelDeviceReduce >( localSolution,
-                                                               dofManager.rankOffset(),
-                                                               numFluidComponents(),
-                                                               dofNumber,
-                                                               elemGhostRank,
-                                                               pres,
-                                                               dPres,
-                                                               compDens,
-                                                               dCompDens,
-                                                               m_allowCompDensChopping,
-                                                               scalingFactor );
+          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 dofManager.rankOffset(),
+                                                                 numFluidComponents(),
+                                                                 dofNumber,
+                                                                 elemGhostRank,
+                                                                 pres,
+                                                                 dPres,
+                                                                 compDens,
+                                                                 dCompDens,
+                                                                 m_allowCompDensChopping,
+                                                                 scalingFactor );
 
       localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
