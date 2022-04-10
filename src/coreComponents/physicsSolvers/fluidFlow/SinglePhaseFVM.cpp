@@ -137,14 +137,14 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 
       arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
-      ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
-                                                                                  rankOffset,
-                                                                                  dofNumber,
-                                                                                  elemGhostRank,
-                                                                                  volume,
-                                                                                  densOld,
-                                                                                  porosityOld,
-                                                                                  localResidualNorm );
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            rankOffset,
+                                                            dofNumber,
+                                                            elemGhostRank,
+                                                            volume,
+                                                            densOld,
+                                                            porosityOld,
+                                                            localResidualNorm );
 
     } );
 
