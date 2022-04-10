@@ -13,11 +13,11 @@
  */
 
 /**
- * @file CompositionalMultiphaseBaseKernels.hpp
+ * @file IsothermalCompositionalMultiphaseBaseKernels.hpp
  */
 
-#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEKERNELS_HPP
-#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#ifndef GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
 
 #include "common/DataLayouts.hpp"
 #include "common/DataTypes.hpp"
@@ -33,7 +33,7 @@
 namespace geosx
 {
 
-namespace compositionalMultiphaseBaseKernels
+namespace isothermalCompositionalMultiphaseBaseKernels
 {
 
 using namespace constitutive;
@@ -355,7 +355,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phaseVolFrac and totalDensity
       // possible use: assemble the derivatives wrt temperature
-      phaseVolFractionKernelOp( ip, phaseVolFrac[ip], totalDensity );
+      phaseVolFractionKernelOp( ip, phaseVolFrac[ip], phaseDensInv, totalDensity );
 
       // now finalize the computation by multiplying by total density
       for( integer jc = 0; jc < numComp; ++jc )
@@ -438,82 +438,6 @@ public:
   }
 };
 
-/******************************** FluidUpdateKernel ********************************/
-
-struct FluidUpdateKernel
-{
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
-  launch( localIndex const size,
-          FLUID_WRAPPER const & fluidWrapper,
-          arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & temp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
-  launch( localIndex const size,
-          FLUID_WRAPPER const & fluidWrapper,
-          arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
-          arrayView1d< real64 const > const & temp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k] + dPres[k], temp[k], compFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          FLUID_WRAPPER const & fluidWrapper,
-          arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
-          arrayView1d< real64 const > const & temp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k] + dPres[k], temp[k], compFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          FLUID_WRAPPER const & fluidWrapper,
-          arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & temp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k], temp[k], compFrac[k] );
-      }
-    } );
-  }
-};
 
 /******************************** RelativePermeabilityUpdateKernel ********************************/
 
@@ -796,6 +720,7 @@ public:
                                              + phaseCompFrac[ip][ic] * dPhaseAmount_dC[jc];
           stack.localJacobian[ic][jc + 1] += dPhaseCompAmount_dC;
         }
+
       }
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
@@ -806,7 +731,7 @@ public:
   }
 
   /**
-   * @brief Compute the local accumulation contributions to the residual and Jacobian
+   * @brief Compute the local volume balance contributions to the residual and Jacobian
    * @tparam FUNC the type of the function that can be used to customize the kernel
    * @param[in] ei the element index
    * @param[inout] stack the stack variables
@@ -836,17 +761,17 @@ public:
       }
     }
 
+    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
+    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
+    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
+
     // scale saturation-based volume balance by pore volume (for better scaling w.r.t. other equations)
     stack.localResidual[numComp] = stack.poreVolumeNew * oneMinusPhaseVolFracSum;
-    for( integer idof = 0; idof < numComp+1; ++idof )
+    for( integer idof = 0; idof < numDof; ++idof )
     {
       stack.localJacobian[numComp][idof] *= stack.poreVolumeNew;
     }
     stack.localJacobian[numComp][0] += stack.dPoreVolume_dPres * oneMinusPhaseVolFracSum;
-
-    // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
-    // possible use: assemble the derivatives wrt temperature, and use oneMinusPhaseVolFracSum if poreVolumeNew depends on temperature
-    phaseVolFractionSumKernelOp( oneMinusPhaseVolFracSum );
   }
 
   /**
@@ -866,8 +791,9 @@ public:
     shiftElementsAheadByOneAndReplaceFirstElementWithSum( numComp, stack.localResidual );
 
     // add contribution to residual and jacobian into:
-    // - the component mass balance equations
-    // - the volume balance equations
+    // - the component mass balance equations (i = 0 to i = numComp-1)
+    // - the volume balance equations (i = numComp)
+    // note that numDof includes derivatives wrt temperature if this class is derived in ThermalKernels
     for( integer i = 0; i < numComp+1; ++i )
     {
       m_localRhs[stack.localRow + i] += stack.localResidual[i];
@@ -1005,7 +931,7 @@ public:
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
                       integer const numComponents,
@@ -1016,7 +942,7 @@ struct ResidualNormKernel
                       arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld,
                       real64 & localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -1042,7 +968,7 @@ struct ResidualNormKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
@@ -1058,7 +984,7 @@ struct SolutionCheckKernel
   {
     real64 constexpr eps = minDensForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -1447,9 +1373,9 @@ void KernelLaunchSelector2( integer const numComp, integer const numPhase, ARGS 
   }
 }
 
-} // namespace compositionalMultiphaseBaseKernels
+} // namespace isothermalCompositionalMultiphaseBaseKernels
 
 } // namespace geosx
 
 
-#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_COMPOSITIONALMULTIPHASEBASEKERNELS_HPP
+#endif //GEOSX_PHYSICSSOLVERS_FLUIDFLOW_ISOTHERMALCOMPOSITIONALMULTIPHASEBASEKERNELS_HPP
