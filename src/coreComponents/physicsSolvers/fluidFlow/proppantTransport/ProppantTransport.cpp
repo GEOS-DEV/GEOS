@@ -690,150 +690,155 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
   string const dofKey = dofManager.getKey( extrinsicMeshData::proppant::proppantConcentration::key() );
   globalIndex const rankOffset = dofManager.rankOffset();
 
-  //  Apply Dirichlet BC for proppant concentration
-
-  fsManager.apply( time_n + dt,
-                   domain,
-                   "ElementRegions",
-                   extrinsicMeshData::proppant::proppantConcentration::key(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const &,
-                        SortedArrayView< localIndex const > const & lset,
-                        Group & subRegion,
-                        string const & )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    arrayView1d< globalIndex const > const
-    dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-
-    arrayView1d< real64 const > const
-    proppantConc = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::proppant::proppantConcentration::key() );
-
-    arrayView1d< real64 const > const
-    dProppantConc = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::proppant::deltaProppantConcentration::key() );
-
-    fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy<> >( lset,
-                                                                 time_n + dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 rankOffset,
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      return proppantConc[a] + dProppantConc[a];
-    } );
-  } );
-
-  //  Apply Dirichlet BC for component concentration
-  if( m_numComponents > 0 )
-  {
-    map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
+    //  Apply Dirichlet BC for proppant concentration
 
     fsManager.apply( time_n + dt,
-                     domain,
+                     mesh,
                      "ElementRegions",
                      extrinsicMeshData::proppant::proppantConcentration::key(),
-                     [&]( FieldSpecificationBase const &,
-                          string const & setName,
-                          SortedArrayView< localIndex const > const &,
+                     [&]( FieldSpecificationBase const & fs,
+                          string const &,
+                          SortedArrayView< localIndex const > const & lset,
                           Group & subRegion,
                           string const & )
     {
+      arrayView1d< globalIndex const > const
+      dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-      string const & subRegionName = subRegion.getName();
-      GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
-      bcStatusMap[subRegionName][setName].resize( m_numComponents );
-      bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
+      arrayView1d< real64 const > const
+      proppantConc = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::proppant::proppantConcentration::key() );
 
-    } );
+      arrayView1d< real64 const > const
+      dProppantConc = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::proppant::deltaProppantConcentration::key() );
 
-    fsManager.apply( time_n + dt,
-                     domain,
-                     "ElementRegions",
-                     extrinsicMeshData::proppant::componentConcentration::key(),
-                     [&] ( FieldSpecificationBase const & fs,
-                           string const & setName,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
-    {
-
-      string const & subRegionName = subRegion.getName();
-      localIndex const comp = fs.getComponent();
-
-      GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
-      GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
-      bcStatusMap[subRegionName][setName][comp] = true;
-
-      fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
-                                                     time_n + dt,
-                                                     subRegion,
-                                                     extrinsicMeshData::proppant::bcComponentConcentration::key() );
-
-    } );
-
-    bool bcConsistent = true;
-    for( auto const & bcStatusEntryOuter : bcStatusMap )
-    {
-      for( auto const & bcStatusEntryInner : bcStatusEntryOuter.second )
+      fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                         parallelDevicePolicy<> >( lset,
+                                                                   time_n + dt,
+                                                                   subRegion,
+                                                                   dofNumber,
+                                                                   rankOffset,
+                                                                   localMatrix,
+                                                                   localRhs,
+                                                                   [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
-        for( localIndex ic = 0; ic < m_numComponents; ++ic )
-        {
-          bcConsistent &= bcStatusEntryInner.second[ic];
-          GEOSX_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
-                                                                                                      << " on region '" << bcStatusEntryOuter.first << "',"
-                                                                                                      << " set '" << bcStatusEntryInner.first << "'" );
-        }
-      }
-    }
-
-    GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
-
-    fsManager.apply( time_n + dt,
-                     domain,
-                     "ElementRegions",
-                     extrinsicMeshData::proppant::proppantConcentration::key(),
-                     [&] ( FieldSpecificationBase const &,
-                           string const &,
-                           SortedArrayView< localIndex const > const & targetSet,
-                           Group & subRegion,
-                           string const & )
-    {
-      arrayView1d< integer const > const ghostRank =
-        subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
-      arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-
-      arrayView2d< real64 const > const compConc =
-        subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::componentConcentration::key() );
-      arrayView2d< real64 const > const deltaCompConc =
-        subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::deltaComponentConcentration::key() );
-      arrayView2d< real64 const > const bcCompConc =
-        subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::bcComponentConcentration::key() );
-
-      forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        localIndex const ei = targetSet[a];
-        if( ghostRank[ei] >= 0 )
-          return;
-
-        globalIndex const dofIndex = dofNumber[ei];
-        localIndex const localRow = dofIndex - rankOffset;
-        real64 rhsValue;
-
-        for( localIndex ic = 0; ic < m_numComponents; ++ic )
-        {
-          FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
-                                                      rankOffset,
-                                                      localMatrix,
-                                                      rhsValue,
-                                                      bcCompConc[ei][ic],
-                                                      compConc[ei][ic] + deltaCompConc[ei][ic] );
-          localRhs[localRow + ic + 1] = rhsValue;
-        }
+        return proppantConc[a] + dProppantConc[a];
       } );
     } );
-  }
+
+    //  Apply Dirichlet BC for component concentration
+    if( m_numComponents > 0 )
+    {
+      map< string, map< string, array1d< bool > > > bcStatusMap; // map to check consistent application of BC
+
+      fsManager.apply( time_n + dt,
+                       mesh,
+                       "ElementRegions",
+                       extrinsicMeshData::proppant::proppantConcentration::key(),
+                       [&]( FieldSpecificationBase const &,
+                            string const & setName,
+                            SortedArrayView< localIndex const > const &,
+                            Group & subRegion,
+                            string const & )
+      {
+
+        string const & subRegionName = subRegion.getName();
+        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) > 0, "Conflicting proppant boundary conditions on set " << setName );
+        bcStatusMap[subRegionName][setName].resize( m_numComponents );
+        bcStatusMap[subRegionName][setName].setValues< serialPolicy >( false );
+
+      } );
+
+      fsManager.apply( time_n + dt,
+                       mesh,
+                       "ElementRegions",
+                       extrinsicMeshData::proppant::componentConcentration::key(),
+                       [&] ( FieldSpecificationBase const & fs,
+                             string const & setName,
+                             SortedArrayView< localIndex const > const & targetSet,
+                             Group & subRegion,
+                             string const & )
+      {
+
+        string const & subRegionName = subRegion.getName();
+        localIndex const comp = fs.getComponent();
+
+        GEOSX_ERROR_IF( bcStatusMap[subRegionName].count( setName ) == 0, "Proppant boundary condition not prescribed on set '" << setName << "'" );
+        GEOSX_ERROR_IF( bcStatusMap[subRegionName][setName][comp], "Conflicting composition[" << comp << "] boundary conditions on set '" << setName << "'" );
+        bcStatusMap[subRegionName][setName][comp] = true;
+
+        fs.applyFieldValue< FieldSpecificationEqual >( targetSet,
+                                                       time_n + dt,
+                                                       subRegion,
+                                                       extrinsicMeshData::proppant::bcComponentConcentration::key() );
+
+      } );
+
+      bool bcConsistent = true;
+      for( auto const & bcStatusEntryOuter : bcStatusMap )
+      {
+        for( auto const & bcStatusEntryInner : bcStatusEntryOuter.second )
+        {
+          for( localIndex ic = 0; ic < m_numComponents; ++ic )
+          {
+            bcConsistent &= bcStatusEntryInner.second[ic];
+            GEOSX_WARNING_IF( !bcConsistent, "Composition boundary condition not applied to component " << ic
+                                                                                                        << " on region '" << bcStatusEntryOuter.first << "',"
+                                                                                                        << " set '" << bcStatusEntryInner.first << "'" );
+          }
+        }
+      }
+
+      GEOSX_ERROR_IF( !bcConsistent, "Inconsistent composition boundary conditions" );
+
+      fsManager.apply( time_n + dt,
+                       mesh,
+                       "ElementRegions",
+                       extrinsicMeshData::proppant::proppantConcentration::key(),
+                       [&] ( FieldSpecificationBase const &,
+                             string const &,
+                             SortedArrayView< localIndex const > const & targetSet,
+                             Group & subRegion,
+                             string const & )
+      {
+        arrayView1d< integer const > const ghostRank =
+          subRegion.getReference< array1d< integer > >( ObjectManagerBase::viewKeyStruct::ghostRankString() );
+        arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+        arrayView2d< real64 const > const compConc =
+          subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::componentConcentration::key() );
+        arrayView2d< real64 const > const deltaCompConc =
+          subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::deltaComponentConcentration::key() );
+        arrayView2d< real64 const > const bcCompConc =
+          subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::bcComponentConcentration::key() );
+
+        forAll< parallelDevicePolicy<> >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
+        {
+          localIndex const ei = targetSet[a];
+          if( ghostRank[ei] >= 0 )
+            return;
+
+          globalIndex const dofIndex = dofNumber[ei];
+          localIndex const localRow = dofIndex - rankOffset;
+          real64 rhsValue;
+
+          for( localIndex ic = 0; ic < m_numComponents; ++ic )
+          {
+            FieldSpecificationEqual::SpecifyFieldValue( dofIndex + ic + 1,
+                                                        rankOffset,
+                                                        localMatrix,
+                                                        rhsValue,
+                                                        bcCompConc[ei][ic],
+                                                        compConc[ei][ic] + deltaCompConc[ei][ic] );
+            localRhs[localRow + ic + 1] = rhsValue;
+          }
+        } );
+      } );
+    }
+  } );
 }
 
 real64
