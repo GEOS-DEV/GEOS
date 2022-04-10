@@ -204,10 +204,8 @@ CFLFluxKernel::
                                    transmissibility,
                                    dTrans_dPres );
 
-    localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
-
     CFLFluxKernel::compute< NC, numElems, maxStencilSize >( numPhases,
-                                                            stencilSize,
+                                                            sei[iconn].size(),
                                                             dt,
                                                             seri[iconn],
                                                             sesri[iconn],

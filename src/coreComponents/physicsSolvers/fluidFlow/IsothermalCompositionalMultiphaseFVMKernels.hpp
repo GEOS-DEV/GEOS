@@ -539,7 +539,7 @@ public:
    */
   GEOSX_HOST_DEVICE
   localIndex stencilSize( localIndex const iconn ) const
-  { return meshMapUtilities::size1( m_sei, iconn ); }
+  { return m_sei[iconn].size(); }
 
   /**
    * @brief Getter for the number of elements at this connection

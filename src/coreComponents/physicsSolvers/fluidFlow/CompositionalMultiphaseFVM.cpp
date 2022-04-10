@@ -664,7 +664,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
 
     fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                                 domain,
+                                                 mesh,
                                                  "faceManager",
                                                  AquiferBoundaryCondition::catalogName(),
                                                  [&] ( AquiferBoundaryCondition const & bc,

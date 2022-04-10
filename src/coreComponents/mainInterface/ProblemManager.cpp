@@ -576,9 +576,9 @@ void ProblemManager::generateMesh()
 
       elemManager.generateMesh( cellBlockManager );
 
-      nodeManager.setGeometricalRelations( cellBlockManager );
+      nodeManager.setGeometricalRelations( cellBlockManager, elemManager );
       edgeManager.setGeometricalRelations( cellBlockManager );
-      faceManager.setGeometricalRelations( cellBlockManager, nodeManager );
+      faceManager.setGeometricalRelations( cellBlockManager, elemManager, nodeManager );
 
       nodeManager.constructGlobalToLocalMap( cellBlockManager );
 
@@ -594,9 +594,6 @@ void ProblemManager::generateMesh()
       nodeManager.setupRelatedObjectsInRelations( edgeManager, faceManager, elemManager );
       edgeManager.setupRelatedObjectsInRelations( nodeManager, faceManager );
       faceManager.setupRelatedObjectsInRelations( nodeManager, edgeManager, elemManager );
-
-      nodeManager.buildRegionMaps( elemManager );
-      faceManager.buildRegionMaps( elemManager );
 
       // Node and edge managers rely on the boundary information provided by the face manager.
       // This is why `faceManager.setDomainBoundaryObjects` is called first.
@@ -820,7 +817,13 @@ DomainPartition const & ProblemManager::getDomainPartition() const
 
 void ProblemManager::applyInitialConditions()
 {
-  m_fieldSpecificationManager->applyInitialConditions( getDomainPartition() );
+  getDomainPartition().forMeshBodies( [&] ( MeshBody & meshBody )
+  {
+    meshBody.forMeshLevels( [&] ( MeshLevel & meshLevel )
+    {
+      m_fieldSpecificationManager->applyInitialConditions( meshLevel );
+    } );
+  } );
   initializePostInitialConditions();
 }
 
