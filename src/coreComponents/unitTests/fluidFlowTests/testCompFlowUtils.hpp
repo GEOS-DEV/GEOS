@@ -780,7 +780,6 @@ void fillCellCenteredNumericalJacobian( COMPOSITIONAL_SOLVER & solver,
                                  elemDofNumber[ei] + numComp + 1,
                                  dT,
                                  jacobianFD.toViewConstSizes() );
-
         }
 
       }

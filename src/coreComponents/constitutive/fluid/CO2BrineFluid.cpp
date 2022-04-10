@@ -185,7 +185,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     {
       string_array const strs = stringutilities::tokenize( str, " " );
 
-      if( strs[0] == toString( SubModelInputNames::DENSITY ) )
+      if( strs[0] == "DensityFun" )
       {
         if( strs[1] == PHASE1::Density::catalogName() )
         {
@@ -196,7 +196,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           phase2InputParams[PHASE2::InputParamOrder::DENSITY] = strs;
         }
       }
-      else if( strs[0] == toString( SubModelInputNames::VISCOSITY ) )
+      else if( strs[0] == "ViscosityFun" )
       {
         if( strs[1] == PHASE1::Viscosity::catalogName() )
         {
@@ -207,7 +207,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           phase2InputParams[PHASE2::InputParamOrder::VISCOSITY] = strs;
         }
       }
-      else if( strs[0] == toString( SubModelInputNames::ENTHALPY ) )
+      else if( strs[0] == "EnthalpyFun" )
       {
         if( strs[1] == PHASE1::Enthalpy::catalogName() )
         {

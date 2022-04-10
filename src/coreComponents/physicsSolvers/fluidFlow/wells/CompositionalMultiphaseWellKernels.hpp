@@ -27,9 +27,9 @@
 #include "constitutive/relativePermeability/RelativePermeabilityExtrinsicData.hpp"
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellExtrinsicData.hpp"
 #include "physicsSolvers/fluidFlow/wells/WellControls.hpp"
@@ -509,12 +509,11 @@ struct RateInitializationKernel
  * @brief Define the interface for the property kernel in charge of computing the total mass density
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class TotalMassDensityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class TotalMassDensityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
-
+  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -545,10 +544,10 @@ public:
    * @param[in] ei the element index
    * @param[in] totalMassDensityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && totalMassDensityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && totalMassDensityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -634,7 +633,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 2 > kernel( subRegion, fluid );
@@ -643,7 +642,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         TotalMassDensityKernel< NUM_COMP, 3 > kernel( subRegion, fluid );
@@ -659,9 +658,9 @@ public:
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static void
-  launch( LOCAL_VECTOR const localResidual,
+  launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -688,7 +687,7 @@ struct ResidualNormKernel
     real64 const absTargetTotalRate = LvArray::math::abs( targetTotalRate );
     real64 const absTargetPhaseRate = LvArray::math::abs( targetPhaseRate );
 
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
@@ -775,9 +774,9 @@ struct ResidualNormKernel
 
 struct SolutionScalingKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static real64
-  launch( LOCAL_VECTOR const localSolution,
+  launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           integer const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -791,7 +790,7 @@ struct SolutionScalingKernel
   {
     real64 constexpr eps = minDensForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, real64 > minVal( 1.0 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, real64 > minVal( 1.0 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
@@ -848,9 +847,9 @@ struct SolutionScalingKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static localIndex
-  launch( LOCAL_VECTOR const localSolution,
+  launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           integer const numComponents,
           arrayView1d< globalIndex const > const & wellElemDofNumber,
@@ -866,7 +865,7 @@ struct SolutionCheckKernel
 
     real64 constexpr eps = minDensForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
