@@ -274,8 +274,8 @@ struct FluidUpdateKernel
 
 struct ResidualNormKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
-  static void launch( LOCAL_VECTOR const localResidual,
+  template< typename POLICY >
+  static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
                       arrayView1d< globalIndex const > const & presDofNumber,
                       arrayView1d< integer const > const & ghostRank,
@@ -284,9 +284,9 @@ struct ResidualNormKernel
                       arrayView2d< real64 const > const & poroOld,
                       real64 * localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > normSum( 0.0 );
-    RAJA::ReduceSum< REDUCE_POLICY, localIndex > count( 0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > normSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, localIndex > count( 0 );
 
     forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
@@ -310,8 +310,8 @@ struct ResidualNormKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
-  static localIndex launch( LOCAL_VECTOR const localSolution,
+  template< typename POLICY >
+  static localIndex launch( arrayView1d< real64 const > const & localSolution,
                             globalIndex const rankOffset,
                             arrayView1d< globalIndex const > const & presDofNumber,
                             arrayView1d< integer const > const & ghostRank,
@@ -319,7 +319,7 @@ struct SolutionCheckKernel
                             arrayView1d< real64 const > const & dPres,
                             real64 const scalingFactor )
   {
-    RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
     forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {

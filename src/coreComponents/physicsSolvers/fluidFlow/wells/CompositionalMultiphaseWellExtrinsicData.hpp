@@ -48,6 +48,14 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature,
                            WRITE_AND_READ,
                            "Temperature" );
 
+EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
+                           "deltaWellTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           NO_WRITE,
+                           "Accumulated temperature updates" );
+
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
                            array2dLayoutComp,

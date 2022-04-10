@@ -638,9 +638,9 @@ struct ResidualNormKernel
   template< typename VIEWTYPE >
   using ElementViewConst = typename ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static void
-  launch( LOCAL_VECTOR const localResidual,
+  launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & facePresDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
@@ -652,7 +652,7 @@ struct ResidualNormKernel
           real64 * localResidualNorm )
   {
 
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {

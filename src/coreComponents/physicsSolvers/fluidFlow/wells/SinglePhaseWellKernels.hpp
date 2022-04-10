@@ -308,9 +308,9 @@ struct RateInitializationKernel
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static void
-  launch( LOCAL_VECTOR const localResidual,
+  launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
           bool const isLocallyOwned,
           localIndex const iwelemControl,
@@ -328,7 +328,7 @@ struct ResidualNormKernel
     real64 const targetRate = wellControls.getTargetTotalRate( timeAtEndOfStep );
     real64 const absTargetRate = LvArray::math::abs( targetRate );
 
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( wellElemDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
     {
@@ -379,9 +379,9 @@ struct ResidualNormKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY, typename LOCAL_VECTOR >
+  template< typename POLICY >
   static localIndex
-  launch( LOCAL_VECTOR const localSolution,
+  launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & presDofNumber,
           arrayView1d< integer const > const & ghostRank,
@@ -389,7 +389,7 @@ struct SolutionCheckKernel
           arrayView1d< real64 const > const & dPres,
           real64 const scalingFactor )
   {
-    RAJA::ReduceMin< REDUCE_POLICY, localIndex > minVal( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
 
     forAll< POLICY >( presDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {

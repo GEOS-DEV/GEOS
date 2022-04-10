@@ -156,7 +156,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fraction" );
+                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            "phaseCompFraction",
