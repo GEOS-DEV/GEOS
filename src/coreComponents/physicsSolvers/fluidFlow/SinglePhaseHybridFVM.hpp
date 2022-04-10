@@ -160,6 +160,7 @@ public:
   virtual real64
   computeFluxFaceDirichlet( real64 const time,
                             real64 const dt,
+                            DofManager const & dofManager,
                             DomainPartition & domain ) const override final;
 
   virtual void

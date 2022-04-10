@@ -422,11 +422,12 @@ void SinglePhaseHybridFVM::applyAquiferBC( real64 const time,
 
 real64 SinglePhaseHybridFVM::computeFluxFaceDirichlet( real64 const time,
                                                        real64 const dt,
+                                                       DofManager const & dofManager,
                                                        DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 
-  GEOSX_UNUSED_VAR( time, dt, domain );
+  GEOSX_UNUSED_VAR( time, dt, dofManager, domain );
 
   return 0.0;
 }

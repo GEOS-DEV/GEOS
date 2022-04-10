@@ -564,6 +564,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 template<>
 real64 SinglePhaseFVM< SinglePhaseProppantBase >::computeFluxFaceDirichlet( real64 const GEOSX_UNUSED_PARAM( time ),
                                                                             real64 const GEOSX_UNUSED_PARAM( dt ),
+                                                                            DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
                                                                             DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) const
 {
   // Aquifer does not make sense for proppant flow in fractures
@@ -573,90 +574,95 @@ real64 SinglePhaseFVM< SinglePhaseProppantBase >::computeFluxFaceDirichlet( real
 template<>
 real64 SinglePhaseFVM< SinglePhaseBase >::computeFluxFaceDirichlet( real64 const time_n,
                                                                     real64 const dt,
+                                                                    DofManager const & dofManager,
                                                                     DomainPartition & domain ) const
 {
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-  FaceManager & faceManager = mesh.getFaceManager();
-  ElementRegionManager const & elemManager = mesh.getElemManager();
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
   FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-  arrayView1d< real64 const > const presFace =
-    faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-
-  arrayView1d< real64 const > const gravCoefFace =
-    faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+  string const & dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
   real64 totalFlux = 0.0;
 
-  // Take BCs defined for "pressure" field and apply values to "facePressure"
-  fsManager.apply( time_n + dt,
-                   domain,
-                   "faceManager",
-                   extrinsicMeshData::flow::pressure::key(),
-                   [&] ( FieldSpecificationBase const & fs,
-                         string const & setName,
-                         SortedArrayView< localIndex const > const & targetSet,
-                         Group & targetGroup,
-                         string const & )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+    FaceManager & faceManager = mesh.getFaceManager();
+    ElementRegionManager const & elemManager = mesh.getElemManager();
+
+    arrayView1d< real64 const > const presFace =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
+
+    arrayView1d< real64 const > const gravCoefFace =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::gravityCoefficient >();
+
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > >
+    elemDofNumber = elemManager.constructArrayViewAccessor< globalIndex, 1 >( dofKey );
+    elemDofNumber.setName( this->getName() + "/accessors/" + dofKey );
+
+    // Take BCs defined for "pressure" field and apply values to "facePressure"
+    fsManager.apply( time_n + dt,
+                     mesh,
+                     "faceManager",
+                     extrinsicMeshData::flow::pressure::key(),
+                     [&] ( FieldSpecificationBase const & fs,
+                           string const & setName,
+                           SortedArrayView< localIndex const > const & targetSet,
+                           Group & targetGroup,
+                           string const & )
     {
-      globalIndex const numTargetFaces = MpiWrapper::sum< globalIndex >( stencil.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::faceBcLogMessage,
-                                   this->getName(), time_n+dt, AquiferBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, targetGroup.getName(), numTargetFaces ) );
-    }
+      BoundaryStencil const & stencil = fluxApprox.getStencil< BoundaryStencil >( mesh, setName );
+      if( stencil.size() == 0 )
+      {
+        return;
+      }
 
-    if( stencil.size() == 0 )
-    {
-      return;
-    }
-    // first, evaluate BC to get primary field values (pressure)
-    fs.applyFieldValue< FieldSpecificationEqual,
-                        parallelDevicePolicy<> >( targetSet,
-                                                  time_n + dt,
-                                                  targetGroup,
-                                                  extrinsicMeshData::flow::facePressure::key() );
+      // first, evaluate BC to get primary field values (pressure)
+      fs.applyFieldValue< FieldSpecificationEqual,
+                          parallelDevicePolicy<> >( targetSet,
+                                                    time_n + dt,
+                                                    targetGroup,
+                                                    extrinsicMeshData::flow::facePressure::key() );
 
-    // TODO: currently we just use model from the first cell in this stencil
-    //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
-    //       Can we just use cell properties for an approximate flux computation?
-    //       Then we can forget about capturing the fluid model.
-    localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
-    localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
-    ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
-    string & fluidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::fluidNamesString() );
-    SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
+      // TODO: currently we just use model from the first cell in this stencil
+      //       since it's not clear how to create fluid kernel wrappers for arbitrary models.
+      //       Can we just use cell properties for an approximate flux computation?
+      //       Then we can forget about capturing the fluid model.
+      localIndex const er = stencil.getElementRegionIndices()( 0, 0 );
+      localIndex const esr = stencil.getElementSubRegionIndices()( 0, 0 );
+      ElementSubRegionBase & subRegion = mesh.getElemManager().getRegion( er ).getSubRegion( esr );
+      string & fluidName = subRegion.getReference< string >( SinglePhaseBase::viewKeyStruct::fluidNamesString() );
+      SingleFluidBase & fluidBase = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
 
-    constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
-    {
-      typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
+      constitutiveUpdatePassThru( fluidBase, [&]( auto & fluid )
+      {
+        typename TYPEOFREF( fluid ) ::KernelWrapper fluidWrapper = fluid.createKernelWrapper();
 
-      typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
-      typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
-      typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
+        typename FluxKernel::SinglePhaseFlowAccessors flowAccessors( elemManager, this->getName() );
+        typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
+        typename FluxKernel::PermeabilityAccessors permAccessors( elemManager, this->getName() );
 
-      FaceDirichletBCKernel::computeFlux( stencil.createKernelWrapper(),
-                                          permAccessors.get< extrinsicMeshData::permeability::permeability >(),
-                                          permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
-                                          flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                          flowAccessors.get< extrinsicMeshData::flow::deltaPressure >(),
-                                          flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
-                                          fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
-                                          fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
-                                          flowAccessors.get< extrinsicMeshData::flow::mobility >(),
-                                          flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
-                                          presFace,
-                                          gravCoefFace,
-                                          fluidWrapper,
-                                          totalFlux );
+        FaceDirichletBCKernel::computeFlux( stencil.createKernelWrapper(),
+                                            permAccessors.get< extrinsicMeshData::permeability::permeability >(),
+                                            permAccessors.get< extrinsicMeshData::permeability::dPerm_dPressure >(),
+                                            flowAccessors.get< extrinsicMeshData::flow::pressure >(),
+                                            flowAccessors.get< extrinsicMeshData::flow::deltaPressure >(),
+                                            flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
+                                            fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
+                                            fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),
+                                            flowAccessors.get< extrinsicMeshData::flow::mobility >(),
+                                            flowAccessors.get< extrinsicMeshData::flow::dMobility_dPressure >(),
+                                            presFace,
+                                            gravCoefFace,
+                                            fluidWrapper,
+                                            totalFlux );
+      } );
     } );
   } );
   return totalFlux;

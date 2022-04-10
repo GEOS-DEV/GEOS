@@ -262,6 +262,7 @@ public:
   virtual real64
   computeFluxFaceDirichlet( real64 const time_n,
                             real64 const dt,
+                            DofManager const & dofManager,
                             DomainPartition & domain ) const = 0;
 
   virtual void
