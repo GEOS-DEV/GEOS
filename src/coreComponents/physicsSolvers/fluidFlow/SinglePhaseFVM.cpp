@@ -137,14 +137,14 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
 
       arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
-      ResidualNormKernel::launch< parallelDevicePolicy<>, parallelDeviceReduce >( localRhs,
-                                                                                  rankOffset,
-                                                                                  dofNumber,
-                                                                                  elemGhostRank,
-                                                                                  volume,
-                                                                                  densOld,
-                                                                                  porosityOld,
-                                                                                  localResidualNorm );
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            rankOffset,
+                                                            dofNumber,
+                                                            elemGhostRank,
+                                                            volume,
+                                                            densOld,
+                                                            porosityOld,
+                                                            localResidualNorm );
 
     } );
 
@@ -491,7 +491,7 @@ void SinglePhaseFVM< BASE >::applyFaceDirichletBC( real64 const time_n,
 
     // Take BCs defined for "pressure" field and apply values to "facePressure"
     fsManager.apply( time_n + dt,
-                     domain,
+                     mesh,
                      "faceManager",
                      extrinsicMeshData::flow::pressure::key(),
                      [&] ( FieldSpecificationBase const & fs,
@@ -599,7 +599,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
     typename FluxKernel::SinglePhaseFluidAccessors fluidAccessors( elemManager, this->getName() );
 
     fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                                 domain,
+                                                 mesh,
                                                  "faceManager",
                                                  AquiferBoundaryCondition::catalogName(),
                                                  [&] ( AquiferBoundaryCondition const & bc,

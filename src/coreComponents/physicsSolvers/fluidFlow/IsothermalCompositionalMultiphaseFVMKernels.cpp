@@ -13,10 +13,10 @@
  */
 
 /**
- * @file CompositionalMultiphaseFVMKernels.cpp
+ * @file IsothermalCompositionalMultiphaseFVMKernels.cpp
  */
 
-#include "CompositionalMultiphaseFVMKernels.hpp"
+#include "IsothermalCompositionalMultiphaseFVMKernels.hpp"
 #include "CompositionalMultiphaseUtilities.hpp"
 
 #include "finiteVolume/CellElementStencilTPFA.hpp"
@@ -28,7 +28,7 @@
 namespace geosx
 {
 
-namespace compositionalMultiphaseFVMKernels
+namespace isothermalCompositionalMultiphaseFVMKernels
 {
 
 /******************************** FaceBasedAssemblyKernel ********************************/
@@ -152,7 +152,7 @@ CFLFluxKernel::
     real64 const mobility = phaseRelPerm[er_up][esr_up][ei_up][0][ip] / phaseVisc[er_up][esr_up][ei_up][0][ip];
 
     // increment the phase (volumetric) outflux of the upstream cell
-    real64 const absPhaseFlux = fabs( dt * mobility * potGrad );
+    real64 const absPhaseFlux = LvArray::math::abs( dt * mobility * potGrad );
     RAJA::atomicAdd( parallelDeviceAtomic{}, &phaseOutflux[er_up][esr_up][ei_up][ip], absPhaseFlux );
 
     // increment the component (mass/molar) outflux of the upstream cell
@@ -204,10 +204,8 @@ CFLFluxKernel::
                                    transmissibility,
                                    dTrans_dPres );
 
-    localIndex const stencilSize = meshMapUtilities::size1( sei, iconn );
-
     CFLFluxKernel::compute< NC, numElems, maxStencilSize >( numPhases,
-                                                            stencilSize,
+                                                            sei[iconn].size(),
                                                             dt,
                                                             seri[iconn],
                                                             sesri[iconn],
@@ -322,7 +320,7 @@ CFLKernel::
     real64 const coef0 = denom * mob[ip1] / mob[ip0] * dMob_dVolFrac[ip0];
     real64 const coef1 = -denom * mob[ip0] / mob[ip1] * dMob_dVolFrac[ip1];
 
-    phaseCFLNumber = fabs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
+    phaseCFLNumber = LvArray::math::abs( coef0*phaseOutflux[ip0] + coef1*phaseOutflux[ip1] );
   }
   // three-phase flow regime
   else if( numMobilePhases == 3 )
@@ -352,7 +350,7 @@ CFLKernel::
     }
     phaseCFLNumber = f[0][0] + f[1][1];
     phaseCFLNumber += sqrt( phaseCFLNumber*phaseCFLNumber - 4 * ( f[0][0]*f[1][1] - f[1][0]*f[0][1] ) );
-    phaseCFLNumber = 0.5 * fabs( phaseCFLNumber ) / poreVol;
+    phaseCFLNumber = 0.5 * LvArray::math::abs( phaseCFLNumber ) / poreVol;
   }
 }
 
@@ -704,7 +702,6 @@ INST_AquiferBCKernel( 5 );
 
 #undef INST_AquiferBCKernel
 
-
-} // namespace compositionalMultiphaseFVMKernels
+} // namespace isothermalCompositionalMultiphaseFVMKernels
 
 } // namespace geosx

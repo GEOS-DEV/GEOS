@@ -36,16 +36,16 @@ template< typename PHASE1, typename PHASE2, typename FLASH > class
   TwoPhaseCatalogNames {};
 
 template<> class
-  TwoPhaseCatalogNames< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+  TwoPhaseCatalogNames< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction >,
+                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
                         PVTProps::CO2Solubility >
 {
 public:
   static string name() { return "CO2BrinePhillipsFluid"; }
 };
 template<> class
-  TwoPhaseCatalogNames< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
-                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
+  TwoPhaseCatalogNames< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy >,
+                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
                         PVTProps::CO2Solubility >
 {
 public:
@@ -53,16 +53,16 @@ public:
 };
 
 template<> class
-  TwoPhaseCatalogNames< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+  TwoPhaseCatalogNames< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction >,
+                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
                         PVTProps::CO2Solubility >
 {
 public:
   static string name() { return "CO2BrineEzrokhiFluid"; }
 };
 template<> class
-  TwoPhaseCatalogNames< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
-                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
+  TwoPhaseCatalogNames< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy >,
+                        PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
                         PVTProps::CO2Solubility >
 {
 public:
@@ -109,10 +109,8 @@ CO2BrineFluid( string const & name, Group * const parent ):
 template< typename PHASE1, typename PHASE2, typename FLASH >
 bool CO2BrineFluid< PHASE1, PHASE2, FLASH >::isThermal() const
 {
-  return ( PHASE1::Enthalpy::catalogName()       != PVTProps::NoOpPVTFunction::catalogName() &&
-           PHASE1::InternalEnergy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() &&
-           PHASE2::Enthalpy::catalogName()       != PVTProps::NoOpPVTFunction::catalogName() &&
-           PHASE2::InternalEnergy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
+  return ( PHASE1::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() &&
+           PHASE2::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() );
 }
 
 
@@ -174,11 +172,11 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
   // TODO: get rid of these external files and move into XML, this is too error prone
   // For now, to support the legacy input, we read all the input parameters at once in the arrays below, and then we create the models
   array1d< array1d< string > > phase1InputParams;
-  phase1InputParams.resize( 4 );
+  phase1InputParams.resize( 3 );
   array1d< array1d< string > > phase2InputParams;
-  phase2InputParams.resize( 4 );
+  phase2InputParams.resize( 3 );
 
-  // 1) Create the viscosity, density, enthalpy, and internal energy models
+  // 1) Create the viscosity, density, enthalpy models
   for( string const & filename : m_phasePVTParaFiles )
   {
     std::ifstream is( filename );
@@ -187,7 +185,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
     {
       string_array const strs = stringutilities::tokenize( str, " " );
 
-      if( strs[0] == toString( SubModelInputNames::DENSITY ) )
+      if( strs[0] == "DensityFun" )
       {
         if( strs[1] == PHASE1::Density::catalogName() )
         {
@@ -198,7 +196,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           phase2InputParams[PHASE2::InputParamOrder::DENSITY] = strs;
         }
       }
-      else if( strs[0] == toString( SubModelInputNames::VISCOSITY ) )
+      else if( strs[0] == "ViscosityFun" )
       {
         if( strs[1] == PHASE1::Viscosity::catalogName() )
         {
@@ -209,7 +207,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
           phase2InputParams[PHASE2::InputParamOrder::VISCOSITY] = strs;
         }
       }
-      else if( strs[0] == toString( SubModelInputNames::ENTHALPY ) )
+      else if( strs[0] == "EnthalpyFun" )
       {
         if( strs[1] == PHASE1::Enthalpy::catalogName() )
         {
@@ -218,17 +216,6 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
         else if( strs[1] == PHASE2::Enthalpy::catalogName() )
         {
           phase2InputParams[PHASE2::InputParamOrder::ENTHALPY] = strs;
-        }
-      }
-      else if( strs[0] == toString( SubModelInputNames::INTERNALENERGY ) )
-      {
-        if( strs[1] == PHASE1::InternalEnergy::catalogName() )
-        {
-          phase1InputParams[PHASE1::InputParamOrder::INTERNALENERGY] = strs;
-        }
-        else if( strs[1] == PHASE2::InternalEnergy::catalogName() )
-        {
-          phase2InputParams[PHASE2::InputParamOrder::INTERNALENERGY] = strs;
         }
       }
       else
@@ -253,15 +240,7 @@ void CO2BrineFluid< PHASE1, PHASE2, FLASH >::createPVTModels()
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::Viscosity::catalogName() ),
                   InputError );
 
-  // we also detect any inconsistency arising in the enthalpy/internal energy models
-  GEOSX_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::INTERNALENERGY].empty() &&
-                  ( PHASE1::InternalEnergy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                  GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::InternalEnergy::catalogName() ),
-                  InputError );
-  GEOSX_THROW_IF( phase2InputParams[PHASE2::InputParamOrder::INTERNALENERGY].empty() &&
-                  ( PHASE2::InternalEnergy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
-                  GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE2::InternalEnergy::catalogName() ),
-                  InputError );
+  // we also detect any inconsistency arising in the enthalpy models
   GEOSX_THROW_IF( phase1InputParams[PHASE1::InputParamOrder::ENTHALPY].empty() &&
                   ( PHASE1::Enthalpy::catalogName() != PVTProps::NoOpPVTFunction::catalogName() ),
                   GEOSX_FMT( "{}: PVT model {} not found in input files", getFullName(), PHASE1::Enthalpy::catalogName() ),
@@ -317,6 +296,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::createKernelWrapper()
                         *m_flash,
                         m_componentMolarWeight.toViewConst(),
                         m_useMass,
+                        isThermal(),
                         m_phaseFraction.toView(),
                         m_phaseDensity.toView(),
                         m_phaseMassDensity.toView(),
@@ -336,6 +316,7 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                  FLASH const & flash,
                  arrayView1d< geosx::real64 const > componentMolarWeight,
                  bool const useMass,
+                 bool const isThermal,
                  PhaseProp::ViewType phaseFraction,
                  PhaseProp::ViewType phaseDensity,
                  PhaseProp::ViewType phaseMassDensity,
@@ -356,24 +337,25 @@ CO2BrineFluid< PHASE1, PHASE2, FLASH >::KernelWrapper::
                                    std::move( totalDensity ) ),
   m_p1Index( p1Index ),
   m_p2Index( p2Index ),
+  m_isThermal( isThermal ),
   m_phase1( phase1.createKernelWrapper() ),
   m_phase2( phase2.createKernelWrapper() ),
   m_flash( flash.createKernelWrapper() )
 {}
 
 // explicit instantiation of the model template; unfortunately we can't use the aliases for this
-template class CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+template class CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::NoOpPVTFunction >,
+                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
                               PVTProps::CO2Solubility >;
-template class CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
-                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
+template class CO2BrineFluid< PhaseModel< PVTProps::PhillipsBrineDensity, PVTProps::PhillipsBrineViscosity, PVTProps::BrineEnthalpy >,
+                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
                               PVTProps::CO2Solubility >;
 
-template class CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
-                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction, PVTProps::NoOpPVTFunction >,
+template class CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::NoOpPVTFunction >,
+                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::NoOpPVTFunction >,
                               PVTProps::CO2Solubility >;
-template class CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy, PVTProps::BrineInternalEnergy >,
-                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy, PVTProps::CO2InternalEnergy >,
+template class CO2BrineFluid< PhaseModel< PVTProps::EzrokhiBrineDensity, PVTProps::EzrokhiBrineViscosity, PVTProps::BrineEnthalpy >,
+                              PhaseModel< PVTProps::SpanWagnerCO2Density, PVTProps::FenghourCO2Viscosity, PVTProps::CO2Enthalpy >,
                               PVTProps::CO2Solubility >;
 
 REGISTER_CATALOG_ENTRY( ConstitutiveBase, CO2BrinePhillipsFluid, string const &, Group * const )

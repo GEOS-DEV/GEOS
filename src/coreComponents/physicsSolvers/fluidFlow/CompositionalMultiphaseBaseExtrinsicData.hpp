@@ -207,6 +207,15 @@ EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
                            WRITE_AND_READ,
                            "Boundary condition pressure" );
 
+EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
+                           "bcTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary temperature" );
+
+
 }
 
 }

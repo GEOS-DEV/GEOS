@@ -25,7 +25,7 @@
 
 namespace geosx
 {
-class SiloFile;
+
 class NodeManager;
 
 /**
@@ -69,7 +69,7 @@ public:
    * @brief Get the name of the catalog.
    * @return The name.
    */
-  virtual const string getCatalogName() const = 0;
+  virtual string getCatalogName() const = 0;
   ///@}
 
   using dataRepository::Group::packSize;
@@ -118,7 +118,13 @@ public:
    * @brief Gets the wrapper names that should not be packed.
    * @return The set of names.
    */
-  virtual std::set< string > getPackingExclusionList() const;
+  std::set< string > getPackingExclusionList() const;
+
+  /**
+   * @brief Registers wrappers that will be excluded from packing.
+   * @param wrapperNames The wrapper names.
+   */
+  void excludeWrappersFromPacking( std::set< string > const & wrapperNames );
 
   /**
    * @brief Computes the pack size of the global maps elements in the @ packList.
@@ -544,8 +550,8 @@ public:
    * Get the upmost parent (i.e. parent of parent of parent...) of @p lookup
    * that has no more valid parent in @p parentIndices.
    */
-  static localIndex getParentRecusive( arraySlice1d< localIndex const > const & parentIndices,
-                                       localIndex const lookup )
+  static localIndex getParentRecursive( arraySlice1d< localIndex const > const & parentIndices,
+                                        localIndex const lookup )
   {
     localIndex rval = lookup;
 
@@ -965,6 +971,9 @@ public:
 protected:
   /// Group that holds object sets.
   Group m_sets;
+
+  /// Names of the wrappers that should not be packed.
+  std::set< string > m_packingExclusionList;
 
   /// Group that holds all the NeighborData objects.
   Group m_neighborGroup;
