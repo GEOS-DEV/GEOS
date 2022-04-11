@@ -495,22 +495,27 @@ void SolidMechanicsEmbeddedFractures::applyTractionBC( real64 const time_n,
 {
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
-  fsManager.apply( time_n+ dt,
-                   domain,
-                   "ElementRegions",
-                   extrinsicMeshData::contact::traction::key(),
-                   [&] ( FieldSpecificationBase const & fs,
-                         string const &,
-                         SortedArrayView< localIndex const > const & targetSet,
-                         Group & subRegion,
-                         string const & )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
-                                                                       time_n+dt,
-                                                                       subRegion,
-                                                                       extrinsicMeshData::contact::traction::key() );
-  } );
 
+    fsManager.apply( time_n+ dt,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::contact::traction::key(),
+                     [&] ( FieldSpecificationBase const & fs,
+                           string const &,
+                           SortedArrayView< localIndex const > const & targetSet,
+                           Group & subRegion,
+                           string const & )
+    {
+      fs.applyFieldValue< FieldSpecificationEqual, parallelHostPolicy >( targetSet,
+                                                                         time_n+dt,
+                                                                         subRegion,
+                                                                         extrinsicMeshData::contact::traction::key() );
+    } );
+  } );
 }
 
 real64 SolidMechanicsEmbeddedFractures::calculateResidualNorm( DomainPartition const & domain,

@@ -159,22 +159,6 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseVolumeFractionOld,
                            WRITE_AND_READ,
                            "Phase volume fraction at the previous converged time step" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensityOld,
-                           "phaseDensityOld",
-                           array2dLayoutPhase,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase density at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( totalDensityOld,
-                           "totalDensityOld",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Total density at the previous converged time step" );
-
 EXTRINSIC_MESH_DATA_TRAIT( phaseMobilityOld,
                            "phaseMobilityOld",
                            array2dLayoutPhase,
@@ -182,14 +166,6 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseMobilityOld,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Phase mobility at the previous converged time step" );
-
-EXTRINSIC_MESH_DATA_TRAIT( phaseComponentFractionOld,
-                           "phaseComponentFractionOld",
-                           array3dLayoutPhaseComp,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Phase component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseOutflux,
                            "phaseOutflux",
@@ -230,6 +206,15 @@ EXTRINSIC_MESH_DATA_TRAIT( bcPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Boundary condition pressure" );
+
+EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
+                           "bcTemperature",
+                           array1d< real64 >,
+                           0,
+                           NOPLOT,
+                           WRITE_AND_READ,
+                           "Boundary temperature" );
+
 
 }
 

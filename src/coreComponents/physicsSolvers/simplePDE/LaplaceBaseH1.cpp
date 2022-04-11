@@ -186,25 +186,31 @@ void LaplaceBaseH1::
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
 
-  fsManager.apply( time,
-                   domain,
-                   "nodeManager",
-                   m_fieldName,
-                   [&]( FieldSpecificationBase const & bc,
-                        string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & targetGroup,
-                        string const & GEOSX_UNUSED_PARAM( fieldName ) )
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     m_fieldName,
-                                                                     dofManager.getKey( m_fieldName ),
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
+
+    fsManager.apply( time,
+                     mesh,
+                     "nodeManager",
+                     m_fieldName,
+                     [&]( FieldSpecificationBase const & bc,
+                          string const &,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & targetGroup,
+                          string const & GEOSX_UNUSED_PARAM( fieldName ) )
+    {
+      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                         parallelDevicePolicy< 32 > >( targetSet,
+                                                                       time,
+                                                                       targetGroup,
+                                                                       m_fieldName,
+                                                                       dofManager.getKey( m_fieldName ),
+                                                                       dofManager.rankOffset(),
+                                                                       localMatrix,
+                                                                       localRhs );
+    } );
   } );
 }
 

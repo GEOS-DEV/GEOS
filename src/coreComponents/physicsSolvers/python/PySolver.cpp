@@ -12,10 +12,8 @@
 #define VERIFY_INITIALIZED( self ) \
   PYTHON_ERROR_IF( self->group == nullptr, PyExc_RuntimeError, "The PySolver is not initialized.", nullptr )
 
-
 namespace geosx
 {
-
 namespace python
 {
 
@@ -76,10 +74,9 @@ static PyObject * execute( PySolver * self, PyObject * args )
     return nullptr;
   }
 
-  int cycleNumber = int(time/dt);
+  geosx::DomainPartition & domain = self->group->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  geosx::GeosxState * g_state = &getGlobalState();
-  geosx::DomainPartition & domain = g_state->getProblemManager().getDomainPartition();
+  int cycleNumber = int(time/dt);
 
   self->group->execute( time, dt, cycleNumber, 0, 0, domain );
 
