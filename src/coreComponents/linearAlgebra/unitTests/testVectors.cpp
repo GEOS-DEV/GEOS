@@ -309,6 +309,25 @@ TYPED_TEST_P( VectorTest, axpby )
   compareVectors( x, y, false, ops::identity, ops::multiply{ alpha + beta } );
 }
 
+TYPED_TEST_P( VectorTest, axpbypcz )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  real64 const alpha = 2.0;
+  real64 const beta = 3.0;
+  real64 const gamma = 4.0;
+
+  Vector z;
+  createAndAssemble< parallelDevicePolicy<> >( 3, z );
+
+  Vector x( z );
+  x.scale( alpha );
+  Vector y( z );
+  z.axpbypcz( 1.0, x, beta, y, gamma );
+
+  compareVectors( z, y, false, ops::identity, ops::multiply{ alpha + beta + gamma } );
+}
+
 TYPED_TEST_P( VectorTest, norm1 )
 {
   using Vector = typename TypeParam::ParallelVector;
@@ -360,6 +379,7 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              dotProduct,
                              axpy,
                              axpby,
+                             axpbypcz,
                              norm1,
                              norm2,
                              normInf );

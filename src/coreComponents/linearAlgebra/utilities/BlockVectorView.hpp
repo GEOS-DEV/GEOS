@@ -140,6 +140,22 @@ public:
               BlockVectorView const & x,
               real64 const beta );
 
+  /**
+   * @brief Update vector <tt>z</tt> as <tt>z = alpha*x + beta*y + gamma*z</tt>.
+   * @note The naming convention follows the logic of the BLAS library.
+   *
+   * @param alpha scaling factor for first added vector
+   * @param x first vector to add
+   * @param beta scaling factor for second added vector
+   * @param y second vector to add
+   * @param gamma scaling factor for self vector
+   */
+  void axpbypcz( real64 const alpha,
+                 BlockVectorView const & x,
+                 real64 const beta,
+                 BlockVectorView const & y,
+                 real64 const gamma );
+   
   ///@}
 
   /// @name Accessors
@@ -363,6 +379,21 @@ void BlockVectorView< VECTOR >::axpby( real64 const alpha,
   for( localIndex i = 0; i < blockSize(); i++ )
   {
     block( i ).axpby( alpha, x.block( i ), beta );
+  }
+}
+
+template< typename VECTOR >
+void BlockVectorView< VECTOR >::axpbypcz( real64 const alpha,
+                                          BlockVectorView const & x,
+                                          real64 const beta,
+                                          BlockVectorView const & y,
+                                          real64 const gamma )
+{
+  GEOSX_LAI_ASSERT_EQ( blockSize(), x.blockSize() );
+  GEOSX_LAI_ASSERT_EQ( blockSize(), y.blockSize() );
+  for( localIndex i = 0; i < blockSize(); i++ )
+  {
+    block( i ).axpbypcz( alpha, x.block( i ), beta, y.block( i ), gamma );
   }
 }
 

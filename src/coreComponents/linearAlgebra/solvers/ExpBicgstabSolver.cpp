@@ -125,23 +125,18 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
     real64 const beta = ( alpha / omega) * ( inner_r0_rp1 / inner_r0_r );
 
     // x = x + alpha *  Mp + omega*Mq;
-    x.axpy( alpha, Mp );
-    x.axpy( omega, Mq );
+    x.axpbypcz( alpha, Mp, omega, Mq, 1.0 );
+
     // r = r - alpha * AMp - omega*AMq;
-    r.axpy( -alpha, AMp );
-    r.axpy( -omega, AMq );
+    r.axpbypcz( -alpha, AMp, -omega, AMq, 1.0 );
 
     // Mp  =  Mq - omega* MAMq + beta*(  Mp - omega*MAMp ) ;
     Mp.axpy( -omega, MAMp );
-    Mp.scale( beta );
-    Mp.axpy( 1.0, Mq );
-    Mp.axpy( -omega, MAMq );
+    Mp.axpbypcz( 1.0, Mq, -omega, MAMq, beta );
 
     // AMp = AMq - omega*AMAMq + beta*( AMp - omega*AMAMp );
     AMp.axpy( -omega, AMAMp );
-    AMp.scale( beta );
-    AMp.axpy( 1.0, AMq );
-    AMp.axpy( -omega, AMAMq );
+    AMp.axpbypcz( 1.0, AMq, -omega, AMAMq, beta );
 
     // Restart
     // TODO

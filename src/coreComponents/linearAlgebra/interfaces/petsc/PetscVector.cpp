@@ -213,6 +213,38 @@ void PetscVector::axpby( real64 const alpha,
   }
 }
 
+void PetscVector::axpbypcz( real64 const alpha,
+                            PetscVector const & x,
+                            real64 const beta,
+                            PetscVector const & y,
+                            real64 const gamma )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  if( ( &x != &y ) && ( &y != this ) )
+  {
+    GEOSX_LAI_CHECK_ERROR( VecAXPBYPCZ( m_vec, alpha, beta, gamma , x.m_vec, y.m_vec ) );
+    touch();
+  }
+  else if( ( &x != &y ) && ( &y == this ) )
+  {
+    axpby( alpha, x, beta + gamma );
+  }
+  else if( ( &x == &y ) && ( &y != this ) )
+  {
+    axpby( alpha + beta, x, gamma );
+  }
+  else if( ( &x == this ) && ( &y != this ) )
+  {
+    axpby( beta, y, alpha + gamma );
+  }
+  else
+  {
+    scale( alpha + beta + gamma );
+  }
+}
+  
 void PetscVector::pointwiseProduct( PetscVector const & x,
                                     PetscVector & y ) const
 {

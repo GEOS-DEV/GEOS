@@ -133,6 +133,12 @@ public:
                       PetscVector const & x,
                       real64 const beta ) override;
 
+  virtual void axpbypcz( real64 const alpha,
+                         PetscVector const & x,
+                         real64 const beta,
+                         PetscVector const & y,
+                         real64 const gamma ) override;
+   
   virtual void pointwiseProduct( PetscVector const & x,
                                  PetscVector & y ) const override;
 

@@ -185,6 +185,40 @@ void EpetraVector::axpby( real64 const alpha,
   touch();
 }
 
+void EpetraVector::axpbypcz( real64 const alpha,
+                             EpetraVector const & x,
+                             real64 const beta,
+                             EpetraVector const & y,
+                             real64 const gamma )
+{
+  GEOSX_LAI_ASSERT( ready() );
+  GEOSX_LAI_ASSERT( x.ready() );
+  GEOSX_LAI_ASSERT( y.ready() );
+  if( ( &x != &y ) && ( &y != this ) )
+  {
+    GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
+    GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
+    axpby( beta, y, gamma ); 
+    axpy( alpha, x );
+  }
+  else if( ( &x != &y ) && ( &y == this ) )
+  {
+    axpby( alpha, x, beta + gamma );
+  }
+  else if( ( &x == &y ) && ( &y != this ) )
+  {
+    axpby( alpha + beta, x, gamma );
+  }
+  else if( ( &x == this ) && ( &y != this ) )
+  {
+    axpby( beta, y, alpha + gamma );
+  }
+  else
+  {
+    scale( alpha + beta + gamma );
+  }
+}
+
 void EpetraVector::pointwiseProduct( EpetraVector const & x,
                                      EpetraVector & y ) const
 {
