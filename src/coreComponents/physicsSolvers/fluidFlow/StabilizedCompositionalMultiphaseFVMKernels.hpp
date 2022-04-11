@@ -269,13 +269,13 @@ public:
 
       // std::cout << "Populate   " << ic << "   " << stack.stabFlux[ic] << std::endl;
 
-      stack.localFlux[ic]           +=  stack.stabFlux[ic]; // does sign need to flip here?
+      stack.localFlux[ic]           +=  stack.stabFlux[ic]; 
       stack.localFlux[numComp + ic] += -stack.stabFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic]; // does sign need to flip here
+        stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic]; 
         stack.localFluxJacobian[numComp + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
 
       }

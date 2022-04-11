@@ -219,6 +219,8 @@ public:
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
 
+    static constexpr char const * useStabFlagString() { return "useStab"; }
+
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
     static constexpr char const * relPermNamesString() { return "relPermNames"; }
@@ -342,6 +344,9 @@ protected:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
+
+  /// flag indicating whether pressure jump stabilization should be used
+  integer m_useStab;
 
   /// flag indicating whether CFL numbers will be computed or not
   integer m_computeCFLNumbers;

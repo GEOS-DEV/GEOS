@@ -109,8 +109,10 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      stabilizedCompositionalMultiphaseFVMKernels::
-      FaceBasedAssemblyKernelFactory::
+      if (m_useStab)
+      { 
+        stabilizedCompositionalMultiphaseFVMKernels::
+        FaceBasedAssemblyKernelFactory::
         createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
                                                    m_numPhases,
                                                    dofManager.rankOffset(),
@@ -122,6 +124,25 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
                                                    dt,
                                                    localMatrix.toViewConstSizes(),
                                                    localRhs.toView() );
+      }
+
+      else
+      {
+        compositionalMultiphaseFVMKernels::
+        FaceBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   elemDofKey,
+                                                   m_hasCapPressure,
+                                                   getName(),
+                                                   mesh.getElemManager(),
+                                                   stencilWrapper,
+                                                   dt,
+                                                   localMatrix.toViewConstSizes(),
+                                                   localRhs.toView() );
+      }
+      
     } );
   } );
 }
