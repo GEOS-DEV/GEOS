@@ -62,18 +62,17 @@ public:
   {
     // Level 0: all three displacements kept
     m_labels[0] = { 0, 1, 2 };
+
     setupLabels();
 
-    m_levelFRelaxMethod[0] = 0; // Jacobi
-    m_levelInterpType[0] = 2; // diagonal scaling (Jacobi)
-    m_levelRestrictType[0] = 0; // injection
-    m_levelCoarseGridMethod[0] = 0; // all
+    // Level 0
+    m_levelFRelaxMethod[0]     = MGRFRelaxationMethod::singleLevel; //default, i.e. Jacobi (to be confirmed)
+    m_levelInterpType[0]       = MGRInterpolationType::jacobi;
+    m_levelRestrictType[0]     = MGRRestrictionType::injection;
+    m_levelCoarseGridMethod[0] = MGRCoarseGridMethod::galerkin;
 
-    m_numRestrictSweeps = 0;
-    m_numInterpSweeps = 0;
-    m_relaxType = 0;
     m_numRelaxSweeps = 0; // skip F-relaxation
-    m_globalSmoothType = 0; // block Jacobi
+    m_globalSmoothType = MGRGlobalSmootherType::blockJacobi;
     m_numGlobalSmoothSweeps = 1;
   }
 
@@ -91,16 +90,13 @@ public:
                                                                   m_numLabels, m_ptrLabels,
                                                                   mgrData.pointMarkers.data() ) );
 
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, m_levelRestrictType ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRestrictSweeps( precond.ptr, m_numRestrictSweeps ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumInterpSweeps( precond.ptr, m_numInterpSweeps ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, m_numRelaxSweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, toUnderlyingPtr( m_levelFRelaxMethod ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, toUnderlyingPtr( m_levelInterpType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelRestrictType( precond.ptr, toUnderlyingPtr( m_levelRestrictType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, toUnderlyingPtr( m_levelCoarseGridMethod ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNonCpointsToFpoints( precond.ptr, 1 ));
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetRelaxType( precond.ptr, m_relaxType ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelFRelaxMethod( precond.ptr, m_levelFRelaxMethod ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetLevelInterpType( precond.ptr, m_levelInterpType ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetCoarseGridMethod( precond.ptr, m_levelCoarseGridMethod ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothType( precond.ptr, m_globalSmoothType ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetNumRelaxSweeps( precond.ptr, m_numRelaxSweeps ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetGlobalSmoothType( precond.ptr, toUnderlying( m_globalSmoothType ) ) );
     GEOSX_LAI_CHECK_ERROR( HYPRE_MGRSetMaxGlobalSmoothIters( precond.ptr, m_numGlobalSmoothSweeps ) );
 
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGCreate( &mgrData.coarseSolver.ptr ) );

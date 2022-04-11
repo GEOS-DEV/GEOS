@@ -56,6 +56,12 @@ ObjectManagerBase::ObjectManagerBase( string const & name,
   registerWrapper< array1d< integer > >( viewKeyStruct::domainBoundaryIndicatorString(), &m_domainBoundaryIndicator );
 
   m_sets.registerWrapper< SortedArray< localIndex > >( this->m_ObjectManagerBaseViewKeys.externalSet );
+
+  excludeWrappersFromPacking( { viewKeyStruct::localToGlobalMapString(),
+                                viewKeyStruct::globalToLocalMapString(),
+                                viewKeyStruct::ghostRankString(),
+                                extrinsicMeshData::ParentIndex::key(),
+                                extrinsicMeshData::ChildIndex::key() } );
 }
 
 ObjectManagerBase::~ObjectManagerBase()
@@ -141,30 +147,28 @@ void ObjectManagerBase::constructSetFromSetAndMap( SortedArrayView< localIndex c
                                                    ArrayOfArraysView< localIndex const > const & map,
                                                    const string & setName )
 {
-  SortedArray< localIndex > & newset = m_sets.getReference< SortedArray< localIndex > >( setName );
-  newset.clear();
+  SortedArray< localIndex > & newSet = m_sets.getReference< SortedArray< localIndex > >( setName );
+  newSet.clear();
 
   localIndex const numObjects = size();
-  GEOSX_ERROR_IF( map.size() != numObjects, "Size mismatch. " << map.size() << " != " << numObjects );
+  GEOSX_ERROR_IF_NE_MSG( map.size(), numObjects, "Map size does not match number of objects." );
 
   if( setName == "all" )
   {
-    newset.reserve( numObjects );
-
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    newSet.reserve( numObjects );
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
-      newset.insert( ka );
+      newSet.insert( ka );
     }
   }
   else
   {
-    for( localIndex ka=0; ka<numObjects; ++ka )
+    for( localIndex ka = 0; ka < numObjects; ++ka )
     {
-      localIndex const * const values = map[ka];
-      localIndex const numValues = map.sizeOfArray( ka );
-      if( std::all_of( values, values + numValues, [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
+      arraySlice1d< localIndex const > const values = map[ka];
+      if( std::all_of( values.begin(), values.end(), [&]( localIndex const i ) { return inputSet.contains( i ); } ) )
       {
-        newset.insert( ka );
+        newSet.insert( ka );
       }
     }
   }
@@ -251,48 +255,47 @@ localIndex ObjectManagerBase::packImpl( buffer_unit_type * & buffer,
   packedSize += bufferOps::Pack< DO_PACKING >( buffer, numPackedIndices );
   if( numPackedIndices > 0 )
   {
-    // If `wrapperNames` is empty we fall back on all the wrappers actually registered in the instance.
-    std::set< string > tmpWrapperNames;
-    if( wrapperNames.empty() )
+    std::set< string > input;
+    std::copy( wrapperNames.begin(), wrapperNames.end(), std::inserter( input, input.end() ) );
+
+    std::set< string > const exclusion = getPackingExclusionList();
+    std::set< string > const available = mapKeys< std::set >( wrappers() );
+
+    // Only taking the wrappers that are requested and available.
+    std::set< string > tmp0;
+    std::set_intersection( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp0, tmp0.end() ) );
+
+    // Checking that all the requested wrappers are available.
+    std::set< string > tmp1;
+    std::set_difference( input.cbegin(), input.cend(), available.cbegin(), available.cend(), std::inserter( tmp1, tmp1.end() ) );
+    if( !tmp1.empty() )
     {
-      tmpWrapperNames = mapKeys< std::set >( wrappers() );
-    }
-    else
-    {
-      std::copy( wrapperNames.begin(), wrapperNames.end(), std::inserter( tmpWrapperNames, tmpWrapperNames.end() ) );
+      GEOSX_LOG( "Wrappers \"" << stringutilities::join( tmp1, ", " ) << "\" were requested from \"" << getName() << "\" but are not available." );
     }
 
-    // We remove all the wrappers which names are in the `exclusion` list.
-    std::set< string > wrapperNamesWithoutExclusions;
-    std::set< string > const exclusion = getPackingExclusionList();
-    std::set_difference( tmpWrapperNames.cbegin(), tmpWrapperNames.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( wrapperNamesWithoutExclusions, wrapperNamesWithoutExclusions.end() ) );
+    // Not taking the wrappers that are excluded.
+    std::set< string > tmp2;
+    std::set_difference( tmp0.cbegin(), tmp0.cend(), exclusion.cbegin(), exclusion.cend(), std::inserter( tmp2, tmp2.end() ) );
 
     // Now we build the final list.
-    // No packing by index is allowed if the registered wrapper
-    // does not share the size of the owning group.
+    // No packing by index is allowed if the registered wrapper does not share the size of the owning group.
     // Hence, the sufficient (but not necessary...) condition on `wrapper.sizedFromParent()`.
-    std::set< string > wrapperNamesFinal;
-    for( string const & wrapperName: wrapperNamesWithoutExclusions )
+    std::vector< string > tmp3;
+    auto predicate = [this]( string const & wrapperName ) -> bool
     {
-      if( this->hasWrapper( wrapperName ) )
-      {
-        WrapperBase const & wrapper = getWrapperBase( wrapperName );
+      return bool( this->getWrapperBase( wrapperName ).sizedFromParent() );
+    };
+    std::copy_if( tmp2.cbegin(), tmp2.cend(), std::back_inserter( tmp3 ), predicate );
 
-        if( wrapper.sizedFromParent() )
-        {
-          wrapperNamesFinal.insert( wrapperName );
-        }
-      }
-    }
+    // Extracting the wrappers
+    std::vector< WrapperBase const * > wrappers;
+    auto transformer = [this]( string const & wrapperName ) -> WrapperBase const *
+    {
+      return &this->getWrapperBase( wrapperName );
+    };
+    std::transform( tmp3.cbegin(), tmp3.cend(), std::back_inserter( wrappers ), transformer );
 
     // Additional refactoring should be done by using `Group::packImpl` that duplicates the following pack code.
-    std::vector< WrapperBase const * > wrappers;
-    for( string const & wrapperName: wrapperNamesFinal )
-    {
-      WrapperBase const & wrapper = getWrapperBase( wrapperName );
-      wrappers.push_back( &wrapper );
-    }
-
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, string( "Wrappers" ) );
     packedSize += bufferOps::Pack< DO_PACKING >( buffer, LvArray::integerConversion< localIndex >( wrappers.size() ) );
     for( WrapperBase const * wrapper: wrappers )
@@ -718,12 +721,15 @@ localIndex ObjectManagerBase::unpackGlobalMaps( buffer_unit_type const * & buffe
 
 std::set< string > ObjectManagerBase::getPackingExclusionList() const
 {
-  return { viewKeyStruct::localToGlobalMapString(),
-           viewKeyStruct::globalToLocalMapString(),
-           viewKeyStruct::ghostRankString(),
-           extrinsicMeshData::ParentIndex::key(),
-           extrinsicMeshData::ChildIndex::key() };
+  return m_packingExclusionList;
 }
+
+
+void ObjectManagerBase::excludeWrappersFromPacking( std::set< string > const & wrapperNames )
+{
+  m_packingExclusionList.insert( wrapperNames.cbegin(), wrapperNames.cend() );
+}
+
 
 localIndex ObjectManagerBase::getNumberOfGhosts() const
 {
