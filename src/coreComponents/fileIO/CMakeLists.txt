@@ -13,6 +13,7 @@ set( fileIO_headers
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/HistoryIO.hpp
      timeHistory/PackCollection.hpp
+     timeHistory/TestingBuffer.hpp
      timeHistory/TimeHistHDF.hpp
      timeHistory/TimeHistoryCollection.hpp
    )
@@ -31,6 +32,7 @@ set( fileIO_sources
      silo/SiloFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
+     timeHistory/TestingBuffer.cpp
      timeHistory/TimeHistHDF.cpp
    )
 

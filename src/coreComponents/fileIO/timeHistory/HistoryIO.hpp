@@ -32,13 +32,6 @@ class BufferedHistoryIO
 {
 public:
 
-  /// Constructor
-  BufferedHistoryIO():
-    m_bufferedCount( 0 ),
-    m_bufferHead( nullptr ),
-    m_dataBuffer( 0 )
-  {}
-
   /// Destructor
   virtual ~BufferedHistoryIO() {}
 
@@ -48,14 +41,7 @@ public:
    * @note Depends on the virtual function resizeBuffer() being implemented correctly in
    *        an inheriting class.
    */
-  buffer_unit_type * getBufferHead()
-  {
-    resizeBuffer();
-    m_bufferedCount++;
-    buffer_unit_type * const currentBufferHead = m_bufferHead;
-    m_bufferHead += getRowBytes();
-    return currentBufferHead;
-  }
+  virtual buffer_unit_type * getBufferHead() = 0;
 
   /**
    * @brief Perform and intialization needed for time-history output.
@@ -89,32 +75,7 @@ public:
    *        that should be operating at the same cadence (ie the time collector and the data
    *        collector).
    */
-  localIndex getBufferedCount()
-  { return m_bufferedCount; }
-
-protected:
-  /**
-   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
-   * @return The size in bytes.
-   */
-  virtual size_t getRowBytes() = 0;
-
-  /// @brief Resize the buffer to accomodate additional history collection.
-  virtual void resizeBuffer() = 0;
-
-  /// @brief Empty the history collection buffer
-  void emptyBuffer( )
-  {
-    m_bufferedCount = 0;
-    m_bufferHead = &m_dataBuffer[0];
-  }
-
-  /// The current number of records in the buffer
-  localIndex m_bufferedCount;
-  /// The write head of the buffer
-  buffer_unit_type * m_bufferHead;
-  /// The data buffer containing the history info
-  buffer_type m_dataBuffer;
+  virtual localIndex getBufferedCount() = 0;
 };
 
 }

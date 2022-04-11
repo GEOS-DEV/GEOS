@@ -14,6 +14,8 @@
 
 #include "TimeHistoryOutput.hpp"
 
+#include "fileIO/timeHistory/TestingBuffer.hpp"
+
 #if defined(GEOSX_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"
 #endif
@@ -71,7 +73,8 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
       if( !prefix.empty() )
       { metadata.setName( prefix + metadata.getName() ); }
 
-      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
+//      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
+      m_io.emplace_back( std::make_unique< TestingBuffer >( metadata.getName(), metadata.getDims() ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {
         m_io[idx]->updateCollectingCount( count );
@@ -96,7 +99,8 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
   if( MpiWrapper::commRank() == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
-    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
+//    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< TestingBuffer >( timeMetadata.getName(), timeMetadata.getDims() ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]()
                                           { return m_io[idx]->getBufferHead(); } );

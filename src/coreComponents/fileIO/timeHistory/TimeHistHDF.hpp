@@ -158,6 +158,8 @@ public:
   /// Destructor
   virtual ~HDFHistIO() { }
 
+  virtual buffer_unit_type * getBufferHead() override;
+
   /// @copydoc geosx::BufferedHistoryIO::init
   virtual void init( bool existsOkay ) override;
 
@@ -170,10 +172,19 @@ public:
   /// @copydoc geosx::BufferedHistoryIO::updateCollectingCount
   virtual void updateCollectingCount( localIndex count ) override;
 
-  /// @copydoc geosx::BufferedHistoryIO::getRowBytes
-  virtual size_t getRowBytes( ) override;
+  localIndex getBufferedCount() override
+  { return m_bufferedCount; }
 
-protected:
+private:
+
+  /**
+   * @brief Get the size in bytes the buffer is currently set to hold per collection operation.
+   * @return The size in bytes.
+   */
+  size_t getRowBytes();
+
+  /// @brief Empty the history collection buffer
+  void emptyBuffer();
 
   /**
    * @brief Setup the parallel 'partitioning' of the data to allow dynamically sized output over time
@@ -196,9 +207,16 @@ protected:
    */
   void resizeFileIfNeeded( localIndex bufferedCount );
 
-  virtual void resizeBuffer( ) override;
+  /// @brief Resize the buffer to accomodate additional history collection.
+  void resizeBuffer();
 
-private:
+  /// The current number of records in the buffer
+  localIndex m_bufferedCount;
+  /// The write head of the buffer
+  buffer_unit_type * m_bufferHead;
+  /// The data buffer containing the history info
+  buffer_type m_dataBuffer;
+
   // file io params
   /// The filename to write to
   string m_filename;
@@ -218,6 +236,7 @@ private:
   localIndex m_writeLimit;
   /// The current history count for this data set in the file
   localIndex m_writeHead;
+
   // history metadata
   /// The underlying data type for this history data set
   hsize_t m_hdfType;

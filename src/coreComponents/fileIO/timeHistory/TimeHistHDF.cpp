@@ -150,7 +150,9 @@ HDFHistIO::HDFHistIO( string const & filename,
                       localIndex initAlloc,
                       localIndex overallocMultiple,
                       MPI_Comm comm ):
-  BufferedHistoryIO(),
+  m_bufferedCount( 0 ),
+  m_bufferHead( nullptr ),
+  m_dataBuffer( 0 ),
   m_filename( filename ),
   m_overallocMultiple( overallocMultiple ),
   m_globalIdxOffset( 0 ),
@@ -232,6 +234,15 @@ void HDFHistIO::setupPartition( globalIndex localIdxCount )
     MpiWrapper::commFree( m_subcomm );
   }
   m_subcomm = MpiWrapper::commSplit( m_comm, color, key );
+}
+
+buffer_unit_type * HDFHistIO::getBufferHead()
+{
+  resizeBuffer();
+  m_bufferedCount++;
+  buffer_unit_type * const currentBufferHead = m_bufferHead;
+  m_bufferHead += getRowBytes();
+  return currentBufferHead;
 }
 
 void HDFHistIO::init( bool existsOkay )
@@ -400,6 +411,12 @@ void HDFHistIO::updateDatasetExtent( hsize_t rowLimit )
 size_t HDFHistIO::getRowBytes( )
 {
   return m_typeCount * m_typeSize;
+}
+
+void HDFHistIO::emptyBuffer()
+{
+  m_bufferedCount = 0;
+  m_bufferHead = &m_dataBuffer[0];
 }
 
 void HDFHistIO::resizeBuffer( )
