@@ -25,8 +25,9 @@ compilers:
     modules: []
     environment: {}
     extra_rpaths: []
+# Previously clang@upstream - clingo doesn't like "upstream" version
 - compiler:
-    spec: clang@upstream
+    spec: clang@9.0.0
     paths:
       cc: /usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang
       cxx: /usr/tce/packages/clang/clang-upstream-2019.03.26/bin/clang++
