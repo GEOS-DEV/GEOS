@@ -358,6 +358,18 @@ public:
   template< typename T >
   static int allReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
 
+  /**
+   * @brief Strongly typed wrapper around MPI_Iallreduce.
+   * @param[in] sendbuf The pointer to the sending buffer.
+   * @param[out] recvbuf The pointer to the receive buffer.
+   * @param[in] count The number of values to send/receive.
+   * @param[in] op The MPI_Op to perform.
+   * @param[in] comm The MPI_Comm over which the gather operates.
+   * @param[out] request Pointer to the MPI_Request associated with this request.
+   * @return The return value of the underlying call to MPI_Allreduce().
+   */
+  template< typename T >
+  static int iAllReduce( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm, MPI_Request * request );
 
   template< typename T >
   static int scan( T const * sendbuf, T * recvbuf, int count, MPI_Op op, MPI_Comm comm );
@@ -695,6 +707,26 @@ int MpiWrapper::allReduce( T const * const sendbuf,
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const MPI_TYPE = internal::getMpiType< T >();
   return MPI_Allreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, MPI_TYPE, op, comm );
+#else
+  if( sendbuf != recvbuf )
+  {
+    memcpy( recvbuf, sendbuf, count * sizeof( T ) );
+  }
+  return 0;
+#endif
+}
+
+template< typename T >
+int MpiWrapper::iAllReduce( T const * const sendbuf,
+                           T * const recvbuf,
+                           int const count,
+                           MPI_Op MPI_PARAM( op ),
+                           MPI_Comm MPI_PARAM( comm ),
+                           MPI_Request * MPI_PARAM( request ) )
+{
+#ifdef GEOSX_USE_MPI
+  MPI_Datatype const MPI_TYPE = internal::getMpiType< T >();
+  return MPI_Iallreduce( sendbuf == recvbuf ? MPI_IN_PLACE : sendbuf, recvbuf, count, MPI_TYPE, op, comm, request );
 #else
   if( sendbuf != recvbuf )
   {
