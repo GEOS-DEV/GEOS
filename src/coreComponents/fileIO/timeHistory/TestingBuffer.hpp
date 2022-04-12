@@ -47,8 +47,6 @@ private:
 
   localIndex m_count;
 
-//  localIndex m_bufferedCount;
-
   std::vector< std::vector< double > > m_buffers;
 
   localIndex m_numStorages;

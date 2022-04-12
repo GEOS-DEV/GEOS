@@ -71,9 +71,11 @@ public:
    * @brief Query the number of history states currently stored in the internal buffer.
    * @return The number of discrete time history records buffered to be written.
    * @note Since the size of each discrete time history can change, this should not be used
-   *        to calculate size, but is useful to check for consistency between collectors
-   *        that should be operating at the same cadence (ie the time collector and the data
-   *        collector).
+   *       to calculate size, but is useful to check for consistency between collectors
+   *       that should be operating at the same cadence (ie the time collector and the data collector).
+   * @note Also, note that this member function is related to restarting HDF5 files.
+   *       Which means that getting this information popping through the abstract interface
+   *       is a shortcut that should eventually be fixed by keeping this information in the HDF5 buffer.
    */
   virtual localIndex getBufferedCount() = 0;
 };

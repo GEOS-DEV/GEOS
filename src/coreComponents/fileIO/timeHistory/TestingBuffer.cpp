@@ -87,8 +87,7 @@ void TestingBuffer::updateCollectingCount( localIndex count )
 
 localIndex TestingBuffer::getBufferedCount()
 {
-  return 1;
-//  return m_bufferedCount;
+  return -1;
 }
 
 }
