@@ -28,44 +28,14 @@
 #include "BufferedHistoryIO.hpp"
 #include <hdf5.h>
 
-
-
 namespace geosx
 {
-
-/**
- * @class HDFTarget
- * @brief An abstract class representing an HDF output target.
- */
-class HDFTarget
-{
-public:
-  /**
-   * @brief Get the HDF hid_t of the target.
-   * @return The hid_t of the target.
-   */
-  virtual operator hid_t() { return 0; }
-
-  /**
-   * @brief Whether a dataset/group with the specified name exists in the target.
-   * @param name The dataset/group name to check for.
-   * @return Whether the dataset/group exists in the target.
-   */
-  virtual bool checkInTarget( const string & name )
-  {
-    htri_t exists = 0;
-    H5E_BEGIN_TRY {
-      exists = H5Gget_objinfo( this->operator hid_t(), name.c_str(), 0, NULL );
-    } H5E_END_TRY
-    return (exists == 0);
-  }
-};
 
 /**
  * @class HDFFile
  * A class used to control access to an HDF file target.
  */
-class HDFFile : public HDFTarget
+class HDFFile
 {
 public:
   /**
@@ -81,6 +51,22 @@ public:
    * Destructor -- Close the file and acccessors.
    */
   ~HDFFile();
+
+  /**
+ * @brief Whether a dataset/group with the specified name exists in the target.
+ * @param name The dataset/group name to check for.
+ * @return Whether the dataset/group exists in the target.
+ */
+  bool checkInTarget( const string & name )
+  {
+    htri_t exists = 0;
+    H5E_BEGIN_TRY
+      {
+        exists = H5Gget_objinfo( this->operator hid_t(), name.c_str(), 0, NULL );
+      }
+    H5E_END_TRY
+    return ( exists == 0 );
+  }
 
   /**
    * @brief Get the HDF hid_t file identifier.
