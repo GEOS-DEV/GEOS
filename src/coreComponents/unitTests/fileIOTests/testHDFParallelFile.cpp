@@ -1,4 +1,5 @@
 #include "fileIO/timeHistory/HDFHistoryIO.hpp"
+#include "common/TimingMacros.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include <gtest/gtest.h>

@@ -25,8 +25,6 @@
 namespace geosx
 {
 
-class DomainPartition;
-
 using namespace dataRepository;
 
 /**

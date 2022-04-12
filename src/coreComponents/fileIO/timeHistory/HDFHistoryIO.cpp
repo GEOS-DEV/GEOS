@@ -2,6 +2,8 @@
 
 #include "HDFFile.hpp"
 
+#include "common/MpiWrapper.hpp"
+
 namespace geosx
 {
 

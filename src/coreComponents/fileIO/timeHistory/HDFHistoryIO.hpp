@@ -12,20 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file TimeHistHDF.hpp
- */
-
 #ifndef GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
 #define GEOSX_FILEIO_TIMEHISTORY_HDFFILE_HPP_
 
-#include "LvArray/src/Array.hpp"
-#include "codingUtilities/traits.hpp"
-#include "common/DataTypes.hpp"
-#include "common/MpiWrapper.hpp"
 
 #include "dataRepository/HistoryDataSpec.hpp"
 #include "BufferedHistoryIO.hpp"
+#include "common/DataTypes.hpp"
+
 #include <hdf5.h>
 
 namespace geosx

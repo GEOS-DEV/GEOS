@@ -12,19 +12,14 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file PackCollection.hpp
- */
-
 #ifndef GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 #define GEOSX_FILEIO_TIMEHISTORY_PACKCOLLECTION_HPP_
 
+#include "mesh/DomainPartition.hpp"
 #include "HistoryCollectionBase.hpp"
 
 namespace geosx
 {
-
-class DomainPartition;
 
 /**
  * @class PackCollection
