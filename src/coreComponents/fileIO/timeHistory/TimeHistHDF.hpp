@@ -87,10 +87,10 @@ private:
 };
 
 /**
- * @class HDFHistIO
+ * @class HDFHistoryIO
  * @brief Perform buffered history I/O for a single type(really just output) on using HDF5.
  */
-class HDFHistIO : public BufferedHistoryIO
+class HDFHistoryIO : public BufferedHistoryIO
 {
 public:
   /**
@@ -105,15 +105,15 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writting to the output file.
    */
-  HDFHistIO( string const & filename,
-             localIndex rank,
-             std::vector< localIndex > const & dims,
-             string const & name,
-             std::type_index typeId,
-             localIndex writeHead = 0,
-             localIndex initAlloc = 1,
-             localIndex overallocMultiple = 2,
-             MPI_Comm comm = MPI_COMM_GEOSX );
+  HDFHistoryIO( string const & filename,
+                localIndex rank,
+                std::vector< localIndex > const & dims,
+                string const & name,
+                std::type_index typeId,
+                localIndex writeHead = 0,
+                localIndex initAlloc = 1,
+                localIndex overallocMultiple = 2,
+                MPI_Comm comm = MPI_COMM_GEOSX );
 
   /**
    * @brief Constructor
@@ -124,25 +124,25 @@ public:
    * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
    * @param comm A communicator where every rank will participate in writing to the output file.
    */
-  HDFHistIO( string const & filename,
-             const HistoryMetadata & spec,
-             localIndex writeHead = 0,
-             localIndex initAlloc = 1,
-             localIndex overallocMultiple = 2,
-             MPI_Comm comm = MPI_COMM_GEOSX ):
-    HDFHistIO( filename,
-               spec.getRank(),
-               spec.getDims(),
-               spec.getName(),
-               spec.getType(),
-               writeHead,
-               initAlloc,
-               overallocMultiple,
-               comm )
+  HDFHistoryIO( string const & filename,
+                const HistoryMetadata & spec,
+                localIndex writeHead = 0,
+                localIndex initAlloc = 1,
+                localIndex overallocMultiple = 2,
+                MPI_Comm comm = MPI_COMM_GEOSX ):
+    HDFHistoryIO( filename,
+                  spec.getRank(),
+                  spec.getDims(),
+                  spec.getName(),
+                  spec.getType(),
+                  writeHead,
+                  initAlloc,
+                  overallocMultiple,
+                  comm )
   { }
 
   /// Destructor
-  virtual ~HDFHistIO() { }
+  virtual ~HDFHistoryIO() { }
 
   virtual buffer_unit_type * getBufferHead() override;
 

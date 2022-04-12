@@ -141,15 +141,15 @@ HDFFile::~HDFFile()
   H5Fclose( m_fileId );
 }
 
-HDFHistIO::HDFHistIO( string const & filename,
-                      localIndex rank,
-                      std::vector< localIndex > const & dims,
-                      string const & name,
-                      std::type_index typeId,
-                      localIndex writeHead,
-                      localIndex initAlloc,
-                      localIndex overallocMultiple,
-                      MPI_Comm comm ):
+HDFHistoryIO::HDFHistoryIO( string const & filename,
+                            localIndex rank,
+                            std::vector< localIndex > const & dims,
+                            string const & name,
+                            std::type_index typeId,
+                            localIndex writeHead,
+                            localIndex initAlloc,
+                            localIndex overallocMultiple,
+                            MPI_Comm comm ):
   m_bufferedCount( 0 ),
   m_bufferHead( nullptr ),
   m_dataBuffer( 0 ),
@@ -181,7 +181,7 @@ HDFHistIO::HDFHistIO( string const & filename,
   m_bufferHead = &m_dataBuffer[0];
 }
 
-void HDFHistIO::setupPartition( globalIndex localIdxCount )
+void HDFHistoryIO::setupPartition( globalIndex localIdxCount )
 {
   int size = MpiWrapper::commSize( m_comm );
   int rank = MpiWrapper::commRank( m_comm );
@@ -236,7 +236,7 @@ void HDFHistIO::setupPartition( globalIndex localIdxCount )
   m_subcomm = MpiWrapper::commSplit( m_comm, color, key );
 }
 
-buffer_unit_type * HDFHistIO::getBufferHead()
+buffer_unit_type * HDFHistoryIO::getBufferHead()
 {
   resizeBuffer();
   m_bufferedCount++;
@@ -245,7 +245,7 @@ buffer_unit_type * HDFHistIO::getBufferHead()
   return currentBufferHead;
 }
 
-void HDFHistIO::init( bool existsOkay )
+void HDFHistoryIO::init( bool existsOkay )
 {
   setupPartition( m_dims[0] );
   int rank = MpiWrapper::commRank( m_comm );
@@ -297,7 +297,7 @@ void HDFHistIO::init( bool existsOkay )
   }
 }
 
-void HDFHistIO::write( )
+void HDFHistoryIO::write()
 {
   // check if the size has changed on any process in the primary comm
   bool anyChanged = false;
@@ -371,14 +371,14 @@ void HDFHistIO::write( )
   emptyBuffer( );
 }
 
-void HDFHistIO::compressInFile( )
+void HDFHistoryIO::compressInFile()
 {
   // set the write limit in the file to the current write head
   updateDatasetExtent( m_writeHead );
   m_writeLimit = m_writeHead;
 }
 
-inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
+inline void HDFHistoryIO::resizeFileIfNeeded( localIndex buffered_count )
 {
   if( m_writeHead + buffered_count > m_writeLimit )
   {
@@ -390,7 +390,7 @@ inline void HDFHistIO::resizeFileIfNeeded( localIndex buffered_count )
   }
 }
 
-void HDFHistIO::updateDatasetExtent( hsize_t rowLimit )
+void HDFHistoryIO::updateDatasetExtent( hsize_t rowLimit )
 {
   if( m_subcomm != MPI_COMM_NULL )
   {
@@ -408,18 +408,18 @@ void HDFHistIO::updateDatasetExtent( hsize_t rowLimit )
   }
 }
 
-size_t HDFHistIO::getRowBytes( )
+size_t HDFHistoryIO::getRowBytes()
 {
   return m_typeCount * m_typeSize;
 }
 
-void HDFHistIO::emptyBuffer()
+void HDFHistoryIO::emptyBuffer()
 {
   m_bufferedCount = 0;
   m_bufferHead = &m_dataBuffer[0];
 }
 
-void HDFHistIO::resizeBuffer( )
+void HDFHistoryIO::resizeBuffer()
 {
   // need to store the count every time we collect (which calls this)
   //  regardless of whether the size changes
@@ -438,7 +438,7 @@ void HDFHistIO::resizeBuffer( )
   m_bufferHead = &m_dataBuffer[0] + inUse;
 }
 
-void HDFHistIO::updateCollectingCount( localIndex count )
+void HDFHistoryIO::updateCollectingCount( localIndex count )
 {
   if( LvArray::integerConversion< hsize_t >( count ) != m_dims[0] )
   {
