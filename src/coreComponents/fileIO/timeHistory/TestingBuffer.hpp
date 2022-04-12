@@ -15,7 +15,7 @@
 #ifndef GEOSX_TESTINGBUFFER_HPP
 #define GEOSX_TESTINGBUFFER_HPP
 
-#include "HistoryIO.hpp"
+#include "BufferedHistoryIO.hpp"
 
 namespace geosx
 {

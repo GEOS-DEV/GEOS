@@ -25,7 +25,7 @@
 #include "common/MpiWrapper.hpp"
 
 #include "dataRepository/HistoryDataSpec.hpp"
-#include "HistoryIO.hpp"
+#include "BufferedHistoryIO.hpp"
 #include <hdf5.h>
 
 

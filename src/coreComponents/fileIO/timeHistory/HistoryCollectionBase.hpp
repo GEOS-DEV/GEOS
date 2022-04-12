@@ -15,7 +15,7 @@
 #ifndef GEOSX_HISTORYCOLLECTIONBASE_HPP
 #define GEOSX_HISTORYCOLLECTIONBASE_HPP
 
-#include "TimeHistoryCollection.hpp"
+#include "HistoryCollection.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryCollectionType.hpp"

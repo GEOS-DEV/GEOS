@@ -11,11 +11,11 @@ set( fileIO_headers
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
      timeHistory/HistoryCollectionBase.hpp
-     timeHistory/HistoryIO.hpp
+     timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
      timeHistory/TestingBuffer.hpp
      timeHistory/TimeHistHDF.hpp
-     timeHistory/TimeHistoryCollection.hpp
+     timeHistory/HistoryCollection.hpp
    )
 
 #

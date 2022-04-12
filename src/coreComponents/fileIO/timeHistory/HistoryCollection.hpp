@@ -12,12 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file TimeHistoryCollection.hpp
- */
-
-#ifndef GEOSX_FILEIO_TIMEHISTORY_TIMEHISTORYCOLLECTION_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_TIMEHISTORYCOLLECTION_HPP_
+#ifndef GEOSX_FILEIO_TIMEHISTORY_HISTORYCOLLECTION_HPP_
+#define GEOSX_FILEIO_TIMEHISTORY_HISTORYCOLLECTION_HPP_
 
 #include "dataRepository/BufferOpsDevice.hpp"
 #include "dataRepository/HistoryDataSpec.hpp"

@@ -12,12 +12,8 @@
  * ------------------------------------------------------------------------------------------------------------
  */
 
-/**
- * @file HistoryIO.hpp
- */
-
-#ifndef GEOSX_FILEIO_TIMEHISTORY_HISTORYIO_HPP_
-#define GEOSX_FILEIO_TIMEHISTORY_HISTORYIO_HPP_
+#ifndef GEOSX_FILEIO_TIMEHISTORY_BUFFEREDHISTORYIO_HPP_
+#define GEOSX_FILEIO_TIMEHISTORY_BUFFEREDHISTORYIO_HPP_
 
 #include "dataRepository/Group.hpp"
 
