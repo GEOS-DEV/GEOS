@@ -91,6 +91,19 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
     real64 inner_r0_r   = r0.dot( r );
     real64 inner_r0_AMp = r0.dot( AMp );
 
+    ///////////////////////
+    GEOSX_LOG_RANK_VAR( inner_r0_r );
+    GEOSX_LOG_RANK_VAR( inner_r0_AMp );
+
+    MPI_Request request;
+    GEOSX_LOG_RANK( "iAllReduce launched " );
+    real64 iInner_r0_r = r0.iDot(r, request );
+    MpiWrapper::wait( &request, MPI_STATUS_IGNORE );
+    GEOSX_LOG_RANK_VAR( iInner_r0_r );
+    
+
+    ///////////////////////
+
     m_precond.apply( r, Mr );
     m_operator.apply( Mr, AMr );
 

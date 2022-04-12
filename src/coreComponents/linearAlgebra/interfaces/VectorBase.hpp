@@ -214,6 +214,75 @@ protected:
    */
   virtual real64 dot( Vector const & vec ) const = 0;
 
+  real64 localDot( Vector const & vec ) const
+  {
+    GEOSX_LAI_ASSERT( ready() );
+    GEOSX_LAI_ASSERT( vec.ready() );
+    GEOSX_LAI_ASSERT_EQ( localSize(), vec.localSize() );
+
+    arrayView1d< real64 const > const my_values = values();
+    arrayView1d< real64 const > const vec_values = vec.values();
+
+    RAJA::ReduceSum< parallelDeviceReduce, real64 >  result = 0.0;
+    forAll< parallelDevicePolicy >( localSize(), [result, my_values, vec_values] GEOSX_DEVICE ( localIndex const i )
+    {
+      result += my_values[i] * vec_values[i];
+    } );
+
+    return result.get();
+  }
+
+
+  /**
+   * @brief Nonblocking dot product with the vector vec.
+   * @param vec vector to dot-product with
+   * @param request the MPI_Request to wait on for the dot product completion
+   * @return dot product
+   * @note Each call to iDot must be paired with a call to MpiWrapper::wait( &request, ... )
+   */
+  AsyncRequest< real64 > iDot( Vector const & vec ) const
+  {
+    real64 localDotProduct = localDot( vec );
+ 
+    AsyncRequest< real64 > asyncRequest( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & result )
+    {
+      MpiWrapper::iAllReduce( &localDotProduct,
+                              &result,
+                              1,
+                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                              comm,
+                              &request );
+    });
+    
+    return asyncRequest;
+  }
+
+  /**
+   * @brief Nonblocking dot product with the vector vec.
+   */
+  template< typename ... VECS >
+  AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot( VECS const & ... vecs )
+  {
+    integer constexpr numVecs = sizeof...( VECS )
+    StackArray< real64, numVecs > localDotProducts;
+    LvArray::typeManipulation::forEachArg( [ & ]( Vector const & vec )
+    {
+      localDotProducts.emplace_back( localDot( vec ) );
+    }, vecs... );
+
+    AsyncRequest< std::array< real64, numVecs > > asyncRequest( [ =, comm = comm() ]( MPI_Request & request, std::array< real64, numVecs > & result )
+    {
+      MpiWrapper::iAllReduce( localDotProducts.data(),
+                              result.data(),
+                              numVecs,
+                              MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
+                              comm,
+                              &request );
+    });
+    
+    return asyncRequest;
+  }
+
   /**
    * @brief Update vector <tt>y</tt> as <tt>y</tt> = <tt>x</tt>.
    * @param x vector to copy

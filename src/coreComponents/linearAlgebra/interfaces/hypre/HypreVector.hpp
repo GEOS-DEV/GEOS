@@ -105,6 +105,7 @@ public:
   using VectorBase::open;
   using VectorBase::zero;
   using VectorBase::values;
+  using VectorBase::iDot;
 
   /**
    * @copydoc VectorBase<HypreVector>::created
