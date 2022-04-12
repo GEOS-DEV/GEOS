@@ -85,4 +85,10 @@ void TestingBuffer::updateCollectingCount( localIndex count )
   m_count = count;
 }
 
+localIndex TestingBuffer::getBufferedCount()
+{
+  return 1;
+//  return m_bufferedCount;
+}
+
 }

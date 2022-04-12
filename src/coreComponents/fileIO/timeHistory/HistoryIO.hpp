@@ -66,6 +66,16 @@ public:
    * @param count [in] The new number of items being collected
    */
   virtual void updateCollectingCount( localIndex count ) = 0;
+
+  /**
+   * @brief Query the number of history states currently stored in the internal buffer.
+   * @return The number of discrete time history records buffered to be written.
+   * @note Since the size of each discrete time history can change, this should not be used
+   *        to calculate size, but is useful to check for consistency between collectors
+   *        that should be operating at the same cadence (ie the time collector and the data
+   *        collector).
+   */
+  virtual localIndex getBufferedCount() = 0;
 };
 
 }
