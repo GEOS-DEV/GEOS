@@ -172,9 +172,6 @@ public:
   /// @copydoc geosx::BufferedHistoryIO::updateCollectingCount
   virtual void updateCollectingCount( localIndex count ) override;
 
-  localIndex getBufferedCount() override
-  { return m_bufferedCount; }
-
 private:
 
   /**

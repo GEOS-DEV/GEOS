@@ -36,8 +36,6 @@ public:
 
   void updateCollectingCount( localIndex count ) override;
 
-  localIndex getBufferedCount() override;
-
 private:
   string const m_name;
 
@@ -46,8 +44,6 @@ private:
   std::vector< std::vector< localIndex > > m_dims;
 
   localIndex m_count;
-
-//  localIndex m_bufferedCount;
 
   std::vector< std::vector< double > > m_buffers;
 

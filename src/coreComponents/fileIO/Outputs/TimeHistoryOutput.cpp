@@ -28,7 +28,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
   m_collectorPaths( ),
   m_format( ),
   m_filename( ),
-  m_recordCount( 0 ),
+  m_hasRecordStarted( false ),
   m_io( )
 {
   registerWrapper( viewKeys::timeHistoryOutputTargetString(), &m_collectorPaths ).
@@ -45,7 +45,7 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "The output file format for time history output." );
 
-  registerWrapper( viewKeys::timeHistoryRestartString(), &m_recordCount ).
+  registerWrapper( viewKeys::timeHistoryRestartString(), &m_hasRecordStarted ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::FALSE ).
     setRestartFlags( RestartFlags::WRITE_AND_READ ).
@@ -56,8 +56,6 @@ TimeHistoryOutput::TimeHistoryOutput( string const & name,
 void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, HistoryCollection & collector )
 {
   GEOSX_ASSERT( m_io.empty() );
-
-  bool const freshInit = ( m_recordCount == 0 );
 
   string const outputDirectory = getOutputDirectory();
   string const outputFile = joinPath( outputDirectory, m_filename );
@@ -73,14 +71,14 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
       if( !prefix.empty() )
       { metadata.setName( prefix + metadata.getName() ); }
 
-//      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata, m_recordCount ) );
-      m_io.emplace_back( std::make_unique< TestingBuffer >( metadata.getName(), metadata.getDims() ) );
+      m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, metadata ) );
+//      m_io.emplace_back( std::make_unique< TestingBuffer >( metadata.getName(), metadata.getDims() ) );
       hc.registerBufferProvider( collectorIdx, [this, idx = m_io.size() - 1]( localIndex count )
       {
         m_io[idx]->updateCollectingCount( count );
         return m_io[idx]->getBufferHead();
       } );
-      m_io.back()->init( !freshInit );
+      m_io.back()->init( m_hasRecordStarted );
     }
   };
 
@@ -99,12 +97,12 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
   if( MpiWrapper::commRank() == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
-//    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, m_recordCount, 1, 2, MPI_COMM_SELF ) );
-    m_io.emplace_back( std::make_unique< TestingBuffer >( timeMetadata.getName(), timeMetadata.getDims() ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, 0, 1, 2, MPI_COMM_SELF ) );
+//    m_io.emplace_back( std::make_unique< TestingBuffer >( timeMetadata.getName(), timeMetadata.getDims() ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]()
                                           { return m_io[idx]->getBufferHead(); } );
-    m_io.back()->init( !freshInit );
+    m_io.back()->init( m_hasRecordStarted );
   }
 
   MpiWrapper::barrier( MPI_COMM_GEOSX );
@@ -121,7 +119,7 @@ void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
     }
     MpiWrapper::barrier( MPI_COMM_GEOSX );
     string const outputFile = joinPath( outputDirectory, m_filename );
-    HDFFile( outputFile, (m_recordCount == 0), true, MPI_COMM_GEOSX );
+    HDFFile( outputFile, !m_hasRecordStarted, true, MPI_COMM_GEOSX );
   }
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
@@ -140,7 +138,7 @@ void TimeHistoryOutput::setFileName( string const & root )
 
 void TimeHistoryOutput::reinit()
 {
-  m_recordCount = 0;
+  m_hasRecordStarted = false;
   m_io.clear();
   initializePostInitialConditionsPostSubGroups();
 }
@@ -153,12 +151,11 @@ bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                  DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
 {
   GEOSX_MARK_FUNCTION;
-  localIndex newBuffered = m_io.front()->getBufferedCount( );
   for( auto & th_io : m_io )
   {
     th_io->write( );
   }
-  m_recordCount += newBuffered;
+  m_hasRecordStarted = true;
   return false;
 }
 
