@@ -146,10 +146,10 @@ HDFHistIO::HDFHistIO( string const & filename,
                       std::vector< localIndex > const & dims,
                       string const & name,
                       std::type_index typeId,
-                      MPI_Comm comm,
                       localIndex writeHead,
                       localIndex initAlloc,
-                      localIndex overallocMultiple ):
+                      localIndex overallocMultiple,
+                      MPI_Comm comm ):
   m_bufferedCount( 0 ),
   m_bufferHead( nullptr ),
   m_dataBuffer( 0 ),
