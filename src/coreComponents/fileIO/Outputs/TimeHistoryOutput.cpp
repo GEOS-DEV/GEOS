@@ -15,6 +15,7 @@
 #include "TimeHistoryOutput.hpp"
 
 #include "fileIO/timeHistory/TestingBuffer.hpp"
+#include "fileIO/timeHistory/HDFFile.hpp"
 
 #if defined(GEOSX_USE_PYGEOSX)
 #include "fileIO/python/PyHistoryOutputType.hpp"

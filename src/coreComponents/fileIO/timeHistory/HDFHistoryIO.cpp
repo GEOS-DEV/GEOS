@@ -1,10 +1,6 @@
 #include "HDFHistoryIO.hpp"
 
-#include "fileIO/Outputs/TimeHistoryOutput.hpp"
-
-#include "common/MpiWrapper.hpp"
-
-#include <hdf5.h>
+#include "HDFFile.hpp"
 
 namespace geosx
 {
@@ -81,64 +77,6 @@ inline hid_t GetHDFDataType( std::type_index const & type )
 inline hid_t GetHDFArrayDataType( std::type_index const & type, hsize_t const rank, hsize_t const * dims )
 {
   return H5Tarray_create( GetHDFDataType( type ), rank, dims );
-}
-
-HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm ):
-  m_filename( ),
-  m_fileId( 0 ),
-  m_faplId( 0 ),
-  m_mpioFapl( parallelAccess ),
-  m_comm( comm )
-{
-  int rnk = MpiWrapper::commRank( comm );
-#ifdef GEOSX_USE_MPI
-  if( m_mpioFapl )
-  {
-    m_faplId = H5Pcreate( H5P_FILE_ACCESS );
-    H5Pset_fapl_mpio( m_faplId, m_comm, MPI_INFO_NULL );
-    m_filename = fnm + ".hdf5";
-  }
-  else
-  {
-    m_faplId = H5P_DEFAULT;
-    m_filename = fnm + "." + std::to_string( rnk ) + ".hdf5";
-  }
-#else
-  m_faplId = H5P_DEFAULT;
-  m_filename = fnm + ".hdf5";
-#endif
-  // check if file already exists
-  htri_t exists = 0;
-  H5E_BEGIN_TRY {
-    exists = H5Fis_hdf5( m_filename.c_str() );
-  } H5E_END_TRY
-  // if there is an non-hdf file with the same name,
-  // and we're either not using parallel access or we're rank 0
-  if( exists == 0 && ( !m_mpioFapl || rnk == 0 ) )
-  {
-    remove( m_filename.c_str() );
-  }
-  if( exists > 0 && !deleteExisting )
-  {
-    m_fileId = H5Fopen( m_filename.c_str(), H5F_ACC_RDWR, m_faplId );
-  }
-  else if( exists >= 0 && deleteExisting )
-  {
-    m_fileId = H5Fcreate( m_filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_faplId );
-  }
-  else if( exists < 0 )
-  {
-    m_fileId = H5Fcreate( m_filename.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, m_faplId );
-  }
-}
-
-HDFFile::~HDFFile()
-{
-  if( m_mpioFapl )
-  {
-    H5Pclose( m_faplId );
-  }
-  H5Fclose( m_fileId );
 }
 
 HDFHistoryIO::HDFHistoryIO( string const & filename,

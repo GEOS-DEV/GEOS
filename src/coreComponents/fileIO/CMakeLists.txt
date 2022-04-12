@@ -10,6 +10,7 @@ set( fileIO_headers
      Outputs/SiloOutput.hpp
      Outputs/TimeHistoryOutput.hpp
      silo/SiloFile.hpp
+     timeHistory/HDFFile.hpp
      timeHistory/HistoryCollectionBase.hpp
      timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
@@ -30,6 +31,7 @@ set( fileIO_sources
      Outputs/SiloOutput.cpp
      Outputs/TimeHistoryOutput.cpp
      silo/SiloFile.cpp
+     timeHistory/HDFFile.cpp
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
      timeHistory/TestingBuffer.cpp
