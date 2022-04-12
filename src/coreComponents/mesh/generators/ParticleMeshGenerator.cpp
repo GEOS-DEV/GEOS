@@ -160,9 +160,9 @@ void ParticleMeshGenerator::generateMesh( DomainPartition & domain )
       while(lineStream >> value)
       {
         lineData.push_back(value);
-        if(positionComponent<3) // first three values are the particle position, check for partition membership
-        {
-          inPartition = inPartition && partition.isCoordInPartition(value, positionComponent);
+        if(positionComponent>=1 && positionComponent<4) // 0th value is global ID. Values 1, 2 and 3 are the particle position, check for partition membership
+        { // TODO: This is super obfuscated and hard-to-read right now, make it better
+          inPartition = inPartition && partition.isCoordInPartition(value, positionComponent-1);
           if(!inPartition) // if the current particle is outside this partition, we can ignore the rest of its data and go to the next line
           {
             break;
