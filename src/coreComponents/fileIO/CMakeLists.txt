@@ -14,7 +14,7 @@ set( fileIO_headers
      timeHistory/BufferedHistoryIO.hpp
      timeHistory/PackCollection.hpp
      timeHistory/TestingBuffer.hpp
-     timeHistory/TimeHistHDF.hpp
+     timeHistory/HDFHistoryIO.hpp
      timeHistory/HistoryCollection.hpp
    )
 
@@ -33,7 +33,7 @@ set( fileIO_sources
      timeHistory/HistoryCollectionBase.cpp
      timeHistory/PackCollection.cpp
      timeHistory/TestingBuffer.cpp
-     timeHistory/TimeHistHDF.cpp
+     timeHistory/HDFHistoryIO.cpp
    )
 
 set( dependencyList mesh constitutive silo hdf5 )

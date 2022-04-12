@@ -1,4 +1,4 @@
-#include "fileIO/timeHistory/TimeHistHDF.hpp"
+#include "fileIO/timeHistory/HDFHistoryIO.hpp"
 #include "mainInterface/initialization.hpp"
 
 #include <gtest/gtest.h>

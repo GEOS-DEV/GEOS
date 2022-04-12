@@ -1,4 +1,4 @@
-#include "TimeHistHDF.hpp"
+#include "HDFHistoryIO.hpp"
 
 #include "fileIO/Outputs/TimeHistoryOutput.hpp"
 
