@@ -17,7 +17,7 @@
 
 
 #include "PartitionBase.hpp"
-//#include "mesh/DomainPartition.hpp"
+#include "mesh/DomainPartition.hpp"
 
 
 #include <map>
@@ -67,7 +67,11 @@ public:
 
   int getColor() override;
 
-//  void RepartitionMasterParticlesToNeighbors(DomainPartition & domain);
+  void repartitionMasterParticlesToNeighbors(DomainPartition & domain);
+
+  void sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,              // Single list of coordinates sent to all neighbors
+                                     std::vector<std::vector<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
+  );
 
   /// number of partitions
   array1d< int > m_Partitions;

@@ -73,6 +73,12 @@ public:
   ///@{
 
   /**
+   * @brief Set the ghost rank of particles in this subregion
+   * @param rank the mpi rank to which all particles in this subregion (in this partition) will have their ghost rank set to
+   */
+  void setGhostRank( int rank, int np );
+
+  /**
    * @brief Fill the ParticleSubRegion by copying those of the source ParticleBlock
    * @param particleBlock the ParticleBlock which properties (connectivity info) will be copied.
    */

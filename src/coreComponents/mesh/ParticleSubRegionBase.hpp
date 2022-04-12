@@ -94,6 +94,32 @@ public:
   { m_hasRVectors = hasRVectors; }
 
   /**
+   * @brief Get the global ID of each particle in this subregion.
+   * @return an arrayView1d of const particle global IDs
+   */
+  arrayView1d< int const > getParticleID() const
+  { return m_particleID; }
+
+  /**
+   * @copydoc getParticleID() const
+   */
+  arrayView1d< int > getParticleID()
+  { return m_particleID; }
+
+  /**
+   * @brief Get the ghost rank of each particle in this subregion.
+   * @return an arrayView1d of const particle ghost ranks
+   */
+  arrayView1d< int const > getGhostRank() const
+  { return m_ghostRank; }
+
+  /**
+   * @copydoc getGhostRank() const
+   */
+  arrayView1d< int > getGhostRank()
+  { return m_ghostRank; }
+
+  /**
    * @brief Get the center of each particle in this subregion.
    * @return an arrayView1d of const particle centers
    */
@@ -246,6 +272,8 @@ public:
   {
     /// @return String key for the member level field for the particle global ID.
     static constexpr char const * particleIDString() { return "particleID"; }
+    /// @return String key for the member level field for the particle ghost rank.
+    static constexpr char const * ghostRankString() { return "ghostRank"; }
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
     /// @return String key for the member level field for the particle velocity.
@@ -281,6 +309,9 @@ private:
 protected:
   /// Boolean indicating whether the particle subregion contains particles needing r-vectors defining their domain extent.
   bool m_hasRVectors;
+
+  /// Member level field for particle ghost ranks
+  array1d< int > m_ghostRank;
 
   /// Member level field for the particle global ID.
   array1d< int > m_particleID;

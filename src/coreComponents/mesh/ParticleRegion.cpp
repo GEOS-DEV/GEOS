@@ -19,6 +19,7 @@
 #include "ParticleRegion.hpp"
 #include "common/TimingMacros.hpp"
 #include "LvArray/src/SparsityPattern.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -43,10 +44,13 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
     ParticleSubRegion & subRegion = particleSubRegions.registerGroup< ParticleSubRegion >( particleBlockName );
     ParticleBlockABC & source = particleBlocks.getGroup< ParticleBlockABC >( subRegion.getName() );
     subRegion.copyFromParticleBlock( source );
+    int const mpiRank = MpiWrapper::commRank( MPI_COMM_GEOSX );
+    subRegion.setGhostRank( mpiRank, subRegion.size() );
   }
 }
 
 // TODO This isn't great because really this calculation should only happen once, classic speed/memory trade-off. It just seems silly having multiple versions of the particle coordinates owned by the manager, regions and subregions.
+// TODO This should ABSOLUTELY be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that we can access those functions directly if needed
 array2d< real64 > ParticleRegion::getParticleCoordinates() const
 {
   int size = 8*(this->size()); // number of particle corners in this region

@@ -25,6 +25,7 @@ using namespace dataRepository;
 ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ): // @suppress("Class members should be properly initialized")
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
+  m_ghostRank(),
   m_particleID(),
   m_particleCenter(),
   m_particleVelocity(),
@@ -37,6 +38,9 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
 {
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
+
+  registerWrapper( viewKeyStruct::ghostRankString(), &m_ghostRank ).
+    setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
     setPlotLevel( PlotLevel::LEVEL_1 );

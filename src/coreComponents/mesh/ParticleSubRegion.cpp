@@ -41,10 +41,19 @@ ParticleSubRegion::~ParticleSubRegion()
   // Left blank
 }
 
+void ParticleSubRegion::setGhostRank(int rank, int np)
+{
+  for(int i=0; i<np; i++)
+  {
+    m_ghostRank[i] = rank;
+  }
+}
+
 void ParticleSubRegion::copyFromParticleBlock( ParticleBlockABC & particleBlock )
 {
   // Defines the (unique) particle type of this cell particle region,
   // and its associated number of nodes, edges, faces.
+  m_ghostRank.resize(particleBlock.size());
   m_particleType = particleBlock.getParticleType();
   m_particleID = particleBlock.getParticleID();
   m_particleCenter = particleBlock.getParticleCenter();
