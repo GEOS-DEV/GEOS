@@ -113,6 +113,16 @@ class Geosx(CMakePackage, CudaPackage):
     depends_on('camp@0.1.0')
     depends_on('camp+cuda', when='+cuda')
 
+    for sm_ in CudaPackage.cuda_arch_values:
+        depends_on('raja cuda_arch={0}'.format(sm_),
+                   when='+raja cuda_arch={0}'.format(sm_))
+        depends_on('umpire cuda_arch={0}'.format(sm_),
+                   when='+umpire cuda_arch={0}'.format(sm_))
+        depends_on('chai cuda_arch={0}'.format(sm_),
+                   when='+chai cuda_arch={0}'.format(sm_))
+        depends_on('camp cuda_arch={0}'.format(sm_),
+                   when='+camp cuda_arch={0}'.format(sm_))
+
     # #
     # # IO
     # #

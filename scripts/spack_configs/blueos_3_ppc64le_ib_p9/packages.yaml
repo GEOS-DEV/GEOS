@@ -1,6 +1,5 @@
 packages:
   all:
-    target: [ppc64le]
     compiler: [gcc, clang]
     providers:
       mpi: [spectrum-mpi]
@@ -24,15 +23,14 @@ packages:
   essl:
     buildable: False
     externals:
-      - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda +lapack
+      - spec: essl@6.2.1 ~ilp64 threads=openmp +cuda
         prefix: /usr/tcetmp/packages/essl/essl-6.2.1/
 
   cuda:
     buildable: False
     externals:
     - spec: cuda@10.1.243
-      modules:
-      - cuda/10.1.243
+      prefix: /usr/tce/packages/cuda/cuda-10.1.243
 
   # System level packages to not build
   cmake:
