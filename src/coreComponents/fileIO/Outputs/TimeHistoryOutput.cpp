@@ -97,7 +97,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition const & domain, H
   if( MpiWrapper::commRank() == 0 )
   {
     HistoryMetadata timeMetadata = collector.getTimeMetaData();
-    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, 0, 1, 2, MPI_COMM_SELF ) );
+    m_io.emplace_back( std::make_unique< HDFHistIO >( outputFile, timeMetadata, MPI_COMM_SELF ) );
 //    m_io.emplace_back( std::make_unique< TestingBuffer >( timeMetadata.getName(), timeMetadata.getDims() ) );
     // We copy the back `idx` not to rely on possible future appends to `m_io`.
     collector.registerTimeBufferProvider( [this, idx = m_io.size() - 1]()

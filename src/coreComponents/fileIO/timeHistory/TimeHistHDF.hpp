@@ -124,10 +124,10 @@ public:
              std::vector< localIndex > const & dims,
              string const & name,
              std::type_index typeId,
+             MPI_Comm comm = MPI_COMM_GEOSX,
              localIndex writeHead = 0,
              localIndex initAlloc = 1,
-             localIndex overallocMultiple = 2,
-             MPI_Comm comm = MPI_COMM_GEOSX );
+             localIndex overallocMultiple = 2 );
 
   /**
    * @brief Constructor
@@ -140,19 +140,20 @@ public:
    */
   HDFHistIO( string const & filename,
              const HistoryMetadata & spec,
+             MPI_Comm comm = MPI_COMM_GEOSX,
              localIndex writeHead = 0,
              localIndex initAlloc = 1,
-             localIndex overallocMultiple = 2,
-             MPI_Comm comm = MPI_COMM_GEOSX ):
+             localIndex overallocMultiple = 2 )
+    :
     HDFHistIO( filename,
                spec.getRank(),
                spec.getDims(),
                spec.getName(),
                spec.getType(),
+               comm,
                writeHead,
                initAlloc,
-               overallocMultiple,
-               comm )
+               overallocMultiple )
   { }
 
   /// Destructor
