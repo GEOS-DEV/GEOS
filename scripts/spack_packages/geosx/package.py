@@ -102,26 +102,23 @@ class Geosx(CMakePackage, CudaPackage):
     # # Performance portability
     # #
     depends_on('raja@0.12.1+openmp~examples~exercises')
-    depends_on('raja+cuda', when='+cuda')
 
     depends_on('umpire@4.1.2~c+openmp~examples')
-    depends_on('umpire+cuda', when='+cuda')
 
     depends_on('chai@2.2.2+openmp~benchmarks~examples')
-    depends_on('chai+cuda', when='+cuda')
 
     depends_on('camp@0.1.0')
-    depends_on('camp+cuda', when='+cuda')
 
-    for sm_ in CudaPackage.cuda_arch_values:
-        depends_on('raja cuda_arch={0}'.format(sm_),
-                   when='+raja cuda_arch={0}'.format(sm_))
-        depends_on('umpire cuda_arch={0}'.format(sm_),
-                   when='+umpire cuda_arch={0}'.format(sm_))
-        depends_on('chai cuda_arch={0}'.format(sm_),
-                   when='+chai cuda_arch={0}'.format(sm_))
-        depends_on('camp cuda_arch={0}'.format(sm_),
-                   when='+camp cuda_arch={0}'.format(sm_))
+    with when('+cuda'):
+        for sm_ in CudaPackage.cuda_arch_values:
+            depends_on('raja+cuda cuda_arch={0}'.format(sm_),
+                       when='cuda_arch={0}'.format(sm_))
+            depends_on('umpire~shared+cuda cuda_arch={0}'.format(sm_),
+                       when='cuda_arch={0}'.format(sm_))
+            depends_on('chai+cuda cuda_arch={0}'.format(sm_),
+                       when='cuda_arch={0}'.format(sm_))
+            depends_on('camp+cuda cuda_arch={0}'.format(sm_),
+                       when='cuda_arch={0}'.format(sm_))
 
     # #
     # # IO
