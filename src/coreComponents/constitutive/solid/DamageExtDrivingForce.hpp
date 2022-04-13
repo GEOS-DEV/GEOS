@@ -87,15 +87,6 @@ public:
   {
     UPDATE_BASE::smallStrainUpdate( k, q, strainIncrement, stress, stiffness );
     real64 factor = getDegradationValue( k, q );
-    LvArray::tensorOps::scale< 6 >( stress, factor );
-
-    real64 const mu    = stiffness.m_shearModulus; 
-    real64 const kappa = stiffness.m_bulkModulus; 
-    stiffness.scaleParams( factor );
-
-    // compute volumetric and deviatoric strain invariants
-    real64 strain[6];
-    UPDATE_BASE::getElasticStrain( k, q, strain );
 
     real64 stressP;
     real64 stressQ;
@@ -106,24 +97,35 @@ public:
                                        stressQ,
                                        deviator );
 
+    real64 const mu    = stiffness.m_shearModulus; 
+    real64 const kappa = stiffness.m_bulkModulus; 
+
+    // compute volumetric and deviatoric strain invariants
+    real64 strain[6];
+    UPDATE_BASE::getElasticStrain( k, q, strain );
+
     // compute invariants of degraded stress 
-    real64 I1 = stressP; 
-    real64 sqrt_J2 = sqrt(3) * stressQ; 
+    real64 I1 = factor * stressP * 3.; 
+    real64 sqrt_J2 = factor * stressQ / sqrt(3.); 
 
     // Calculate the external driving force according to Kumar et al. 
     real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale; 
     
-    real64 beta1 = - 0.375 * m_criticalFractureEnergy / m_lengthScale * (0.5*(1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/m_compressStrength/m_tensileStrength)
-                   - (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144 / mu / kappa
+    real64 beta1 = - 0.375 * m_criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
+                   - (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
                    - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength, 3) - pow(m_tensileStrength, 3))*m_tensileStrength/18/(mu*mu)/(kappa*kappa)); 
     
-    real64 beta2 = - 0.375 * m_criticalFractureEnergy / m_lengthScale * (sqrt(3)*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2/m_compressStrength/m_tensileStrength)
-                   - (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48 / sqrt(3) / mu / kappa
-                   - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength,3) + pow(m_tensileStrength,3))*m_tensileStrength/6/sqrt(3)/(mu*mu)/(kappa*kappa)); 
+    real64 beta2 = - 0.375 * m_criticalFractureEnergy / m_lengthScale * (sqrt(3.)*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
+                   - (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48. / sqrt(3.) / mu / kappa
+                   - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength,3) + pow(m_tensileStrength,3))*m_tensileStrength/6./sqrt(3.)/(mu*mu)/(kappa*kappa)); 
 
-    real64 beta3 = (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy; 
+    real64 beta3 = m_lengthScale * (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy; 
 
     m_extDrivingForce( k, q ) = 1. / (1 + beta3*I1*I1) * (beta2 * sqrt_J2 + beta1*I1 + beta0); 
+
+    LvArray::tensorOps::scale< 6 >( stress, factor );
+
+    stiffness.scaleParams( factor );
   }
 
   GEOSX_HOST_DEVICE
