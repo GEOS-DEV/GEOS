@@ -163,7 +163,7 @@ void PackCollection::updateSetsIndices( DomainPartition const & domain )
     arrayView1d< integer const > const ghostRank = targetObject->ghostRank( );
     for( std::size_t setIdx = 0; setIdx < numSets; ++setIdx )
     {
-      array1d< localIndex > & setIndices = m_setsIndices[ setIdx ] ;
+      array1d< localIndex > & setIndices = m_setsIndices[ setIdx ];
       array1d< localIndex > ownedIndices( setIndices.size() );
 
       localIndex ownIdx = 0;

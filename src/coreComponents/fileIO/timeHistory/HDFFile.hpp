@@ -42,10 +42,10 @@ public:
   ~HDFFile();
 
   /**
- * @brief Whether a dataset/group with the specified name exists in the target.
- * @param name The dataset/group name to check for.
- * @return Whether the dataset/group exists in the target.
- */
+   * @brief Whether a dataset/group with the specified name exists in the target.
+   * @param name The dataset/group name to check for.
+   * @return Whether the dataset/group exists in the target.
+   */
   bool checkInTarget( const string & name ) const;
 
   /**

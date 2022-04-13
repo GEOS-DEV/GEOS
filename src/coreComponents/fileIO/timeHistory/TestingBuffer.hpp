@@ -20,7 +20,7 @@
 namespace geosx
 {
 
-class TestingBuffer: public BufferedHistoryIO
+class TestingBuffer : public BufferedHistoryIO
 {
 public:
 

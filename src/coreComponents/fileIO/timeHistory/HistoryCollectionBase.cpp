@@ -14,7 +14,8 @@
 
 #include "HistoryCollectionBase.hpp"
 
-namespace geosx {
+namespace geosx
+{
 
 void HistoryCollectionBase::initializePostSubGroups()
 {

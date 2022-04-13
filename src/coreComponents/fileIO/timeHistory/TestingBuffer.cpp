@@ -25,9 +25,7 @@ TestingBuffer::TestingBuffer( string name, std::vector< localIndex > const & dim
   m_initialDims( dims ),
   m_count( 1 ),
   m_numStorages( 0 )
-{
-
-}
+{}
 
 buffer_unit_type * TestingBuffer::getBufferHead()
 {
@@ -38,13 +36,11 @@ buffer_unit_type * TestingBuffer::getBufferHead()
 
   m_buffers.emplace_back( n, 0 );
 
-  return reinterpret_cast<buffer_unit_type *>(m_buffers.back().data());
+  return reinterpret_cast< buffer_unit_type * >( m_buffers.back().data() );
 }
 
 void TestingBuffer::init( bool existsOkay )
-{
-  GEOSX_LOG( "TestingBuffer::init" );
-}
+{}
 
 void TestingBuffer::write()
 {
@@ -76,9 +72,7 @@ void TestingBuffer::write()
 }
 
 void TestingBuffer::compressInFile()
-{
-
-}
+{}
 
 void TestingBuffer::updateCollectingCount( localIndex count )
 {

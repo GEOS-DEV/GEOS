@@ -21,7 +21,8 @@
 #include "fileIO/python/PyHistoryCollectionType.hpp"
 #endif
 
-namespace geosx {
+namespace geosx
+{
 
 class HistoryCollectionBase : public HistoryCollection
 {
@@ -66,9 +67,9 @@ public:
 protected:
 
   /**
- * @brief Update the indices from the sets being collected.
- * @param domain The DomainPartition of the problem.
- */
+   * @brief Update the indices from the sets being collected.
+   * @param domain The DomainPartition of the problem.
+   */
   virtual void updateSetsIndices( DomainPartition const & domain ) = 0;
 
   /**
@@ -104,7 +105,10 @@ protected:
   /// Callbacks to get the current buffer head to write history data into
   std::vector< BufferProvider > m_bufferProviders;
 
-  /// The set of metadata collectors for this collector ( currently only used to collect coordinates of mesh objects when collecting field data )
+  /**
+   * @brief The set of metadata collectors for this collector
+   * @note Currently only used to collect coordinates of mesh objects when collecting field data.
+   */
   std::vector< std::unique_ptr< HistoryCollection > > m_metaDataCollectors;
 };
 

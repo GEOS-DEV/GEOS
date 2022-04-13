@@ -48,9 +48,11 @@ HDFFile::HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, 
 #endif
   // check if file already exists
   htri_t exists = 0;
-  H5E_BEGIN_TRY {
-      exists = H5Fis_hdf5( m_filename.c_str() );
-    } H5E_END_TRY
+  H5E_BEGIN_TRY
+  {
+    exists = H5Fis_hdf5( m_filename.c_str() );
+  }
+  H5E_END_TRY
   // if there is an non-hdf file with the same name,
   // and we're either not using parallel access or we're rank 0
   if( exists == 0 && ( !m_mpioFapl || rnk == 0 ) )
@@ -84,9 +86,9 @@ bool HDFFile::checkInTarget( const string & name ) const
 {
   int exists = 0;
   H5E_BEGIN_TRY
-    {
-      exists = H5Gget_objinfo( this->operator int64_t(), name.c_str(), 0, NULL );
-    }
+  {
+    exists = H5Gget_objinfo( this->operator int64_t(), name.c_str(), 0, NULL );
+  }
   H5E_END_TRY
   return ( exists == 0 );
 }
