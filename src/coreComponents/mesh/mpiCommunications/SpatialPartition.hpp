@@ -67,10 +67,12 @@ public:
 
   int getColor() override;
 
-  void repartitionMasterParticlesToNeighbors(DomainPartition & domain);
+  void repartitionMasterParticlesToNeighbors(DomainPartition & domain,
+                                             MPI_iCommData & icomm);
 
-  void sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,              // Single list of coordinates sent to all neighbors
-                                     std::vector<std::vector<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
+  void sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
+                                     MPI_iCommData & icomm,                                                         // Solver's MPI communicator
+                                     std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
   );
 
   /// number of partitions
