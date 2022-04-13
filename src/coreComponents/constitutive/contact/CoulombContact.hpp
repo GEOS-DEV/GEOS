@@ -297,7 +297,7 @@ inline void CoulombContactUpdates::updateFractureState( localIndex const k,
 {
   using namespace extrinsicMeshData::contact;
 
-  if( dispJump[0] >  -LvArray::NumericLimits< real64 >::epsilon )
+  if( dispJump[0] >  -m_displacementJumpThreshold )
   {
     fractureState = FractureState::Open;
     m_elasticSlip[k][0] = 0.0;
