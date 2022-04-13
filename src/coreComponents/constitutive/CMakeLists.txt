@@ -107,7 +107,7 @@ set( constitutive_headers
      solid/SolidModelDiscretizationOpsTransverseIsotropic.hpp
      solid/SolidModelDiscretizationOpsOrthotropic.hpp
      solid/TriaxialDriver.hpp
-     solid/porosity/BiotExtrinsicData.hpp
+     solid/porosity/PorosityExtrinsicData.hpp
      solid/porosity/BiotPorosity.hpp
      solid/porosity/PorosityBase.hpp
      solid/porosity/PressurePorosity.hpp
