@@ -837,6 +837,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   } ); // subregion loop
 
 
+  // Particle repartitioning
+  partition.repartitionMasterParticlesToNeighbors(domain, m_iComm);
+
+
   // Calculate stable time step
   real64 wavespeed = 0.0;
   real64 length = std::fmin(m_hx[0],std::fmin(m_hx[1],m_hx[2]));
@@ -854,7 +858,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     }
   } );
 
-  return m_cflFactor*length/wavespeed;
+  real64 dtReturn = wavespeed > 1.0e-12 ? m_cflFactor*length/wavespeed : DBL_MAX; // This partitions's dt, make it huge if wavespeed=0.0 (this happens when there are no particles on this partition)
+  return dtReturn;
 }
 
 void SolidMechanicsMPM::setConstitutiveNamesCallSuper( ParticleSubRegionBase & subRegion ) const
