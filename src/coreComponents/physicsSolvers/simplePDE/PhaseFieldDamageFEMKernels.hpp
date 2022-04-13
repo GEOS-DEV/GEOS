@@ -100,7 +100,8 @@ public:
                           CRSMatrixView< real64, globalIndex const > const inputMatrix,
                           arrayView1d< real64 > const inputRhs,
                           string const fieldName,
-                          int const localDissipationOption ):
+                          int const localDissipationOption, 
+                          int const extDrivingForceOption ):
     Base( nodeManager,
           edgeManager,
           faceManager,
@@ -114,7 +115,8 @@ public:
           inputRhs ),
     m_X( nodeManager.referencePosition()),
     m_nodalDamage( nodeManager.template getReference< array1d< real64 > >( fieldName )),
-    m_localDissipationOption( localDissipationOption )
+    m_localDissipationOption( localDissipationOption ),
+    m_extDrivingForceOption( extDrivingForceOption )
   {}
 
   //***************************************************************************
@@ -215,18 +217,25 @@ public:
     {
       if( m_localDissipationOption == 1 )
       {
-        stack.localResidual[ a ] += detJ * ( -3 * N[a] / 16  -
-                                              0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) -
-                                              (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) - 
-                                              (extDrivingForce / 2 / Gc * ell * N[a])); // External driving force added 
+        stack.localResidual[ a ] += detJ * ( - 3 * N[a] / 16  
+                                             - 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) 
+                                             - (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) );  
+
+        if ( m_extDrivingForceOption == 1 )
+        {
+          stack.localResidual[ a ] -= detJ * ( extDrivingForce / 2. / Gc * ell * N[a] ); // External driving force added
+        }
       }
       else
       {
-        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage +
-                                              (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) +
-                                              N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) + 
-                                              (extDrivingForce / 2 / Gc * ell * N[a]) ); // External driving force added 
+        stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage 
+                                             + (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) 
+                                             + N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) ); 
 
+        if ( m_extDrivingForceOption == 1 )
+        { 
+          stack.localResidual[ a ] -= detJ * ( extDrivingForce / 2. / Gc * ell * N[a] ); // External driving force added
+        }
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
@@ -290,6 +299,8 @@ protected:
 
   int const m_localDissipationOption;
 
+  int const m_extDrivingForceOption; 
+
 };
 
 using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDamageKernel,
@@ -298,6 +309,7 @@ using PhaseFieldDamageKernelFactory = finiteElement::KernelFactory< PhaseFieldDa
                                                                     CRSMatrixView< real64, globalIndex const > const,
                                                                     arrayView1d< real64 > const,
                                                                     string const,
+                                                                    int,
                                                                     int >;
 
 } // namespace geosx
