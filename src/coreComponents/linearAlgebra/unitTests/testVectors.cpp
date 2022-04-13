@@ -278,6 +278,43 @@ TYPED_TEST_P( VectorTest, dotProduct )
   EXPECT_DOUBLE_EQ( dp, x.globalSize() );
 }
 
+TYPED_TEST_P( VectorTest, nonBlockingDotProduct )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  Vector x;
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+
+  Vector y( x );
+  y.reciprocal();
+
+  AsyncRequest< real64 > request = x.iDot( y );
+
+  real64 const dp = request.complete();
+  EXPECT_DOUBLE_EQ( dp, x.globalSize() );
+}
+
+TYPED_TEST_P( VectorTest, nonBlockingDotProductMultiple )
+{
+  using Vector = typename TypeParam::ParallelVector;
+
+  Vector x;
+  createAndAssemble< parallelDevicePolicy<> >( 3, x );
+
+  Vector y( x );
+  y.reciprocal();
+
+  Vector z( x );
+  z.reciprocal();
+  z.scale( 3.0 );
+
+  AsyncRequest< std::array< real64, 2 > > request = x.iDot2( y, z );
+
+  std::array< real64, 2 > const dp = request.complete();
+  EXPECT_DOUBLE_EQ( dp[0], x.globalSize() );
+  EXPECT_DOUBLE_EQ( dp[1], 3*x.globalSize() );
+}
+
 TYPED_TEST_P( VectorTest, axpy )
 {
   using Vector = typename TypeParam::ParallelVector;
@@ -377,6 +414,8 @@ REGISTER_TYPED_TEST_SUITE_P( VectorTest,
                              scaleValues,
                              reciprocal,
                              dotProduct,
+                             nonBlockingDotProduct,
+                             nonBlockingDotProductMultiple,
                              axpy,
                              axpby,
                              axpbypcz,

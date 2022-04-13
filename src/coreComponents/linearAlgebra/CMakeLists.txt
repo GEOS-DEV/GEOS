@@ -26,6 +26,7 @@ set( linearAlgebra_headers
      solvers/PreconditionerJacobi.hpp
      solvers/SeparateComponentPreconditioner.hpp
      utilities/Arnoldi.hpp
+     utilities/AsyncRequest.hpp
      utilities/BlockOperator.hpp
      utilities/BlockOperatorView.hpp
      utilities/BlockOperatorWrapper.hpp

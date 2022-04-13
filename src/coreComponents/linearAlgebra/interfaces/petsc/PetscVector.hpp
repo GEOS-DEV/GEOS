@@ -99,6 +99,8 @@ public:
   using VectorBase::open;
   using VectorBase::zero;
   using VectorBase::values;
+  using VectorBase::iDot;
+  using VectorBase::iDot2;
 
   /**
    * @copydoc VectorBase<PetscVector>::created

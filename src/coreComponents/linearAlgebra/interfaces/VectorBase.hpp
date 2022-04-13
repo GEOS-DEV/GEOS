@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_INTERFACES_VECTORBASE_HPP_
 
 #include "linearAlgebra/common/common.hpp"
+#include "linearAlgebra/utilities/AsyncRequest.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -222,12 +223,13 @@ protected:
 
     arrayView1d< real64 const > const my_values = values();
     arrayView1d< real64 const > const vec_values = vec.values();
-
-    RAJA::ReduceSum< parallelDeviceReduce, real64 >  result = 0.0;
-    forAll< parallelDevicePolicy >( localSize(), [result, my_values, vec_values] GEOSX_DEVICE ( localIndex const i )
+printf("Yes\n");
+    RAJA::ReduceSum< parallelDeviceReduce, real64 >  result( 0.0 );
+    forAll< parallelDevicePolicy<> >( localSize(), [result, my_values, vec_values] GEOSX_DEVICE ( localIndex const i )
     {
       result += my_values[i] * vec_values[i];
     } );
+GEOSX_LOG_RANK( "Yes2" );
 
     return result.get();
   }
@@ -244,6 +246,7 @@ protected:
   {
     real64 localDotProduct = localDot( vec );
  
+GEOSX_LOG_RANK( "Yes3" );
     AsyncRequest< real64 > asyncRequest( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & result )
     {
       MpiWrapper::iAllReduce( &localDotProduct,
@@ -254,6 +257,7 @@ protected:
                               &request );
     });
     
+GEOSX_LOG_RANK( "Yes4" );
     return asyncRequest;
   }
 
@@ -261,10 +265,10 @@ protected:
    * @brief Nonblocking dot product with the vector vec.
    */
   template< typename ... VECS >
-  AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot( VECS const & ... vecs )
+  AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const
   {
-    integer constexpr numVecs = sizeof...( VECS )
-    StackArray< real64, numVecs > localDotProducts;
+    integer constexpr numVecs = sizeof...( VECS );
+    StackArray< real64, 1, numVecs > localDotProducts;
     LvArray::typeManipulation::forEachArg( [ & ]( Vector const & vec )
     {
       localDotProducts.emplace_back( localDot( vec ) );

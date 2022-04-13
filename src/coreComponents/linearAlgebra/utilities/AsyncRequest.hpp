@@ -16,8 +16,10 @@
  * @file AsyncRequest.hpp
  */
 
-#ifndef GEOSX_LINEARALGEBRA_UTILITIES_S
-#define GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
+#ifndef GEOSX_LINEARALGEBRA_UTILITIES_ASYNCREQUEST_HPP_
+#define GEOSX_LINEARALGEBRA_UTILITIES_ASYNCREQUEST_HPP_
+
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -28,24 +30,26 @@ class AsyncRequest
 public:
 
 template< typename F >
-AsyncRequest( F f )
+explicit AsyncRequest( F f )
 {
-  f(  )
+  m_result = std::make_unique< T >();
+  m_request = std::make_unique< MPI_Request >();
+  f( *m_request, *m_result );
 }
 
 T const & complete() const
 {
-  MpiWrapper::wait( &m_request, MPI_STATUS_IGNORE );
-  return m_result;
+  MpiWrapper::wait( m_request.get(), MPI_STATUS_IGNORE );
+  return *m_result;
 }
 
 private:
 
-  MPI_Request m_request{};
-  T m_result{};
+  std::unique_ptr< MPI_Request > m_request{};
+  std::unique_ptr< T > m_result{};
 
 };
 
 } // namespace geosx
 
-#endif //GEOSX_LINEARALGEBRA_UTILITIES_ARNOLDI_HPP_
+#endif // GEOSX_LINEARALGEBRA_UTILITIES_ASYNCREQUEST_HPP_

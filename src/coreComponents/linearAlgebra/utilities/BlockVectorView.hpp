@@ -20,6 +20,7 @@
 #define GEOSX_LINEARALGEBRA_UTILITIES_BLOCKVECTORVIEW_HPP_
 
 #include "common/common.hpp"
+#include "linearAlgebra/utilities/AsyncRequest.hpp"
 #include "common/MpiWrapper.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
@@ -116,8 +117,11 @@ public:
    * @return the dot product
    * @note Each call to iDot must be paired with a call to MpiWrapper::wait( &request, ... )
    */
-  real64 iDot( BlockVectorView const & x,
-               MPI_Request & request ) const;
+   AsyncRequest< real64 > iDot( BlockVectorView const & x ) const;
+
+
+   template< typename ... VECS >
+   AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const;
 
   /**
    * @brief 2-norm of the block vector.
@@ -349,34 +353,15 @@ real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
 }
 
 template< typename VECTOR >
-real64 BlockVectorView< VECTOR >::iDot( BlockVectorView const & src,
-                                        MPI_Request & request ) const
+AsyncRequest< real64 > BlockVectorView< VECTOR >::iDot( BlockVectorView const & src ) const
 {
-  GEOSX_LAI_ASSERT_EQ( blockSize(), src.blockSize() );
-  real64 result = 0;
-  real64 localDotProduct = 0;
-  for( localIndex i = 0; i < blockSize(); i++ )
-  {
-    GEOSX_LAI_ASSERT( block( i ).ready() );
-    GEOSX_LAI_ASSERT( src.block( i ).ready() );
-    GEOSX_LAI_ASSERT_EQ( block( i ).globalSize(), src.block( i ).globalSize() );
-    
-    arrayView1d< real64 const > const my_values = block( i ).m_values.toViewConst();
-    arrayView1d< real64 const > const vec_values = src.block(i ).m_values.toViewConst();
+  return AsyncRequest< real64 >( [](auto, auto){} );
+}
 
-    forAll< parallelDevicePolicy >( localSize(), [localDotProduct, my_values, vec_values] GEOSX_DEVICE ( localIndex const k )
-    {
-      localDotProduct = localDotProduct + my_values[k] * vec_values[k];
-    } );
-  }
-  MpiWrapper::iAllReduce( &localDotProduct,
-                          &result,
-                          1,
-                          MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
-                          block( 0 ).comm(),
-                          &request );
-
-  return result;
+template< typename VECTOR >
+template< typename ... VECS > AsyncRequest< std::array< real64, sizeof...( VECS ) > > BlockVectorView<VECTOR>::iDot2( VECS const & ... vecs ) const
+{
+  return AsyncRequest< std::array< real64, sizeof...( VECS ) > >( [](auto,auto){} );
 }
 
 template< typename VECTOR >

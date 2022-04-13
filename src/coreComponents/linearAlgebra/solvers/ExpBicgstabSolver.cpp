@@ -88,27 +88,37 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
       break;
     }
 
-    real64 inner_r0_r   = r0.dot( r );
+    // real64 inner_r0_r   = r0.dot( r );
     real64 inner_r0_AMp = r0.dot( AMp );
 
     ///////////////////////
-    GEOSX_LOG_RANK_VAR( inner_r0_r );
-    GEOSX_LOG_RANK_VAR( inner_r0_AMp );
+    // GEOSX_LOG_RANK_VAR( inner_r0_r );
+    // GEOSX_LOG_RANK_VAR( inner_r0_AMp );
 
-    MPI_Request request;
-    GEOSX_LOG_RANK( "iAllReduce launched " );
-    real64 iInner_r0_r = r0.iDot(r, request );
-    MpiWrapper::wait( &request, MPI_STATUS_IGNORE );
-    GEOSX_LOG_RANK_VAR( iInner_r0_r );
-    
+    // MPI_Request request;
+    // GEOSX_LOG_RANK( "iAllReduce launched " );
+    // real64 iInner_r0_r = r0.iDot(r, request );
+    // MpiWrapper::wait( &request, MPI_STATUS_IGNORE );
+    // GEOSX_LOG_RANK_VAR( iInner_r0_r );
 
-    ///////////////////////
+    AsyncRequest< real64 > request = r0.iDot( r );
+
+    // // ... do stuff
+
+    // real64 const iInner_r0_r = request.complete( );
+
+
+    // ///////////////////////
 
     m_precond.apply( r, Mr );
     m_operator.apply( Mr, AMr );
 
     m_precond.apply( AMp, MAMp );
     m_operator.apply( MAMp, AMAMp );
+    
+    real64 const inner_r0_r = request.complete( );
+    //GEOSX_LOG_RANK_VAR( inner_r0_r );
+    //GEOSX_LOG_RANK_VAR( iInner_r0_r );
 
     // Error correction 
     // 
