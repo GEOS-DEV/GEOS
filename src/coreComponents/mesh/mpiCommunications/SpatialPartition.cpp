@@ -15,6 +15,7 @@
 #include "SpatialPartition.hpp"
 #include "codingUtilities/Utilities.hpp"
 #include "LvArray/src/genericTensorOps.hpp"
+#include "mesh/mpiCommunications/MPI_iCommData.hpp"
 
 #include <cmath>
 
@@ -275,7 +276,8 @@ namespace geosx
     LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
   }
 
-  void SpatialPartition::repartitionMasterParticlesToNeighbors(DomainPartition & domain)
+  void SpatialPartition::repartitionMasterParticlesToNeighbors(DomainPartition & domain,
+                                                               MPI_iCommData & icomm)
   {
 
     /*
@@ -330,20 +332,21 @@ namespace geosx
           p_x[i] = particleCenter[pp][i];
           inPartition = inPartition && isCoordInPartition( p_x[i], i);
         }
-        if( ghostRank[pp]==this->m_rank && inPartition )
+        if( ghostRank[pp]==this->m_rank && !inPartition )
         {
           outOfDomainParticleCoordinates.emplace_back(p_x);  // Store the coordinate of the out-of-domain particle
-          outOfDomainParticleLocalIndices.push_back(pp);  // Store the local index "pp" for the current coordinate.
-          ghostRank[pp] = -1;                             // Temporarily set ghostRank of out-of-domain particle to -1 until it is requested by someone.
+          outOfDomainParticleLocalIndices.push_back(pp);     // Store the local index "pp" for the current coordinate.
+          ghostRank[pp] = -1;                                // Temporarily set ghostRank of out-of-domain particle to -1 until it is requested by someone.
         }
       }
 
 
       // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
-      std::vector<std::vector<R1Tensor>> particleCoordinatesReceivedFromNeighbors(nn);
+      std::vector<array1d<R1Tensor>> particleCoordinatesReceivedFromNeighbors(nn);
 
-      sendCoordinateListToNeighbors(outOfDomainParticleCoordinates.toView(),           // input: Single list of coordinates sent to all neighbors
-                                    particleCoordinatesReceivedFromNeighbors  // output: List of lists of coordinates received from each neighbor.
+      sendCoordinateListToNeighbors(outOfDomainParticleCoordinates.toView(),      // input: Single list of coordinates sent to all neighbors
+                                    icomm,                                        // input: Solver MPI communicator
+                                    particleCoordinatesReceivedFromNeighbors      // output: List of lists of coordinates received from each neighbor.
                                     );
 
     } );
@@ -351,67 +354,96 @@ namespace geosx
   }
 
 
-  void SpatialPartition::sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,              // Single list of coordinates sent to all neighbors
-                                                       std::vector<std::vector<R1Tensor>>& particleCoordinatesReceivedFromNeighbors  // List of lists of coordinates received from each neighbor.
+  void SpatialPartition::sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
+                                                       MPI_iCommData & icomm,                                                         // Solver's MPI communicator
+                                                       std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
   )
   {
+    // TEST
+    // Find out rank, size
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_GEOSX, &world_rank);
+    int world_size;
+    MPI_Comm_size(MPI_COMM_GEOSX, &world_size);
+
+//    int number;
+//    if (world_rank == 0) {
+//        number = -1;
+//        MPI_Send(&number, 1, MPI_INT, 1, 0, MPI_COMM_GEOSX);
+//    } else if (world_rank == 1) {
+//        MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_GEOSX,
+//                 MPI_STATUS_IGNORE);
+//        printf("Process 1 received number %d from process 0\n",
+//               number);
+//    }
+
+    // Number of neighboring partitions
     unsigned int nn = m_neighbors.size();
 
     // The send buffer is identical for each neighbor, and contains the packed coordinate list.
     unsigned int sizeOfPacked = 0;
-    buffer_unit_type* buffer;
-    sizeOfPacked += bufferOps::Pack<true>(buffer,particleCoordinatesSendingToNeighbors); // Pack the coordinate list
+    buffer_unit_type* sendBuffer;
+    sizeOfPacked += bufferOps::Pack< true >( sendBuffer, particleCoordinatesSendingToNeighbors ); // Pack the coordinate list
     array1d<unsigned int> sizeOfReceived(nn);
+
+    // Declare the receive buffers
+    array1d< buffer_unit_type* > receiveBuffer(nn);
+
+    {
+      // send the coordinate list to each neighbor.  Using an asynchronous send,
+      // the mpi request will be different for each send, but the buffer is the same
+      array1d<MPI_Request>   sendRequest(nn);
+      array1d<MPI_Status>    sendStatus(nn);
+      array1d<MPI_Request>   receiveRequest(nn);
+      array1d<MPI_Status>    receiveStatus(nn);
+
+      // Send/receive the size of the packed buffer.
+      for(size_t n=0; n<nn; n++ )
+      {
+        int const sendTag = CommTag( MpiWrapper::commRank(), m_neighbors[n].neighborRank(), icomm.commID() );
+        int const receiveTag = CommTag( m_neighbors[n].neighborRank(), MpiWrapper::commRank(), icomm.commID() );
+        //MPI_Isend( &sizeOfPacked, 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), sendTag, MPI_COMM_GEOSX, &(sendRequest[n]) );               // Send buffer size
+        //MPI_Irecv( &(sizeOfReceived[n]), 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), receiveTag, MPI_COMM_GEOSX, &(receiveRequest[n]) );  // Receive buffer size
+        //m_neighbors[n].mpiISendReceiveBufferSizes( icomm.commID(), sendRequest[n], receiveRequest[n], MPI_COMM_GEOSX);
+
+        //GEOSX_LOG_RANK("I (rank " << MpiWrapper::commRank() << ") sent data of size " << sizeOfPacked << " to rank " << m_neighbors[n].neighborRank() << " using tag " << sendTag);
+        //GEOSX_LOG_RANK("I (rank " << MpiWrapper::commRank() << ") received data of size " << sizeOfReceived[n] << " from rank " << m_neighbors[n].neighborRank() << " using tag " << receiveTag);
+
+      }
+      //MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+      //MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+    }
+
+    // Send/receive the buffer containing the list of coordinates
+//    {
+//      array1d<MPI_Request>   sendRequest(nn);
+//      array1d<MPI_Status>    sendStatus(nn);
+//      array1d<MPI_Request>   receiveRequest(nn);
+//      array1d<MPI_Status>    receiveStatus(nn);
+//
+//      for(size_t n=0; n<nn; n++ )
+//      {
+////        receiveBuffer[n].resize(sizeOfReceived[n]);
+////        const CommRegistry::commID commID = CommRegistry::mpmSolver;
+////        const int stag = CommRegistry::CommTag(m_neighbors[n].Rank(), m_neighbors[n].NeighborRank(), commID);
+////        const int rtag = CommRegistry::CommTag(m_neighbors[n].NeighborRank(), m_neighbors[n].Rank(), commID);
+////        MPI_Isend(sendBuffer.data(),      sizeOfPacked,      MPI_CHAR, m_neighbors[n].NeighborRank(), stag, MPI_COMM_WORLD, &(sendRequest[n])   );  // Send coordinate list buffer
+////        MPI_Irecv(receiveBuffer[n].data(),sizeOfReceived[n], MPI_CHAR, m_neighbors[n].NeighborRank(), rtag, MPI_COMM_WORLD, &(receiveRequest[n]));  // Receive coordinate list buffer
+//        m_neighbors[n].mpiISendReceiveBuffers( icomm.commID(), sendRequest[n], receiveRequest[n], MPI_COMM_GEOSX);
+//      }
+//      MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+//      MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+//    }
+
+    // Unpack the received coordinate list from each neighbor
+//    for(size_t n=0; n<nn; n++ )
+//    {
+//      // Unpack the buffer to an array of coordinates.
+//      const signed char* _buffer = reinterpret_cast<signed char*>( receiveBuffer[n] );
+//      bufferOps::Unpack( _buffer, particleCoordinatesReceivedFromNeighbors[n] );
+//    }
   }
 
-
-  //
-  //  // The send buffer is identical for each neighbor, and contains the packed coordinate list.
-  //  bufvector sendBuffer;
-  //  unsigned int sizeOfPacked = sendBuffer.Pack(particleCoordinatesSendingToNeighbors); // Pack the coordinate list
-  //  Array1dT<unsigned int>  sizeOfReceived(nn);
-  //  {
-  //    // send the coordinate list to each neighbor.  Using an asynchronous send,
-  //    // the mpi request will be different for each send, but the buffer is the same
-  //    Array1dT<MPI_Request>   sendRequest(nn);
-  //    Array1dT<MPI_Status>    sendStatus(nn);
-  //    Array1dT<MPI_Request>   receiveRequest(nn);
-  //    Array1dT<MPI_Status>    receiveStatus(nn);
-  //
-  //    // Send/receive the size of the packed buffer.
-  //    for(localIndex n=0; n<nn; n++ )
-  //    {
-  //      const CommRegistry::commID commID = CommRegistry::mpmSolver;
-  //      const int stag = CommRegistry::CommTag(m_neighbors[n].Rank()        , m_neighbors[n].NeighborRank(), commID);
-  //      const int rtag = CommRegistry::CommTag(m_neighbors[n].NeighborRank(), m_neighbors[n].Rank()        , commID);
-  //      MPI_Isend(&sizeOfPacked,       1, MPI_UNSIGNED, m_neighbors[n].NeighborRank(), stag, MPI_COMM_WORLD, &(sendRequest[n])   );  // Send buffer size
-  //      MPI_Irecv(&(sizeOfReceived[n]),1, MPI_UNSIGNED, m_neighbors[n].NeighborRank(), rtag, MPI_COMM_WORLD, &(receiveRequest[n]));  // Receive buffer size
-  //    }
-  //    MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
-  //    MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
-  //  }
-  //
-  //  // Send/receive the buffer containing the list of coordinates
-  //  Array1dT<bufvector> receiveBuffer(nn);
-  //  {
-  //    Array1dT<MPI_Request>   sendRequest(nn);
-  //    Array1dT<MPI_Status>    sendStatus(nn);
-  //    Array1dT<MPI_Request>   receiveRequest(nn);
-  //    Array1dT<MPI_Status>    receiveStatus(nn);
-  //
-  //    for(localIndex n=0; n<nn; n++ )
-  //    {
-  //      receiveBuffer[n].resize(sizeOfReceived[n]);
-  //      const CommRegistry::commID commID = CommRegistry::mpmSolver;
-  //      const int stag = CommRegistry::CommTag(m_neighbors[n].Rank(), m_neighbors[n].NeighborRank(), commID);
-  //      const int rtag = CommRegistry::CommTag(m_neighbors[n].NeighborRank(), m_neighbors[n].Rank(), commID);
-  //      MPI_Isend(sendBuffer.data(),      sizeOfPacked,      MPI_CHAR, m_neighbors[n].NeighborRank(), stag, MPI_COMM_WORLD, &(sendRequest[n])   );  // Send coordinate list buffer
-  //      MPI_Irecv(receiveBuffer[n].data(),sizeOfReceived[n], MPI_CHAR, m_neighbors[n].NeighborRank(), rtag, MPI_COMM_WORLD, &(receiveRequest[n]));  // Receive coordinate list buffer
-  //    }
-  //    MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
-  //    MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
-  //  }
-  //
   //  // Unpack the received coordinate list from each neighbor
   //
   //  for(localIndex n=0; n<nn; n++ )
