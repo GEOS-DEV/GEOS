@@ -133,6 +133,7 @@ public:
   {
     static constexpr char const * coeffNameString() { return "coeffField"; }
     static constexpr char const * localDissipationOptionString() { return "localDissipation"; }
+    static constexpr char const * extDrivingForceOptionString() { return "extDrivingForce"; }
     static constexpr char const * solidModelNamesString() { return "solidMaterialNames"; }
 
     dataRepository::ViewKey timeIntegrationOption = { "timeIntegrationOption" };
@@ -162,6 +163,7 @@ private:
   stabledt m_stabledt;
   timeIntegrationOption m_timeIntegrationOption;
   string m_localDissipationOption;
+  string m_extDrivingForceOption; 
 
   array1d< real64 > m_coeff;
 

@@ -69,6 +69,10 @@ PhaseFieldDamageFEM::PhaseFieldDamageFEM( const string & name,
   registerWrapper( viewKeyStruct::localDissipationOptionString(), &m_localDissipationOption ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Type of local dissipation function. Can be Linear or Quadratic" );
+
+  registerWrapper( viewKeyStruct::extDrivingForceOptionString(), &m_extDrivingForceOption ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Whether to have external driving force. Can be True or False" );
 }
 
 PhaseFieldDamageFEM::~PhaseFieldDamageFEM()
@@ -139,6 +143,11 @@ void PhaseFieldDamageFEM::postProcessInput()
   if( m_localDissipationOption != "Linear" && m_localDissipationOption != "Quadratic" )
   {
     GEOSX_ERROR( "invalid local dissipation option - must be Linear or Quadratic" );
+  }
+
+  if( m_extDrivingForceOption != "True" && m_extDrivingForceOption != "False" )
+  {
+    GEOSX_ERROR( "invalid external driving force option - must be True or False" );
   }
 
   // Set basic parameters for solver
@@ -231,7 +240,8 @@ void PhaseFieldDamageFEM::assembleSystem( real64 const GEOSX_UNUSED_PARAM( time_
                                                  localMatrix,
                                                  localRhs,
                                                  m_fieldName,
-                                                 m_localDissipationOption=="Linear" ? 1 : 2 );
+                                                 m_localDissipationOption=="Linear" ? 1 : 2,  
+                                                 m_extDrivingForceOption=="False" ? 0 : 1 );
 
     finiteElement::
       regionBasedKernelApplication< parallelDevicePolicy<>,
