@@ -40,10 +40,12 @@ public:
     TaskBase( name, parent )
   {}
 
+  /// Type of buffer provider
   using BufferProvider = std::function< buffer_unit_type * ( localIndex ) >;
+  /// Type of time buffer provider
   using TimeBufferProvider = std::function< buffer_unit_type *() >;
 
-  // Forwarding public...
+  /// Forwarding public...
   void initializePostSubGroups() override {};
 
   /**

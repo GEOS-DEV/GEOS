@@ -24,6 +24,9 @@
 namespace geosx
 {
 
+/**
+ * @brief Technical code factorisation after refactoring. Feel free to challenge this class.
+ */
 class HistoryCollectionBase : public HistoryCollection
 {
 public:
@@ -68,7 +71,7 @@ protected:
 
   /**
    * @brief Update the indices from the sets being collected.
-   * @param domain The DomainPartition of the problem.
+   * @param[in] domain The DomainPartition of the problem.
    */
   virtual void updateSetsIndices( DomainPartition const & domain ) = 0;
 

@@ -20,10 +20,18 @@
 namespace geosx
 {
 
+/**
+ * @brief Class only designed for testing purposes.
+ */
 class TestingBuffer : public BufferedHistoryIO
 {
 public:
 
+  /**
+   * @brief Constructor
+   * @param name Name given to the instance
+   * @param dims Dimensions of multi dimensional data that will be stored.
+   */
   TestingBuffer( string name, std::vector< localIndex > const & dims );
 
   buffer_unit_type * getBufferHead() override;
