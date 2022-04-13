@@ -39,7 +39,7 @@ buffer_unit_type * TestingBuffer::getBufferHead()
   return reinterpret_cast< buffer_unit_type * >( m_buffers.back().data() );
 }
 
-void TestingBuffer::init( bool existsOkay )
+void TestingBuffer::init( bool GEOSX_UNUSED_PARAM( existsOkay ) )
 {}
 
 void TestingBuffer::write()
