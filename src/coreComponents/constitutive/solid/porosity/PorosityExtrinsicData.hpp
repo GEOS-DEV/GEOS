@@ -30,14 +30,13 @@ namespace extrinsicMeshData
 namespace porosity
 {
 
-EXTRINSIC_MESH_DATA_TRAIT(biotCoefficient,
-                          "biotCoefficient",
-                          array1d< real64 >,
-                          -1,
-                          LEVEL_0,
-                          WRITE_AND_READ,
-                          "Biot Coefficient" );
-
+EXTRINSIC_MESH_DATA_TRAIT( biotCoefficient,
+                           "biotCoefficient",
+                           array1d< real64 >,
+                           -1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Biot Coefficient" );
 
 
 

@@ -110,28 +110,28 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       compositionalMultiphaseFVMKernels::
-      FaceBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_numPhases,
-                                                 dofManager.rankOffset(),
-                                                 elemDofKey,
-                                                 m_hasCapPressure,
-                                                 getName(),
-                                                 mesh.getElemManager(),
-                                                 stencilWrapper,
-                                                 dt,
-                                                 localMatrix.toViewConstSizes(),
-                                                 localRhs.toView() );
-      
+        FaceBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   elemDofKey,
+                                                   m_hasCapPressure,
+                                                   getName(),
+                                                   mesh.getElemManager(),
+                                                   stencilWrapper,
+                                                   dt,
+                                                   localMatrix.toViewConstSizes(),
+                                                   localRhs.toView() );
+
     } );
   } );
 }
 
 void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
-                                                    DomainPartition const & domain,
-                                                    DofManager const & dofManager,
-                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                                                    arrayView1d< real64 > const & localRhs ) const
+                                                              DomainPartition const & domain,
+                                                              DofManager const & dofManager,
+                                                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                              arrayView1d< real64 > const & localRhs ) const
 {
   GEOSX_MARK_FUNCTION;
 
@@ -153,19 +153,19 @@ void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       stabilizedCompositionalMultiphaseFVMKernels::
-      FaceBasedAssemblyKernelFactory::
-      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                 m_numPhases,
-                                                 dofManager.rankOffset(),
-                                                 elemDofKey,
-                                                 m_hasCapPressure,
-                                                 getName(),
-                                                 mesh.getElemManager(),
-                                                 stencilWrapper,
-                                                 dt,
-                                                 localMatrix.toViewConstSizes(),
-                                                 localRhs.toView() );
-      
+        FaceBasedAssemblyKernelFactory::
+        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                   m_numPhases,
+                                                   dofManager.rankOffset(),
+                                                   elemDofKey,
+                                                   m_hasCapPressure,
+                                                   getName(),
+                                                   mesh.getElemManager(),
+                                                   stencilWrapper,
+                                                   dt,
+                                                   localMatrix.toViewConstSizes(),
+                                                   localRhs.toView() );
+
     } );
   } );
 }

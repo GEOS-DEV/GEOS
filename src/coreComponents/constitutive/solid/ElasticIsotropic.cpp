@@ -60,8 +60,8 @@ ElasticIsotropic::ElasticIsotropic( string const & name, Group * const parent ):
     setApplyDefaultValue( -1 ).
     setDescription( "Elastic Shear Modulus Field" );
 
-  registerExtrinsicData(extrinsicMeshData::solid::bulkModulus{}, &m_bulkModulus);
-  registerExtrinsicData(extrinsicMeshData::solid::shearModulus{}, &m_shearModulus);
+  registerExtrinsicData( extrinsicMeshData::solid::bulkModulus{}, &m_bulkModulus );
+  registerExtrinsicData( extrinsicMeshData::solid::shearModulus{}, &m_shearModulus );
 }
 
 ElasticIsotropic::~ElasticIsotropic()

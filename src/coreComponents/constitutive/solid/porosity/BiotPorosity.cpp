@@ -38,7 +38,7 @@ BiotPorosity::BiotPorosity( string const & name, Group * const parent ):
   registerWrapper( viewKeyStruct::biotCoefficientString(), &m_biotCoefficient ).
     setDescription( "Biot coefficient." );
 
-  registerExtrinsicData(extrinsicMeshData::porosity::biotCoefficient{}, &m_biotCoefficient);
+  registerExtrinsicData( extrinsicMeshData::porosity::biotCoefficient{}, &m_biotCoefficient );
 }
 
 void BiotPorosity::allocateConstitutiveData( dataRepository::Group & parent,

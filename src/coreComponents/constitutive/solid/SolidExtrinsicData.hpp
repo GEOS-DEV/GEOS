@@ -30,25 +30,21 @@ namespace extrinsicMeshData
 namespace solid
 {
 
-EXTRINSIC_MESH_DATA_TRAIT(bulkModulus,
-                          "bulkModulus",
-                          array1d< real64 >,
-                          -1,
-                          LEVEL_0,
-                          WRITE_AND_READ,
-                          "Bulk Modulus" );
+EXTRINSIC_MESH_DATA_TRAIT( bulkModulus,
+                           "bulkModulus",
+                           array1d< real64 >,
+                           -1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Bulk Modulus" );
 
-EXTRINSIC_MESH_DATA_TRAIT(shearModulus,
-                          "shearModulus",
-                          array1d< real64 >,
-                          -1,
-                          LEVEL_0,
-                          WRITE_AND_READ,
-                          "Shear Modulus" );
-
-
-
-
+EXTRINSIC_MESH_DATA_TRAIT( shearModulus,
+                           "shearModulus",
+                           array1d< real64 >,
+                           -1,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Shear Modulus" );
 
 
 

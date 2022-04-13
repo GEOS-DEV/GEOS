@@ -274,20 +274,21 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
   } );
 
   // Face-based contributions
-  if (m_useStab)
+  if( m_useStab )
   {
     m_flowSolver->assembleStabilizedFluxTerms( dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
+                                               domain,
+                                               dofManager,
+                                               localMatrix,
+                                               localRhs );
   }
-  else {
+  else
+  {
     m_flowSolver->assembleFluxTerms( dt,
-                                   domain,
-                                   dofManager,
-                                   localMatrix,
-                                   localRhs );
+                                     domain,
+                                     dofManager,
+                                     localMatrix,
+                                     localRhs );
   }
 }
 

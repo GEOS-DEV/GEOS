@@ -93,7 +93,7 @@ public:
     m_elementRegionIndices( elementRegionIndices.toViewConst() ),
     m_elementSubRegionIndices( elementSubRegionIndices.toViewConst() ),
     m_elementIndices( elementIndices.toViewConst() ),
-    m_weights( weights.toViewConst() ), 
+    m_weights( weights.toViewConst() ),
     m_stabWeights( stabWeights.toViewConst() )
   {};
 

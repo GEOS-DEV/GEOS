@@ -70,11 +70,11 @@ public:
                                                   extrinsicMeshData::flow::phaseComponentFractionOld >;
 
   using SolidAccessors = StencilMaterialAccessors< SolidBase,
-                                           extrinsicMeshData::solid::bulkModulus,
-                                           extrinsicMeshData::solid::shearModulus >;
+                                                   extrinsicMeshData::solid::bulkModulus,
+                                                   extrinsicMeshData::solid::shearModulus >;
 
   using PorosityAccessors = StencilMaterialAccessors< PorosityBase,
-                                          extrinsicMeshData::porosity::biotCoefficient >;
+                                                      extrinsicMeshData::porosity::biotCoefficient >;
 
   using AbstractBase::m_dt;
   using AbstractBase::m_numPhases;
@@ -146,14 +146,14 @@ public:
             permeabilityAccessors,
             dt,
             localMatrix,
-            localRhs ), 
-    m_phaseDensOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseDensityOld {}) ),
-    m_phaseCompFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseComponentFractionOld {})),
-    m_phaseVolFracOld(stabCompFlowAccessors.get(extrinsicMeshData::flow::phaseVolumeFractionOld {})),
-    m_bulkModulus(solidAccessors.get(extrinsicMeshData::solid::bulkModulus {})),
-    m_shearModulus(solidAccessors.get(extrinsicMeshData::solid::shearModulus {})),
-    m_biotCoefficient(porosityAccessors.get(extrinsicMeshData::porosity::biotCoefficient {})),
-    m_stabWeights(stencilWrapper.getStabWeights())
+            localRhs ),
+    m_phaseDensOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseDensityOld {} ) ),
+    m_phaseCompFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseComponentFractionOld {} )),
+    m_phaseVolFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFractionOld {} )),
+    m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} )),
+    m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} )),
+    m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} )),
+    m_stabWeights( stencilWrapper.getStabWeights())
 
   {}
 
@@ -165,7 +165,7 @@ public:
     StackVariables( localIndex const size, localIndex numElems )
       : Base::StackVariables( size, numElems ),
       stabFlux( numComp ),
-      dStabFlux_dP( size, numComp  )
+      dStabFlux_dP( size, numComp )
     {}
 
     using Base::StackVariables::stencilSize;
@@ -214,10 +214,10 @@ public:
       GEOSX_UNUSED_VAR( ip, er_up, esr_up, ei_up );
 
       // We are in the loop over phases, ip provides the current phase index.
-      
+
       real64 dPresGradStab{};
 
-      real64 tauStab = 0.0; 
+      real64 tauStab = 0.0;
 
 
       // compute potential difference MPFA-style
@@ -229,7 +229,7 @@ public:
 
         tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
-        dPresGradStab += tauStab * m_stabWeights(iconn, i) * m_dPres[er][esr][ei];
+        dPresGradStab += tauStab * m_stabWeights( iconn, i ) * m_dPres[er][esr][ei];
       }
 
       // modify stabilization flux
@@ -238,15 +238,15 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
 
-        real64 laggedUpwind = m_phaseDensOld[er_up][esr_up][ei_up][ip] 
-                            * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
-                            * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
+        real64 laggedUpwind = m_phaseDensOld[er_up][esr_up][ei_up][ip]
+                              * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
+                              * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
 
         stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
 
         for( integer ke = 0; ke < stack.stencilSize; ++ke )
         {
-          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights(iconn, ke) * laggedUpwind;
+          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwind;
         }
       }
 
@@ -257,19 +257,19 @@ public:
     for( integer ic = 0; ic < numComp; ++ic )
     {
 
-      stack.localFlux[ic]           +=  stack.stabFlux[ic]; 
+      stack.localFlux[ic]           +=  stack.stabFlux[ic];
       stack.localFlux[numComp + ic] += -stack.stabFlux[ic];
 
       for( integer ke = 0; ke < stack.stencilSize; ++ke )
       {
         localIndex const localDofIndexPres = ke * numDof;
-        stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic]; 
+        stack.localFluxJacobian[ic][localDofIndexPres]           +=  stack.dStabFlux_dP[ke][ic];
         stack.localFluxJacobian[numComp + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
 
       }
     }
 
-    
+
   }
 
   /**
@@ -288,13 +288,13 @@ public:
 
 protected:
 
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const  m_phaseDensOld;
+  ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseDensOld;
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_COMP > > const m_phaseCompFracOld;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFracOld;
 
-  ElementViewConst< arrayView1d< real64 const> > const m_bulkModulus;
-  ElementViewConst< arrayView1d< real64 const> > const m_shearModulus;
-  ElementViewConst< arrayView1d< real64 const> > const m_biotCoefficient;
+  ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
+  ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;
+  ElementViewConst< arrayView1d< real64 const > > const m_biotCoefficient;
 
   typename STENCILWRAPPER::WeightContainerViewConstType m_stabWeights;
 

@@ -47,7 +47,7 @@ public:
                                        IndexContainerType const & elementSubRegionIndices,
                                        IndexContainerType const & elementIndices,
                                        WeightContainerType const & weights,
-                                       WeightContainerType const & stabWeights  );
+                                       WeightContainerType const & stabWeights );
 
   /**
    * @brief Give the number of stencil entries.
