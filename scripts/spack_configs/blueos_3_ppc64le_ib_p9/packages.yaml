@@ -52,7 +52,7 @@ packages:
     buildable: False
     externals:
       - spec: m4@1.4.16
-        prefix: /usr/bin/
+        prefix: /usr
   perl:
     buildable: false
     externals:
