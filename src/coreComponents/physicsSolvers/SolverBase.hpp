@@ -633,8 +633,15 @@ public:
       string const meshBodyName = target.first;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody const & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      MeshLevel const & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
-      lambda( meshBodyName, meshLevel, regionNames );
+      //MeshLevel const & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
+      //lambda( meshBodyName, meshLevel, regionNames );
+
+      MeshLevel const * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( this->m_discretizationName );
+      if( meshLevelPtr==nullptr )
+      {
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( MeshLevel::groupStructKeys::baseDiscretizationString() );
+      }
+      lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }
 
@@ -646,8 +653,15 @@ public:
       string const meshBodyName = target.first;
       arrayView1d< string const > const & regionNames = target.second.toViewConst();
       MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
-      MeshLevel & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
-      lambda( meshBodyName, meshLevel, regionNames );
+//      MeshLevel & meshLevel = meshBody.getMeshLevel( this->m_discretizationName );
+//      lambda( meshBodyName, meshLevel, regionNames );
+
+      MeshLevel * meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( this->m_discretizationName );
+      if( meshLevelPtr==nullptr )
+      {
+        meshLevelPtr = meshBody.getMeshLevels().getGroupPointer<MeshLevel>( MeshLevel::groupStructKeys::baseDiscretizationString() );
+      }
+      lambda( meshBodyName, *meshLevelPtr, regionNames );
     }
   }
 

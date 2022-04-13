@@ -9,7 +9,7 @@
     <AcousticSEM
       name="acousticSolver"
       cflFactor="0.25"
-      discretization="FE2"
+      discretization="FE1"
       targetRegions="{ Region }"
       sourceCoordinates="{ { 55, 55, 55 },
                            { 10, 10, 14 } }"

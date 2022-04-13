@@ -139,7 +139,7 @@ void AcousticWaveEquationSEM::initializePreSubGroups()
 void AcousticWaveEquationSEM::registerDataOnMesh( Group & meshBodies )
 {
 
-  forMeshTargets( meshBodies, [&] ( string const &,
+  forDiscretizationOnMeshTargets( meshBodies, [&] ( string const &,
                                     MeshLevel & mesh,
                                     arrayView1d< string const > const & )
   {

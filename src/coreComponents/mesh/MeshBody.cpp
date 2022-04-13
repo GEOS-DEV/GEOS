@@ -59,6 +59,14 @@ MeshLevel & MeshBody::createMeshLevel( string const & sourceLevelName,
                                                                     order ) );
 }
 
+MeshLevel & MeshBody::createShallowMeshLevel( string const & sourceLevelName,
+                                              string const & newLevelName )
+{
+  MeshLevel & sourceMeshLevel = this->getMeshLevel( sourceLevelName );
+  return m_meshLevels.registerGroup( newLevelName, &sourceMeshLevel );
+}
+
+
 void MeshBody::setGlobalLengthScale( real64 scale )
 {
   m_globalLengthScale = scale;

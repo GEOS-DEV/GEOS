@@ -543,15 +543,13 @@ void ProblemManager::generateMesh()
     string const & meshBodyName = discretizationPair.first.first;
     FiniteElementDiscretization const & discretization = *(discretizationPair.first.second);
     int const order = discretization.getOrder();
+    MeshBody & meshBody = domain.getMeshBody( meshBodyName );
+    string const & discretizationName = discretization.getName();
+    arrayView1d< string const > const regionNames = discretizationPair.second;
+    CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
 
     if( order > 1 )
     {
-      string const & discretizationName = discretization.getName();
-      arrayView1d< string const > const regionNames = discretizationPair.second;
-      MeshBody & meshBody = domain.getMeshBody( meshBodyName );
-
-      CellBlockManagerABC & cellBlockManager = meshBody.getGroup< CellBlockManagerABC >( keys::cellManager );
-
       MeshLevel & mesh = meshBody.createMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
                                                    discretizationName,
                                                    discretization.getOrder() );
@@ -560,6 +558,11 @@ void ProblemManager::generateMesh()
                                     cellBlockManager,
                                     &discretization,
                                     regionNames );
+    }
+    else if( order==1 )
+    {
+      meshBody.createShallowMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString(),
+                                       discretizationName );
     }
   }
 
@@ -610,7 +613,7 @@ void ProblemManager::applyNumericalMethods()
   ConstitutiveManager & constitutiveManager = domain.getGroup< ConstitutiveManager >( keys::ConstitutiveManager );
   Group & meshBodies = domain.getMeshBodies();
 
-  map< std::tuple< string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
+  map< std::tuple< string, string, string, string >, localIndex > const regionQuadrature = calculateRegionQuadrature( meshBodies );
 
   setRegionQuadrature( meshBodies, constitutiveManager, regionQuadrature );
 }
@@ -741,13 +744,13 @@ void ProblemManager::generateDiscretization( MeshLevel & meshLevel,
 }
 
 
-map< std::tuple< string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
+map< std::tuple< string, string, string, string >, localIndex > ProblemManager::calculateRegionQuadrature( Group & meshBodies )
 {
 
   NumericalMethodsManager const &
   numericalMethodManager = getGroup< NumericalMethodsManager >( groupKeys.numericalMethodsManager.key() );
 
-  map< std::tuple< string, string, string >, localIndex > regionQuadrature;
+  map< std::tuple< string, string, string, string >, localIndex > regionQuadrature;
 
   for( localIndex solverIndex=0; solverIndex<m_physicsSolverManager->numSubGroups(); ++solverIndex )
   {
@@ -763,7 +766,7 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
       FiniteElementDiscretization const * const
       feDiscretization = feDiscretizationManager.getGroupPointer< FiniteElementDiscretization >( discretizationName );
 
-      solver->forMeshTargets( meshBodies,
+      solver->forDiscretizationOnMeshTargets( meshBodies,
                               [&]( string const & meshBodyName,
                                    MeshLevel & meshLevel,
                                    auto const & regionNames )
@@ -808,6 +811,7 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
                   feDiscretization->calculateShapeFunctionGradients< SUBREGION_TYPE, FE_TYPE >( X, &subRegion, meshData, finiteElement );
 
                   localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                              meshLevel.getName(),
                                                                                               regionName,
                                                                                               subRegion.getName() ) ];
 
@@ -820,6 +824,7 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
               elemRegion.forElementSubRegions( [&]( auto & subRegion )
               {
                 localIndex & numQuadraturePointsInList = regionQuadrature[ std::make_tuple( meshBodyName,
+                                                                                            meshLevel.getName(),
                                                                                             regionName,
                                                                                             subRegion.getName() ) ];
                 localIndex const numQuadraturePoints = 1;
@@ -838,8 +843,40 @@ map< std::tuple< string, string, string >, localIndex > ProblemManager::calculat
 
 void ProblemManager::setRegionQuadrature( Group & meshBodies,
                                           ConstitutiveManager const & constitutiveManager,
-                                          map< std::tuple< string, string, string >, localIndex > const & regionQuadrature )
+                                          map< std::tuple< string, string, string, string >, localIndex > const & regionQuadratures )
 {
+
+
+  for( auto regionQuadrature=regionQuadratures.begin(); regionQuadrature!=regionQuadratures.end(); ++regionQuadrature )
+  {
+    std::tuple< string, string, string, string > const key = regionQuadrature->first;
+    localIndex const numQuadraturePoints = regionQuadrature->second;
+    string const meshBodyName = std::get<0>(key);
+    string const meshLevelName = std::get<1>(key);
+    string const regionName = std::get<2>(key);
+    string const subRegionName = std::get<3>(key);
+
+    MeshBody & meshBody = meshBodies.getGroup< MeshBody >( meshBodyName );
+    MeshLevel & meshLevel = meshBody.getMeshLevel( meshLevelName );
+    ElementRegionManager & elemRegionManager = meshLevel.getElemManager();
+    ElementRegionBase & elemRegion = elemRegionManager.getRegion( regionName );
+    ElementSubRegionBase & elemSubRegion = elemRegion.getSubRegion( subRegionName );
+
+    string_array const & materialList = elemRegion.getMaterialList();
+    for( auto & materialName : materialList )
+    {
+      constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, numQuadraturePoints );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "{}/{}/{}/{}/{} allocated {} quadrature points",
+                                   meshBodyName,
+                                   meshLevelName,
+                                   regionName,
+                                   subRegionName,
+                                   materialName,
+                                   numQuadraturePoints ) );
+
+    }
+  }
+
   for( localIndex a = 0; a < meshBodies.getSubGroups().size(); ++a )
   {
     MeshBody & meshBody = meshBodies.getGroup< MeshBody >( a );
@@ -855,22 +892,16 @@ void ProblemManager::setRegionQuadrature( Group & meshBodies,
         string const & regionName = elemRegion.getName();
         string const & subRegionName = elemSubRegion.getName();
         string_array const & materialList = elemRegion.getMaterialList();
-        TYPEOFREF( regionQuadrature ) ::const_iterator rqIter = regionQuadrature.find( std::make_tuple( meshBody.getName(),
+        TYPEOFREF( regionQuadratures ) ::const_iterator rqIter = regionQuadratures.find( std::make_tuple( meshBody.getName(),
+                                                                                                        meshLevel.getName(),
                                                                                                         regionName,
                                                                                                         subRegionName ) );
-        if( rqIter != regionQuadrature.end() )
-        {
-          localIndex const quadratureSize = rqIter->second;
-          for( auto & materialName : materialList )
-          {
-            constitutiveManager.hangConstitutiveRelation( materialName, &elemSubRegion, quadratureSize );
-            GEOSX_LOG_RANK_0( "  "<<regionName<<"/"<<subRegionName<<"/"<<materialName<<" is allocated with "<<quadratureSize<<" quadrature points." );
-          }
-        }
-        else
-        {
-          GEOSX_LOG_RANK_0( "\t" << regionName << "/" << subRegionName << " does not have a discretization associated with it." );
-        }
+        GEOSX_ERROR_IF( rqIter == regionQuadratures.end(),
+                        GEOSX_FMT( "{}/{}/{}/{} does not have a discretization associated with it.",
+                                   meshBody.getName(),
+                                   meshLevel.getName(),
+                                   regionName,
+                                   subRegionName ) );
       } );
     } );
   }

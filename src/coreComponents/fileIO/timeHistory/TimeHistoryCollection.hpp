@@ -204,7 +204,8 @@ protected:
    *        object path is relative, it searches relative to the mesh in the same way the fieldSpecification does,
    *        so any objectPath that works in fieldSpecification will also work here.
    */
-  inline dataRepository::Group const * getTargetObject( DomainPartition const & domain, string const & objectPath )
+  inline dataRepository::Group const * getTargetObject( DomainPartition const & domain,
+                                                        string const & objectPath )
   {
     // absolute objectPaths can be used to target anything in the data repo that is packable
     if( objectPath[0] == '/' )
@@ -219,21 +220,35 @@ protected:
       dataRepository::Group const * targetGroup = nullptr;
       //dataRepository::Group const * targetGroup = &domain.getMeshBody( 0 ).getMeshLevel( 1 );
 
-      localIndex const numMeshBodies = domain.getMeshBodies().numSubGroups();
-      if( numMeshBodies == 1 )
+      int const numMeshBodies = domain.getMeshBodies().numSubGroups();
+
+      GEOSX_ERROR_IF( targetTokenLength>3,
+                      "too many levels in path entry");
+
+      if( targetTokenLength==3 )
       {
+        string const meshBodyName = targetTokens[0];
+        MeshBody const & meshBody = domain.getMeshBody( meshBodyName );
+        string const meshLevelName = targetTokens[2];
+        targetGroup = &(meshBody.getMeshLevel( meshLevelName ) );
+      }
+      else
+      {
+        GEOSX_ERROR_IF( numMeshBodies != 1,
+                        "There are multiple mesh bodies, however, the mesh body name not specified in path" );
+
         MeshBody const & meshBody = domain.getMeshBody( 0 );
-        localIndex const numMeshLevels = meshBody.getMeshLevels().numSubGroups();
-        if( numMeshLevels <= 2 )
+        if( targetTokenLength==2 )
+        {
+          string const meshLevelName = targetTokens[1];
+          targetGroup = &(meshBody.getMeshLevel( meshLevelName ) );
+        }
+        else //targetTokenLength==1
         {
           targetGroup = &(meshBody.getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ) );
         }
       }
 
-      if( targetGroup == nullptr )
-      {
-        GEOSX_ERROR( "not implmented" );
-      }
 
       for( localIndex pathLevel = 0; pathLevel < targetTokenLength; ++pathLevel )
       {

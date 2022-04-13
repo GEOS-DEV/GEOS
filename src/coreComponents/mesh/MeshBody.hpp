@@ -73,6 +73,9 @@ public:
                                string const & newLevelName,
                                int const order );
 
+  MeshLevel & createShallowMeshLevel( string const & sourceLevelName,
+                                      string const & newLevelName );
+
   /**
    * @brief Get the meshLevels group
    * @return reference to the meshLevels group.
