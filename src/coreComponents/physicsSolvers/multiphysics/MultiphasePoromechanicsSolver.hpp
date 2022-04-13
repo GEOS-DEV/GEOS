@@ -116,6 +116,8 @@ public:
     constexpr static char const * fluidSolverNameString() { return "fluidSolverName"; }
 
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
+
+    constexpr static char const * useStabFlagString() { return "useStab"; }
   };
 
 protected:
@@ -132,6 +134,8 @@ protected:
 
   // pointer to the solid mechanics sub-solver
   SolidMechanicsLagrangianFEM * m_solidSolver;
+
+  integer m_useStab;
 
 };
 

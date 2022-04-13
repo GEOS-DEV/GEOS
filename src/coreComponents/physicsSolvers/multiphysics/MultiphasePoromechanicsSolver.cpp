@@ -48,7 +48,8 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
                                                               Group * const parent ):
   SolverBase( name, parent ),
   m_solidSolverName(),
-  m_flowSolverName()
+  m_flowSolverName(),
+  m_useStab( 0 )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
@@ -58,6 +59,11 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   registerWrapper( viewKeyStruct::fluidSolverNameString(), &m_flowSolverName ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of the fluid mechanics solver to use in the poroelastic solver" );
+
+  registerWrapper( viewKeyStruct::useStabFlagString(), &m_useStab ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Use pressure jump stabilization in flux" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -268,11 +274,21 @@ void MultiphasePoromechanicsSolver::assembleSystem( real64 const time_n,
   } );
 
   // Face-based contributions
-  m_flowSolver->assembleFluxTerms( dt,
+  if (m_useStab)
+  {
+    m_flowSolver->assembleStabilizedFluxTerms( dt,
                                    domain,
                                    dofManager,
                                    localMatrix,
                                    localRhs );
+  }
+  else {
+    m_flowSolver->assembleFluxTerms( dt,
+                                   domain,
+                                   dofManager,
+                                   localMatrix,
+                                   localRhs );
+  }
 }
 
 void MultiphasePoromechanicsSolver::applyBoundaryConditions( real64 const time_n,

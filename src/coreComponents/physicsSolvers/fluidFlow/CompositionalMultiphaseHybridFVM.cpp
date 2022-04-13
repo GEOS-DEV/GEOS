@@ -500,6 +500,16 @@ void CompositionalMultiphaseHybridFVM::assembleFluxTerms( real64 const dt,
   } );
 }
 
+void CompositionalMultiphaseHybridFVM::assembleStabilizedFluxTerms( real64 const dt,
+                                                          DomainPartition const & domain,
+                                                          DofManager const & dofManager,
+                                                          CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                          arrayView1d< real64 > const & localRhs ) const
+{ 
+  // stab not implemented
+  assembleFluxTerms( dt, domain, dofManager, localMatrix, localRhs );
+}
+
 real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartition const & domain,
                                                                    DofManager const & dofManager,
                                                                    arrayView1d< real64 const > const & localSolution )

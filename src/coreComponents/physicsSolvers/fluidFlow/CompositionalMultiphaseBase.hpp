@@ -206,6 +206,22 @@ public:
                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
                      arrayView1d< real64 > const & localRhs ) const = 0;
 
+  /**
+   * @brief assembles the flux terms for all cells with pressure jump stabilization
+   * @param time_n previous time value
+   * @param dt time step
+   * @param domain the physical domain object
+   * @param dofManager degree-of-freedom manager associated with the linear system
+   * @param matrix the system matrix
+   * @param rhs the system right-hand side vector
+   */
+  virtual void
+  assembleStabilizedFluxTerms( real64 const dt,
+                     DomainPartition const & domain,
+                     DofManager const & dofManager,
+                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                     arrayView1d< real64 > const & localRhs ) const = 0;
+
 
   /**@}*/
 
@@ -218,8 +234,6 @@ public:
     static constexpr char const * inputTemperatureString() { return "temperature"; }
 
     static constexpr char const * useMassFlagString() { return "useMass"; }
-
-    static constexpr char const * useStabFlagString() { return "useStab"; }
 
     static constexpr char const * computeCFLNumbersString() { return "computeCFLNumbers"; }
 
@@ -344,9 +358,6 @@ protected:
 
   /// flag indicating whether mass or molar formulation should be used
   integer m_useMass;
-
-  /// flag indicating whether pressure jump stabilization should be used
-  integer m_useStab;
 
   /// flag indicating whether CFL numbers will be computed or not
   integer m_computeCFLNumbers;

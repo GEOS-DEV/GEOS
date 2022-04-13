@@ -109,39 +109,62 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      if (m_useStab)
-      { 
-        stabilizedCompositionalMultiphaseFVMKernels::
-        FaceBasedAssemblyKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   m_numPhases,
-                                                   dofManager.rankOffset(),
-                                                   elemDofKey,
-                                                   m_hasCapPressure,
-                                                   getName(),
-                                                   mesh.getElemManager(),
-                                                   stencilWrapper,
-                                                   dt,
-                                                   localMatrix.toViewConstSizes(),
-                                                   localRhs.toView() );
-      }
+      compositionalMultiphaseFVMKernels::
+      FaceBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dofManager.rankOffset(),
+                                                 elemDofKey,
+                                                 m_hasCapPressure,
+                                                 getName(),
+                                                 mesh.getElemManager(),
+                                                 stencilWrapper,
+                                                 dt,
+                                                 localMatrix.toViewConstSizes(),
+                                                 localRhs.toView() );
+      
+    } );
+  } );
+}
 
-      else
-      {
-        compositionalMultiphaseFVMKernels::
-        FaceBasedAssemblyKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   m_numPhases,
-                                                   dofManager.rankOffset(),
-                                                   elemDofKey,
-                                                   m_hasCapPressure,
-                                                   getName(),
-                                                   mesh.getElemManager(),
-                                                   stencilWrapper,
-                                                   dt,
-                                                   localMatrix.toViewConstSizes(),
-                                                   localRhs.toView() );
-      }
+void CompositionalMultiphaseFVM::assembleStabilizedFluxTerms( real64 const dt,
+                                                    DomainPartition const & domain,
+                                                    DofManager const & dofManager,
+                                                    CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                                    arrayView1d< real64 > const & localRhs ) const
+{
+  GEOSX_MARK_FUNCTION;
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel const & mesh,
+                                               arrayView1d< string const > const & )
+  {
+    NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
+    FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
+    FluxApproximationBase const & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
+
+    string const & elemDofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
+    ElementRegionManager::ElementViewAccessor< arrayView1d< globalIndex const > > elemDofNumber =
+      mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
+    elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
+
+    fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
+    {
+      typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
+
+      stabilizedCompositionalMultiphaseFVMKernels::
+      FaceBasedAssemblyKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dofManager.rankOffset(),
+                                                 elemDofKey,
+                                                 m_hasCapPressure,
+                                                 getName(),
+                                                 mesh.getElemManager(),
+                                                 stencilWrapper,
+                                                 dt,
+                                                 localMatrix.toViewConstSizes(),
+                                                 localRhs.toView() );
       
     } );
   } );
