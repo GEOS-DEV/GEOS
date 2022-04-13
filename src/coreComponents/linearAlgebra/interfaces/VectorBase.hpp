@@ -249,6 +249,7 @@ GEOSX_LOG_RANK( "Yes2" );
 GEOSX_LOG_RANK( "Yes3" );
     AsyncRequest< real64 > asyncRequest( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & result )
     {
+      GEOSX_LOG_RANK_VAR( localDotProduct );
       MpiWrapper::iAllReduce( &localDotProduct,
                               &result,
                               1,

@@ -31,10 +31,11 @@ public:
 
 template< typename F >
 explicit AsyncRequest( F f )
+  : m_function( std::move( f ) )
 {
-  m_result = std::make_unique< T >();
+  m_result = std::make_unique< T >(T{});
   m_request = std::make_unique< MPI_Request >();
-  f( *m_request, *m_result );
+  m_function( *m_request, *m_result );
 }
 
 T const & complete() const
@@ -45,8 +46,9 @@ T const & complete() const
 
 private:
 
-  std::unique_ptr< MPI_Request > m_request{};
-  std::unique_ptr< T > m_result{};
+  std::unique_ptr< MPI_Request > m_request;
+  std::unique_ptr< T > m_result;
+  std::function< void(MPI_Request &, T & ) > m_function;
 
 };
 
