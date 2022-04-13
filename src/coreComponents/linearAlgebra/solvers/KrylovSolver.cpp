@@ -65,8 +65,8 @@ KrylovSolver< VECTOR >::create( LinearSolverParameters const & parameters,
     case LinearSolverParameters::SolverType::expBicgstab:
     {
       return std::make_unique< ExpBicgstabSolver< Vector > >( parameters,
-                                                           matrix,
-                                                           precond );
+                                                              matrix,
+                                                              precond );
     }
     case LinearSolverParameters::SolverType::gmres:
     {

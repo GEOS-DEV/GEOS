@@ -140,7 +140,7 @@ public:
                          real64 const beta,
                          PetscVector const & y,
                          real64 const gamma ) override;
-   
+
   virtual void pointwiseProduct( PetscVector const & x,
                                  PetscVector & y ) const override;
 

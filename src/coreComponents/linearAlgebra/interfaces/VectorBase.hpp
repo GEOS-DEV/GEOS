@@ -223,13 +223,12 @@ protected:
 
     arrayView1d< real64 const > const my_values = values();
     arrayView1d< real64 const > const vec_values = vec.values();
-printf("Yes\n");
+
     RAJA::ReduceSum< parallelDeviceReduce, real64 >  result( 0.0 );
     forAll< parallelDevicePolicy<> >( localSize(), [result, my_values, vec_values] GEOSX_DEVICE ( localIndex const i )
     {
       result += my_values[i] * vec_values[i];
     } );
-GEOSX_LOG_RANK( "Yes2" );
 
     return result.get();
   }
@@ -245,20 +244,17 @@ GEOSX_LOG_RANK( "Yes2" );
   AsyncRequest< real64 > iDot( Vector const & vec ) const
   {
     real64 localDotProduct = localDot( vec );
- 
-GEOSX_LOG_RANK( "Yes3" );
+
     AsyncRequest< real64 > asyncRequest( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & result )
     {
-      GEOSX_LOG_RANK_VAR( localDotProduct );
       MpiWrapper::iAllReduce( &localDotProduct,
                               &result,
                               1,
                               MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                               comm,
                               &request );
-    });
-    
-GEOSX_LOG_RANK( "Yes4" );
+    } );
+
     return asyncRequest;
   }
 
@@ -273,7 +269,7 @@ GEOSX_LOG_RANK( "Yes4" );
     LvArray::typeManipulation::forEachArg( [ & ]( Vector const & vec )
     {
       localDotProducts.emplace_back( localDot( vec ) );
-    }, vecs... );
+    }, vecs ... );
 
     AsyncRequest< std::array< real64, numVecs > > asyncRequest( [ =, comm = comm() ]( MPI_Request & request, std::array< real64, numVecs > & result )
     {
@@ -283,8 +279,8 @@ GEOSX_LOG_RANK( "Yes4" );
                               MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                               comm,
                               &request );
-    });
-    
+    } );
+
     return asyncRequest;
   }
 
@@ -327,7 +323,7 @@ GEOSX_LOG_RANK( "Yes4" );
                          real64 const beta,
                          Vector const & y,
                          real64 const gamma ) = 0;
-   
+
   /**
    * @brief Compute the component-wise multiplication <tt>y</tt> = <tt>v * x</tt>.
    * @param x first vector (input)

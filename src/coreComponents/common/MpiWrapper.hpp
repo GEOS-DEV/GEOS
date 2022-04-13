@@ -718,11 +718,11 @@ int MpiWrapper::allReduce( T const * const sendbuf,
 
 template< typename T >
 int MpiWrapper::iAllReduce( T const * const sendbuf,
-                           T * const recvbuf,
-                           int const count,
-                           MPI_Op MPI_PARAM( op ),
-                           MPI_Comm MPI_PARAM( comm ),
-                           MPI_Request * MPI_PARAM( request ) )
+                            T * const recvbuf,
+                            int const count,
+                            MPI_Op MPI_PARAM( op ),
+                            MPI_Comm MPI_PARAM( comm ),
+                            MPI_Request * MPI_PARAM( request ) )
 {
 #ifdef GEOSX_USE_MPI
   MPI_Datatype const MPI_TYPE = internal::getMpiType< T >();

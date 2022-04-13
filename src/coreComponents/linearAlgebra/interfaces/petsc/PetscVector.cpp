@@ -224,7 +224,7 @@ void PetscVector::axpbypcz( real64 const alpha,
   GEOSX_LAI_ASSERT( y.ready() );
   if( ( &x != &y ) && ( &y != this ) )
   {
-    GEOSX_LAI_CHECK_ERROR( VecAXPBYPCZ( m_vec, alpha, beta, gamma , x.m_vec, y.m_vec ) );
+    GEOSX_LAI_CHECK_ERROR( VecAXPBYPCZ( m_vec, alpha, beta, gamma, x.m_vec, y.m_vec ) );
     touch();
   }
   else if( ( &x != &y ) && ( &y == this ) )
@@ -244,7 +244,7 @@ void PetscVector::axpbypcz( real64 const alpha,
     scale( alpha + beta + gamma );
   }
 }
-  
+
 void PetscVector::pointwiseProduct( PetscVector const & x,
                                     PetscVector & y ) const
 {

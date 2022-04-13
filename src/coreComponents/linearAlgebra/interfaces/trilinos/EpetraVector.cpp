@@ -198,7 +198,7 @@ void EpetraVector::axpbypcz( real64 const alpha,
   {
     GEOSX_LAI_ASSERT_EQ( localSize(), x.localSize() );
     GEOSX_LAI_ASSERT_EQ( localSize(), y.localSize() );
-    axpby( beta, y, gamma ); 
+    axpby( beta, y, gamma );
     axpy( alpha, x );
   }
   else if( ( &x != &y ) && ( &y == this ) )

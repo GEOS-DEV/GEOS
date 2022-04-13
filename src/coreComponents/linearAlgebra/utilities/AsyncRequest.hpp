@@ -25,24 +25,24 @@ namespace geosx
 {
 
 template< typename T >
-class AsyncRequest 
+class AsyncRequest
 {
 public:
 
-template< typename F >
-explicit AsyncRequest( F f )
-  : m_function( std::move( f ) )
-{
-  m_result = std::make_unique< T >(T{});
-  m_request = std::make_unique< MPI_Request >();
-  m_function( *m_request, *m_result );
-}
+  template< typename F >
+  explicit AsyncRequest( F f )
+    : m_function( std::move( f ) )
+  {
+    m_result = std::make_unique< T >( T{} );
+    m_request = std::make_unique< MPI_Request >();
+    m_function( *m_request, *m_result );
+  }
 
-T const & complete() const
-{
-  MpiWrapper::wait( m_request.get(), MPI_STATUS_IGNORE );
-  return *m_result;
-}
+  T const & complete() const
+  {
+    MpiWrapper::wait( m_request.get(), MPI_STATUS_IGNORE );
+    return *m_result;
+  }
 
 private:
 

@@ -260,10 +260,10 @@ TYPED_TEST_P( KrylovSolverBlockTest, BiCGSTAB )
   this->test( params_BiCGSTAB() );
 }
 
-TYPED_TEST_P( KrylovSolverBlockTest, ExpBiCGSTAB )
-{
-  this->test( params_ExpBiCGSTAB() );
-}
+//TYPED_TEST_P( KrylovSolverBlockTest, ExpBiCGSTAB )
+//{
+//  this->test( params_ExpBiCGSTAB() );
+//}
 
 TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
 {
@@ -273,7 +273,7 @@ TYPED_TEST_P( KrylovSolverBlockTest, GMRES )
 REGISTER_TYPED_TEST_SUITE_P( KrylovSolverBlockTest,
                              CG,
                              BiCGSTAB,
-                             ExpBiCGSTAB,
+                             //ExpBiCGSTAB,
                              GMRES );
 
 #ifdef GEOSX_USE_TRILINOS

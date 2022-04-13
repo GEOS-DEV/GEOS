@@ -117,11 +117,11 @@ public:
    * @return the dot product
    * @note Each call to iDot must be paired with a call to MpiWrapper::wait( &request, ... )
    */
-   AsyncRequest< real64 > iDot( BlockVectorView const & x ) const;
+  AsyncRequest< real64 > iDot( BlockVectorView const & x ) const;
 
 
-   template< typename ... VECS >
-   AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const;
+  template< typename ... VECS >
+  AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const;
 
   /**
    * @brief 2-norm of the block vector.
@@ -171,7 +171,7 @@ public:
                  real64 const beta,
                  BlockVectorView const & y,
                  real64 const gamma );
-   
+
   ///@}
 
   /// @name Accessors
@@ -355,13 +355,13 @@ real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
 template< typename VECTOR >
 AsyncRequest< real64 > BlockVectorView< VECTOR >::iDot( BlockVectorView const & src ) const
 {
-  return AsyncRequest< real64 >( [](auto, auto){} );
+  return AsyncRequest< real64 >( []( auto, auto ){} );
 }
 
 template< typename VECTOR >
-template< typename ... VECS > AsyncRequest< std::array< real64, sizeof...( VECS ) > > BlockVectorView<VECTOR>::iDot2( VECS const & ... vecs ) const
+template< typename ... VECS > AsyncRequest< std::array< real64, sizeof...( VECS ) > > BlockVectorView< VECTOR >::iDot2( VECS const & ... vecs ) const
 {
-  return AsyncRequest< std::array< real64, sizeof...( VECS ) > >( [](auto,auto){} );
+  return AsyncRequest< std::array< real64, sizeof...( VECS ) > >( []( auto, auto ){} );
 }
 
 template< typename VECTOR >

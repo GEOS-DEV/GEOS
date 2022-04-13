@@ -88,40 +88,21 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
       break;
     }
 
-    // real64 inner_r0_r   = r0.dot( r );
-    real64 inner_r0_AMp = r0.dot( AMp );
-
-    ///////////////////////
-    // GEOSX_LOG_RANK_VAR( inner_r0_r );
-    // GEOSX_LOG_RANK_VAR( inner_r0_AMp );
-
-    // MPI_Request request;
-    // GEOSX_LOG_RANK( "iAllReduce launched " );
-    // real64 iInner_r0_r = r0.iDot(r, request );
-    // MpiWrapper::wait( &request, MPI_STATUS_IGNORE );
-    // GEOSX_LOG_RANK_VAR( iInner_r0_r );
-
-    AsyncRequest< real64 > request = r0.iDot( r );
-
-    // // ... do stuff
-
-    // real64 const iInner_r0_r = request.complete( );
-
-
-    // ///////////////////////
+    AsyncRequest< std::array< real64, 2 > > request = r0.iDot2( r, AMp );
 
     m_precond.apply( r, Mr );
     m_operator.apply( Mr, AMr );
 
     m_precond.apply( AMp, MAMp );
     m_operator.apply( MAMp, AMAMp );
-    
-    real64 const inner_r0_r = request.complete( );
-    //GEOSX_LOG_RANK_VAR( inner_r0_r );
-    //GEOSX_LOG_RANK_VAR( iInner_r0_r );
 
-    // Error correction 
-    // 
+    std::array< real64, 2 > const dp = request.complete();
+    real64 const inner_r0_r   = dp[0];
+    real64 const inner_r0_AMp = dp[1];
+
+
+    // Error correction
+    //
     // ... TBD
 
     //  Scalar operations
@@ -134,13 +115,16 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
     AMq.copy( AMr );
     AMq.axpy( -alpha, AMAMp );
 
-    real64 const inner_r0_AMq = r0.dot( AMq );
-    real64 const inner_AMq_AMq = AMq.dot( AMq );
-    real64 const inner_r_AMq = r.dot( AMq );
-    real64 const inner_AMp_AMq = AMp.dot( AMq );
+    AsyncRequest< std::array< real64, 4 > > request2 = AMq.iDot2( r0, AMq, r, AMp );
 
     m_precond.apply( AMq, MAMq );
     m_operator.apply( MAMq, AMAMq );
+
+    std::array< real64, 4 > const dp2 = request2.complete();
+    real64 const inner_r0_AMq  = dp2[0];
+    real64 const inner_AMq_AMq = dp2[1];
+    real64 const inner_r_AMq   = dp2[2];
+    real64 const inner_AMp_AMq = dp2[3];
 
     real64 const inner_q_AMq = inner_r_AMq - alpha * inner_AMp_AMq;
     real64 const omega = inner_q_AMq / inner_AMq_AMq;
