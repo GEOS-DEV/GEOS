@@ -218,8 +218,6 @@ public:
       real64 dPresGradStab{};
 
       real64 tauStab = 0.0; 
-      // tauStab = 9.6344e-12;
-      // tauStab = 100.;
 
 
       // compute potential difference MPFA-style
@@ -231,33 +229,25 @@ public:
 
         tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
-
         dPresGradStab += tauStab * m_stabWeights(iconn, i) * m_dPres[er][esr][ei];
-
-        // std::cout << m_dPres[er][esr][ei] << std::endl;
-
       }
 
-      // modify flux with stabilization
+      // modify stabilization flux
       // multiply dPresGrad with upwind, lagged quantities
 
       for( integer ic = 0; ic < numComp; ++ic )
       {
 
-        stack.stabFlux[ic] += dPresGradStab * m_phaseDensOld[er_up][esr_up][ei_up][ip] 
-                                        * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
-                                        * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
+        real64 laggedUpwind = m_phaseDensOld[er_up][esr_up][ei_up][ip] 
+                            * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
+                            * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
+
+        stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
 
         for( integer ke = 0; ke < stack.stencilSize; ++ke )
         {
-
-          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights(iconn, ke) * m_phaseDensOld[er_up][esr_up][ei_up][ip] 
-                                                                           * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
-                                                                           * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
-
+          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights(iconn, ke) * laggedUpwind;
         }
-
-        // std::cout << "Compute \t" << ip << "\t" << ic << "\t" << dPresGradStab << "\t" << m_phaseDensOld[er_up][esr_up][ei_up][ip] << "\t" << m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic] << "\t" << m_phaseVolFracOld[er_up][esr_up][ei_up][ip] << "\t" << stack.stabFlux[ic] << std::endl;
       }
 
 
@@ -266,8 +256,6 @@ public:
     // populate local flux vector and derivatives
     for( integer ic = 0; ic < numComp; ++ic )
     {
-
-      // std::cout << "Populate   " << ic << "   " << stack.stabFlux[ic] << std::endl;
 
       stack.localFlux[ic]           +=  stack.stabFlux[ic]; 
       stack.localFlux[numComp + ic] += -stack.stabFlux[ic];
@@ -279,8 +267,6 @@ public:
         stack.localFluxJacobian[numComp + ic][localDofIndexPres] += -stack.dStabFlux_dP[ke][ic];
 
       }
-
-      // std::cout << ic << "   " << stack.localFlux[ic] << std::endl;
     }
 
     
