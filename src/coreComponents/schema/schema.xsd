@@ -641,6 +641,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--positionTolerance => A position tolerance to verify if a node belong to a nodeset-->
 		<xsd:attribute name="positionTolerance" type="real64" default="1e-10" />
+		<!--tiltingAngle => A tilting angle in radians.-->
+		<xsd:attribute name="tiltingAngle" type="real64" default="0" />
+		<!--tiltingDirection => A 2D array specifying the direction of tilting.-->
+		<xsd:attribute name="tiltingDirection" type="real64_array" default="{0}" />
+		<!--tiltingOrigin => A 2D array specifying the tilting origin.-->
+		<xsd:attribute name="tiltingOrigin" type="real64_array" default="{0}" />
 		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--xBias => Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
@@ -718,6 +724,12 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="radius" type="real64_array" use="required" />
 		<!--theta => Tangent angle defining geometry size: 90 for quarter, 180 for half and 360 for full wellbore geometry-->
 		<xsd:attribute name="theta" type="real64_array" use="required" />
+		<!--tiltingAngle => A tilting angle in radians.-->
+		<xsd:attribute name="tiltingAngle" type="real64" default="0" />
+		<!--tiltingDirection => A 2D array specifying the direction of tilting.-->
+		<xsd:attribute name="tiltingDirection" type="real64_array" default="{0}" />
+		<!--tiltingOrigin => A 2D array specifying the tilting origin.-->
+		<xsd:attribute name="tiltingOrigin" type="real64_array" default="{0}" />
 		<!--trajectory => Coordinates defining the wellbore trajectory-->
 		<xsd:attribute name="trajectory" type="real64_array2d" default="{{0}}" />
 		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
@@ -1256,6 +1268,11 @@ the relative residual norm satisfies:
 * phaseVolRate
 * totalVolRate-->
 		<xsd:attribute name="control" type="geosx_WellControls_Control" use="required" />
+		<!--disableInjectorCrossflow => Flag to disable crossflow in injecting wells: 
+ - If the flag is set to 0, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
+ - If the flag is set to 1, we only allow well-to-reservoir flow at the perforations. 
+This flag is only available for injectors.-->
+		<xsd:attribute name="disableInjectorCrossflow" type="integer" default="0" />
 		<!--injectionStream => Global component densities of the injection stream-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream-->

@@ -10,6 +10,9 @@ nx                integer_array required Number of elements in the x-direction w
 ny                integer_array required Number of elements in the y-direction within each mesh block                                            
 nz                integer_array required Number of elements in the z-direction within each mesh block                                            
 positionTolerance real64        1e-10    A position tolerance to verify if a node belong to a nodeset                                            
+tiltingAngle      real64        0        A tilting angle in radians.                                                                             
+tiltingDirection  real64_array  {0}      A 2D array specifying the direction of tilting.                                                         
+tiltingOrigin     real64_array  {0}      A 2D array specifying the tilting origin.                                                               
 trianglePattern   integer       0        Pattern by which to decompose the hex mesh into prisms (more explanation required)                      
 xBias             real64_array  {1}      Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N) 
 xCoords           real64_array  required x-coordinates of each mesh block vertex                                                                 

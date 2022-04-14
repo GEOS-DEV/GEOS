@@ -112,6 +112,24 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
     setInputFlag( InputFlags::OPTIONAL ).
     setRestartFlags( RestartFlags::NO_WRITE ).
     setDescription( "A position tolerance to verify if a node belong to a nodeset" );
+
+  registerWrapper( viewKeyStruct::tiltingDirectionString(), &m_tiltingDirection ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "A 2D array specifying the direction of tilting." );
+
+  registerWrapper( viewKeyStruct::tiltingAngleString(), &m_tiltingAngle ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "A tilting angle in radians." );
+
+  registerWrapper( viewKeyStruct::tiltingOriginString(), &m_tiltingOrigin ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setDescription( "A 2D array specifying the tilting origin." );
+
 }
 
 static int getNumElemPerBox( ElementType const elementType )
@@ -239,6 +257,22 @@ void InternalMeshGenerator::postProcessInput()
   }
 
   m_fPerturb = 0.0;
+
+  GEOSX_THROW_IF( !isZero( m_tiltingAngle ) && m_tiltingDirection.size() != 2,
+                  "InternalMeshGenerator: to apply tilting, please specify a direction using " << viewKeyStruct::tiltingDirectionString(),
+                  InputError );
+
+  GEOSX_THROW_IF( !isZero( m_tiltingAngle ) && m_tiltingOrigin.size() != 2,
+                  "InternalMeshGenerator: to apply tilting, please specify an origin using " << viewKeyStruct::tiltingOriginString(),
+                  InputError );
+
+  GEOSX_THROW_IF( isZero( m_tiltingAngle ) && ( m_tiltingOrigin.size() > 0 || m_tiltingDirection.size() > 0 ),
+                  "InternalMeshGenerator: to apply tilting, please specify an angle using " << viewKeyStruct::tiltingAngleString(),
+                  InputError );
+
+  GEOSX_THROW_IF( std::abs( m_tiltingAngle ) >= M_PI / 2.0,
+                  "InternalMeshGenerator: the tilting angle must be specified in radians, using a value between -pi/2 and pi/2",
+                  InputError );
 }
 
 Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
@@ -985,6 +1019,18 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
       X[iN][0] -= ( X[iN][1] - m_skewCenter[1] ) * std::tan( m_skewAngle );
     }
   }
+
+  LvArray::tensorOps::normalize< 2 >( m_tiltingDirection );
+
+  if( std::fabs( m_tiltingAngle ) > 0.0 )
+  {
+    for( localIndex iN = 0; iN != numNodes; ++iN )
+    {
+      X[iN][2] += ( ( X[iN][0] - m_tiltingOrigin[0] ) * m_tiltingDirection[0]
+                    + ( X[iN][1] - m_tiltingOrigin[1] ) * m_tiltingDirection[1] ) * std::tan( m_tiltingAngle );
+    }
+  }
+
 
   coordinateTransformation( X, nodeSets );
 

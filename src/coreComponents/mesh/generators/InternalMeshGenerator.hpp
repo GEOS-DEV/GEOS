@@ -154,8 +154,12 @@ protected:
     constexpr static char const * trianglePatternString() { return "trianglePattern"; }
     constexpr static char const * meshTypeString() { return "meshType"; }
     constexpr static char const * positionToleranceString() { return "positionTolerance"; }
+    constexpr static char const * tiltingDirectionString() { return "tiltingDirection"; }
+    constexpr static char const * tiltingAngleString() { return "tiltingAngle"; }
+    constexpr static char const * tiltingOriginString() { return "tiltingOrigin"; }
   };
   /// @endcond
+
 
   void postProcessInput() override;
 
@@ -223,7 +227,14 @@ private:
   /// Skew center for skew mesh generation
   real64 m_skewCenter[3] = { 0, 0, 0 };
 
+  /// Tilting angle
+  real64 m_tiltingAngle;
 
+  /// Tilting origin
+  array1d< real64 > m_tiltingOrigin;
+
+  /// Tilting direction
+  array1d< real64 > m_tiltingDirection;
 
   /**
    * @brief Convert ndim node spatialized index to node global index.
@@ -344,7 +355,6 @@ public:
 
 };
 
-//ENUM_STRINGS( InternalMeshGenerator::MeshType, "Cartesian", "Cylindrical", "CylindricalSquareBoundary" )
 
 } /* namespace geosx */
 

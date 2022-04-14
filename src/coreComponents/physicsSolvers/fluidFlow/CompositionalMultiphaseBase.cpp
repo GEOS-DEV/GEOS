@@ -195,9 +195,9 @@ void CompositionalMultiphaseBase::registerDataOnMesh( Group & meshBodies )
         reference().resizeDimension< 1, 2 >( m_numPhases, m_numComponents );
 
       subRegion.registerExtrinsicData< phaseOutflux >( getName() ).
-	reference().resizeDimension< 1 >( m_numPhases );
+        reference().resizeDimension< 1 >( m_numPhases );
       subRegion.registerExtrinsicData< componentOutflux >( getName() ).
-	reference().resizeDimension< 1 >( m_numComponents );
+        reference().resizeDimension< 1 >( m_numComponents );
       subRegion.registerExtrinsicData< phaseCFLNumber >( getName() );
       subRegion.registerExtrinsicData< componentCFLNumber >( getName() );
 
