@@ -406,7 +406,7 @@ localIndex Unpack( buffer_unit_type const * & buffer,
 {
   ArrayOfArrays< T > varAsArray;
   localIndex sizeOfUnpackedChars = Unpack( buffer, varAsArray );
-  var.assimilate( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
+  var.template assimilate< parallelHostPolicy >( std::move( varAsArray ), LvArray::sortedArrayManipulation::SORTED_UNIQUE );
   return sizeOfUnpackedChars;
 }
 
@@ -1088,7 +1088,7 @@ Pack( buffer_unit_type * & buffer,
     else
     {
       sizeOfPackedChars += Pack< DO_PACKING >( buffer,
-                                               localIndex( -1 ) );
+                                               globalIndex( -1 ) );
     }
   }
 

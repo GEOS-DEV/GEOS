@@ -64,7 +64,7 @@ public:
    * @param table Table with stress / strain time history
    */
   template< typename SOLID_TYPE >
-  void runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
+  void runStrainControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table );
 
   /**
    * @brief Run a stress-controlled test using loading protocol in table
@@ -72,7 +72,7 @@ public:
    * @param table Table with stress / strain time history
    */
   template< typename SOLID_TYPE >
-  void runStressControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
+  void runStressControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table );
 
   /**
    * @brief Run a mixed stress/strain-controlled test using loading protocol in table
@@ -80,7 +80,7 @@ public:
    * @param table Table with stress / strain time history
    */
   template< typename SOLID_TYPE >
-  void runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > & table );
+  void runMixedControlTest( SOLID_TYPE & solid, arrayView2d< real64 > const & table );
 
   /**
    * @brief Validate results by checking residual and removing erroneous data
@@ -114,7 +114,7 @@ private:
     constexpr static char const * baselineString() { return "baseline"; }
   };
 
-  integer m_numSteps;              ///< Number of load steps
+  integer m_numSteps;          ///< Number of load steps
   string m_solidMaterialName;  ///< Material identifier
   string m_mode;               ///< Test mode: strainControl, stressControl, mixedControl
   string m_axialFunctionName;  ///< Time-dependent function controlling axial stress or strain (depends on test mode)

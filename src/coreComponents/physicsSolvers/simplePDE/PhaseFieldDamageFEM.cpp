@@ -548,10 +548,10 @@ PhaseFieldDamageFEM::calculateResidualNorm( DomainPartition const & domain,
   return residual;
 }
 
-void PhaseFieldDamageFEM::solveSystem( DofManager const & dofManager,
-                                       ParallelMatrix & matrix,
-                                       ParallelVector & rhs,
-                                       ParallelVector & solution )
+void PhaseFieldDamageFEM::solveLinearSystem( DofManager const & dofManager,
+                                             ParallelMatrix & matrix,
+                                             ParallelVector & rhs,
+                                             ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
   rhs.scale( -1.0 ); // TODO decide if we want this here
@@ -561,7 +561,7 @@ void PhaseFieldDamageFEM::solveSystem( DofManager const & dofManager,
 //  std::cout << matrix<<std::endl;
 //  std::cout<< rhs << std::endl;
 
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 
   if( getLogLevel() == 2 )
   {
@@ -579,27 +579,32 @@ void PhaseFieldDamageFEM::applyDirichletBCImplicit( real64 const time,
 
 {
   FieldSpecificationManager const & fsManager = FieldSpecificationManager::getInstance();
-  fsManager.apply( time,
-                   domain,
-                   "nodeManager",
-                   m_fieldName,
-                   [&]( FieldSpecificationBase const & bc, string const &,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & targetGroup,
-                        string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & )
   {
-    bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy< 32 > >( targetSet,
-                                                                     time,
-                                                                     targetGroup,
-                                                                     m_fieldName,
-                                                                     dofManager.getKey( m_fieldName ),
-                                                                     dofManager.rankOffset(),
-                                                                     localMatrix,
-                                                                     localRhs );
-  } );
+    fsManager.apply( time,
+                     mesh,
+                     "nodeManager",
+                     m_fieldName,
+                     [&]( FieldSpecificationBase const & bc, string const &,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & targetGroup,
+                          string const GEOSX_UNUSED_PARAM( fieldName ) ) -> void
+    {
+      bc.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                         parallelDevicePolicy< 32 > >( targetSet,
+                                                                       time,
+                                                                       targetGroup,
+                                                                       m_fieldName,
+                                                                       dofManager.getKey( m_fieldName ),
+                                                                       dofManager.rankOffset(),
+                                                                       localMatrix,
+                                                                       localRhs );
+    } );
 
-  fsManager.applyFieldValue< serialPolicy >( time, domain, "ElementRegions", viewKeyStruct::coeffNameString() );
+    fsManager.applyFieldValue< serialPolicy >( time, mesh, "ElementRegions", viewKeyStruct::coeffNameString() );
+  } );
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, PhaseFieldDamageFEM, string const &,

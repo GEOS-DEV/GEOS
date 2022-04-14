@@ -6,6 +6,7 @@ set( gtest_geosx_tests
      testSinglePhaseBaseKernels.cpp
      testSinglePhaseFVMKernels.cpp
      testSinglePhaseHybridFVMKernels.cpp
+     testThermalCompMultiphaseFlow.cpp
    )
 
 set( dependencyList gtest )
@@ -18,10 +19,6 @@ endif()
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )
-endif()
-
-if ( ENABLE_PYGEOSX )
-  set( dependencyList ${dependencyList} pygeosx )
 endif()
 
 if( ENABLE_PVTPackage )

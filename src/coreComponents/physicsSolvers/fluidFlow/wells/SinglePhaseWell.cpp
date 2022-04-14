@@ -96,10 +96,10 @@ void SinglePhaseWell::registerDataOnMesh( Group & meshBodies )
   } );
 }
 
-void SinglePhaseWell::initializePreSubGroups()
+void SinglePhaseWell::initializePostSubGroups()
 {
 
-  WellSolverBase::initializePreSubGroups();
+  WellSolverBase::initializePostSubGroups();
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -707,20 +707,19 @@ SinglePhaseWell::calculateResidualNorm( DomainPartition const & domain,
 
       WellControls const & wellControls = getWellControls( subRegion );
 
-      ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                  parallelDeviceReduce >( localRhs,
-                                                          dofManager.rankOffset(),
-                                                          subRegion.isLocallyOwned(),
-                                                          subRegion.getTopWellElementIndex(),
-                                                          wellControls,
-                                                          wellElemDofNumber,
-                                                          wellElemGhostRank,
-                                                          wellElemVolume,
-                                                          wellElemDensityOld,
-                                                          m_currentTime + m_currentDt, // residual normalized with rate of the end of the
-                                                                                       // time interval
-                                                          m_currentDt,
-                                                          &localResidualNorm );
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            dofManager.rankOffset(),
+                                                            subRegion.isLocallyOwned(),
+                                                            subRegion.getTopWellElementIndex(),
+                                                            wellControls,
+                                                            wellElemDofNumber,
+                                                            wellElemGhostRank,
+                                                            wellElemVolume,
+                                                            wellElemDensityOld,
+                                                            m_currentTime + m_currentDt, // residual normalized with rate of the end of the
+                                                            // time interval
+                                                            m_currentDt,
+                                                            &localResidualNorm );
 
     } );
   } );
@@ -763,14 +762,14 @@ bool SinglePhaseWell::checkSystemSolution( DomainPartition const & domain,
 
       // here we can reuse the flow solver kernel checking that pressures are positive
       localIndex const subRegionSolutionCheck =
-        singlePhaseWellKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                                             parallelDeviceReduce >( localSolution,
-                                                                                     dofManager.rankOffset(),
-                                                                                     wellElemDofNumber,
-                                                                                     wellElemGhostRank,
-                                                                                     wellElemPressure,
-                                                                                     dWellElemPressure,
-                                                                                     scalingFactor );
+        singlePhaseWellKernels::
+          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 dofManager.rankOffset(),
+                                                                 wellElemDofNumber,
+                                                                 wellElemGhostRank,
+                                                                 wellElemPressure,
+                                                                 dWellElemPressure,
+                                                                 scalingFactor );
 
       if( subRegionSolutionCheck == 0 )
       {

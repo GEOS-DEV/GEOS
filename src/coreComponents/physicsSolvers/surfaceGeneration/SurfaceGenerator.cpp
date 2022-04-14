@@ -312,7 +312,9 @@ void SurfaceGenerator::initializePostInitialConditionsPreSubGroups()
     m_originalNodetoEdges = nodeManager.edgeList();
     m_originalFaceToEdges = faceManager.edgeList();
 
-    nodeManager.registerWrapper( "usedFaces", &m_usedFacesForNode );
+    string const usedFacesLabel = "usedFaces";
+    nodeManager.registerWrapper( usedFacesLabel, &m_usedFacesForNode );
+    nodeManager.excludeWrappersFromPacking( { usedFacesLabel } );
     m_usedFacesForNode.resize( nodeManager.size() );
 
     localIndex const numFaces = faceManager.size();
@@ -934,7 +936,7 @@ bool SurfaceGenerator::findFracturePlanes( localIndex const nodeID,
 {
   arrayView1d< localIndex const > const & parentNodeIndices = nodeManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
 
-  localIndex const parentNodeIndex = ObjectManagerBase::getParentRecusive( parentNodeIndices, nodeID );
+  localIndex const parentNodeIndex = ObjectManagerBase::getParentRecursive( parentNodeIndices, nodeID );
 
   arrayView1d< localIndex const > const & parentFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::ParentIndex >();
   arrayView1d< localIndex const > const & childFaceIndices = faceManager.getExtrinsicData< extrinsicMeshData::ChildIndex >();
@@ -2097,7 +2099,7 @@ void SurfaceGenerator::performFracture( const localIndex nodeID,
                                                         getSubRegion< CellElementSubRegion >( faceToSubRegionMap[iFace][0] );
             arrayView2d< real64 const > const subRegionElemCenter = elementSubRegion.getElementCenter();
 
-            faceManager.sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ], faceToNodeMap.sizeOfArray( iFace ) );
+            FaceManager::sortFaceNodes( X, subRegionElemCenter[ elementIndex ], faceToNodeMap[ iFace ] );
 
             //Face normal need to be updated here
             real64 fCenter[ 3 ];
