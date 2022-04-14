@@ -105,11 +105,6 @@ else()
   set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
 endif()
 
-if( ENABLE_PYGEOSX )
-  set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver )
-endif()
-
-
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
@@ -164,6 +159,9 @@ blt_add_executable( NAME geosx
 				 )
 			     endif()
 
+if( ENABLE_PYGEOSX )
+   add_subdirectory( pygeosx )
+endif()
 
 if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
@@ -176,6 +174,3 @@ install( DIRECTORY ../examples/
 install( DIRECTORY ../scripts/
          DESTINATION scripts )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( pygeosx )
-endif()

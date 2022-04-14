@@ -48,7 +48,6 @@ public:
   MeshLevel( string const & name,
              Group * const parent );
 
-
   /**
    * @brief Constructor for the MeshLevel object.
    * @param[in] name the name of the MeshLevel object in the repository

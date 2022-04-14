@@ -320,7 +320,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain,
+                                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                   "ElementRegions",
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,
@@ -367,7 +367,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
-  MeshLevel const & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
+  MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() );
 
   NumericalMethodsManager const & numericalMethodManager = domain.getNumericalMethodManager();
   FiniteVolumeManager const & fvManager = numericalMethodManager.getFiniteVolumeManager();
@@ -396,7 +396,7 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
   array1d< real64 > localSumFluxes( aquiferNameToAquiferId.size() );
 
   fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                               domain,
+                                               mesh,
                                                "faceManager",
                                                AquiferBoundaryCondition::catalogName(),
                                                [&] ( AquiferBoundaryCondition const & bc,

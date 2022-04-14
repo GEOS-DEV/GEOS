@@ -332,7 +332,7 @@ void SinglePhaseBase::computeHydrostaticEquilibrium()
 
   // then start the actual table construction
   fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain,
+                                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                                   "ElementRegions",
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,
@@ -768,47 +768,52 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
-
-  fsManager.apply( time_n + dt,
-                   domain,
-                   "ElementRegions",
-                   extrinsicMeshData::flow::pressure::key(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & lset,
-                        Group & subRegion,
-                        string const & )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+
+    fsManager.apply( time_n + dt,
+                     mesh,
+                     "ElementRegions",
+                     extrinsicMeshData::flow::pressure::key(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const & setName,
+                          SortedArrayView< localIndex const > const & lset,
+                          Group & subRegion,
+                          string const & )
     {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time_n+dt, FieldSpecificationBase::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-    }
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( lset.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                     getName(), time_n+dt, FieldSpecificationBase::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
 
 
-    arrayView1d< globalIndex const > const dofNumber =
-      subRegion.getReference< array1d< globalIndex > >( dofKey );
+      arrayView1d< globalIndex const > const dofNumber =
+        subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-    arrayView1d< real64 const > const pres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
+      arrayView1d< real64 const > const pres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
 
-    arrayView1d< real64 const > const dPres =
-      subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
+      arrayView1d< real64 const > const dPres =
+        subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
 
-    // call the application of the boundary condition to alter the matrix and rhs
-    fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
-                                       parallelDevicePolicy<> >( lset,
-                                                                 time_n + dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      return pres[a] + dPres[a];
+      // call the application of the boundary condition to alter the matrix and rhs
+      fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
+                                         parallelDevicePolicy<> >( lset,
+                                                                   time_n + dt,
+                                                                   subRegion,
+                                                                   dofNumber,
+                                                                   dofManager.rankOffset(),
+                                                                   localMatrix,
+                                                                   localRhs,
+                                                                   [=] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+        return pres[a] + dPres[a];
+      } );
     } );
   } );
 }
@@ -825,39 +830,46 @@ void SinglePhaseBase::applySourceFluxBC( real64 const time_n,
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
   string const dofKey = dofManager.getKey( extrinsicMeshData::flow::pressure::key() );
 
-  fsManager.apply( time_n + dt,
-                   domain,
-                   "ElementRegions",
-                   FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
-                   [&]( FieldSpecificationBase const & fs,
-                        string const & setName,
-                        SortedArrayView< localIndex const > const & targetSet,
-                        Group & subRegion,
-                        string const & )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & )
   {
-    if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
-    {
-      globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
-      GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
-                                   getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
-                                   fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
-    }
 
-    arrayView1d< globalIndex const > const
-    dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
-
-    fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
-                                       parallelDevicePolicy<> >( targetSet.toViewConst(),
-                                                                 time_n + dt,
-                                                                 dt,
-                                                                 subRegion,
-                                                                 dofNumber,
-                                                                 dofManager.rankOffset(),
-                                                                 localMatrix,
-                                                                 localRhs,
-                                                                 [] GEOSX_HOST_DEVICE ( localIndex const )
+    fsManager.apply( time_n + dt,
+                     mesh,
+                     "ElementRegions",
+                     FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
+                     [&]( FieldSpecificationBase const & fs,
+                          string const & setName,
+                          SortedArrayView< localIndex const > const & targetSet,
+                          Group & subRegion,
+                          string const & )
     {
-      return 0.0;
+      if( fs.getLogLevel() >= 1 && m_nonlinearSolverParameters.m_numNewtonIterations == 0 )
+      {
+        globalIndex const numTargetElems = MpiWrapper::sum< globalIndex >( targetSet.size() );
+        GEOSX_LOG_RANK_0( GEOSX_FMT( geosx::internal::bcLogMessage,
+                                     getName(), time_n+dt, SourceFluxBoundaryCondition::catalogName(),
+                                     fs.getName(), setName, subRegion.getName(), fs.getScale(), numTargetElems ) );
+      }
+
+      arrayView1d< globalIndex const > const
+      dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
+
+      fs.applyBoundaryConditionToSystem< FieldSpecificationAdd,
+                                         parallelDevicePolicy<> >( targetSet.toViewConst(),
+                                                                   time_n + dt,
+                                                                   dt,
+                                                                   subRegion,
+                                                                   dofNumber,
+                                                                   dofManager.rankOffset(),
+                                                                   localMatrix,
+                                                                   localRhs,
+                                                                   [] GEOSX_HOST_DEVICE ( localIndex const )
+      {
+        return 0.0;
+      } );
+
     } );
 
   } );
@@ -886,17 +898,17 @@ void SinglePhaseBase::updateState( DomainPartition & domain )
   } );
 }
 
-void SinglePhaseBase::solveSystem( DofManager const & dofManager,
-                                   ParallelMatrix & matrix,
-                                   ParallelVector & rhs,
-                                   ParallelVector & solution )
+void SinglePhaseBase::solveLinearSystem( DofManager const & dofManager,
+                                         ParallelMatrix & matrix,
+                                         ParallelVector & rhs,
+                                         ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();
 
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )

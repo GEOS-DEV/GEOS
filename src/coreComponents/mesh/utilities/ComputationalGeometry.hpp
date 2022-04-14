@@ -363,48 +363,6 @@ int sign( T const val )
   return (T( 0 ) < val) - (val < T( 0 ));
 }
 
-/**
- * @brief Check if a point is inside a convex polyhedron (3D polygon)
- * @tparam POINT_TYPE type of @p point
- * @param[in] nodeCoordinates a global array of nodal coordinates
- * @param[in] faceNodeIndices ordered lists of node indices for each face of the polyhedron
- * @param[in] point coordinates of the query point
- * @param[in] areaTolerance same as in centroid_3DPolygon
- * @return whether the point is inside
- *
- * @note Face nodes must all be ordered the same way (i.e. CW or CCW),
- * resulting in all face normals pointing either outside or inside the polyhendron
- *
- * @note For faces with n>3 nodes that are non-planar, average normal is used
- */
-template< typename POINT_TYPE >
-GEOSX_HOST_DEVICE
-bool isPointInsidePolyhedron( arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & nodeCoordinates,
-                              arrayView1d< arrayView1d< localIndex const > const > const & faceNodeIndices,
-                              POINT_TYPE const & point,
-                              real64 const areaTolerance = 0.0 )
-{
-  localIndex const numFaces = faceNodeIndices.size( 0 );
-  R1Tensor faceCenter, faceNormal;
-  int prevSign = 0;
-
-  for( localIndex kf = 0; kf < numFaces; ++kf )
-  {
-    centroid_3DPolygon( faceNodeIndices[kf], nodeCoordinates, faceCenter, faceNormal, areaTolerance );
-
-    LvArray::tensorOps::subtract< 3 >( faceCenter, point );
-    int const s = sign( LvArray::tensorOps::AiBi< 3 >( faceNormal, faceCenter ) );
-
-    // all dot products should be non-negative (for outward normals) or non-positive (for inward normals)
-    if( prevSign * s < 0 )
-    {
-      return false;
-    }
-    prevSign = s;
-  }
-
-  return true;
-}
 
 /**
  * @brief Check if a point is inside a convex polyhedron (3D polygon)

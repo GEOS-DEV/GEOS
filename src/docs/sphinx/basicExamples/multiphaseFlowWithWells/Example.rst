@@ -118,7 +118,7 @@ Mesh definition and well geometry
 
 In the presence of wells, the **Mesh** block of the XML input file includes two parts:
 
- - a sub-block **PAMELAMeshGenerator** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
+ - a sub-block **PAMELAMesh** defining the reservoir mesh (see :ref:`TutorialSinglePhaseFlowExternalMesh` for more on this),
  - a collection of sub-blocks **InternalWell** defining the geometry of the wells.
 
 The reservoir mesh is imported from a ``.msh`` file that contains the mesh geometry
@@ -279,7 +279,7 @@ attribute (here, 0 or 1) is used to point to a specific entry of the ``phaseName
 in the **DeadOilFluid** block. 
 
 Note that we also define the uniform porosity field here since it is not included in the mesh file
-imported by the **PAMELAMeshGenerator**.
+imported by the **PAMELAMesh**.
 
 .. literalinclude:: ../../../../../inputFiles/compositionalMultiphaseWell/benchmarks/Egg/deadOilEgg_base_iterative.xml
   :language: xml
@@ -332,7 +332,7 @@ The first few lines appearing to the console are indicating that the XML element
   Adding Solver of type CompositionalMultiphaseReservoir, named coupledFlowAndWells
   Adding Solver of type CompositionalMultiphaseFVM, named compositionalMultiphaseFlow
   Adding Solver of type CompositionalMultiphaseWell, named compositionalMultiphaseWell
-  Adding Mesh: PAMELAMeshGenerator, mesh
+  Adding Mesh: PAMELAMesh, mesh
   Adding Mesh: InternalWell, wellProducer1
   Adding Mesh: InternalWell, wellProducer2
   Adding Mesh: InternalWell, wellProducer3
@@ -440,55 +440,7 @@ We have instructed GEOSX to output the time series of rates for each producer.
 The data contained in the corresponding hdf5 files can be extracted and plotted
 as shown below.
 
-.. plot::
-
-   import matplotlib
-   import matplotlib.pyplot as plt
-   import numpy as np
-   import h5py
-
-   def main():
-
-       numWells = 4
-       iplt = -1
-       cmap = plt.get_cmap("tab10")
-    
-       # Loop over the four producers 
-       for iw in range(1,numWells+1):
-
-           # File path
-           hdf5FilePath = 'wellRateHistory'+str(iw)+'.hdf5'    
-
-           # Read HDF5
-           hf = h5py.File(hdf5FilePath, 'r')
-           time = hf.get('Time')
-           time = np.array(time)
-           massRate = hf.get('wellElementMixtureConnectionRate')
-           massRate = np.array(massRate)
-
-           # Some comments about the computation of the volumetric rate here:
-           # A proper oil rate constraint for individual wells is currently being implemented
-           # In the meantime, the volume rate is (wrongly) computed by dividing
-           # the total mass rate by the surface oil density 
-        
-           # Conversions
-           inCubicMeters = 1/848.9
-           inDays = 1.0 / (24 * 3600)
-        
-           # Plot HDF5 content (here, the rate at the well)
-           iplt += 1
-           plt.plot(time[:,0]*inDays, abs(massRate[:,0])*inCubicMeters/inDays, '-o', color=cmap(iplt), label='Producer #'+str(iw))
-
-       plt.xlim( -1, 175)
-       plt.ylim( 0, 3800)        
-       plt.grid()
-       plt.xlabel('time [days]')
-       plt.ylabel('total rate [cubic meters per day]')
-       plt.legend(bbox_to_anchor=(0.025, 0.975), loc='upper left', borderaxespad=0.)
-       plt.show()
-
-   if __name__ == "__main__":
-       main()
+.. plot:: docs/sphinx/basicExamples/multiphaseFlowWithWells/multiphaseFlowWithWellsFigure.py
 
 	   
 ------------------------------------

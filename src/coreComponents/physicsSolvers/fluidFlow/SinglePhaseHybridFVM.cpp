@@ -127,7 +127,7 @@ void SinglePhaseHybridFVM::initializePostInitialConditionsPreSubGroups()
 
     FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
     fsManager.apply( 0.0,
-                     domain,
+                     mesh,
                      "faceManager",
                      extrinsicMeshData::flow::pressure::key(),
                      [&] ( FieldSpecificationBase const & bc,
@@ -478,15 +478,15 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
       {
         arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
 
-        singlePhaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                            parallelDeviceReduce >( localRhs,
-                                                                                    rankOffset,
-                                                                                    elemDofNumber,
-                                                                                    elemGhostRank,
-                                                                                    volume,
-                                                                                    densOld,
-                                                                                    porosityOld,
-                                                                                    localResidualNorm );
+        singlePhaseBaseKernels::
+          ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                                rankOffset,
+                                                                elemDofNumber,
+                                                                elemGhostRank,
+                                                                volume,
+                                                                densOld,
+                                                                porosityOld,
+                                                                localResidualNorm );
       } );
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
@@ -506,17 +506,17 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
     defaultViscosity /= subRegionCounter;
 
     // 2. Compute the residual for the face-based constraints
-    singlePhaseHybridFVMKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                             parallelDeviceReduce >( localRhs,
-                                                                                     rankOffset,
-                                                                                     faceDofNumber.toNestedViewConst(),
-                                                                                     faceGhostRank.toNestedViewConst(),
-                                                                                     elemRegionList.toNestedViewConst(),
-                                                                                     elemSubRegionList.toNestedViewConst(),
-                                                                                     elemList.toNestedViewConst(),
-                                                                                     flowAccessors.get( extrinsicMeshData::elementVolume{} ),
-                                                                                     defaultViscosity,
-                                                                                     &localResidualNorm[3] );
+    singlePhaseHybridFVMKernels::
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            rankOffset,
+                                                            faceDofNumber.toNestedViewConst(),
+                                                            faceGhostRank.toNestedViewConst(),
+                                                            elemRegionList.toNestedViewConst(),
+                                                            elemSubRegionList.toNestedViewConst(),
+                                                            elemList.toNestedViewConst(),
+                                                            flowAccessors.get( extrinsicMeshData::elementVolume{} ),
+                                                            defaultViscosity,
+                                                            &localResidualNorm[3] );
 
 
   } );
@@ -572,14 +572,14 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
       localIndex const subRegionSolutionCheck =
-        singlePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                                             parallelDeviceReduce >( localSolution,
-                                                                                     rankOffset,
-                                                                                     elemDofNumber,
-                                                                                     elemGhostRank,
-                                                                                     pres,
-                                                                                     dPres,
-                                                                                     scalingFactor );
+        singlePhaseBaseKernels::
+          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 rankOffset,
+                                                                 elemDofNumber,
+                                                                 elemGhostRank,
+                                                                 pres,
+                                                                 dPres,
+                                                                 scalingFactor );
 
       if( subRegionSolutionCheck == 0 )
       {
@@ -599,14 +599,14 @@ bool SinglePhaseHybridFVM::checkSystemSolution( DomainPartition const & domain,
 
 
     localIndex const faceSolutionCheck =
-      singlePhaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                                           parallelDeviceReduce >( localSolution,
-                                                                                   rankOffset,
-                                                                                   faceDofNumber,
-                                                                                   faceGhostRank,
-                                                                                   facePres,
-                                                                                   dFacePres,
-                                                                                   scalingFactor );
+      singlePhaseBaseKernels::
+        SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                               rankOffset,
+                                                               faceDofNumber,
+                                                               faceGhostRank,
+                                                               facePres,
+                                                               dFacePres,
+                                                               scalingFactor );
 
     if( faceSolutionCheck == 0 )
     {

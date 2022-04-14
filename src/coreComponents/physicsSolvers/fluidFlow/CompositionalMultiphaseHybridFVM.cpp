@@ -28,9 +28,9 @@
 #include "finiteVolume/MimeticInnerProductDispatch.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseHybridFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseHybridFVMKernels.hpp"
 
 /**
@@ -41,7 +41,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace compositionalMultiphaseBaseKernels;
+using namespace isothermalCompositionalMultiphaseBaseKernels;
 using namespace compositionalMultiphaseHybridFVMKernels;
 using namespace mimeticInnerProduct;
 
@@ -513,7 +513,7 @@ real64 CompositionalMultiphaseHybridFVM::scalingForSystemSolution( DomainPartiti
     return 1.0;
   }
 
-  real64 constexpr eps = compositionalMultiphaseBaseKernels::minDensForDivision;
+  real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
   real64 const maxRelativePresChange = m_maxRelativePresChange;
 
@@ -675,18 +675,18 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
-        compositionalMultiphaseBaseKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                                                         parallelDeviceReduce >( localSolution,
-                                                                                                 dofManager.rankOffset(),
-                                                                                                 numFluidComponents(),
-                                                                                                 elemDofNumber,
-                                                                                                 elemGhostRank,
-                                                                                                 elemPres,
-                                                                                                 dElemPres,
-                                                                                                 compDens,
-                                                                                                 dCompDens,
-                                                                                                 m_allowCompDensChopping,
-                                                                                                 scalingFactor );
+        isothermalCompositionalMultiphaseBaseKernels::
+          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 dofManager.rankOffset(),
+                                                                 numFluidComponents(),
+                                                                 elemDofNumber,
+                                                                 elemGhostRank,
+                                                                 elemPres,
+                                                                 dElemPres,
+                                                                 compDens,
+                                                                 dCompDens,
+                                                                 m_allowCompDensChopping,
+                                                                 scalingFactor );
       localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
 
@@ -703,14 +703,14 @@ bool CompositionalMultiphaseHybridFVM::checkSystemSolution( DomainPartition cons
       faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
 
     localIndex const faceSolutionCheck =
-      compositionalMultiphaseHybridFVMKernels::SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                                                            parallelDeviceReduce >( localSolution,
-                                                                                                    dofManager.rankOffset(),
-                                                                                                    faceDofNumber,
-                                                                                                    faceGhostRank,
-                                                                                                    facePres,
-                                                                                                    dFacePres,
-                                                                                                    scalingFactor );
+      compositionalMultiphaseHybridFVMKernels::
+        SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                               dofManager.rankOffset(),
+                                                               faceDofNumber,
+                                                               faceGhostRank,
+                                                               facePres,
+                                                               dFacePres,
+                                                               scalingFactor );
     localCheck = std::min( localCheck, faceSolutionCheck );
 
   } );
@@ -797,25 +797,26 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & totalDensOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::totalDensityOld >();
 
-      CoupledSolidBase const & solidModel =
-        getConstitutiveModel< CoupledSolidBase >( subRegion,
-                                                  subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
+      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld = fluid.totalDensityOld();
 
-      arrayView1d< real64 const > const & referencePorosity = solidModel.getReferencePorosity();
+      string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
+      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+      arrayView1d< real64 const > const & referencePorosity = solid.getReferencePorosity();
 
       real64 subRegionResidualNorm = 0.0;
-      compositionalMultiphaseBaseKernels::ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                                                      parallelDeviceReduce >( localRhs,
-                                                                                              rankOffset,
-                                                                                              numFluidComponents(),
-                                                                                              elemDofNumber,
-                                                                                              elemGhostRank,
-                                                                                              referencePorosity,
-                                                                                              volume,
-                                                                                              totalDensOld,
-                                                                                              subRegionResidualNorm );
+      isothermalCompositionalMultiphaseBaseKernels::
+        ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                              rankOffset,
+                                                              numFluidComponents(),
+                                                              elemDofNumber,
+                                                              elemGhostRank,
+                                                              referencePorosity,
+                                                              volume,
+                                                              totalDensOld,
+                                                              subRegionResidualNorm );
       localResidualNorm += subRegionResidualNorm;
     } );
 
@@ -830,19 +831,18 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
     // 2. Compute the residual for the face-based constraints
     real64 faceResidualNorm = 0.0;
     compositionalMultiphaseHybridFVMKernels::
-      ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                  parallelDeviceReduce >( localRhs,
-                                                          rankOffset,
-                                                          numFluidPhases(),
-                                                          faceDofNumber.toNestedViewConst(),
-                                                          faceGhostRank.toNestedViewConst(),
-                                                          m_regionFilter.toViewConst(),
-                                                          elemRegionList.toNestedViewConst(),
-                                                          elemSubRegionList.toNestedViewConst(),
-                                                          elemList.toNestedViewConst(),
-                                                          compFlowAccessors.get( extrinsicMeshData::elementVolume{} ),
-                                                          compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
-                                                          faceResidualNorm );
+      ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
+                                                            rankOffset,
+                                                            numFluidPhases(),
+                                                            faceDofNumber.toNestedViewConst(),
+                                                            faceGhostRank.toNestedViewConst(),
+                                                            m_regionFilter.toViewConst(),
+                                                            elemRegionList.toNestedViewConst(),
+                                                            elemSubRegionList.toNestedViewConst(),
+                                                            elemList.toNestedViewConst(),
+                                                            compFlowAccessors.get( extrinsicMeshData::elementVolume{} ),
+                                                            compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
+                                                            faceResidualNorm );
     localResidualNorm += faceResidualNorm;
   } );
 
@@ -865,6 +865,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                             DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
+
   // 1. apply the elem-based update
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
 

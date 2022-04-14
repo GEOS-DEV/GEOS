@@ -57,7 +57,6 @@ MeshLevel::MeshLevel( string const & name,
   registerWrapper< integer >( viewKeys.meshLevel );
 }
 
-
 MeshLevel::MeshLevel( string const & name,
                       Group * const parent,
                       MeshLevel const & source,
@@ -445,7 +444,6 @@ void MeshLevel::initializePostInitialConditionsPostSubGroups()
   } );
 }
 
-
 void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & seedNodeList,
                                         localIndex_array & nodeAdjacencyList,
                                         localIndex_array & edgeAdjacencyList,
@@ -510,11 +508,11 @@ void MeshLevel::generateAdjacencyLists( arrayView1d< localIndex const > const & 
           {
             faceAdjacencySet.insert( elemsToFaces[elementIndex][a] );
 
-            localIndex const faceID = elemsToFaces[elementIndex][a];
-            localIndex const numEdges = faceToEdges.sizeOfArray( faceID );
+            localIndex const faceIndex = elemsToFaces[elementIndex][a];
+            localIndex const numEdges = faceToEdges.sizeOfArray( faceIndex );
             for( localIndex b=0; b<numEdges; ++b )
             {
-              edgeAdjacencySet.insert( faceToEdges( faceID, b ));
+              edgeAdjacencySet.insert( faceToEdges( faceIndex, b ));
             }
 
           }

@@ -64,7 +64,7 @@ public:
    * @param table Table with input/output time history
    */
   template< typename FLUID_TYPE >
-  void runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table );
+  void runTest( FLUID_TYPE & fluid, arrayView2d< real64 > const & table );
 
   /**
    * @brief Ouput table to file for easy plotting
