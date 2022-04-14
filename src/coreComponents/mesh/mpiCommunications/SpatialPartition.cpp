@@ -359,34 +359,23 @@ namespace geosx
                                                        std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
   )
   {
-    // TEST
-    // Find out rank, size
-    int world_rank;
-    MPI_Comm_rank(MPI_COMM_GEOSX, &world_rank);
-    int world_size;
-    MPI_Comm_size(MPI_COMM_GEOSX, &world_size);
-
-//    int number;
-//    if (world_rank == 0) {
-//        number = -1;
-//        MPI_Send(&number, 1, MPI_INT, 1, 0, MPI_COMM_GEOSX);
-//    } else if (world_rank == 1) {
-//        MPI_Recv(&number, 1, MPI_INT, 0, 0, MPI_COMM_GEOSX,
-//                 MPI_STATUS_IGNORE);
-//        printf("Process 1 received number %d from process 0\n",
-//               number);
-//    }
-
     // Number of neighboring partitions
     unsigned int nn = m_neighbors.size();
 
     // The send buffer is identical for each neighbor, and contains the packed coordinate list.
-    unsigned int sizeOfPacked = 0;
-    buffer_unit_type* sendBuffer;
-    sizeOfPacked += bufferOps::Pack< true >( sendBuffer, particleCoordinatesSendingToNeighbors ); // Pack the coordinate list
-    array1d<unsigned int> sizeOfReceived(nn);
+    unsigned int sizeToBePacked = 0;                                                      // size of the outgoing data with packing=false (we need to run through it first without packing so we can size the buffer)
+    unsigned int sizeOfPacked = 0;                                                        // size of the outgoing data with packing=true
+    buffer_unit_type* junk;                                                               // junk buffer, stores nothing since we're just getting the buffer size on the first pass
+    sizeToBePacked += bufferOps::Pack< false >( junk,
+                                                particleCoordinatesSendingToNeighbors );  // get the size of the coordinate list
+    buffer_type sendBuffer(sizeToBePacked);                                               // the actual sized buffer that we pack into
+    buffer_unit_type* sendBufferPtr = sendBuffer.data();                                  // get a pointer to the buffer
+    sizeOfPacked += bufferOps::Pack< true >( sendBufferPtr,
+                                             particleCoordinatesSendingToNeighbors );     // pack the coordinate list into the buffer
+    GEOSX_ERROR_IF_NE( sizeToBePacked, sizeOfPacked );                                    // make sure the packer is self-consistent
 
     // Declare the receive buffers
+    array1d<unsigned int> sizeOfReceived(nn);
     array1d< buffer_unit_type* > receiveBuffer(nn);
 
     {
@@ -402,16 +391,19 @@ namespace geosx
       {
         int const sendTag = CommTag( MpiWrapper::commRank(), m_neighbors[n].neighborRank(), icomm.commID() );
         int const receiveTag = CommTag( m_neighbors[n].neighborRank(), MpiWrapper::commRank(), icomm.commID() );
-        //MPI_Isend( &sizeOfPacked, 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), sendTag, MPI_COMM_GEOSX, &(sendRequest[n]) );               // Send buffer size
-        //MPI_Irecv( &(sizeOfReceived[n]), 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), receiveTag, MPI_COMM_GEOSX, &(receiveRequest[n]) );  // Receive buffer size
+        MPI_Isend( &sizeOfPacked, 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), sendTag, MPI_COMM_GEOSX, &(sendRequest[n]) );               // Send buffer size
+        MPI_Irecv( &(sizeOfReceived[n]), 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), receiveTag, MPI_COMM_GEOSX, &(receiveRequest[n]) );  // Receive buffer size
         //m_neighbors[n].mpiISendReceiveBufferSizes( icomm.commID(), sendRequest[n], receiveRequest[n], MPI_COMM_GEOSX);
-
-        //GEOSX_LOG_RANK("I (rank " << MpiWrapper::commRank() << ") sent data of size " << sizeOfPacked << " to rank " << m_neighbors[n].neighborRank() << " using tag " << sendTag);
-        //GEOSX_LOG_RANK("I (rank " << MpiWrapper::commRank() << ") received data of size " << sizeOfReceived[n] << " from rank " << m_neighbors[n].neighborRank() << " using tag " << receiveTag);
-
       }
-      //MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
-      //MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+
+      MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+      MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+
+      for(size_t n=0; n<nn; n++ )
+      {
+        GEOSX_LOG_RANK("I (rank " << MpiWrapper::commRank() << ") sent data of size " << sizeOfPacked << " to rank " << m_neighbors[n].neighborRank());
+        GEOSX_LOG_RANK("I (rank " << MpiWrapper::commRank() << ") received data of size " << sizeOfReceived[n] << " from rank " << m_neighbors[n].neighborRank());
+      }
     }
 
     // Send/receive the buffer containing the list of coordinates
