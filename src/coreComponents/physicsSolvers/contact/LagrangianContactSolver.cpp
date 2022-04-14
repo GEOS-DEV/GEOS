@@ -1766,20 +1766,20 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            if( originalFractureState == FractureState::Open )
+            if( originalFractureState == extrinsicMeshData::contact::FractureState::Open )
             {
               if( dispJump[kfe][0] > -normalDisplacementTolerance[kfe] )
               {
-                fractureState[kfe] = FractureState::Open;
+                fractureState[kfe] = extrinsicMeshData::contact::FractureState::Open;
               }
               else
               {
-                fractureState[kfe] = FractureState::Stick;
+                fractureState[kfe] = extrinsicMeshData::contact::FractureState::Stick;
               }
             }
             else if( traction[kfe][0] > normalTractionTolerance[kfe] )
             {
-              fractureState[kfe] = FractureState::Open;
+              fractureState[kfe] = extrinsicMeshData::contact::FractureState::Open;
             }
             else
             {
@@ -1790,28 +1790,28 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
                 contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                    dLimitTangentialTractionNorm_dTraction );
 
-              if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
+              if( originalFractureState == extrinsicMeshData::contact::FractureState::Stick && currentTau >= limitTau )
               {
                 currentTau *= (1.0 - m_slidingCheckTolerance);
               }
-              else if( originalFractureState != FractureState::Stick && currentTau <= limitTau )
+              else if( originalFractureState != extrinsicMeshData::contact::FractureState::Stick && currentTau <= limitTau )
               {
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
               if( currentTau > limitTau )
               {
-                if( originalFractureState == FractureState::Stick )
+                if( originalFractureState == extrinsicMeshData::contact::FractureState::Stick )
                 {
-                  fractureState[kfe] = FractureState::NewSlip;
+                  fractureState[kfe] = extrinsicMeshData::contact::FractureState::NewSlip;
                 }
                 else
                 {
-                  fractureState[kfe] = FractureState::Slip;
+                  fractureState[kfe] = extrinsicMeshData::contact::FractureState::Slip;
                 }
               }
               else
               {
-                fractureState[kfe] = FractureState::Stick;
+                fractureState[kfe] = extrinsicMeshData::contact::FractureState::Stick;
               }
             }
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
