@@ -851,7 +851,7 @@ the relative residual norm satisfies:
 		<xsd:attribute name="logLevel" type="integer" default="0" />
 		<!--preconditionerType => Preconditioner type. Available options are: ``none|jacobi|l1jacobi|fgs|sgs|l1sgs|chebyshev|iluk|ilut|icc|ict|amg|mgr|block|direct|bgs``-->
 		<xsd:attribute name="preconditionerType" type="geosx_LinearSolverParameters_PreconditionerType" default="iluk" />
-		<!--solverType => Linear solver type. Available options are: ``direct|cg|gmres|fgmres|bicgstab|preconditioner``-->
+		<!--solverType => Linear solver type. Available options are: ``direct|cg|gmres|fgmres|bicgstab|expBicgstab|preconditioner``-->
 		<xsd:attribute name="solverType" type="geosx_LinearSolverParameters_SolverType" default="direct" />
 		<!--stopIfError => Whether to stop the simulation if the linear solver reports an error-->
 		<xsd:attribute name="stopIfError" type="integer" default="1" />
@@ -888,7 +888,7 @@ the relative residual norm satisfies:
 	</xsd:simpleType>
 	<xsd:simpleType name="geosx_LinearSolverParameters_SolverType">
 		<xsd:restriction base="xsd:string">
-			<xsd:pattern value=".*[\[\]`$].*|direct|cg|gmres|fgmres|bicgstab|preconditioner" />
+			<xsd:pattern value=".*[\[\]`$].*|direct|cg|gmres|fgmres|bicgstab|expBicgstab|preconditioner" />
 		</xsd:restriction>
 	</xsd:simpleType>
 	<xsd:complexType name="NonlinearSolverParametersType">

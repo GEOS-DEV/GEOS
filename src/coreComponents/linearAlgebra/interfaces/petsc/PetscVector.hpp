@@ -100,7 +100,9 @@ public:
   using VectorBase::zero;
   using VectorBase::values;
   using VectorBase::iDot;
+  /// @cond DO_NOT_DOCUMENT
   using VectorBase::iDot2;
+  /// @endcond
 
   /**
    * @copydoc VectorBase<PetscVector>::created

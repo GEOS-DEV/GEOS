@@ -257,6 +257,7 @@ ENUM_STRINGS( LinearSolverParameters::SolverType,
               "gmres",
               "fgmres",
               "bicgstab",
+              "expBicgstab",
               "preconditioner" );
 
 /// Declare strings associated with enumeration values.

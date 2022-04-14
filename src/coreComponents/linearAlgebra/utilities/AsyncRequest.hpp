@@ -24,11 +24,20 @@
 namespace geosx
 {
 
+/**
+ * @brief Helper class for managing non-blocking operation.
+ * @tparam T the type of the result of the non-blocking operation
+ */
 template< typename T >
 class AsyncRequest
 {
 public:
 
+  /**
+   * @brief Constructor.
+   * @tparam F the type of the lambda function
+   * @param f lambda function that defines the MPI non-blocking operation to be performed
+   */
   template< typename F >
   explicit AsyncRequest( F f )
     : m_function( std::move( f ) )
@@ -38,6 +47,10 @@ public:
     m_function( *m_request, *m_result );
   }
 
+  /**
+   * @brief Completes the managed MPI request.
+   * @return the result of the non blocking operation
+   */
   T const & complete() const
   {
     MpiWrapper::wait( m_request.get(), MPI_STATUS_IGNORE );
@@ -46,9 +59,9 @@ public:
 
 private:
 
-  std::unique_ptr< MPI_Request > m_request;
-  std::unique_ptr< T > m_result;
-  std::function< void(MPI_Request &, T & ) > m_function;
+  std::unique_ptr< MPI_Request > m_request;              ///< Unique pointer to the MPI request
+  std::unique_ptr< T > m_result;                         ///< Unique pointer to the result of the non-blocking operation
+  std::function< void( MPI_Request &, T & ) > m_function; ///< Lambda function wrapper to a non-blocking MPI function
 
 };
 

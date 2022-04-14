@@ -215,6 +215,11 @@ protected:
    */
   virtual real64 dot( Vector const & vec ) const = 0;
 
+  /**
+   * @brief Local part of the dot product with the vector vec.
+   * @param vec vector to dot-product with
+   * @return local part of the dot product
+   */
   real64 localDot( Vector const & vec ) const
   {
     GEOSX_LAI_ASSERT( ready() );
@@ -233,33 +238,37 @@ protected:
     return result.get();
   }
 
-
   /**
-   * @brief Nonblocking dot product with the vector vec.
+   * @brief Starts a nonblocking dot product computation with the vector vec.
    * @param vec vector to dot-product with
-   * @param request the MPI_Request to wait on for the dot product completion
-   * @return dot product
-   * @note Each call to iDot must be paired with a call to MpiWrapper::wait( &request, ... )
+   * @return an AsyncRequest object managing the asynchronous dot product completion
+   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   *       returns the dot product
    */
   AsyncRequest< real64 > iDot( Vector const & vec ) const
   {
     real64 localDotProduct = localDot( vec );
 
-    AsyncRequest< real64 > asyncRequest( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & result )
+    AsyncRequest< real64 > result( [ localDotProduct, comm = comm() ]( MPI_Request & request, real64 & dotProduct )
     {
       MpiWrapper::iAllReduce( &localDotProduct,
-                              &result,
+                              &dotProduct,
                               1,
                               MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                               comm,
                               &request );
     } );
 
-    return asyncRequest;
+    return result;
   }
 
   /**
-   * @brief Nonblocking dot product with the vector vec.
+   * @brief Starts a nonblocking dot product computation with the vectors vecs.
+   * @tparam VECS variadic pack of vector types
+   * @param vecs vectors to dot-product with
+   * @return an AsyncRequest object managing the asynchronous dot products completion
+   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   *       returns an std::array containing the dot products
    */
   template< typename ... VECS >
   AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const
@@ -271,17 +280,17 @@ protected:
       localDotProducts.emplace_back( localDot( vec ) );
     }, vecs ... );
 
-    AsyncRequest< std::array< real64, numVecs > > asyncRequest( [ =, comm = comm() ]( MPI_Request & request, std::array< real64, numVecs > & result )
+    AsyncRequest< std::array< real64, numVecs > > result( [ =, comm = comm() ]( MPI_Request & request, std::array< real64, numVecs > & dotProducts )
     {
       MpiWrapper::iAllReduce( localDotProducts.data(),
-                              result.data(),
+                              dotProducts.data(),
                               numVecs,
                               MpiWrapper::getMpiOp( MpiWrapper::Reduction::Sum ),
                               comm,
                               &request );
     } );
 
-    return asyncRequest;
+    return result;
   }
 
   /**
@@ -311,7 +320,7 @@ protected:
                       real64 const beta ) = 0;
 
   /**
-   * @brief Update vector <tt>z</tt> as <tt>z</tt> = <tt>alpha*x + beta*y</tt> + gamma*z</tt>.
+   * @brief Update vector <tt>z</tt> as <tt>z</tt> = <tt>alpha*x + beta*y + gamma*z</tt>.
    * @param alpha scaling factor for first added vector
    * @param x first vector to add
    * @param beta scaling factor for second added vector

@@ -111,15 +111,23 @@ public:
   real64 dot( BlockVectorView const & x ) const;
 
   /**
-   * @brief Nonblocking dot product with the vector vec.
-   * @param x the block vector to compute product with
-   * @param request the MPI_Request to wait on for the dot product completion
-   * @return the dot product
-   * @note Each call to iDot must be paired with a call to MpiWrapper::wait( &request, ... )
+   * @brief Starts a nonblocking dot product computation with the block vector x.
+   * @param x the block vector to dot-product with
+   * @return an AsyncRequest object managing the asynchronous dot product completion
+   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   *       returns the dot product
    */
   AsyncRequest< real64 > iDot( BlockVectorView const & x ) const;
 
 
+  /**
+   * @brief Starts a nonblocking dot product computation with the block vectors vecs.
+   * @tparam VECS variadic pack of vector types to dot product with
+   * @param vecs vectors to dot-product with
+   * @return an AsyncRequest object managing the asynchronous dot products completion
+   * @note Each call to iDot must be paired with a call to AsyncRequest::complete(), which
+   *       returns an std::array containing the dot products
+   */
   template< typename ... VECS >
   AsyncRequest< std::array< real64, sizeof...( VECS ) > > iDot2( VECS const & ... vecs ) const;
 
@@ -355,12 +363,23 @@ real64 BlockVectorView< VECTOR >::dot( BlockVectorView const & src ) const
 template< typename VECTOR >
 AsyncRequest< real64 > BlockVectorView< VECTOR >::iDot( BlockVectorView const & src ) const
 {
+  GEOSX_UNUSED_VAR( src );
   return AsyncRequest< real64 >( []( auto, auto ){} );
 }
 
 template< typename VECTOR >
 template< typename ... VECS > AsyncRequest< std::array< real64, sizeof...( VECS ) > > BlockVectorView< VECTOR >::iDot2( VECS const & ... vecs ) const
 {
+  //localIndex dummy = 0;
+  LvArray::typeManipulation::forEachArg( [ & ]( BlockVectorView< VECTOR > const & vec )
+  {
+    GEOSX_UNUSED_VAR( vec );
+    //for( localIndex i = 0; i < blockSize(); i++ )
+    //{
+    //  dummy = dummy > vec.block(i).localSize() ? dummy : vec.block(i).localSize();
+    //}
+  }, vecs ... );
+  //GEOSX_UNUSED_VAR( dummy );
   return AsyncRequest< std::array< real64, sizeof...( VECS ) > >( []( auto, auto ){} );
 }
 
