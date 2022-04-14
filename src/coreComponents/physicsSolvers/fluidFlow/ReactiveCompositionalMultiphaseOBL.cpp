@@ -802,7 +802,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 1. Check pressure Dirichlet BCs
   fsManager.apply( time,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const &,
@@ -826,7 +826,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 2. Check composition BC (global component fraction)
   fsManager.apply( time,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,
@@ -866,7 +866,7 @@ bool validateDirichletBC( DomainPartition & domain,
   {
     // 3. Check temperature Dirichlet BCs
     fsManager.apply( time,
-                     domain,
+                     domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                      "ElementRegions",
                      extrinsicMeshData::flow::temperature::key(),
                      [&]( FieldSpecificationBase const &,
@@ -944,7 +944,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
 
   // 1. Apply pressure Dirichlet BCs, store in a separate field
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const & fs,
@@ -969,7 +969,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
 
   // 2. Apply composition BC (global component fraction), store in a separate field
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,
@@ -986,7 +986,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
 
   // 3. Apply temperature Dirichlet BCs, store in a separate field
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::temperature::key(),
                    [&]( FieldSpecificationBase const & fs,
@@ -1015,7 +1015,7 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
 
   // 3. Apply to the system
   fsManager.apply( time + dt,
-                   domain,
+                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&] ( FieldSpecificationBase const &,
@@ -1103,52 +1103,25 @@ void ReactiveCompositionalMultiphaseOBL::applyDirichletBC( real64 const time,
   } );
 }
 
-void ReactiveCompositionalMultiphaseOBL::solveSystem( DofManager const & dofManager,
-                                                      ParallelMatrix & matrix,
-                                                      ParallelVector & rhs,
-                                                      ParallelVector & solution )
+void ReactiveCompositionalMultiphaseOBL::solveLinearSystem( DofManager const & dofManager,
+                                                            ParallelMatrix & matrix,
+                                                            ParallelVector & rhs,
+                                                            ParallelVector & solution )
 {
   GEOSX_MARK_FUNCTION;
 
   rhs.scale( -1.0 );
   solution.zero();
 
-  SolverBase::solveSystem( dofManager, matrix, rhs, solution );
+  SolverBase::solveLinearSystem( dofManager, matrix, rhs, solution );
 }
 
 // to be changed into enforceOBLLimits - to chop all primary variables to be within OBL discretization space
 void ReactiveCompositionalMultiphaseOBL::chopPrimaryVariablesToOBLLimits( DomainPartition & domain )
 {
   GEOSX_UNUSED_VAR( domain );
-  // GEOSX_MARK_FUNCTION;
 
-  // MeshLevel & mesh = domain.getMeshBody( 0 ).getMeshLevel( 0 );
-
-  // integer const numComp = m_numComponents;
-  // forTargetSubRegions( mesh, [&]( localIndex const, ElementSubRegionBase & subRegion )
-  // {
-  //   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
-
-  //   arrayView2d< real64 const, compflow::USD_COMP > const compDens =
-  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-  //   arrayView2d< real64, compflow::USD_COMP > const dCompDens =
-  //     subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
-
-  //   forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-  //   {
-  //     if( ghostRank[ei] < 0 )
-  //     {
-  //       for( integer ic = 0; ic < numComp; ++ic )
-  //       {
-  //         real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic];
-  //         if( newDens < minValueForDivision )
-  //         {
-  //           dCompDens[ei][ic] = -compDens[ei][ic] + minValueForDivision;
-  //         }
-  //       }
-  //     }
-  //   } );
-  // } );
+  // not implemented yet
 }
 
 void ReactiveCompositionalMultiphaseOBL::resetStateToBeginningOfStep( DomainPartition & domain )

@@ -61,22 +61,6 @@ EXTRINSIC_MESH_DATA_TRAIT( initialTemperature,
                            WRITE_AND_READ,
                            "Initial temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( bcTemperature,
-                           "bcTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           WRITE_AND_READ,
-                           "Boundary condition temperature" );
-
-EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
-                           "deltaTemperature",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated temperature updates" );
-
 EXTRINSIC_MESH_DATA_TRAIT( referencePorosity,
                            "referencePorosity",
                            array1d< real64 >,
