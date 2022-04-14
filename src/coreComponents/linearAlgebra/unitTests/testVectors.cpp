@@ -439,15 +439,4 @@ int main( int argc, char * * argv )
 {
   geosx::testing::LinearAlgebraTestScope scope( argc, argv );
   return RUN_ALL_TESTS();
-  // using Vector = HypreVector;
-//
-// Vector x;
-// createAndAssemble< parallelDevicePolicy<> >( 3, x );
-//
-// Vector y( x );
-// y.reciprocal();
-//
-// AsyncRequest< real64 > request = x.iDot( y );
-//
-// real64 const dp = request.complete();
 }

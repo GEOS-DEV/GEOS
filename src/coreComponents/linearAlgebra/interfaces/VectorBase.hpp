@@ -215,6 +215,7 @@ protected:
    */
   virtual real64 dot( Vector const & vec ) const = 0;
 
+  public:
   /**
    * @brief Local part of the dot product with the vector vec.
    * @param vec vector to dot-product with
@@ -238,6 +239,7 @@ protected:
     return result.get();
   }
 
+  protected:
   /**
    * @brief Starts a nonblocking dot product computation with the vector vec.
    * @param vec vector to dot-product with

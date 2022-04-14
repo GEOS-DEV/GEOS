@@ -370,16 +370,10 @@ AsyncRequest< real64 > BlockVectorView< VECTOR >::iDot( BlockVectorView const & 
 template< typename VECTOR >
 template< typename ... VECS > AsyncRequest< std::array< real64, sizeof...( VECS ) > > BlockVectorView< VECTOR >::iDot2( VECS const & ... vecs ) const
 {
-  //localIndex dummy = 0;
   LvArray::typeManipulation::forEachArg( [ & ]( BlockVectorView< VECTOR > const & vec )
   {
     GEOSX_UNUSED_VAR( vec );
-    //for( localIndex i = 0; i < blockSize(); i++ )
-    //{
-    //  dummy = dummy > vec.block(i).localSize() ? dummy : vec.block(i).localSize();
-    //}
   }, vecs ... );
-  //GEOSX_UNUSED_VAR( dummy );
   return AsyncRequest< std::array< real64, sizeof...( VECS ) > >( []( auto, auto ){} );
 }
 
