@@ -29,7 +29,6 @@
 #include "mesh/NodeManager.hpp"
 #include "mesh/SurfaceElementRegion.hpp"
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
-#include "physicsSolvers/contact/ContactExtrinsicData.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
 
 namespace geosx
@@ -37,6 +36,7 @@ namespace geosx
 
 using namespace dataRepository;
 using namespace constitutive;
+using namespace extrinsicMeshData::contact;
 
 ContactSolverBase::ContactSolverBase( const string & name,
                                       Group * const parent ):
@@ -64,8 +64,6 @@ void ContactSolverBase::postProcessInput()
 
 void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
-  using namespace extrinsicMeshData::contact;
-
   meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
   {
     MeshLevel & meshLevel = meshBody.getMeshLevel( 0 );
@@ -88,33 +86,13 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
           subRegion.registerExtrinsicData< traction >( getName() ).
             reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
-            setPlotLevel( PlotLevel::LEVEL_0 ).
-            setApplyDefaultValue( FractureState::Stick ).
-            setRegisteringObjects( this->getName()).
-            setDescription( "An array that holds the fracture state." );
-          initializeFractureState( subRegion, viewKeyStruct::fractureStateString() );
+          subRegion.registerExtrinsicData< fractureState >( getName() );
 
-          subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setApplyDefaultValue( FractureState::Stick ).
-            setRegisteringObjects( this->getName()).
-            setDescription( "An array that holds the fracture state." );
-          initializeFractureState( subRegion, viewKeyStruct::oldFractureStateString() );
-
+          subRegion.registerExtrinsicData< oldFractureState >( getName() );
         } );
       } );
     }
   } );
-}
-
-
-void ContactSolverBase::initializeFractureState( SurfaceElementSubRegion & subRegion,
-                                                 string const & fieldName ) const
-{
-  GEOSX_MARK_FUNCTION;
-  arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-  fractureState.setValues< parallelHostPolicy >( FractureState::Stick );
 }
 
 real64 ContactSolverBase::solverStep( real64 const & time_n,
@@ -152,10 +130,10 @@ void ContactSolverBase::computeFractureStateStatistics( MeshLevel const & mesh,
 
   array1d< globalIndex > localCounter( 3 );
 
-  elemManager.forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion const & subRegion )
+  elemManager.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion const & subRegion )
   {
     arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
-    arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+    arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
 
     RAJA::ReduceSum< parallelHostReduce, localIndex > stickCount( 0 ), slipCount( 0 ), openCount( 0 );
     forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
