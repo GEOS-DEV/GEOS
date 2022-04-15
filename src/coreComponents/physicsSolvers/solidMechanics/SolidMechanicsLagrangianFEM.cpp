@@ -1069,11 +1069,11 @@ SolidMechanicsLagrangianFEM::
 
   applyTractionBC( time_n + dt, dofManager, domain, localRhs );
 
-  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( 0 ).getFaceManager();
+  FaceManager const & faceManager = domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ).getFaceManager();
 
   if( faceManager.hasWrapper( "ChomboPressure" ) )
   {
-    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( 0 ), "faceManager", "ChomboPressure" );
+    fsManager.applyFieldValue( time_n, domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ), "faceManager", "ChomboPressure" );
     applyChomboPressure( dofManager, domain, localRhs );
   }
 

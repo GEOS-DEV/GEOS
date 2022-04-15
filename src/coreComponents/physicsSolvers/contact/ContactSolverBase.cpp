@@ -66,45 +66,44 @@ void ContactSolverBase::registerDataOnMesh( dataRepository::Group & meshBodies )
 {
   using namespace extrinsicMeshData::contact;
 
-  meshBodies.forSubGroups< MeshBody >( [&] ( MeshBody & meshBody )
+  forDiscretizationOnMeshTargets( meshBodies,
+                                  [&]( string const,
+                                       MeshLevel & meshLevel,
+                                       arrayView1d<string const> const regionNames )
   {
-    MeshLevel & meshLevel = meshBody.getMeshLevel( m_discretizationName );
-
     ElementRegionManager & elemManager = meshLevel.getElemManager();
+    elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
     {
-      elemManager.forElementRegions< SurfaceElementRegion >( [&] ( SurfaceElementRegion & region )
+      region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
       {
-        region.forElementSubRegions< SurfaceElementSubRegion >( [&]( SurfaceElementSubRegion & subRegion )
-        {
-          subRegion.registerExtrinsicData< dispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< dispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< deltaDispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< oldDispJump >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< oldDispJump >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerExtrinsicData< traction >( getName() ).
-            reference().resizeDimension< 1 >( 3 );
+        subRegion.registerExtrinsicData< traction >( getName() ).
+          reference().resizeDimension< 1 >( 3 );
 
-          subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
-            setPlotLevel( PlotLevel::LEVEL_0 ).
-            setApplyDefaultValue( FractureState::Stick ).
-            setRegisteringObjects( this->getName()).
-            setDescription( "An array that holds the fracture state." );
-          initializeFractureState( subRegion, viewKeyStruct::fractureStateString() );
+        subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::fractureStateString() ).
+          setPlotLevel( PlotLevel::LEVEL_0 ).
+          setApplyDefaultValue( FractureState::Stick ).
+          setRegisteringObjects( this->getName()).
+          setDescription( "An array that holds the fracture state." );
+        initializeFractureState( subRegion, viewKeyStruct::fractureStateString() );
 
-          subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
-            setPlotLevel( PlotLevel::NOPLOT ).
-            setApplyDefaultValue( FractureState::Stick ).
-            setRegisteringObjects( this->getName()).
-            setDescription( "An array that holds the fracture state." );
-          initializeFractureState( subRegion, viewKeyStruct::oldFractureStateString() );
+        subRegion.registerWrapper< array1d< integer > >( viewKeyStruct::oldFractureStateString() ).
+          setPlotLevel( PlotLevel::NOPLOT ).
+          setApplyDefaultValue( FractureState::Stick ).
+          setRegisteringObjects( this->getName()).
+          setDescription( "An array that holds the fracture state." );
+        initializeFractureState( subRegion, viewKeyStruct::oldFractureStateString() );
 
-        } );
       } );
-    }
+    } );
   } );
 }
 

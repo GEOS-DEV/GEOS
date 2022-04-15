@@ -1264,7 +1264,7 @@ void CompositionalMultiphaseBase::applySourceFluxBC( real64 const time,
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
 
   fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    "ElementRegions",
                    FieldSpecificationBase::viewKeyStruct::fluxBoundaryConditionString(),
                    [&]( FieldSpecificationBase const & fs,
@@ -1363,7 +1363,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 1. Check pressure Dirichlet BCs
   fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const &,
@@ -1389,7 +1389,7 @@ bool validateDirichletBC( DomainPartition & domain,
   if( isThermal )
   {
     fsManager.apply( time,
-                     domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                     domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                      "ElementRegions",
                      extrinsicMeshData::flow::temperature::key(),
                      [&]( FieldSpecificationBase const &,
@@ -1424,7 +1424,7 @@ bool validateDirichletBC( DomainPartition & domain,
 
   // 3. Check composition BC (global component fraction)
   fsManager.apply( time,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,
@@ -1516,7 +1516,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
   // 1. Apply pressure Dirichlet BCs, store in a separate field
   fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&]( FieldSpecificationBase const & fs,
@@ -1543,7 +1543,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
   if( m_isThermal )
   {
     fsManager.apply( time + dt,
-                     domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                     domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                      "ElementRegions",
                      extrinsicMeshData::flow::temperature::key(),
                      [&]( FieldSpecificationBase const & fs,
@@ -1561,7 +1561,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
   // 3. Apply composition BC (global component fraction) and store them for constitutive call
   fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    "ElementRegions",
                    extrinsicMeshData::flow::globalCompFraction::key(),
                    [&] ( FieldSpecificationBase const & fs,
@@ -1581,7 +1581,7 @@ void CompositionalMultiphaseBase::applyDirichletBC( real64 const time,
 
   // 4. Call constitutive update, back-calculate target global component densities and apply to the system
   fsManager.apply( time + dt,
-                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                   domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                    "ElementRegions",
                    extrinsicMeshData::flow::pressure::key(),
                    [&] ( FieldSpecificationBase const &,

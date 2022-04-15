@@ -87,7 +87,9 @@ public:
    * @param [in] level index of the mesh level
    * @return const reference to the MeshLevel
    */
-  MeshLevel const & getMeshLevel( string const & level ) const
+  template< typename T, std::enable_if_t< std::is_same<T,string>::value ||
+                                          std::is_same<T, const char *>::value, bool> = false >
+  MeshLevel & getMeshLevel( T const & level ) const
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
 
   /**
@@ -95,8 +97,16 @@ public:
    * @param level The name of the MeshLevel
    * @return Reference to the MeshLevel
    */
-  MeshLevel & getMeshLevel( string const & level )
+  template< typename T, std::enable_if_t< std::is_same<T,string>::value ||
+                                          std::is_same<T, const char *>::value, bool > = false >
+  MeshLevel & getMeshLevel( T const & level )
   { return m_meshLevels.getGroup< MeshLevel >( level ); }
+
+//  template< typename T >
+//  MeshLevel const & getMeshLevel( T const & level ) const = delete;
+//
+//  template< typename T >
+//  MeshLevel const & getMeshLevel( T const & level ) = delete;
 
 
   /**

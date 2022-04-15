@@ -320,7 +320,7 @@ void FlowSolverBase::findMinMaxElevationInEquilibriumTarget( DomainPartition & d
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
 
   fsManager.apply< EquilibriumInitialCondition >( 0.0,
-                                                  domain.getMeshBody( 0 ).getMeshLevel( 0 ),
+                                                  domain.getMeshBody( 0 ).getMeshLevel( m_discretizationName ),
                                                   "ElementRegions",
                                                   EquilibriumInitialCondition::catalogName(),
                                                   [&] ( EquilibriumInitialCondition const & fs,

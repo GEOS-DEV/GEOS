@@ -506,7 +506,7 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
   } );
 
   CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
-                                                       domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
+                                                       domain.getMeshBody( this->getName() ).getMeshLevel( MeshLevel::groupStructKeys::baseDiscretizationString() ),
                                                        domain.getNeighbors(),
                                                        false );
 }
