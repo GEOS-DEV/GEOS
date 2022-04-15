@@ -46,6 +46,37 @@ public:
   NeighborCommunicator():
     NeighborCommunicator( -1 ){};
 
+
+  enum class Location
+  {
+    Elem, //!< location is element (like pressure in finite volumes)
+    Face, //!< location is face (like flux in mixed finite elements)
+    Edge, //!< location is edge (like flux between fracture elements)
+    Node  //!< location is node (like displacements in finite elements)
+  };
+
+  struct fieldSyncKey
+  {
+    string regionName;
+    Location location;
+
+    fieldSyncKey( string const regionName, Location const location )
+    regionName( regionName ),
+    location( location )
+    {}
+
+    bool operator==( const fieldSyncKey & other ) const
+    {
+      return std::tie( regionName, location ) == std::tie( other.regionName, other.location );
+    }
+
+    bool operator<( const fieldSyncKey & other ) const
+    {
+      return std::tie( regionName, location ) < std::tie( other.regionName, other.location );
+    }
+
+  };
+
   void mpiISendReceive( buffer_unit_type const * const sendBuffer,
                         int const sendSize,
                         MPI_Request & sendRequest,
@@ -235,6 +266,24 @@ public:
                             bool onDevice,
                             parallelDeviceEvents & events );
 
+  void packCommBufferForSync( std::map< fieldSyncKey, string_array > const & fieldNames,
+                              MeshLevel const & meshLevel,
+                              int const commID,
+                              bool onDevice,
+                              parallelDeviceEvents & events );
+
+  int packCommSizeForSync( std::map< fieldSyncKey, string_array > const & fieldNames,
+                           MeshLevel const & meshLevel,
+                           int const commID,
+                           bool onDevice,
+                           parallelDeviceEvents & events );
+
+  void unpackBufferForSync( std::map< fieldSyncKey, string_array > const & fieldNames,
+                            MeshLevel & meshLevel,
+                            int const commID,
+                            bool onDevice,
+                            parallelDeviceEvents & events );
+
   int neighborRank() const { return m_neighborRank; }
 
   void clear();
@@ -293,8 +342,6 @@ private:
   std::vector< buffer_type > m_receiveBuffer;
 
 };
-
-
 
 template< typename T >
 void NeighborCommunicator::mpiISendReceiveSizes( array1d< T > const & sendBuffer,

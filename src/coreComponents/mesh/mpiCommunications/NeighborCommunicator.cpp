@@ -620,5 +620,159 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
   }
 }
 
+///////////////////////////  New versions of the packing and unpacking functions //////////////////////////////////////////////////////////////
+int NeighborCommunicator::packCommSizeForSync( std::map< fieldSyncKey, string_array > const & fieldsTobeSync,
+                                               MeshLevel const & mesh,
+                                               int const commID,
+                                               bool onDevice,
+                                               parallelDeviceEvents & events )
+{
+  GEOSX_MARK_FUNCTION;
 
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+
+  int bufferSize = 0;
+
+  for( auto const & fields : fieldsTobeSync )
+  {
+    fieldSyncKey key = fields.first;
+    switch( key.location )
+    {
+      case Location::Node:
+      {
+        bufferSize += nodeManager.packSize( fields.second, nodeGhostsToSend, 0, onDevice, events );
+      }
+      case Location::Edge:
+      {
+        bufferSize += edgeManager.packSize( fields.second, edgeGhostsToSend, 0, onDevice, events );
+      }
+      case Location::Face:
+      {
+        bufferSize += faceManager.packSize( fields.second, faceGhostsToSend, 0, onDevice, events );
+      }
+      case Location::Elem:
+      {
+        elemManager.getRegion( key.regionName ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        {
+          bufferSize += subRegion.packSize( fields.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+        } );
+      }
+    }
+  }
+
+  this->m_sendBufferSize[commID] = bufferSize;
+  return bufferSize;
+}
+
+
+void NeighborCommunicator::packCommBufferForSync( std::map< fieldSyncKey, string_array > const & fieldsTobeSync,
+                                                  MeshLevel const & mesh,
+                                                  int const commID,
+                                                  bool onDevice,
+                                                  parallelDeviceEvents & events )
+{
+  GEOSX_MARK_FUNCTION;
+
+  NodeManager const & nodeManager = mesh.getNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
+  FaceManager const & faceManager = mesh.getFaceManager();
+  ElementRegionManager const & elemManager = mesh.getElemManager();
+
+  arrayView1d< localIndex const > const & nodeGhostsToSend = nodeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( m_neighborRank ).ghostsToSend();
+  arrayView1d< localIndex const > const & faceGhostsToSend = faceManager.getNeighborData( m_neighborRank ).ghostsToSend();
+
+  buffer_type & sendBuff = sendBuffer( commID );
+  int const bufferSize =  LvArray::integerConversion< int >( sendBuff.size());
+  buffer_unit_type * sendBufferPtr = sendBuff.data();
+
+  int packedSize = 0;
+
+  for( auto const & fields : fieldsTobeSync )
+  {
+    fieldSyncKey key = fields.first;
+    switch( key.location )
+    {
+      case Location::Node:
+      {
+        packedSize += nodeManager.pack( sendBufferPtr, fields.second, nodeGhostsToSend, 0, onDevice, events );
+      }
+      case Location::Edge:
+      {
+        packedSize += edgeManager.pack( sendBufferPtr, fields.second, edgeGhostsToSend, 0, onDevice, events );
+      }
+      case Location::Face:
+      {
+        packedSize += faceManager.pack( sendBufferPtr, fields.second, faceGhostsToSend, 0, onDevice, events );
+      }
+      case Location::Elem:
+      {
+        elemManager.getRegion( key.regionName ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        {
+          packedSize += subRegion.pack( sendBufferPtr, fields.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+        } );
+      }
+    }
+  }
+
+  GEOSX_ERROR_IF_NE( bufferSize, packedSize );
+}
+
+
+void NeighborCommunicator::unpackBufferForSync( std::map< fieldSyncKey, string_array > const & fieldsTobeSync,
+                                                MeshLevel & mesh,
+                                                int const commID,
+                                                bool onDevice,
+                                                parallelDeviceEvents & events )
+{
+  GEOSX_MARK_FUNCTION;
+
+  buffer_type const & receiveBuff = receiveBuffer( commID );
+  buffer_unit_type const * receiveBufferPtr = receiveBuff.data();
+
+  NodeManager & nodeManager = mesh.getNodeManager();
+  EdgeManager & edgeManager = mesh.getEdgeManager();
+  FaceManager & faceManager = mesh.getFaceManager();
+  ElementRegionManager & elemManager = mesh.getElemManager();
+
+  array1d< localIndex > & nodeGhostsToReceive = nodeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  array1d< localIndex > & edgeGhostsToReceive = edgeManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+  array1d< localIndex > & faceGhostsToReceive = faceManager.getNeighborData( m_neighborRank ).ghostsToReceive();
+
+  int unpackedSize = 0;
+
+  for( auto const & fields : fieldsTobeSync )
+  {
+    fieldSyncKey key = fields.first;
+    switch( key.location )
+    {
+      case Location::Node:
+      {
+        unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
+      }
+      case Location::Edge:
+      {
+        unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, onDevice, events );
+      }
+      case Location::Face:
+      {
+        unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, onDevice, events );
+      }
+      case Location::Elem:
+      {
+        elemManager.getRegion( key.regionName ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+        {
+          unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
+        } );
+      }
+    }
+  }
+}
 } /* namespace geosx */
