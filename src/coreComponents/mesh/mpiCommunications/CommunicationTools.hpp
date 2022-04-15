@@ -24,6 +24,7 @@
 #include "common/MpiWrapper.hpp"
 #include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "mesh/mpiCommunications/NeighborCommunicator.hpp"
 
 #include <set>
 
@@ -92,6 +93,30 @@ public:
                   MPI_iCommData & icomm,
                   bool onDevice,
                   parallelDeviceEvents & events );
+
+  void synchronizeFields2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                           MeshLevel & mesh,
+                           std::vector< NeighborCommunicator > & allNeighbors,
+                           bool onDevice );
+
+  void synchronizePackSendRecvSizes2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                                      MeshLevel & mesh,
+                                      std::vector< NeighborCommunicator > & neighbors,
+                                      MPI_iCommData & icomm,
+                                      bool onDevice );
+
+  void synchronizePackSendRecv2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                                 MeshLevel & mesh,
+                                 std::vector< NeighborCommunicator > & allNeighbors,
+                                 MPI_iCommData & icomm,
+                                 bool onDevice );
+
+  void asyncPack2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                   MeshLevel & mesh,
+                   std::vector< NeighborCommunicator > & neighbors,
+                   MPI_iCommData & icomm,
+                   bool onDevice,
+                   parallelDeviceEvents & events );
 
   void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
                       MPI_iCommData & icomm,

@@ -55,26 +55,21 @@ public:
     Node  //!< location is node (like displacements in finite elements)
   };
 
-  struct fieldSyncKey
+  struct SyncFieldsID
   {
     string regionName;
     Location location;
+    array1d< string > fieldNames;
 
-    fieldSyncKey( string const regionName, Location const location )
-    regionName( regionName ),
-    location( location )
+    SyncFieldsID( string const regionName, Location const location ):
+      regionName( regionName ),
+      location( location )
     {}
 
-    bool operator==( const fieldSyncKey & other ) const
+    void addField( string const fieldName )
     {
-      return std::tie( regionName, location ) == std::tie( other.regionName, other.location );
+      fieldNames.emplace_back( fieldName );
     }
-
-    bool operator<( const fieldSyncKey & other ) const
-    {
-      return std::tie( regionName, location ) < std::tie( other.regionName, other.location );
-    }
-
   };
 
   void mpiISendReceive( buffer_unit_type const * const sendBuffer,
@@ -266,19 +261,19 @@ public:
                             bool onDevice,
                             parallelDeviceEvents & events );
 
-  void packCommBufferForSync( std::map< fieldSyncKey, string_array > const & fieldNames,
+  void packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
                               MeshLevel const & meshLevel,
                               int const commID,
                               bool onDevice,
                               parallelDeviceEvents & events );
 
-  int packCommSizeForSync( std::map< fieldSyncKey, string_array > const & fieldNames,
+  int packCommSizeForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool onDevice,
                            parallelDeviceEvents & events );
 
-  void unpackBufferForSync( std::map< fieldSyncKey, string_array > const & fieldNames,
+  void unpackBufferForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
                             MeshLevel & meshLevel,
                             int const commID,
                             bool onDevice,

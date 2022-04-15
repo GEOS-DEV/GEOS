@@ -947,5 +947,70 @@ void CommunicationTools::synchronizeFields( const std::map< string, string_array
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
 }
 
+void CommunicationTools::synchronizeFields2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                                             MeshLevel & mesh,
+                                             std::vector< NeighborCommunicator > & neighbors,
+                                             bool onDevice )
+{
+  MPI_iCommData icomm( getCommID() );
+  icomm.resize( neighbors.size() );
+  synchronizePackSendRecvSizes2( fieldsTobeSync, mesh, neighbors, icomm, onDevice );
+  synchronizePackSendRecv2( fieldsTobeSync, mesh, neighbors, icomm, onDevice );
+  synchronizeUnpack( mesh, neighbors, icomm, onDevice );
+}
+
+void CommunicationTools::synchronizePackSendRecv2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                                                   MeshLevel & mesh,
+                                                   std::vector< NeighborCommunicator > & neighbors,
+                                                   MPI_iCommData & icomm,
+                                                   bool onDevice )
+{
+  GEOSX_MARK_FUNCTION;
+  parallelDeviceEvents events;
+  asyncPack2( fieldsTobeSync, mesh, neighbors, icomm, onDevice, events );
+  asyncSendRecv( neighbors, icomm, onDevice, events );
+}
+
+void CommunicationTools::synchronizePackSendRecvSizes2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                                                        MeshLevel & mesh,
+                                                        std::vector< NeighborCommunicator > & neighbors,
+                                                        MPI_iCommData & icomm,
+                                                        bool onDevice )
+{
+  GEOSX_MARK_FUNCTION;
+  icomm.resize( neighbors.size() );
+
+  parallelDeviceEvents events;
+  for( std::size_t neighborIndex = 0; neighborIndex < neighbors.size(); ++neighborIndex )
+  {
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+    int const bufferSize = neighbor.packCommSizeForSync( fieldsTobeSync, mesh, icomm.commID(), onDevice, events );
+
+    neighbor.mpiISendReceiveBufferSizes( icomm.commID(),
+                                         icomm.mpiSendBufferSizeRequest( neighborIndex ),
+                                         icomm.mpiRecvBufferSizeRequest( neighborIndex ),
+                                         MPI_COMM_GEOSX );
+
+    neighbor.resizeSendBuffer( icomm.commID(), bufferSize );
+  }
+  waitAllDeviceEvents( events );
+}
+
+
+void CommunicationTools::asyncPack2( std::vector< NeighborCommunicator::SyncFieldsID > const & fieldsTobeSync,
+                                     MeshLevel & mesh,
+                                     std::vector< NeighborCommunicator > & neighbors,
+                                     MPI_iCommData & icomm,
+                                     bool onDevice,
+                                     parallelDeviceEvents & events )
+{
+  GEOSX_MARK_FUNCTION;
+  for( NeighborCommunicator & neighbor : neighbors )
+  {
+    neighbor.packCommBufferForSync( fieldsTobeSync, mesh, icomm.commID(), onDevice, events );
+  }
+}
+
+
 
 } /* namespace geosx */
