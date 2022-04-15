@@ -17,8 +17,8 @@
  */
 
 #include "CornerPointMeshParser.hpp"
-
 #include "mesh/generators/cornerPointMesh/utilities/StringUtilities.hpp"
+
 #include "common/GEOS_RAJA_Interface.hpp"
 #include <iostream>
 
@@ -231,11 +231,15 @@ void CornerPointMeshParser::readLocalZCORN( std::istringstream & meshFile,
   localIndex const iMinLocal = dims.iMinLocal();
   localIndex const jMinLocal = dims.jMinLocal();
   localIndex const kMinLocal = 0;
-
-  m_zcorn.resize( 8*nXLocal*nYLocal*nZLocal );
+  localIndex const auxZcornOffset = nXLocal* nYLocal * 8;
+  // Add auxillary layers of cells, located at top and bottom of original domain.
+  // These layers are created to facilitate face buildings
+  m_zcorn.resize( 8*nXLocal*nYLocal*(nZLocal + 2) );
 
   // Note: Below I mimic what I will ultimately do: not storing the full file in a string,
   //       but instead going through the file and saving only what the MPI rank needs
+
+  // Fill zcorns located in between top and bottom auxillary layers (original zcorn)
   for( localIndex k = 0; k < nZLocal; ++k )
   {
     for( localIndex j = 0; j < nYLocal; ++j )
@@ -247,14 +251,14 @@ void CornerPointMeshParser::readLocalZCORN( std::istringstream & meshFile,
         localIndex const iXm = (k+kMinLocal)*8*nX*nY + (j+jMinLocal)*4*nX + 2*(i+iMinLocal);
         localIndex const iXp = iXm + 2*nX;
 
-        m_zcorn( iXmLocal ) = tmp[ iXm ];
-        m_zcorn( iXmLocal + 1 ) = tmp[ iXm + 1 ];
-        m_zcorn( iXpLocal ) = tmp[ iXp ];
-        m_zcorn( iXpLocal + 1 ) = tmp[ iXp + 1 ];
-        m_zcorn( iXmLocal + 4*nXLocal*nYLocal ) = tmp[ iXm + 4*nX*nY ];
-        m_zcorn( iXmLocal + 4*nXLocal*nYLocal + 1 ) = tmp[ iXm + 4*nX*nY + 1 ];
-        m_zcorn( iXpLocal + 4*nXLocal*nYLocal ) = tmp[ iXp + 4*nX*nY ];
-        m_zcorn( iXpLocal + 4*nXLocal*nYLocal + 1 ) = tmp[ iXp + 4*nX*nY + 1 ];
+        m_zcorn( auxZcornOffset + iXmLocal ) = tmp[ iXm ];
+        m_zcorn( auxZcornOffset + iXmLocal + 1 ) = tmp[ iXm + 1 ];
+        m_zcorn( auxZcornOffset + iXpLocal ) = tmp[ iXp ];
+        m_zcorn( auxZcornOffset + iXpLocal + 1 ) = tmp[ iXp + 1 ];
+        m_zcorn( auxZcornOffset + iXmLocal + 4*nXLocal*nYLocal ) = tmp[ iXm + 4*nX*nY ];
+        m_zcorn( auxZcornOffset + iXmLocal + 4*nXLocal*nYLocal + 1 ) = tmp[ iXm + 4*nX*nY + 1 ];
+        m_zcorn( auxZcornOffset + iXpLocal + 4*nXLocal*nYLocal ) = tmp[ iXp + 4*nX*nY ];
+        m_zcorn( auxZcornOffset + iXpLocal + 4*nXLocal*nYLocal + 1 ) = tmp[ iXp + 4*nX*nY + 1 ];
       }
     }
   }
@@ -283,8 +287,8 @@ void CornerPointMeshParser::readLocalACTNUM( std::istringstream & meshFile,
   localIndex const iMinLocal = dims.iMinLocal();
   localIndex const jMinLocal = dims.jMinLocal();
   localIndex const kMinLocal = 0;
-
-  m_actnum.resize( nXLocal*nYLocal*nZLocal );
+  localIndex const auxCellOffset = nXLocal* nYLocal;
+  m_actnum.resize( nXLocal*nYLocal*(nZLocal + 2) );
 
   // Note: Below I mimic what I will ultimately do: not storing the full file in a string,
   //       but instead going through the file and saving only what the MPI rank needs
@@ -296,7 +300,7 @@ void CornerPointMeshParser::readLocalACTNUM( std::istringstream & meshFile,
       {
         localIndex const eiLocal = k*nXLocal*nYLocal + j*nXLocal + i;
         localIndex const ei = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + i+iMinLocal;
-        m_actnum( eiLocal ) = tmp[ ei ];
+        m_actnum( eiLocal + auxCellOffset) = tmp[ ei ];
       }
     }
   }
@@ -326,8 +330,8 @@ void CornerPointMeshParser::readLocalPROP( std::istringstream & meshFile,
   localIndex const jMinLocal = dims.jMinLocal();
   localIndex const kMinLocal = 0;
 
-  prop.resize( nXLocal*nYLocal*nZLocal );
-
+  prop.resize( nXLocal*nYLocal*( nZLocal + 2) );
+  localIndex const auxCellOffset = nXLocal* nYLocal;
   // Note: Below I mimic what I will ultimately do: not storing the full file in a string,
   //       but instead going through the file and saving only what the MPI rank needs
 
@@ -339,7 +343,8 @@ void CornerPointMeshParser::readLocalPROP( std::istringstream & meshFile,
       {
         localIndex const eiLocal = k*nXLocal*nYLocal + j*nXLocal + i;
         localIndex const ei = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + i+iMinLocal;
-        prop( eiLocal ) = tmp[ ei ];
+
+        prop( eiLocal + auxCellOffset) = tmp[ ei ];
       }
     }
   }
@@ -362,7 +367,7 @@ void CornerPointMeshParser::fillLocalPROP( CornerPointMeshDimensions const & dim
 {
   localIndex const nXLocal = dims.nXLocal();
   localIndex const nYLocal = dims.nYLocal();
-  localIndex const nZLocal = dims.nZLocal();
+  localIndex const nZLocal = dims.nZLocal() + 2;
 
   prop.resize( nXLocal*nYLocal*nZLocal );
   prop.template setValues< serialPolicy >( defaultValue );

@@ -117,7 +117,6 @@ set( mesh_sources
      generators/cornerPointMesh/CornerPointMeshPartition.cpp
      generators/cornerPointMesh/utilities/StringUtilities.cpp
    )
-     )
 
 set( dependencyList schema dataRepository constitutive metis )
 

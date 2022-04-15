@@ -307,6 +307,8 @@ private:
    */
   void appendAuxillaryLayer();
 
+  void appendCellDataForAuxillaryLayer();
+
   //  Find connections between two faces. If two faces overlap entirely, they are conforming internal faces. If otherwise, they are
   //  on faulted surface. As for faulted faces, new nodes will be introduced, which results in cases with more or less stanford 4 points face.
   //  For example, face could be consisted of either  3 points (minimum), 5 points or 6 points (maximum).

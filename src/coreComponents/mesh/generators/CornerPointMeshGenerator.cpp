@@ -17,10 +17,12 @@
  */
 
 #include "CornerPointMeshGenerator.hpp"
-
+#include "mesh/generators/CellBlockManager.hpp"
 #include "mesh/DomainPartition.hpp"
 #include "mesh/MeshBody.hpp"
 #include "mesh/ElementType.hpp"
+#include "mesh/mpiCommunications/CommunicationTools.hpp"
+#include <numeric>
 
 namespace geosx
 {
@@ -28,16 +30,16 @@ using namespace dataRepository;
 using namespace cornerPointMesh;
 
 CornerPointMeshGenerator::CornerPointMeshGenerator( string const & name, Group * const parent ):
-  MeshGeneratorBase( name, parent ),
+    ExternalMeshGeneratorBase( name, parent ),
   m_permeabilityUnitInInputFile( PermeabilityUnit::Millidarcy ),
   m_coordinatesUnitInInputFile( CoordinatesUnit::Meter ),
   m_toSquareMeter( 1.0 ),
   m_toMeter( 1.0 )
 {
-  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "Path to the mesh file" );
+//  registerWrapper( viewKeyStruct::filePathString(), &m_filePath ).
+//    setInputFlag( InputFlags::REQUIRED ).
+//    setRestartFlags( RestartFlags::NO_WRITE ).
+//    setDescription( "Path to the mesh file" );
 
   registerWrapper( viewKeyStruct::permeabilityUnitInInputFileString(), &m_permeabilityUnitInInputFile ).
     setInputFlag( InputFlags::OPTIONAL ).
@@ -100,12 +102,9 @@ Group * CornerPointMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM
 
 void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
 {
-  Group & meshBodies = domain.getGroup( string( "MeshBodies" ));
-  MeshBody & meshBody = meshBodies.registerGroup< MeshBody >( this->getName() );
-
-  MeshLevel & meshLevel0 = meshBody.registerGroup< MeshLevel >( string( "Level0" ));
-  NodeManager & nodeManager = meshLevel0.getNodeManager();
-  CellBlockManager & cellBlockManager = domain.getGroup< CellBlockManager >( keys::cellManager );
+  MeshBody & meshBody = domain.getMeshBodies().registerGroup< MeshBody >( this->getName() );
+  meshBody.createMeshLevel( 0 );
+  CellBlockManager & cellBlockManager = meshBody.registerGroup< CellBlockManager >( keys::cellManager );
 
   // Step 0: transfer the neighbor list
 
@@ -119,36 +118,28 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
   arrayView2d< real64 const > vertexPositions = m_cpMeshBuilder->vertexPositions();
   arrayView1d< globalIndex const > vertexToGlobalVertex = m_cpMeshBuilder->vertexToGlobalVertex();
   localIndex const nVertices = vertexPositions.size( 0 );
-  nodeManager.resize( nVertices );
-  arrayView1d< globalIndex > const & vertexLocalToGlobal = nodeManager.localToGlobalMap();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = nodeManager.referencePosition();
+  cellBlockManager.setNumNodes( nVertices );
+  arrayView1d< globalIndex > const & vertexLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = cellBlockManager.getNodesPositions();
 
-  Group & vertexSets = nodeManager.sets();
-  SortedArray< localIndex > & allVertices =
-    vertexSets.registerWrapper< SortedArray< localIndex > >( string( "all" ) ).reference();
+  // Generate the "all" set
+  array1d< localIndex > allNodes( nVertices );
+  std::iota( allNodes.begin(), allNodes.end(), 0 );
+  SortedArray< localIndex > & allNodeSet = cellBlockManager.getNodeSets()[ "all" ];
+  allNodeSet.insert( allNodes.begin(), allNodes.end() );
 
   real64 xMin[3] = { std::numeric_limits< real64 >::max() };
   real64 xMax[3] = { std::numeric_limits< real64 >::min() };
 
   for( localIndex iVertex = 0; iVertex < nVertices; ++iVertex )
   {
-    X( iVertex, 0 ) = m_toMeter * vertexPositions( iVertex, 0 );
-    X( iVertex, 1 ) = m_toMeter * vertexPositions( iVertex, 1 );
-    X( iVertex, 2 ) = m_toMeter * vertexPositions( iVertex, 2 );
-    allVertices.insert( iVertex );
-    vertexLocalToGlobal( iVertex ) = vertexToGlobalVertex( iVertex );
-
-    for( int dim = 0; dim < 3; dim++ )
+    for( integer i = 0; i < 3; ++i )
     {
-      if( X( iVertex, dim ) > xMax[dim] )
-      {
-        xMax[dim] = X( iVertex, dim );
-      }
-      if( X( iVertex, dim ) < xMin[dim] )
-      {
-        xMin[dim] = X( iVertex, dim );
-      }
+      X( iVertex, i ) = ( m_toMeter * vertexPositions( iVertex, i ) + m_translate[i] ) * m_scale[i];
+      xMax[i] = std::max( xMax[i], X( iVertex, i ) );
+      xMin[i] = std::min( xMin[i], X( iVertex, i ) );
     }
+    vertexLocalToGlobal( iVertex ) = vertexToGlobalVertex( iVertex );
   }
   LvArray::tensorOps::subtract< 3 >( xMax, xMin );
   meshBody.setGlobalLengthScale( LvArray::tensorOps::l2Norm< 3 >( xMax ) );
@@ -159,9 +150,8 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
 
   for( localIndex er = 0; er < regionId.size(); ++er )
   {
-
-    CellBlock * cellBlock = &cellBlockManager.getGroup( keys::cellBlocks ).
-                              registerGroup< CellBlock >( "DEFAULT_HEX_"+std::to_string( er ) );
+    string const cellBlockName = "DEFAULT_HEX_"+std::to_string( er );
+    CellBlock& cellBlock = cellBlockManager.registerCellBlock( cellBlockName );
 
     if( regionId.sizeOfArray( er ) == 0 )
     {
@@ -182,12 +172,12 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
     arrayView1d< localIndex const > cpVertexToVertex = m_cpMeshBuilder->cpVertexToVertex();
 
     localIndex const nOwnedActiveCellsInRegion = ownedActiveCellsInRegion.size();
-    cellBlock->setElementType( ElementType::Hexahedron );
-    cellBlock->resize( nOwnedActiveCellsInRegion );
+    cellBlock.setElementType( ElementType::Hexahedron );
+    cellBlock.resize( nOwnedActiveCellsInRegion );
 
-    arrayView1d< globalIndex > cellLocalToGlobal = cellBlock->localToGlobalMap();
-    auto & cellToVertex = cellBlock->nodeList(); // TODO: remove auto
-    cellToVertex.resize( nOwnedActiveCellsInRegion, 8 );
+    arrayView1d< globalIndex > cellLocalToGlobal = cellBlock.localToGlobalMap();
+    arrayView2d< localIndex, cells::NODE_MAP_USD > const cellToVertex = cellBlock.getElemToNode(); // CPG has an arrayofarray
+    //cellToVertex.resize( nOwnedActiveCellsInRegion, 8 );
 
     for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
     {
@@ -211,6 +201,7 @@ void CornerPointMeshGenerator::generateMesh( DomainPartition & domain )
       cellLocalToGlobal( iOwnedActiveCellInRegion ) = ownedActiveCellToGlobalCell( iOwnedActiveCellInRegion );
     }
   }
+  cellBlockManager.buildMaps();
 }
 
 void CornerPointMeshGenerator::freeResources()
@@ -221,29 +212,49 @@ void CornerPointMeshGenerator::freeResources()
 namespace
 {
 
-string findFullWrapperName( ElementSubRegionBase const & subRegion,
-                            string const & targetWrapperName )
+//string findFullWrapperName( ElementSubRegionBase const & subRegion,
+//                            string const & targetWrapperName )
+//{
+//  using namespace constitutive;
+//  string fullWrapperName;
+//  subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
+//  {
+//    material.forWrappers( [&]( WrapperBase const & wrapper )
+//    {
+//      if( wrapper.sizedFromParent() )
+//      {
+//        if( wrapper.getName() == targetWrapperName )
+//        {
+//          fullWrapperName = ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
+//        }
+//      }
+//    } );
+//  } );
+//  return fullWrapperName;
+//}
+
+std::vector< localIndex > findFieldNamesForImport( arrayView1d< string const > const & srcFieldNames)
 {
-  using namespace constitutive;
-  string fullWrapperName;
-  subRegion.getConstitutiveModels().forSubGroups< ConstitutiveBase >( [&]( ConstitutiveBase const & material )
+  std::vector<localIndex> arrays; // save index
+  std::vector<string> validFieldNames = {"PORO", "PERM"}; // Now we only import PORO and PERM field from GRDECL files
+  for( string const & sourceName : srcFieldNames )
   {
-    material.forWrappers( [&]( WrapperBase const & wrapper )
-    {
-      if( wrapper.sizedFromParent() )
-      {
-        if( wrapper.getName() == targetWrapperName )
-        {
-          fullWrapperName = ConstitutiveBase::makeFieldName( material.getName(), wrapper.getName() );
-        }
-      }
-    } );
-  } );
-  return fullWrapperName;
+    auto fieldNameIndex = std::find(validFieldNames.begin(), validFieldNames.end(), sourceName);
+
+    bool isValid = fieldNameIndex != validFieldNames.end() ? true : false;
+
+    GEOSX_THROW_IF( isValid == false,
+                    GEOSX_FMT( "Source field '{}' not found in dataset", sourceName ),
+                    InputError );
+
+    localIndex fieldPos = fieldNameIndex -  validFieldNames.begin();
+    arrays.push_back( fieldPos );
+  }
+
+  return arrays;
 }
 
 } // namespace
-
 
 void CornerPointMeshGenerator::importFields( DomainPartition & domain ) const
 {
@@ -253,12 +264,14 @@ void CornerPointMeshGenerator::importFields( DomainPartition & domain ) const
   ElementRegionManager & elemManager = domain.getMeshBody( this->getName() ).getMeshLevel( 0 ).getElemManager();
   ArrayOfArraysView< localIndex const > regionId = m_cpMeshBuilder->regionId();
 
+  std::vector< localIndex > const indexArrays = findFieldNamesForImport( m_fieldsToImport );
+
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex const er,
                                                                          localIndex const,
                                                                          ElementRegionBase &,
                                                                          CellElementSubRegion & subRegion )
   {
-    if( regionId.sizeOfArray( er ) == 0 )
+    if( regionId.sizeOfArray( er ) == 0 || indexArrays.size() == 0)
     {
       return;
     }
@@ -272,46 +285,63 @@ void CornerPointMeshGenerator::importFields( DomainPartition & domain ) const
     // Step 3: fill property information
 
     // TODO: here, just copy over what is done in PAMELAMeshGenerator, if it works
-
-    // Step 3.a: fill porosity in active cells
-    arrayView1d< real64 const > porosityField = m_cpMeshBuilder->porosityField();
-    string const poroWrapperName = findFullWrapperName( subRegion, "referencePorosity" );
-    if( !porosityField.empty()  && !poroWrapperName.empty() )
+    // Writing properties
+    for( std::size_t i = 0; i < indexArrays.size(); ++i )
     {
-      arrayView1d< real64 > & referencePorosity = subRegion.getReference< array1d< real64 > >( poroWrapperName );
-      for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
+      // Get source
+      // Find destination
+      string const wrapperName = m_fieldNamesInGEOSX[indexArrays[i]];
+      if( subRegion.hasWrapper( wrapperName ) )
       {
-        localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
-        localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
-        localIndex const iCell = activeCellToCell( iActiveCell );
-        referencePorosity( iOwnedActiveCellInRegion ) = porosityField( iCell );
-      }
-    }
-
-    // Step 3.b: fill permeability in active cells
-    arrayView2d< real64 const > permeabilityField = m_cpMeshBuilder->permeabilityField();
-    string const permWrapperName = findFullWrapperName( subRegion, "permeability" );
-    if( !permeabilityField.empty() && !permWrapperName.empty() )
-    {
-      arrayView3d< real64 > & permeability = subRegion.getReference< array3d< real64 > >( permWrapperName );
-      for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
-      {
-        localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
-        localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
-        localIndex const iCell = activeCellToCell( iActiveCell );
-        for( int q = 0; q < permeability.size( 1 ); ++q )
+        // Step 3.a: fill porosity in active cells
+        if ( m_fieldsToImport[i] == "PORO")
         {
-          for( localIndex dim = 0; dim < 3; dim++ )
+          arrayView1d< real64 const > porosityField = m_cpMeshBuilder->porosityField();
+          if( !porosityField.empty() )
           {
-            permeability( iOwnedActiveCellInRegion, q, dim ) =
-              LvArray::math::max( 1e-19, m_toSquareMeter * permeabilityField( iCell, dim ) );
+            arrayView1d< real64 > & referencePorosity = subRegion.getReference< array1d< real64 > >( wrapperName );
+            for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
+            {
+              localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
+              localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
+              localIndex const iCell = activeCellToCell( iActiveCell );
+              referencePorosity( iOwnedActiveCellInRegion ) = porosityField( iCell );
+            }
           }
         }
-      }
-    }
-  } );
-}
 
+        if (m_fieldsToImport[i] == "PERM")
+        {
+         // Step 3.b: fill permeability in active cells
+         arrayView2d< real64 const > permeabilityField = m_cpMeshBuilder->permeabilityField();
+         if( !permeabilityField.empty())
+         {
+           arrayView3d< real64 > & permeability = subRegion.getReference< array3d< real64 > >( wrapperName );
+           for( localIndex iOwnedActiveCellInRegion = 0; iOwnedActiveCellInRegion < nOwnedActiveCellsInRegion; ++iOwnedActiveCellInRegion )
+           {
+             localIndex const iOwnedActiveCell = ownedActiveCellsInRegion( iOwnedActiveCellInRegion );
+             localIndex const iActiveCell = ownedActiveCellToActiveCell( iOwnedActiveCell );
+             localIndex const iCell = activeCellToCell( iActiveCell );
+             for( int q = 0; q < permeability.size( 1 ); ++q )
+             {
+               for( localIndex dim = 0; dim < 3; dim++ )
+               {
+                 permeability( iOwnedActiveCellInRegion, q, dim ) =
+                   LvArray::math::max( 1e-19, m_toSquareMeter * permeabilityField( iCell, dim ) );
+               }
+             }
+           }
+         }
+       }
+     }
+   }
+  } );
+
+  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+                                                       domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
+                                                       domain.getNeighbors(),
+                                                       false );
+}
 
 REGISTER_CATALOG_ENTRY( MeshGeneratorBase, CornerPointMeshGenerator, string const &, Group * const )
 }

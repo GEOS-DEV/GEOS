@@ -232,6 +232,13 @@ Element: Constitutive
 .. include:: ../../coreComponents/schema/docs/Constitutive.rst
 
 
+.. _XML_CornerPointMesh:
+
+Element: CornerPointMesh
+========================
+.. include:: ../../coreComponents/schema/docs/CornerPointMesh.rst
+
+
 .. _XML_Coulomb:
 
 Element: Coulomb
@@ -349,13 +356,6 @@ Element: Events
 Element: ExtendedDruckerPrager
 ==============================
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager.rst
-
-
-.. _XML_ExternalCornerPointMesh:
-
-Element: ExternalCornerPointMesh
-================================
-.. include:: ../../coreComponents/schema/docs/ExternalCornerPointMesh.rst
 
 
 .. _XML_FieldSpecification:
@@ -1251,6 +1251,13 @@ Datastructure: ConstitutiveModels
 .. include:: ../../coreComponents/schema/docs/ConstitutiveModels_other.rst
 
 
+.. _DATASTRUCTURE_CornerPointMesh:
+
+Datastructure: CornerPointMesh
+==============================
+.. include:: ../../coreComponents/schema/docs/CornerPointMesh_other.rst
+
+
 .. _DATASTRUCTURE_Coulomb:
 
 Datastructure: Coulomb
@@ -1368,13 +1375,6 @@ Datastructure: Events
 Datastructure: ExtendedDruckerPrager
 ====================================
 .. include:: ../../coreComponents/schema/docs/ExtendedDruckerPrager_other.rst
-
-
-.. _DATASTRUCTURE_ExternalCornerPointMesh:
-
-Datastructure: ExternalCornerPointMesh
-======================================
-.. include:: ../../coreComponents/schema/docs/ExternalCornerPointMesh_other.rst
 
 
 .. _DATASTRUCTURE_FaceManager:

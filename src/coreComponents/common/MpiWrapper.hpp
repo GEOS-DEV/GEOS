@@ -669,10 +669,10 @@ int MpiWrapper::scatter( arrayView1d< T const > sendValues,
                   "Inconsistent sizes in MpiWrapper::scatter" );
   return MPI_Scatter( sendValues.data(),
                       sizePerRank,
-                      getMpiType< T >(),
+                      internal::getMpiType< T >(),
                       recvValues.data(),
                       sizePerRank,
-                      getMpiType< T >(),
+                      internal::getMpiType< T >(),
                       srcRank,
                       comm );
 #else

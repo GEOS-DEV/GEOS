@@ -84,10 +84,13 @@ void CornerPointMeshBuilder::postProcessMesh()
   // construct map linking a region to its cells
   formRegions();
 
-  // for now, do some debugging
+  // output VTK for testing purposes
   //outputDebugVTKFile( m_vertices, m_faces, m_cells );
   updateVertex();
-  outputDebugVTKFileWithFaces( m_vertices, m_faces, m_cells);
+
+  int const numRanks = MpiWrapper::commSize();
+  if (!(numRanks > 1))
+    outputDebugVTKFileWithFaces( m_vertices, m_faces, m_cells);
 }
 
 void CornerPointMeshBuilder::updateVertex()
@@ -263,80 +266,91 @@ void CornerPointMeshBuilder::populateReverseCellMaps( localIndex const nCells,
 void CornerPointMeshBuilder::appendAuxillaryLayer()
 {
   // Append top and bottom auxillary layers to zcorn and adjust actnum
-  array1d< localIndex > & actnum = m_parser.actnum();
   array1d< real64 > & zcorn = m_parser.zcorn();
   localIndex const nXLocal = m_dims.nXLocal() * 2;
   localIndex const nYLocal = m_dims.nYLocal() * 2;
-  localIndex const nZLocal = m_dims.nZLocal() * 2;
-  localIndex layerZcornSize = nXLocal * nYLocal;
 
   // step 1: Find highest and lowest points to set as up and bottom boundaries
   real64 const minZcorn = *( std::min_element( zcorn.begin(), zcorn.end() ) ) - m_offset;
   real64 const maxZcorn = *( std::max_element( zcorn.begin(), zcorn.end() ) ) + m_offset;
 
-  array1d< real64 > topLayer( layerZcornSize );
-  array1d< real64 > bottomLayer( layerZcornSize );
-  // TODO: resizeDefault seems not to assign the given value to each element. The interesting finding is
-  //       topCellActnum works fine with resizeDefault. It appears to me resizeDefault does not work well
-  //       with real64.
-  //topLayer.resizeDefault( layerZcornSize, maxZcorn );
-  //bottomLayer.resizeDefault( layerZcornSize, minZcorn );
-
-  // Step 2: duplicate original top and bottom layer of points
-  array1d< real64 > origTopLayer( layerZcornSize );
-  array1d< real64 > origBottomLayer( layerZcornSize );
-
   // loop over all zcorns of elements at top/bottom layer in the MPI domain, including overlaps
-  localIndex count = 0;
-  localIndex const k = nZLocal - 1; // lower layer
+  localIndex const k = m_dims.nZLocal() * 2; // lower layer
 
-  // TODO: discuss with Francois to see if it is better to use multidimensional vectors
   for( localIndex j = 0; j < nYLocal; ++j )
   {
     for( localIndex i = 0; i < nXLocal; ++i )
     {
       // compute explicit local and global indices using the ijk structure
-      localIndex const iLocalTopZcorn = j*nXLocal + i;
-      localIndex const iLocalBottomZcorn = k * nYLocal * nXLocal + iLocalTopZcorn;
-      origTopLayer( count ) = zcorn( iLocalTopZcorn );
-      origBottomLayer( count ) = zcorn( iLocalBottomZcorn );
-      topLayer( count ) = minZcorn;
-      bottomLayer( count ) = maxZcorn;
-      count += 1;
+      // Step 2: assign values to zcorn array associated with auxillary layers
+      localIndex const iLocalTopZcorn = j*nXLocal + i + 2* nYLocal * nXLocal;
+      localIndex const iLocalBottomZcorn = iLocalTopZcorn + (k -1) * nYLocal * nXLocal;
+
+      zcorn( iLocalTopZcorn -  nYLocal * nXLocal) = zcorn( iLocalTopZcorn );
+      zcorn( iLocalBottomZcorn +  nYLocal * nXLocal)= zcorn( iLocalBottomZcorn );
+
+      zcorn( iLocalTopZcorn - 2*nYLocal * nXLocal ) = minZcorn;
+      zcorn( iLocalBottomZcorn + 2*nYLocal * nXLocal ) = maxZcorn;
     }
   }
 
-  localIndex startZcornPos = 0;
-  localIndex const endZcornPos = zcorn.size();
-  // Step 3: Append four new layers of zcorns to zcorn vector (TODO: better way?)
-  zcorn.insert( endZcornPos, origBottomLayer.begin(), origBottomLayer.end());
-  zcorn.insert( endZcornPos + layerZcornSize, bottomLayer.begin(), bottomLayer.end());
-  zcorn.insert( startZcornPos, origTopLayer.begin(), origTopLayer.end());
-  zcorn.insert( startZcornPos, topLayer.begin(), topLayer.end());
-
-  // Step 4: assign auxillary cells with being inactive and region numbers
-  array1d< localIndex > & regionId = m_parser.regionId();
-  localIndex const layerCellSize = m_dims.nXLocal() * m_dims.nYLocal();
-  array1d< localIndex > topCellActnum;
-  array1d< localIndex > bottomCellActnum;
-  array1d< localIndex > topCellReginId;
-  array1d< localIndex > bottomCellReginId;
-  // TODO: hard-coded activeness and regionId
-  localIndex const inactiveness = -1;
-  topCellActnum.resizeDefault( layerCellSize, inactiveness);
-  bottomCellActnum.resizeDefault( layerCellSize, inactiveness);
-  topCellReginId.resize(layerCellSize);
-  bottomCellReginId.resize(layerCellSize);
-
-  localIndex startActnumPos = 0;
-  localIndex endActnumPos = actnum.size();
-  actnum.insert( endActnumPos, bottomCellActnum.begin(), bottomCellActnum.end());
-  actnum.insert( startActnumPos, topCellActnum.begin(), topCellActnum.end());
-
-  regionId.insert( endActnumPos, bottomCellReginId.begin(), bottomCellReginId.end());
-  regionId.insert( startActnumPos, topCellReginId.begin(), topCellReginId.end());
-
+  appendCellDataForAuxillaryLayer();
   //printDataForDebugging();
+}
+
+void CornerPointMeshBuilder::appendCellDataForAuxillaryLayer()
+{
+  // regionID and actnum
+  array1d< localIndex > & regionId = m_parser.regionId();
+  array1d< localIndex > & actnum = m_parser.actnum();
+  // Field data
+  array1d< real64 > & poro = m_parser.poro();
+  array2d< real64 > & perm = m_parser.perm();
+  bool hasPoro = poro.size() > 0 ? true : false;
+  bool hasPerm = perm.size( 0 ) > 0 ? true : false;
+
+  localIndex const nXLocal = m_dims.nXLocal();
+  localIndex const nYLocal = m_dims.nYLocal();
+  localIndex const k = m_dims.nZLocal();
+
+  // default values for auxillary cells
+  //localIndex const inactiveRegionID = -1;
+  localIndex const inactiveness = -1;
+  real64 const inactivePoro = 0.0;
+  const std::vector<real64> inactivePerm = {0.0, 0.0, 0.0};
+
+  for( localIndex j = 0; j < nYLocal; ++j )
+  {
+    for( localIndex i = 0; i < nXLocal; ++i )
+    {
+      localIndex const iLocalTopCell = j*nXLocal + i + nYLocal * nXLocal;
+      localIndex const iLocalBottomCell = iLocalTopCell + (k-1) * nYLocal * nXLocal;
+
+      localIndex const iLocalTopAuxCell = j*nXLocal + i;
+      localIndex const iLocalBottomAuxCell = iLocalBottomCell + nYLocal * nXLocal;
+
+      regionId( iLocalTopAuxCell ) = regionId(iLocalTopCell);
+      actnum( iLocalTopAuxCell ) = inactiveness;
+
+      regionId( iLocalBottomAuxCell ) = regionId(iLocalBottomCell);
+      actnum( iLocalBottomAuxCell ) = inactiveness;
+
+      if (hasPoro)
+      {
+        poro( iLocalTopAuxCell ) = 0.0;
+        poro( iLocalBottomAuxCell ) = 0.0;
+      }
+
+      if (hasPerm)
+      {
+        for( localIndex dim = 0; dim < 3; ++dim )
+        {
+          perm(iLocalTopAuxCell, dim) = inactivePerm[dim];
+          perm(iLocalBottomAuxCell, dim) = inactivePerm[dim];
+        }
+      }
+    }
+  }
 }
 
 bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,

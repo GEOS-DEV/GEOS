@@ -243,8 +243,6 @@ private:
                       array1d< T > & prop,
                       T defaultValue );
 
-
-
   /// local content of the COORD keyword in the GRDECL file
   array1d< real64 > m_coord;
 

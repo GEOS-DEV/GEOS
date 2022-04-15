@@ -23,7 +23,7 @@
 #include "codingUtilities/Utilities.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 #include "codingUtilities/EnumStrings.hpp"
-#include "mesh/generators/MeshGeneratorBase.hpp"
+#include "mesh/generators/ExternalMeshGeneratorBase.hpp"
 #include "mesh/generators/cornerPointMesh/CornerPointMeshBuilder.hpp"
 
 namespace geosx
@@ -33,7 +33,7 @@ namespace geosx
  *  @class CornerPointMeshGenerator
  *  @brief Class that reads and processes a corner point grid
  */
-class CornerPointMeshGenerator : public MeshGeneratorBase
+class CornerPointMeshGenerator : public ExternalMeshGeneratorBase
 {
 public:
 
@@ -71,7 +71,7 @@ public:
  * @brief Return the name of the CornerPointMeshGenerator in object Catalog.
  * @return string that contains the key name to CornerPointMeshGenerator in the Catalog
  */
-  static string catalogName() { return "ExternalCornerPointMesh"; }
+  static string catalogName() { return "CornerPointMesh"; }
 
 ///@cond DO_NOT_DOCUMENT
   struct viewKeyStruct
@@ -112,7 +112,7 @@ private:
   std::unique_ptr< cornerPointMesh::CornerPointMeshBuilder > m_cpMeshBuilder;
 
   /// Path to the mesh file
-  Path m_filePath;
+//  Path m_filePath;
 
   /// Permeability unit
   PermeabilityUnit m_permeabilityUnitInInputFile;
