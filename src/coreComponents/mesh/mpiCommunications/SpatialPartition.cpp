@@ -334,7 +334,6 @@ namespace geosx
         }
         if( ghostRank[pp]==this->m_rank && !inPartition )
         {
-          GEOSX_LOG_RANK("A particle left this partition!");
           outOfDomainParticleCoordinates.emplace_back(p_x);  // Store the coordinate of the out-of-domain particle
           outOfDomainParticleLocalIndices.push_back(pp);     // Store the local index "pp" for the current coordinate.
           ghostRank[pp] = -1;                                // Temporarily set ghostRank of out-of-domain particle to -1 until it is requested by someone.
@@ -363,10 +362,6 @@ namespace geosx
     // Number of neighboring partitions
     unsigned int nn = m_neighbors.size();
 
-    // Temporarily unpack into this
-    std::vector<array1d<R1Tensor>> temp(nn);
-    //array1d<R1Tensor> temp;
-
     // The send buffer is identical for each neighbor, and contains the packed coordinate list.
     unsigned int sizeToBePacked = 0;                                                      // size of the outgoing data with packing=false (we need to run through it first without packing so we can size the buffer)
     unsigned int sizeOfPacked = 0;                                                        // size of the outgoing data with packing=true
@@ -383,9 +378,9 @@ namespace geosx
     array1d<unsigned int> sizeOfReceived(nn);
     array1d< buffer_type > receiveBuffer(nn);
 
+    // send the coordinate list to each neighbor.  Using an asynchronous send,
+    // the mpi request will be different for each send, but the buffer is the same
     {
-      // send the coordinate list to each neighbor.  Using an asynchronous send,
-      // the mpi request will be different for each send, but the buffer is the same
       array1d<MPI_Request>   sendRequest(nn);
       array1d<MPI_Status>    sendStatus(nn);
       array1d<MPI_Request>   receiveRequest(nn);
@@ -394,13 +389,6 @@ namespace geosx
       // Send/receive the size of the packed buffer
       for(size_t n=0; n<nn; n++ )
       {
-        // Send-receive stuff explicitly written out here for reference
-//        int const sendTag = CommTag( MpiWrapper::commRank(), m_neighbors[n].neighborRank(), icomm.commID() );
-//        int const receiveTag = CommTag( m_neighbors[n].neighborRank(), MpiWrapper::commRank(), icomm.commID() );
-//        MPI_Isend( &sizeOfPacked, 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), sendTag, MPI_COMM_GEOSX, &(sendRequest[n]) );               // Send buffer size
-//        MPI_Irecv( &(sizeOfReceived[n]), 1, MPI_UNSIGNED, m_neighbors[n].neighborRank(), receiveTag, MPI_COMM_GEOSX, &(receiveRequest[n]) );  // Receive buffer size
-
-        // This handy-dandy function encapsulates all the send-receive stuff, might as well use it
         m_neighbors[n].mpiISendReceive( &sizeOfPacked,
                                         1,
                                         sendRequest[n],
@@ -423,12 +411,6 @@ namespace geosx
 
       for(size_t n=0; n<nn; n++ )
       {
-//        receiveBuffer[n].resize(sizeOfReceived[n]);
-//        int const sendTag = CommTag( MpiWrapper::commRank(), m_neighbors[n].neighborRank(), icomm.commID() );
-//        int const receiveTag = CommTag( m_neighbors[n].neighborRank(), MpiWrapper::commRank(), icomm.commID() );
-//        MPI_Isend( sendBuffer.data(), sizeOfPacked, MPI_CHAR, m_neighbors[n].neighborRank(), sendTag, MPI_COMM_GEOSX, &(sendRequest[n]) );  // Send coordinate list buffer
-//        MPI_Irecv( receiveBuffer[n].data(), sizeOfReceived[n], MPI_CHAR, m_neighbors[n].neighborRank(), receiveTag, MPI_COMM_GEOSX, &(receiveRequest[n]) );  // Receive coordinate list buffer
-
         receiveBuffer[n].resize(sizeOfReceived[n]);
         m_neighbors[n].mpiISendReceive( sendBuffer.data(), // TODO: This can't be sendBufferPtr, why not? I guess cuz sendBufferPtr gets incremented (moved) during packing.
                                         sizeOfPacked,
@@ -443,26 +425,13 @@ namespace geosx
       MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
     }
 
-    //Unpack the received coordinate list from each neighbor
+    // Unpack the received coordinate list from each neighbor
     for(size_t n=0; n<nn; n++ )
     {
       // Unpack the buffer to an array of coordinates.
       const buffer_unit_type* receiveBufferPtr = receiveBuffer[n].data(); // needed for const cast
       bufferOps::Unpack( receiveBufferPtr, particleCoordinatesReceivedFromNeighbors[n] );
-      if(particleCoordinatesReceivedFromNeighbors[n].size()>0)
-      {
-        GEOSX_LOG_RANK("I received " << particleCoordinatesReceivedFromNeighbors[n].size() << " particles!");
-      }
     }
   }
-
-  //  // Unpack the received coordinate list from each neighbor
-  //
-  //  for(localIndex n=0; n<nn; n++ )
-  //  {
-  //    // Unpack the buffer to an array of coordinates.
-  //    const char* _buffer = reinterpret_cast<char*>(receiveBuffer[n].data());
-  //    bufvector::Unpack(_buffer,particleCoordinatesReceivedFromNeighbors[n]);
-  //  }
 
 }
