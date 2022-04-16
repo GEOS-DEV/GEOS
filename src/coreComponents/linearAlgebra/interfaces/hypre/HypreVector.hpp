@@ -107,7 +107,7 @@ public:
   using VectorBase::values;
   using VectorBase::iDot;
   /// @cond DO_NOT_DOCUMENT
-  using VectorBase::iDot2;
+  using VectorBase::iDotMultiple;
   /// @endcond
 
   /**
