@@ -219,84 +219,76 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
-      if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
+      arrayView2d< real64 > const & deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaTraction >();
+      arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
+      arrayView2d< real64 > const & oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
+      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+      arrayView1d< integer > const & oldFractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldFractureState >();
+
+      forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
-        arrayView2d< real64 > const &
-        deltaTraction = subRegion.getExtrinsicData< extrinsicMeshData::contact::deltaTraction >();
-        arrayView2d< real64 const > const &
-        dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
-        arrayView2d< real64 > const &
-        oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
-        arrayView1d< integer const > const &
-        fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-        arrayView1d< integer > const &
-        oldFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() );
-
-        forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
+        for( localIndex i = 0; i < 3; ++i )
         {
-          for( localIndex i = 0; i < 3; ++i )
-          {
-            deltaTraction[kfe][i] = 0.0;
-            oldDispJump[kfe][i] = dispJump[kfe][i];
-          }
-          oldFractureState[kfe] = fractureState[kfe];
-        } );
-
-        // Laura print
-        arrayView2d< real64 > const & traction = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::traction::key() );
-        arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
-        real64 maxNorm   = 0.0;
-        real64 maxNormFT = 0.0;
-        real64 maxNormFN = 0.0;
-        real64 Jmean = 0.0;
-        real64 FTmean = 0.0;
-        real64 FNmean = 0.0;
-        real64 sumarea = 0.0;
-        real64 area_slip = 0.0;
-        forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
-        {
-          real64 const normD = sqrt( dispJump[kfe][1]*dispJump[kfe][1]+dispJump[kfe][2]*dispJump[kfe][2] );
-          if( normD > maxNorm )
-          {
-            maxNorm = normD;
-          }
-          real64 const normForceT = sqrt( traction[kfe][1]*traction[kfe][1]+traction[kfe][2]*traction[kfe][2] );
-          if( normForceT > maxNormFT )
-          {
-            maxNormFT = normForceT;
-          }
-          if( maxNormFN < std::abs( traction[kfe][0] ) )
-          {
-            maxNormFN = std::abs( traction[kfe][0] );
-          }
-          real64 const area = faceArea[kfe];
-          sumarea += area;
-          //if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
-          if( std::abs( normD ) > 1.e-4 )
-          {
-            area_slip += area;
-            Jmean += normD*area;
-          }
-          FTmean += normForceT*area;
-          FNmean += std::abs( traction[kfe][0] )*area;
-        } );
-        if( std::abs( area_slip ) > 0 )
-        {
-          Jmean /= area_slip;
+          deltaTraction[kfe][i] = 0.0;
+          oldDispJump[kfe][i] = dispJump[kfe][i];
         }
-        if( std::abs( sumarea ) > 0 )
+        oldFractureState[kfe] = fractureState[kfe];
+      } );
+
+      // Laura print
+      arrayView2d< real64 > const & traction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
+      arrayView1d< real64 const > const & faceArea = subRegion.getElementArea().toViewConst();
+      real64 maxNorm   = 0.0;
+      real64 maxNormFT = 0.0;
+      real64 maxNormFN = 0.0;
+      real64 Jmean = 0.0;
+      real64 FTmean = 0.0;
+      real64 FNmean = 0.0;
+      real64 sumarea = 0.0;
+      real64 area_slip = 0.0;
+      forAll< parallelHostPolicy >( subRegion.size(), [&] ( localIndex const kfe )
+      {
+        real64 const normD = sqrt( dispJump[kfe][1]*dispJump[kfe][1]+dispJump[kfe][2]*dispJump[kfe][2] );
+        if( normD > maxNorm )
         {
-          FTmean /= sumarea;
-          FNmean /= sumarea;
+          maxNorm = normD;
         }
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T {:15.6e}", maxNormFT ) );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N {:15.6e}", maxNormFN ) );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force T {:15.6e}", FTmean ) );
-        GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force N {:15.6e}", FNmean ) );
-        // end Laura
+        real64 const normForceT = sqrt( traction[kfe][1]*traction[kfe][1]+traction[kfe][2]*traction[kfe][2] );
+        if( normForceT > maxNormFT )
+        {
+          maxNormFT = normForceT;
+        }
+        if( maxNormFN < std::abs( traction[kfe][0] ) )
+        {
+          maxNormFN = std::abs( traction[kfe][0] );
+        }
+        real64 const area = faceArea[kfe];
+        sumarea += area;
+        //if( fractureState[kfe] == 1 || fractureState[kfe] == 2 )
+        if( std::abs( normD ) > 1.e-4 )
+        {
+          area_slip += area;
+          Jmean += normD*area;
+        }
+        FTmean += normForceT*area;
+        FNmean += std::abs( traction[kfe][0] )*area;
+      } );
+      if( std::abs( area_slip ) > 0 )
+      {
+        Jmean /= area_slip;
       }
+      if( std::abs( sumarea ) > 0 )
+      {
+        FTmean /= sumarea;
+        FNmean /= sumarea;
+      }
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max disp jump {:15.6e}", maxNorm ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force T {:15.6e}", maxNormFT ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "LagrangianContactSolver::implicitStepComplete -- [frac] max total force N {:15.6e}", maxNormFN ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean disp jump {:15.6e}", Jmean ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force T {:15.6e}", FTmean ) );
+      GEOSX_LOG_RANK_0( GEOSX_FMT( "mean force N {:15.6e}", FNmean ) );
+      // end Laura
     } );
 
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
@@ -488,8 +480,8 @@ void LagrangianContactSolver::resetStateToBeginningOfStep( DomainPartition & dom
       arrayView2d< real64 > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
       arrayView2d< real64 const > const & oldDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
 
-      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
-      arrayView1d< integer const > const & oldFractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::oldFractureStateString() );
+      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
+      arrayView1d< integer const > const & oldFractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldFractureState >();
 
       forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
       {
@@ -739,7 +731,7 @@ real64 LagrangianContactSolver::calculateResidualNorm( DomainPartition const & d
                                         globalResidualNorm[0],
                                         globalResidualNorm[1],
                                         globalResidualNorm[2] ) );
-  // return globalResidualNorm[2];
+  //return globalResidualNorm[2];
   return res;
 }
 
@@ -1095,8 +1087,8 @@ void LagrangianContactSolver::
       arrayView3d< real64 const > const &
       rotationMatrix = subRegion.getReference< array3d< real64 > >( viewKeyStruct::rotationMatrixString() );
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
-      arrayView2d< real64 const > const & traction = subRegion.getReference< array2d< real64 > >( extrinsicMeshData::contact::traction::key() );
-      arrayView1d< integer const > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+      arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
+      arrayView1d< integer const > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
       arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
       arrayView2d< real64 const > const & previousDispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::oldDispJump >();
       arrayView1d< real64 const > const & slidingTolerance = subRegion.getReference< array1d< real64 > >( viewKeyStruct::slidingToleranceString() );
@@ -1126,7 +1118,7 @@ void LagrangianContactSolver::
 
             switch( fractureState[kfe] )
             {
-              case FractureState::Stick:
+              case extrinsicMeshData::contact::FractureState::Stick:
                 {
                   for( localIndex i = 0; i < 3; ++i )
                   {
@@ -1160,8 +1152,8 @@ void LagrangianContactSolver::
                   }
                   break;
                 }
-              case FractureState::Slip:
-              case FractureState::NewSlip:
+              case extrinsicMeshData::contact::FractureState::Slip:
+              case extrinsicMeshData::contact::FractureState::NewSlip:
                 {
                   elemRHS[0] = +Ja * dispJump[kfe][0];
 
@@ -1191,7 +1183,7 @@ void LagrangianContactSolver::
 
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
 
-                  if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NewSlip ) )
+                  if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == extrinsicMeshData::contact::FractureState::NewSlip ) )
                       && slidingNorm > slidingTolerance[kfe] )
                   {
                     for( localIndex i = 1; i < 3; ++i )
@@ -1259,7 +1251,7 @@ void LagrangianContactSolver::
                   }
                   break;
                 }
-              case FractureState::Open:
+              case extrinsicMeshData::contact::FractureState::Open:
                 {
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << dispJump[kfe][0] );
 
@@ -1282,7 +1274,7 @@ void LagrangianContactSolver::
             {
               localRhs[localRow + idof] += elemRHS[idof];
 
-              if( fractureState[kfe] != FractureState::Open )
+              if( fractureState[kfe] != extrinsicMeshData::contact::FractureState::Open )
               {
                 localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
                                                                           nodeDOF,
@@ -1290,7 +1282,7 @@ void LagrangianContactSolver::
                                                                           2 * 3 * numNodesPerFace );
               }
 
-              if( fractureState[kfe] != FractureState::Stick )
+              if( fractureState[kfe] != extrinsicMeshData::contact::FractureState::Stick )
               {
                 localMatrix.addToRow< serialAtomic >( localRow + idof,
                                                       elemDOF,
@@ -1586,18 +1578,18 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
             nDof[kf] = 0;
             switch( fractureState[fractureIndex[kf]] )
             {
-              case ( FractureState::Stick ):
+              case ( extrinsicMeshData::contact::FractureState::Stick ):
                 {
                   nDof[kf] = 3;
                   break;
                 }
-              case ( FractureState::NewSlip ):
-              case ( FractureState::Slip ):
+              case ( extrinsicMeshData::contact::FractureState::NewSlip ):
+              case ( extrinsicMeshData::contact::FractureState::Slip ):
                 {
                   nDof[kf] = 1;
                   break;
                 }
-              case ( FractureState::Open ):
+              case ( extrinsicMeshData::contact::FractureState::Open ):
                 {
                   nDof[kf] = 0;
                   break;
@@ -1764,6 +1756,8 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
 {
   GEOSX_MARK_FUNCTION;
 
+  using namespace extrinsicMeshData::contact;
+
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -1775,7 +1769,7 @@ bool LagrangianContactSolver::resetConfigurationToDefault( DomainPartition & dom
     {
       if( subRegion.hasWrapper( extrinsicMeshData::contact::traction::key() ) )
       {
-        arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+        arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
           if( fractureState[kfe] != FractureState::Open )
@@ -1801,6 +1795,8 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
   /////////////////////////// LAURA  ////////////////////////////////
   /////////////////////////// LAURA  ////////////////////////////////
 
+  using namespace extrinsicMeshData::contact;
+
   bool hasConfigurationConverged = true;
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
@@ -1817,7 +1813,7 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
       arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
       arrayView2d< real64 const > const & traction = subRegion.getExtrinsicData< extrinsicMeshData::contact::traction >();
       arrayView2d< real64 const > const & dispJump = subRegion.getExtrinsicData< extrinsicMeshData::contact::dispJump >();
-      arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
+      arrayView1d< integer > const & fractureState = subRegion.getExtrinsicData< extrinsicMeshData::contact::fractureState >();
 
       arrayView1d< real64 const > const & normalTractionTolerance =
         subRegion.getReference< array1d< real64 > >( viewKeyStruct::normalTractionToleranceString() );
@@ -1836,20 +1832,20 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
           if( ghostRank[kfe] < 0 )
           {
             integer const originalFractureState = fractureState[kfe];
-            if( originalFractureState == FractureState::Open )
+            if( originalFractureState == extrinsicMeshData::contact::FractureState::Open )
             {
               if( dispJump[kfe][0] > -normalDisplacementTolerance[kfe] )
               {
-                fractureState[kfe] = FractureState::Open;
+                fractureState[kfe] = extrinsicMeshData::contact::FractureState::Open;
               }
               else
               {
-                fractureState[kfe] = FractureState::Stick;
+                fractureState[kfe] = extrinsicMeshData::contact::FractureState::Stick;
               }
             }
             else if( traction[kfe][0] > normalTractionTolerance[kfe] )
             {
-              fractureState[kfe] = FractureState::Open;
+              fractureState[kfe] = extrinsicMeshData::contact::FractureState::Open;
             }
             else
             {
@@ -1860,28 +1856,28 @@ bool LagrangianContactSolver::updateConfiguration( DomainPartition & domain )
                 contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                    dLimitTangentialTractionNorm_dTraction );
 
-              if( originalFractureState == FractureState::Stick && currentTau >= limitTau )
+              if( originalFractureState == extrinsicMeshData::contact::FractureState::Stick && currentTau >= limitTau )
               {
                 currentTau *= (1.0 - m_slidingCheckTolerance);
               }
-              else if( originalFractureState != FractureState::Stick && currentTau <= limitTau )
+              else if( originalFractureState != extrinsicMeshData::contact::FractureState::Stick && currentTau <= limitTau )
               {
                 currentTau *= (1.0 + m_slidingCheckTolerance);
               }
-              if( currentTau >= limitTau )
+              if( currentTau > limitTau )
               {
-                if( originalFractureState == FractureState::Stick )
+                if( originalFractureState == extrinsicMeshData::contact::FractureState::Stick )
                 {
-                  fractureState[kfe] = FractureState::NewSlip;
+                  fractureState[kfe] = extrinsicMeshData::contact::FractureState::NewSlip;
                 }
                 else
                 {
-                  fractureState[kfe] = FractureState::Slip;
+                  fractureState[kfe] = extrinsicMeshData::contact::FractureState::Slip;
                 }
               }
               else
               {
-                fractureState[kfe] = FractureState::Stick;
+                fractureState[kfe] = extrinsicMeshData::contact::FractureState::Stick;
               }
             }
             checkActiveSetSub.min( compareFractureStates( originalFractureState, fractureState[kfe] ) );
@@ -1936,6 +1932,8 @@ bool LagrangianContactSolver::isElementInOpenState( FaceElementSubRegion const &
                                                     localIndex const kfe ) const
 {
   GEOSX_MARK_FUNCTION;
+
+  using namespace extrinsicMeshData::contact;
 
   // It can be used only thanks to the global synchronization in AssembleSystem (SynchronizeFractureState)
   bool res = false;
