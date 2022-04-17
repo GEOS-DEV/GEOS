@@ -48,13 +48,13 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature,
                            WRITE_AND_READ,
                            "Temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
-                           "deltaWellTemperature",
+EXTRINSIC_MESH_DATA_TRAIT( temperatureOld,
+                           "wellTemperatureOld",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated temperature updates" );
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "TemperatureOld" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
@@ -64,13 +64,13 @@ EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            WRITE_AND_READ,
                            "Global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaGlobalCompDensity,
-                           "deltaGlobalCompDensity",
+EXTRINSIC_MESH_DATA_TRAIT( globalCompDensityOld,
+                           "globalCompDensityOld",
                            array2dLayoutComp,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated global component density updates" );
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Global component density at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRate,
                            "wellElementMixtureConnectionRate",
@@ -80,14 +80,13 @@ EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRate,
                            WRITE_AND_READ,
                            "Mixture connection rate" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaMixtureConnectionRate,
-                           "deltaWellElementMixtureConnectionRate",
+EXTRINSIC_MESH_DATA_TRAIT( mixtureConnectionRateOld,
+                           "wellElementMixtureConnectionRateOld",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated mixture connection rate updates" );
-
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Mixture connection rate at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction,
                            "globalCompFraction",

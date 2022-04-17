@@ -158,7 +158,6 @@ public:
   ComponentFractionKernel( ObjectManagerBase & subRegion )
     : Base(),
     m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >() ),
     m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() )
   {}
@@ -175,7 +174,6 @@ public:
                 FUNC && compFractionKernelOp = NoOpFunc{} ) const
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
-    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
     arraySlice1d< real64, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
     arraySlice2d< real64, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
 
@@ -183,14 +181,14 @@ public:
 
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      totalDensity += compDens[ic] + dCompDens[ic];
+      totalDensity += compDens[ic];
     }
 
     real64 const totalDensityInv = 1.0 / totalDensity;
 
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      compFrac[ic] = (compDens[ic] + dCompDens[ic]) * totalDensityInv;
+      compFrac[ic] = compDens[ic] * totalDensityInv;
       for( integer jc = 0; jc < numComp; ++jc )
       {
         dCompFrac_dCompDens[ic][jc] = -compFrac[ic] * totalDensityInv;
@@ -207,7 +205,6 @@ protected:
 
   // Views on component densities
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
-  arrayView2d< real64 const, compflow::USD_COMP > m_dCompDens;
 
   // outputs
 
@@ -277,7 +274,6 @@ public:
     m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
     m_dPhaseVolFrac_dComp( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
     m_compDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >() ),
-    m_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
     m_phaseFrac( fluid.phaseFraction() ),
     m_dPhaseFrac( fluid.dPhaseFraction() ),
@@ -299,7 +295,6 @@ public:
     using Deriv = multifluid::DerivativeOffset;
 
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compDens = m_compDens[ei];
-    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompDens = m_dCompDens[ei];
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > const dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const phaseDens = m_phaseDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const dPhaseDens = m_dPhaseDens[ei][0];
@@ -316,7 +311,7 @@ public:
     real64 const dTotalDens_dCompDens = 1.0;
     for( integer ic = 0; ic < numComp; ++ic )
     {
-      totalDensity += compDens[ic] + dCompDens[ic];
+      totalDensity += compDens[ic];
     }
 
     for( integer ip = 0; ip < numPhase; ++ip )
@@ -382,7 +377,6 @@ protected:
 
   /// Views on component densities
   arrayView2d< real64 const, compflow::USD_COMP > m_compDens;
-  arrayView2d< real64 const, compflow::USD_COMP > m_dCompDens;
   arrayView3d< real64 const, compflow::USD_COMP_DC > m_dCompFrac_dCompDens;
 
   /// Views on phase fractions
@@ -976,9 +970,7 @@ struct SolutionCheckKernel
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & compDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens,
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
@@ -992,7 +984,7 @@ struct SolutionCheckKernel
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
         {
-          real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
+          real64 const newPres = pres[ei] + scalingFactor * localSolution[localRow];
           check.min( newPres >= 0.0 );
         }
 
@@ -1003,7 +995,7 @@ struct SolutionCheckKernel
         {
           for( integer ic = 0; ic < numComponents; ++ic )
           {
-            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            real64 const newDens = compDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             check.min( newDens >= 0.0 );
           }
         }
@@ -1012,7 +1004,7 @@ struct SolutionCheckKernel
           real64 totalDens = 0.0;
           for( integer ic = 0; ic < numComponents; ++ic )
           {
-            real64 const newDens = compDens[ei][ic] + dCompDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            real64 const newDens = compDens[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             totalDens += (newDens > 0.0) ? newDens : 0.0;
           }
           check.min( totalDens >= eps );

@@ -121,8 +121,8 @@ public:
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
-    m_fluidPressureOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_deltaFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() )
+    m_fluidPressureOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressureOld >() ),
+    m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() )
   {}
 
   //*****************************************************************************
@@ -296,7 +296,7 @@ public:
                                                        q,
                                                        m_initialFluidPressure[k],
                                                        m_fluidPressureOld[k],
-                                                       m_deltaFluidPressure[k],
+                                                       m_fluidPressure[k],
                                                        strainIncrement,
                                                        m_gravityAcceleration,
                                                        m_gravityVector,
@@ -503,11 +503,9 @@ protected:
   /// The rank-global initial fluid pressure array
   arrayView1d< real64 const > const m_initialFluidPressure;
 
-  /// The rank-global fluid pressure array.
+  /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > const m_fluidPressureOld;
-
-  /// The rank-global delta-fluid pressure array.
-  arrayView1d< real64 const > const m_deltaFluidPressure;
+  arrayView1d< real64 const > const m_fluidPressure;
 
 };
 

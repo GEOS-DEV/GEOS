@@ -154,9 +154,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
     initializeWells( domain );
   }
 
-  // set deltas to zero and recompute dependent quantities
-  resetStateToBeginningOfStep( domain );
-
   // backup fields used in time derivative approximation
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
@@ -164,6 +161,13 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   {
     backupFields( mesh, regionNames );
   } );
+}
+
+void WellSolverBase::implicitStepComplete( real64 const & time_n,
+                                           real64 const & dt,
+                                           DomainPartition & domain )
+{
+  GEOSX_UNUSED_VAR( time_n, dt, domain );
 }
 
 void WellSolverBase::assembleSystem( real64 const time,

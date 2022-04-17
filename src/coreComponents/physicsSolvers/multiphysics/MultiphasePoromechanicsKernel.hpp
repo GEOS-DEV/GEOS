@@ -151,8 +151,8 @@ public:
       using namespace extrinsicMeshData::flow;
 
       m_initialFluidPressure = elementSubRegion.template getExtrinsicData< initialPressure >();
-      m_fluidPressureOld = elementSubRegion.template getExtrinsicData< pressure >();
-      m_deltaFluidPressure = elementSubRegion.template getExtrinsicData< deltaPressure >();
+      m_fluidPressureOld = elementSubRegion.template getExtrinsicData< pressureOld >();
+      m_fluidPressure = elementSubRegion.template getExtrinsicData< pressure >();
 
       m_fluidPhaseSaturationOld = elementSubRegion.template getExtrinsicData< phaseVolumeFractionOld >();
 
@@ -321,7 +321,7 @@ public:
                                                       NC,
                                                       m_initialFluidPressure[k],
                                                       m_fluidPressureOld[k],
-                                                      m_deltaFluidPressure[k],
+                                                      m_fluidPressure[k],
                                                       strainIncrement,
                                                       m_gravityAcceleration,
                                                       m_gravityVector,
@@ -654,11 +654,9 @@ protected:
   /// The rank-global initial fluid pressure array.
   arrayView1d< real64 const > m_initialFluidPressure;
 
-  /// The rank-global fluid pressure array.
+  /// The rank-global fluid pressure arrays.
   arrayView1d< real64 const > m_fluidPressureOld;
-
-  /// The rank-global delta-fluid pressure array.
-  arrayView1d< real64 const > m_deltaFluidPressure;
+  arrayView1d< real64 const > m_fluidPressure;
 
   /// Number of components
   localIndex const m_numComponents;

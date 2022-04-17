@@ -284,7 +284,6 @@ FluxKernel::
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
-          arrayView1d< real64 const > const & dConnRate,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac,
           arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
           real64 const & dt,
@@ -319,7 +318,7 @@ FluxKernel::
      */
 
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
-    real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
+    real64 const currentConnRate = connRate[iwelem];
     localIndex iwelemUp = -1;
 
     if( iwelemNext < 0 && !isProducer ) // exit connection, injector
@@ -514,7 +513,6 @@ FluxKernel::
                   arrayView1d< globalIndex const > const & wellElemDofNumber, \
                   arrayView1d< localIndex const > const & nextWellElemIndex, \
                   arrayView1d< real64 const > const & connRate, \
-                  arrayView1d< real64 const > const & dConnRate, \
                   arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac, \
                   arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens, \
                   real64 const & dt, \
@@ -537,8 +535,6 @@ PressureRelationKernel::
            real64 const & gravCoefNext,
            real64 const & pres,
            real64 const & presNext,
-           real64 const & dPres,
-           real64 const & dPresNext,
            real64 const & totalMassDens,
            real64 const & totalMassDensNext,
            real64 const & dTotalMassDens_dPres,
@@ -567,7 +563,7 @@ PressureRelationKernel::
 
   // TODO: add friction and acceleration terms
 
-  localPresRel = ( presNext + dPresNext  - pres - dPres - avgMassDens * gravD );
+  localPresRel = ( presNext - pres - avgMassDens * gravD );
   localPresRelJacobian[TAG::NEXT *(NC+1)]    = ( 1 - dAvgMassDens_dPresNext * gravD );
   localPresRelJacobian[TAG::CURRENT *(NC+1)] = ( -1 - dAvgMassDens_dPresCurrent * gravD );
 
@@ -592,7 +588,6 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
@@ -693,8 +688,6 @@ PressureRelationKernel::
                      wellElemGravCoef[iwelemNext],
                      wellElemPressure[iwelem],
                      wellElemPressure[iwelemNext],
-                     dWellElemPressure[iwelem],
-                     dWellElemPressure[iwelemNext],
                      wellElemTotalMassDens[iwelem],
                      wellElemTotalMassDens[iwelemNext],
                      dWellElemTotalMassDens_dPres[iwelem],
@@ -745,7 +738,6 @@ PressureRelationKernel::
                   arrayView1d< real64 const > const & wellElemGravCoef, \
                   arrayView1d< localIndex const > const & nextWellElemIndex, \
                   arrayView1d< real64 const > const & wellElemPressure, \
-                  arrayView1d< real64 const > const & dWellElemPressure, \
                   arrayView1d< real64 const > const & wellElemTotalMassDens, \
                   arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres, \
                   arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens, \
@@ -768,7 +760,6 @@ void
 PerforationKernel::
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
-           real64 const & dResPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dResPhaseVolFrac_dComp,
@@ -783,9 +774,7 @@ PerforationKernel::
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dResPhaseRelPerm_dPhaseVolFrac,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPres,
-           real64 const & dWellElemPres,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompDens,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dWellElemCompDens,
            real64 const & wellElemTotalMassDens,
            real64 const & dWellElemTotalMassDens_dPres,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dWellElemTotalMassDens_dCompDens,
@@ -839,7 +828,7 @@ PerforationKernel::
 
   // a) get reservoir variables
 
-  pres[TAG::RES] = resPres + dResPres;
+  pres[TAG::RES] = resPres;
   dPres_dP[TAG::RES] = 1.0;
   multiplier[TAG::RES] = 1.0;
 
@@ -849,7 +838,7 @@ PerforationKernel::
 
   // b) get well variables
 
-  pres[TAG::WELL] = wellElemPres + dWellElemPres;
+  pres[TAG::WELL] = wellElemPres;
   dPres_dP[TAG::WELL] = 1.0;
   multiplier[TAG::WELL] = -1.0;
 
@@ -989,7 +978,7 @@ PerforationKernel::
     real64 wellElemTotalDens = 0;
     for( integer ic = 0; ic < NC; ++ic )
     {
-      wellElemTotalDens += wellElemCompDens[ic] + dWellElemCompDens[ic];
+      wellElemTotalDens += wellElemCompDens[ic];
     }
 
     // first, compute the reservoir total mobility (excluding phase density)
@@ -1087,7 +1076,6 @@ PerforationKernel::
   launch( localIndex const size,
           bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
-          ElementViewConst< arrayView1d< real64 const > > const & dResPres,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
@@ -1102,9 +1090,7 @@ PerforationKernel::
           ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPres,
-          arrayView1d< real64 const > const & dWellElemPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
@@ -1135,7 +1121,6 @@ PerforationKernel::
 
     compute< NC, NP >( disableReservoirToWellFlow,
                        resPres[er][esr][ei],
-                       dResPres[er][esr][ei],
                        resPhaseVolFrac[er][esr][ei],
                        dResPhaseVolFrac_dPres[er][esr][ei],
                        dResPhaseVolFrac_dComp[er][esr][ei],
@@ -1150,9 +1135,7 @@ PerforationKernel::
                        dResPhaseRelPerm_dPhaseVolFrac[er][esr][ei][0],
                        wellElemGravCoef[iwelem],
                        wellElemPres[iwelem],
-                       dWellElemPres[iwelem],
                        wellElemCompDens[iwelem],
-                       dWellElemCompDens[iwelem],
                        wellElemTotalMassDens[iwelem],
                        dWellElemTotalMassDens_dPres[iwelem],
                        dWellElemTotalMassDens_dCompDens[iwelem],
@@ -1173,7 +1156,6 @@ PerforationKernel::
     launch< NC, NP >( localIndex const size, \
                       bool const disableReservoirToWellFlow, \
                       ElementViewConst< arrayView1d< real64 const > > const & resPres, \
-                      ElementViewConst< arrayView1d< real64 const > > const & dResPres, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac, \
                       ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres, \
                       ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp, \
@@ -1188,9 +1170,7 @@ PerforationKernel::
                       ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac, \
                       arrayView1d< real64 const > const & wellElemGravCoef, \
                       arrayView1d< real64 const > const & wellElemPres, \
-                      arrayView1d< real64 const > const & dWellElemPres, \
                       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens, \
-                      arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens, \
                       arrayView1d< real64 const > const & wellElemTotalMassDens, \
                       arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres, \
                       arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens, \

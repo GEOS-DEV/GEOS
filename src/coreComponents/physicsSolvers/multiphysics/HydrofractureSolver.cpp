@@ -212,6 +212,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
         fieldNames["node"].emplace_back( keys::TotalDisplacement );
         fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
+        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressureOld::key() ); // in case there is a time step cut
         fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::getInstance().synchronizeFields( fieldNames,
@@ -751,10 +752,9 @@ HydrofractureSolver::
     arrayView1d< globalIndex const > const &
     pressureDofNumber = subRegion.getReference< array1d< globalIndex > >( presDofKey );
 
-    if( subRegion.hasWrapper( "pressure" ) )
+    if( subRegion.hasWrapper( extrinsicMeshData::flow::pressure::key() ) )
     {
-      arrayView1d< real64 const > const & fluidPressure = subRegion.getReference< array1d< real64 > >( "pressure" );
-      arrayView1d< real64 const > const & deltaFluidPressure = subRegion.getReference< array1d< real64 > >( "deltaPressure" );
+      arrayView1d< real64 const > const & fluidPressure = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
       arrayView1d< real64 const > const & area = subRegion.getElementArea();
       arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
@@ -777,7 +777,7 @@ HydrofractureSolver::
 
         real64 const Ja = area[kfe] / numNodesPerFace;
 
-        real64 nodalForceMag = ( fluidPressure[kfe]+deltaFluidPressure[kfe] ) * Ja;
+        real64 nodalForceMag = fluidPressure[kfe] * Ja;
         real64 nodalForce[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3( Nbar );
         LvArray::tensorOps::scale< 3 >( nodalForce, nodalForceMag );
 

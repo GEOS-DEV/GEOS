@@ -1915,8 +1915,6 @@
 			<xsd:element name="neighborData" type="neighborDataType" />
 			<xsd:element name="sets" type="setsType" />
 		</xsd:choice>
-		<!--deltaFacePressure => Accumulated face pressure updates => CompositionalMultiphaseHybridFVM, SinglePhaseHybridFVM-->
-		<xsd:attribute name="deltaFacePressure" type="real64_array" />
 		<!--domainBoundaryIndicator => (no description available)-->
 		<xsd:attribute name="domainBoundaryIndicator" type="integer_array" />
 		<!--edgeList => (no description available)-->
@@ -1933,6 +1931,8 @@
 		<xsd:attribute name="faceCenter" type="real64_array2d" />
 		<!--faceNormal => (no description available)-->
 		<xsd:attribute name="faceNormal" type="real64_array2d" />
+		<!--facePressureOld => Face pressure at the previous converged time step => CompositionalMultiphaseHybridFVM, SinglePhaseHybridFVM-->
+		<xsd:attribute name="facePressureOld" type="real64_array" />
 		<!--ghostRank => (no description available)-->
 		<xsd:attribute name="ghostRank" type="integer_array" />
 		<!--globalToLocalMap => (no description available)-->

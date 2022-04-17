@@ -122,7 +122,6 @@ public:
     m_dFluidDensity_dPressure( embeddedSurfSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >(
                                                                                                                        fluidModelKey ) ).dDensity_dPressure() ),
     m_matrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
-    m_deltaMatrixPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
     m_oldPorosity( inputConstitutiveType.getOldPorosity() ),
     m_tractionVec( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::traction >() ),
     m_dTraction_dJump( embeddedSurfSubRegion.getExtrinsicData< extrinsicMeshData::contact::dTraction_dJump >() ),
@@ -422,7 +421,7 @@ public:
     LvArray::tensorOps::Ri_add_AijBj< nUdof, 3 >( stack.localDispResidual, stack.localKuw, stack.wLocal );
 
     // add pore pressure contribution
-    LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] + m_deltaMatrixPressure[ k ] );
+    LvArray::tensorOps::scaledAdd< 3 >( stack.localJumpResidual, stack.localKwpm, m_matrixPressure[ k ] );
 
     localIndex const embSurfIndex = m_cellsToEmbeddedSurfaces[k][0];
 
@@ -541,8 +540,6 @@ protected:
   arrayView1d< real64 const > const m_matrixPressure;
 
   /// The rank-global delta-fluid pressure array.
-  arrayView1d< real64 const > const m_deltaMatrixPressure;
-
   arrayView2d< real64 const > const m_oldPorosity;
 
   arrayView2d< real64 const > const m_tractionVec;
@@ -601,7 +598,6 @@ struct StateUpdateKernel
    * @param[in] contactWrapper the wrapper implementing the contact relationship
    * @param[in] dispJump the displacement jump
    * @param[in] pressure the pressure
-   * @param[in] deltaPressure the accumulated pressure updates
    * @param[in] area the area
    * @param[in] volume the volume
    * @param[out] deltaVolume the change in volume
@@ -617,7 +613,6 @@ struct StateUpdateKernel
           POROUS_WRAPPER const & porousMaterialWrapper,
           arrayView2d< real64 const > const & dispJump,
           arrayView1d< real64 const > const & pressure,
-          arrayView1d< real64 const > const & deltaPressure,
           arrayView1d< real64 const > const & area,
           arrayView1d< real64 const > const & volume,
           arrayView1d< real64 > const & deltaVolume,
@@ -640,10 +635,10 @@ struct StateUpdateKernel
 
       real64 const jump[3] = LVARRAY_TENSOROPS_INIT_LOCAL_3 ( dispJump[k] );
 
-      porousMaterialWrapper.updateStateFromPressureApertureAndJump( k, 0, pressure[k], deltaPressure[k], oldHydraulicAperture[k], hydraulicAperture[k], jump );
+      porousMaterialWrapper.updateStateFromPressureApertureAndJump( k, 0, pressure[k], oldHydraulicAperture[k], hydraulicAperture[k], jump );
 
       // traction on the fracture to include the pressure contribution
-      contactWrapper.addPressureToTraction( pressure[k] + deltaPressure[k],
+      contactWrapper.addPressureToTraction( pressure[k],
                                             fractureTraction[k],
                                             dFractureTraction_dPressure[k] );
     } );

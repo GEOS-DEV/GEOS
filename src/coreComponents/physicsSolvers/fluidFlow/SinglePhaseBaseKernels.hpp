@@ -257,14 +257,13 @@ struct FluidUpdateKernel
 {
   template< typename FLUID_WRAPPER >
   static void launch( FLUID_WRAPPER const & fluidWrapper,
-                      arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres )
+                      arrayView1d< real64 const > const & pres )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
-        fluidWrapper.update( k, q, pres[k] + dPres[k] );
+        fluidWrapper.update( k, q, pres[k] );
       }
     } );
   }
@@ -316,7 +315,6 @@ struct SolutionCheckKernel
                             arrayView1d< globalIndex const > const & presDofNumber,
                             arrayView1d< integer const > const & ghostRank,
                             arrayView1d< real64 const > const & pres,
-                            arrayView1d< real64 const > const & dPres,
                             real64 const scalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
@@ -326,7 +324,7 @@ struct SolutionCheckKernel
       if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
       {
         localIndex const lid = presDofNumber[ei] - rankOffset;
-        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
+        real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
         if( newPres < 0.0 )
         {

@@ -262,11 +262,9 @@ struct AssemblerKernelHelper
   /**
    * @brief In a given element, compute the transmissibility-weighted pressure gradients in the cell
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh facesb
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] phaseDens the phase densities in the element
    * @param[in] dPhaseDens the derivatives of the phase densities in the element wrt pressure and component fractions
@@ -284,11 +282,9 @@ struct AssemblerKernelHelper
   GEOSX_HOST_DEVICE
   static void
     applyGradient( arrayView1d< real64 const > const & facePres,
-                   arrayView1d< real64 const > const & dFacePres,
                    arrayView1d< real64 const > const & faceGravCoef,
                    arraySlice1d< localIndex const > const & elemToFaces,
                    real64 const & elemPres,
-                   real64 const & dElemPres,
                    real64 const & elemGravCoef,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & elemPhaseMassDens,
                    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dElemPhaseMassDens,
@@ -493,11 +489,9 @@ struct AssemblerKernel
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank ghost rank of each face
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
@@ -528,12 +522,10 @@ struct AssemblerKernel
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
-           arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimFaceGravCoef,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
-           real64 const & dElemPres,
            real64 const & elemGravCoef,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
@@ -602,11 +594,9 @@ struct FluxKernel
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank  the ghost ranks of the face pressures
    * @param[in] facePres the pressures at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravDepth the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
@@ -638,7 +628,6 @@ struct FluxKernel
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
@@ -940,7 +929,6 @@ struct SolutionCheckKernel
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           real64 const scalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
@@ -951,7 +939,7 @@ struct SolutionCheckKernel
       {
         localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[iface] - rankOffset );
         {
-          real64 const newFacePres = facePres[iface] + dFacePres[iface] + scalingFactor * localSolution[localRow];
+          real64 const newFacePres = facePres[iface] + scalingFactor * localSolution[localRow];
           check.min( newFacePres >= 0.0 );
         }
       }

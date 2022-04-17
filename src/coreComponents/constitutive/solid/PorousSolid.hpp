@@ -58,7 +58,7 @@ public:
                                      localIndex const q,
                                      real64 const & initialFluidPressure,
                                      real64 const & fluidPressureOld,
-                                     real64 const & deltaFluidPressure,
+                                     real64 const & fluidPressure,
                                      real64 const ( &strainIncrement )[6],
                                      real64 const & gravityAcceleration,
                                      real64 const ( &gravityVector )[3],
@@ -81,14 +81,14 @@ public:
     computeTotalStress( k,
                         q,
                         initialFluidPressure,
-                        fluidPressureOld,
-                        deltaFluidPressure,
+                        fluidPressure,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
                         stiffness );
 
     // Compute porosity and its derivatives
+    real64 const deltaFluidPressure = fluidPressure - fluidPressureOld;
     real64 porosity;
     real64 porosityOld;
     real64 porosityInit;
@@ -141,7 +141,7 @@ public:
                                     localIndex const NC,
                                     real64 const & initialFluidPressure,
                                     real64 const & fluidPressureOld,
-                                    real64 const & deltaFluidPressure,
+                                    real64 const & fluidPressure,
                                     real64 const ( &strainIncrement )[6],
                                     real64 const & gravityAcceleration,
                                     real64 const ( &gravityVector )[3],
@@ -179,14 +179,14 @@ public:
     computeTotalStress( k,
                         q,
                         initialFluidPressure,
-                        fluidPressureOld,
-                        deltaFluidPressure,
+                        fluidPressure,
                         strainIncrement,
                         totalStress,
                         dTotalStress_dPressure,
                         stiffness );
 
     // Compute porosity and its derivatives
+    real64 const deltaFluidPressure = fluidPressure - fluidPressureOld;
     real64 porosity;
     real64 porosityOld;
     real64 porosityInit;
@@ -467,8 +467,7 @@ private:
   void computeTotalStress( localIndex const k,
                            localIndex const q,
                            real64 const & initialFluidPressure,
-                           real64 const & fluidPressureOld,
-                           real64 const & deltaFluidPressure,
+                           real64 const & fluidPressure,
                            real64 const ( &strainIncrement )[6],
                            real64 ( & totalStress )[6],
                            real64 ( & dTotalStress_dPressure )[6],
@@ -486,7 +485,7 @@ private:
     real64 const biotCoefficient = m_porosityUpdate.getBiotCoefficient( k );
     real64 const initialBiotCoefficient = biotCoefficient; // temporary
 
-    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * ( fluidPressureOld + deltaFluidPressure ) + initialBiotCoefficient * initialFluidPressure );
+    LvArray::tensorOps::symAddIdentity< 3 >( totalStress, -biotCoefficient * fluidPressure + initialBiotCoefficient * initialFluidPressure );
 
     dTotalStress_dPressure[0] = -biotCoefficient;
     dTotalStress_dPressure[1] = -biotCoefficient;

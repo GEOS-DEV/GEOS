@@ -31,6 +31,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp" // needed to register pressure(Old)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/contact/ContactExtrinsicData.hpp"
@@ -108,9 +109,13 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
 
       // Needed just because SurfaceGenerator initialize the field "pressure" (NEEDED!!!)
       // It is used in "TwoPointFluxApproximation.cpp", called by "SurfaceGenerator.cpp"
-      subRegion.registerWrapper< real64_array >( "pressure" ).
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressure >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressureOld >( getName() ).
+        setPlotLevel( PlotLevel::NOPLOT ).
+        setRegisteringObjects( this->getName());
+
     } );
 
     FaceManager & faceManager = mesh.getFaceManager();

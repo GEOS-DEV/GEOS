@@ -1,5 +1,5 @@
 /*
- * ------------------------------------------------------------------------------------------------------------
+   1;95;0c * ------------------------------------------------------------------------------------------------------------
  * SPDX-License-Identifier: LGPL-2.1-only
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
@@ -27,7 +27,6 @@ using namespace geosx::singlePhaseFVMKernels;
 template< localIndex stencilSize >
 void computeFlux( arraySlice1d< real64 const > const & weight,
                   real64 const * pres,
-                  real64 const * dPres,
                   real64 const * gravCoef,
                   real64 const * mob,
                   real64 const * dMob_dPres,
@@ -50,7 +49,7 @@ void computeFlux( arraySlice1d< real64 const > const & weight,
   real64 sumWeightGrav = 0;
   for( localIndex i = 0; i < stencilSize; ++i )
   {
-    potDif += weight[i] * (pres[i] + dPres[i] - densMean * gravCoef[i]);
+    potDif += weight[i] * (pres[i] - densMean * gravCoef[i]);
     sumWeightGrav += weight[i] * gravCoef[i];
   }
   localIndex const k_up = (potDif >= 0) ? 0 : 1;
@@ -65,7 +64,6 @@ void computeFlux( arraySlice1d< real64 const > const & weight,
 template< bool FULL, localIndex stencilSize >
 void testFluxKernel( CellElementStencilTPFA const & stencil,
                      real64 const * pres,
-                     real64 const * dPres,
                      real64 const * gravCoef,
                      real64 const * mob,
                      real64 const * dMob_dPres,
@@ -81,11 +79,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   CellElementStencilTPFA::WeightContainerViewConstType const & weights = stencil.getWeights();
 
   auto presView        = AccessorHelper< FULL >::template makeElementAccessor< 1 >( pres,
-                                                                                    stencilSize,
-                                                                                    seri[0],
-                                                                                    sesri[0],
-                                                                                    sei[0] );
-  auto dPresView       = AccessorHelper< FULL >::template makeElementAccessor< 1 >( dPres,
                                                                                     stencilSize,
                                                                                     seri[0],
                                                                                     sesri[0],
@@ -134,7 +127,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
                        transmissibility,
                        dTrans_dPres,
                        presView.toNestedViewConst(),
-                       dPresView.toNestedViewConst(),
                        gravCoefView.toNestedViewConst(),
                        densView.toNestedViewConst(),
                        dDens_dPresView.toNestedViewConst(),
@@ -150,7 +142,6 @@ void testFluxKernel( CellElementStencilTPFA const & stencil,
   // compute etalon
   computeFlux( weights[0],
                pres,
-               dPres,
                gravCoef,
                mob,
                dMob_dPres,
@@ -192,10 +183,7 @@ TEST( SinglePhaseFVMKernels, fluxFull )
 
   // we keep these around for easy aggregate initialization
   real64 const presData[NTEST][stencilSize] = {
-    { 1e+6, 2e+6 }, { 2e+6, 2e+6 }, { 2e+6, 2e+6 }
-  };
-  real64 const dPresData[NTEST][stencilSize] = {
-    { 1e+5, 1e+5 }, { 1e+5, 2e+5 }, { 1e+5, 1e+5 }
+    { 1.1e+6, 2.1e+6 }, { 2.1e+6, 2.2e+6 }, { 2.1e+6, 2.1e+6 }
   };
   real64 const gravCoefData[NTEST][stencilSize] = {
     { 1e+3, 5e+2 }, { 1e+3, 1e+3 }, { 0.0, 1e+3 }
@@ -221,7 +209,6 @@ TEST( SinglePhaseFVMKernels, fluxFull )
 
     testFluxKernel< true, 2 >( stencil,
                                presData[i],
-                               dPresData[i],
                                gravCoefData[i],
                                mobData[i],
                                dMob_dPresData[i],

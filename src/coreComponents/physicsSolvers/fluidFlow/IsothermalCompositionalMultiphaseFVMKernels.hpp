@@ -285,7 +285,6 @@ public:
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
                       extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
@@ -364,7 +363,6 @@ protected:
 
   /// Views on pressure
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
-  ElementViewConst< arrayView1d< real64 const > > const m_dPres;
 
   /// Views on derivatives of phase volume fractions and comp fractions
   ElementViewConst< arrayView3d< real64 const, compflow::USD_COMP_DC > > const m_dCompFrac_dCompDens;
@@ -680,9 +678,9 @@ public:
           }
         }
 
-        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] + m_dPres[er][esr][ei] - capPressure);
+        presGrad += stack.transmissibility[0][i] * (m_pres[er][esr][ei] - capPressure);
         dPresGrad_dP[i] += stack.transmissibility[0][i] * (1 - dCapPressure_dP)
-                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] + m_dPres[er][esr][ei] - capPressure);
+                           + stack.dTrans_dPres[0][i] * (m_pres[er][esr][ei] - capPressure);
         for( integer jc = 0; jc < numComp; ++jc )
         {
           dPresGrad_dC[i][jc] += -stack.transmissibility[0][i] * dCapPressure_dC[jc];
@@ -1136,7 +1134,7 @@ struct AquiferBCKernel
   using CompFlowAccessors =
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
+                      extrinsicMeshData::flow::pressureOld,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::phaseVolumeFraction,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
@@ -1185,7 +1183,7 @@ struct AquiferBCKernel
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & dPres,
+          ElementViewConst< arrayView1d< real64 const > > const & presOld,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,

@@ -101,9 +101,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
                                                                              CellElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< proppantConcentration >( getName() );
-      subRegion.registerExtrinsicData< deltaProppantConcentration >( getName() );
+      subRegion.registerExtrinsicData< proppantConcentrationOld >( getName() );
       subRegion.registerExtrinsicData< componentConcentration >( getName() );
-      subRegion.registerExtrinsicData< deltaComponentConcentration >( getName() );
+      subRegion.registerExtrinsicData< componentConcentrationOld >( getName() );
       subRegion.registerExtrinsicData< bcComponentConcentration >( getName() );
       subRegion.registerExtrinsicData< cellBasedFlux >( getName() ).
         reference().resizeDimension< 1 >( 3 );
@@ -116,9 +116,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
                                                                                           FaceElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< proppantConcentration >( getName() );
-      subRegion.registerExtrinsicData< deltaProppantConcentration >( getName() );
+      subRegion.registerExtrinsicData< proppantConcentrationOld >( getName() );
       subRegion.registerExtrinsicData< componentConcentration >( getName() );
-      subRegion.registerExtrinsicData< deltaComponentConcentration >( getName() );
+      subRegion.registerExtrinsicData< componentConcentrationOld >( getName() );
       subRegion.registerExtrinsicData< bcComponentConcentration >( getName() );
       subRegion.registerExtrinsicData< oldComponentDensity >( getName() );
       subRegion.registerExtrinsicData< cellBasedFlux >( getName() ).
@@ -188,7 +188,7 @@ void ProppantTransport::initializePreSubGroups()
 
       {
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >().resizeDimension< 1 >( m_numComponents );
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >().resizeDimension< 1 >( m_numComponents );
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >().resizeDimension< 1 >( m_numComponents );
       } );
     }
   } );
@@ -202,7 +202,7 @@ void ProppantTransport::resizeFractureFields( MeshLevel & mesh, arrayView1d< str
                                                                                           FaceElementSubRegion & subRegion )
     {
       subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >().resizeDimension< 1 >( m_numComponents );
-      subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >().resizeDimension< 1 >( m_numComponents );
+      subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >().resizeDimension< 1 >( m_numComponents );
       subRegion.getExtrinsicData< extrinsicMeshData::proppant::oldComponentDensity >().resizeDimension< 1 >( m_numComponents );
       subRegion.getExtrinsicData< extrinsicMeshData::proppant::bcComponentConcentration >().resizeDimension< 1 >( m_numComponents );
     } );
@@ -214,10 +214,8 @@ void ProppantTransport::updateFluidModel( ObjectManagerBase & dataGroup )
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres  = dataGroup.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-  arrayView1d< real64 const > const dPres = dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
   arrayView2d< real64 const > const componentConc  = dataGroup.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
-  arrayView2d< real64 const > const dComponentConc = dataGroup.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >();
 
   SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
@@ -226,9 +224,7 @@ void ProppantTransport::updateFluidModel( ObjectManagerBase & dataGroup )
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     FluidUpdateKernel::launch( fluidWrapper,
                                pres,
-                               dPres,
-                               componentConc,
-                               dComponentConc );
+                               componentConc );
   } );
 }
 
@@ -237,10 +233,8 @@ void ProppantTransport::updateComponentDensity( ObjectManagerBase & dataGroup )
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const pres  = dataGroup.getExtrinsicData< extrinsicMeshData::flow::pressure >();
-  arrayView1d< real64 const > const dPres = dataGroup.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
 
   arrayView2d< real64 const > const componentConc  = dataGroup.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
-  arrayView2d< real64 const > const dComponentConc = dataGroup.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >();
 
   SlurryFluidBase & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
@@ -249,9 +243,7 @@ void ProppantTransport::updateComponentDensity( ObjectManagerBase & dataGroup )
     typename TYPEOFREF( castedFluid ) ::KernelWrapper fluidWrapper = castedFluid.createKernelWrapper();
     ComponentDensityUpdateKernel::launch( fluidWrapper,
                                           pres,
-                                          dPres,
-                                          componentConc,
-                                          dComponentConc );
+                                          componentConc );
   } );
 }
 
@@ -261,7 +253,6 @@ void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
   GEOSX_MARK_FUNCTION;
 
   arrayView1d< real64 const > const proppantConc  = dataGroup.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-  arrayView1d< real64 const > const dProppantConc = dataGroup.getExtrinsicData< extrinsicMeshData::proppant::deltaProppantConcentration >();
 
   SlurryFluidBase const & fluid = getConstitutiveModel< SlurryFluidBase >( dataGroup, dataGroup.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
@@ -279,7 +270,6 @@ void ProppantTransport::updateProppantModel( ObjectManagerBase & dataGroup )
     typename TYPEOFREF( castedProppant ) ::KernelWrapper proppantWrapper = castedProppant.createKernelWrapper();
     ProppantUpdateKernel::launch( proppantWrapper,
                                   proppantConc,
-                                  dProppantConc,
                                   fluidDens,
                                   dFluidDens_dPres,
                                   dFluidDens_dCompConc,
@@ -450,12 +440,7 @@ void ProppantTransport::postStepUpdate( real64 const & time_n,
 
 void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time_n ),
                                            real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                           DomainPartition & GEOSX_UNUSED_PARAM( domain ) )
-{}
-
-void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
-                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
-                                              DomainPartition & domain )
+                                           DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -469,29 +454,46 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
                                                                   ElementSubRegionBase & subRegion )
     {
 
-      arrayView1d< real64 > const proppantConc =
+      arrayView1d< real64 const > const proppantConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-      arrayView1d< real64 const > const dProppantConc =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaProppantConcentration >();
+      arrayView1d< real64 > const proppantConcOld =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
 
-      arrayView2d< real64 > const componentConc =
+      arrayView2d< real64 const > const componentConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
-      arrayView2d< real64 const > const dComponentConc =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >();
-
-      arrayView1d< real64 > const proppantLiftFlux =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantLiftFlux >();
+      arrayView2d< real64 > const componentConcOld =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >();
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-        proppantConc[ei] += dProppantConc[ei];
-        proppantLiftFlux[ei] = 0.0;
+        proppantConcOld[ei] = proppantConc[ei];
 
-        for( localIndex c = 0; c < numComponents; ++c )
+        for( integer c = 0; c < numComponents; ++c )
         {
-          componentConc[ei][c] += dComponentConc[ei][c];
+          componentConcOld[ei][c] = componentConc[ei][c];
         }
       } );
+    } );
+  } );
+}
+
+void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                              real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                              DomainPartition & domain )
+{
+  GEOSX_MARK_FUNCTION;
+
+  forMeshTargets( domain.getMeshBodies(), [&]( string const &,
+                                               MeshLevel & mesh,
+                                               arrayView1d< string const > const & regionNames )
+  {
+    mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
+                                                                  ElementSubRegionBase & subRegion )
+    {
+
+      arrayView1d< real64 > const proppantLiftFlux =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantLiftFlux >();
+      proppantLiftFlux.zero();
     } );
   } );
 }
@@ -559,8 +561,8 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::oldComponentDensity >();
       arrayView1d< real64 const > const proppantConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-      arrayView1d< real64 const > const dProppantConc =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaProppantConcentration >();
+      arrayView1d< real64 const > const proppantConcOld =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
       arrayView1d< real64 const > const proppantPackVolFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantPackVolumeFraction >();
       arrayView1d< real64 const > const proppantLiftFlux =
@@ -579,8 +581,8 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
                                   dofManager.rankOffset(),
                                   dofNumber,
                                   elemGhostRank,
+                                  proppantConcOld,
                                   proppantConc,
-                                  dProppantConc,
                                   componentDensOld,
                                   componentDens,
                                   dCompDens_dPres,
@@ -643,9 +645,7 @@ void ProppantTransport::assembleFluxTerms( real64 const GEOSX_UNUSED_PARAM( time
                           dofNumberAccessor.toNestedViewConst(),
                           flowAccessors.get< extrinsicMeshData::ghostRank >(),
                           flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                          flowAccessors.get< extrinsicMeshData::flow::deltaPressure >(),
                           flowAccessors.get< extrinsicMeshData::proppant::proppantConcentration >(),
-                          flowAccessors.get< extrinsicMeshData::proppant::deltaProppantConcentration >(),
                           slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::componentDensity >(),
                           slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dComponentDensity_dPressure >(),
                           slurryFluidAccessors.get< extrinsicMeshData::slurryfluid::dComponentDensity_dComponentConcentration >(),
@@ -712,9 +712,6 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
       arrayView1d< real64 const > const
       proppantConc = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::proppant::proppantConcentration::key() );
 
-      arrayView1d< real64 const > const
-      dProppantConc = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::proppant::deltaProppantConcentration::key() );
-
       fs.applyBoundaryConditionToSystem< FieldSpecificationEqual,
                                          parallelDevicePolicy<> >( lset,
                                                                    time_n + dt,
@@ -725,7 +722,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                                    localRhs,
                                                                    [=] GEOSX_HOST_DEVICE ( localIndex const a )
       {
-        return proppantConc[a] + dProppantConc[a];
+        return proppantConc[a];
       } );
     } );
 
@@ -810,8 +807,6 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
 
         arrayView2d< real64 const > const compConc =
           subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::componentConcentration::key() );
-        arrayView2d< real64 const > const deltaCompConc =
-          subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::deltaComponentConcentration::key() );
         arrayView2d< real64 const > const bcCompConc =
           subRegion.getReference< array2d< real64 > >( extrinsicMeshData::proppant::bcComponentConcentration::key() );
 
@@ -832,7 +827,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                         localMatrix,
                                                         rhsValue,
                                                         bcCompConc[ei][ic],
-                                                        compConc[ei][ic] + deltaCompConc[ei][ic] );
+                                                        compConc[ei][ic] );
             localRhs[localRow + ic + 1] = rhsValue;
           }
         } );
@@ -898,7 +893,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
 {
   dofManager.addVectorToField( localSolution,
                                extrinsicMeshData::proppant::proppantConcentration::key(),
-                               extrinsicMeshData::proppant::deltaProppantConcentration::key(),
+                               extrinsicMeshData::proppant::proppantConcentration::key(),
                                scalingFactor,
                                { m_numDofPerCell, 0, 1 } );
 
@@ -907,14 +902,14 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
   {
     dofManager.addVectorToField( localSolution,
                                  extrinsicMeshData::proppant::proppantConcentration::key(),
-                                 extrinsicMeshData::proppant::deltaComponentConcentration::key(),
+                                 extrinsicMeshData::proppant::componentConcentration::key(),
                                  scalingFactor,
                                  { m_numDofPerCell, 1, m_numDofPerCell } );
   }
 
   std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::deltaProppantConcentration::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::deltaComponentConcentration::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantConcentration::key() );
+  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::componentConcentration::key() );
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
@@ -960,16 +955,21 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase & subRegion )
     {
-      arrayView1d< real64 > const & dProppantConc =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaProppantConcentration >();
-      arrayView2d< real64 > const & dComponentConc =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::deltaComponentConcentration >();
+      arrayView1d< real64 > const & proppantConc =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
+      arrayView1d< real64 const > const & proppantConcOld =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
+      arrayView2d< real64 > const & componentConc =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
+      arrayView2d< real64 const > const & componentConcOld =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >();
+
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
-        dProppantConc[ei] = 0.0;
+        proppantConc[ei] = proppantConcOld[ei];
         for( localIndex c = 0; c < numComponents; ++c )
         {
-          dComponentConc[ei][c] = 0.0;
+          componentConc[ei][c] = componentConcOld[ei][c];
         }
       } );
 

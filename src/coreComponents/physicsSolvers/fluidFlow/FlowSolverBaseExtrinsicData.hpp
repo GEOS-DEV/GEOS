@@ -40,6 +40,14 @@ EXTRINSIC_MESH_DATA_TRAIT( pressure,
                            WRITE_AND_READ,
                            "Pressure" );
 
+EXTRINSIC_MESH_DATA_TRAIT( pressureOld,
+                           "pressureOld",
+                           array1d< real64 >,
+                           0,
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Pressure at the previous converged time step" );
+
 EXTRINSIC_MESH_DATA_TRAIT( initialPressure,
                            "initialPressure",
                            array1d< real64 >,
@@ -47,14 +55,6 @@ EXTRINSIC_MESH_DATA_TRAIT( initialPressure,
                            NOPLOT,
                            WRITE_AND_READ,
                            "Initial pressure" );
-
-EXTRINSIC_MESH_DATA_TRAIT( deltaPressure,
-                           "deltaPressure",
-                           array1d< real64 >,
-                           0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated pressure updates" );
 
 EXTRINSIC_MESH_DATA_TRAIT( facePressure,
                            "facePressure",
@@ -64,13 +64,13 @@ EXTRINSIC_MESH_DATA_TRAIT( facePressure,
                            WRITE_AND_READ,
                            "Face pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaFacePressure,
-                           "deltaFacePressure",
+EXTRINSIC_MESH_DATA_TRAIT( facePressureOld,
+                           "facePressureOld",
                            array1d< real64 >,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Accumulated face pressure updates" );
+                           "Face pressure at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( deltaVolume,
                            "deltaVolume",

@@ -47,13 +47,13 @@ EXTRINSIC_MESH_DATA_TRAIT( temperature,
                            WRITE_AND_READ,
                            "Temperature" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaTemperature,
-                           "deltaTemperature",
+EXTRINSIC_MESH_DATA_TRAIT( temperatureOld,
+                           "temperatureOld",
                            array1d< real64 >,
                            0,
-                           NOPLOT,
-                           NO_WRITE,
-                           "Accumulated temperature updates" );
+                           LEVEL_0,
+                           WRITE_AND_READ,
+                           "Temperature at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            "globalCompDensity",
@@ -63,13 +63,13 @@ EXTRINSIC_MESH_DATA_TRAIT( globalCompDensity,
                            WRITE_AND_READ,
                            "Global component density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaGlobalCompDensity,
-                           "deltaGlobalCompDensity",
+EXTRINSIC_MESH_DATA_TRAIT( globalCompDensityOld,
+                           "globalCompDensityOld",
                            array2dLayoutComp,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Accumulated global component density updates" );
+                           "Global component density updates at the previous converged time step " );
 
 EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction,
                            "globalCompFraction",

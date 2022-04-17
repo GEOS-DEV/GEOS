@@ -470,45 +470,6 @@ struct FluidUpdateKernel
 
   template< typename POLICY, typename FLUID_WRAPPER >
   static void
-  launch( localIndex const size,
-          FLUID_WRAPPER const & fluidWrapper,
-          arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
-          arrayView1d< real64 const > const & temp,
-          arrayView1d< real64 const > const & dTemp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
-    {
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k] + dPres[k], temp[k] + dTemp[k], compFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
-  launch( SortedArrayView< localIndex const > const & targetSet,
-          FLUID_WRAPPER const & fluidWrapper,
-          arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
-          arrayView1d< real64 const > const & temp,
-          arrayView1d< real64 const > const & dTemp,
-          arrayView2d< real64 const, compflow::USD_COMP > const & compFrac )
-  {
-    forAll< POLICY >( targetSet.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
-    {
-      localIndex const k = targetSet[a];
-      for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
-      {
-        fluidWrapper.update( k, q, pres[k] + dPres[k], temp[k] + dTemp[k], compFrac[k] );
-      }
-    } );
-  }
-
-  template< typename POLICY, typename FLUID_WRAPPER >
-  static void
   launch( SortedArrayView< localIndex const > const & targetSet,
           FLUID_WRAPPER const & fluidWrapper,
           arrayView1d< real64 const > const & pres,
@@ -535,12 +496,11 @@ struct SolidInternalEnergyUpdateKernel
   static void
   launch( localIndex const size,
           SOLID_INTERNAL_ENERGY_WRAPPER const & solidInternalEnergyWrapper,
-          arrayView1d< real64 const > const & temp,
-          arrayView1d< real64 const > const & dTemp )
+          arrayView1d< real64 const > const & temp )
   {
     forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const k )
     {
-      solidInternalEnergyWrapper.update( k, temp[k] + dTemp[k] );
+      solidInternalEnergyWrapper.update( k, temp[k] );
     } );
   }
 };
@@ -601,64 +561,6 @@ struct ResidualNormKernel
   }
 
 };
-
-
-/******************************** Kernel launch machinery ********************************/
-
-// TODO: remove, move, avoid duplication
-
-namespace internal
-{
-
-template< typename T, typename LAMBDA >
-void KernelLaunchSelectorCompSwitch( T value, LAMBDA && lambda )
-{
-  static_assert( std::is_integral< T >::value, "KernelLaunchSelectorCompSwitch: type should be integral" );
-
-  switch( value )
-  {
-    case 1:
-    { lambda( std::integral_constant< T, 1 >() ); return; }
-    case 2:
-    { lambda( std::integral_constant< T, 2 >() ); return; }
-    case 3:
-    { lambda( std::integral_constant< T, 3 >() ); return; }
-    case 4:
-    { lambda( std::integral_constant< T, 4 >() ); return; }
-    case 5:
-    { lambda( std::integral_constant< T, 5 >() ); return; }
-    default:
-    { GEOSX_ERROR( "Unsupported number of components: " << value ); }
-  }
-}
-
-} // namespace helpers
-
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector1( localIndex const numComp, ARGS && ... args )
-{
-  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    KERNELWRAPPER::template launch< NC() >( std::forward< ARGS >( args )... );
-  } );
-}
-
-template< typename KERNELWRAPPER, typename ... ARGS >
-void KernelLaunchSelector2( localIndex const numComp, localIndex const numPhase, ARGS && ... args )
-{
-  internal::KernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
-  {
-    switch( numPhase )
-    {
-      case 2:
-        { KERNELWRAPPER::template launch< NC(), 2 >( std::forward< ARGS >( args )... ); return; }
-      case 3:
-        { KERNELWRAPPER::template launch< NC(), 3 >( std::forward< ARGS >( args )... ); return; }
-      default:
-        { GEOSX_ERROR( "Unsupported number of phases: " << numPhase ); }
-    }
-  } );
-}
 
 } // namespace thermalCompositionalMultiphaseBaseKernels
 

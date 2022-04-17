@@ -448,8 +448,6 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
@@ -460,7 +458,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
           real64 prevTotalDens = 0;
           for( localIndex ic = 0; ic < NC; ++ic )
           {
-            prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
+            prevTotalDens += compDens[ei][ic];
           }
 
           // compute the change in component densities and component fractions
@@ -518,11 +516,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
       arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-      arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
         isothermalCompositionalMultiphaseBaseKernels::
@@ -532,9 +527,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
                                                                  dofNumber,
                                                                  elemGhostRank,
                                                                  pres,
-                                                                 dPres,
                                                                  compDens,
-                                                                 dCompDens,
                                                                  m_allowCompDensChopping,
                                                                  scalingFactor );
 
@@ -557,13 +550,13 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::deltaPressure::key(),
+                               extrinsicMeshData::flow::pressure::key(),
                                scalingFactor,
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
+                               extrinsicMeshData::flow::globalCompDensity::key(),
                                scalingFactor,
                                componentMask );
 
@@ -572,7 +565,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::deltaTemperature::key(),
+                                 extrinsicMeshData::flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -589,12 +582,12 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                arrayView1d< string const > const & )
   {
     std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
+    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
+    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::globalCompDensity::key() );
 
     if( m_isThermal )
     {
-      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
+      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::temperature::key() );
     }
 
     CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
@@ -711,7 +704,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         aquiferWaterPhaseCompFrac,
                                                                         compFlowAccessors.get( extrinsicMeshData::ghostRank{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::pressureOld{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
