@@ -32,7 +32,9 @@ static_assert( std::is_same< idx_t, int64_t >::value, "PetMETIS must be built wi
 
 array1d< int64_t >
 partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
-              MPI_Comm comm )
+              MPI_Comm comm,
+              int const minCommonNodes,
+              int const numRefinements )
 {
   int const numProcs = MpiWrapper::commSize( comm );
   idx_t const numElems = elemToNodes.size();
@@ -41,7 +43,7 @@ partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
   if( numProcs > 1 )
   {
     // Compute `elemdist` parameter (element range owned by each rank)
-    array1d< idx_t > elemCounts( numProcs + 1 );
+    array1d< idx_t > elemCounts;
     MpiWrapper::allGather( numElems, elemCounts, comm );
     array1d< idx_t > elemDist( numProcs + 1 );
     std::partial_sum( elemCounts.begin(), elemCounts.end(), elemDist.begin() + 1 );
@@ -50,23 +52,52 @@ partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
     array1d< real_t > tpwgts( numProcs );
     tpwgts.setValues< serialPolicy >( static_cast< real_t >( 1.0 / numProcs ) );
 
-    // Prepare other ParMETIS parameters
+    // Set other ParMETIS parameters
     idx_t wgtflag = 0;
     idx_t numflag = 0;
     idx_t ncon = 1;
-    idx_t ncommonnodes = 3; // enforce face connectivity
+    idx_t ncommonnodes = minCommonNodes;
     idx_t npart = numProcs;
-    idx_t options[3] = { 1, 0, 2022 };
+    idx_t options[4] = { 1, 0, 2022, PARMETIS_PSR_UNCOUPLED };
     idx_t edgecut = 0;
     real_t ubvec = 1.05;
 
+    auto const checkReturnValue = []( int const r, char const * func )
+    {
+      GEOSX_ERROR_IF_NE_MSG( r, METIS_OK, GEOSX_FMT( "ParMETIS call '{}' returned an error code: {}", func, r ) );
+    };
+
+    idx_t * xadj;
+    idx_t * adjncy;
+    {
+      int const res = ParMETIS_V3_Mesh2Dual( elemDist.data(),
+                                             const_cast< idx_t * >( elemToNodes.getOffsets() ),
+                                             const_cast< idx_t * >( elemToNodes.getValues() ),
+                                             &numflag, &ncommonnodes,
+                                             &xadj, &adjncy, &comm );
+      checkReturnValue( res, "Mesh2Dual" );
+    }
+
     // Call ParMETIS
-    int const res = ParMETIS_V3_PartMeshKway( elemDist.data(),
-                                              const_cast< idx_t * >( elemToNodes.getOffsets() ),
-                                              const_cast< idx_t * >( elemToNodes.getValues() ),
-                                              nullptr, &wgtflag, &numflag, &ncon, &ncommonnodes, &npart,
-                                              tpwgts.data(), &ubvec, options, &edgecut, part.data(), &comm );
-    GEOSX_ERROR_IF_NE_MSG( res, METIS_OK, "ParMETIS call returned an error: " << res );
+    {
+      int const res = ParMETIS_V3_PartKway( elemDist.data(), xadj, adjncy,
+                                            nullptr, nullptr, &wgtflag,
+                                            &numflag, &ncon, &npart, tpwgts.data(),
+                                            &ubvec, options, &edgecut, part.data(), &comm );
+      checkReturnValue( res, "PartKway" );
+    }
+
+    for( int iter = 0; iter < numRefinements; ++iter )
+    {
+      int const res = ParMETIS_V3_RefineKway( elemDist.data(), xadj, adjncy,
+                                              nullptr, nullptr, &wgtflag,
+                                              &numflag, &ncon, &npart, tpwgts.data(),
+                                              &ubvec, options, &edgecut, part.data(), &comm );
+      checkReturnValue( res, "RefineKway" );
+    }
+
+    METIS_Free( xadj );
+    METIS_Free( adjncy );
   }
 
   return part;

@@ -35,7 +35,9 @@ namespace parmetis
  */
 array1d< int64_t >
 partMeshKway( ArrayOfArraysView< int64_t const, int64_t > const & elemToNodes,
-              MPI_Comm comm );
+              MPI_Comm comm,
+              int minCommonNodes,
+              int numRefinements );
 
 } // namespace parmetis
 } // namespace geosx

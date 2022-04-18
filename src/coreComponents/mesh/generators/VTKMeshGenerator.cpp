@@ -71,6 +71,11 @@ VTKMeshGenerator::VTKMeshGenerator( string const & name,
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 1 ).
     setDescription( "Whether to use graph partitioning to improve parallel mesh distribution" );
+
+  registerWrapper( viewKeyStruct::numPartitionRefinementIterString(), &m_numPartitionRefinementIter ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Number of graph partitioning refinement iterations" );
 }
 
 namespace vtk
@@ -264,16 +269,31 @@ splitMeshByPartition( vtkUnstructuredGrid & grid,
 }
 
 vtkSmartPointer< vtkUnstructuredGrid >
-redistributeByCellGraph( vtkUnstructuredGrid & mesh )
+redistributeByCellGraph( vtkUnstructuredGrid & mesh,
+                         MPI_Comm const comm,
+                         int const numRefinements,
+                         std::set< int > & mpiNeighbors )
 {
   // Use int64_t here to match ParMETIS' idx_t
   ArrayOfArrays< int64_t, int64_t > const elemToNodes = buildElemToNodes< int64_t >( mesh );
 
-  int64_t const numParts = MpiWrapper::commSize( MPI_COMM_GEOSX );
-  array1d< int64_t > const newPartitions = parmetis::partMeshKway( elemToNodes.toViewConst(), MPI_COMM_GEOSX );
+  int64_t const numProcs = MpiWrapper::commSize( comm );
+  array1d< int64_t > const newPartitions = parmetis::partMeshKway( elemToNodes.toViewConst(),
+                                                                   comm,
+                                                                   3, numRefinements );
   vtkSmartPointer< vtkPartitionedDataSet > splitMesh = splitMeshByPartition( mesh,
-                                                                             numParts,
+                                                                             numProcs,
                                                                              newPartitions.toViewConst() );
+
+  // Any rank can become a neighbor after graph re-partitioning
+  int const myRank = MpiWrapper::commRank( comm );
+  for( int i = 0; i < numProcs; ++i )
+  {
+    if( i != myRank )
+    {
+      mpiNeighbors.insert( i );
+    }
+  }
 
   return vtk::redistribute( *splitMesh, MPI_COMM_GEOSX );
 }
@@ -322,7 +342,9 @@ void computeMPINeighborRanks( std::vector< vtkBoundingBox > cuts,
  */
 vtkSmartPointer< vtkUnstructuredGrid >
 redistributeMesh( vtkUnstructuredGrid & loadedMesh,
+                  MPI_Comm const comm,
                   bool const useGraphPartitioning,
+                  int const numRefinements,
                   std::set< int > & mpiNeighbors )
 {
   GEOSX_MARK_FUNCTION;
@@ -332,7 +354,8 @@ redistributeMesh( vtkUnstructuredGrid & loadedMesh,
   generator->SetInputDataObject( &loadedMesh );
   generator->Update();
 
-  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells() );
+  // Determine if redistribution is required
+  vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells(), comm );
   if( minCellsOnAnyRank > 0 )
   {
     // We read a properly pre-partitioned mesh, so there should be nothing to do
@@ -350,10 +373,10 @@ redistributeMesh( vtkUnstructuredGrid & loadedMesh,
     vtkUnstructuredGrid::SafeDownCast( rdsf->GetOutputDataObject( 0 ) );
 
   // Redistribute the mesh again using higher-quality graph partitioner
-  // TODO: how to update neighbor rank list after graph partitioning?
-  //       using VTK to generate ghost cells involves all-to-all exhanges
-  //       and is just as expensive as simply including all ranks in the list
-  return useGraphPartitioning ? redistributeByCellGraph( *distMesh ) : distMesh;
+  vtkSmartPointer< vtkUnstructuredGrid > redistMesh =
+    useGraphPartitioning ? redistributeByCellGraph( *distMesh, comm, numRefinements, mpiNeighbors ) : distMesh;
+
+  return redistMesh;
 }
 
 /**
@@ -1075,7 +1098,11 @@ void VTKMeshGenerator::generateMesh( DomainPartition & domain )
     GEOSX_LOG_LEVEL_RANK_0( 2, "  reading the dataset..." );
     vtkSmartPointer< vtkUnstructuredGrid > loadedMesh = vtk::loadMesh( m_filePath );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  redistributing mesh..." );
-    m_vtkMesh = vtk::redistributeMesh( *loadedMesh, m_useGraphPartitioning, domain.getMetisNeighborList() );
+    m_vtkMesh = vtk::redistributeMesh( *loadedMesh,
+                                       MPI_COMM_GEOSX,
+                                       m_useGraphPartitioning,
+                                       m_numPartitionRefinementIter,
+                                       domain.getMetisNeighborList() );
     GEOSX_LOG_LEVEL_RANK_0( 2, "  done!" );
   }
 

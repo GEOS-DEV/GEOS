@@ -18,14 +18,8 @@
 
 #include "VTKMeshGeneratorTools.hpp"
 
-#include "LvArray/src/Array.hpp"
-#include "LvArray/src/ArrayOfArraysView.hpp"
-#include "LvArray/src/ChaiBuffer.hpp"
-
 #include <vtkAppendFilter.h>
 #include <vtkDIYUtilities.h>
-
-#include <parmetis.h>
 
 // NOTE: do NOT include anything from GEOSX here.
 // See full explanation in VTKMeshGeneratorTools.hpp.
