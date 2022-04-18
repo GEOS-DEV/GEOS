@@ -1746,6 +1746,8 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
                                                 arrayView1d< string const > const & regionNames )
   {
 
+    backupFields( mesh, regionNames );
+
     ElementRegionManager & elemManager = mesh.getElemManager();
 
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames,

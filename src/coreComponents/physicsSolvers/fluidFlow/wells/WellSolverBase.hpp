@@ -233,12 +233,6 @@ public:
   virtual void updateSubRegionState( MeshLevel const & meshLevel,
                                      WellElementSubRegion & subRegion ) = 0;
 
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh reference to the mesh
-   */
-  virtual void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const = 0;
-
   struct viewKeyStruct : SolverBase::viewKeyStruct
   {
     static constexpr char const * fluidNamesString() { return "fluidNames"; }

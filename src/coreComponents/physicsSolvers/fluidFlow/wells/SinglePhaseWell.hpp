@@ -212,12 +212,6 @@ public:
                                           CRSMatrixView< real64, globalIndex const > const & localMatrix,
                                           arrayView1d< real64 > const & localRhs ) override;
 
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh reference to the mesh
-   */
-  void backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const override;
-
   struct viewKeyStruct : WellSolverBase::viewKeyStruct
   {
     static constexpr char const * dofFieldString() { return "singlePhaseWellVars"; }

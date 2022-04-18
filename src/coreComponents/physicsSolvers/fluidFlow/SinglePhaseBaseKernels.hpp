@@ -20,9 +20,12 @@
 #define GEOSX_PHYSICSSOLVERS_FLUIDFLOW_SINGLEPHASEBASEKERNELS_HPP
 
 #include "common/DataTypes.hpp"
-#include "finiteVolume/FluxApproximationBase.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "constitutive/fluid/SingleFluidBase.hpp"
+#include "constitutive/solid/CoupledSolidBase.hpp"
+#include "finiteVolume/FluxApproximationBase.hpp"
 #include "linearAlgebra/interfaces/InterfaceTypes.hpp"
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
 
 namespace geosx
 {
@@ -129,127 +132,352 @@ struct MobilityKernel
   }
 };
 
-/******************************** AccumulationKernel ********************************/
-struct AccumulationKernel
+/******************************** ElementBasedAssemblyKernel ********************************/
+
+/**
+ * @brief Internal struct to provide no-op defaults used in the inclusion
+ *   of lambda functions into kernel component functions.
+ * @struct NoOpFunc
+ */
+struct NoOpFunc
 {
+  template< typename ... Ts >
   GEOSX_HOST_DEVICE
-  GEOSX_FORCE_INLINE
-  static void
-  compute( real64 const & densNew,
-           real64 const & densOld,
-           real64 const & dDens_dPres,
-           real64 const & poreVolNew,
-           real64 const & poreVolOld,
-           real64 const & dPoreVol_dPres,
-           real64 & localAccum,
-           real64 & localAccumJacobian )
+  constexpr void
+  operator()( Ts && ... ) const {}
+};
+
+/**
+ * @class ElementBasedAssemblyKernel
+ * @brief Define the interface for the assembly kernel in charge of accumulation
+ */
+template< typename SUBREGION_TYPE >
+class ElementBasedAssemblyKernel
+{
+
+public:
+
+  /**
+   * @brief Constructor
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  ElementBasedAssemblyKernel( globalIndex const rankOffset,
+                              string const dofKey,
+                              SUBREGION_TYPE const & subRegion,
+                              constitutive::SingleFluidBase const & fluid,
+                              constitutive::CoupledSolidBase const & solid,
+                              CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                              arrayView1d< real64 > const & localRhs )
+    :
+    m_rankOffset( rankOffset ),
+    m_dofNumber( subRegion.template getReference< array1d< globalIndex > >( dofKey ) ),
+    m_elemGhostRank( subRegion.ghostRank() ),
+    m_volume( subRegion.getElementVolume() ),
+    m_deltaVolume( subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >() ),
+    m_porosityOld( solid.getOldPorosity() ),
+    m_porosityNew( solid.getPorosity() ),
+    m_dPoro_dPres( solid.getDporosity_dPressure() ),
+    m_densityOld( fluid.densityOld() ),
+    m_density( fluid.density() ),
+    m_dDensity_dPres( fluid.dDensity_dPressure() ),
+    m_localMatrix( localMatrix ),
+    m_localRhs( localRhs )
+  {}
+
+  /**
+   * @struct StackVariables
+   * @brief Kernel variables (dof numbers, jacobian and residual) located on the stack
+   */
+  struct StackVariables
+  {
+public:
+
+    // Pore volume information
+
+    /// Pore volume at time n+1
+    real64 poreVolumeNew = 0.0;
+
+    /// Pore volume at the previous converged time step
+    real64 poreVolumeOld = 0.0;
+
+    /// Derivative of pore volume with respect to pressure
+    real64 dPoreVolume_dPres = 0.0;
+
+    // Residual information
+
+    /// Index of the matrix row/column corresponding to the dof in this element
+    globalIndex dofNumber;
+
+    /// Storage for the element local residual vector
+    real64 localResidual;
+
+    /// Storage for the element local Jacobian matrix
+    real64 localJacobian;
+
+  };
+
+  /**
+   * @brief Getter for the ghost rank of an element
+   * @param[in] ei the element index
+   * @return the ghost rank of the element
+   */
+  GEOSX_HOST_DEVICE
+  integer elemGhostRank( localIndex const ei ) const
+  { return m_elemGhostRank( ei ); }
+
+
+  /**
+   * @brief Performs the setup phase for the kernel.
+   * @param[in] ei the element index
+   * @param[in] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void setup( localIndex const ei,
+              StackVariables & stack ) const
+  {
+    // initialize the pore volume
+    stack.poreVolumeNew = ( m_volume[ei] + m_deltaVolume[ei] ) * m_porosityNew[ei][0];
+    stack.poreVolumeOld = m_volume[ei] * m_porosityOld[ei][0];
+    stack.dPoreVolume_dPres = ( m_volume[ei] + m_deltaVolume[ei] ) * m_dPoro_dPres[ei][0];
+
+    // set degree of freedom index for this element
+    stack.dofNumber = m_dofNumber[ei];
+  }
+
+  /**
+   * @brief Compute the local accumulation contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   * @param[in] kernelOp the function used to customize the kernel
+   */
+  template< typename FUNC = NoOpFunc >
+  GEOSX_HOST_DEVICE
+  void computeAccumulation( localIndex const ei,
+                            StackVariables & stack,
+                            FUNC && kernelOp = NoOpFunc{} ) const
   {
     // Residual contribution is mass conservation in the cell
-    localAccum = poreVolNew * densNew - poreVolOld * densOld;
+    stack.localResidual = stack.poreVolumeNew * m_density[ei][0] - stack.poreVolumeOld * m_densityOld[ei][0];
 
     // Derivative of residual wrt to pressure in the cell
-    localAccumJacobian = dPoreVol_dPres * densNew + dDens_dPres * poreVolNew;
+    stack.localJacobian = stack.dPoreVolume_dPres * m_density[ei][0] + m_dDensity_dPres[ei][0] * stack.poreVolumeNew;
+
+    // Customize the kernel with this lambda
+    kernelOp();
   }
 
-  template< typename POLICY >
-  static void launch( localIndex const size,
-                      globalIndex const rankOffset,
-                      arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< integer const > const & elemGhostRank,
-                      arrayView1d< real64 const > const & volume,
-                      arrayView2d< real64 const > const & porosityOld,
-                      arrayView2d< real64 const > const & porosityNew,
-                      arrayView2d< real64 const > const & dPoro_dPres,
-                      arrayView1d< real64 const > const & densOld,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                      arrayView1d< real64 > const & localRhs )
+  /**
+   * @brief Performs the complete phase for the kernel.
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void complete( localIndex const GEOSX_UNUSED_PARAM( ei ),
+                 StackVariables & stack ) const
   {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
+    localIndex const localElemDof = stack.dofNumber - m_rankOffset;
+
+    // add contribution to global residual and jacobian (no need for atomics here)
+    m_localMatrix.addToRow< serialAtomic >( localElemDof, &stack.dofNumber, &stack.localJacobian, 1 );
+    m_localRhs[localElemDof] += stack.localResidual;
+  }
+
+  /**
+   * @brief Performs the kernel launch
+   * @tparam POLICY the policy used in the RAJA kernels
+   * @tparam KERNEL_TYPE the kernel type
+   * @param[in] numElems the number of elements
+   * @param[inout] kernelComponent the kernel component providing access to setup/compute/complete functions and stack variables
+   */
+  template< typename POLICY, typename KERNEL_TYPE >
+  static void
+  launch( localIndex const numElems,
+          KERNEL_TYPE const & kernelComponent )
+  {
+    GEOSX_MARK_FUNCTION;
+
+    forAll< POLICY >( numElems, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      if( elemGhostRank[ei] < 0 )
+      if( kernelComponent.elemGhostRank( ei ) >= 0 )
       {
-        real64 localAccum, localAccumJacobian;
-
-        real64 const poreVolNew = volume[ei] * porosityNew[ei][0];
-        real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
-        real64 const dPoreVol_dPres = volume[ei] * dPoro_dPres[ei][0];
-
-        compute( dens[ei][0],
-                 densOld[ei],
-                 dDens_dPres[ei][0],
-                 poreVolNew,
-                 poreVolOld,
-                 dPoreVol_dPres,
-                 localAccum,
-                 localAccumJacobian );
-
-        globalIndex const elemDOF = dofNumber[ei];
-        localIndex const localElemDof = elemDOF - rankOffset;
-
-        // add contribution to global residual and jacobian (no need for atomics here)
-        localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
-        localRhs[localElemDof] += localAccum;
+        return;
       }
+
+      typename KERNEL_TYPE::StackVariables stack;
+
+      kernelComponent.setup( ei, stack );
+      kernelComponent.computeAccumulation( ei, stack );
+      kernelComponent.complete( ei, stack );
     } );
   }
-  template< typename POLICY >
-  static void launch( localIndex const size,
-                      globalIndex const rankOffset,
-                      arrayView1d< globalIndex const > const & dofNumber,
-                      arrayView1d< integer const > const & elemGhostRank,
-                      arrayView1d< real64 const > const & volume,
-                      arrayView1d< real64 const > const & deltaVolume,
-                      arrayView2d< real64 const > const & porosityOld,
-                      arrayView2d< real64 const > const & porosityNew,
-                      arrayView2d< real64 const > const & dPoro_dPres,
-                      arrayView1d< real64 const > const & densOld,
-                      arrayView2d< real64 const > const & dens,
-                      arrayView2d< real64 const > const & dDens_dPres,
-  #if ALLOW_CREATION_MASS
-                      arrayView1d< real64 const > const & creationMass,
-  #endif
-                      CRSMatrixView< real64, globalIndex const > const & localMatrix,
-                      arrayView1d< real64 > const & localRhs )
-  {
-    forAll< POLICY >( size, [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-    {
-      if( elemGhostRank[ei] < 0 )
-      {
-        real64 localAccum, localAccumJacobian;
 
-        real64 const poreVolNew = ( volume[ei] + deltaVolume[ei] ) * porosityNew[ei][0];
-        real64 const poreVolOld = volume[ei] * porosityOld[ei][0];
+protected:
 
-        real64 const dPoreVol_dPres = ( volume[ei] + deltaVolume[ei] ) * dPoro_dPres[ei][0];
+  /// Offset for my MPI rank
+  globalIndex const m_rankOffset;
 
-        compute( dens[ei][0],
-                 densOld[ei],
-                 dDens_dPres[ei][0],
-                 poreVolNew,
-                 poreVolOld,
-                 dPoreVol_dPres,
-                 localAccum,
-                 localAccumJacobian );
+  /// View on the dof numbers
+  arrayView1d< globalIndex const > const m_dofNumber;
 
-  #if ALLOW_CREATION_MASS
-        if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
-        {
-          localAccum += creationMass[ei] * 0.25;
-        }
-  #endif
+  /// View on the ghost ranks
+  arrayView1d< integer const > const m_elemGhostRank;
 
-        globalIndex const elemDOF = dofNumber[ei];
-        localIndex const localElemDof = elemDOF - rankOffset;
+  /// View on the element volumes
+  arrayView1d< real64 const > const m_volume;
+  arrayView1d< real64 const > const m_deltaVolume;
 
-        // add contribution to global residual and jacobian (no need for atomics here)
-        localMatrix.addToRow< serialAtomic >( localElemDof, &elemDOF, &localAccumJacobian, 1 );
-        localRhs[localElemDof] += localAccum;
-      }
-    } );
-  }
+  /// Views on the porosity
+  arrayView2d< real64 const > const m_porosityOld;
+  arrayView2d< real64 const > const m_porosityNew;
+  arrayView2d< real64 const > const m_dPoro_dPres;
+
+  /// Views on density
+  arrayView2d< real64 const > const m_densityOld;
+  arrayView2d< real64 const > const m_density;
+  arrayView2d< real64 const > const m_dDensity_dPres;
+
+  /// View on the local CRS matrix
+  CRSMatrixView< real64, globalIndex const > const m_localMatrix;
+  /// View on the local RHS
+  arrayView1d< real64 > const m_localRhs;
+
 };
+
+/**
+ * @class SurfaceElementBasedAssemblyKernel
+ * @brief Define the interface for the assembly kernel in charge of accumulation in SurfaceElementSubRegion
+ */
+class SurfaceElementBasedAssemblyKernel : public ElementBasedAssemblyKernel< SurfaceElementSubRegion >
+{
+
+public:
+
+  using Base = ElementBasedAssemblyKernel< SurfaceElementSubRegion >;
+
+  /**
+   * @brief Constructor
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  SurfaceElementBasedAssemblyKernel( globalIndex const rankOffset,
+                                     string const dofKey,
+                                     SurfaceElementSubRegion const & subRegion,
+                                     constitutive::SingleFluidBase const & fluid,
+                                     constitutive::CoupledSolidBase const & solid,
+                                     CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                                     arrayView1d< real64 > const & localRhs )
+    : Base( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs )
+#if ALLOW_CREATION_MASS
+    , m_creationMass( subRegion.getReference< array1d< real64 > >( SurfaceElementSubRegion::viewKeyStruct::creationMassString() ) )
+#endif
+  {
+#if !defined(ALLOW_CREATION_MASS)
+    static_assert( true, "must have ALLOW_CREATION_MASS defined" );
+#endif
+  }
+
+  /**
+   * @brief Compute the local accumulation contributions to the residual and Jacobian
+   * @tparam FUNC the type of the function that can be used to customize the kernel
+   * @param[in] ei the element index
+   * @param[inout] stack the stack variables
+   */
+  GEOSX_HOST_DEVICE
+  void computeAccumulation( localIndex const ei,
+                            Base::StackVariables & stack ) const
+  {
+    Base::computeAccumulation( ei, stack, [&] ()
+    {
+#if ALLOW_CREATION_MASS
+      if( Base::m_volume[ei] * Base::m_densityOld[ei][0] > 1.1 * m_creationMass[ei] )
+      {
+        stack.localResidual += m_creationMass[ei] * 0.25;
+      }
+#endif
+    } );
+  }
+
+protected:
+
+#if ALLOW_CREATION_MASS
+  arrayView1d< real64 const > const m_creationMass;
+#endif
+
+};
+
+/**
+ * @class ElementBasedAssemblyKernelFactory
+ */
+class ElementBasedAssemblyKernelFactory
+{
+public:
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( globalIndex const rankOffset,
+                   string const dofKey,
+                   CellElementSubRegion const & subRegion,
+                   constitutive::SingleFluidBase const & fluid,
+                   constitutive::CoupledSolidBase const & solid,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    ElementBasedAssemblyKernel< CellElementSubRegion >
+    kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+    ElementBasedAssemblyKernel< CellElementSubRegion >::template launch< POLICY >( subRegion.size(), kernel );
+  }
+
+  /**
+   * @brief Create a new kernel and launch
+   * @tparam POLICY the policy used in the RAJA kernel
+   * @param[in] rankOffset the offset of my MPI rank
+   * @param[in] dofKey the string key to retrieve the degress of freedom numbers
+   * @param[in] subRegion the element subregion
+   * @param[in] fluid the fluid model
+   * @param[in] solid the solid model
+   * @param[inout] localMatrix the local CRS matrix
+   * @param[inout] localRhs the local right-hand side vector
+   */
+  template< typename POLICY >
+  static void
+  createAndLaunch( globalIndex const rankOffset,
+                   string const dofKey,
+                   SurfaceElementSubRegion const & subRegion,
+                   constitutive::SingleFluidBase const & fluid,
+                   constitutive::CoupledSolidBase const & solid,
+                   CRSMatrixView< real64, globalIndex const > const & localMatrix,
+                   arrayView1d< real64 > const & localRhs )
+  {
+    SurfaceElementBasedAssemblyKernel
+      kernel( rankOffset, dofKey, subRegion, fluid, solid, localMatrix, localRhs );
+    SurfaceElementBasedAssemblyKernel::launch< POLICY >( subRegion.size(), kernel );
+  }
+
+};
+
 
 /******************************** FluidUpdateKernel ********************************/
 
@@ -280,7 +508,7 @@ struct ResidualNormKernel
                       arrayView1d< globalIndex const > const & presDofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & volume,
-                      arrayView1d< real64 const > const & densOld,
+                      arrayView2d< real64 const > const & densOld,
                       arrayView2d< real64 const > const & poroOld,
                       real64 * localResidualNorm )
   {
@@ -295,7 +523,7 @@ struct ResidualNormKernel
         localIndex const lid = presDofNumber[a] - rankOffset;
         real64 const val = localResidual[lid];
         localSum += val * val;
-        normSum += poroOld[a][0] * densOld[a] * volume[a];
+        normSum += poroOld[a][0] * densOld[a][0] * volume[a];
         count += 1;
       }
     } );

@@ -19,6 +19,7 @@ dVisc_dCompConc      real64_array3d Derivative of viscosity with respect to comp
 dVisc_dProppantConc  real64_array2d Derivative of viscosity with respect to proppant concentration          
 dViscosity_dPressure real64_array2d Derivative of viscosity with respect to pressure                        
 density              real64_array2d Density                                                                 
+densityOld           real64_array2d Density at the previous converged time step                             
 initialDensity       real64_array2d Initial density                                                         
 viscosity            real64_array2d Viscosity                                                               
 ==================== ============== ======================================================================= 

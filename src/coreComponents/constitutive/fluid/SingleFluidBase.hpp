@@ -101,6 +101,7 @@ protected:
 
   /// Derivative of viscosity w.r.t. pressure
   arrayView2d< real64 > m_dVisc_dPres;
+
 //END_SPHINX_INCLUDE_01
 //START_SPHINX_INCLUDE_02
 private:
@@ -164,6 +165,8 @@ public:
    */
   void initializeState() const;
 
+  virtual void saveConvergedState() const override;
+
   // *** ConstitutiveBase interface
 
   virtual void allocateConstitutiveData( dataRepository::Group & parent,
@@ -178,6 +181,7 @@ public:
   arrayView2d< real64 const > dDensity_dPressure() const { return m_dDensity_dPressure; }
 
   arrayView2d< real64 const > initialDensity() const { return m_initialDensity; }
+  arrayView2d< real64 const > densityOld() const { return m_densityOld; }
 
   arrayView2d< real64 > viscosity() { return m_viscosity; }
   arrayView2d< real64 const > viscosity() const { return m_viscosity; }
@@ -185,8 +189,8 @@ public:
   arrayView2d< real64 > dViscosity_dPressure() { return m_dViscosity_dPressure; }
   arrayView2d< real64 const > dViscosity_dPressure() const { return m_dViscosity_dPressure; }
 
-  virtual real64 defaultDensity() const = 0; // { return 1.0; }
-  virtual real64 defaultViscosity() const = 0; // { return 1.0; }
+  virtual real64 defaultDensity() const = 0;
+  virtual real64 defaultViscosity() const = 0;
 
 protected:
 
@@ -197,6 +201,7 @@ protected:
   array2d< real64 > m_dDensity_dPressure;
 
   array2d< real64 > m_initialDensity;
+  array2d< real64 > m_densityOld;
 
   array2d< real64 > m_viscosity;
   array2d< real64 > m_dViscosity_dPressure;

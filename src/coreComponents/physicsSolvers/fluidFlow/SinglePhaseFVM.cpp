@@ -130,11 +130,13 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
       arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & densOld        = subRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+
+      SingleFluidBase const & fluidModel =
+        SolverBase::getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::fluidNamesString() ) );
+      arrayView2d< real64 const > const & densityOld = fluidModel.densityOld();
 
       CoupledSolidBase const & solidModel =
-        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
-
+        SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.template getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
       arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
 
       ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
@@ -142,7 +144,7 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
                                                             dofNumber,
                                                             elemGhostRank,
                                                             volume,
-                                                            densOld,
+                                                            densityOld,
                                                             porosityOld,
                                                             localResidualNorm );
 
