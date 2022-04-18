@@ -172,11 +172,7 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
     arrayView1d< real64 > const & facePresOld =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
-
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
-    {
-      facePresOld[iface] = facePres[iface];
-    } );
+    facePresOld.setValues< parallelDevicePolicy<> >( facePres );
   } );
 }
 
@@ -638,11 +634,7 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
     arrayView1d< real64 const > const & facePresOld =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
-
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
-    {
-      facePres[iface] = facePresOld[iface];
-    } );
+    facePres.setValues< parallelDevicePolicy<> >( facePresOld );
   } );
 }
 

@@ -813,19 +813,14 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
       arrayView1d< real64 const > const & wellElemPressureOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressureOld >();
+      wellElemPressure.setValues< parallelDevicePolicy<> >( wellElemPressureOld );
 
       arrayView1d< real64 > const & connRate =
         subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
       arrayView1d< real64 const > const & connRateOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRateOld >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-      {
-        wellElemPressure[iwelem] = wellElemPressureOld[iwelem];
-        connRate[iwelem] = connRateOld[iwelem];
-      } );
+      connRate.setValues< parallelDevicePolicy<> >( connRateOld );
     } );
-
   } );
 
   // call constitutive models
@@ -874,14 +869,11 @@ void SinglePhaseWell::implicitStepSetup( real64 const & time,
     {
       arrayView1d< real64 const > const wellElemPressure = subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
       arrayView1d< real64 > const wellElemPressureOld = subRegion.getExtrinsicData< extrinsicMeshData::well::pressureOld >();
+      wellElemPressureOld.setValues< parallelDevicePolicy<> >( wellElemPressure );
+
       arrayView1d< real64 const > const connRate = subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate >();
       arrayView1d< real64 > const connRateOld = subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRateOld >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-      {
-        wellElemPressureOld[iwelem] = wellElemPressure[iwelem];
-        connRateOld[iwelem]         = connRate[iwelem];
-      } );
+      connRateOld.setValues< parallelDevicePolicy<> >( connRate );
 
       validateWellConstraints( subRegion );
 

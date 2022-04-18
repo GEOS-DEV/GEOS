@@ -444,8 +444,6 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
 {
   GEOSX_MARK_FUNCTION;
 
-  integer const & numComponents = m_numComponents;
-
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
@@ -453,26 +451,17 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
-
       arrayView1d< real64 const > const proppantConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
       arrayView1d< real64 > const proppantConcOld =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
+      proppantConcOld.setValues< parallelDevicePolicy<> >( proppantConc );
 
       arrayView2d< real64 const > const componentConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
       arrayView2d< real64 > const componentConcOld =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-      {
-        proppantConcOld[ei] = proppantConc[ei];
-
-        for( integer c = 0; c < numComponents; ++c )
-        {
-          componentConcOld[ei][c] = componentConc[ei][c];
-        }
-      } );
+      componentConcOld.setValues< parallelDevicePolicy<> >( componentConc );
     } );
   } );
 }
@@ -490,7 +479,6 @@ void ProppantTransport::implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM(
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
     {
-
       arrayView1d< real64 > const proppantLiftFlux =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantLiftFlux >();
       proppantLiftFlux.zero();
@@ -720,10 +708,7 @@ void ProppantTransport::applyBoundaryConditions( real64 const time_n,
                                                                    rankOffset,
                                                                    localMatrix,
                                                                    localRhs,
-                                                                   [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        return proppantConc[a];
-      } );
+                                                                   proppantConc );
     } );
 
     //  Apply Dirichlet BC for component concentration
@@ -945,8 +930,6 @@ void ProppantTransport::solveLinearSystem( DofManager const & dofManager,
 
 void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  integer const numComponents = m_numComponents;
-
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
@@ -959,19 +942,13 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
       arrayView1d< real64 const > const & proppantConcOld =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
+      proppantConc.setValues< parallelDevicePolicy<> >( proppantConcOld );
+
       arrayView2d< real64 > const & componentConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
       arrayView2d< real64 const > const & componentConcOld =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
-      {
-        proppantConc[ei] = proppantConcOld[ei];
-        for( localIndex c = 0; c < numComponents; ++c )
-        {
-          componentConc[ei][c] = componentConcOld[ei][c];
-        }
-      } );
+      componentConc.setValues< parallelDevicePolicy<> >( componentConcOld );
 
       updateState( subRegion );
     } );

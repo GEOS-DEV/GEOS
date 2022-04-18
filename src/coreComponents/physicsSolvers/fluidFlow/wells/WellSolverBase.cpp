@@ -163,13 +163,6 @@ void WellSolverBase::implicitStepSetup( real64 const & time_n,
   } );
 }
 
-void WellSolverBase::implicitStepComplete( real64 const & time_n,
-                                           real64 const & dt,
-                                           DomainPartition & domain )
-{
-  GEOSX_UNUSED_VAR( time_n, dt, domain );
-}
-
 void WellSolverBase::assembleSystem( real64 const time,
                                      real64 const dt,
                                      DomainPartition & domain,

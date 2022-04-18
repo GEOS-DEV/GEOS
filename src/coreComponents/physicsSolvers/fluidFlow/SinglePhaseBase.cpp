@@ -798,10 +798,7 @@ void SinglePhaseBase::applyDirichletBC( real64 const time_n,
                                                                    dofManager.rankOffset(),
                                                                    localMatrix,
                                                                    localRhs,
-                                                                   [=] GEOSX_HOST_DEVICE ( localIndex const a )
-      {
-        return pres[a];
-      } );
+                                                                   pres );
     } );
   } );
 }

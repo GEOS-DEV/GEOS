@@ -260,12 +260,7 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
     arrayView1d< real64 const > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
-    {
-      facePresOld[iface] = facePres[iface];
-    } );
-
+    facePresOld.setValues< parallelDevicePolicy<> >( facePres );
   } );
 
 }
@@ -841,11 +836,7 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
     arrayView1d< real64 > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-
-    forAll< parallelDevicePolicy<> >( faceManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
-    {
-      facePres[iface] = facePresOld[iface];
-    } );
+    facePres.setValues< parallelDevicePolicy<> >( facePresOld );
   } );
 }
 

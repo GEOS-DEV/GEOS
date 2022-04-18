@@ -148,10 +148,9 @@ public:
                                   real64 const & dt,
                                   DomainPartition & domain ) override;
 
-  virtual void implicitStepComplete( real64 const & time_n,
-                                     real64 const & dt,
-                                     DomainPartition & domain ) override;
-
+  virtual void implicitStepComplete( real64 const & GEOSX_UNUSED_PARAM( time_n ),
+                                     real64 const & GEOSX_UNUSED_PARAM( dt ),
+                                     DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
   /**@}*/
 

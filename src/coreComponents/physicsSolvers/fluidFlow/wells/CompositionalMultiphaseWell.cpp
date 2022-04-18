@@ -1494,8 +1494,6 @@ void CompositionalMultiphaseWell::chopNegativeDensities( DomainPartition & domai
 
 void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
 {
-  integer const numComp = m_numComponents;
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -1512,26 +1510,19 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
       arrayView1d< real64 const > const & wellElemPressureOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressureOld >();
+      wellElemPressure.setValues< parallelDevicePolicy<> >( wellElemPressureOld );
 
       arrayView2d< real64, compflow::USD_COMP > const & wellElemGlobalCompDensity =
         subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemGlobalCompDensityOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensityOld >();
+      wellElemGlobalCompDensity.setValues< parallelDevicePolicy<> >( wellElemGlobalCompDensityOld );
 
       arrayView1d< real64 > const & connRate =
         subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
       arrayView1d< real64 const > const & connRateOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRateOld >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-      {
-        wellElemPressure[iwelem] = wellElemPressureOld[iwelem];
-        connRate[iwelem] = connRateOld[iwelem];
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          wellElemGlobalCompDensity[iwelem][ic] = wellElemGlobalCompDensityOld[iwelem][ic];
-        }
-      } );
+      connRate.setValues< parallelDevicePolicy<> >( connRateOld );
     } );
   } );
   // call constitutive models
@@ -1701,8 +1692,6 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
 {
   WellSolverBase::implicitStepSetup( time_n, dt, domain );
 
-  integer const numComp = m_numComponents;
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -1719,26 +1708,19 @@ void CompositionalMultiphaseWell::implicitStepSetup( real64 const & time_n,
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
       arrayView1d< real64 > const & wellElemPressureOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressureOld >();
+      wellElemPressureOld.setValues< parallelDevicePolicy<> >( wellElemPressure );
 
       arrayView2d< real64 const, compflow::USD_COMP > const & wellElemGlobalCompDensity =
         subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
       arrayView2d< real64, compflow::USD_COMP > const & wellElemGlobalCompDensityOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensityOld >();
+      wellElemGlobalCompDensityOld.setValues< parallelDevicePolicy<> >( wellElemGlobalCompDensity );
 
       arrayView1d< real64 const > const & connRate =
         subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate >();
       arrayView1d< real64 > const & connRateOld =
         subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRateOld >();
-
-      forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
-      {
-        wellElemPressureOld[iwelem] = wellElemPressure[iwelem];
-        connRateOld[iwelem] = connRate[iwelem];
-        for( integer ic = 0; ic < numComp; ++ic )
-        {
-          wellElemGlobalCompDensityOld[iwelem][ic] = wellElemGlobalCompDensity[iwelem][ic];
-        }
-      } );
+      connRateOld.setValues< parallelDevicePolicy<> >( connRate );
 
       validateWellConstraints( subRegion );
 
