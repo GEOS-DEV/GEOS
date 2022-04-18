@@ -48,16 +48,16 @@ public:
    * @brief Get catalog name.
    * @return the catalog name
    */
-  static const string catalogName()
+  static string catalogName()
   { return "FaceElementSubRegion"; }
 
   /**
    * @brief Get catalog name.
    * @return the catalog name
    */
-  virtual const string getCatalogName() const override
+  virtual string getCatalogName() const override
   {
-    return FaceElementSubRegion::catalogName();
+    return catalogName();
   }
 
   ///@}
@@ -103,8 +103,6 @@ public:
                                        bool const overwriteDownMaps ) override;
 
   virtual void fixUpDownMaps( bool const clearIfUnmapped ) override;
-
-  std::set< string > getPackingExclusionList() const override;
 
   ///@}
 

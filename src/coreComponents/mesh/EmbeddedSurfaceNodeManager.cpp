@@ -17,14 +17,14 @@
  */
 
 #include "EmbeddedSurfaceNodeManager.hpp"
-#include "FaceManager.hpp"
-#include "EdgeManager.hpp"
-#include "ToElementRelation.hpp"
-#include "BufferOps.hpp"
-#include "mesh/ExtrinsicMeshData.hpp"
+
 #include "common/TimingMacros.hpp"
 #include "common/MpiWrapper.hpp"
-#include "ElementRegionManager.hpp"
+#include "mesh/BufferOps.hpp"
+#include "mesh/EdgeManager.hpp"
+#include "mesh/ElementRegionManager.hpp"
+#include "mesh/ToElementRelation.hpp"
+#include "mesh/utilities/MeshMapUtilities.hpp"
 
 namespace geosx
 {
@@ -42,19 +42,20 @@ EmbeddedSurfaceNodeManager::EmbeddedSurfaceNodeManager( string const & name,
   this->registerWrapper( viewKeyStruct::elementSubRegionListString(), &elementSubRegionList() );
   this->registerWrapper( viewKeyStruct::elementListString(), &elementList() );
   this->registerWrapper( viewKeyStruct::parentEdgeGlobalIndexString(), &m_parentEdgeGlobalIndex );
+
+  excludeWrappersFromPacking( { viewKeyStruct::edgeListString(),
+                                viewKeyStruct::elementRegionListString(),
+                                viewKeyStruct::elementSubRegionListString(),
+                                viewKeyStruct::elementListString() } );
 }
-
-
-EmbeddedSurfaceNodeManager::~EmbeddedSurfaceNodeManager()
-{}
 
 
 void EmbeddedSurfaceNodeManager::resize( localIndex const newSize )
 {
-  m_toEdgesRelation.resize( newSize, 2 * getEdgeMapOverallocation() );
-  m_toElements.m_toElementRegion.resize( newSize, 2 * getElemMapOverAllocation() );
-  m_toElements.m_toElementSubRegion.resize( newSize, 2 * getElemMapOverAllocation() );
-  m_toElements.m_toElementIndex.resize( newSize, 2 * getElemMapOverAllocation() );
+  m_toEdgesRelation.resize( newSize, 2 * edgeMapOverallocation() );
+  m_toElements.m_toElementRegion.resize( newSize, 2 * elemMapOverallocation() );
+  m_toElements.m_toElementSubRegion.resize( newSize, 2 * elemMapOverallocation() );
+  m_toElements.m_toElementIndex.resize( newSize, 2 * elemMapOverallocation() );
   ObjectManagerBase::resize( newSize );
 }
 
@@ -64,46 +65,14 @@ void EmbeddedSurfaceNodeManager::setEdgeMaps( EdgeManager const & embSurfEdgeMan
   GEOSX_MARK_FUNCTION;
 
   arrayView2d< localIndex const > const edgeToNodeMap = embSurfEdgeManager.nodeList();
-  localIndex const numEdges = edgeToNodeMap.size( 0 );
-  localIndex const numNodes = size();
 
-  ArrayOfArrays< localIndex > toEdgesTemp( numNodes, EdgeManager::maxEdgesPerNode() );
-  RAJA::ReduceSum< parallelHostReduce, localIndex > totalNodeEdges = 0;
+  ArrayOfArrays< localIndex > nodeToEdges =
+    meshMapUtilities::transposeIndexMap< parallelHostPolicy >( edgeToNodeMap,
+                                                               size(),
+                                                               edgeMapOverallocation() );
 
-  forAll< parallelHostPolicy >( numEdges, [&]( localIndex const edgeID )
-  {
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 0 ), edgeID );
-    toEdgesTemp.emplaceBackAtomic< parallelHostAtomic >( edgeToNodeMap( edgeID, 1 ), edgeID );
-    totalNodeEdges += 2;
-  } );
-
-  // Resize the node to edge map.
-  m_toEdgesRelation.resize( 0 );
-
-  // Reserve space for the number of current nodes plus some extra.
-  double const overAllocationFactor = 0.3;
-  localIndex const entriesToReserve = ( 1 + overAllocationFactor ) * numNodes;
-  m_toEdgesRelation.reserve( entriesToReserve );
-
-  // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeEdges.get() + numNodes * getEdgeMapOverallocation() * ( 1 + 2 * overAllocationFactor );
-  m_toEdgesRelation.reserveValues( valuesToReserve );
-
-  // Append the individual sets.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
-  {
-    m_toEdgesRelation.appendSet( toEdgesTemp.sizeOfArray( nodeID ) + getEdgeMapOverallocation() );
-  }
-
-  ArrayOfSetsView< localIndex > const & toEdgesView = m_toEdgesRelation.toView();
-  forAll< parallelHostPolicy >( numNodes, [&]( localIndex const nodeID )
-  {
-    localIndex * const edges = toEdgesTemp[ nodeID ];
-    localIndex const numNodeEdges = toEdgesTemp.sizeOfArray( nodeID );
-    localIndex const numUniqueEdges = LvArray::sortedArrayManipulation::makeSortedUnique( edges, edges + numNodeEdges );
-    toEdgesView.insertIntoSet( nodeID, edges, edges + numUniqueEdges );
-  } );
-
+  m_toEdgesRelation.assimilate< parallelHostPolicy >( std::move( nodeToEdges ),
+                                                      LvArray::sortedArrayManipulation::UNSORTED_NO_DUPLICATES );
   m_toEdgesRelation.setRelatedObject( embSurfEdgeManager );
 }
 
@@ -151,21 +120,21 @@ void EmbeddedSurfaceNodeManager::setElementMaps( ElementRegionManager const & el
   toElementList.reserve( entriesToReserve );
 
   // Reserve space for the total number of face nodes + extra space for existing faces + even more space for new faces.
-  localIndex const valuesToReserve = totalNodeElems.get() + numNodes * getElemMapOverAllocation() * ( 1 + 2 * overAllocationFactor );
+  localIndex const valuesToReserve = totalNodeElems.get() + numNodes * elemMapOverallocation() * ( 1 + 2 * overAllocationFactor );
   toElementRegionList.reserveValues( valuesToReserve );
   toElementSubRegionList.reserveValues( valuesToReserve );
   toElementList.reserveValues( valuesToReserve );
 
   // Append an array for each node with capacity to hold the appropriate number of elements plus some wiggle room.
-  for( localIndex nodeID = 0; nodeID < numNodes; ++nodeID )
+  for( localIndex nodeIndex = 0; nodeIndex < numNodes; ++nodeIndex )
   {
     toElementRegionList.appendArray( 0 );
     toElementSubRegionList.appendArray( 0 );
     toElementList.appendArray( 0 );
 
-    toElementRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementSubRegionList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
-    toElementList.setCapacityOfArray( nodeID, elemsPerNode[ nodeID ] + getElemMapOverAllocation() );
+    toElementRegionList.setCapacityOfArray( nodeIndex, elemsPerNode[ nodeIndex ] + elemMapOverallocation() );
+    toElementSubRegionList.setCapacityOfArray( nodeIndex, elemsPerNode[ nodeIndex ] + elemMapOverallocation() );
+    toElementList.setCapacityOfArray( nodeIndex, elemsPerNode[ nodeIndex ] + elemMapOverallocation() );
   }
 
   // Populate the element maps.
@@ -209,16 +178,6 @@ void EmbeddedSurfaceNodeManager::appendNode( arraySlice1d< real64 const > const 
   this->resize( nodeIndex + 1 );
   LvArray::tensorOps::copy< 3 >( m_referencePosition[nodeIndex], pointCoord );
   m_ghostRank[ nodeIndex ] = pointGhostRank;
-}
-
-std::set< string > EmbeddedSurfaceNodeManager::getPackingExclusionList() const
-{
-  std::set< string > result = ObjectManagerBase::getPackingExclusionList();
-  result.insert( { viewKeyStruct::edgeListString(),
-                   viewKeyStruct::elementRegionListString(),
-                   viewKeyStruct::elementSubRegionListString(),
-                   viewKeyStruct::elementListString() } );
-  return result;
 }
 
 

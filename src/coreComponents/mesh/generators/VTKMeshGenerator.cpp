@@ -259,7 +259,7 @@ real64 writeMeshNodes( vtkUnstructuredGrid & mesh,
 
   // Writing the points
   arrayView1d< globalIndex > const & nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = cellBlockManager.getNodesPositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > const & X = cellBlockManager.getNodePositions();
 
   constexpr real64 minReal = LvArray::NumericLimits< real64 >::min;
   constexpr real64 maxReal = LvArray::NumericLimits< real64 >::max;
@@ -541,9 +541,9 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Triangle:      return { 0, 1, 2 };
     case ElementType::Quadrilateral: return { 0, 1, 2, 3 }; // TODO check
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
-    case ElementType::Tetrahedron:   return { 1, 0, 2, 3 };
-    case ElementType::Pyramid:       return { 0, 1, 2, 3, 4, 5 }; // TODO check
-    case ElementType::Prism:         return { 0, 3, 1, 4, 2, 5 };
+    case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
+    case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
+    case ElementType::Prism:         return { 0, 3, 2, 5, 1, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }

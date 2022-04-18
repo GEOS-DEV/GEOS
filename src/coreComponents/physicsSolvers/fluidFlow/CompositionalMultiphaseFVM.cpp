@@ -34,17 +34,17 @@
 #include "mesh/DomainPartition.hpp"
 #include "mesh/mpiCommunications/CommunicationTools.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVMKernels.hpp"
 #include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseFVMKernels.hpp"
+#include "physicsSolvers/fluidFlow/ThermalCompositionalMultiphaseFVMKernels.hpp"
 
 namespace geosx
 {
 
 using namespace dataRepository;
 using namespace constitutive;
-using namespace compositionalMultiphaseFVMKernels;
-using namespace compositionalMultiphaseBaseKernels;
 
 CompositionalMultiphaseFVM::CompositionalMultiphaseFVM( const string & name,
                                                         Group * const parent )
@@ -108,18 +108,38 @@ void CompositionalMultiphaseFVM::assembleFluxTerms( real64 const dt,
     {
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
-      FaceBasedAssemblyKernelFactory::
-        createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                                   m_numPhases,
-                                                   dofManager.rankOffset(),
-                                                   elemDofKey,
-                                                   m_hasCapPressure,
-                                                   getName(),
-                                                   mesh.getElemManager(),
-                                                   stencilWrapper,
-                                                   dt,
-                                                   localMatrix.toViewConstSizes(),
-                                                   localRhs.toView() );
+      if( m_isThermal )
+      {
+        thermalCompositionalMultiphaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     m_hasCapPressure,
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
+      }
+      else
+      {
+        isothermalCompositionalMultiphaseFVMKernels::
+          FaceBasedAssemblyKernelFactory::
+          createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                     m_numPhases,
+                                                     dofManager.rankOffset(),
+                                                     elemDofKey,
+                                                     m_hasCapPressure,
+                                                     getName(),
+                                                     mesh.getElemManager(),
+                                                     stencilWrapper,
+                                                     dt,
+                                                     localMatrix.toViewConstSizes(),
+                                                     localRhs.toView() );
+      }
     } );
   } );
 }
@@ -163,10 +183,14 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
     FiniteVolumeManager & fvManager = numericalMethodManager.getFiniteVolumeManager();
     FluxApproximationBase & fluxApprox = fvManager.getFluxApproximation( m_discretizationName );
 
-    CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
-    CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
-    CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
+    isothermalCompositionalMultiphaseFVMKernels::
+      CFLFluxKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+    isothermalCompositionalMultiphaseFVMKernels::
+      CFLFluxKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+    isothermalCompositionalMultiphaseFVMKernels::
+      CFLFluxKernel::PermeabilityAccessors permeabilityAccessors( mesh.getElemManager(), getName() );
+    isothermalCompositionalMultiphaseFVMKernels::
+      CFLFluxKernel::RelPermAccessors relPermAccessors( mesh.getElemManager(), getName() );
 
     // TODO: find a way to compile with this modifiable accessors in CompFlowAccessors, and remove them from here
     ElementRegionManager::ElementViewAccessor< arrayView2d< real64, compflow::USD_PHASE > > const phaseOutfluxAccessor =
@@ -177,28 +201,30 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
       mesh.getElemManager().constructViewAccessor< array2d< real64, compflow::LAYOUT_COMP >,
                                                    arrayView2d< real64, compflow::USD_COMP > >( extrinsicMeshData::flow::componentOutflux::key() );
 
+
     fluxApprox.forAllStencils( mesh, [&] ( auto & stencil )
     {
 
       typename TYPEOFREF( stencil ) ::KernelWrapper stencilWrapper = stencil.createKernelWrapper();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
-      KernelLaunchSelector1< CFLFluxKernel >( m_numComponents,
-                                              m_numPhases,
-                                              dt,
-                                              stencilWrapper,
-                                              compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                              compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
-                                              compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                              permeabilityAccessors.get( extrinsicMeshData::permeability::permeability{} ),
-                                              permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure{} ),
-                                              relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
-                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
-                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
-                                              multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                              phaseOutfluxAccessor.toNestedView(),
-                                              compOutfluxAccessor.toNestedView() );
+      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
+      < isothermalCompositionalMultiphaseFVMKernels::CFLFluxKernel >( m_numComponents,
+                                                                      m_numPhases,
+                                                                      dt,
+                                                                      stencilWrapper,
+                                                                      compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                                                      compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
+                                                                      compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                                                      permeabilityAccessors.get( extrinsicMeshData::permeability::permeability{} ),
+                                                                      permeabilityAccessors.get( extrinsicMeshData::permeability::dPerm_dPressure{} ),
+                                                                      relPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
+                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
+                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseMassDensity{} ),
+                                                                      multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                                                      phaseOutfluxAccessor.toNestedView(),
+                                                                      compOutfluxAccessor.toNestedView() );
     } );
   } );
 
@@ -248,22 +274,23 @@ void CompositionalMultiphaseFVM::computeCFLNumbers( real64 const & dt,
 
       arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
 
-      KernelLaunchSelector2< CFLKernel >( m_numComponents, m_numPhases,
-                                          subRegion.size(),
-                                          volume,
-                                          porosity,
-                                          compDens,
-                                          compFrac,
-                                          phaseVolFrac,
-                                          phaseRelPerm,
-                                          dPhaseRelPerm_dPhaseVolFrac,
-                                          phaseVisc,
-                                          phaseOutflux,
-                                          compOutflux,
-                                          phaseCFLNumber,
-                                          compCFLNumber,
-                                          subRegionMaxPhaseCFLNumber,
-                                          subRegionMaxCompCFLNumber );
+      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector2
+      < isothermalCompositionalMultiphaseFVMKernels::CFLKernel >( m_numComponents, m_numPhases,
+                                                                  subRegion.size(),
+                                                                  volume,
+                                                                  porosity,
+                                                                  compDens,
+                                                                  compFrac,
+                                                                  phaseVolFrac,
+                                                                  phaseRelPerm,
+                                                                  dPhaseRelPerm_dPhaseVolFrac,
+                                                                  phaseVisc,
+                                                                  phaseOutflux,
+                                                                  compOutflux,
+                                                                  phaseCFLNumber,
+                                                                  compCFLNumber,
+                                                                  subRegionMaxPhaseCFLNumber,
+                                                                  subRegionMaxCompCFLNumber );
 
       localMaxPhaseCFLNumber = LvArray::math::max( localMaxPhaseCFLNumber, subRegionMaxPhaseCFLNumber );
       localMaxCompCFLNumber = LvArray::math::max( localMaxCompCFLNumber, subRegionMaxCompCFLNumber );
@@ -284,7 +311,8 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 {
   GEOSX_MARK_FUNCTION;
 
-  real64 localResidualNorm = 0.0;
+  real64 localFlowResidualNorm = 0.0;
+  real64 localEnergyResidualNorm = 0.0;
 
   globalIndex const rankOffset = dofManager.rankOffset();
   string const dofKey = dofManager.getKey( viewKeyStruct::elemDofFieldString() );
@@ -297,6 +325,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                                 [&]( localIndex const,
                                                      ElementSubRegionBase const & subRegion )
     {
+
       arrayView1d< globalIndex const > dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
@@ -306,32 +335,80 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
       arrayView2d< real64 const, multifluid::USD_FLUID > const totalDensOld = fluid.totalDensityOld();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
-      CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
-      arrayView1d< real64 const > const referencePorosity = solid.getReferencePorosity();
+      CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
+      arrayView1d< real64 const > const referencePorosity = solidModel.getReferencePorosity();
 
-      real64 subRegionResidualNorm = 0.0;
-      ResidualNormKernel::launch< parallelDevicePolicy<>,
-                                  parallelDeviceReduce >( localRhs,
-                                                          rankOffset,
-                                                          numFluidComponents(),
-                                                          dofNumber,
-                                                          elemGhostRank,
-                                                          referencePorosity,
-                                                          volume,
-                                                          totalDensOld,
-                                                          subRegionResidualNorm );
-      localResidualNorm += subRegionResidualNorm;
+      real64 subRegionFlowResidualNorm = 0.0;
+      real64 subRegionEnergyResidualNorm = 0.0;
+
+      if( m_isThermal )
+      {
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFracOld =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >();
+        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensOld = fluid.phaseDensityOld();
+        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergyOld = fluid.phaseInternalEnergyOld();
+
+        string const & solidInternalEnergyName = subRegion.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
+        SolidInternalEnergy const & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
+        arrayView2d< real64 const > const solidInternalEnergyOld = solidInternalEnergy.getOldInternalEnergy();
+
+        thermalCompositionalMultiphaseBaseKernels::
+          ResidualNormKernel::
+          launch< parallelDevicePolicy<> >( localRhs,
+                                            rankOffset,
+                                            numFluidPhases(),
+                                            numFluidComponents(),
+                                            dofNumber,
+                                            elemGhostRank,
+                                            referencePorosity,
+                                            volume,
+                                            solidInternalEnergyOld,
+                                            phaseVolFracOld,
+                                            totalDensOld,
+                                            phaseDensOld,
+                                            phaseInternalEnergyOld,
+                                            subRegionFlowResidualNorm,
+                                            subRegionEnergyResidualNorm );
+      }
+      else
+      {
+        isothermalCompositionalMultiphaseBaseKernels::
+          ResidualNormKernel::
+          launch< parallelDevicePolicy<> >( localRhs,
+                                            rankOffset,
+                                            numFluidComponents(),
+                                            dofNumber,
+                                            elemGhostRank,
+                                            referencePorosity,
+                                            volume,
+                                            totalDensOld,
+                                            subRegionFlowResidualNorm );
+      }
+      localFlowResidualNorm   += subRegionFlowResidualNorm;
+      localEnergyResidualNorm += subRegionEnergyResidualNorm;
     } );
   } );
 
-  // compute global residual norm
-  real64 const residual = std::sqrt( MpiWrapper::sum( localResidualNorm ) );
-
-  if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+  // compute global residual norms
+  real64 residual = 0.0;
+  if( m_isThermal )
   {
-    std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ;", residual );
+    real64 const flowResidual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
+    real64 const energyResidual = std::sqrt( MpiWrapper::sum( localEnergyResidualNorm ) );
+    residual = std::sqrt( flowResidual*flowResidual + energyResidual*energyResidual );
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+    {
+      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ( Renergy ) = ( {:4.2e} ) ; ", flowResidual, energyResidual );
+    }
   }
-
+  else
+  {
+    residual = std::sqrt( MpiWrapper::sum( localFlowResidualNorm ) );
+    if( getLogLevel() >= 1 && logger::internal::rank == 0 )
+    {
+      std::cout << GEOSX_FMT( "    ( Rfluid ) = ( {:4.2e} ) ; ", residual );
+    }
+  }
   return residual;
 }
 
@@ -348,7 +425,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
     return 1.0;
   }
 
-  real64 constexpr eps = compositionalMultiphaseBaseKernels::minDensForDivision;
+  real64 constexpr eps = isothermalCompositionalMultiphaseBaseKernels::minDensForDivision;
   real64 const maxCompFracChange = m_maxCompFracChange;
 
   localIndex const NC = m_numComponents;
@@ -448,18 +525,18 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
         subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
-        SolutionCheckKernel::launch< parallelDevicePolicy<>,
-                                     parallelDeviceReduce >( localSolution,
-                                                             dofManager.rankOffset(),
-                                                             numFluidComponents(),
-                                                             dofNumber,
-                                                             elemGhostRank,
-                                                             pres,
-                                                             dPres,
-                                                             compDens,
-                                                             dCompDens,
-                                                             m_allowCompDensChopping,
-                                                             scalingFactor );
+        isothermalCompositionalMultiphaseBaseKernels::
+          SolutionCheckKernel::launch< parallelDevicePolicy<> >( localSolution,
+                                                                 dofManager.rankOffset(),
+                                                                 numFluidComponents(),
+                                                                 dofNumber,
+                                                                 elemGhostRank,
+                                                                 pres,
+                                                                 dPres,
+                                                                 compDens,
+                                                                 dCompDens,
+                                                                 m_allowCompDensChopping,
+                                                                 scalingFactor );
 
       localCheck = std::min( localCheck, subRegionSolutionCheck );
     } );
@@ -476,6 +553,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   GEOSX_MARK_FUNCTION;
 
   DofManager::CompMask pressureMask( m_numDofPerCell, 0, 1 );
+  DofManager::CompMask componentMask( m_numDofPerCell, 1, m_numComponents+1 );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
@@ -487,7 +565,17 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                viewKeyStruct::elemDofFieldString(),
                                extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
                                scalingFactor,
-                               ~pressureMask );
+                               componentMask );
+
+  if( m_isThermal )
+  {
+    DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
+    dofManager.addVectorToField( localSolution,
+                                 viewKeyStruct::elemDofFieldString(),
+                                 extrinsicMeshData::flow::deltaTemperature::key(),
+                                 scalingFactor,
+                                 temperatureMask );
+  }
 
   // if component density chopping is allowed, some component densities may be negative after the update
   // these negative component densities are set to zero in this function
@@ -495,6 +583,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
   {
     chopNegativeDensities( domain );
   }
+
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
@@ -502,6 +591,12 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     std::map< string, string_array > fieldNames;
     fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
     fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
+
+    if( m_isThermal )
+    {
+      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
+    }
+
     CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
   } );
 }
@@ -517,12 +612,26 @@ void CompositionalMultiphaseFVM::updatePhaseMobility( ObjectManagerBase & dataGr
   string const & relpermName = dataGroup.getReference< string >( viewKeyStruct::relPermNamesString() );
   RelativePermeabilityBase const & relperm = getConstitutiveModel< RelativePermeabilityBase >( dataGroup, relpermName );
 
-  PhaseMobilityKernelFactory::
-    createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
-                                               m_numPhases,
-                                               dataGroup,
-                                               fluid,
-                                               relperm );
+  if( m_isThermal )
+  {
+    thermalCompositionalMultiphaseFVMKernels::
+      PhaseMobilityKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dataGroup,
+                                                 fluid,
+                                                 relperm );
+  }
+  else
+  {
+    isothermalCompositionalMultiphaseFVMKernels::
+      PhaseMobilityKernelFactory::
+      createAndLaunch< parallelDevicePolicy<> >( m_numComponents,
+                                                 m_numPhases,
+                                                 dataGroup,
+                                                 fluid,
+                                                 relperm );
+  }
 }
 
 void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
@@ -535,6 +644,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
   GEOSX_MARK_FUNCTION;
 
   FieldSpecificationManager & fsManager = FieldSpecificationManager::getInstance();
+
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & )
@@ -548,11 +658,13 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       mesh.getElemManager().constructArrayViewAccessor< globalIndex, 1 >( elemDofKey );
     elemDofNumber.setName( getName() + "/accessors/" + elemDofKey );
 
-    AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
-    AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
+    isothermalCompositionalMultiphaseFVMKernels::
+      AquiferBCKernel::CompFlowAccessors compFlowAccessors( mesh.getElemManager(), getName() );
+    isothermalCompositionalMultiphaseFVMKernels::
+      AquiferBCKernel::MultiFluidAccessors multiFluidAccessors( mesh.getElemManager(), getName() );
 
     fsManager.apply< AquiferBoundaryCondition >( time + dt,
-                                                 domain,
+                                                 mesh,
                                                  "faceManager",
                                                  AquiferBoundaryCondition::catalogName(),
                                                  [&] ( AquiferBoundaryCondition const & bc,
@@ -586,32 +698,33 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
       arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac = bc.getWaterPhaseComponentFraction();
 
       // While this kernel is waiting for a factory class, pass all the accessors here
-      KernelLaunchSelector1< AquiferBCKernel >( m_numComponents,
-                                                m_numPhases,
-                                                waterPhaseIndex,
-                                                allowAllPhasesIntoAquifer,
-                                                stencil,
-                                                dofManager.rankOffset(),
-                                                elemDofNumber.toNestedViewConst(),
-                                                aquiferBCWrapper,
-                                                aquiferWaterPhaseDens,
-                                                aquiferWaterPhaseCompFrac,
-                                                compFlowAccessors.get( extrinsicMeshData::ghostRank{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
-                                                compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                                multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
-                                                time,
-                                                dt,
-                                                localMatrix.toViewConstSizes(),
-                                                localRhs.toView() );
+      isothermalCompositionalMultiphaseBaseKernels::KernelLaunchSelector1
+      < isothermalCompositionalMultiphaseFVMKernels::AquiferBCKernel >( m_numComponents,
+                                                                        m_numPhases,
+                                                                        waterPhaseIndex,
+                                                                        allowAllPhasesIntoAquifer,
+                                                                        stencil,
+                                                                        dofManager.rankOffset(),
+                                                                        elemDofNumber.toNestedViewConst(),
+                                                                        aquiferBCWrapper,
+                                                                        aquiferWaterPhaseDens,
+                                                                        aquiferWaterPhaseCompFrac,
+                                                                        compFlowAccessors.get( extrinsicMeshData::ghostRank{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
+                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                                                        multiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
+                                                                        time,
+                                                                        dt,
+                                                                        localMatrix.toViewConstSizes(),
+                                                                        localRhs.toView() );
     } );
   } );
 
