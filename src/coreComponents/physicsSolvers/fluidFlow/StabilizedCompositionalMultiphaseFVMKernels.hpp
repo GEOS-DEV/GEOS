@@ -219,6 +219,7 @@ public:
 
       real64 tauStab = 0.0;
 
+      real64 tauC = 1.0;
 
       // compute potential difference MPFA-style
       for( integer i = 0; i < stack.stencilSize; ++i )
@@ -227,7 +228,9 @@ public:
         localIndex const esr = m_sesri( iconn, i );
         localIndex const ei  = m_sei( iconn, i );
 
-        tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
+        // tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
+        
+        tauStab = tauC * 9.0 * (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (32.0 * (10.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
 
         dPresGradStab += tauStab * m_stabWeights( iconn, i ) * m_dPres[er][esr][ei];
       }
