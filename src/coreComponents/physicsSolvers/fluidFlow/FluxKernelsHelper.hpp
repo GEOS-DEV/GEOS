@@ -164,6 +164,7 @@ struct AquiferBCKernel
 
     forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
+      // ============================================================
       localIndex const er  = seri( iconn, Order::ELEM );
       localIndex const esr = sesri( iconn, Order::ELEM );
       localIndex const ei  = sefi( iconn, Order::ELEM );
@@ -179,6 +180,7 @@ struct AquiferBCKernel
                                                               areaFraction,
                                                               dAquiferVolFlux_dPres );
       targetSetSumFluxes += aquiferVolFlux;
+      // =============================================================
     } );
     return targetSetSumFluxes.get();
   }

@@ -182,6 +182,7 @@ bool PVTDriver::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
 
 
 template< typename FLUID_TYPE >
+GEOSX_FORCE_INLINE
 void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
 {
   // get number of phases and components
@@ -228,11 +229,13 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
 
   using ExecPolicy = typename FLUID_TYPE::exec_policy;
   auto numSteps = m_numSteps;
-  forAll< ExecPolicy >( 1, [=]  GEOSX_HOST_DEVICE ( integer const ei )
+  forAll< ExecPolicy >( 1, [=] GEOSX_HOST_DEVICE ( integer const ei )
   {
     for( integer n=0; n<=numSteps; ++n )
     {
-      kernelWrapper.update( ei, 0, table( n, PRES ), table( n, TEMP ), composition );
+      auto & pres = table( n, PRES );
+      auto & temp = table( n, TEMP );
+      //kernelWrapper.update( ei, 0, pres, temp, composition );
       table( n, TEMP+1 ) = totalDensity( ei, 0 );
 
       for( integer p=0; p<NP; ++p )

@@ -65,6 +65,7 @@ public:
 public:
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -76,6 +77,7 @@ public:
                           real64 & totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -87,6 +89,7 @@ public:
                           FluidProp::SliceType const totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -148,7 +151,8 @@ private:
 };
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -162,8 +166,16 @@ CompositionalMultiphaseFluid::KernelWrapper::
 {
 #if defined(GEOSX_DEVICE_COMPILE)
   GEOSX_ERROR( "This function cannot be used on GPU" );
+  GEOSX_UNUSED_VAR( pressure );
+  GEOSX_UNUSED_VAR( temperature );
+  GEOSX_UNUSED_VAR( composition );
+  GEOSX_UNUSED_VAR( phaseFrac );
+  GEOSX_UNUSED_VAR( phaseDens );
+  GEOSX_UNUSED_VAR( phaseMassDens );
+  GEOSX_UNUSED_VAR( phaseVisc );
+  GEOSX_UNUSED_VAR( phaseCompFrac );
+  GEOSX_UNUSED_VAR( totalDens );
 #else
-
   integer constexpr maxNumComp = MultiFluidBase::MAX_NUM_COMPONENTS;
   integer constexpr maxNumPhase = MultiFluidBase::MAX_NUM_PHASES;
   integer const numComp = numComponents();
@@ -243,7 +255,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 CompositionalMultiphaseFluid::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -257,6 +270,15 @@ CompositionalMultiphaseFluid::KernelWrapper::
 {
 #if defined(GEOSX_DEVICE_COMPILE)
   GEOSX_ERROR( "This function cannot be used on GPU" );
+  GEOSX_UNUSED_VAR( pressure );
+  GEOSX_UNUSED_VAR( temperature );
+  GEOSX_UNUSED_VAR( composition );
+  GEOSX_UNUSED_VAR( phaseFraction );
+  GEOSX_UNUSED_VAR( phaseDensity );
+  GEOSX_UNUSED_VAR( phaseMassDensity );
+  GEOSX_UNUSED_VAR( phaseViscosity );
+  GEOSX_UNUSED_VAR( phaseCompFraction );
+  GEOSX_UNUSED_VAR( totalDensity );
 #else
 
   using Deriv = multifluid::DerivativeOffset;
@@ -379,7 +401,8 @@ CompositionalMultiphaseFluid::KernelWrapper::
 }
 
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 CompositionalMultiphaseFluid::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

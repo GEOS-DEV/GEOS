@@ -39,6 +39,7 @@ public:
    * @return number of elements
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex numElems() const { return m_settlingFactor.size( 0 ); }
 
   /**
@@ -46,6 +47,7 @@ public:
    * @return number of gauss points per element
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex numGauss() const { return m_settlingFactor.size( 1 ); };
 
 protected:
@@ -80,23 +82,27 @@ protected:
   /**
    * @brief Copy constructor.
    */
+  GEOSX_HOST_DEVICE
   ParticleFluidBaseUpdate( ParticleFluidBaseUpdate const & ) = default;
 
   /**
    * @brief Move constructor.
    */
+  GEOSX_HOST_DEVICE
   ParticleFluidBaseUpdate( ParticleFluidBaseUpdate && ) = default;
 
   /**
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
+  GEOSX_HOST_DEVICE
   ParticleFluidBaseUpdate & operator=( ParticleFluidBaseUpdate const & ) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
+  GEOSX_HOST_DEVICE
   ParticleFluidBaseUpdate & operator=( ParticleFluidBaseUpdate && ) = delete;
 
   bool m_isCollisionalSlip;
@@ -127,6 +133,7 @@ private:
    * @param[in] dFluidViscosity_dComponentConcentration derivatives of the fluid viscosity wrt the composition
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        real64 const proppantConcentration,
                        real64 const fluidDensity,

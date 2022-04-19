@@ -628,6 +628,8 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
 
     CommunicationTools::getInstance().asyncSendRecv( domain.getNeighbors(), m_iComm, true, packEvents );
 
+    waitAllDeviceEvents( packEvents );
+    
     explicitKernelDispatch( mesh,
                             regionNames,
                             this->getDiscretizationName(),

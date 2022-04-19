@@ -96,5 +96,9 @@
 /// An integer flag representing the type that globalIndex will be aliased to.
 #define GEOSX_GLOBALINDEX_TYPE_FLAG 2
 
+#if defined(GEOSX_USE_CUDA) || defined(GEOSX_USE_HIP)
+#define GEOSX_USE_DEVICE
+#endif
+
 #endif  /* GEOSX_CONFIG_HPP */
 

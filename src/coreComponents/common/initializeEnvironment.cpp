@@ -41,6 +41,10 @@
 #include <cuda.h>
 #endif
 
+#if defined( GEOSX_USE_HIP )
+#include <hip/hip_runtime.h>
+#endif
+
 #include <cfenv>
 
 namespace geosx
@@ -201,6 +205,19 @@ void setupCaliper( cali::ConfigManager & caliperManager,
 #endif
   adiak::value( "CUDA runtime version", cudaRuntimeVersion );
   adiak::value( "CUDA driver version", cudaDriverVersion );
+
+  // HIP info
+  int hipRuntimeVersion = 0;
+  int hipDriverVersion = 0;
+#if defined( GESOX_USE_HIP )
+  adiak::value( "HIP", "On" )
+  GEOSX_ERROR_IF_NE( hipSuccess, hipRuntimeGetVersion( &hipRuntimeVersion ) );
+  GEOSX_ERROR_IF_NE( hipSuccess, hipDriverGetVersion( &hipDriverVersion ) );
+#else
+  adiak::value( "HIP", "Off" )
+#endif
+  adiak::value( "HIP runtime version", hipRuntimeVersion);
+  adiak::value( "HIP driver version", hipDriverVersion);
 }
 #endif // defined( GEOSX_USE_CALIPER )
 

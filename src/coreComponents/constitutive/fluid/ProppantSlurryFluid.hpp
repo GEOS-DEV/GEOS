@@ -353,6 +353,7 @@ private:
 };
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 ProppantSlurryFluidUpdate::
   computeFluidDensity( real64 const & pressure,
@@ -402,6 +403,7 @@ ProppantSlurryFluidUpdate::
 }
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 ProppantSlurryFluidUpdate::
   computeComponentDensity( real64 const pressure,
@@ -428,6 +430,7 @@ ProppantSlurryFluidUpdate::
 }
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 ProppantSlurryFluidUpdate::
   computeFluidViscosity( arraySlice1d< real64 const > const & componentDensity,
@@ -461,6 +464,7 @@ ProppantSlurryFluidUpdate::
 }
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 ProppantSlurryFluidUpdate::
   compute( real64 const & proppantConcentration,

@@ -73,6 +73,7 @@ struct MultiFluidVarView
   using SliceType = MultiFluidVarSlice< T, NDIM - 2, USD - 2, USD_DC - 2 >;
 
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   SliceType operator()( localIndex const k, localIndex const q ) const
   {
     return { value[k][q], derivs[k][q] };

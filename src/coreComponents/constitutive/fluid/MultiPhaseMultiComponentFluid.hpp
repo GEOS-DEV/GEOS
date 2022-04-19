@@ -64,6 +64,7 @@ public:
 public:
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -75,6 +76,7 @@ public:
                           real64 & totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void compute( real64 const pressure,
                           real64 const temperature,
                           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & composition,
@@ -86,6 +88,7 @@ public:
                           FluidProp::SliceType const totalDensity ) const override;
 
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     virtual void update( localIndex const k,
                          localIndex const q,
                          real64 const pressure,
@@ -199,7 +202,8 @@ using CO2BrineEzrokhiFluid = MultiPhaseMultiComponentFluid< PVTProps::EzrokhiBri
 
 template< typename P1DENSWRAPPER, typename P1VISCWRAPPER, typename P2DENSWRAPPER, typename P2VISCWRAPPER, typename FLASHWRAPPER >
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VISCWRAPPER, FLASHWRAPPER >::KernelWrapper::
   compute( real64 pressure,
            real64 temperature,
@@ -326,7 +330,8 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWrapper::
   compute( real64 const pressure,
            real64 const temperature,
@@ -476,7 +481,9 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
 }
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
-GEOSX_HOST_DEVICE inline void
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+void
 MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWrapper::
   update( localIndex const k,
           localIndex const q,

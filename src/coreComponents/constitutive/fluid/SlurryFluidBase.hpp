@@ -39,6 +39,7 @@ public:
    * @return number of elements
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex numElems() const { return m_density.size( 0 ); }
 
   /**
@@ -46,6 +47,7 @@ public:
    * @return number of gauss points per element
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex numGauss() const { return m_density.size( 1 ); };
 
   /**
@@ -53,6 +55,7 @@ public:
    * @return number of fluid components
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   localIndex numFluidComponents() const { return m_defaultComponentDensity.size(); }
 
 protected:
@@ -134,23 +137,27 @@ protected:
   /**
    * @brief Copy constructor.
    */
+  GEOSX_HOST_DEVICE
   SlurryFluidBaseUpdate( SlurryFluidBaseUpdate const & ) = default;
 
   /**
    * @brief Move constructor.
    */
+  GEOSX_HOST_DEVICE
   SlurryFluidBaseUpdate( SlurryFluidBaseUpdate && ) = default;
 
   /**
    * @brief Deleted copy assignment operator
    * @return reference to this object
    */
+  GEOSX_HOST_DEVICE
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate const & ) = delete;
 
   /**
    * @brief Deleted move assignment operator
    * @return reference to this object
    */
+  GEOSX_HOST_DEVICE
   SlurryFluidBaseUpdate & operator=( SlurryFluidBaseUpdate && ) = delete;
 
   arrayView1d< real64 const > m_defaultComponentDensity;
@@ -197,6 +204,7 @@ private:
    * @param[in] isProppantBoundary proppant boundary flag
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void update( localIndex const k,
                        localIndex const q,
                        real64 const pressure,
@@ -214,6 +222,7 @@ private:
    * @param[in] shearRate shear rate for power-law fluid calculation
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void updateFluidProperty( localIndex const k,
                                     localIndex const q,
                                     real64 const pressure,
@@ -228,6 +237,7 @@ private:
    * @param[in] componentconcentration fluid composition array
    */
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   virtual void updateComponentDensity( localIndex const k,
                                        localIndex const q,
                                        real64 const pressure,

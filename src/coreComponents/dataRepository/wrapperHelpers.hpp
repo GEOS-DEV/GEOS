@@ -570,6 +570,7 @@ void addBlueprintField( T const &,
 {
   GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << fields.path() );
+  GEOSX_UNUSED_VAR( fields ); // GEOSX_ERROR is suppressed on amd platforms atm
 }
 
 template< typename T, int NDIM, int USD >
@@ -616,6 +617,7 @@ void populateMCArray( T const &,
 {
   GEOSX_ERROR( "Cannot create a mcarray out of " << LvArray::system::demangleType< T >() <<
                "\nWas trying to write it to " << node.path() );
+  GEOSX_UNUSED_VAR( node ); // GEOSX_ERROR is suppressed on amd platforms atm
 }
 
 template< typename T >

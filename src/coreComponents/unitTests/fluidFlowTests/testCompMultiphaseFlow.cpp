@@ -554,6 +554,8 @@ void testNumericalJacobian( CompositionalMultiphaseFVM & solver,
           dPres[ei] = dP;
 #if defined(GEOSX_USE_CUDA)
           dPres.move( LvArray::MemorySpace::cuda, false );
+#elif defined(GEOSX_USE_HIP)
+	  dPres.move( LvArray::MemorySpace::hip, false );
 #endif
 
 

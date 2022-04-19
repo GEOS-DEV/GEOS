@@ -37,10 +37,10 @@ public:
 
     /// @cond DO_NOT_DOCUMENT
     /// We need these SMFs to avoid host-device errors with CUDA.
-    KernelWrapper() = default;
-    KernelWrapper( KernelWrapper const & ) = default;
-    KernelWrapper & operator=( KernelWrapper const & ) = default;
-    KernelWrapper & operator=( KernelWrapper && ) = default;
+    GEOSX_HOST_DEVICE KernelWrapper() = default;
+    GEOSX_HOST_DEVICE KernelWrapper( KernelWrapper const & ) = default;
+    GEOSX_HOST_DEVICE KernelWrapper & operator=( KernelWrapper const & ) = default;
+    GEOSX_HOST_DEVICE KernelWrapper & operator=( KernelWrapper && ) = default;
     /// @endcond
 
     /**

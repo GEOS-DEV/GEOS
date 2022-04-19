@@ -86,6 +86,7 @@ public:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64 compute( IN_ARRAY const & input ) const;
 
     /**
@@ -96,6 +97,7 @@ public:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64 compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
     /**
@@ -137,6 +139,7 @@ private:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateLinear( IN_ARRAY const & input ) const;
 
@@ -148,6 +151,7 @@ private:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
@@ -158,6 +162,7 @@ private:
      */
     template< typename IN_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateRound( IN_ARRAY const & input ) const;
 
@@ -169,6 +174,7 @@ private:
      */
     template< typename IN_ARRAY, typename OUT_ARRAY >
     GEOSX_HOST_DEVICE
+    GEOSX_FORCE_INLINE
     real64
     interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const;
 
@@ -337,6 +343,7 @@ private:
 
 template< typename IN_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 {
@@ -352,6 +359,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 {
@@ -424,6 +432,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 {
@@ -485,6 +494,7 @@ TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input ) const
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -502,6 +512,7 @@ TableFunction::KernelWrapper::compute( IN_ARRAY const & input, OUT_ARRAY && deri
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {
@@ -587,14 +598,33 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
       cornerValue *= weights[dim][corner];
       for( integer kk = 0; kk < numDimensions; ++kk )
       {
-        dCornerValue_dInput[kk] *= ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
+	auto weight = ( dim == kk ) ? dWeights_dInput[dim][corner] : weights[dim][corner];
+        dCornerValue_dInput[kk] *= weight;
       }
     }
 
     for( integer dim = 0; dim < numDimensions; ++dim )
     {
-      derivatives[dim] += dCornerValue_dInput[dim];
+      real64 val = dCornerValue_dInput[dim];
+      real64 & d = derivatives[dim];
+
+      // ====================================
+      d += val;
+      // ====================================
+      // uncommenting this makes the hip-clang compiler fail to compile on Crusher via:
+      // FluidUpdateKernel<DeadOilFluid::KernelWrapper>::launch
+      // + DeadOilFluid::KernelWrapper::update
+      //   + DeadOilFluid::KernelWrapper::compute
+      //     + DeadOilFluid::KernelWrapper::computeViscosities
+      //       + TableFunction::compute
+      //         + TableFunction::interpolateLinear
+      // all of which are force-inlined to get to this point in the first place
+      // val is on the stack
+      // d is a value from an arrayview3d, which is sliced down to an array..
+      // is the issue &(phaseVisc.derivs)[ip][Deriv::dP] in DeadOilFluid::computeViscosities?
+      // phaseVisc.derivs is an Array(View)Slice, so we're taking the address of that object and grabbing an offset from there? but there isn't an array of those, only a struct containing two Slices/Views, and this is the latter, so what is that doing?
     }
+
     value += cornerValue;
   }
   return value;
@@ -602,6 +632,7 @@ TableFunction::KernelWrapper::interpolateLinear( IN_ARRAY const & input, OUT_ARR
 
 template< typename IN_ARRAY, typename OUT_ARRAY >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 real64
 TableFunction::KernelWrapper::interpolateRound( IN_ARRAY const & input, OUT_ARRAY && derivatives ) const
 {

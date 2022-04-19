@@ -592,6 +592,7 @@ AquiferBCKernel::
 
   forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
   {
+    // ==================================
     constexpr integer NDOF = NC + 1;
 
     // working arrays
@@ -664,6 +665,7 @@ AquiferBCKernel::
                                                       NDOF );
       }
     }
+    // ====================================
   } );
 }
 
