@@ -20,6 +20,7 @@
 
 #include <vtkAppendFilter.h>
 #include <vtkDIYUtilities.h>
+#include <vtkDIYGhostUtilities.h>
 
 // NOTE: do NOT include anything from GEOSX here.
 // See full explanation in VTKMeshGeneratorTools.hpp.
@@ -41,11 +42,11 @@ redistribute( vtkPartitionedDataSet & localParts,
   diy::mpi::communicator comm( mpiComm );
   assert( static_cast< int >( localParts.GetNumberOfPartitions() ) == comm.size() );
 
-  using VectorOfUG = std::vector< vtkSmartPointer< vtkUnstructuredGrid > >;
+  using BlockType = std::vector< vtkSmartPointer< vtkUnstructuredGrid > >;
 
   diy::Master master( comm, 1, -1,
-                      []() { return static_cast< void * >( new VectorOfUG() ); },
-                      []( void * b ) { delete static_cast< VectorOfUG * >( b ); } );
+                      [] { return static_cast< void * >( new BlockType() ); },
+                      []( void * b ) { delete static_cast< BlockType * >( b ); } );
 
   diy::ContiguousAssigner const assigner( comm.size(), comm.size() );
   diy::RegularDecomposer< diy::DiscreteBounds > decomposer( 1, diy::interval( 0, comm.size() - 1 ), comm.size() );
@@ -53,7 +54,7 @@ redistribute( vtkPartitionedDataSet & localParts,
   assert( master.size() == 1 );
 
   int const myRank = comm.rank();
-  diy::all_to_all( master, assigner, [myRank, &localParts]( VectorOfUG * block, diy::ReduceProxy const & rp )
+  diy::all_to_all( master, assigner, [myRank, &localParts]( BlockType * block, diy::ReduceProxy const & rp )
   {
     if( rp.in_link().size() == 0 )
     {
@@ -96,13 +97,79 @@ redistribute( vtkPartitionedDataSet & localParts,
 
   vtkNew< vtkAppendFilter > appender;
   appender->MergePointsOn();
-  for( auto & ug : *master.block< VectorOfUG >( 0 ) )
+  for( auto & ug : *master.block< BlockType >( 0 ) )
   {
     appender->AddInputDataObject( ug );
   }
   appender->Update();
 
   return vtkUnstructuredGrid::SafeDownCast( appender->GetOutputDataObject( 0 ) );
+}
+
+std::vector< vtkBoundingBox >
+exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm )
+{
+  // The code below is modified from vtkDIYGhostUtilities::ExchangeBoundingBoxes():
+  // https://gitlab.kitware.com/vtk/vtk/-/blob/1f0e4b2d0be7cd328795131642b5bf7984f681c1/Parallel/DIY/vtkDIYGhostUtilities.txx#L300
+  // It makes some simplifications (e.g. just one input dataset per rank).
+
+  using BlockType = std::map< int, vtkBoundingBox >;
+
+  diy::mpi::communicator comm( mpiComm );
+  diy::Master master( comm, 1, -1,
+                      [] { return static_cast< void * >( new BlockType() ); },
+                      []( void * b ) { delete static_cast< BlockType * >( b ); } );
+
+  diy::ContiguousAssigner const assigner( comm.size(), comm.size() );
+  diy::RegularDecomposer< diy::DiscreteBounds > decomposer( 1, diy::interval( 0, comm.size() - 1 ), comm.size() );
+  decomposer.decompose( comm.rank(), assigner, master );
+  assert( master.size() == 1 );
+
+  diy::all_to_all( master, assigner, [&dataSet]( BlockType * block, diy::ReduceProxy const & rp )
+  {
+    int myBlockId = rp.gid();
+    if( rp.round() == 0 )
+    {
+      vtkBoundingBox bb( dataSet.GetBounds() );
+      for( int i = 0; i < rp.out_link().size(); ++i )
+      {
+        diy::BlockID const blockId = rp.out_link().target( i );
+        if( blockId.gid != myBlockId )
+        {
+          rp.enqueue( blockId, bb.GetMinPoint(), 3 );
+          rp.enqueue( blockId, bb.GetMaxPoint(), 3 );
+        }
+      }
+    }
+    else
+    {
+      double minPoint[3], maxPoint[3];
+      for( int i = 0; i < static_cast< int >( rp.in_link().size() ); ++i )
+      {
+        diy::BlockID const blockId = rp.in_link().target( i );
+        if( blockId.gid != myBlockId )
+        {
+          rp.dequeue( blockId, minPoint, 3 );
+          rp.dequeue( blockId, maxPoint, 3 );
+
+          block->emplace( blockId.gid, vtkBoundingBox( minPoint[0], maxPoint[0], minPoint[1],
+                                                       maxPoint[1], minPoint[2], maxPoint[2] ) );
+        }
+      }
+    }
+  } );
+
+  BlockType & boxMap = *master.block< BlockType >( 0 );
+  boxMap.emplace( comm.rank(), vtkBoundingBox( dataSet.GetBounds() ) );
+  assert( static_cast< int >( boxMap.size() ) == comm.size() );
+
+  std::vector< vtkBoundingBox > boxes;
+  boxes.reserve( boxMap.size() );
+  for( auto const & rankBox : boxMap )
+  {
+    boxes.push_back( rankBox.second );
+  }
+  return boxes;
 }
 
 } // namespace vtk

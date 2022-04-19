@@ -50,6 +50,15 @@ namespace vtk
 vtkSmartPointer< vtkUnstructuredGrid >
 redistribute( vtkPartitionedDataSet & localParts, MPI_Comm mpiComm );
 
+/**
+ * @brief All-to-all exchange of mesh partition bounding boxes between all ranks.
+ * @param dataSet the local part of the mesh
+ * @param mpiComm the MPI communicator
+ * @return a vector of bounding boxes, one per rank in @p mpiComm
+ */
+std::vector< vtkBoundingBox >
+exchangeBoundingBoxes( vtkDataSet & dataSet, MPI_Comm mpiComm );
+
 } // namespace vtk
 } // namespace geosx
 

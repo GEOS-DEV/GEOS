@@ -60,7 +60,7 @@
       file="staircase3d_tet.vtu"
       fieldsToImport="{ FluidComposition }"
       fieldNamesInGEOSX="{ globalCompFraction }"
-      useGraphPartitioning="1"
+      partitionRefinement="1"
       logLevel="2"/>
 
     <InternalWell

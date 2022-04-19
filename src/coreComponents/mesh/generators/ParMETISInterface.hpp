@@ -30,6 +30,8 @@ namespace parmetis
  * @brief Partition a finite element mesh according to its dual graph.
  * @param elemToNodes the input mesh represented by its elem-node graph
  * @param comm the MPI communicator of processes to partition over
+ * @param minCommonNodes minimum number of shared nodes to create an graph edge
+ * @param numRefinements number of partition refinement iterations
  * @return an array of target partitions for each element in local mesh
  * @note the number of partitions will be equal to the size of @p comm.
  */
