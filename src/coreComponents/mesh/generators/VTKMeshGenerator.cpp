@@ -116,11 +116,14 @@ loadMesh( Path const & filePath )
     {
       vtkUgReader->Update();
     }
+    else if( MpiWrapper::commSize() < numberOfPieces )
+    {
+      GEOSX_ERROR( "Reading a partitioned VTK dataset with fewer ranks than partitions is currently not supported." );
+    }
     else if( MpiWrapper::commRank() < numberOfPieces )
     {
-      vtkUgReader->UpdatePiece( MpiWrapper::commRank(), 2, 0 ); // TODO What's that numPieces = 2?
+      vtkUgReader->UpdatePiece( MpiWrapper::commRank(), MpiWrapper::commSize(), 0 );
     }
-    // TODO what happens if numberOfPieces > MpiWrapper::commSize() ?
     loadedMesh = vtkUgReader->GetOutput();
   }
   else
@@ -317,14 +320,14 @@ redistributeMesh( vtkUnstructuredGrid & loadedMesh,
   vtkIdType const minCellsOnAnyRank = MpiWrapper::min( loadedMesh.GetNumberOfCells(), comm );
   if( minCellsOnAnyRank == 0 )
   {
-    // Redistribute data all over the available ranks using simple octree partitions
+    // Redistribute the mesh over all ranks using simple octree partitions
     mesh = redistributeByKdTree( *mesh );
+  }
 
-    // Redistribute the mesh again using higher-quality graph partitioner
-    if( partitionRefinement > 0 )
-    {
-      mesh = redistributeByCellGraph( *mesh, comm, partitionRefinement - 1 );
-    }
+  // Redistribute the mesh again using higher-quality graph partitioner
+  if( partitionRefinement > 0 )
+  {
+    mesh = redistributeByCellGraph( *mesh, comm, partitionRefinement - 1 );
   }
 
   return mesh;
