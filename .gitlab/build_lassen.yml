@@ -1,0 +1,25 @@
+####
+# This is the share configuration of jobs for lassen
+.on_lassen:
+  tags:
+    - shell
+    - lassen
+
+####
+# Templates
+.build_on_lassen:
+  stage: build
+  variables:
+    ALLOC_COMMAND: "lalloc 1 -q pdebug"
+    INTEGRATED_ALLOC_COMMAND: "lalloc 10 -q pdebug"
+    SYSTEM: "lassen"
+  extends: [.build_script, .on_lassen]
+
+####
+# Jobs
+lassen_clang_upstream_build:
+  variables:
+    HOST_CONFIG: "lassen-clang@upstream.cmake"
+    BUILD_DIR: "build-lassen-clang@upstream-release"
+  extends: [.build_on_lassen]
+

@@ -1,0 +1,92 @@
+variables:
+  PROJECT_ALLOC_NAME: ${CI_PROJECT_NAME}_ci_${CI_PIPELINE_ID}
+  BUILD_ROOT: ${CI_PROJECT_DIR}
+  # Should make it so we aren't doing fresh clones of GEOSX all the time
+  GIT_STRATEGY: fetch
+  GIT_SUBMODULE_STRATEGY: normal
+
+stages:
+  - build
+  - nightly
+
+####
+# Template
+.build_script:
+  script:
+    - mkdir ${SYSTEM}
+
+    # CONFIGURE
+    - echo "~~~~~~~~~~ START - configure ~~~~~~~~~~~"
+    - python scripts/config-build.py -hc host-configs/LLNL/${HOST_CONFIG} -bt Release -DENABLE_DOXYGEN=OFF 2>&1 | tee ${SYSTEM}/${SYSTEM}_configure.log || config_code=$?
+    - if [ $config_code -ne 0 ]; then mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_configure.log ${SYSTEM}/${SYSTEM}_configure_SUCCESS.log; fi
+    - echo "~~~~~~~~~~ END - configure ~~~~~~~~~~~~~"
+
+    # BUILD
+    - echo "~~~~~~~~~~ START - build ~~~~~~~~~~~"
+    - ${ALLOC_COMMAND} make VERBOSE=1 -C ${BUILD_DIR} -j 2>&1 | tee ${SYSTEM}/${SYSTEM}_build.log || build_code=$?
+    - if [ $build_code -ne 0 ]; then mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_build.log ${SYSTEM}/${SYSTEM}_build_SUCCESS.log; fi
+    - echo "~~~~~~~~~~ END - build ~~~~~~~~~~~~~"
+
+    # UNIT TEST
+    - echo "~~~~~~~~~~ START - unit tests ~~~~~~~~~~~"
+    - ${ALLOC_COMMAND} make -C ${BUILD_DIR} test ARGS="-V" 2>&1 | tee ${SYSTEM}/${SYSTEM}_unit_test.log || unit_code=$?
+    - if [ $unit_code -ne 0 ]; then mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_unit_test.log ${SYSTEM}/${SYSTEM}_unit_test_SUCCESS.log; fi
+    - echo "~~~~~~~~~~ END - unit tests ~~~~~~~~~~~~~"
+
+    # INTEGRATED TEST
+    - echo "~~~~~~~~~~ START - integrated tests ~~~~~~~~~~~"
+    - ./${BUILD_DIR}/geosxats.sh -a veryclean
+    - ${INTEGRATED_ALLOC_COMMAND} ./${BUILD_DIR}/geosxats.sh --failIfTestsFail 2>&1 | tee ${SYSTEM}/${SYSTEM}_integrated_test.log || integrated_code=$?
+    - if [ $integrated_code -ne 0 ]; then mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_FAILURE.log; else mv ${SYSTEM}/${SYSTEM}_integrated_test.log ${SYSTEM}/${SYSTEM}_integrated_test_SUCCESS.log; fi
+    - mkdir ${SYSTEM}/integratedTestsDebugFiles
+    - cp -rL ${BUILD_DIR}/integratedTests/TestLogs ${SYSTEM}/
+    - grep -r -l --include=*.data "Error" ${BUILD_DIR}/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - grep -r -l --include=*.err --exclude-dir="TestLogs*" "error" ${BUILD_DIR}/integratedTests/ | xargs cp -t ${SYSTEM}/integratedTestsDebugFiles || true
+    - echo "~~~~~~~~~~ END - integrated tests ~~~~~~~~~~~~~"
+
+    # CLEANUP + PRINT SUCCESS/FAILURES
+    - echo "~~~~~~~~~~ START - cleanup ~~~~~~~~~~~"
+    - ./${BUILD_DIR}/geosxats.sh -a veryclean
+    - rm -rf ${BUILD_DIR}
+    - if [ $config_code -ne 0 ]; then echo "Configuration failed"; else echo "Configuration succeeded"; fi
+    - if [ $build_code -ne 0 ]; then echo "Build failed"; else echo "Build succeeded"; fi
+    - if [ $unit_code -ne 0 ]; then echo "Unit tests failed"; else echo "Unit tests succeeded"; fi
+    - if [ $integrated_code -ne 0 ]; then echo "Integrated tests failed"; else echo "Integrated tests succeeded"; fi
+    - exit_val=$((config_code + build_code + unit_code + integrated_code))
+    - exit $exit_val
+    - echo "~~~~~~~~~~ END - cleanup ~~~~~~~~~~~~~"
+  # Job only triggers for scheduled pipelines and through web interface
+  only:
+    refs:
+      - schedules
+      - web
+  # Output a folder of logs files; these are automatically inherited by nightly-job
+  artifacts:
+    when: always
+    paths:
+      - quartz/
+      - lassen/
+  # Allow job to always fail, so nightly-job in next stage will run
+  allow_failure: true
+
+# This is where jobs are included
+include:
+ - local: .gitlab/build_quartz.yml
+ - local: .gitlab/build_lassen.yml
+
+# Pull nightlyTests repo and update files
+nightly-job:
+  stage: nightly
+  script:
+    - echo "~~~~~~~~~~ START - write to nightlyTests Repo ~~~~~~~~~~~~~"
+    - git clone git@github.com:GEOSX/nightlyTests.git
+    - cd test
+    - ./update.sh
+    - echo "~~~~~~~~~~ END - write to nightlyTests Repo ~~~~~~~~~~~~~"
+  only:
+    refs:
+      - schedules
+      - web
+  tags:
+   - shell
+   - quartz
