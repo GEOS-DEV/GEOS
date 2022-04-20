@@ -1189,7 +1189,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regioNames )
+                                                arrayView1d< string const > const & regionNames )
 
   {
     std::vector< SyncFieldsID > fieldsTobeSync;
@@ -1199,7 +1199,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 
     fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Node, regionNames, fieldNames } );
 
-    CommunicationTools::getInstance().synchronizeFields2( fieldNames,
+    CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
                                                           mesh,
                                                           domain.getNeighbors(),
                                                           true );
