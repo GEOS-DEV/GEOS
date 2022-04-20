@@ -918,7 +918,7 @@ void SolidMechanicsLagrangianFEM::setupDofs( DomainPartition const & GEOSX_UNUSE
 {
   GEOSX_MARK_FUNCTION;
   dofManager.addField( keys::TotalDisplacement,
-                       DofManager::Location::Node,
+                       FieldLocation::Node,
                        3,
                        m_meshTargets );
 
@@ -1197,7 +1197,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
     fieldNames.emplace_back( keys::IncrementalDisplacement );
     fieldNames.emplace_back( keys::TotalDisplacement );
 
-    fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Node, regionNames, fieldNames } );
+    fieldsTobeSync.emplace_back( FieldLocation::Node, regionNames, fieldNames );
 
     CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
                                                           mesh,

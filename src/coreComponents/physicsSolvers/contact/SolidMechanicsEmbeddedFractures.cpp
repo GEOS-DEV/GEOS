@@ -201,7 +201,7 @@ void SolidMechanicsEmbeddedFractures::setupDofs( DomainPartition const & domain,
     } );
 
     dofManager.addField( extrinsicMeshData::contact::dispJump::key(),
-                         DofManager::Location::Elem,
+                         FieldLocation::Elem,
                          3,
                          meshTargets );
 
@@ -674,7 +674,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
     fieldNames.emplace_back( extrinsicMeshData::contact::dispJump::key() );
     fieldNames.emplace_back( extrinsicMeshData::contact::deltaDispJump::key() );
 
-    fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Elem, regionNames, fieldNames } );
+    fieldsTobeSync.emplace_back( FieldLocation::Elem, regionNames, fieldNames );
 
     CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
                                                           mesh,

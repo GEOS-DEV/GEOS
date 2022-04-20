@@ -742,6 +742,17 @@ struct SyncFieldsID
   SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, arrayView1d< string const > const & fields ):
     location( location )
   {
+    fillNames( regions, fields );
+  }
+  SyncFieldsID( FieldLocation const location, std::vector< string > const & regions, std::vector< string > const & fields ):
+    location( location )
+  {
+    fillNames( regions, fields );
+  }
+
+  template< typename T >
+  void fillNames(T const & regions, T const & fields)
+  {
     regionNames.resize( regions.size());
     for( integer i = 0; i < regionNames.size(); i++ )
     {

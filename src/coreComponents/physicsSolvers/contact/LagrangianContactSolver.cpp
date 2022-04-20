@@ -526,7 +526,7 @@ void LagrangianContactSolver::setupDofs( DomainPartition const & domain,
   } );
 
   dofManager.addField( extrinsicMeshData::contact::traction::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        3,
                        meshTargets );
   dofManager.addCoupling( extrinsicMeshData::contact::traction::key(),

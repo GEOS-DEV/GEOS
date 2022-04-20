@@ -500,7 +500,7 @@ void ProppantTransport::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM( d
                                    DofManager & dofManager ) const
 {
   dofManager.addField( extrinsicMeshData::proppant::proppantConcentration::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        m_numDofPerCell,
                        m_meshTargets );
 

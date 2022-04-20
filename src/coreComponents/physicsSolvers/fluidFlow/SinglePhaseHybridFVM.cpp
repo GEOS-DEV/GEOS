@@ -213,7 +213,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
   // we need Connectivity::Face because of the two-point upwinding
   // in AssembleOneSidedMassFluxes
   dofManager.addField( extrinsicMeshData::flow::pressure::key(),
-                       DofManager::Location::Elem,
+                       FieldLocation::Elem,
                        1,
                        m_meshTargets );
 
@@ -223,7 +223,7 @@ void SinglePhaseHybridFVM::setupDofs( DomainPartition const & GEOSX_UNUSED_PARAM
 
   // setup the connectivity of face fields
   dofManager.addField( extrinsicMeshData::flow::facePressure::key(),
-                       DofManager::Location::Face,
+                       FieldLocation::Face,
                        1,
                        m_meshTargets );
 

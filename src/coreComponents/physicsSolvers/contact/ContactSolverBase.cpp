@@ -241,7 +241,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
     regionNames.emplace_back( getFractureRegionName() );
     fieldNames.emplace_back( viewKeyStruct::fractureStateString() );
 
-    fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Elem, regionNames, fieldNames  } );
+    fieldsTobeSync.emplace_back( FieldLocation::Elem, regionNames, fieldNames );
 
     CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
                                                           mesh,
