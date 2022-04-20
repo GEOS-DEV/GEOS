@@ -65,7 +65,7 @@
       xCoords="{ 0, 30 }"
       yCoords="{ -5, -1.0, 0, 1.0, 5 }"
       zCoords="{ 0, 1 }"
-      nx="{ 60 }"
+      nx="{ 120 }"
       ny="{ 20, 20, 20, 20 }"
       nz="{ 2 }"
       yBias="{0.75, 0, 0, -0.75}"
@@ -132,21 +132,12 @@
       defaultDensity="2700"
       defaultBulkModulus="4.4144e3"
       defaultShearModulus="4.3363e3"
-      lengthScale="0.1"
+      lengthScale="0.2"
       criticalFractureEnergy="9.1e-2"
       criticalStrainEnergy="0"
       tensileStrength="27.0"
       compressiveStrength="77.0"
-      deltaCoefficient="1.45"/>
-
-<!--     <DamageElasticIsotropic
-      name="graphite"
-      defaultDensity="2700"
-      defaultBulkModulus="4.4144e3"
-      defaultShearModulus="4.3363e3"
-      lengthScale="0.1"
-      criticalFractureEnergy="9.1e-2"
-      criticalStrainEnergy="0"/> -->
+      deltaCoefficient="3.22"/>
   </Constitutive>
 
   <FieldSpecifications>
@@ -192,13 +183,6 @@
       scale="0.0"
       setNames="{ rightCenterPointz }"/>
 
- <!--    <FieldSpecification
-      name="pointSource"
-      fieldName="Damage"
-      objectPath="nodeManager"
-      scale="1"
-      setNames="{ leftCenterPoint }"/> -->
-
     <FieldSpecification
       name="separableFace"
       initialCondition="1"
@@ -237,11 +221,6 @@
   </Outputs>
 
   <Geometry>
-  <!--   <Box
-      name="leftCenterPoint"
-      xMin="{ -0.001, -0.001, -0.001 }"
-      xMax="{ +5.001, +0.001, +1.001 }"/> -->
-
     <Box
       name="fracture"
       xMin="{ -0.001, -0.001, -0.001 }"
