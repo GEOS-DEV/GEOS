@@ -115,7 +115,7 @@ public:
                    std::vector< NeighborCommunicator > & neighbors,
                    MPI_iCommData & icomm,
                    bool onDevice,
-                   parallelDeviceEvents & events );     
+                   parallelDeviceEvents & events );
 
   void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
                       MPI_iCommData & icomm,
@@ -128,9 +128,9 @@ public:
                           bool onDevice );
 
   void synchronizeUnpack2( MeshLevel & mesh,
-                          std::vector< NeighborCommunicator > & neighbors,
-                          MPI_iCommData & icomm,
-                          bool onDevice );                        
+                           std::vector< NeighborCommunicator > & neighbors,
+                           MPI_iCommData & icomm,
+                           bool onDevice );
 
   bool asyncUnpack( MeshLevel & mesh,
                     std::vector< NeighborCommunicator > & neighbors,
@@ -140,10 +140,10 @@ public:
 
 
   bool asyncUnpack2( MeshLevel & mesh,
-                    std::vector< NeighborCommunicator > & neighbors,
-                    MPI_iCommData & icomm,
-                    bool onDevice,
-                    parallelDeviceEvents & events );                  
+                     std::vector< NeighborCommunicator > & neighbors,
+                     MPI_iCommData & icomm,
+                     bool onDevice,
+                     parallelDeviceEvents & events );
 
   void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
@@ -153,10 +153,10 @@ public:
 
 
   void finalizeUnpack2( MeshLevel & mesh,
-                       std::vector< NeighborCommunicator > & neighbors,
-                       MPI_iCommData & icomm,
-                       bool onDevice,
-                       parallelDeviceEvents & events );                     
+                        std::vector< NeighborCommunicator > & neighbors,
+                        MPI_iCommData & icomm,
+                        bool onDevice,
+                        parallelDeviceEvents & events );
 
 private:
   std::set< int > m_freeCommIDs;

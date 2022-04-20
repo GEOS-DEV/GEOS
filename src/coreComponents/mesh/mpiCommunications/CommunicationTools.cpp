@@ -947,7 +947,7 @@ void CommunicationTools::synchronizeFields( const std::map< string, string_array
   synchronizeUnpack( mesh, neighbors, icomm, onDevice );
 }
 
-void CommunicationTools::synchronizeFields2( std::vector<SyncFieldsID > const & fieldsTobeSync,
+void CommunicationTools::synchronizeFields2( std::vector< SyncFieldsID > const & fieldsTobeSync,
                                              MeshLevel & mesh,
                                              std::vector< NeighborCommunicator > & neighbors,
                                              bool onDevice )
@@ -959,7 +959,7 @@ void CommunicationTools::synchronizeFields2( std::vector<SyncFieldsID > const & 
   synchronizeUnpack2( mesh, neighbors, icomm, onDevice );
 }
 
-void CommunicationTools::synchronizePackSendRecv2( std::vector<SyncFieldsID > const & fieldsTobeSync,
+void CommunicationTools::synchronizePackSendRecv2( std::vector< SyncFieldsID > const & fieldsTobeSync,
                                                    MeshLevel & mesh,
                                                    std::vector< NeighborCommunicator > & neighbors,
                                                    MPI_iCommData & icomm,
@@ -971,7 +971,7 @@ void CommunicationTools::synchronizePackSendRecv2( std::vector<SyncFieldsID > co
   asyncSendRecv( neighbors, icomm, onDevice, events );
 }
 
-void CommunicationTools::synchronizePackSendRecvSizes2( std::vector<SyncFieldsID > const & fieldsTobeSync,
+void CommunicationTools::synchronizePackSendRecvSizes2( std::vector< SyncFieldsID > const & fieldsTobeSync,
                                                         MeshLevel & mesh,
                                                         std::vector< NeighborCommunicator > & neighbors,
                                                         MPI_iCommData & icomm,
@@ -998,7 +998,7 @@ void CommunicationTools::synchronizePackSendRecvSizes2( std::vector<SyncFieldsID
 }
 
 
-void CommunicationTools::asyncPack2( std::vector<SyncFieldsID > const & fieldsTobeSync,
+void CommunicationTools::asyncPack2( std::vector< SyncFieldsID > const & fieldsTobeSync,
                                      MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
@@ -1014,10 +1014,10 @@ void CommunicationTools::asyncPack2( std::vector<SyncFieldsID > const & fieldsTo
 
 
 bool CommunicationTools::asyncUnpack2( MeshLevel & mesh,
-                                      std::vector< NeighborCommunicator > & neighbors,
-                                      MPI_iCommData & icomm,
-                                      bool onDevice,
-                                      parallelDeviceEvents & events )
+                                       std::vector< NeighborCommunicator > & neighbors,
+                                       MPI_iCommData & icomm,
+                                       bool onDevice,
+                                       parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1055,10 +1055,10 @@ bool CommunicationTools::asyncUnpack2( MeshLevel & mesh,
 }
 
 void CommunicationTools::finalizeUnpack2( MeshLevel & mesh,
-                                         std::vector< NeighborCommunicator > & neighbors,
-                                         MPI_iCommData & icomm,
-                                         bool onDevice,
-                                         parallelDeviceEvents & events )
+                                          std::vector< NeighborCommunicator > & neighbors,
+                                          MPI_iCommData & icomm,
+                                          bool onDevice,
+                                          parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1080,9 +1080,9 @@ void CommunicationTools::finalizeUnpack2( MeshLevel & mesh,
 }
 
 void CommunicationTools::synchronizeUnpack2( MeshLevel & mesh,
-                                            std::vector< NeighborCommunicator > & neighbors,
-                                            MPI_iCommData & icomm,
-                                            bool onDevice )
+                                             std::vector< NeighborCommunicator > & neighbors,
+                                             MPI_iCommData & icomm,
+                                             bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
   parallelDeviceEvents events;

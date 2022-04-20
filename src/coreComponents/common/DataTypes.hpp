@@ -726,35 +726,35 @@ struct TypeName
 
 
 enum class FieldLocation
-  {
-    Elem, //!< location is element (like pressure in finite volumes)
-    Face, //!< location is face (like flux in mixed finite elements)
-    Edge, //!< location is edge (like flux between fracture elements)
-    Node  //!< location is node (like displacements in finite elements)
-  };
+{
+  Elem,   //!< location is element (like pressure in finite volumes)
+  Face,   //!< location is face (like flux in mixed finite elements)
+  Edge,   //!< location is edge (like flux between fracture elements)
+  Node    //!< location is node (like displacements in finite elements)
+};
 
-  struct SyncFieldsID
-  {
-    FieldLocation location;
-    array1d< string > regionNames;
-    array1d< string > fieldNames;
+struct SyncFieldsID
+{
+  FieldLocation location;
+  array1d< string > regionNames;
+  array1d< string > fieldNames;
 
-    SyncFieldsID(  FieldLocation const location, arrayView1d< string const> const & regions,  arrayView1d< string const> const & fields ):
-      location( location )
+  SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, arrayView1d< string const > const & fields ):
+    location( location )
+  {
+    regionNames.resize( regions.size());
+    for( integer i = 0; i < regionNames.size(); i++ )
     {
-      regionNames.resize(regions.size());
-      for(integer i = 0; i < regionNames.size(); i++)
-      {
-        regionNames[i] = regions[i];
-      }
-
-      fieldNames.resize(fields.size());
-      for(integer i = 0; i < fieldNames.size(); i++)
-      {
-        fieldNames[i] = fields[i];
-      }
+      regionNames[i] = regions[i];
     }
-  };
+
+    fieldNames.resize( fields.size());
+    for( integer i = 0; i < fieldNames.size(); i++ )
+    {
+      fieldNames[i] = fields[i];
+    }
+  }
+};
 
 }
 

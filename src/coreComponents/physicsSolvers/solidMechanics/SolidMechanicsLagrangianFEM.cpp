@@ -1187,20 +1187,22 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                keys::TotalDisplacement,
                                -scalingFactor );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
-  fieldNames["node"].emplace_back( keys::TotalDisplacement );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regioNames )
 
   {
+    std::vector< SyncFieldsID > fieldsTobeSync;
+    array1d< string > fieldNames;
+    fieldNames.emplace_back( keys::IncrementalDisplacement );
+    fieldNames.emplace_back( keys::TotalDisplacement );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
-                                                         mesh,
-                                                         domain.getNeighbors(),
-                                                         true );
+    fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Node, regionNames, fieldNames } );
+
+    CommunicationTools::getInstance().synchronizeFields2( fieldNames,
+                                                          mesh,
+                                                          domain.getNeighbors(),
+                                                          true );
   } );
 }
 
