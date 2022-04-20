@@ -67,6 +67,7 @@ public:
   using DamageUpdates< UPDATE_BASE >::getDegradationValue;
   using DamageUpdates< UPDATE_BASE >::getDegradationDerivative;
   using DamageUpdates< UPDATE_BASE >::getDegradationSecondDerivative;
+  using DamageUpdates< UPDATE_BASE >::getDamage;
   using DamageUpdates< UPDATE_BASE >::getEnergyThreshold;
 
   using DamageUpdates< UPDATE_BASE >::m_strainEnergyDensity;
@@ -112,12 +113,12 @@ public:
     real64 beta0 = m_deltaCoefficient * 0.375 * m_criticalFractureEnergy / m_lengthScale; 
     
     real64 beta1 = - 0.375 * m_criticalFractureEnergy / m_lengthScale * ((1 + m_deltaCoefficient)*(m_compressStrength - m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
-                   - (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
-                   - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength, 3) - pow(m_tensileStrength, 3))*m_tensileStrength/18/(mu*mu)/(kappa*kappa)); 
+                   + (8*mu + 24*kappa - 27*m_tensileStrength) * (m_compressStrength - m_tensileStrength) / 144. / mu / kappa
+                   + m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength, 3) - pow(m_tensileStrength, 3))*m_tensileStrength/18/(mu*mu)/(kappa*kappa)); 
     
     real64 beta2 = - 0.375 * m_criticalFractureEnergy / m_lengthScale * (sqrt(3.)*(1 + m_deltaCoefficient)*(m_compressStrength + m_tensileStrength)/2./m_compressStrength/m_tensileStrength)
-                   - (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48. / sqrt(3.) / mu / kappa
-                   - m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength,3) + pow(m_tensileStrength,3))*m_tensileStrength/6./sqrt(3.)/(mu*mu)/(kappa*kappa)); 
+                   + (8*mu + 24*kappa - 27*m_tensileStrength)*(m_compressStrength + m_tensileStrength) / 48. / sqrt(3.) / mu / kappa
+                   + m_lengthScale / m_criticalFractureEnergy * ((mu + 3*kappa)*(pow(m_compressStrength,3) + pow(m_tensileStrength,3))*m_tensileStrength/6./sqrt(3.)/(mu*mu)/(kappa*kappa)); 
 
     real64 beta3 = m_lengthScale * (m_tensileStrength/mu/kappa) / m_criticalFractureEnergy; 
 
@@ -126,6 +127,20 @@ public:
     LvArray::tensorOps::scale< 6 >( stress, factor );
 
     stiffness.scaleParams( factor );
+  }
+
+  GEOSX_HOST_DEVICE
+  virtual real64 getStrainEnergyDensity( localIndex const k,
+                                         localIndex const q ) const final
+  {
+    real64 const sed = SolidBaseUpdates::getStrainEnergyDensity( k, q );
+
+    if( sed > m_strainEnergyDensity( k, q ) )
+    {
+      m_strainEnergyDensity( k, q ) = sed;
+    }
+
+    return m_strainEnergyDensity( k, q );
   }
 
   GEOSX_HOST_DEVICE
