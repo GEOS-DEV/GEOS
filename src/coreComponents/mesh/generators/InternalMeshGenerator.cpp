@@ -105,7 +105,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
+    setDescription( "Pattern by which to decompose the hex mesh into wedges (more explanation required)" );
 
   registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
     setApplyDefaultValue( 1e-10 ).
@@ -121,7 +121,7 @@ static int getNumElemPerBox( ElementType const elementType )
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
     case ElementType::Tetrahedron:   return 6;
-    case ElementType::Prism:         return 2;
+    case ElementType::Wedge:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;
     default:
@@ -254,7 +254,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
       nodeIDInBox[7] = 6;
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       if( trianglePattern == 0 )
       {

@@ -75,7 +75,7 @@ The differences are worth pointing out here. In GEOSX:
    vertices can be anywhere in space. This is useful for grids that turn, fold,
    or are heavily bent. Hexahedral blocks should nevertheless not be deprecated
    and have 8 distinct vertices.
-   Some tolerance exists for deprecation to wedges or prisms
+   Some tolerance exists for deprecation to wedges
    in some solvers (finite element solvers), but it is best to avoid such situations
    and label elements according to their actual shape.
    Butterfly cells, flat cells, negative or zero volume cells will cause problems.
@@ -233,7 +233,7 @@ with console messages as follows.
     0 >>> Number of tetrahedra = 0
     0 >>> Number of hexahedra = 1000
     0 >>> Number of pyramids = 0
-    0 >>> Number of prisms = 0
+    0 >>> Number of wedges = 0
     0 >>> *** Done
     0 >>> *** Creating Polygons from Polyhedra...
     0 >>> 3300 polygons have been created
@@ -405,7 +405,7 @@ Followed by:
   0 >>> Number of tetrahedra = 1153
   0 >>> Number of hexahedra = 0
   0 >>> Number of pyramids = 0
-  0 >>> Number of prisms = 0
+  0 >>> Number of wedges = 0
   0 >>> *** Done
   0 >>> *** Creating Polygons from Polyhedra...
   0 >>> 1994 polygons have been created
@@ -481,7 +481,7 @@ For any feedback on this tutorial, please submit a `GitHub issue on the project'
 
   - A complete description of the Internal Mesh generator is found here :ref:`Meshes`.
   - PAMELA being an external submodule has less documentation, but the same :ref:`Meshes` page may get you started.
-  - GEOSX can handle tetrahedra, hexahedra, prisms, pyramids, wedges, and any combination thereof in one mesh.
+  - GEOSX can handle tetrahedra, hexahedra, pyramids, wedges, and any combination thereof in one mesh.
     For more information on how MSH formats can help you specify these mesh types, see the `Gmsh`_ website.
 
 
