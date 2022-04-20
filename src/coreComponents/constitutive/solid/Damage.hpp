@@ -97,7 +97,9 @@ public:
   virtual real64 getDegradationValue( localIndex const k,
                                       localIndex const q ) const
   {
-    return (1 - m_damage( k, q ))*(1 - m_damage( k, q ));
+    real64 pf = fmax(fmin(0.999, m_damage( k, q )), 0.0); 
+
+    return (1 - pf)*(1 - pf);
   }
 
 
@@ -115,6 +117,14 @@ public:
   {
     GEOSX_UNUSED_VAR( d );
     return 2.0;
+  }
+
+  GEOSX_FORCE_INLINE
+  GEOSX_HOST_DEVICE
+  virtual real64 getDamage( localIndex const k, 
+                            localIndex const q ) const
+  {
+    return m_damage( k, q );
   }
 
 
