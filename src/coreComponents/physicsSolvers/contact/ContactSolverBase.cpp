@@ -232,14 +232,18 @@ real64 ContactSolverBase::explicitStep( real64 const & GEOSX_UNUSED_PARAM( time_
 
 void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) const
 {
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( viewKeyStruct::fractureStateString() ) );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    std::vector< SyncFieldsID > fieldsTobeSync;
+    array1d<string> regionNames, fieldNames;
+    regionNames.emplace_back( getFractureRegionName() );
+    fieldNames.emplace_back( viewKeyStruct::fractureStateString() );
+
+    fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Elem, regionNames, fieldNames  } );
+
+    CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );

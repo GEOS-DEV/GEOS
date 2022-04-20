@@ -69,6 +69,16 @@ public:
    */
   std::map< string, string_array > & fieldNames() { return m_fieldNames;}
 
+  /**
+   * @return Reference to the field names registered with the communication data.
+   */
+  std::vector< SyncFieldsID > const & getFieldsTobeSync() const { return m_fieldsTobeSync;}
+
+  /**
+   * @return Reference to the field names registered with the communication data.
+   */
+  std::vector< SyncFieldsID > & fieldsTobeSync() { return m_fieldsTobeSync;}
+
 
   MPI_Request * mpiSendBufferRequest() { return m_mpiSendBufferRequest.data(); }
   MPI_Request * mpiRecvBufferRequest() { return m_mpiRecvBufferRequest.data(); }
@@ -100,6 +110,8 @@ private:
   /// A collection of field names keyed on object keys to pack/unpack from
   /// communication pipeline.
   std::map< string, string_array > m_fieldNames;
+
+  std::vector< SyncFieldsID > m_fieldsTobeSync;
 
   array1d< MPI_Request > m_mpiSendBufferRequest;
   array1d< MPI_Request > m_mpiRecvBufferRequest;

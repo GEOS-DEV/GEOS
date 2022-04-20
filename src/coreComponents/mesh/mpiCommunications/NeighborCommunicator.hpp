@@ -46,32 +46,6 @@ public:
   NeighborCommunicator():
     NeighborCommunicator( -1 ){};
 
-
-  enum class Location
-  {
-    Elem, //!< location is element (like pressure in finite volumes)
-    Face, //!< location is face (like flux in mixed finite elements)
-    Edge, //!< location is edge (like flux between fracture elements)
-    Node  //!< location is node (like displacements in finite elements)
-  };
-
-  struct SyncFieldsID
-  {
-    string regionName;
-    Location location;
-    array1d< string > fieldNames;
-
-    SyncFieldsID( string const regionName, Location const location ):
-      regionName( regionName ),
-      location( location )
-    {}
-
-    void addField( string const fieldName )
-    {
-      fieldNames.emplace_back( fieldName );
-    }
-  };
-
   void mpiISendReceive( buffer_unit_type const * const sendBuffer,
                         int const sendSize,
                         MPI_Request & sendRequest,

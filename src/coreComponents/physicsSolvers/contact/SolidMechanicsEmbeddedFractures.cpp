@@ -664,15 +664,18 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
     updateJump( dofManager, domain );
   }
 
-  std::vector< NeighborCommunicator::SyncFieldsID > fieldsTobeSync;
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    NeighborCommunicator::SyncFieldsID fieldsID( getFractureRegionName(), NeighborCommunicator::Location::Elem );
-    fieldsID.addField( string( extrinsicMeshData::contact::dispJump::key() ) );
-    fieldsID.addField( string( extrinsicMeshData::contact::deltaDispJump::key()) );
-    fieldsTobeSync.emplace_back( fieldsID );
+    std::vector< SyncFieldsID > fieldsTobeSync;
+    array1d<string> regionNames, fieldNames;
+    regionNames.emplace_back( getFractureRegionName() );
+    fieldNames.emplace_back( extrinsicMeshData::contact::dispJump::key() );
+    fieldNames.emplace_back( extrinsicMeshData::contact::deltaDispJump::key() );
+
+    fieldsTobeSync.emplace_back( SyncFieldsID{ FieldLocation::Elem, regionNames, fieldNames } );
+    
     CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
                                                           mesh,
                                                           domain.getNeighbors(),

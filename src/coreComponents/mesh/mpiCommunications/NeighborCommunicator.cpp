@@ -645,24 +645,24 @@ int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const
   {
     switch( fieldsID.location )
     {
-      case Location::Node:
+      case FieldLocation::Node:
       {
         bufferSize += nodeManager.packSize( fieldsID.fieldNames, nodeGhostsToSend, 0, onDevice, events );
         break;
       }
-      case Location::Edge:
+      case FieldLocation::Edge:
       {
         bufferSize += edgeManager.packSize( fieldsID.fieldNames, edgeGhostsToSend, 0, onDevice, events );
         break;
       }
-      case Location::Face:
+      case FieldLocation::Face:
       {
         bufferSize += faceManager.packSize( fieldsID.fieldNames, faceGhostsToSend, 0, onDevice, events );
         break;
       }
-      case Location::Elem:
+      case FieldLocation::Elem:
       {
-        elemManager.getRegion( fieldsID.regionName ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        elemManager.forElementSubRegions< ElementSubRegionBase >( fieldsID.regionNames, [&]( localIndex const, ElementSubRegionBase const & subRegion )
         {
           bufferSize += subRegion.packSize( fieldsID.fieldNames, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
@@ -703,24 +703,24 @@ void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > co
   {
     switch( fieldsID.location )
     {
-      case Location::Node:
+      case FieldLocation::Node:
       {
         packedSize += nodeManager.pack( sendBufferPtr, fieldsID.fieldNames, nodeGhostsToSend, 0, onDevice, events );
         break;
       }
-      case Location::Edge:
+      case FieldLocation::Edge:
       {
         packedSize += edgeManager.pack( sendBufferPtr, fieldsID.fieldNames, edgeGhostsToSend, 0, onDevice, events );
         break;
       }
-      case Location::Face:
+      case FieldLocation::Face:
       {
         packedSize += faceManager.pack( sendBufferPtr, fieldsID.fieldNames, faceGhostsToSend, 0, onDevice, events );
         break;
       }
-      case Location::Elem:
+      case FieldLocation::Elem:
       {
-        elemManager.getRegion( fieldsID.regionName ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        elemManager.forElementSubRegions< ElementSubRegionBase >( fieldsID.regionNames, [&]( localIndex const, ElementSubRegionBase const & subRegion )
         {
           packedSize += subRegion.pack( sendBufferPtr, fieldsID.fieldNames, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
@@ -759,24 +759,24 @@ void NeighborCommunicator::unpackBufferForSync( std::vector< SyncFieldsID > cons
   {
     switch( fieldsID.location )
     {
-      case Location::Node:
+      case FieldLocation::Node:
       {
         unpackedSize += nodeManager.unpack( receiveBufferPtr, nodeGhostsToReceive, 0, onDevice, events );
         break;
       }
-      case Location::Edge:
+      case FieldLocation::Edge:
       {
         unpackedSize += edgeManager.unpack( receiveBufferPtr, edgeGhostsToReceive, 0, onDevice, events );
         break;
       }
-      case Location::Face:
+      case FieldLocation::Face:
       {
         unpackedSize += faceManager.unpack( receiveBufferPtr, faceGhostsToReceive, 0, onDevice, events );
         break;
       }
-      case Location::Elem:
+      case FieldLocation::Elem:
       {
-        elemManager.getRegion( fieldsID.regionName ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
+        elemManager.forElementSubRegions< ElementSubRegionBase >( fieldsID.regionNames, [&]( localIndex const, ElementSubRegionBase & subRegion )
         {
           unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
         } );
