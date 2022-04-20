@@ -17,7 +17,7 @@
 
 #include "CommID.hpp"
 
-#include "common/DataTypes.hpp"
+#include "mpiCommunicationUtils.hpp"
 
 namespace geosx
 {

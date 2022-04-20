@@ -186,11 +186,8 @@ void DofManager::createIndexArray( FieldDescription const & field )
       FieldLocation constexpr LOC = decltype(loc)::value;
       using helper = ArrayHelper< globalIndex, LOC >;
 
-      std::vector< string > fieldNames;
-      fieldNames.emplace_back( field.key );
-
       std::vector< SyncFieldsID > fieldsToBeSync;
-      fieldsToBeSync.emplace_back( field.location, regions, fieldNames );
+      fieldsToBeSync.emplace_back( SyncFieldsID(field.location, regions, {field.key} ) );
 
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
@@ -1300,21 +1297,10 @@ void DofManager::reorderByRank()
           ArrayHelper::reference( indexArray, locIdx ) += adjustment;
         } );
 
-        // fieldsToSync[{ body.getName(), mesh.getName() }][MeshHelper< LOC >::syncObjName].emplace_back( field.key );
-
-        std::vector< string > fieldNames;
-        fieldNames.emplace_back( field.key );
-        fieldsToBeSync[{ body.getName(), mesh.getName() }].emplace_back( field.location, regions, fieldNames );
+        fieldsToBeSync[{ body.getName(), mesh.getName() }].emplace_back( SyncFieldsID ( field.location, regions, {field.key} ) );
       } );
     } );
   }
-
-  // synchronize index arrays for all fields across ranks
-  // for( auto const & meshFieldPair : fieldsToSync )
-  // {
-  //   MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
-  //   CommunicationTools::getInstance().synchronizeFields( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );
-  // }
 
   for( auto const & meshFieldPair : fieldsToBeSync )
   {

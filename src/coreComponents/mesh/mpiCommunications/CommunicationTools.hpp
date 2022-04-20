@@ -22,8 +22,9 @@
 #include "CommID.hpp"
 
 #include "common/MpiWrapper.hpp"
-#include "common/DataTypes.hpp"
 #include "common/GEOS_RAJA_Interface.hpp"
+
+#include "mpiCommunicationUtils.hpp"
 
 #include <set>
 

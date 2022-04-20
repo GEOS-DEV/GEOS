@@ -724,47 +724,12 @@ struct TypeName
   }
 };
 
-
 enum class FieldLocation
 {
   Elem,   //!< location is element (like pressure in finite volumes)
   Face,   //!< location is face (like flux in mixed finite elements)
   Edge,   //!< location is edge (like flux between fracture elements)
   Node    //!< location is node (like displacements in finite elements)
-};
-
-struct SyncFieldsID
-{
-  FieldLocation location;
-  array1d< string > regionNames;
-  array1d< string > fieldNames;
-
-  SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, arrayView1d< string const > const & fields ):
-    location( location )
-  {
-    fillNames( regions, fields );
-  }
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & regions, std::vector< string > const & fields ):
-    location( location )
-  {
-    fillNames( regions, fields );
-  }
-
-  template< typename T >
-  void fillNames( T const & regions, T const & fields )
-  {
-    regionNames.resize( regions.size());
-    for( integer i = 0; i < regionNames.size(); i++ )
-    {
-      regionNames[i] = regions[i];
-    }
-
-    fieldNames.resize( fields.size());
-    for( integer i = 0; i < fieldNames.size(); i++ )
-    {
-      fieldNames[i] = fields[i];
-    }
-  }
 };
 
 }

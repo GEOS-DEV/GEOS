@@ -40,6 +40,7 @@ set( mesh_headers
      generators/MeshGeneratorBase.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
+     mpiCommunications/mpiCommunicationUtils.hpp
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp
