@@ -188,8 +188,8 @@ void DofManager::createIndexArray( FieldDescription const & field )
 
       std::vector< string > fieldNames;
       fieldNames.emplace_back( field.key );
-      
-      std::vector<SyncFieldsID> fieldsTobeSync;
+
+      std::vector< SyncFieldsID > fieldsTobeSync;
       fieldsTobeSync.emplace_back( field.location, regions, fieldNames );
 
       // register index array
@@ -1279,7 +1279,7 @@ void DofManager::reorderByRank()
   // synced, and a value that contans the name of the field to be synced.
   std::map< std::pair< string, string >, std::map< string, string_array > > fieldsToSync;
 
-  std::map< std::pair< string, string >, std::vector< SyncFieldsID >  > fieldsTobeSync;
+  std::map< std::pair< string, string >, std::vector< SyncFieldsID > > fieldsTobeSync;
 
   // adjust index arrays for owned locations
   for( FieldDescription const & field : m_fields )
@@ -1303,7 +1303,7 @@ void DofManager::reorderByRank()
         // fieldsToSync[{ body.getName(), mesh.getName() }][MeshHelper< LOC >::syncObjName].emplace_back( field.key );
 
         std::vector< string > fieldNames;
-        fieldNames.emplace_back(field.key);
+        fieldNames.emplace_back( field.key );
         fieldsTobeSync[{ body.getName(), mesh.getName() }].emplace_back( field.location, regions, fieldNames );
       } );
     } );
@@ -1315,8 +1315,8 @@ void DofManager::reorderByRank()
   //   MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
   //   CommunicationTools::getInstance().synchronizeFields( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );
   // }
-  
-   for( auto const & meshFieldPair : fieldsTobeSync )
+
+  for( auto const & meshFieldPair : fieldsTobeSync )
   {
     MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
     CommunicationTools::getInstance().synchronizeFields2( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );

@@ -121,9 +121,9 @@ void collectLocalDofNumbers( DomainPartition const & domain,
  */
 template<>
 void collectLocalDofNumbers< FieldLocation::Elem >( DomainPartition const & domain,
-                                                           string const & dofIndexKey,
-                                                           std::vector< DofManager::Regions > const & support,
-                                                           array1d< globalIndex > & dofNumbers )
+                                                    string const & dofIndexKey,
+                                                    std::vector< DofManager::Regions > const & support,
+                                                    array1d< globalIndex > & dofNumbers )
 {
   for( DofManager::Regions const & regions : support )
   {

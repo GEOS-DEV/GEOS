@@ -751,7 +751,7 @@ struct SyncFieldsID
   }
 
   template< typename T >
-  void fillNames(T const & regions, T const & fields)
+  void fillNames( T const & regions, T const & fields )
   {
     regionNames.resize( regions.size());
     for( integer i = 0; i < regionNames.size(); i++ )
