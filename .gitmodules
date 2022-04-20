@@ -1,19 +1,19 @@
 [submodule "src/coreComponents/LvArray"]
 	path = src/coreComponents/LvArray
-	url = ../LvArray.git
+	url = https://github.com/GEOSX/LvArray.git
 [submodule "src/cmake/blt"]
 	path = src/cmake/blt
-	url = ../../LLNL/blt.git
+	url = https://github.com/LLNL/blt.git
 [submodule "src/coreComponents/constitutive/PVTPackage"]
 	path = src/coreComponents/constitutive/PVTPackage
-	url = ../PVTPackage.git
+	url = https://github.com/GEOSX/PVTPackage.git
 [submodule "integratedTests"]
 	path = integratedTests
-	url = ../integratedTests.git
+	url = git@github.com:GEOSX/integratedTests.git 
 [submodule "src/coreComponents/mesh/PAMELA"]
 	path = src/coreComponents/mesh/PAMELA
-	url = ../PAMELA.git
+	url = https://github.com/GEOSX/PAMELA.git
 	shallow = true
 [submodule "src/coreComponents/fileIO/coupling/hdf5_interface"]
 	path = src/coreComponents/fileIO/coupling/hdf5_interface
-	url = ../hdf5_interface.git
+	url = https://github.com/GEOSX/hdf5_interface.git
