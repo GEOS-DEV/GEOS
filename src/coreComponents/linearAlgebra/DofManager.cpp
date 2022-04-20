@@ -189,8 +189,8 @@ void DofManager::createIndexArray( FieldDescription const & field )
       std::vector< string > fieldNames;
       fieldNames.emplace_back( field.key );
 
-      std::vector< SyncFieldsID > fieldsTobeSync;
-      fieldsTobeSync.emplace_back( field.location, regions, fieldNames );
+      std::vector< SyncFieldsID > fieldsToBeSync;
+      fieldsToBeSync.emplace_back( field.location, regions, fieldNames );
 
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
@@ -203,7 +203,7 @@ void DofManager::createIndexArray( FieldDescription const & field )
       } );
 
       // synchronize across ranks
-      CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync, mesh, m_domain->getNeighbors(), false );
+      CommunicationTools::getInstance().synchronizeFields2( fieldsToBeSync, mesh, m_domain->getNeighbors(), false );
     } );
   } );
 }
@@ -1279,7 +1279,7 @@ void DofManager::reorderByRank()
   // synced, and a value that contans the name of the field to be synced.
   std::map< std::pair< string, string >, std::map< string, string_array > > fieldsToSync;
 
-  std::map< std::pair< string, string >, std::vector< SyncFieldsID > > fieldsTobeSync;
+  std::map< std::pair< string, string >, std::vector< SyncFieldsID > > fieldsToBeSync;
 
   // adjust index arrays for owned locations
   for( FieldDescription const & field : m_fields )
@@ -1304,7 +1304,7 @@ void DofManager::reorderByRank()
 
         std::vector< string > fieldNames;
         fieldNames.emplace_back( field.key );
-        fieldsTobeSync[{ body.getName(), mesh.getName() }].emplace_back( field.location, regions, fieldNames );
+        fieldsToBeSync[{ body.getName(), mesh.getName() }].emplace_back( field.location, regions, fieldNames );
       } );
     } );
   }
@@ -1316,7 +1316,7 @@ void DofManager::reorderByRank()
   //   CommunicationTools::getInstance().synchronizeFields( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );
   // }
 
-  for( auto const & meshFieldPair : fieldsTobeSync )
+  for( auto const & meshFieldPair : fieldsToBeSync )
   {
     MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
     CommunicationTools::getInstance().synchronizeFields2( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );

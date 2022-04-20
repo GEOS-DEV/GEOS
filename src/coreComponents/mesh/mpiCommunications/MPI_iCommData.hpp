@@ -72,12 +72,12 @@ public:
   /**
    * @return Reference to the field names registered with the communication data.
    */
-  std::vector< SyncFieldsID > const & getFieldsTobeSync() const { return m_fieldsTobeSync;}
+  std::vector< SyncFieldsID > const & getFieldsToBeSync() const { return m_fieldsToBeSync;}
 
   /**
    * @return Reference to the field names registered with the communication data.
    */
-  std::vector< SyncFieldsID > & fieldsTobeSync() { return m_fieldsTobeSync;}
+  std::vector< SyncFieldsID > & fieldsToBeSync() { return m_fieldsToBeSync;}
 
 
   MPI_Request * mpiSendBufferRequest() { return m_mpiSendBufferRequest.data(); }
@@ -111,7 +111,7 @@ private:
   /// communication pipeline.
   std::map< string, string_array > m_fieldNames;
 
-  std::vector< SyncFieldsID > m_fieldsTobeSync;
+  std::vector< SyncFieldsID > m_fieldsToBeSync;
 
   array1d< MPI_Request > m_mpiSendBufferRequest;
   array1d< MPI_Request > m_mpiRecvBufferRequest;

@@ -235,19 +235,19 @@ public:
                             bool onDevice,
                             parallelDeviceEvents & events );
 
-  void packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  void packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                               MeshLevel const & meshLevel,
                               int const commID,
                               bool onDevice,
                               parallelDeviceEvents & events );
 
-  int packCommSizeForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  int packCommSizeForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                            MeshLevel const & meshLevel,
                            int const commID,
                            bool onDevice,
                            parallelDeviceEvents & events );
 
-  void unpackBufferForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  void unpackBufferForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                             MeshLevel & meshLevel,
                             int const commID,
                             bool onDevice,

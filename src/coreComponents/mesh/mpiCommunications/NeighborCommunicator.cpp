@@ -622,7 +622,7 @@ void NeighborCommunicator::unpackBufferForSync( std::map< string, string_array >
 
 ///////////////////////////  New versions of the packing and unpacking functions
 /// //////////////////////////////////////////////////////////////
-int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
+int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                                MeshLevel const & mesh,
                                                int const commID,
                                                bool onDevice,
@@ -641,7 +641,7 @@ int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const
 
   int bufferSize = 0;
 
-  for( SyncFieldsID const & fieldsID : fieldsTobeSync )
+  for( SyncFieldsID const & fieldsID : fieldsToBeSync )
   {
     switch( fieldsID.location )
     {
@@ -676,7 +676,7 @@ int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const
 }
 
 
-void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
+void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                                   MeshLevel const & mesh,
                                                   int const commID,
                                                   bool onDevice,
@@ -699,7 +699,7 @@ void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > co
 
   int packedSize = 0;
 
-  for( SyncFieldsID const & fieldsID : fieldsTobeSync )
+  for( SyncFieldsID const & fieldsID : fieldsToBeSync )
   {
     switch( fieldsID.location )
     {
@@ -733,7 +733,7 @@ void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > co
 }
 
 
-void NeighborCommunicator::unpackBufferForSync( std::vector< SyncFieldsID > const & fieldsTobeSync,
+void NeighborCommunicator::unpackBufferForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                                 MeshLevel & mesh,
                                                 int const commID,
                                                 bool onDevice,
@@ -755,7 +755,7 @@ void NeighborCommunicator::unpackBufferForSync( std::vector< SyncFieldsID > cons
 
   int unpackedSize = 0;
 
-  for( SyncFieldsID const & fieldsID : fieldsTobeSync )
+  for( SyncFieldsID const & fieldsID : fieldsToBeSync )
   {
     switch( fieldsID.location )
     {

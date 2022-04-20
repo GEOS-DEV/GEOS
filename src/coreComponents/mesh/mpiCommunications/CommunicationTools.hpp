@@ -93,24 +93,24 @@ public:
                   bool onDevice,
                   parallelDeviceEvents & events );
 
-  void synchronizeFields2( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  void synchronizeFields2( std::vector< SyncFieldsID > const & fieldsToBeSync,
                            MeshLevel & mesh,
                            std::vector< NeighborCommunicator > & allNeighbors,
                            bool onDevice );
 
-  void synchronizePackSendRecvSizes2( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  void synchronizePackSendRecvSizes2( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                       MeshLevel & mesh,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       MPI_iCommData & icomm,
                                       bool onDevice );
 
-  void synchronizePackSendRecv2( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  void synchronizePackSendRecv2( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                  MeshLevel & mesh,
                                  std::vector< NeighborCommunicator > & allNeighbors,
                                  MPI_iCommData & icomm,
                                  bool onDevice );
 
-  void asyncPack2( std::vector< SyncFieldsID > const & fieldsTobeSync,
+  void asyncPack2( std::vector< SyncFieldsID > const & fieldsToBeSync,
                    MeshLevel & mesh,
                    std::vector< NeighborCommunicator > & neighbors,
                    MPI_iCommData & icomm,

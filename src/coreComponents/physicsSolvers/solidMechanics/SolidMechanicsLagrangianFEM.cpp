@@ -1192,14 +1192,14 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< string const > const & regionNames )
 
   {
-    std::vector< SyncFieldsID > fieldsTobeSync;
+    std::vector< SyncFieldsID > fieldsToBeSync;
     array1d< string > fieldNames;
     fieldNames.emplace_back( keys::IncrementalDisplacement );
     fieldNames.emplace_back( keys::TotalDisplacement );
 
-    fieldsTobeSync.emplace_back( FieldLocation::Node, regionNames, fieldNames );
+    fieldsToBeSync.emplace_back( FieldLocation::Node, regionNames, fieldNames );
 
-    CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
+    CommunicationTools::getInstance().synchronizeFields2( fieldsToBeSync,
                                                           mesh,
                                                           domain.getNeighbors(),
                                                           true );

@@ -236,14 +236,14 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::vector< SyncFieldsID > fieldsTobeSync;
+    std::vector< SyncFieldsID > fieldsToBeSync;
     array1d< string > regionNames, fieldNames;
     regionNames.emplace_back( getFractureRegionName() );
     fieldNames.emplace_back( viewKeyStruct::fractureStateString() );
 
-    fieldsTobeSync.emplace_back( FieldLocation::Elem, regionNames, fieldNames );
+    fieldsToBeSync.emplace_back( FieldLocation::Elem, regionNames, fieldNames );
 
-    CommunicationTools::getInstance().synchronizeFields2( fieldsTobeSync,
+    CommunicationTools::getInstance().synchronizeFields2( fieldsToBeSync,
                                                           mesh,
                                                           domain.getNeighbors(),
                                                           true );
