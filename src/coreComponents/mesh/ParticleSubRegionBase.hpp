@@ -312,6 +312,10 @@ public:
 
   void erase(localIndex pp);
 
+  void eraseVector(array2d< real64 > & vector, localIndex index);
+
+  void eraseTensor(array3d< real64 > & tensor, localIndex index);
+
 private:
   /// Group in which the constitutive models of this subregion are registered
   dataRepository::Group m_constitutiveModels;

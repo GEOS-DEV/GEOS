@@ -704,10 +704,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {
       auto const & p_x = particleCenter[p];
       auto const & p_v = particleVelocity[p];
-      real64 & p_m = particleMass[p][0];
+      real64 & p_m = particleMass[p];
       real64 & p_Vol = particleVolume[p];
       real64 const & p_Vol0 = particleVolume0[p];
-      real64 & p_rho = particleDensity[p];
+      real64 & p_rho = particleDensity[p][0];
       auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, long>
       auto const & p_stress = particleStress[p][0];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
@@ -843,7 +843,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 
 
   // Particle repartitioning
-  partition.repartitionMasterParticlesToNeighbors(domain, m_iComm);
+  partition.repartitionMasterParticlesToNeighbors( domain, m_iComm );
 
 
   // Calculate stable time step
@@ -857,7 +857,8 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView2d< real64 > const rho = constitutiveRelation.getDensity();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
-    for(int p=0; p<subRegion.size(); p++)
+    //for(int p=0; p<subRegion.size(); p++)
+    for(int p=0; p<rho.size(); p++)
     {
       wavespeed = std::max(wavespeed,sqrt((k[p]+(4.0/3.0)*g[p])/rho[p][0]));
     }
