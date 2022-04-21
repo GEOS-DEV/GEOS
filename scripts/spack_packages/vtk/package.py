@@ -35,29 +35,11 @@ class Vtk(CMakePackage):
     version('6.3.0', sha256='92a493354c5fa66bea73b5fc014154af5d9f3f6cee8d20a826f4cd5d4b0e8a5e')
     version('6.1.0', sha256='bd7df10a479606d529a8b71f466c44a2bdd11fd534c62ce0aa44fad91883fa34')
 
-    # VTK7 defaults to OpenGL2 rendering backend
-    variant('opengl2', default=True, description='Enable OpenGL2 backend')
-    variant('osmesa', default=False, description='Enable OSMesa support')
-    variant('python', default=False, description='Enable Python support')
-    variant('qt', default=False, description='Build with support for Qt')
-    variant('xdmf', default=False, description='Build XDMF file support')
-    variant('ffmpeg', default=False, description='Build with FFMPEG support')
     variant('mpi', default=True, description='Enable MPI support')
 
     patch('VTK-9.1.0-disable_traits.patch', when='@9.1.0')
     patch('VTK-9.1.0-duplicate-points-fix.patch', when='@9.1.0')
     patch('VTK-9.1.0-cmake-fix.patch', when='@9.1.0')
-
-    patch('gcc.patch', when='@6.1.0')
-    # patch to fix some missing stl includes
-    # which lead to build errors on newer compilers
-    # version range to be updated once the linked patch is released
-    #patch('https://gitlab.kitware.com/vtk/vtk/-/commit/e066c3f4fbbfe7470c6207db0fc3f3952db633c.diff',
-    #      when="@9:", sha256='0546696bd02f3a99fccb9b7c49533377bf8179df16d901cefe5abf251173716d')
-
-    # At the moment, we cannot build with both osmesa and qt, but as of
-    # VTK 8.1, that should change
-    conflicts('+osmesa', when='+qt')
 
     extends('python', when='+python')
 
@@ -76,69 +58,7 @@ class Vtk(CMakePackage):
     # https://gitlab.kitware.com/vtk/vtk/commit/706f1b397df09a27ab8981ab9464547028d0c322
     patch('python3.7-const-char.patch', when='@7.0.0:8.1.1 ^python@3.7:')
 
-    # Broken downstream FindMPI
-    patch('vtkm-findmpi-downstream.patch', when='@9.0.0')
-
-    # The use of the OpenGL2 backend requires at least OpenGL Core Profile
-    # version 3.2 or higher.
-    #depends_on('gl@3.2:', when='+opengl2')
-    #depends_on('gl@1.2:', when='~opengl2')
-
-    #if sys.platform != 'darwin':
-    #    depends_on('glx', when='~osmesa')
-    #    depends_on('libxt', when='~osmesa')
-
-    # Note: it is recommended to use mesa+llvm, if possible.
-    # mesa default is software rendering, llvm makes it faster
-    #depends_on('osmesa', when='+osmesa')
-
-    # VTK will need Qt5OpenGL, and qt needs '-opengl' for that
-    #depends_on('qt+opengl', when='+qt')
-
-    #depends_on('boost', when='+xdmf')
-    #depends_on('boost+mpi', when='+xdmf +mpi')
-    #depends_on('ffmpeg', when='+ffmpeg')
     depends_on('mpi', when='+mpi')
-
-    #depends_on('expat')
-    # See <https://gitlab.kitware.com/vtk/vtk/-/issues/18033> for why vtk doesn't
-    # work yet with freetype 2.10.3 (including possible patches)
-    #depends_on('freetype @:2.10.2')
-    #depends_on('freetype')
-    #depends_on('glew')
-    # set hl variant explicitly, similar to issue #7145
-    #depends_on('hdf5+hl')
-    #depends_on('jpeg')
-    #depends_on('jsoncpp')
-    #depends_on('libxml2')
-    #depends_on('lz4')
-    #depends_on('netcdf-c~mpi', when='~mpi')
-    #depends_on('netcdf-c+mpi', when='+mpi')
-    #depends_on('netcdf-cxx')
-    #depends_on('libpng')
-    #depends_on('libtiff')
-    #depends_on('zlib')
-    #depends_on('eigen', when='@8.2.0:')
-    #depends_on('double-conversion', when='@8.2.0:')
-    #depends_on('sqlite', when='@8.2.0:')
-
-    # For finding Fujitsu-MPI wrapper commands
-    patch('find_fujitsu_mpi.patch', when='@:8.2.0%fj')
-    # Freetype@2.10.3 no longer exports FT_CALLBACK_DEF, this
-    # patch replaces FT_CALLBACK_DEF with simple extern "C"
-    # See https://gitlab.kitware.com/vtk/vtk/-/issues/18033
-    patch('https://gitlab.kitware.com/vtk/vtk/uploads/c6fa799a1a028b8f8a728a40d26d3fec/vtk-freetype-2.10.3-replace-FT_CALLBACK_DEF.patch',
-          sha256='eefda851f844e8a1dfb4ebd8a9ff92d2b78efc57f205774052c5f4c049cc886a',
-          when='^freetype@2.10.3:')
-
-    def url_for_version(self, version):
-        url = "http://www.vtk.org/files/release/{0}/VTK-{1}.tar.gz"
-        return url.format(version.up_to(2), version)
-
-    #def setup_build_environment(self, env):
-        # VTK has some trouble finding freetype unless it is set in
-        # the environment
-        #env.set('FREETYPE_DIR', self.spec['freetype'].prefix)
 
     def cmake_args(self):
         spec = self.spec
@@ -146,12 +66,16 @@ class Vtk(CMakePackage):
         # Added GEOSX Arguments
         if '+mpi' in spec:
             mpi_args = [
+                self.define('CMAKE_C_COMPILER', spec['mpi'].mpicc),
+                self.define('CMAKE_CXX_COMPILER', spec['mpi'].mpicxx),
                 '-DVTK_USE_MPI=ON',
                 '-DVTK_MODULE_ENABLE_VTK_IOParallelXML=YES',
                 '-DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=YES'
             ]
         else:
             mpi_args = [
+                self.define('CMAKE_C_COMPILER', self.compiler.cc),
+                self.define('CMAKE_CXX_COMPILER', self.compiler.cxx),
                 '-DVTK_USE_MPI=OFF',
                 '-DVTK_MODULE_ENABLE_VTK_IOParallelXML=NO',
                 '-DVTK_MODULE_ENABLE_VTK_FiltersParallelDIY2=NO',
@@ -176,170 +100,5 @@ class Vtk(CMakePackage):
         ]
 
         cmake_args = mpi_args + cmake_args
-
-        # Some variable names have changed
-        #if spec.satisfies('@8.2.0:'):
-        #    cmake_args.extend([
-        #        '-DVTK_USE_SYSTEM_OGG:BOOL=OFF',
-        #        '-DVTK_USE_SYSTEM_THEORA:BOOL=OFF',
-        #        '-DVTK_USE_SYSTEM_LIBPROJ:BOOL=OFF',
-        #        '-DVTK_USE_SYSTEM_PUGIXML:BOOL=OFF',
-        #    ])
-        #else:
-        #    cmake_args.extend([
-        #        '-DVTK_USE_SYSTEM_OGGTHEORA:BOOL=OFF',
-        #        '-DVTK_USE_SYSTEM_LIBPROJ4:BOOL=OFF',
-        #    ])
-
-        #if '+mpi' in spec:
-        #    if spec.satisfies('@:8.2.0'):
-        #        cmake_args.extend([
-        #            '-DVTK_Group_MPI:BOOL=ON',
-        #            '-DVTK_USE_SYSTEM_DIY2:BOOL=OFF'
-        #        ])
-        #    else:
-        #        cmake_args.extend([
-        #            '-DVTK_USE_MPI=ON'
-        #        ])
-
-        #if '+ffmpeg' in spec:
-        #    cmake_args.extend(['-DModule_vtkIOFFMPEG:BOOL=ON'])
-
-        # Enable/Disable wrappers for Python.
-        #if '+python' in spec:
-        #    cmake_args.extend([
-        #        '-DVTK_WRAP_PYTHON=ON',
-        #        '-DPYTHON_EXECUTABLE={0}'.format(spec['python'].command.path),
-        #    ])
-        #    if '+mpi' in spec:
-        #        cmake_args.append('-DVTK_USE_SYSTEM_MPI4PY:BOOL=ON')
-        #    if spec.satisfies('@9.0.0: ^python@3:'):
-        #        cmake_args.append('-DVTK_PYTHON_VERSION=3')
-        #else:
-        #    cmake_args.append('-DVTK_WRAP_PYTHON=OFF')
-
-        #if 'darwin' in spec.architecture:
-        #    cmake_args.extend([
-        #        '-DCMAKE_MACOSX_RPATH=ON'
-        #    ])
-
-        #if '+qt' in spec:
-        #    qt_ver = spec['qt'].version.up_to(1)
-        #    qt_bin = spec['qt'].prefix.bin
-        #    qmake_exe = os.path.join(qt_bin, 'qmake')
-#
-        #    cmake_args.extend([
-        #        # Enable Qt support here.
-        #        '-DVTK_QT_VERSION:STRING={0}'.format(qt_ver),
-        #        '-DQT_QMAKE_EXECUTABLE:PATH={0}'.format(qmake_exe),
-        #        '-DVTK_Group_Qt:BOOL=ON',
-        #    ])
-#
-        #    # NOTE: The following definitions are required in order to allow
-        #    # VTK to build with qt~webkit versions (see the documentation for
-        #    # more info: http://www.vtk.org/Wiki/VTK/Tutorials/QtSetup).
-        #    if '~webkit' in spec['qt']:
-        #        cmake_args.extend([
-        #            '-DVTK_Group_Qt:BOOL=OFF',
-        #            '-DModule_vtkGUISupportQt:BOOL=ON',
-        #            '-DModule_vtkGUISupportQtOpenGL:BOOL=ON',
-        #        ])
-
-        #if '+xdmf' in spec:
-        #    if spec.satisfies('^cmake@3.12:'):
-        #        # This policy exists only for CMake >= 3.12
-        #        cmake_args.extend(["-DCMAKE_POLICY_DEFAULT_CMP0074=NEW"])
-#
-        #    cmake_args.extend([
-        #        # Enable XDMF Support here
-        #        "-DModule_vtkIOXdmf2:BOOL=ON",
-        #        "-DModule_vtkIOXdmf3:BOOL=ON",
-        #        "-DBOOST_ROOT={0}".format(spec['boost'].prefix),
-        #        "-DBOOST_LIBRARY_DIR={0}".format(spec['boost'].prefix.lib),
-        #        "-DBOOST_INCLUDE_DIR={0}".format(spec['boost'].prefix.include),
-        #        "-DBOOST_NO_SYSTEM_PATHS:BOOL=ON",
-        #        # This is needed because VTK has multiple FindBoost
-        #        # and they stick to system boost if there's a system boost
-        #        # installed with CMake
-        #        "-DBoost_NO_BOOST_CMAKE:BOOL=ON",
-        #        "-DHDF5_ROOT={0}".format(spec['hdf5'].prefix),
-        #        # The xdmf project does not export any CMake file...
-        #        "-DVTK_USE_SYSTEM_XDMF3:BOOL=OFF",
-        #        "-DVTK_USE_SYSTEM_XDMF2:BOOL=OFF"
-        #    ])
-
-        #    if '+mpi' in spec:
-        #        cmake_args.extend(["-DModule_vtkIOParallelXdmf3:BOOL=ON"])
-
-        #cmake_args.append('-DVTK_RENDERING_BACKEND:STRING=' + opengl_ver)
-
-        #if spec.satisfies('@:8.1.0'):
-        #    cmake_args.append('-DVTK_USE_SYSTEM_GLEW:BOOL=ON')
-
-        #if '+osmesa' in spec:
-        #    cmake_args.extend([
-        #        '-DVTK_USE_X:BOOL=OFF',
-        #        '-DVTK_USE_COCOA:BOOL=OFF',
-        #        '-DVTK_OPENGL_HAS_OSMESA:BOOL=ON'])
-
-        #else:
-        #    cmake_args.append('-DVTK_OPENGL_HAS_OSMESA:BOOL=OFF')
-        #    if spec.satisfies('@:7.9.9'):
-        #        # This option is gone in VTK 8.1.2
-        #        cmake_args.append('-DOpenGL_GL_PREFERENCE:STRING=LEGACY')
-#
-        #    if 'darwin' in spec.architecture:
-        #        cmake_args.extend([
-        #            '-DVTK_USE_X:BOOL=OFF',
-        #            '-DVTK_USE_COCOA:BOOL=ON'])
-#
-        #    elif 'linux' in spec.architecture:
-        #        cmake_args.extend([
-        #            '-DVTK_USE_X:BOOL=ON',
-        #            '-DVTK_USE_COCOA:BOOL=OFF'])
-
-        compile_flags = []
-
-        #if spec.satisfies('@:6.1.0'):
-        #    compile_flags.append('-DGLX_GLXEXT_LEGACY')
-
-            # VTK 6.1.0 (and possibly earlier) does not use
-            # NETCDF_CXX_ROOT to detect NetCDF C++ bindings, so
-            # NETCDF_CXX_INCLUDE_DIR and NETCDF_CXX_LIBRARY must be
-            # used instead to detect these bindings
-        #    netcdf_cxx_lib = spec['netcdf-cxx'].libs.joined()
-        #    cmake_args.extend([
-        #        '-DNETCDF_CXX_INCLUDE_DIR={0}'.format(
-        #            spec['netcdf-cxx'].prefix.include),
-        #        '-DNETCDF_CXX_LIBRARY={0}'.format(netcdf_cxx_lib),
-        #    ])
-
-            # Garbage collection is unsupported in Xcode starting with
-            # version 5.1; if the Apple clang version of the compiler
-            # is 5.1.0 or later, unset the required Objective-C flags
-            # to remove the garbage collection flags.  Versions of VTK
-            # after 6.1.0 set VTK_REQUIRED_OBJCXX_FLAGS to the empty
-            # string. This fix was recommended on the VTK mailing list
-            # in March 2014 (see
-            # https://public.kitware.com/pipermail/vtkusers/2014-March/083368.html)
-        #    if self.spec.satisfies('%apple-clang@5.1.0:'):
-        #        cmake_args.extend(['-DVTK_REQUIRED_OBJCXX_FLAGS='])
-
-            # A bug in tao pegtl causes build failures with intel compilers
-        #    if '%intel' in spec and spec.version >= Version('8.2'):
-        #        cmake_args.append(
-        #            '-DVTK_MODULE_ENABLE_VTK_IOMotionFX:BOOL=OFF')
-
-        # -no-ipo prevents an internal compiler error from multi-file
-        # optimization (https://github.com/spack/spack/issues/20471)
-        #if '%intel' in spec:
-        #    compile_flags.append('-no-ipo')
-
-        if compile_flags:
-            compile_flags = ' '.join(compile_flags)
-            cmake_args.extend([
-                '-DCMAKE_C_FLAGS={0}'.format(compile_flags),
-                '-DCMAKE_CXX_FLAGS={0}'.format(compile_flags)
-            ])
 
         return cmake_args
