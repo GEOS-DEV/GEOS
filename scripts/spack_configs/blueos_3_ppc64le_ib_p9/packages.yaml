@@ -41,8 +41,8 @@ packages:
   readline:
     buildable: False
     externals:
-      - spec: readline@6.2
-        prefix: /usr/lib64/
+      - spec: readline@7.0
+        prefix: /collab/usr/gapps/python/build/spack-coralea.3/opt/spack/linux-rhel7-ppc64le/gcc-4.9.3/readline-7.0-owal6z2zh5zotgvdmwow6sgdn6cqfn43/
   zlib:
     buildable: False
     externals:

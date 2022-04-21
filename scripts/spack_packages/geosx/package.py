@@ -130,7 +130,7 @@ class Geosx(CMakePackage, CudaPackage):
 
 
     depends_on('adiak@0.2.1', when='+caliper')
-    depends_on('caliper@2.4~gotcha~sampler~libunwind~libdw', when='+caliper')
+    depends_on('caliper@2.4.0~gotcha~sampler~libunwind~libdw', when='+caliper')
 
     depends_on('pugixml')
 
