@@ -71,28 +71,28 @@ public:
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
   void synchronizeFields( std::vector< SyncFieldsID > const & fieldsToBeSync,
-                           MeshLevel & mesh,
-                           std::vector< NeighborCommunicator > & allNeighbors,
-                           bool onDevice );
+                          MeshLevel & mesh,
+                          std::vector< NeighborCommunicator > & allNeighbors,
+                          bool onDevice );
 
   void synchronizePackSendRecvSizes( std::vector< SyncFieldsID > const & fieldsToBeSync,
-                                      MeshLevel & mesh,
-                                      std::vector< NeighborCommunicator > & neighbors,
-                                      MPI_iCommData & icomm,
-                                      bool onDevice );
+                                     MeshLevel & mesh,
+                                     std::vector< NeighborCommunicator > & neighbors,
+                                     MPI_iCommData & icomm,
+                                     bool onDevice );
 
   void synchronizePackSendRecv( std::vector< SyncFieldsID > const & fieldsToBeSync,
-                                 MeshLevel & mesh,
-                                 std::vector< NeighborCommunicator > & allNeighbors,
-                                 MPI_iCommData & icomm,
-                                 bool onDevice );
+                                MeshLevel & mesh,
+                                std::vector< NeighborCommunicator > & allNeighbors,
+                                MPI_iCommData & icomm,
+                                bool onDevice );
 
   void asyncPack( std::vector< SyncFieldsID > const & fieldsToBeSync,
-                   MeshLevel & mesh,
-                   std::vector< NeighborCommunicator > & neighbors,
-                   MPI_iCommData & icomm,
-                   bool onDevice,
-                   parallelDeviceEvents & events );
+                  MeshLevel & mesh,
+                  std::vector< NeighborCommunicator > & neighbors,
+                  MPI_iCommData & icomm,
+                  bool onDevice,
+                  parallelDeviceEvents & events );
 
   void asyncSendRecv( std::vector< NeighborCommunicator > & neighbors,
                       MPI_iCommData & icomm,

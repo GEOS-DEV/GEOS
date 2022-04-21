@@ -802,11 +802,11 @@ void CommunicationTools::synchronizePackSendRecvSizes( std::vector< SyncFieldsID
 
 
 void CommunicationTools::asyncPack( std::vector< SyncFieldsID > const & fieldsToBeSync,
-                                     MeshLevel & mesh,
-                                     std::vector< NeighborCommunicator > & neighbors,
-                                     MPI_iCommData & icomm,
-                                     bool onDevice,
-                                     parallelDeviceEvents & events )
+                                    MeshLevel & mesh,
+                                    std::vector< NeighborCommunicator > & neighbors,
+                                    MPI_iCommData & icomm,
+                                    bool onDevice,
+                                    parallelDeviceEvents & events )
 {
   GEOSX_MARK_FUNCTION;
   for( NeighborCommunicator & neighbor : neighbors )

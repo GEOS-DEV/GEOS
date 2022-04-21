@@ -149,13 +149,13 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
 
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames, 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames,
                                                {m_fieldName} ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                          mesh,
-                                                          domain.getNeighbors(),
-                                                          true );
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
   } );
 }
 

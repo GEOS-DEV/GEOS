@@ -486,7 +486,7 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
   PAMELA::PartMap< PAMELA::Polyhedron * > const polyhedronPartMap =
     std::get< 0 >( PAMELA::getPolyhedronPartMap( m_pamelaMesh.get(), 0 ) );
 
-  array1d<string> regionNames;
+  array1d< string > regionNames;
 
   elemManager.forElementSubRegionsComplete< CellElementSubRegion >( [&]( localIndex,
                                                                          localIndex,
@@ -507,9 +507,9 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
     importFieldsOnSubRegion( *regionPtr, *cellBlockPtr, region, subRegion );
     regionNames.emplace_back( region.getName() );
   } );
-  
+
   std::vector< SyncFieldsID > fieldsToBeSync;
-  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, m_fieldNamesInGEOSX ) ); 
+  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, m_fieldNamesInGEOSX ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                        domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),

@@ -62,16 +62,6 @@ public:
   /**
    * @return Reference to the field names registered with the communication data.
    */
-  std::map< string, string_array > const & getFieldNames() const { return m_fieldNames;}
-
-  /**
-   * @return Reference to the field names registered with the communication data.
-   */
-  std::map< string, string_array > & fieldNames() { return m_fieldNames;}
-
-  /**
-   * @return Reference to the field names registered with the communication data.
-   */
   std::vector< SyncFieldsID > const & getFieldsToBeSync() const { return m_fieldsToBeSync;}
 
   /**
@@ -109,7 +99,6 @@ private:
 
   /// A collection of field names keyed on object keys to pack/unpack from
   /// communication pipeline.
-  std::map< string, string_array > m_fieldNames;
 
   std::vector< SyncFieldsID > m_fieldsToBeSync;
 

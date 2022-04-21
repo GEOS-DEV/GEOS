@@ -41,21 +41,21 @@ struct SyncFieldsID
     location( location )
   {
     fillRegions( regions );
-    fillFields(fields);
+    fillFields( fields );
   }
 
   SyncFieldsID( FieldLocation const location, std::vector< string > const & regions, std::initializer_list< string > fields ):
     location( location )
   {
     fillRegions( regions );
-    fillFields( fields );  
+    fillFields( fields );
   }
 
   SyncFieldsID( FieldLocation const location, string const & region, std::initializer_list< string > fields ):
     location( location )
   {
-    regionNames.emplace_back(region);
-    fillFields(fields);
+    regionNames.emplace_back( region );
+    fillFields( fields );
   }
 
   template< typename T >
@@ -68,11 +68,11 @@ struct SyncFieldsID
     }
   }
 
-  void fillFields( arrayView1d<string const> const & fields )
+  void fillFields( arrayView1d< string const > const & fields )
   {
     for( auto field : fields )
     {
-      fieldNames.emplace_back(field);
+      fieldNames.emplace_back( field );
     }
   }
 
@@ -80,7 +80,7 @@ struct SyncFieldsID
   {
     for( auto field : fields )
     {
-      fieldNames.emplace_back(field);
+      fieldNames.emplace_back( field );
     }
   }
 };

@@ -901,12 +901,12 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                 arrayView1d< string const > const & regionNames )
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
-                                               { extrinsicMeshData::flow::deltaPressure::key(), 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+                                               { extrinsicMeshData::flow::deltaPressure::key(),
                                                  extrinsicMeshData::flow::deltaGlobalCompDensity::key() } ) );
 
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face, regionNames, 
-                                               { extrinsicMeshData::flow::deltaFacePressure::key() } ) );                                                           
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face, regionNames,
+                                               { extrinsicMeshData::flow::deltaFacePressure::key() } ) );
 
 
 

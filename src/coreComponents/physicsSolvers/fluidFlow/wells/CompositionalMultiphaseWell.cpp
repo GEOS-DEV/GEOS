@@ -1484,17 +1484,17 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-  // synchronize
-  std::vector< SyncFieldsID > fieldsToBeSync;
-  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
-                                               {extrinsicMeshData::well::deltaPressure::key() , 
+    // synchronize
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+                                               {extrinsicMeshData::well::deltaPressure::key(),
                                                 extrinsicMeshData::well::deltaGlobalCompDensity::key(),
                                                 extrinsicMeshData::well::deltaMixtureConnectionRate::key()} ) );
 
-  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                       mesh,
-                                                       domain.getNeighbors(),
-                                                       true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
   } );
 }
 

@@ -801,11 +801,11 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames)
+                                                arrayView1d< string const > const & regionNames )
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
-                                               { extrinsicMeshData::well::deltaPressure::key() , 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+                                               { extrinsicMeshData::well::deltaPressure::key(),
                                                  extrinsicMeshData::well::deltaConnectionRate::key() } ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

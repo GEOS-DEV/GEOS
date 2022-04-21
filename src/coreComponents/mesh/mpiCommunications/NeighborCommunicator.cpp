@@ -516,7 +516,8 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
 //   {
 //     elemManager.forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
 //     {
-//       bufferSize += subRegion.packSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+//       bufferSize += subRegion.packSize( fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0,
+// onDevice, events );
 //     } );
 //   }
 
@@ -566,7 +567,8 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
 //   {
 //     elemManager.forElementSubRegions( [&]( ElementSubRegionBase const & subRegion )
 //     {
-//       packedSize += subRegion.pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+//       packedSize += subRegion.pack( sendBufferPtr, fieldNames.at( "elems" ), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(),
+// 0, onDevice, events );
 //     } );
 //   }
 
@@ -615,7 +617,8 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
 //   {
 //     elemManager.forElementSubRegions< ElementSubRegionBase >( [&] ( ElementSubRegionBase & subRegion )
 //     {
-//       unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
+//       unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice,
+// events );
 //     } );
 //   }
 // }

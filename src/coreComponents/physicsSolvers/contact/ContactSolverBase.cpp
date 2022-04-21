@@ -237,12 +237,12 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 arrayView1d< string const > const & )
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,  getFractureRegionName(), {viewKeyStruct::fractureStateString()} ) );
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, getFractureRegionName(), {viewKeyStruct::fractureStateString()} ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                          mesh,
-                                                          domain.getNeighbors(),
-                                                          true );
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
   } );
 }
 

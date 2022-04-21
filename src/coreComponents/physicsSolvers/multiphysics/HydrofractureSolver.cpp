@@ -209,13 +209,13 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       else
       {
         std::vector< SyncFieldsID > fieldsToBeSync;
-        fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, m_targetRegionNames, 
-                                                   { keys::IncrementalDisplacement, 
+        fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, m_targetRegionNames,
+                                                   { keys::IncrementalDisplacement,
                                                      keys::TotalDisplacement } ) );
 
-        fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, m_surfaceGenerator->getFractureRegionName(), 
-                                                  { extrinsicMeshData::flow::pressure::key(),
-                                                    "elementAperture"  } ) );          
+        fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, m_surfaceGenerator->getFractureRegionName(),
+                                                   { extrinsicMeshData::flow::pressure::key(),
+                                                     "elementAperture"  } ) );
 
 
 

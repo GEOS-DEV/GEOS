@@ -563,9 +563,9 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
 
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, 
-                                               regionNames, 
-                                               {keys::Velocity,  keys::Acceleration} ) );
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node,
+                                               regionNames,
+                                               {keys::Velocity, keys::Acceleration} ) );
 
     m_iComm.resize( domain.getNeighbors().size() );
     CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true );
@@ -1195,13 +1195,13 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
 
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames, 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames,
                                                {keys::IncrementalDisplacement, keys::TotalDisplacement} ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
-                                                          mesh,
-                                                          domain.getNeighbors(),
-                                                          true );
+                                                         mesh,
+                                                         domain.getNeighbors(),
+                                                         true );
   } );
 }
 

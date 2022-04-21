@@ -1677,10 +1677,11 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                 arrayView1d< string const > const & )
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, getFractureRegionName(), 
-                                               {extrinsicMeshData::contact::traction::key(), 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, getFractureRegionName(),
+                                               {extrinsicMeshData::contact::traction::key(),
                                                 extrinsicMeshData::contact::deltaTraction::key(),
-                                                extrinsicMeshData::contact::dispJump::key() } ) ); // This is used locally only, synchronized just for output reasons
+                                                extrinsicMeshData::contact::dispJump::key() } ) ); // This is used locally only,
+                                                                                                   // synchronized just for output reasons
 
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

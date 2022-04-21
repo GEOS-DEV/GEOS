@@ -1043,8 +1043,8 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
                                                arrayView1d< string const > const & regionNames )
   {
     std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
-                                               { extrinsicMeshData::flow::pressure::key(), 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+                                               { extrinsicMeshData::flow::pressure::key(),
                                                  extrinsicMeshData::flow::globalCompDensity::key() } ) );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
