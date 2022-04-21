@@ -105,7 +105,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pattern by which to decompose the hex mesh into wedges (more explanation required)" );
+    setDescription( "Pattern by which to decompose the hex mesh into wedges" );
 
   registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
     setApplyDefaultValue( 1e-10 ).

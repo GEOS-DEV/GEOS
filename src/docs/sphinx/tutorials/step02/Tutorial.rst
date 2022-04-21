@@ -73,9 +73,9 @@ The differences are worth pointing out here. In GEOSX:
 
  - **hexahedra can have irregular shapes**: no pillars are needed and
    vertices can be anywhere in space. This is useful for grids that turn, fold,
-   or are heavily bent. Hexahedral blocks should nevertheless not be deprecated
-   and have 8 distinct vertices.
-   Some tolerance exists for deprecation to wedges
+   or are heavily bent. Hexahedral blocks should nevertheless have 8 distinct
+   vertices that are not coalesced.
+   Some tolerance exists for degeneration to wedges
    in some solvers (finite element solvers), but it is best to avoid such situations
    and label elements according to their actual shape.
    Butterfly cells, flat cells, negative or zero volume cells will cause problems.

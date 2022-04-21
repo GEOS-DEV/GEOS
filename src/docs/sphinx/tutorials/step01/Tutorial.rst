@@ -192,7 +192,7 @@ Here the ``InternalMesh`` object is instantiated with the name ``mesh``.
 
 
 We specify the collection of elements types that this mesh contains.
-Tetrahedra, hexahedra, wedges are examples of element types.
+Tetrahedra, hexahedra, and  wedges are examples of element types.
 If a mesh contains different types of elements (a hybrid mesh),
 we should indicate this here by listing all unique types of elements in curly brackets.
 Keeping things simple, our element collection has only one type of element: a ``C3D8`` type representing a hexahedral element (linear 8-node brick).
