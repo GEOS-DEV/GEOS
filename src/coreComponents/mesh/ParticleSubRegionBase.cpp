@@ -17,9 +17,11 @@
  */
 
 #include "ParticleSubRegionBase.hpp"
+#include "constitutive/ConstitutiveManager.hpp"
 
 namespace geosx
 {
+
 using namespace dataRepository;
 
 ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ): // @suppress("Class members should be properly initialized")
@@ -153,20 +155,73 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
 
 void ParticleSubRegionBase::erase(localIndex pp)
 {
-  // Erase from registered particle fields
+  // Erase from registered particle fields...
+  int oldSize = this->size();
+  int newSize = this->size()-1;
+
+  // scalar fields:
   m_particleGhostRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
   m_particleID.erase(pp);
-  m_particleCenter.erase(pp);
-  m_particleVelocity.erase(pp);
   m_particleVolume.erase(pp);
   m_particleVolume0.erase(pp);
   m_particleMass.erase(pp);
-  m_particleDeformationGradient.erase(pp);
-  m_particleRVectors.erase(pp);
-  m_particleRVectors0.erase(pp);
 
+  // vector fields:
+  this->eraseVector( m_particleCenter, pp );
+  this->eraseVector( m_particleVelocity, pp );
+
+  // matrix fields:
+  this->eraseTensor( m_particleDeformationGradient, pp );
+  this->eraseTensor( m_particleRVectors, pp );
+  this->eraseTensor( m_particleRVectors0, pp );
   // Decrement the size of this subregion
-  m_size--;
+  this->resize(newSize);
+}
+
+void ParticleSubRegionBase::eraseVector(array2d< real64 > & vector, localIndex index)
+{
+  int oldSize = this->size();
+  int newSize = this->size()-1;
+
+  array1d< real64 > temp(3*oldSize);
+  for(int i=0; i<3*oldSize; i++)
+  {
+    temp[i] = vector[i/3][i%3];
+  }
+  temp.erase(3*index+2);
+  temp.erase(3*index+1);
+  temp.erase(3*index+0);
+  vector.resize(newSize,3);
+  for(int i=0; i<3*newSize; i++)
+  {
+    vector[i/3][i%3] = temp[i];
+  }
+}
+
+void ParticleSubRegionBase::eraseTensor(array3d< real64 > & tensor, localIndex index)
+{
+  int oldSize = this->size();
+  int newSize = this->size()-1;
+
+  array1d< real64 > temp(9*oldSize);
+  for(int i=0; i<9*oldSize; i++)
+  {
+    temp[i] = tensor[i/9][i/3%3][i%3];
+  }
+  temp.erase(9*index+8);
+  temp.erase(9*index+7);
+  temp.erase(9*index+6);
+  temp.erase(9*index+5);
+  temp.erase(9*index+4);
+  temp.erase(9*index+3);
+  temp.erase(9*index+2);
+  temp.erase(9*index+1);
+  temp.erase(9*index+0);
+  tensor.resize(newSize,3,3);
+  for(int i=0; i<9*newSize; i++)
+  {
+    tensor[i/9][i/3%3][i%3] = temp[i];
+  }
 }
 
 } /* namespace geosx */

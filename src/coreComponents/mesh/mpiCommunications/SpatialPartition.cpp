@@ -276,8 +276,8 @@ namespace geosx
     LvArray::tensorOps::addScalar< 3 >( m_contactGhostMax, bufferSize );
   }
 
-  void SpatialPartition::repartitionMasterParticlesToNeighbors(DomainPartition & domain,
-                                                               MPI_iCommData & icomm)
+  void SpatialPartition::repartitionMasterParticlesToNeighbors( DomainPartition & domain,
+                                                                MPI_iCommData & icomm )
   {
 
     /*
@@ -648,12 +648,11 @@ namespace geosx
     }
   }
 
-  void SpatialPartition::sendParticlesToNeighbor(ParticleSubRegionBase & subRegion,
-                                                 std::vector<int> const & newParticleStartingIndices,
-                                                 std::vector<int> const & numberOfIncomingParticles,
-                                                 MPI_iCommData & icomm,
-                                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor
-  )
+  void SpatialPartition::sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
+                                                  std::vector<int> const & newParticleStartingIndices,
+                                                  std::vector<int> const & numberOfIncomingParticles,
+                                                  MPI_iCommData & icomm,
+                                                  std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor )
   {
     unsigned int nn = m_neighbors.size();
 

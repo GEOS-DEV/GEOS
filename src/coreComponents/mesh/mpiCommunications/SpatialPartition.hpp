@@ -67,8 +67,8 @@ public:
 
   int getColor() override;
 
-  void repartitionMasterParticlesToNeighbors(DomainPartition & domain,
-                                             MPI_iCommData & icomm);
+  void repartitionMasterParticlesToNeighbors( DomainPartition & domain,
+                                              MPI_iCommData & icomm );
 
   void sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
                                      MPI_iCommData & icomm,                                                         // Solver's MPI communicator
@@ -77,15 +77,13 @@ public:
 
   void sendListOfLocalIndicesToNeighbors(std::vector<array1d<int>>& listSendingToEachNeighbor,
                                          MPI_iCommData & icomm,
-                                         std::vector<array1d<int>>& listReceivedFromEachNeighbor
-  );
+                                         std::vector<array1d<int>>& listReceivedFromEachNeighbor );
 
-  void sendParticlesToNeighbor(ParticleSubRegionBase & subRegion,
-                               std::vector<int> const & newParticleStartingIndices,
-                               std::vector<int> const & numberOfIncomingParticles,
-                               MPI_iCommData & icomm,
-                               std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor
-  );
+  void sendParticlesToNeighbor( ParticleSubRegionBase & subRegion,
+                                std::vector<int> const & newParticleStartingIndices,
+                                std::vector<int> const & numberOfIncomingParticles,
+                                MPI_iCommData & icomm,
+                                std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor );
 
 
   /// number of partitions
