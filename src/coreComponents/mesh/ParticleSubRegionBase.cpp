@@ -25,7 +25,7 @@ using namespace dataRepository;
 ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const parent ): // @suppress("Class members should be properly initialized")
   ObjectManagerBase( name, parent ),
   m_constitutiveModels( groupKeyStruct::constitutiveModelsString(), this ),
-  m_ghostRank(),
+  m_particleGhostRank(),
   m_particleID(),
   m_particleCenter(),
   m_particleVelocity(),
@@ -39,7 +39,7 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerGroup( groupKeyStruct::constitutiveModelsString(), &m_constitutiveModels ).
     setSizedFromParent( 1 );
 
-  registerWrapper( viewKeyStruct::ghostRankString(), &m_ghostRank ).
+  registerWrapper( viewKeyStruct::particleGhostRankString(), &m_particleGhostRank ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
   registerWrapper( viewKeyStruct::particleIDString(), &m_particleID ).
@@ -62,16 +62,111 @@ ParticleSubRegionBase::ParticleSubRegionBase( string const & name, Group * const
   registerWrapper( viewKeyStruct::particleMassString(), &m_particleMass ).
     setPlotLevel( PlotLevel::LEVEL_1 );
 
+  registerWrapper( viewKeyStruct::particleRVectorsString(), &m_particleRVectors ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    reference().resizeDimension< 1, 2 >( 3, 3 );
+
+  registerWrapper( viewKeyStruct::particleRVectors0String(), &m_particleRVectors0 ).
+    setPlotLevel( PlotLevel::NOPLOT ).
+    reference().resizeDimension< 1, 2 >( 3, 3 );
+
   // The only things that should be registered here are those that are read in from the input files. So e.g. particle mass shouldn't be here since it's not specified in any input file, whereas particle volume is.
   // A solver(?) should then on the first cycle register particle mass and calculate it from volume and density. Same idea for other similarly post-processed and/or solver-specific fields.
 
-  // idk what I'm doing
-//  registerWrapper( viewKeyStruct::particleDeformationGradientString(), &m_particleDeformationGradient ).
-//    setPlotLevel( PlotLevel::LEVEL_1 ).
-//    reference().resizeDimension< 1 >( 3 ).resizeDimension< 2 >( 3 );
+  registerWrapper( viewKeyStruct::particleDeformationGradientString(), &m_particleDeformationGradient ).
+    setPlotLevel( PlotLevel::LEVEL_1 ).
+    reference().resizeDimension< 1, 2 >( 3, 3 );
 }
 
 ParticleSubRegionBase::~ParticleSubRegionBase()
 {}
+
+unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
+                                                  arrayView1d< localIndex > const & localIndices,
+                                                  bool doPack ) const
+{
+  // Particle fields that are packed. TODO: This seems silly, can't we grab all registered fields all at once?
+  std::map< string, string_array > fieldNames;
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
+
+  // Declarations
+  parallelDeviceEvents events; // I have no idea what this thing is
+  unsigned int packedSize = 0;
+
+  // Pack particle fields
+  if(!doPack) // doPack == false, so we're just getting the size
+  {
+    packedSize += ObjectManagerBase::packSize( fieldNames.at( "particles" ), localIndices, 0, false, events );
+  }
+  else // doPack == true, perform the pack
+  {
+    buffer_unit_type* bufferPtr = buffer.data();
+    packedSize += ObjectManagerBase::pack( bufferPtr, fieldNames.at( "particles" ), localIndices, 0, false, events );
+  }
+
+  // Pack constitutive fields?
+
+  return packedSize;
+}
+
+void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
+                                            int const & startingIndex,
+                                            int const & numberOfIncomingParticles )
+{
+  // Particle fields that are unpacked
+  std::map< string, string_array > fieldNames;
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
+  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
+
+  // Declarations
+  parallelDeviceEvents events; // I have no idea what this thing is
+  const buffer_unit_type* receiveBufferPtr = buffer.data(); // needed for const cast
+
+  // Get the indices we're overwriting during unpack.
+  // Before unpacking, those indices should contain junk/default data created when subRegion.resize() was called.
+  array1d< localIndex > indices(numberOfIncomingParticles);
+  for(int i=0; i<numberOfIncomingParticles; i++)
+  {
+    indices[i] = startingIndex + i;
+  }
+
+  // Unpack
+  ObjectManagerBase::unpack( receiveBufferPtr, indices, 0, false, events );
+}
+
+void ParticleSubRegionBase::erase(localIndex pp)
+{
+  // Erase from registered particle fields
+  m_particleGhostRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
+  m_particleID.erase(pp);
+  m_particleCenter.erase(pp);
+  m_particleVelocity.erase(pp);
+  m_particleVolume.erase(pp);
+  m_particleVolume0.erase(pp);
+  m_particleMass.erase(pp);
+  m_particleDeformationGradient.erase(pp);
+  m_particleRVectors.erase(pp);
+  m_particleRVectors0.erase(pp);
+
+  // Decrement the size of this subregion
+  m_size--;
+}
 
 } /* namespace geosx */
