@@ -110,14 +110,14 @@ public:
    * @brief Get the ghost rank of each particle in this subregion.
    * @return an arrayView1d of const particle ghost ranks
    */
-  arrayView1d< int const > getGhostRank() const
-  { return m_ghostRank; }
+  arrayView1d< int const > getParticleGhostRank() const
+  { return m_particleGhostRank; }
 
   /**
-   * @copydoc getGhostRank() const
+   * @copydoc getParticleGhostRank() const
    */
-  arrayView1d< int > getGhostRank()
-  { return m_ghostRank; }
+  arrayView1d< int > getParticleGhostRank()
+  { return m_particleGhostRank; }
 
   /**
    * @brief Get the center of each particle in this subregion.
@@ -273,7 +273,7 @@ public:
     /// @return String key for the member level field for the particle global ID.
     static constexpr char const * particleIDString() { return "particleID"; }
     /// @return String key for the member level field for the particle ghost rank.
-    static constexpr char const * ghostRankString() { return "ghostRank"; }
+    static constexpr char const * particleGhostRankString() { return "particleGhostRank"; }
     /// @return String key for the member level field for the particle center.
     static constexpr char const * particleCenterString() { return "particleCenter"; }
     /// @return String key for the member level field for the particle velocity.
@@ -302,6 +302,16 @@ public:
     static constexpr auto constitutiveModelsString() { return "ConstitutiveModels"; }
   };
 
+  unsigned int particlePack( buffer_type & buffer,
+                             arrayView1d< localIndex > const & localIndices,
+                             bool doPack ) const;
+
+  void particleUnpack( buffer_type & buffer,
+                       int const & startingIndex,
+                       int const & numberOfIncomingParticles );
+
+  void erase(localIndex pp);
+
 private:
   /// Group in which the constitutive models of this subregion are registered
   dataRepository::Group m_constitutiveModels;
@@ -311,7 +321,7 @@ protected:
   bool m_hasRVectors;
 
   /// Member level field for particle ghost ranks
-  array1d< int > m_ghostRank;
+  array1d< int > m_particleGhostRank;
 
   /// Member level field for the particle global ID.
   array1d< int > m_particleID;

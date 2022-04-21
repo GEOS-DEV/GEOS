@@ -687,12 +687,14 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   {
     arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
     arrayView2d< real64 > const particleVelocity = subRegion.getParticleVelocity();
+    arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView1d< real64 > const particleVolume0 = subRegion.getParticleVolume0();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
 
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     ElasticIsotropic & constitutiveRelation = getConstitutiveModel< ElasticIsotropic >( subRegion, solidMaterialName ); // again, limiting to elastic isotropic for now
+    arrayView2d< real64 > const particleDensity = constitutiveRelation.getDensity();
     arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
     arrayView1d< real64 > const shearModulus = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const bulkModulus = constitutiveRelation.bulkModulus();
@@ -702,8 +704,10 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     {
       auto const & p_x = particleCenter[p];
       auto const & p_v = particleVelocity[p];
+      real64 & p_m = particleMass[p][0];
       real64 & p_Vol = particleVolume[p];
       real64 const & p_Vol0 = particleVolume0[p];
+      real64 & p_rho = particleDensity[p];
       auto const & p_F = particleDeformationGradient[p]; // auto = LvArray::ArraySlice<double, 2, 1, long>
       auto const & p_stress = particleStress[p][0];
       real64 p_L[3][3] = { {0} }; // Velocity gradient
@@ -777,6 +781,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
       // Get det(F), update volume and r-vectors
       detF = -p_F[0][2]*p_F[1][1]*p_F[2][0] + p_F[0][1]*p_F[1][2]*p_F[2][0] + p_F[0][2]*p_F[1][0]*p_F[2][1] - p_F[0][0]*p_F[1][2]*p_F[2][1] - p_F[0][1]*p_F[1][0]*p_F[2][2] + p_F[0][0]*p_F[1][1]*p_F[2][2];
       p_Vol = p_Vol0*detF;
+      p_rho = p_m/p_Vol;
       subRegion.updateRVectors(p, p_F);
 
       // Particle constitutive update - Elastic Isotropic model doesn't have a hyperelastic update yet (waiting on strain and stress measure confirmation?) so we implement our own - St. Venant-Kirchhoff
