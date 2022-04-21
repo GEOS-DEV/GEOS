@@ -34,7 +34,7 @@ public:
    * @param parallelAccess Whether to access one file in parallel or one file per rank in the comm.
    * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
    */
-  HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, struct ompi_communicator_t * comm );
+  HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm );
 
   /**
    * Destructor -- Close the file and acccessors.
@@ -63,7 +63,7 @@ private:
   /// Whether to open the same file in parallel, or open a file per process
   bool m_mpioFapl;
   /// The comminator to operate on the file collectively over
-  struct ompi_communicator_t * m_comm;
+  MPI_Comm m_comm;
 };
 
 }
