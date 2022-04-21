@@ -113,9 +113,11 @@ public:
 
 private:
 
-  void buildCellBlocks( CellBlockManager & cellBlockManager ) const;
+  real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
-  void buildSurfaces( CellBlockManager & cellBlockManager ) const;
+  void writeCells( CellBlockManager & cellBlockManager ) const;
+
+  void writeSurfaces( CellBlockManager & cellBlockManager ) const;
 
   void importFieldOnCellElementSubRegion( int const regionId,
                                           ElementType const elemType,

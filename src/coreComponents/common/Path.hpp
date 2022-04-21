@@ -32,45 +32,62 @@ class Path : public std::string
 {
 public:
 
-  /// Default constructor.
-  Path():
-    std::string()
-  {}
-
-  /**
-   * @brief Copy constructor, creates a copy of @p src.
-   * @param src the Path to copy.
-   */
-  Path( Path const & src ):
-    std::string( src )
-  {}
-
-  /// Destructor.
-  ~Path()
-  {}
-
-  /**
-   * @brief Copy Constructor
-   * @param rhs Reference to the Path that will be copied.
-   * @return *this
-   */
-  Path & operator=( Path const & rhs )
-  {
-    std::string::operator=( rhs );
-    return *this;
-  }
-
   using std::string::string;
 
-  /*!
+  /**
+   * @brief Copy constructor.
+   * @param rhs Path to be copied.
+   */
+  Path( Path const & rhs ) = default;
+
+  /**
+   * @brief Move constructor.
+   * @param rhs Path to be moved.
+   */
+  Path( Path && rhs ) = default;
+
+  /**
+   * @brief Copy assignment.
+   * @param rhs Path to be copied.
+   * @return *this
+   */
+  Path & operator=( Path const & rhs ) = default;
+
+  /**
+   * @brief Move assignment.
+   * @param rhs Path to be moved.
+   * @return *this
+   */
+  Path & operator=( Path && rhs ) = default;
+
+  /**
    * @brief Get the path prefix of the file
    * @details The path prefix is usually a folder path in which the XML file is located
    * @return the path prefix
    */
   static std::string & pathPrefix()
   {
-    static std::string m_pathPrefix;
-    return m_pathPrefix;
+    static std::string s_pathPrefix;
+    return s_pathPrefix;
+  }
+
+  /**
+   * @brief @return the filename portion of the path
+   */
+  std::string filename() const
+  {
+    size_type const pos = find_last_of( '/' );
+    return pos == npos ? static_cast< std::string >( *this ) : substr( pos + 1 );
+  }
+
+  /**
+   * @brief @return the extension of the filename
+   */
+  std::string extension() const
+  {
+    std::string const fname = filename();
+    size_type const pos = fname.find_last_of( '.' );
+    return pos == npos ? "" : fname.substr( pos + 1 );
   }
 };
 
@@ -88,7 +105,7 @@ std::string getAbsolutePath( std::string const & path );
  * @retval true if the path is absolute
  * @retval false if the path is relative
  */
-inline bool isAbsolutePath( const std::string & path )
+inline bool isAbsolutePath( std::string const & path )
 {
   return !path.empty() && path[ 0 ] == '/';
 }
@@ -125,7 +142,7 @@ std::pair< std::string, std::string > splitPath( std::string const & path );
  * @return the combined path
  */
 template< typename ... ARGS >
-inline std::string joinPath( ARGS const & ... args )
+std::string joinPath( ARGS const & ... args )
 {
   size_t constexpr numParts = sizeof...(args);
   static_assert( numParts > 0, "Must provide arguments" );
