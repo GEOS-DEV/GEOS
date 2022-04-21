@@ -317,7 +317,7 @@ namespace geosx
       // should only happen if it has left the global domain (hopefully at an outflow b.c.).
 
       arrayView2d< real64 > const particleCenter = subRegion.getParticleCenter();
-      arrayView1d< int > const ghostRank = subRegion.getGhostRank();
+      arrayView1d< int > const particleGhostRank = subRegion.getParticleGhostRank();
       array1d< R1Tensor > outOfDomainParticleCoordinates;
       std::vector< localIndex > outOfDomainParticleLocalIndices;
       unsigned int nn = m_neighbors.size();
@@ -332,22 +332,152 @@ namespace geosx
           p_x[i] = particleCenter[pp][i];
           inPartition = inPartition && isCoordInPartition( p_x[i], i);
         }
-        if( ghostRank[pp]==this->m_rank && !inPartition )
+        if( particleGhostRank[pp]==this->m_rank && !inPartition )
         {
           outOfDomainParticleCoordinates.emplace_back(p_x);  // Store the coordinate of the out-of-domain particle
           outOfDomainParticleLocalIndices.push_back(pp);     // Store the local index "pp" for the current coordinate.
-          ghostRank[pp] = -1;                                // Temporarily set ghostRank of out-of-domain particle to -1 until it is requested by someone.
+          particleGhostRank[pp] = -1;                        // Temporarily set particleGhostRank of out-of-domain particle to -1 until it is requested by someone.
         }
       }
 
 
       // (2) Pack the list of particle center coordinates to each neighbor, and send/receive the list to neighbors.
+
       std::vector<array1d<R1Tensor>> particleCoordinatesReceivedFromNeighbors(nn);
 
       sendCoordinateListToNeighbors(outOfDomainParticleCoordinates.toView(),      // input: Single list of coordinates sent to all neighbors
                                     icomm,                                        // input: Solver MPI communicator
                                     particleCoordinatesReceivedFromNeighbors      // output: List of lists of coordinates received from each neighbor.
                                     );
+
+
+      // (3) check the received lists for particles that are in the domain of the
+      //     current partition.  make a list of the locations in the coordinate list
+      //     of the particles that are to be owned by the current partition.
+
+      std::vector<array1d<int>> particleListIndicesRequestingFromNeighbors(nn);
+      for(size_t n=0; n<nn; n++ )
+      {
+        // Loop through the unpacked list and make a list of the index of any point in partition interior domain
+        for(int pp=0; pp<particleCoordinatesReceivedFromNeighbors[n].toView().size(); pp++)
+        {
+          bool inPartition = true;
+          for(int j=0; j<3; j++)
+          {
+            inPartition = inPartition && isCoordInPartition( particleCoordinatesReceivedFromNeighbors[n].toView()[pp][j], j );
+          }
+          if( inPartition )
+          {
+            // Request particle to be transferred, and take ownership
+            particleListIndicesRequestingFromNeighbors[n].emplace_back(pp);
+          }
+        }
+      }
+
+
+      // (4) Pack and send/receive list of requested indices to each neighbor.  These are the indices
+      //     in the list of coordinates, not the LocalIndices on the sending processor. Unpack it
+      //     and store the request list.
+
+      std::vector<array1d<int>> particleListIndicesRequestedFromNeighbors(nn);
+
+      sendListOfLocalIndicesToNeighbors(particleListIndicesRequestingFromNeighbors,
+                                        icomm,
+                                        particleListIndicesRequestedFromNeighbors);
+
+
+      // (5) Update the ghost rank of the out-of-domain particles to be equal to the rank
+      //     of the partition requesting to own the particle.
+
+      std::vector<array1d<localIndex>> particleLocalIndicesRequestedFromNeighbors(nn);
+      {
+        unsigned int numberOfRequestedParticles = 0;
+        std::vector<int> outOfDomainParticleRequests(outOfDomainParticleLocalIndices.size(),0);
+
+        for(size_t n=0; n<nn; n++ )
+        {
+          int ni = particleListIndicesRequestedFromNeighbors[n].size();
+          numberOfRequestedParticles += ni;
+
+          // The corresponding local index for each item in the request list is stored here:
+          particleLocalIndicesRequestedFromNeighbors[n].resize(ni);
+
+          for(int k=0; k<ni; k++)
+          {
+            int i = particleListIndicesRequestedFromNeighbors[n][k];
+            outOfDomainParticleRequests[i] += 1;
+            localIndex pp = outOfDomainParticleLocalIndices[i];
+
+            particleLocalIndicesRequestedFromNeighbors[n][k] = pp;
+            // Set ghost rank of the particle equal to neighbor rank.
+            particleGhostRank[pp] = m_neighbors[n].neighborRank();
+          }
+        }
+
+        // Check that there is exactly one processor requesting each out-of-domain particle.
+        if (numberOfRequestedParticles != outOfDomainParticleLocalIndices.size())
+        {
+          std::cout << "Rank " << m_rank << " has requests for " << numberOfRequestedParticles << " out of " << outOfDomainParticleLocalIndices.size() << " out-of-domain particles" << std::endl;
+        }
+        for (size_t i=0; i<outOfDomainParticleRequests.size(); i++)
+        {
+          if (outOfDomainParticleRequests[i] != 1)
+          {
+            std::cout << "Rank " << m_rank << " particle as " << outOfDomainParticleRequests[i] << " != 1 requests!" << std::endl;
+          }
+        }
+      }
+
+
+      // (5.1) Resize particle subRegion to accommodate incoming particles.
+      //       Keep track of the starting indices and number of particles coming from each neighbor.
+
+      int oldSize = subRegion.size();
+      int newSize = subRegion.size();
+      std::vector<int> newParticleStartingIndices(nn);
+      std::vector<int> numberOfIncomingParticles(nn);
+      for(size_t n=0; n<nn; n++)
+      {
+        numberOfIncomingParticles[n] = particleListIndicesRequestingFromNeighbors[n].size();
+        newParticleStartingIndices[n] = newSize;
+        newSize += numberOfIncomingParticles[n];
+      }
+      if(newSize > oldSize)
+      {
+        subRegion.resize(newSize); // TODO: Does this handle constitutive fields owned by the subRegion?
+      }
+
+
+      // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
+
+      sendParticlesToNeighbor( subRegion,
+                               newParticleStartingIndices,
+                               numberOfIncomingParticles,
+                               icomm,
+                               particleLocalIndicesRequestedFromNeighbors );
+
+
+      // (7) Delete any out-of-domain particles that were not requested by a neighbor.  These particles
+      //     will still have ghostRank=-1. This should only happen if the particle has left the global domain.
+      //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
+      //     the global domain, print a warning.
+
+      for(int pp = subRegion.size()-1; pp>=0; pp--)
+      {
+        if( particleGhostRank[pp] == -1 )
+        {
+          GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenter[pp] );
+          subRegion.erase(pp);
+        }
+        else if( particleGhostRank[pp] != m_rank )
+        {
+          subRegion.erase(pp);
+        }
+      }
+      // Resize particle region owning this subregion
+      ParticleRegion & region = dynamicCast< ParticleRegion & >( subRegion.getParent().getParent() );
+      int newRegionSize = region.getNumberOfParticles();
+      region.resize(newRegionSize);
 
     } );
 
@@ -356,7 +486,7 @@ namespace geosx
 
   void SpatialPartition::sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
                                                        MPI_iCommData & icomm,                                                         // Solver's MPI communicator
-                                                       std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
+                                                       std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
   )
   {
     // Number of neighboring partitions
@@ -432,6 +562,176 @@ namespace geosx
       const buffer_unit_type* receiveBufferPtr = receiveBuffer[n].data(); // needed for const cast
       bufferOps::Unpack( receiveBufferPtr, particleCoordinatesReceivedFromNeighbors[n] );
     }
+  }
+
+  void SpatialPartition::sendListOfLocalIndicesToNeighbors(std::vector<array1d<int>>& listSendingToEachNeighbor,
+                                                           MPI_iCommData & icomm,
+                                                           std::vector<array1d<int>>& listReceivedFromEachNeighbor
+  )
+  {
+    // Number of neighboring partitions
+    unsigned int nn = m_neighbors.size();
+
+    // Pack the outgoing lists of local indices
+    std::vector< unsigned int > sizeOfPacked(nn);
+    std::vector< buffer_type > sendBuffer(nn);
+    for(size_t n=0; n<nn; n++)
+    {
+      unsigned int sizeToBePacked = 0;                                                // size of the outgoing data with packing=false (we need to run through it first without packing so we can size the buffer)
+      sizeOfPacked[n] = 0;                                                            // size of the outgoing data with packing=true
+      buffer_unit_type* junk;                                                         // junk buffer, stores nothing since we're just getting the buffer size on the first pass
+      sizeToBePacked += bufferOps::Pack< false >( junk,
+                                                  listSendingToEachNeighbor[n] );     // get the size of the list of local indices
+      sendBuffer[n].resize(sizeToBePacked);                                           // the actual sized buffer that we pack into
+      buffer_unit_type* sendBufferPtr = sendBuffer[n].data();                         // get a pointer to the buffer
+      sizeOfPacked[n] += bufferOps::Pack< true >( sendBufferPtr,
+                                                  listSendingToEachNeighbor[n] );     // pack the list of local indices into the buffer
+      GEOSX_ERROR_IF_NE( sizeToBePacked, sizeOfPacked[n] );                           // make sure the packer is self-consistent
+    }
+
+    // Declare the receive buffers
+    array1d< unsigned int > sizeOfReceived(nn); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector or std::array
+    array1d< buffer_type > receiveBuffer(nn);
+
+    // send the list of local indices to each neighbor using an asynchronous send
+    {
+      array1d<MPI_Request>   sendRequest(nn);
+      array1d<MPI_Status>    sendStatus(nn);
+      array1d<MPI_Request>   receiveRequest(nn);
+      array1d<MPI_Status>    receiveStatus(nn);
+
+      // Send/receive the size of the packed buffer
+      for(size_t n=0; n<nn; n++ )
+      {
+        m_neighbors[n].mpiISendReceive( &(sizeOfPacked[n]),
+                                        1,
+                                        sendRequest[n],
+                                        &(sizeOfReceived[n]),
+                                        1,
+                                        receiveRequest[n],
+                                        icomm.commID(),
+                                        MPI_COMM_GEOSX );
+      }
+      MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+      MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+    }
+
+    // Send/receive the buffer containing the list of local indices
+    {
+      array1d<MPI_Request>   sendRequest(nn);
+      array1d<MPI_Status>    sendStatus(nn);
+      array1d<MPI_Request>   receiveRequest(nn);
+      array1d<MPI_Status>    receiveStatus(nn);
+
+      for(size_t n=0; n<nn; n++ )
+      {
+        receiveBuffer[n].resize(sizeOfReceived[n]);
+        m_neighbors[n].mpiISendReceive( sendBuffer[n].data(), // TODO: This can't be sendBufferPtr, why not? I guess cuz sendBufferPtr gets incremented (moved) during packing.
+                                        sizeOfPacked[n],
+                                        sendRequest[n],
+                                        receiveBuffer[n].data(),
+                                        sizeOfReceived[n],
+                                        receiveRequest[n],
+                                        icomm.commID(),
+                                        MPI_COMM_GEOSX );
+      }
+      MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+      MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+    }
+
+    // Unpack the received list of local indices from each neighbor
+    for(size_t n=0; n<nn; n++ )
+    {
+      // Unpack the buffer to an array of coordinates.
+      const buffer_unit_type* receiveBufferPtr = receiveBuffer[n].data(); // needed for const cast
+      bufferOps::Unpack( receiveBufferPtr, listReceivedFromEachNeighbor[n] );
+    }
+  }
+
+  void SpatialPartition::sendParticlesToNeighbor(ParticleSubRegionBase & subRegion,
+                                                 std::vector<int> const & newParticleStartingIndices,
+                                                 std::vector<int> const & numberOfIncomingParticles,
+                                                 MPI_iCommData & icomm,
+                                                 std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor
+  )
+  {
+    unsigned int nn = m_neighbors.size();
+
+    // Pack the send buffer for the particles being sent to each neighbor
+    std::vector< buffer_type > sendBuffer(nn);
+    std::vector< unsigned int > sizeOfPacked(nn);
+
+    for(size_t n=0; n<nn; n++ )
+    {
+      sizeOfPacked[n] = subRegion.particlePack( sendBuffer[n], particleLocalIndicesToSendToEachNeighbor[n].toView(), false );
+      sendBuffer[n].resize( sizeOfPacked[n] );
+      unsigned int sizeCheck = subRegion.particlePack( sendBuffer[n], particleLocalIndicesToSendToEachNeighbor[n].toView(), true );
+      GEOSX_ERROR_IF_NE( sizeCheck, sizeOfPacked[n]);
+    }
+
+    // Declare the receive buffers
+    array1d< unsigned int > sizeOfReceived(nn); // TODO: decide if these number-of-neighbor-sized arrays should be array1d, std::vector or std::array
+    array1d< buffer_type > receiveBuffer(nn);
+
+    // send/receive the size of the packed particle data to each neighbor using an asynchronous send
+    {
+      array1d<MPI_Request>   sendRequest(nn);
+      array1d<MPI_Status>    sendStatus(nn);
+      array1d<MPI_Request>   receiveRequest(nn);
+      array1d<MPI_Status>    receiveStatus(nn);
+
+      for(size_t n=0; n<nn; n++ )
+      {
+        m_neighbors[n].mpiISendReceive( &(sizeOfPacked[n]),
+                                        1,
+                                        sendRequest[n],
+                                        &(sizeOfReceived[n]),
+                                        1,
+                                        receiveRequest[n],
+                                        icomm.commID(),
+                                        MPI_COMM_GEOSX );
+      }
+      MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+      MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+    }
+
+    // Send/receive the buffer containing the list of local indices
+    {
+      array1d<MPI_Request>   sendRequest(nn);
+      array1d<MPI_Status>    sendStatus(nn);
+      array1d<MPI_Request>   receiveRequest(nn);
+      array1d<MPI_Status>    receiveStatus(nn);
+
+      for(size_t n=0; n<nn; n++ )
+      {
+        receiveBuffer[n].resize(sizeOfReceived[n]);
+        m_neighbors[n].mpiISendReceive( sendBuffer[n].data(),
+                                        sizeOfPacked[n],
+                                        sendRequest[n],
+                                        receiveBuffer[n].data(),
+                                        sizeOfReceived[n],
+                                        receiveRequest[n],
+                                        icomm.commID(),
+                                        MPI_COMM_GEOSX );
+      }
+      MPI_Waitall(nn, sendRequest.data(), sendStatus.data());
+      MPI_Waitall(nn, receiveRequest.data(), receiveStatus.data());
+    }
+
+    // Unpack the received particle data.
+    for(size_t n=0; n<nn; n++ )
+    {
+      // Unpack the buffer to an array of coordinates.
+      const buffer_unit_type* receiveBufferPtr = receiveBuffer[n].data(); // needed for const cast
+      subRegion.particleUnpack( receiveBuffer[n], newParticleStartingIndices[n], numberOfIncomingParticles[n] );
+    }
+
+//    for(localIndex n=0; n<nn; n++ )
+//    {
+//      lArray1d receiveElements;
+//      const char* _buffer = reinterpret_cast<char*>(receiveBuffer[n].data());  // Recast into form needed by Unpack:
+//      particleManager.Unpack(_buffer,receiveElements);                         // Unpack particles and create/overwrite as needed
+//    }
   }
 
 }

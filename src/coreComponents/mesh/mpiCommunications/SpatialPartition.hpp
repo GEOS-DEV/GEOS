@@ -72,8 +72,21 @@ public:
 
   void sendCoordinateListToNeighbors(arrayView1d<R1Tensor> const & particleCoordinatesSendingToNeighbors,           // Single list of coordinates sent to all neighbors
                                      MPI_iCommData & icomm,                                                         // Solver's MPI communicator
-                                     std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors   // List of lists of coordinates received from each neighbor.
+                                     std::vector<array1d<R1Tensor>>& particleCoordinatesReceivedFromNeighbors       // List of lists of coordinates received from each neighbor.
   );
+
+  void sendListOfLocalIndicesToNeighbors(std::vector<array1d<int>>& listSendingToEachNeighbor,
+                                         MPI_iCommData & icomm,
+                                         std::vector<array1d<int>>& listReceivedFromEachNeighbor
+  );
+
+  void sendParticlesToNeighbor(ParticleSubRegionBase & subRegion,
+                               std::vector<int> const & newParticleStartingIndices,
+                               std::vector<int> const & numberOfIncomingParticles,
+                               MPI_iCommData & icomm,
+                               std::vector< array1d< localIndex > > const & particleLocalIndicesToSendToEachNeighbor
+  );
+
 
   /// number of partitions
   array1d< int > m_Partitions;
