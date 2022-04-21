@@ -215,7 +215,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -237,9 +237,9 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     } );
 
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaTraction::key() ) );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, { extrinsicMeshData::contact::deltaTraction::key() } ) );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );
@@ -1669,12 +1669,6 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
   dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::deltaTraction::key(), -scalingFactor );
   dofManager.addVectorToField( localSolution, extrinsicMeshData::contact::traction::key(), extrinsicMeshData::contact::traction::key(), -scalingFactor );
 
-
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::traction::key() ) );
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::deltaTraction::key() ) );
-  // This is used locally only, synchronized just for output reasons
-  fieldNames["elems"].emplace_back( string( extrinsicMeshData::contact::dispJump::key() ) );
   // fractureStateString is synchronized in UpdateFractureState
   // oldFractureStateString and oldDispJumpString used locally only
 
@@ -1682,7 +1676,14 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, getFractureRegionName(), 
+                                               {extrinsicMeshData::contact::traction::key(), 
+                                                extrinsicMeshData::contact::deltaTraction::key(),
+                                                extrinsicMeshData::contact::dispJump::key() } ) ); // This is used locally only, synchronized just for output reasons
+
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );

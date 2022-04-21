@@ -423,14 +423,16 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
   dofManager.addVectorToField( localSolution, m_fieldName, m_fieldName, scalingFactor );
 
   // Syncronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_fieldName );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+     std::vector< SyncFieldsID > fieldsToBeSync;
+
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames, 
+                                                 {m_fieldName} ) );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          false );

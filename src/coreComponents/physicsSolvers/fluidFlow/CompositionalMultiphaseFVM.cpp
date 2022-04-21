@@ -586,18 +586,23 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
-                                               arrayView1d< string const > const & )
+                                               arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
-
+    std::vector< SyncFieldsID > fieldsToBeSync;
     if( m_isThermal )
     {
-      fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                                 { extrinsicMeshData::flow::deltaPressure::key() , 
+                                                   extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
+                                                   extrinsicMeshData::flow::deltaTemperature::key() } ) ); 
+    }else
+    {
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                                 { extrinsicMeshData::flow::deltaPressure::key(), 
+                                                   extrinsicMeshData::flow::deltaGlobalCompDensity::key() } ) ); 
     }
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 

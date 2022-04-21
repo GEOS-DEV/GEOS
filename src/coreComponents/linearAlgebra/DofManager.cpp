@@ -200,7 +200,7 @@ void DofManager::createIndexArray( FieldDescription const & field )
       } );
 
       // synchronize across ranks
-      CommunicationTools::getInstance().synchronizeFields2( fieldsToBeSync, mesh, m_domain->getNeighbors(), false );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, m_domain->getNeighbors(), false );
     } );
   } );
 }
@@ -1305,7 +1305,7 @@ void DofManager::reorderByRank()
   for( auto const & meshFieldPair : fieldsToBeSync )
   {
     MeshLevel & mesh = m_domain->getMeshBody( meshFieldPair.first.first ).getMeshLevel( meshFieldPair.first.second );
-    CommunicationTools::getInstance().synchronizeFields2( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );
+    CommunicationTools::getInstance().synchronizeFields( meshFieldPair.second, mesh, m_domain->getNeighbors(), false );
   }
 
   m_reordered = true;

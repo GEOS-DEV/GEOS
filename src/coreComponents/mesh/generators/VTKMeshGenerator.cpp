@@ -868,7 +868,11 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
     }
   }
 
-  CommunicationTools::getInstance().synchronizeFields( { { "elems", m_fieldNamesInGEOSX } },
+  std::vector< SyncFieldsID > fieldsToBeSync;
+  array1d<string> regionNames;
+  regionNames.emplace_back("where can I get the regionNames?");
+  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames , m_fieldNamesInGEOSX ) );
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                        domain.getMeshBody( this->getName() ).getMeshLevel( 0 ),
                                                        domain.getNeighbors(),
                                                        false );

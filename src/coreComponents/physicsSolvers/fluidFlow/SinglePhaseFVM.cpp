@@ -177,12 +177,13 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["elems"].emplace_back( string( extrinsicMeshData::flow::deltaPressure::key() ) );
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                               { extrinsicMeshData::flow::deltaPressure::key() } ) );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
 }
 

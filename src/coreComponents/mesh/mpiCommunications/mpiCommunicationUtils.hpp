@@ -30,6 +30,13 @@ struct SyncFieldsID
   array1d< string > regionNames;
   array1d< string > fieldNames;
 
+  SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, arrayView1d< string const > const & fields ):
+    location( location )
+  {
+    fillRegions( regions );
+    fillFields( fields );
+  }
+
   SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, std::initializer_list< string > fields ):
     location( location )
   {
@@ -58,6 +65,14 @@ struct SyncFieldsID
     for( integer i = 0; i < regionNames.size(); i++ )
     {
       regionNames[i] = regions[i];
+    }
+  }
+
+  void fillFields( arrayView1d<string const> const & fields )
+  {
+    for( auto field : fields )
+    {
+      fieldNames.emplace_back(field);
     }
   }
 

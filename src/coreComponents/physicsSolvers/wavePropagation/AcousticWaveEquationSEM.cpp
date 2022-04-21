@@ -564,11 +564,11 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
     /// synchronize pressure fields
-    std::map< string, string_array > fieldNames;
-    fieldNames["node"].emplace_back( extrinsicMeshData::Pressure_np1::key() );
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames, { extrinsicMeshData::Pressure_np1::key() } ) );
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
-    syncFields.synchronizeFields( fieldNames,
+    syncFields.synchronizeFields( fieldsToBeSync,
                                   domain.getMeshBody( 0 ).getMeshLevel( 0 ),
                                   domain.getNeighbors(),
                                   true );

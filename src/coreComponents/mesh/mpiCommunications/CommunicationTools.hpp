@@ -70,48 +70,24 @@ public:
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
-  void synchronizeFields( const std::map< string, string_array > & fieldNames,
-                          MeshLevel & mesh,
-                          std::vector< NeighborCommunicator > & allNeighbors,
-                          bool onDevice );
-
-  void synchronizePackSendRecvSizes( const std::map< string, string_array > & fieldNames,
-                                     MeshLevel & mesh,
-                                     std::vector< NeighborCommunicator > & neighbors,
-                                     MPI_iCommData & icomm,
-                                     bool onDevice );
-
-  void synchronizePackSendRecv( const std::map< string, string_array > & fieldNames,
-                                MeshLevel & mesh,
-                                std::vector< NeighborCommunicator > & allNeighbors,
-                                MPI_iCommData & icomm,
-                                bool onDevice );
-
-  void asyncPack( const std::map< string, string_array > & fieldNames,
-                  MeshLevel & mesh,
-                  std::vector< NeighborCommunicator > & neighbors,
-                  MPI_iCommData & icomm,
-                  bool onDevice,
-                  parallelDeviceEvents & events );
-
-  void synchronizeFields2( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void synchronizeFields( std::vector< SyncFieldsID > const & fieldsToBeSync,
                            MeshLevel & mesh,
                            std::vector< NeighborCommunicator > & allNeighbors,
                            bool onDevice );
 
-  void synchronizePackSendRecvSizes2( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void synchronizePackSendRecvSizes( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                       MeshLevel & mesh,
                                       std::vector< NeighborCommunicator > & neighbors,
                                       MPI_iCommData & icomm,
                                       bool onDevice );
 
-  void synchronizePackSendRecv2( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void synchronizePackSendRecv( std::vector< SyncFieldsID > const & fieldsToBeSync,
                                  MeshLevel & mesh,
                                  std::vector< NeighborCommunicator > & allNeighbors,
                                  MPI_iCommData & icomm,
                                  bool onDevice );
 
-  void asyncPack2( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void asyncPack( std::vector< SyncFieldsID > const & fieldsToBeSync,
                    MeshLevel & mesh,
                    std::vector< NeighborCommunicator > & neighbors,
                    MPI_iCommData & icomm,
@@ -128,36 +104,17 @@ public:
                           MPI_iCommData & icomm,
                           bool onDevice );
 
-  void synchronizeUnpack2( MeshLevel & mesh,
-                           std::vector< NeighborCommunicator > & neighbors,
-                           MPI_iCommData & icomm,
-                           bool onDevice );
-
   bool asyncUnpack( MeshLevel & mesh,
                     std::vector< NeighborCommunicator > & neighbors,
                     MPI_iCommData & icomm,
                     bool onDevice,
                     parallelDeviceEvents & events );
 
-
-  bool asyncUnpack2( MeshLevel & mesh,
-                     std::vector< NeighborCommunicator > & neighbors,
-                     MPI_iCommData & icomm,
-                     bool onDevice,
-                     parallelDeviceEvents & events );
-
   void finalizeUnpack( MeshLevel & mesh,
                        std::vector< NeighborCommunicator > & neighbors,
                        MPI_iCommData & icomm,
                        bool onDevice,
                        parallelDeviceEvents & events );
-
-
-  void finalizeUnpack2( MeshLevel & mesh,
-                        std::vector< NeighborCommunicator > & neighbors,
-                        MPI_iCommData & icomm,
-                        bool onDevice,
-                        parallelDeviceEvents & events );
 
 private:
   std::set< int > m_freeCommIDs;

@@ -898,13 +898,19 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
   // 3. synchronize
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & )
+                                                arrayView1d< string const > const & regionNames )
   {
-    std::map< string, string_array > fieldNames;
-    fieldNames["face"].emplace_back( extrinsicMeshData::flow::deltaFacePressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaPressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::deltaGlobalCompDensity::key() );
-    CommunicationTools::getInstance().synchronizeFields( fieldNames,
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                               { extrinsicMeshData::flow::deltaPressure::key(), 
+                                                 extrinsicMeshData::flow::deltaGlobalCompDensity::key() } ) );
+
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face, regionNames, 
+                                               { extrinsicMeshData::flow::deltaFacePressure::key() } ) );                                                           
+
+
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
                                                          true );

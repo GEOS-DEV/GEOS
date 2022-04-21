@@ -142,14 +142,21 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                m_fieldName,
                                scalingFactor );
 
-  // Synchronize ghost nodes
-  std::map< string, string_array > fieldNames;
-  fieldNames["node"].emplace_back( m_fieldName );
 
-  getGlobalState().getCommunicationTools().synchronizeFields( fieldNames,
-                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),
-                                                              domain.getNeighbors(),
-                                                              true );
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
+
+  {
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames, 
+                                               {m_fieldName} ) );
+
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
+                                                          mesh,
+                                                          domain.getNeighbors(),
+                                                          true );
+  } );
 }
 
 void LaplaceBaseH1::updateState( DomainPartition & domain )

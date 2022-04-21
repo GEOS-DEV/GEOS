@@ -562,12 +562,13 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
     arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
 
-    std::map< string, string_array > fieldNames;
-    fieldNames["node"].emplace_back( keys::Velocity );
-    fieldNames["node"].emplace_back( keys::Acceleration );
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, 
+                                               regionNames, 
+                                               {keys::Velocity,  keys::Acceleration} ) );
 
     m_iComm.resize( domain.getNeighbors().size() );
-    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldNames, mesh, domain.getNeighbors(), m_iComm, true );
+    CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true );
 
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Acceleration );
 
@@ -624,7 +625,7 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     fsManager.applyFieldValue< parallelDevicePolicy< 1024 > >( time_n, mesh, "nodeManager", keys::Velocity );
 
     parallelDeviceEvents packEvents;
-    CommunicationTools::getInstance().asyncPack( fieldNames, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
+    CommunicationTools::getInstance().asyncPack( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true, packEvents );
 
     waitAllDeviceEvents( packEvents );
 
@@ -1197,7 +1198,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
     fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames, 
                                                {keys::IncrementalDisplacement, keys::TotalDisplacement} ) );
 
-    CommunicationTools::getInstance().synchronizeFields2( fieldsToBeSync,
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                           mesh,
                                                           domain.getNeighbors(),
                                                           true );

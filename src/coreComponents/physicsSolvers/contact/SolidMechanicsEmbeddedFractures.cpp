@@ -675,7 +675,7 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                 {extrinsicMeshData::contact::dispJump::key(), 
                                                  extrinsicMeshData::contact::deltaDispJump::key()} ) );
 
-    CommunicationTools::getInstance().synchronizeFields2( fieldsToBeSync,
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                           mesh,
                                                           domain.getNeighbors(),
                                                           true );

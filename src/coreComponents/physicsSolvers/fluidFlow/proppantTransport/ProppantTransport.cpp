@@ -323,9 +323,6 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantConcentration::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::componentConcentration::key() );
 
   integer const numComponents = m_numComponents;
 
@@ -334,8 +331,12 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
+    std::vector< SyncFieldsID > fieldsToBeSync;
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                               { extrinsicMeshData::proppant::proppantConcentration::key(), 
+                                                 extrinsicMeshData::proppant::componentConcentration::key() } ) );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 
     mesh.getElemManager().forElementSubRegions( regionNames, [&]( localIndex const,
                                                                   ElementSubRegionBase & subRegion )
@@ -912,17 +913,20 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                  { m_numDofPerCell, 1, m_numDofPerCell } );
   }
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::deltaProppantConcentration::key() );
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::deltaComponentConcentration::key() );
+  
 
   forMeshTargets( domain.getMeshBodies(), [&]( string const &,
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
+    
+    std::vector< SyncFieldsID > fieldsToBeSync;
 
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                               { extrinsicMeshData::proppant::deltaProppantConcentration::key(), 
+                                                extrinsicMeshData::proppant::deltaComponentConcentration::key() } ) );
 
-    CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+    CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 
     mesh.getElemManager().forElementSubRegions( regionNames,
                                                 [&]( localIndex const,
@@ -1018,10 +1022,10 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
                                                 cellBasedFluxAccessor.toNestedView() );
   } );
 
-  std::map< string, string_array > fieldNames;
-  fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::cellBasedFlux::key() );
-
-  CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+  std::vector< SyncFieldsID > fieldsToBeSync;
+  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, m_targetRegionNames, 
+                                            { extrinsicMeshData::proppant::cellBasedFlux::key() } ) );
+  CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 }
 
 void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -1089,14 +1093,15 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     } );
 
     {
-      std::map< string, string_array > fieldNames;
-      fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantConcentration::key() );
-      fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantPackVolumeFraction::key() );
-      fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantExcessPackVolume::key() );
-      fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantLiftFlux::key() );
+      std::vector< SyncFieldsID > fieldsToBeSync;
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+                                                 { extrinsicMeshData::proppant::proppantConcentration::key(), 
+                                                   extrinsicMeshData::proppant::proppantPackVolumeFraction::key(), 
+                                                   extrinsicMeshData::proppant::proppantExcessPackVolume::key(),
+                                                   extrinsicMeshData::proppant::proppantLiftFlux::key() } ) );
 
 
-      CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
     }
 
     elemManager.forElementSubRegions( regionNames,
@@ -1119,11 +1124,12 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     } );
 
     {
-      std::map< string, string_array > fieldNames;
-      fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantConcentration::key() );
-      fieldNames["elems"].emplace_back( extrinsicMeshData::proppant::proppantPackVolumeFraction::key() );
+      std::vector< SyncFieldsID > fieldsToBeSync;
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, 
+                                                 { extrinsicMeshData::proppant::proppantConcentration::key(), 
+                                                   extrinsicMeshData::proppant::proppantPackVolumeFraction::key() } ) );
 
-      CommunicationTools::getInstance().synchronizeFields( fieldNames, mesh, domain.getNeighbors(), true );
+      CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
     }
 
     elemManager.forElementSubRegions( regionNames,
