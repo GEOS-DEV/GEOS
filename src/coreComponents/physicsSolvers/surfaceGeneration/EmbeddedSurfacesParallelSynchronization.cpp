@@ -203,13 +203,13 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   int bufferSize = 0;
 
   bufferSize += nodeManager.packGlobalMapsSize( newNodesToSend, 0 );
-  bufferSize += elemManager.PackGlobalMapsSize( newElemsToSend );
+  bufferSize += elemManager.packGlobalMapsSize( newElemsToSend );
 
   bufferSize += nodeManager.packUpDownMapsSize( newNodesToSend );
-  bufferSize += elemManager.PackUpDownMapsSize( newElemsToSend );
+  bufferSize += elemManager.packUpDownMapsSize( newElemsToSend );
 
-  bufferSize += nodeManager.packSize( {}, newNodesToSend, 0, false, sizeEvents );
-  bufferSize += elemManager.PackSize( {}, newElemsToSend );
+  bufferSize += nodeManager.packSize( newNodesToSend, 0, false, sizeEvents );
+  bufferSize += elemManager.packSize( newElemsToSend );
 
   neighbor->resizeSendBuffer( commID, bufferSize );
 
@@ -220,13 +220,13 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   int packedSize = 0;
 
   packedSize += nodeManager.packGlobalMaps( sendBufferPtr, newNodesToSend, 0 );
-  packedSize += elemManager.PackGlobalMaps( sendBufferPtr, newElemsToSend );
+  packedSize += elemManager.packGlobalMaps( sendBufferPtr, newElemsToSend );
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodesToSend );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, newElemsToSend );
+  packedSize += elemManager.packUpDownMaps( sendBufferPtr, newElemsToSend );
 
-  packedSize += nodeManager.pack( sendBufferPtr, {}, newNodesToSend, 0, false, packEvents );
-  packedSize += elemManager.Pack( sendBufferPtr, {}, newElemsToSend );
+  packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
+  packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
 }
@@ -263,13 +263,13 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   parallelDeviceEvents events;
 
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
-  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, newGhostElems );
+  unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
+  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
   unpackedSize += nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
-  unpackedSize += elemManager.Unpack( receiveBufferPtr, newGhostElems );
+  unpackedSize += elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   waitAllDeviceEvents( events );
 

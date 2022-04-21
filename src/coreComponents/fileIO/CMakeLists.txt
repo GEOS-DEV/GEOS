@@ -33,6 +33,15 @@ set( fileIO_sources
    )
 
 set( dependencyList mesh constitutive silo hdf5 )
+if( ENABLE_PYGEOSX )
+  list( APPEND fileIO_headers
+	python/PyHistoryCollectionType.hpp 
+	python/PyHistoryOutputType.hpp )
+  list( APPEND fileIO_sources 
+        python/PyHistoryCollection.cpp 
+        python/PyHistoryOutput.cpp )
+  list( APPEND dependencyList Python3::Python pylvarray ) 
+endif()
 
 
 if( ENABLE_MPI )
@@ -77,6 +86,3 @@ target_include_directories( fileIO PUBLIC ${CMAKE_SOURCE_DIR}/coreComponents )
 
 geosx_add_code_checks(PREFIX fileIO )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( python )
-endif()

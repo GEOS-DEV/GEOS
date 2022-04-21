@@ -50,14 +50,14 @@ public:
    * @brief Const getter for the catalog name.
    * @return the name of this type in the catalog
    */
-  static const string catalogName()
+  static string catalogName()
   { return "CellElementSubRegion"; }
 
   /**
    * @copydoc catalogName()
    */
-  virtual const string getCatalogName() const override final
-  { return CellElementSubRegion::catalogName(); }
+  virtual string getCatalogName() const override final
+  { return catalogName(); }
 
   /**
    * @name Constructor / Destructor
@@ -98,8 +98,6 @@ public:
    * @name Overriding packing / Unpacking functions
    */
   ///@{
-
-  std::set< string > getPackingExclusionList() const override;
 
   virtual localIndex packUpDownMapsSize( arrayView1d< localIndex const > const & packList ) const override;
 
@@ -204,12 +202,13 @@ public:
    * @brief Get the local indices of the nodes in a face of the element.
    * @param[in] elementIndex The local index of the target element.
    * @param[in] localFaceIndex The local index of the target face in the element (this will be [0, numFacesInElement[)
-   * @param[out] nodeIndices A reference to the array of node indices of the face. Gets resized at the proper size.
+   * @param[out] nodeIndices Memory to which node indices for the face will be written, must have sufficient size.
+   * @return tne number of values written into @p nodeIndices
    * @deprecated This method will be removed soon.
    */
-  void getFaceNodes( localIndex const elementIndex,
-                     localIndex const localFaceIndex,
-                     array1d< localIndex > & nodeIndices ) const;
+  localIndex getFaceNodes( localIndex const elementIndex,
+                           localIndex const localFaceIndex,
+                           Span< localIndex > const nodeIndices ) const;
 
   /**
    * @brief Get the element-to-node map.
@@ -263,7 +262,7 @@ public:
    * @param[in] a the index of the face in the element
    * @return a const reference to the local index of the face
    */
-  localIndex const & faceList( localIndex k, localIndex a ) const { return m_toFacesRelation( k, a ); }
+  localIndex faceList( localIndex k, localIndex a ) const { return m_toFacesRelation( k, a ); }
 
   /**
    * @brief @return The array of shape function derivatives.
@@ -386,14 +385,14 @@ private:
 
   /**
    * @brief Pack element-to-node and element-to-face maps
-   * @tparam the flag for the bufferOps::Pack function
+   * @tparam DO_PACKING the flag for the bufferOps::Pack function
    * @param buffer the buffer used in the bufferOps::Pack function
    * @param packList the packList used in the bufferOps::Pack function
    * @return the pack size
    */
-  template< bool DOPACK >
-  localIndex packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                    arrayView1d< localIndex const > const & packList ) const;
+  template< bool DO_PACKING >
+  localIndex packUpDownMapsImpl( buffer_unit_type * & buffer,
+                                 arrayView1d< localIndex const > const & packList ) const;
 
   /**
    * @brief Links the managers to their mappings.
@@ -403,10 +402,10 @@ private:
    */
   void setupRelatedObjectsInRelations( MeshLevel const & mesh ) override;
 
-  template< bool DOPACK >
-  localIndex packFracturedElementsPrivate( buffer_unit_type * & buffer,
-                                           arrayView1d< localIndex const > const & packList,
-                                           arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
+  template< bool DO_PACKING >
+  localIndex packFracturedElementsImpl( buffer_unit_type * & buffer,
+                                        arrayView1d< localIndex const > const & packList,
+                                        arrayView1d< globalIndex const > const & embeddedSurfacesLocalToGlobal ) const;
 };
 
 } /* namespace geosx */

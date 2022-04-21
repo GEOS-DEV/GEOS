@@ -482,9 +482,9 @@ FluxKernel::
 
       // Apply equation/variable change transformation(s)
       real64 work[NC+1]{};
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, 1, 2, localFluxJacobian_dRate, work );
-      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
-      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, 2, localFlux );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, 1, 2, localFluxJacobian_dRate, work );
+      shiftBlockRowsAheadByOneAndReplaceFirstRowWithColumnSum( NC, NC, NC + 1, 2, localFluxJacobian_dPresCompUp, work );
+      shiftBlockElementsAheadByOneAndReplaceFirstElementWithSum( NC, NC, 2, localFlux );
 
       for( integer i = 0; i < 2*NC; ++i )
       {
@@ -1675,11 +1675,23 @@ PresTempCompFracInitializationKernel::
                   "Invalid well initialization: negative pressure was found",
                   InputError );
 
+  RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
+
   // estimate the pressures in the well elements using this avgDens
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
     wellElemPres[iwelem] = pressureControl + avgTotalMassDens * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    if( wellElemPres[iwelem] <= 0 )
+    {
+      foundNegativePressure.max( 1 );
+    }
+
   } );
+
+  GEOSX_THROW_IF( foundNegativePressure.get() == 1,
+                  "Invalid well initialization: negative pressure was found",
+                  InputError );
+
 }
 
 /******************************** CompDensInitializationKernel ********************************/
