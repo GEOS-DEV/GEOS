@@ -471,6 +471,10 @@ public:
 
     real64 maxForce = 0;
 
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+    GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
+
     CONSTITUTIVE_TYPE::KernelWrapper::DiscretizationOps::template fillLowerBTDB< numNodesPerElem >( stack.localJacobian );
 
     //int nFlowDof = m_numComponents + 1;
@@ -533,7 +537,7 @@ public:
 
       RAJA::atomicAdd< serialAtomic >( &m_rhs[dof], stack.localVolBalanceResidual[0] );
     }
-
+#endif
     return maxForce;
   }
 

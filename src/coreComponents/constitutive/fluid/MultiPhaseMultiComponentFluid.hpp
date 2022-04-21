@@ -215,6 +215,9 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
            arraySlice2d< real64, multifluid::USD_PHASE_COMP-2 > const & phaseCompFraction,
            real64 & totalDensity ) const
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile the GEOSx MultiPhaseMultiComponentFluid kernels with HIP yet.");
+#else
   integer constexpr numComp = 2;
   integer constexpr numPhase = 2;
   integer const ip1 = m_p1Index;
@@ -226,8 +229,7 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
   if( m_useMass )
   {
     // convert mass fractions to mole fractions
-    convertToMoleFractions< numComp >( composition,
-                                       compMoleFrac );
+    convertToMoleFractions< numComp >( composition,  compMoleFrac );
   }
   else
   {
@@ -325,7 +327,7 @@ MultiPhaseMultiComponentFluid< P1DENSWRAPPER, P1VISCWRAPPER, P2DENSWRAPPER, P2VI
   computeTotalDensity< numComp, numPhase >( phaseFraction,
                                             phaseDensity,
                                             totalDensity );
-
+#endif
 }
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
@@ -343,6 +345,9 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
            PhaseComp::SliceType const phaseCompFraction,
            FluidProp::SliceType const totalDensity ) const
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile the GEOSx MultiPhaseMultiComponentFluid kernels with HIP yet.");
+#else
   integer constexpr numComp = 2;
   integer constexpr numPhase = 2;
   integer const ip1 = m_p1Index;
@@ -478,6 +483,7 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
                        phaseDensity,
                        totalDensity );
 
+#endif
 }
 
 template< typename P1DENS, typename P1VISC, typename P2DENS, typename P2VISC, typename FLASH >
@@ -491,6 +497,9 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile the GEOSx MultiPhaseMultiComponentFluid kernels with HIP yet.");
+#else
   compute( pressure,
            temperature,
            composition,
@@ -500,6 +509,7 @@ MultiPhaseMultiComponentFluid< P1DENS, P1VISC, P2DENS, P2VISC, FLASH >::KernelWr
            m_phaseViscosity( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
+#endif
 }
 
 } //namespace constitutive

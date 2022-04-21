@@ -75,7 +75,9 @@ struct ControlEquationHelper
   static constexpr real64 EPS = 1e-15;
 
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  real64 const & targetBHP,
@@ -85,7 +87,9 @@ struct ControlEquationHelper
                  WellControls::Control & newControl );
 
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,
            real64 const & targetBHP,
@@ -183,7 +187,9 @@ struct PerforationKernel
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   compute( real64 const & resPressure,
            real64 const & dResPressure,
            real64 const & resDensity,

@@ -9,7 +9,7 @@ set( HYPRE_DIR "${GEOSX_TPL_DIR}/hypre-develop-7n62z7h5hd7emdq4dptavi6fcllsliwt"
 set( SUPERLU_DIST_DIR "${GEOSX_TPL_DIR}/superlu-dist-7.1.1-ryxxa3bxgu4fyk5xhqxcenskd6v3ziaw/" CACHE PATH "" ) #superlu-dist-7.1.1-iu6gvmifimd6yjyl4rnxsbpdvkkdy67u/" CACHE PATH "" )
 
 set( PUGIXML_DIR "${GEOSX_TPL_DIR}/pugixml-1.11.4-rjfutqv6lun34dfw655kvqal6rzyy55v/" CACHE PATH "" )
-set( FMT_DIR "/gpfs/alpine/geo127/scratch/tobin6/spack/opt/spack/cray-sles15-zen3/cce-13.0.1/fmt-8.0.1-btbom4skpofijcymgd5sgwbzw37l4isj" CACHE PATH "" )
+set( FMT_DIR "${GEOSX_TPL_DIR2}/fmt-8.0.1-btbom4skpofijcymgd5sgwbzw37l4isj" CACHE PATH "" )
 set( SUITESPARSE_DIR "${GEOSX_TPL_DIR}/suite-sparse-5.10.1-jgaa5fs7xmdjfslwbyw5o3oeigw3sjvi/" CACHE PATH "" )
 
 set(ENABLE_MATHPRESSO OFF CACHE BOOL "")

@@ -55,9 +55,24 @@ using namespace constitutive;
 using namespace interpolation;
 using namespace finiteElement;
 
-constexpr integer LagrangianContactSolver::FractureState::STICK;
-constexpr integer LagrangianContactSolver::FractureState::SLIP;constexpr integer LagrangianContactSolver::FractureState::NEW_SLIP;
-constexpr integer LagrangianContactSolver::FractureState::OPEN;
+// /**
+//  * @struct FractureState
+//  *
+//  * A struct for the fracture states
+//  */
+// struct FractureState
+// {
+//   static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity
+//   static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
+//   static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed
+//                                          ///< for
+//   static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
+// };
+
+constexpr integer STICK = 0;
+constexpr integer SLIP = 1;
+constexpr integer NEW_SLIP = 2;
+constexpr integer OPEN = 3;
 
 LagrangianContactSolver::LagrangianContactSolver( const string & name,
                                                   Group * const parent ):
@@ -1573,7 +1588,7 @@ void LagrangianContactSolver::
 
               switch( fractureState[kfe] )
               {
-                case FractureState::STICK:
+                case STICK:
                   {
                     for( localIndex i = 0; i < 3; ++i )
                     {
@@ -1607,8 +1622,8 @@ void LagrangianContactSolver::
                     }
                     break;
                   }
-                case FractureState::SLIP:
-                case FractureState::NEW_SLIP:
+                case SLIP:
+                case NEW_SLIP:
                   {
                     elemRHS[0] = +Ja * dispJump[kfe][0];
 
@@ -1638,7 +1653,7 @@ void LagrangianContactSolver::
 
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " sliding: " << sliding[0] << " " << sliding[1] );
 
-                    if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == FractureState::NEW_SLIP ) )
+                    if( !( ( m_nonlinearSolverParameters.m_numNewtonIterations == 0 ) && ( fractureState[kfe] == NEW_SLIP ) )
                         && slidingNorm > slidingTolerance[kfe] )
                     {
                       for( localIndex i = 1; i < 3; ++i )
@@ -1706,7 +1721,7 @@ void LagrangianContactSolver::
                     }
                     break;
                   }
-                case FractureState::OPEN:
+                case OPEN:
                   {
 //                GEOSX_LOG_LEVEL_BY_RANK( 3, "element: " << kfe << " opening: " << dispJump[kfe][0] );
 
@@ -1729,7 +1744,7 @@ void LagrangianContactSolver::
               {
                 localRhs[localRow + idof] += elemRHS[idof];
 
-                if( fractureState[kfe] != FractureState::OPEN )
+                if( fractureState[kfe] != OPEN )
                 {
                   localMatrix.addToRowBinarySearchUnsorted< serialAtomic >( localRow + idof,
                                                                             nodeDOF,
@@ -1737,7 +1752,7 @@ void LagrangianContactSolver::
                                                                             2 * 3 * numNodesPerFace );
                 }
 
-                if( fractureState[kfe] != FractureState::STICK )
+                if( fractureState[kfe] != STICK )
                 {
                   localMatrix.addToRow< serialAtomic >( localRow + idof,
                                                         elemDOF,
@@ -2036,18 +2051,18 @@ void LagrangianContactSolver::assembleStabilization( DomainPartition const & dom
             nDof[kf] = 0;
             switch( fractureState[fractureIndex[kf]] )
             {
-              case ( FractureState::STICK ):
+              case ( STICK ):
                 {
                   nDof[kf] = 3;
                   break;
                 }
-              case ( FractureState::NEW_SLIP ):
-              case ( FractureState::SLIP ):
+              case ( NEW_SLIP ):
+              case ( SLIP ):
                 {
                   nDof[kf] = 1;
                   break;
                 }
-              case ( FractureState::OPEN ):
+              case ( OPEN ):
                 {
                   nDof[kf] = 0;
                   break;
@@ -2216,7 +2231,7 @@ void LagrangianContactSolver::initializeFractureState( MeshLevel & mesh,
     if( subRegion.hasWrapper( m_tractionKey ) )
     {
       arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( fieldName );
-      fractureState.setValues< parallelHostPolicy >( FractureState::STICK );
+      fractureState.setValues< parallelHostPolicy >( STICK );
     }
   } );
 }
@@ -2239,9 +2254,9 @@ void LagrangianContactSolver::setFractureStateForElasticStep( DomainPartition & 
         arrayView1d< integer > const & fractureState = subRegion.getReference< array1d< integer > >( viewKeyStruct::fractureStateString() );
         forAll< parallelHostPolicy >( subRegion.size(), [=] ( localIndex const kfe )
         {
-          if( fractureState[kfe] != FractureState::OPEN )
+          if( fractureState[kfe] != OPEN )
           {
-            fractureState[kfe] = FractureState::STICK;
+            fractureState[kfe] = STICK;
           }
         } );
       }
@@ -2292,20 +2307,20 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
             if( ghostRank[kfe] < 0 )
             {
               integer const originalFractureState = fractureState[kfe];
-              if( originalFractureState == FractureState::OPEN )
+              if( originalFractureState == OPEN )
               {
                 if( dispJump[kfe][0] > -normalDisplacementTolerance[kfe] )
                 {
-                  fractureState[kfe] = FractureState::OPEN;
+                  fractureState[kfe] = OPEN;
                 }
                 else
                 {
-                  fractureState[kfe] = FractureState::STICK;
+                  fractureState[kfe] = STICK;
                 }
               }
               else if( traction[kfe][0] > normalTractionTolerance[kfe] )
               {
-                fractureState[kfe] = FractureState::OPEN;
+                fractureState[kfe] = OPEN;
               }
               else
               {
@@ -2316,28 +2331,28 @@ bool LagrangianContactSolver::updateFractureState( DomainPartition & domain ) co
                   contactWrapper.computeLimitTangentialTractionNorm( traction[kfe][0],
                                                                      dLimitTangentialTractionNorm_dTraction );
 
-                if( originalFractureState == FractureState::STICK && currentTau >= limitTau )
+                if( originalFractureState == STICK && currentTau >= limitTau )
                 {
                   currentTau *= (1.0 - m_slidingCheckTolerance);
                 }
-                else if( originalFractureState != FractureState::STICK && currentTau <= limitTau )
+                else if( originalFractureState != STICK && currentTau <= limitTau )
                 {
                   currentTau *= (1.0 + m_slidingCheckTolerance);
                 }
                 if( currentTau > limitTau )
                 {
-                  if( originalFractureState == FractureState::STICK )
+                  if( originalFractureState == STICK )
                   {
-                    fractureState[kfe] = FractureState::NEW_SLIP;
+                    fractureState[kfe] = NEW_SLIP;
                   }
                   else
                   {
-                    fractureState[kfe] = FractureState::SLIP;
+                    fractureState[kfe] = SLIP;
                   }
                 }
                 else
                 {
-                  fractureState[kfe] = FractureState::STICK;
+                  fractureState[kfe] = STICK;
                 }
               }
 
@@ -2427,18 +2442,18 @@ void LagrangianContactSolver::computeFractureStateStatistics( DomainPartition co
           {
             switch( fractureState[kfe] )
             {
-              case FractureState::STICK:
+              case STICK:
                 {
                   stickCount += 1;
                   break;
                 }
-              case FractureState::NEW_SLIP:
-              case FractureState::SLIP:
+              case NEW_SLIP:
+              case SLIP:
                 {
                   slipCount += 1;
                   break;
                 }
-              case FractureState::OPEN:
+              case OPEN:
                 {
                   openCount += 1;
                   break;
@@ -2535,6 +2550,16 @@ void LagrangianContactSolver::setNextDt( real64 const & currentDt,
                                          real64 & nextDt )
 {
   nextDt = currentDt;
+}
+
+GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
+bool LagrangianContactSolver::compareFractureStates( integer const state0, integer const state1 )
+{
+  return state0 == state1
+           || ( state0 == NEW_SLIP && state1 == SLIP )
+           || ( state0 == SLIP && state1 == NEW_SLIP );
+ 
 }
 
 REGISTER_CATALOG_ENTRY( SolverBase, LagrangianContactSolver, string const &, Group * const )

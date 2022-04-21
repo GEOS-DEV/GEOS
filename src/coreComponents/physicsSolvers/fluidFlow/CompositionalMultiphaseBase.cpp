@@ -896,6 +896,9 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
                                                          temp,
                                                          compFrac] GEOSX_HOST_DEVICE ( localIndex const i )
     {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
       localIndex const k = targetSet[i];
       real64 const elevation = elemCenter[k][2];
 
@@ -905,6 +908,7 @@ void CompositionalMultiphaseBase::computeHydrostaticEquilibrium()
       {
         compFrac[k][ic] = compFracTableWrappersViewConst[ic].compute( &elevation );
       }
+#endif      
     } );
   } );
 }

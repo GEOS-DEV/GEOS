@@ -118,8 +118,12 @@ struct ProppantUpdateKernel
                       arrayView2d< real64 const > const & dFluidVisc_dPres,
                       arrayView3d< real64 const > const & dFluidVisc_dCompConc )
   {
+
     forAll< parallelDevicePolicy<> >( proppantWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
       proppantWrapper.update( a,
                               proppantConc[a] + dProppantConc[a],
                               fluidDens[a][0],
@@ -128,6 +132,7 @@ struct ProppantUpdateKernel
                               fluidVisc[a][0],
                               dFluidVisc_dPres[a][0],
                               dFluidVisc_dCompConc[a][0] );
+#endif
     } );
   }
 };
@@ -137,7 +142,9 @@ struct ProppantUpdateKernel
 struct AccumulationKernel
 {
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   compute( localIndex const NC,
            real64 const proppantConcOld,
            real64 const proppantConcNew,
@@ -417,7 +424,9 @@ struct ProppantPackVolumeKernel
                                   ElementView< arrayView1d< real64 > > const & proppantPackVolFrac );
 
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   computeProppantPackVolume( localIndex const numElems,
                              real64 const dt,
                              real64 const proppantDensity,
@@ -445,7 +454,9 @@ struct ProppantPackVolumeKernel
                              arrayView1d< real64 > const & proppantLiftFlux );
 
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   updateProppantPackVolume( localIndex const numElems,
                             arraySlice1d< localIndex const > const & stencilElementIndices,
                             arraySlice1d< real64 const > const & stencilWeights,

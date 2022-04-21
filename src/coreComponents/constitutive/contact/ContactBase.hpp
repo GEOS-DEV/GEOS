@@ -219,7 +219,12 @@ GEOSX_HOST_DEVICE
 real64 ContactBaseUpdates::computeHydraulicAperture( real64 const aperture,
                                                      real64 & dHydraulicAperture_dAperture ) const
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+  return 0.0;
+#else
   return m_apertureTable.compute( &aperture, &dHydraulicAperture_dAperture );
+#endif
 }
 
 GEOSX_HOST_DEVICE

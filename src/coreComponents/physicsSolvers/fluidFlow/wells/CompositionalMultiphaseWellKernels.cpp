@@ -31,6 +31,7 @@ namespace compositionalMultiphaseWellKernels
 /******************************** ControlEquationHelper ********************************/
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 ControlEquationHelper::
   switchControl( bool const isProducer,
@@ -110,6 +111,7 @@ ControlEquationHelper::
 
 template< integer NC >
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 ControlEquationHelper::
   compute( globalIndex const rankOffset,

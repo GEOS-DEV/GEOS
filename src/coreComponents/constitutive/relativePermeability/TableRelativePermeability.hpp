@@ -308,9 +308,13 @@ TableRelativePermeability::KernelWrapper::
           localIndex const q,
           arraySlice1d< geosx::real64 const, compflow::USD_PHASE - 1 > const & phaseVolFraction ) const
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
   compute( phaseVolFraction,
            m_phaseRelPerm[k][q],
            m_dPhaseRelPerm_dPhaseVolFrac[k][q] );
+#endif
 }
 
 } // namespace constitutive

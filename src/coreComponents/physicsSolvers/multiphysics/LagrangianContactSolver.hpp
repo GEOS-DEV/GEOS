@@ -212,49 +212,6 @@ private:
 
   real64 m_initialResidual[3] = {0.0, 0.0, 0.0};
 
-  /**
-   * @struct FractureState
-   *
-   * A struct for the fracture states
-   */
-  struct FractureState
-  {
-    static constexpr integer STICK = 0;    ///< element is closed: no jump across the discontinuity
-    static constexpr integer SLIP = 1;     ///< element is sliding: no normal jump across the discontinuity, but sliding is allowed for
-    static constexpr integer NEW_SLIP = 2; ///< element just starts sliding: no normal jump across the discontinuity, but sliding is allowed
-                                           ///< for
-    static constexpr integer OPEN = 3;     ///< element is open: no constraints are imposed
-  };
-
-  string fractureStateToString( integer const & state ) const
-  {
-    string stringState;
-    switch( state )
-    {
-      case FractureState::STICK:
-      {
-        stringState = "stick";
-        break;
-      }
-      case FractureState::SLIP:
-      {
-        stringState = "slip";
-        break;
-      }
-      case FractureState::NEW_SLIP:
-      {
-        stringState = "new_slip";
-        break;
-      }
-      case FractureState::OPEN:
-      {
-        stringState = "open";
-        break;
-      }
-    }
-    return stringState;
-  }
-
   void createPreconditioner( DomainPartition const & domain );
 
   virtual void setConstitutiveNames( ElementSubRegionBase & subRegion ) const override;
@@ -291,13 +248,7 @@ public:
 
   GEOSX_HOST_DEVICE
   GEOSX_FORCE_INLINE
-  static bool compareFractureStates( integer const state0,
-                                     integer const state1 )
-  {
-    return state0 == state1
-           || ( state0 == FractureState::NEW_SLIP && state1 == FractureState::SLIP )
-           || ( state0 == FractureState::SLIP && state1 == FractureState::NEW_SLIP );
-  }
+  static bool compareFractureStates( integer const state0, integer const state1 );
 };
 
 } /* namespace geosx */

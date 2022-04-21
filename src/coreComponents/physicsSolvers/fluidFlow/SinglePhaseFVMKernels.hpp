@@ -481,7 +481,9 @@ struct AquiferBCKernel
 
     forAll< parallelDevicePolicy<> >( stencil.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iconn )
     {
-
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+      GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
       // working variables
       real64 localFlux = 0.0;
       real64 localFluxJacobian = 0.0;
@@ -525,6 +527,7 @@ struct AquiferBCKernel
                                                       &localFluxJacobian,
                                                       1 );
       }
+#endif
     } );
   }
 

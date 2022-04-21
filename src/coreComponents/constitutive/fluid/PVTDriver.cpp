@@ -235,7 +235,7 @@ void PVTDriver::runTest( FLUID_TYPE & fluid, arrayView2d< real64 > & table )
     {
       auto & pres = table( n, PRES );
       auto & temp = table( n, TEMP );
-      //kernelWrapper.update( ei, 0, pres, temp, composition );
+      kernelWrapper.update( ei, 0, pres, temp, composition );
       table( n, TEMP+1 ) = totalDensity( ei, 0 );
 
       for( integer p=0; p<NP; ++p )

@@ -397,6 +397,7 @@ UpwindingHelper::
 }
 
 GEOSX_HOST_DEVICE
+GEOSX_FORCE_INLINE
 void
 UpwindingHelper::
   setIndicesForMobilityRatioUpwinding( localIndex const (&localIds)[ 3 ],

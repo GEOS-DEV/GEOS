@@ -60,6 +60,7 @@ public:
 
   template< int USD1, int USD2, int USD3 >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -68,6 +69,7 @@ public:
 
   template< int USD1 >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   void compute( real64 const & pressure,
                 real64 const & temperature,
                 arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -142,7 +144,8 @@ private:
 
 template< int USD1, int USD2, int USD3 >
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 CO2SolubilityUpdate::compute( real64 const & pressure,
                               real64 const & temperature,
                               arraySlice1d< real64 const, USD1 > const & compFraction,
@@ -213,7 +216,8 @@ CO2SolubilityUpdate::compute( real64 const & pressure,
 
 template< int USD1 >
 GEOSX_HOST_DEVICE
-inline void
+GEOSX_FORCE_INLINE
+void
 CO2SolubilityUpdate::compute( real64 const & pressure,
                               real64 const & temperature,
                               arraySlice1d< real64 const, USD1 > const & compFraction,

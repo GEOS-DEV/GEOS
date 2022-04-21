@@ -81,7 +81,9 @@ struct ControlEquationHelper
   using COFFSET = compositionalMultiphaseWellKernels::ColOffset;
 
   GEOSX_HOST_DEVICE
-  static void
+  GEOSX_FORCE_INLINE
+  static
+  void
   switchControl( bool const isProducer,
                  WellControls::Control const & currentControl,
                  integer const phasePhaseIndex,
@@ -95,6 +97,7 @@ struct ControlEquationHelper
 
   template< integer NC >
   GEOSX_HOST_DEVICE
+  GEOSX_FORCE_INLINE
   static void
   compute( globalIndex const rankOffset,
            WellControls::Control const currentControl,

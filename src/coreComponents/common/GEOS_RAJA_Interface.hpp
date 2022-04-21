@@ -90,7 +90,7 @@ template< unsigned long BLOCK_SIZE = 128 >
 using parallelDevicePolicy = RAJA::hip_exec< BLOCK_SIZE >;
 
 template< unsigned long BLOCK_SIZE = 128 >
-using parallelDeviceAsyncPolicy = RAJA::hip_exec_async< BLOCK_SIZE >;
+using parallelDeviceAsyncPolicy = parallelDevicePolicy< BLOCK_SIZE >;//RAJA::hip_exec_async< BLOCK_SIZE >;
 
 using parallelDeviceStream = RAJA::resources::Hip;
 using parallelDeviceEvent = RAJA::resources::Event;
@@ -198,9 +198,10 @@ RAJA_INLINE bool testAllDeviceEvents( parallelDeviceEvents & events )
 
 RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
 {
+  GEOSX_UNUSED_VAR( events );
   // poll device events for completion then wait 10 nanoseconds 6,000,000,000 times (60 sec timeout)
   // 10 nsecs ~= 30 clock cycles @ 3Ghz
-  GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
+  // GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
 template< typename POLICY, typename LAMBDA >

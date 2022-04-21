@@ -1118,6 +1118,9 @@ BlackOilFluid::KernelWrapper::
           real64 const temperature,
           arraySlice1d< geosx::real64 const, compflow::USD_COMP - 1 > const & composition ) const
 {
+#if defined(GEOSX_USE_HIP) && defined(GEOSX_DEVICE_COMPILE)
+  GEOSX_ERROR("Can't compile this kernel with HIP yet.");
+#else
   compute( pressure,
            temperature,
            composition,
@@ -1127,6 +1130,7 @@ BlackOilFluid::KernelWrapper::
            m_phaseViscosity( k, q ),
            m_phaseCompFraction( k, q ),
            m_totalDensity( k, q ) );
+#endif
 }
 
 } // namespace constitutive
