@@ -302,7 +302,7 @@ void SinglePhaseWell::updateFluidModel( WellElementSubRegion & subRegion ) const
   } );
 }
 
-void SinglePhaseWell::updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion )
+void SinglePhaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update volumetric rates for the well constraints
   // Warning! This must be called before updating the fluid model
@@ -314,8 +314,7 @@ void SinglePhaseWell::updateSubRegionState( MeshLevel const & meshLevel, WellEle
   // update the current BHP
   updateBHPForConstraint( subRegion );
 
-  // update perforation rates
-  computePerforationRates( meshLevel, subRegion );
+  // note: the perforation rates are updated separately
 }
 
 void SinglePhaseWell::initializeWells( DomainPartition & domain )
@@ -354,6 +353,9 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
       arrayView1d< localIndex const > const resElementIndex =
         perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
 
+      arrayView1d< real64 const > const & perfGravCoef =
+        perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+
       // TODO: change the way we access the flowSolver here
       SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
       PresInitializationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
@@ -362,23 +364,25 @@ void SinglePhaseWell::initializeWells( DomainPartition & domain )
       // 1) Loop over all perforations to compute an average density
       // 2) Initialize the reference pressure
       // 3) Estimate the pressures in the well elements using the average density
-      PresInitializationKernel::launch( perforationData.size(),
-                                        subRegion.size(),
-                                        perforationData.getNumPerforationsGlobal(),
-                                        wellControls,
-                                        0.0, // initialization done at t = 0
-                                        resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                        resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::density{} ),
-                                        resElementRegion,
-                                        resElementSubRegion,
-                                        resElementIndex,
-                                        wellElemGravCoef,
-                                        wellElemPressure );
+      PresInitializationKernel::
+        launch( perforationData.size(),
+                subRegion.size(),
+                perforationData.getNumPerforationsGlobal(),
+                wellControls,
+                0.0, // initialization done at t = 0
+                resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::density{} ),
+                resElementRegion,
+                resElementSubRegion,
+                resElementIndex,
+                perfGravCoef,
+                wellElemGravCoef,
+                wellElemPressure );
 
       // 4) Recompute the pressure-dependent properties
       // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
       //       to better initialize the rates
-      updateSubRegionState( meshLevel, subRegion );
+      updateSubRegionState( subRegion );
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       SingleFluidBase & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );
@@ -547,12 +551,6 @@ void SinglePhaseWell::assembleAccumulationTerms( DomainPartition const & domain,
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
-      // for now, we do not want to model storage effects in the wells (unless the well is shut)
-      WellControls const & wellControls = getWellControls( subRegion );
-      if( wellControls.isWellOpen( m_currentTime + m_currentDt ) )
-      {
-        return;
-      }
 
       // get a reference to the degree-of-freedom numbers
       string const wellElemDofKey = dofManager.getKey( wellElementDofName() );
@@ -593,87 +591,90 @@ void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOSX_
   // not implemented for single phase flow
 }
 
-void SinglePhaseWell::computePerforationRates( MeshLevel const & meshLevel,
-                                               WellElementSubRegion & subRegion )
+void SinglePhaseWell::updatePerforationRates( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
-  // therefore, we do not want to compute perforation rates and we simply assume they are zero
-  WellControls const & wellControls = getWellControls( subRegion );
-  if( !wellControls.isWellOpen( m_currentTime + m_currentDt ) )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    return;
-  }
 
-  // get the well data
-  PerforationData * const perforationData = subRegion.getPerforationData();
+    // TODO: change the way we access the flowSolver here
+    SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
+    PerforationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
+    PerforationKernel::SingleFluidAccessors resSingleFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
 
-  // get the degrees of freedom and depth
-  arrayView1d< real64 const > const wellElemGravCoef =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
 
-  // get well primary variables on well elements
-  arrayView1d< real64 const > const wellElemPressure =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-  arrayView1d< real64 const > const dWellElemPressure =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
+      // get the well data
+      PerforationData * const perforationData = subRegion.getPerforationData();
 
-  // get well constitutive data
-  string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
-  SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );  arrayView2d< real64 const > const wellElemDensity = fluid.density();
-  arrayView2d< real64 const > const dWellElemDensity_dPres = fluid.dDensity_dPressure();
-  arrayView2d< real64 const > const wellElemViscosity = fluid.viscosity();
-  arrayView2d< real64 const > const dWellElemViscosity_dPres = fluid.dViscosity_dPressure();
+      // get the degrees of freedom and depth
+      arrayView1d< real64 const > const wellElemGravCoef =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
-  // get well variables on perforations
-  arrayView1d< real64 const > const perfGravCoef =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
-  arrayView1d< localIndex const > const perfWellElemIndex =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
-  arrayView1d< real64 const > const perfTransmissibility =
-    perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
+      // get well primary variables on well elements
+      arrayView1d< real64 const > const wellElemPressure =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      arrayView1d< real64 const > const dWellElemPressure =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
-  arrayView1d< real64 > const perfRate =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
-  arrayView2d< real64 > const dPerfRate_dPres =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
+      // get well constitutive data
+      string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
+      SingleFluidBase const & fluid = subRegion.getConstitutiveModel< SingleFluidBase >( fluidName );  arrayView2d< real64 const > const wellElemDensity = fluid.density();
+      arrayView2d< real64 const > const dWellElemDensity_dPres = fluid.dDensity_dPressure();
+      arrayView2d< real64 const > const wellElemViscosity = fluid.viscosity();
+      arrayView2d< real64 const > const dWellElemViscosity_dPres = fluid.dViscosity_dPressure();
 
-  // get the element region, subregion, index
-  arrayView1d< localIndex const > const resElementRegion =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
-  arrayView1d< localIndex const > const resElementSubRegion =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
-  arrayView1d< localIndex const > const resElementIndex =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+      // get well variables on perforations
+      arrayView1d< real64 const > const perfGravCoef =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView1d< localIndex const > const perfWellElemIndex =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+      arrayView1d< real64 const > const perfTransmissibility =
+        perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
 
-  // TODO: change the way we access the flowSolver here
-  SinglePhaseBase const & flowSolver = getParent().getGroup< SinglePhaseBase >( getFlowSolverName() );
-  PerforationKernel::SinglePhaseFlowAccessors resSinglePhaseFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
-  PerforationKernel::SingleFluidAccessors resSingleFluidAccessors( meshLevel.getElemManager(), flowSolver.getName() );
+      arrayView1d< real64 > const perfRate =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::perforationRate >();
+      arrayView2d< real64 > const dPerfRate_dPres =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::dPerforationRate_dPres >();
 
-  PerforationKernel::launch( perforationData->size(),
-                             resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                             resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
-                             resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::density{} ),
-                             resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dPressure{} ),
-                             resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::viscosity{} ),
-                             resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::dViscosity_dPressure{} ),
-                             wellElemGravCoef,
-                             wellElemPressure,
-                             dWellElemPressure,
-                             wellElemDensity,
-                             dWellElemDensity_dPres,
-                             wellElemViscosity,
-                             dWellElemViscosity_dPres,
-                             perfGravCoef,
-                             perfWellElemIndex,
-                             perfTransmissibility,
-                             resElementRegion,
-                             resElementSubRegion,
-                             resElementIndex,
-                             perfRate,
-                             dPerfRate_dPres );
+      // get the element region, subregion, index
+      arrayView1d< localIndex const > const resElementRegion =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+      arrayView1d< localIndex const > const resElementSubRegion =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+      arrayView1d< localIndex const > const resElementIndex =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+
+
+      PerforationKernel::launch( perforationData->size(),
+                                 resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                 resSinglePhaseFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                 resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::density{} ),
+                                 resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::dDensity_dPressure{} ),
+                                 resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::viscosity{} ),
+                                 resSingleFluidAccessors.get( extrinsicMeshData::singlefluid::dViscosity_dPressure{} ),
+                                 wellElemGravCoef,
+                                 wellElemPressure,
+                                 dWellElemPressure,
+                                 wellElemDensity,
+                                 dWellElemDensity_dPres,
+                                 wellElemViscosity,
+                                 dWellElemViscosity_dPres,
+                                 perfGravCoef,
+                                 perfWellElemIndex,
+                                 perfTransmissibility,
+                                 resElementRegion,
+                                 resElementSubRegion,
+                                 resElementIndex,
+                                 perfRate,
+                                 dPerfRate_dPres );
+    } );
+  } );
 }
 
 

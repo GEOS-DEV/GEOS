@@ -106,7 +106,12 @@ real64 ReservoirSolverBase::solverStep( real64 const & time_n,
   real64 dt_return = dt;
 
   // setup the coupled linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+  static bool systemSetupDone = false;
+  if( !systemSetupDone )
+  {
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+    systemSetupDone = true;
+  }
 
   // setup reservoir and well systems
   implicitStepSetup( time_n, dt, domain );
@@ -284,21 +289,6 @@ void ReservoirSolverBase::assembleSystem( real64 const time_n,
                                 dofManager,
                                 localMatrix,
                                 localRhs );
-
-  /*
-   * This redundant call to UpdateStateAll is here to make sure that we compute the
-   * perforation rates AFTER the reservoir phase compositions have been moved to device.
-   *
-   * An issue with ElementViewAccessors is that if the outer arrays are already on device,
-   * but an inner array gets touched and updated on host, capturing outer arrays in a device kernel
-   * DOES NOT call move() on the inner array (see implementation of NewChaiBuffer::moveNested()).
-   * Here we force the move by launching a dummy kernel.
-   *
-   * If the perforation rates are computed BEFORE the reservoir phase compositions have been
-   * moved to device, the calculation is wrong. the problem should go away when fluid updates
-   * are executed on device.
-   */
-  m_wellSolver->updateState( domain );
 
   // assemble J_WW (excluding perforation rates)
   m_wellSolver->assembleSystem( time_n, dt,

@@ -567,68 +567,99 @@ PresInitializationKernel::
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
+          arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPressure )
 {
   real64 const targetBHP = wellControls.getTargetBHP( currentTime );
   real64 const refWellElemGravCoef = wellControls.getReferenceGravityCoef();
+  real64 const initialPressureCoef = wellControls.getInitialPressureCoefficient();
   WellControls::Control const currentControl = wellControls.getControl();
   bool const isProducer = wellControls.isProducer();
 
-  // loop over all perforations to compute an average density
+
+
+  // Step 1: we loop over all the perforations on this rank to compute the following quantities:
+  //   - Sum of densities over the perforated reservoir elements
+  // In passing, we save the min gravCoef difference between the reference depth and the perforation depth
+  // Note that we use gravCoef instead of depth for the (unlikely) case in which the gravityVector is not aligned with z
+
   RAJA::ReduceSum< parallelDeviceReduce, real64 > sumDensity( 0 );
-  RAJA::ReduceMin< parallelDeviceReduce, real64 > minResPressure( 1e10 );
-  RAJA::ReduceMax< parallelDeviceReduce, real64 > maxResPressure( 0 );
+  RAJA::ReduceMin< parallelDeviceReduce, real64 > localMinGravCoefDiff( 1e9 );
+
   forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
   {
-
     // get the reservoir (sub)region and element indices
     localIndex const er = resElementRegion[iperf];
     localIndex const esr = resElementSubRegion[iperf];
     localIndex const ei = resElementIndex[iperf];
 
+    // save the min gravCoef difference between the reference depth and the perforation depth (times g)
+    localMinGravCoefDiff.min( LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] ) );
+
+    // increment the fluid density
     sumDensity += resDensity[er][esr][ei][0];
-    minResPressure.min( resPressure[er][esr][ei] );
-    maxResPressure.max( resPressure[er][esr][ei] );
   } );
-  real64 const pres = ( isProducer )
-                    ? MpiWrapper::min( minResPressure.get() )
-                    : MpiWrapper::max( maxResPressure.get() );
+  real64 const minGravCoefDiff = MpiWrapper::min( localMinGravCoefDiff.get() );
+
+
+
+  // Step 2: we assign average quantities over the well (i.e., over all the ranks)
+
   real64 const avgDensity = MpiWrapper::sum( sumDensity.get() ) / numPerforations;
 
-  real64 pressureControl = 0.0;
-  real64 const gravCoefControl = refWellElemGravCoef;
-  // initialize the pressure in the element where the BHP is controlled)
+
+
+  // Step 3: we compute the approximate pressure at the reference depth
+  // We make a distinction between pressure-controlled wells and rate-controlled wells
+
+  real64 refPres = 0.0;
+
+  // if the well is controlled by pressure, initialize the reference pressure at the target pressure
   if( currentControl == WellControls::Control::BHP )
   {
-    // if pressure constraint, initialize the pressure at the constraint
-    pressureControl = targetBHP;
+    refPres = targetBHP;
   }
-  else // rate control
+  // if the well is controlled by rate, initialize the reference pressure using the pressure at the closest perforation
+  else
   {
-    // initialize the pressure in the element where the BHP is controlled slightly
-    // above/below the target pressure depending on well type.
-    // note: the targetBHP is not used here because we sometimes set targetBHP to a very large (unrealistic) value
-    //       to keep the well in rate control during the full simulation, and we don't want this large targetBHP to
-    //       be used for initialization
-    pressureControl = ( isProducer ) ? 0.5 * pres : 2.0 * pres;
+    RAJA::ReduceMin< parallelDeviceReduce, real64 > localRefPres( 1e9 );
+    real64 const alpha = ( isProducer ) ? 1 - initialPressureCoef : 1 + initialPressureCoef;
+
+    forAll< parallelDevicePolicy<> >( perforationSize, [=] GEOSX_HOST_DEVICE ( localIndex const iperf )
+    {
+      // get the reservoir (sub)region and element indices
+      localIndex const er = resElementRegion[iperf];
+      localIndex const esr = resElementSubRegion[iperf];
+      localIndex const ei = resElementIndex[iperf];
+
+      // get the perforation pressure and save the estimated reference pressure
+      real64 const gravCoefDiff = LvArray::math::abs( refWellElemGravCoef - perfGravCoef[iperf] );
+      if( isZero( gravCoefDiff - minGravCoefDiff ) )
+      {
+        localRefPres.min( alpha * resPressure[er][esr][ei] + avgDensity * ( refWellElemGravCoef - perfGravCoef[iperf] ) );
+      }
+    } );
+    refPres = MpiWrapper::min( localRefPres.get() );
   }
 
-  GEOSX_THROW_IF( pressureControl <= 0,
-                  "Invalid well initialization: negative pressure was found",
-                  InputError );
+
+
+  // Step 4: we are ready to assign the primary variables on the well elements:
+  //  - pressure: hydrostatic pressure using our crude approximation of the total mass density
 
   RAJA::ReduceMax< parallelDeviceReduce, integer > foundNegativePressure( 0 );
 
-  // estimate the pressures in the well elements using this avgDensity
   forAll< parallelDevicePolicy<> >( subRegionSize, [=] GEOSX_HOST_DEVICE ( localIndex const iwelem )
   {
-    wellElemPressure[iwelem] = pressureControl + avgDensity * ( wellElemGravCoef[iwelem] - gravCoefControl );
+    wellElemPressure[iwelem] = refPres + avgDensity * ( wellElemGravCoef[iwelem] - refWellElemGravCoef );
+
     if( wellElemPressure[iwelem] <= 0 )
     {
       foundNegativePressure.max( 1 );
     }
   } );
+
 
   GEOSX_THROW_IF( foundNegativePressure.get() == 1,
                   "Invalid well initialization: negative pressure was found",

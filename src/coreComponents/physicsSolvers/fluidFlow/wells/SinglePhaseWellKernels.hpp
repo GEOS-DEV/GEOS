@@ -283,6 +283,7 @@ struct PresInitializationKernel
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
+          arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPressure );
 

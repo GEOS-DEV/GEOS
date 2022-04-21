@@ -801,8 +801,7 @@ void CompositionalMultiphaseWell::updateTotalMassDensity( WellElementSubRegion &
                                                fluid );
 }
 
-void CompositionalMultiphaseWell::updateSubRegionState( MeshLevel const & meshLevel,
-                                                        WellElementSubRegion & subRegion )
+void CompositionalMultiphaseWell::updateSubRegionState( WellElementSubRegion & subRegion )
 {
   // update properties
   updateComponentFraction( subRegion );
@@ -819,8 +818,7 @@ void CompositionalMultiphaseWell::updateSubRegionState( MeshLevel const & meshLe
   // update the current BHP pressure
   updateBHPForConstraint( subRegion );
 
-  // update perforation rates
-  computePerforationRates( meshLevel, subRegion );
+  // note: the perforation rates are updated separately
 }
 
 void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
@@ -853,10 +851,8 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
       // get well primary variables on well elements
       arrayView1d< real64 > const & wellElemPressure =
         subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-
       arrayView1d< real64 > const & wellElemTemp =
         subRegion.getExtrinsicData< extrinsicMeshData::well::temperature >();
-
       arrayView2d< real64, compflow::USD_COMP > const & wellElemCompDens =
         subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
       arrayView1d< real64 > const & connRate =
@@ -875,6 +871,9 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
         perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
       arrayView1d< localIndex const > const & resElementIndex =
         perforationData.getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+
+      arrayView1d< real64 const > const & perfGravCoef =
+        perforationData.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
 
       // 1) Loop over all perforations to compute an average mixture density and component fraction
@@ -896,6 +895,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                 resElementRegion,
                 resElementSubRegion,
                 resElementIndex,
+                perfGravCoef,
                 wellElemGravCoef,
                 wellElemPressure,
                 wellElemTemp,
@@ -930,7 +930,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
       // 5) Recompute the pressure-dependent properties
       // Note: I am leaving that here because I would like to use the perforationRates (computed in UpdateState)
       //       to better initialize the rates
-      updateSubRegionState( mesh, subRegion );
+      updateSubRegionState( subRegion );
 
       // 6) Estimate the well rates
       // TODO: initialize rates using perforation rates
@@ -1026,15 +1026,6 @@ void CompositionalMultiphaseWell::assembleAccumulationTerms( DomainPartition con
                                                               [&]( localIndex const,
                                                                    WellElementSubRegion const & subRegion )
     {
-
-      // for now, we do not want to model storage effects in the wells (unless the well is shut)
-      WellControls const & wellControls = getWellControls( subRegion );
-      bool const isWellOpen = wellControls.isWellOpen( m_currentTime + m_currentDt );
-      bool const enableReservoirToWellFlow = wellControls.isProducer() || wellControls.isCrossflowEnabled();
-      if( isWellOpen && enableReservoirToWellFlow )
-      {
-        return;
-      }
 
       // get the degrees of freedom and ghosting info
       arrayView1d< globalIndex const > const & wellElemDofNumber =
@@ -1335,116 +1326,122 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
   return MpiWrapper::min( localCheck );
 }
 
-void CompositionalMultiphaseWell::computePerforationRates( MeshLevel const & meshLevel,
-                                                           WellElementSubRegion & subRegion )
+void CompositionalMultiphaseWell::updatePerforationRates( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
-  // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
-  // therefore, we do not want to compute perforation rates and we simply assume they are zero
-  WellControls const & wellControls = getWellControls( subRegion );
-  bool const disableReservoirToWellFlow = wellControls.isInjector() and !wellControls.isCrossflowEnabled();
-  if( !wellControls.isWellOpen( m_currentTime + m_currentDt ) )
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                                MeshLevel & mesh,
+                                                arrayView1d< string const > const & regionNames )
   {
-    return;
-  }
 
-  PerforationData * const perforationData = subRegion.getPerforationData();
+    // TODO: change the way we access the flowSolver here
+    CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
+    PerforationKernel::CompFlowAccessors resCompFlowAccessors( mesh.getElemManager(), flowSolver.getName() );
+    PerforationKernel::MultiFluidAccessors resMultiFluidAccessors( mesh.getElemManager(), flowSolver.getName() );
+    PerforationKernel::RelPermAccessors resRelPermAccessors( mesh.getElemManager(), flowSolver.getName() );
 
-  // get depth
-  arrayView1d< real64 const > const & wellElemGravCoef =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+    mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
+                                                                                          WellElementSubRegion & subRegion )
+    {
 
-  // get well primary variables on well elements
-  arrayView1d< real64 const > const & wellElemPres =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
-  arrayView1d< real64 const > const & dWellElemPres =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
+      WellControls const & wellControls = getWellControls( subRegion );
+      bool const disableReservoirToWellFlow = wellControls.isInjector() and !wellControls.isCrossflowEnabled();
 
-  arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
-  arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::deltaGlobalCompDensity >();
+      PerforationData * const perforationData = subRegion.getPerforationData();
 
-  arrayView1d< real64 const > const & wellElemTotalMassDens =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::totalMassDensity >();
-  arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >();
-  arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >();
+      // get depth
+      arrayView1d< real64 const > const & wellElemGravCoef =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
 
-  arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompFraction >();
-  arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens =
-    subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >();
+      // get well primary variables on well elements
+      arrayView1d< real64 const > const & wellElemPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::pressure >();
+      arrayView1d< real64 const > const & dWellElemPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaPressure >();
 
-  // get well variables on perforations
-  arrayView1d< real64 const > const & perfGravCoef =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
-  arrayView1d< localIndex const > const & perfWellElemIndex =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
-  arrayView1d< real64 const > const & perfTrans =
-    perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompDensity >();
+      arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::deltaGlobalCompDensity >();
 
-  arrayView2d< real64 > const & compPerfRate =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::compPerforationRate >();
-  arrayView3d< real64 > const & dCompPerfRate_dPres =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dPres >();
-  arrayView4d< real64 > const & dCompPerfRate_dComp =
-    perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
+      arrayView1d< real64 const > const & wellElemTotalMassDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::totalMassDensity >();
+      arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dPressure >();
+      arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::dTotalMassDensity_dGlobalCompDensity >();
 
-  // get the element region, subregion, index
-  arrayView1d< localIndex const > const & resElementRegion =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
-  arrayView1d< localIndex const > const & resElementSubRegion =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
-  arrayView1d< localIndex const > const & resElementIndex =
-    perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+      arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::globalCompFraction >();
+      arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens =
+        subRegion.getExtrinsicData< extrinsicMeshData::well::dGlobalCompFraction_dGlobalCompDensity >();
 
-  // TODO: change the way we access the flowSolver here
-  CompositionalMultiphaseBase const & flowSolver = getParent().getGroup< CompositionalMultiphaseBase >( getFlowSolverName() );
-  PerforationKernel::CompFlowAccessors resCompFlowAccessors( meshLevel.getElemManager(), flowSolver.getName() );
-  PerforationKernel::MultiFluidAccessors resMultiFluidAccessors( meshLevel.getElemManager(), flowSolver.getName() );
-  PerforationKernel::RelPermAccessors resRelPermAccessors( meshLevel.getElemManager(), flowSolver.getName() );
+      // get well variables on perforations
+      arrayView1d< real64 const > const & perfGravCoef =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::gravityCoefficient >();
+      arrayView1d< localIndex const > const & perfWellElemIndex =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::wellElementIndexString() );
+      arrayView1d< real64 const > const & perfTrans =
+        perforationData->getReference< array1d< real64 > >( PerforationData::viewKeyStruct::wellTransmissibilityString() );
 
-  isothermalCompositionalMultiphaseBaseKernels::
-    KernelLaunchSelector2< PerforationKernel >( numFluidComponents(),
-                                                numFluidPhases(),
-                                                perforationData->size(),
-                                                disableReservoirToWellFlow,
-                                                resCompFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                                resCompFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
-                                                resCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
-                                                resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
-                                                resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
-                                                resCompFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
-                                                resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
-                                                resRelPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
-                                                resRelPermAccessors.get( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{} ),
-                                                wellElemGravCoef,
-                                                wellElemPres,
-                                                dWellElemPres,
-                                                wellElemCompDens,
-                                                dWellElemCompDens,
-                                                wellElemTotalMassDens,
-                                                dWellElemTotalMassDens_dPres,
-                                                dWellElemTotalMassDens_dCompDens,
-                                                wellElemCompFrac,
-                                                dWellElemCompFrac_dCompDens,
-                                                perfGravCoef,
-                                                perfWellElemIndex,
-                                                perfTrans,
-                                                resElementRegion,
-                                                resElementSubRegion,
-                                                resElementIndex,
-                                                compPerfRate,
-                                                dCompPerfRate_dPres,
-                                                dCompPerfRate_dComp );
+      arrayView2d< real64 > const & compPerfRate =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::compPerforationRate >();
+      arrayView3d< real64 > const & dCompPerfRate_dPres =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dPres >();
+      arrayView4d< real64 > const & dCompPerfRate_dComp =
+        perforationData->getExtrinsicData< extrinsicMeshData::well::dCompPerforationRate_dComp >();
+
+      // get the element region, subregion, index
+      arrayView1d< localIndex const > const & resElementRegion =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementRegionString() );
+      arrayView1d< localIndex const > const & resElementSubRegion =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementSubregionString() );
+      arrayView1d< localIndex const > const & resElementIndex =
+        perforationData->getReference< array1d< localIndex > >( PerforationData::viewKeyStruct::reservoirElementIndexString() );
+
+      isothermalCompositionalMultiphaseBaseKernels::
+        KernelLaunchSelector2< PerforationKernel >( numFluidComponents(),
+                                                    numFluidPhases(),
+                                                    perforationData->size(),
+                                                    disableReservoirToWellFlow,
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity{} ),
+                                                    resCompFlowAccessors.get( extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity{} ),
+                                                    resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseDensity{} ),
+                                                    resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseDensity{} ),
+                                                    resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseViscosity{} ),
+                                                    resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseViscosity{} ),
+                                                    resMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseCompFraction{} ),
+                                                    resMultiFluidAccessors.get( extrinsicMeshData::multifluid::dPhaseCompFraction{} ),
+                                                    resRelPermAccessors.get( extrinsicMeshData::relperm::phaseRelPerm{} ),
+                                                    resRelPermAccessors.get( extrinsicMeshData::relperm::dPhaseRelPerm_dPhaseVolFraction{} ),
+                                                    wellElemGravCoef,
+                                                    wellElemPres,
+                                                    dWellElemPres,
+                                                    wellElemCompDens,
+                                                    dWellElemCompDens,
+                                                    wellElemTotalMassDens,
+                                                    dWellElemTotalMassDens_dPres,
+                                                    dWellElemTotalMassDens_dCompDens,
+                                                    wellElemCompFrac,
+                                                    dWellElemCompFrac_dCompDens,
+                                                    perfGravCoef,
+                                                    perfWellElemIndex,
+                                                    perfTrans,
+                                                    resElementRegion,
+                                                    resElementSubRegion,
+                                                    resElementIndex,
+                                                    compPerfRate,
+                                                    dCompPerfRate_dPres,
+                                                    dCompPerfRate_dComp );
+
+    } );
+  } );
+
 }
 
 

@@ -196,11 +196,11 @@ void WellSolverBase::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-      updateSubRegionState( mesh, subRegion );
+      updateSubRegionState( subRegion );
     } );
   } );
 
-
+  updatePerforationRates( domain );
 }
 
 void WellSolverBase::initializePreSubGroups()
