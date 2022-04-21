@@ -130,20 +130,20 @@ real64 SinglePhaseFVM< BASE >::calculateResidualNorm( DomainPartition const & do
       arrayView1d< globalIndex const > const & dofNumber = subRegion.template getReference< array1d< globalIndex > >( dofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume         = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & densOld        = subRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+      arrayView1d< real64 const > const & dens_n        = subRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >();
 
       CoupledSolidBase const & solidModel =
         SolverBase::getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( BASE::viewKeyStruct::solidNamesString() ) );
 
-      arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
+      arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
 
       ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
                                                             rankOffset,
                                                             dofNumber,
                                                             elemGhostRank,
                                                             volume,
-                                                            densOld,
-                                                            porosityOld,
+                                                            dens_n,
+                                                            porosity_n,
                                                             localResidualNorm );
 
     } );
@@ -616,7 +616,7 @@ void SinglePhaseFVM< SinglePhaseBase >::applyAquiferBC( real64 const time,
                                                       aquiferBCWrapper,
                                                       aquiferDens,
                                                       flowAccessors.get< extrinsicMeshData::flow::pressure >(),
-                                                      flowAccessors.get< extrinsicMeshData::flow::pressureOld >(),
+                                                      flowAccessors.get< extrinsicMeshData::flow::pressure_n >(),
                                                       flowAccessors.get< extrinsicMeshData::flow::gravityCoefficient >(),
                                                       fluidAccessors.get< extrinsicMeshData::singlefluid::density >(),
                                                       fluidAccessors.get< extrinsicMeshData::singlefluid::dDensity_dPressure >(),

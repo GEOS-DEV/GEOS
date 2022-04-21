@@ -101,9 +101,9 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
                                                                              CellElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< proppantConcentration >( getName() );
-      subRegion.registerExtrinsicData< proppantConcentrationOld >( getName() );
+      subRegion.registerExtrinsicData< proppantConcentration_n >( getName() );
       subRegion.registerExtrinsicData< componentConcentration >( getName() );
-      subRegion.registerExtrinsicData< componentConcentrationOld >( getName() );
+      subRegion.registerExtrinsicData< componentConcentration_n >( getName() );
       subRegion.registerExtrinsicData< bcComponentConcentration >( getName() );
       subRegion.registerExtrinsicData< cellBasedFlux >( getName() ).
         reference().resizeDimension< 1 >( 3 );
@@ -116,11 +116,11 @@ void ProppantTransport::registerDataOnMesh( Group & meshBodies )
                                                                                           FaceElementSubRegion & subRegion )
     {
       subRegion.registerExtrinsicData< proppantConcentration >( getName() );
-      subRegion.registerExtrinsicData< proppantConcentrationOld >( getName() );
+      subRegion.registerExtrinsicData< proppantConcentration_n >( getName() );
       subRegion.registerExtrinsicData< componentConcentration >( getName() );
-      subRegion.registerExtrinsicData< componentConcentrationOld >( getName() );
+      subRegion.registerExtrinsicData< componentConcentration_n >( getName() );
       subRegion.registerExtrinsicData< bcComponentConcentration >( getName() );
-      subRegion.registerExtrinsicData< oldComponentDensity >( getName() );
+      subRegion.registerExtrinsicData< componentDensity_n >( getName() );
       subRegion.registerExtrinsicData< cellBasedFlux >( getName() ).
         reference().resizeDimension< 1 >( 3 );
 
@@ -188,7 +188,7 @@ void ProppantTransport::initializePreSubGroups()
 
       {
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >().resizeDimension< 1 >( m_numComponents );
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >().resizeDimension< 1 >( m_numComponents );
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration_n >().resizeDimension< 1 >( m_numComponents );
       } );
     }
   } );
@@ -202,8 +202,8 @@ void ProppantTransport::resizeFractureFields( MeshLevel & mesh, arrayView1d< str
                                                                                           FaceElementSubRegion & subRegion )
     {
       subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >().resizeDimension< 1 >( m_numComponents );
-      subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >().resizeDimension< 1 >( m_numComponents );
-      subRegion.getExtrinsicData< extrinsicMeshData::proppant::oldComponentDensity >().resizeDimension< 1 >( m_numComponents );
+      subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration_n >().resizeDimension< 1 >( m_numComponents );
+      subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentDensity_n >().resizeDimension< 1 >( m_numComponents );
       subRegion.getExtrinsicData< extrinsicMeshData::proppant::bcComponentConcentration >().resizeDimension< 1 >( m_numComponents );
     } );
   }
@@ -336,12 +336,12 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
       SlurryFluidBase const & fluid =
         getConstitutiveModel< SlurryFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
       arrayView3d< real64 const > const componentDens = fluid.componentDensity();
-      arrayView2d< real64 > const componentDensOld = subRegion.getExtrinsicData< extrinsicMeshData::proppant::oldComponentDensity >();
+      arrayView2d< real64 > const componentDens_n = subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentDensity_n >();
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         for( localIndex c = 0; c < numComponents; ++c )
         {
-          componentDensOld[ei][c] = componentDens[ei][0][c];
+          componentDens_n[ei][c] = componentDens[ei][0][c];
         }
       } );
     } );
@@ -377,7 +377,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
       SlurryFluidBase const & fluid = getConstitutiveModel< SlurryFluidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
 
       arrayView3d< real64 const > const componentDens = fluid.componentDensity();
-      arrayView2d< real64 > const componentDensOld = subRegion.getExtrinsicData< extrinsicMeshData::proppant::oldComponentDensity >();
+      arrayView2d< real64 > const componentDens_n = subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentDensity_n >();
 
       arrayView1d< real64 > const excessPackVolume = subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantExcessPackVolume >();
       arrayView2d< real64 > const cellBasedFlux = subRegion.getExtrinsicData< extrinsicMeshData::proppant::cellBasedFlux >();
@@ -386,7 +386,7 @@ void ProppantTransport::preStepUpdate( real64 const & time,
       {
         for( localIndex c = 0; c < m_numComponents; ++c )
         {
-          componentDensOld[ei][c] = componentDens[ei][0][c];
+          componentDens_n[ei][c] = componentDens[ei][0][c];
         }
         excessPackVolume[ei] = 0.0;
         LvArray::tensorOps::fill< 3 >( cellBasedFlux[ei], 0.0 );
@@ -453,15 +453,15 @@ void ProppantTransport::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( ti
     {
       arrayView1d< real64 const > const proppantConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-      arrayView1d< real64 > const proppantConcOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
-      proppantConcOld.setValues< parallelDevicePolicy<> >( proppantConc );
+      arrayView1d< real64 > const proppantConc_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration_n >();
+      proppantConc_n.setValues< parallelDevicePolicy<> >( proppantConc );
 
       arrayView2d< real64 const > const componentConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
-      arrayView2d< real64 > const componentConcOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >();
-      componentConcOld.setValues< parallelDevicePolicy<> >( componentConc );
+      arrayView2d< real64 > const componentConc_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration_n >();
+      componentConc_n.setValues< parallelDevicePolicy<> >( componentConc );
     } );
   } );
 }
@@ -545,12 +545,12 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
 
-      arrayView2d< real64 const > const componentDensOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::oldComponentDensity >();
+      arrayView2d< real64 const > const componentDens_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentDensity_n >();
       arrayView1d< real64 const > const proppantConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-      arrayView1d< real64 const > const proppantConcOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
+      arrayView1d< real64 const > const proppantConc_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration_n >();
       arrayView1d< real64 const > const proppantPackVolFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantPackVolumeFraction >();
       arrayView1d< real64 const > const proppantLiftFlux =
@@ -569,9 +569,9 @@ void ProppantTransport::assembleAccumulationTerms( real64 const dt,
                                   dofManager.rankOffset(),
                                   dofNumber,
                                   elemGhostRank,
-                                  proppantConcOld,
+                                  proppantConc_n,
                                   proppantConc,
-                                  componentDensOld,
+                                  componentDens_n,
                                   componentDens,
                                   dCompDens_dPres,
                                   dCompDens_dCompConc,
@@ -940,15 +940,15 @@ void ProppantTransport::resetStateToBeginningOfStep( DomainPartition & domain )
     {
       arrayView1d< real64 > const & proppantConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration >();
-      arrayView1d< real64 const > const & proppantConcOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentrationOld >();
-      proppantConc.setValues< parallelDevicePolicy<> >( proppantConcOld );
+      arrayView1d< real64 const > const & proppantConc_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::proppantConcentration_n >();
+      proppantConc.setValues< parallelDevicePolicy<> >( proppantConc_n );
 
       arrayView2d< real64 > const & componentConc =
         subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration >();
-      arrayView2d< real64 const > const & componentConcOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentrationOld >();
-      componentConc.setValues< parallelDevicePolicy<> >( componentConcOld );
+      arrayView2d< real64 const > const & componentConc_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::proppant::componentConcentration_n >();
+      componentConc.setValues< parallelDevicePolicy<> >( componentConc_n );
 
       updateState( subRegion );
     } );

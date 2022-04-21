@@ -34,9 +34,9 @@ GEOSX_HOST_DEVICE
 void
 AccumulationKernel::
   compute( localIndex const numComps,
-           real64 const proppantConcOld,
+           real64 const proppantConc_n,
            real64 const proppantConcNew,
-           arraySlice1d< real64 const > const & componentDensOld,
+           arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
@@ -48,7 +48,7 @@ AccumulationKernel::
 {
 
   // proppant mass conservation
-  localAccum[0] = (proppantConcNew - proppantConcOld) * volume - proppantLiftVolume;
+  localAccum[0] = (proppantConcNew - proppantConc_n) * volume - proppantLiftVolume;
 
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
@@ -64,8 +64,8 @@ AccumulationKernel::
   for( localIndex c1 = 0; c1 < numComps; ++c1 )
   {
 
-    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDensOld[c1] * (1.0 - proppantConcOld) ) * volume
-                       + (componentDensNew[c1] - componentDensOld[c1]) * packPoreVolume;
+    localAccum[c1+1] = ( componentDensNew[c1] * (1.0 - proppantConcNew) - componentDens_n[c1] * (1.0 - proppantConc_n) ) * volume
+                       + (componentDensNew[c1] - componentDens_n[c1]) * packPoreVolume;
 
     for( localIndex c2 = 0; c2 < numComps; ++c2 )
     {
@@ -85,9 +85,9 @@ AccumulationKernel::
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
-          arrayView1d< real64 const > const & proppantConcOld,
+          arrayView1d< real64 const > const & proppantConc_n,
           arrayView1d< real64 const > const & proppantConc,
-          arrayView2d< real64 const > const & componentDensOld,
+          arrayView2d< real64 const > const & componentDens_n,
           arrayView3d< real64 const > const & componentDens,
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
@@ -120,9 +120,9 @@ AccumulationKernel::
       real64 const proppantLiftVolume = proppantLiftFlux[ei] * dt;
 
       compute( numComps,
-               proppantConcOld[ei],
+               proppantConc_n[ei],
                proppantConc[ei],
-               componentDensOld[ei],
+               componentDens_n[ei],
                componentDens[ei][0],
                dCompDens_dPres[ei][0],
                dCompDens_dCompConc[ei][0],

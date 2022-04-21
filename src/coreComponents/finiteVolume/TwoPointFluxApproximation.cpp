@@ -272,12 +272,12 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
   static_assert( true, "must have ALLOW_CREATION_MASS defined" );
 #endif
 #if ALLOW_CREATION_MASS==0
-  arrayView1d< real64 > const dens = fractureSubRegion.getReference< array1d< real64 > >( "densityOld" );
+  arrayView1d< real64 > const dens = fractureSubRegion.getReference< array1d< real64 > >( "density_n" );
 #endif
 
 
 #if SET_CREATION_PRESSURE==1
-  arrayView1d< real64 > const fluidPressureOld = fractureSubRegion.getExtrinsicData< extrinsicMeshData::flow::pressureOld >();
+  arrayView1d< real64 > const fluidPressure_n = fractureSubRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
   arrayView1d< real64 > const fluidPressure = fractureSubRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
   // Set the new face elements to some unphysical numbers to make sure they get set by the following routines.
   SortedArrayView< localIndex const > const newFaceElements = fractureSubRegion.m_newFaceElements.toViewConst();
@@ -331,7 +331,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
                             edgeGhostRank,
                             elemGhostRank,
                             fluidPressure,
-                            fluidPressureOld,
+                            fluidPressure_n,
                             &fractureSubRegion,
 #if SET_CREATION_DISPLACEMENT==1
                             faceToNodesMap,
@@ -401,7 +401,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
       // code to initialize new face elements with pressures from neighbors
       if( fractureSubRegion.m_newFaceElements.count( fractureElementIndex )==0 )
       {
-        initialPressure = std::min( initialPressure, fluidPressureOld[fractureElementIndex] );
+        initialPressure = std::min( initialPressure, fluidPressure_n[fractureElementIndex] );
 #if SET_CREATION_DISPLACEMENT==1
         initialAperture = std::min( initialAperture, aperture[fractureElementIndex] );
 #endif
@@ -484,7 +484,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
     forAll< serialPolicy >( allNewElems.size(),
                             [ &allNewElems
                               , fluidPressure
-                              , fluidPressureOld
+                              , fluidPressure_n
 #if SET_CREATION_DISPLACEMENT==1
                               , aperture
                               , faceMap
@@ -503,7 +503,7 @@ void TwoPointFluxApproximation::addToFractureStencil( MeshLevel & mesh,
       {
         fluidPressure[newElemIndex] = 0.0;
       }
-      fluidPressureOld[newElemIndex] = fluidPressure[newElemIndex];
+      fluidPressure_n[newElemIndex] = fluidPressure[newElemIndex];
 #if !defined(ALLOW_CREATION_MASS)
       static_assert( true, "must have ALLOW_CREATION_MASS defined" );
 #endif

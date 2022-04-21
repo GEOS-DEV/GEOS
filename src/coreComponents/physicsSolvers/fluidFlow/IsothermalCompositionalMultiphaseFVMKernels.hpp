@@ -1134,7 +1134,7 @@ struct AquiferBCKernel
   using CompFlowAccessors =
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressureOld,
+                      extrinsicMeshData::flow::pressure_n,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::phaseVolumeFraction,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
@@ -1183,7 +1183,7 @@ struct AquiferBCKernel
           arrayView1d< real64 const > const & aquiferWaterPhaseCompFrac,
           ElementViewConst< arrayView1d< integer const > > const & ghostRank,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & presOld,
+          ElementViewConst< arrayView1d< real64 const > > const & pres_n,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dPhaseVolFrac_dPres,

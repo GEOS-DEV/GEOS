@@ -212,7 +212,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
         fieldNames["node"].emplace_back( keys::IncrementalDisplacement );
         fieldNames["node"].emplace_back( keys::TotalDisplacement );
         fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
-        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressureOld::key() ); // in case there is a time step cut
+        fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure_n::key() ); // in case there is a time step cut
         fieldNames["elems"].emplace_back( "elementAperture" );
 
         CommunicationTools::getInstance().synchronizeFields( fieldNames,

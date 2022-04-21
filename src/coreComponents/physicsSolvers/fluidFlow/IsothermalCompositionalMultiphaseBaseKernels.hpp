@@ -551,18 +551,18 @@ public:
     m_dofNumber( subRegion.getReference< array1d< globalIndex > >( dofKey ) ),
     m_elemGhostRank( subRegion.ghostRank() ),
     m_volume( subRegion.getElementVolume() ),
-    m_porosityOld( solid.getOldPorosity() ),
+    m_porosity_n( solid.getPorosity_n() ),
     m_porosityNew( solid.getPorosity() ),
     m_dPoro_dPres( solid.getDporosity_dPressure() ),
     m_dCompFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dGlobalCompFraction_dGlobalCompDensity >() ),
-    m_phaseVolFracOld( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >() ),
+    m_phaseVolFrac_n( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >() ),
     m_phaseVolFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction >() ),
     m_dPhaseVolFrac_dPres( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure >() ),
     m_dPhaseVolFrac_dCompDens( subRegion.getExtrinsicData< extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity >() ),
-    m_phaseDensOld( fluid.phaseDensityOld() ),
+    m_phaseDens_n( fluid.phaseDensity_n() ),
     m_phaseDens( fluid.phaseDensity() ),
     m_dPhaseDens( fluid.dPhaseDensity() ),
-    m_phaseCompFracOld( fluid.phaseCompFractionOld() ),
+    m_phaseCompFrac_n( fluid.phaseCompFraction_n() ),
     m_phaseCompFrac( fluid.phaseCompFraction() ),
     m_dPhaseCompFrac( fluid.dPhaseCompFraction() ),
     m_localMatrix( localMatrix ),
@@ -583,7 +583,7 @@ public:
     real64 poreVolumeNew = 0.0;
 
     /// Pore volume at the previous converged time step
-    real64 poreVolumeOld = 0.0;
+    real64 poreVolume_n = 0.0;
 
     /// Derivative of pore volume with respect to pressure
     real64 dPoreVolume_dPres = 0.0;
@@ -625,7 +625,7 @@ public:
   {
     // initialize the pore volume
     stack.poreVolumeNew = m_volume[ei] * m_porosityNew[ei][0];
-    stack.poreVolumeOld = m_volume[ei] * m_porosityOld[ei][0];
+    stack.poreVolume_n = m_volume[ei] * m_porosity_n[ei][0];
     stack.dPoreVolume_dPres = m_volume[ei] * m_dPoro_dPres[ei][0];
 
     // set row index and degrees of freedom indices for this element
@@ -654,16 +654,16 @@ public:
     // construct the slices for variables accessed multiple times
     arraySlice2d< real64 const, compflow::USD_COMP_DC - 1 > dCompFrac_dCompDens = m_dCompFrac_dCompDens[ei];
 
-    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFracOld = m_phaseVolFracOld[ei];
+    arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac_n = m_phaseVolFrac_n[ei];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > phaseVolFrac = m_phaseVolFrac[ei];
     arraySlice1d< real64 const, compflow::USD_PHASE - 1 > dPhaseVolFrac_dPres = m_dPhaseVolFrac_dPres[ei];
     arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > dPhaseVolFrac_dCompDens = m_dPhaseVolFrac_dCompDens[ei];
 
-    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDensOld = m_phaseDensOld[ei][0];
+    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens_n = m_phaseDens_n[ei][0];
     arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > phaseDens = m_phaseDens[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > dPhaseDens = m_dPhaseDens[ei][0];
 
-    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFracOld = m_phaseCompFracOld[ei][0];
+    arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac_n = m_phaseCompFrac_n[ei][0];
     arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > phaseCompFrac = m_phaseCompFrac[ei][0];
     arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > dPhaseCompFrac = m_dPhaseCompFrac[ei][0];
 
@@ -675,7 +675,7 @@ public:
     for( integer ip = 0; ip < m_numPhases; ++ip )
     {
       real64 const phaseAmountNew = stack.poreVolumeNew * phaseVolFrac[ip] * phaseDens[ip];
-      real64 const phaseAmountOld = stack.poreVolumeOld * phaseVolFracOld[ip] * phaseDensOld[ip];
+      real64 const phaseAmount_n = stack.poreVolume_n * phaseVolFrac_n[ip] * phaseDens_n[ip];
 
       real64 const dPhaseAmount_dP = stack.dPoreVolume_dPres * phaseVolFrac[ip] * phaseDens[ip]
                                      + stack.poreVolumeNew * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
@@ -695,12 +695,12 @@ public:
       for( integer ic = 0; ic < numComp; ++ic )
       {
         real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
-        real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
+        real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
         real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
                                            + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-        stack.localResidual[ic] += phaseCompAmountNew - phaseCompAmountOld;
+        stack.localResidual[ic] += phaseCompAmountNew - phaseCompAmount_n;
         stack.localJacobian[ic][0] += dPhaseCompAmount_dP;
 
         // jc - index of component w.r.t. whose compositional var the derivative is being taken
@@ -719,7 +719,7 @@ public:
 
       // call the lambda in the phase loop to allow the reuse of the phase amounts and their derivatives
       // possible use: assemble the derivatives wrt temperature, and the accumulation term of the energy equation for this phase
-      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmountOld, dPhaseAmount_dP, dPhaseAmount_dC );
+      phaseAmountKernelOp( ip, phaseAmountNew, phaseAmount_n, dPhaseAmount_dP, dPhaseAmount_dC );
 
     }
   }
@@ -846,7 +846,7 @@ protected:
   arrayView1d< real64 const > const m_volume;
 
   /// Views on the porosity
-  arrayView2d< real64 const > const m_porosityOld;
+  arrayView2d< real64 const > const m_porosity_n;
   arrayView2d< real64 const > const m_porosityNew;
   arrayView2d< real64 const > const m_dPoro_dPres;
 
@@ -854,18 +854,18 @@ protected:
   arrayView3d< real64 const, compflow::USD_COMP_DC > const m_dCompFrac_dCompDens;
 
   /// Views on the phase volume fractions
-  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFracOld;
+  arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac_n;
   arrayView2d< real64 const, compflow::USD_PHASE > const m_phaseVolFrac;
   arrayView2d< real64 const, compflow::USD_PHASE > const m_dPhaseVolFrac_dPres;
   arrayView3d< real64 const, compflow::USD_PHASE_DC > const m_dPhaseVolFrac_dCompDens;
 
   /// Views on the phase densities
-  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDensOld;
+  arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens_n;
   arrayView3d< real64 const, multifluid::USD_PHASE > const m_phaseDens;
   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const m_dPhaseDens;
 
   /// Views on the phase component fraction
-  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFracOld;
+  arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac_n;
   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const m_phaseCompFrac;
   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const m_dPhaseCompFrac;
 
@@ -933,7 +933,7 @@ struct ResidualNormKernel
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & refPoro,
                       arrayView1d< real64 const > const & volume,
-                      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld,
+                      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens_n,
                       real64 & localResidualNorm )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
@@ -943,7 +943,7 @@ struct ResidualNormKernel
       if( ghostRank[ei] < 0 )
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
-        real64 const normalizer = totalDensOld[ei][0] * refPoro[ei] * volume[ei];
+        real64 const normalizer = totalDens_n[ei][0] * refPoro[ei] * volume[ei];
 
         for( integer idof = 0; idof < numComponents + 1; ++idof )
         {

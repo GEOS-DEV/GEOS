@@ -71,7 +71,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
                                                               [&]( localIndex const,
                                                                    ElementSubRegionBase & subRegion )
     {
-      subRegion.registerExtrinsicData< pressureOld >( getName() );
+      subRegion.registerExtrinsicData< pressure_n >( getName() );
       subRegion.registerExtrinsicData< initialPressure >( getName() );
       subRegion.registerExtrinsicData< pressure >( getName() );
 
@@ -80,7 +80,7 @@ void SinglePhaseBase::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< mobility >( getName() );
       subRegion.registerExtrinsicData< dMobility_dPressure >( getName() );
 
-      subRegion.registerExtrinsicData< densityOld >( getName() );
+      subRegion.registerExtrinsicData< density_n >( getName() );
 
 
     } );
@@ -226,7 +226,7 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
       // 1. update porosity, permeability, and density/viscosity
       SingleFluidBase const & fluid = getConstitutiveModel< SingleFluidBase >( subRegion, subRegion.template getReference< string >( viewKeyStruct::fluidNamesString() ) );
       real64 const defaultDensity = getFluidProperties( fluid ).defaultDensity;
-      subRegion.template getWrapper< array1d< real64 > >( extrinsicMeshData::flow::densityOld::key() ).setDefaultValue( defaultDensity );
+      subRegion.template getWrapper< array1d< real64 > >( extrinsicMeshData::flow::density_n::key() ).setDefaultValue( defaultDensity );
 
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
@@ -493,8 +493,8 @@ void SinglePhaseBase::implicitStepSetup( real64 const & GEOSX_UNUSED_PARAM( time
                                                                                                                    auto & subRegion )
     {
       arrayView1d< real64 const > const & pres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView1d< real64 > const & presOld = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressureOld >();
-      presOld.setValues< parallelDevicePolicy<> >( pres );
+      arrayView1d< real64 > const & pres_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+      pres_n.setValues< parallelDevicePolicy<> >( pres );
 
       arrayView1d< real64 > const & dVol = subRegion.template getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
       dVol.zero();
@@ -559,14 +559,14 @@ void SinglePhaseBase::implicitStepComplete( real64 const & time,
     {
       arrayView1d< integer const > const elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const densOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+      arrayView1d< real64 const > const dens_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::density_n >();
       arrayView1d< real64 > const creationMass = subRegion.getReference< real64_array >( FaceElementSubRegion::viewKeyStruct::creationMassString() );
 
       forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
         if( elemGhostRank[ei] < 0 )
         {
-          if( volume[ei] * densOld[ei] > 1.1 * creationMass[ei] )
+          if( volume[ei] * dens_n[ei] > 1.1 * creationMass[ei] )
           {
             creationMass[ei] *= 0.75;
             if( creationMass[ei]<1.0e-20 )
@@ -614,8 +614,8 @@ void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion
   arrayView1d< globalIndex const > const dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const ghostRank = subRegion.ghostRank();
 
-  arrayView1d< real64 const > const densityOld =
-    subRegion.getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+  arrayView1d< real64 const > const density_n =
+    subRegion.getExtrinsicData< extrinsicMeshData::flow::density_n >();
 
   arrayView1d< real64 const > const volume = subRegion.getElementVolume();
 
@@ -628,7 +628,7 @@ void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion
   CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, subRegion.getReference< string >( viewKeyStruct::solidNamesString() ) );
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
-  arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
+  arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
   //END_SPHINX_INCLUDE_COUPLEDSOLID
 
@@ -637,10 +637,10 @@ void SinglePhaseBase::accumulationLaunch( CellElementSubRegion const & subRegion
                                                                  dofNumber,
                                                                  ghostRank,
                                                                  volume,
-                                                                 porosityOld,
+                                                                 porosity_n,
                                                                  porosity,
                                                                  dPoro_dPres,
-                                                                 densityOld,
+                                                                 density_n,
                                                                  density,
                                                                  dDens_dPres,
                                                                  localMatrix,
@@ -658,7 +658,7 @@ void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subReg
   arrayView1d< globalIndex const > const & dofNumber = subRegion.getReference< array1d< globalIndex > >( dofKey );
   arrayView1d< integer const > const & ghostRank = subRegion.ghostRank();
 
-  arrayView1d< real64 const > const & densityOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+  arrayView1d< real64 const > const & density_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::density_n >();
   arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
   arrayView1d< real64 const > const & deltaVolume = subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaVolume >();
 
@@ -680,7 +680,7 @@ void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subReg
 
 
   arrayView2d< real64 const > const & porosity    = solidModel.getPorosity();
-  arrayView2d< real64 const > const & porosityOld = solidModel.getOldPorosity();
+  arrayView2d< real64 const > const & porosity_n = solidModel.getPorosity_n();
   arrayView2d< real64 const > const & dPoro_dPres = solidModel.getDporosity_dPressure();
 
   AccumulationKernel::template launch< parallelDevicePolicy<> >( subRegion.size(),
@@ -689,10 +689,10 @@ void SinglePhaseBase::accumulationLaunch( SurfaceElementSubRegion const & subReg
                                                                  ghostRank,
                                                                  volume,
                                                                  deltaVolume,
-                                                                 porosityOld,
+                                                                 porosity_n,
                                                                  porosity,
                                                                  dPoro_dPres,
-                                                                 densityOld,
+                                                                 density_n,
                                                                  density,
                                                                  dDens_dPres,
 #if ALLOW_CREATION_MASS
@@ -907,8 +907,8 @@ void SinglePhaseBase::resetStateToBeginningOfStep( DomainPartition & domain )
                                                                                                                    auto & subRegion )
     {
       arrayView1d< real64 > const pres = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >();
-      arrayView1d< real64 const > const presOld = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressureOld >();
-      pres.setValues< parallelDevicePolicy<> >( presOld );
+      arrayView1d< real64 const > const pres_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
+      pres.setValues< parallelDevicePolicy<> >( pres_n );
 
       updatePorosityAndPermeability( subRegion );
       updateFluidState( subRegion );
@@ -925,11 +925,11 @@ void SinglePhaseBase::backupFields( MeshLevel & mesh,
   {
     ConstitutiveBase const & fluid = getConstitutiveModel( subRegion, subRegion.getReference< string >( viewKeyStruct::fluidNamesString() ) );
     arrayView2d< real64 const > const & dens = getFluidProperties( fluid ).dens;
-    arrayView1d< real64 > const & densOld = subRegion.getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+    arrayView1d< real64 > const & dens_n = subRegion.getExtrinsicData< extrinsicMeshData::flow::density_n >();
 
     forAll< parallelDevicePolicy<> >( subRegion.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
-      densOld[ei] = dens[ei][0];
+      dens_n[ei] = dens[ei][0];
     } );
   } );
 }

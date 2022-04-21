@@ -40,8 +40,8 @@ EXTRINSIC_MESH_DATA_TRAIT( proppantConcentration,
                            WRITE_AND_READ,
                            "Proppant concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( proppantConcentrationOld,
-                           "proppantConcentrationOld",
+EXTRINSIC_MESH_DATA_TRAIT( proppantConcentration_n,
+                           "proppantConcentration_n",
                            array1d< real64 >,
                            0,
                            LEVEL_0,
@@ -56,8 +56,8 @@ EXTRINSIC_MESH_DATA_TRAIT( componentConcentration,
                            WRITE_AND_READ,
                            "Component concentration" );
 
-EXTRINSIC_MESH_DATA_TRAIT( componentConcentrationOld,
-                           "componentConcentrationOld",
+EXTRINSIC_MESH_DATA_TRAIT( componentConcentration_n,
+                           "componentConcentration_n",
                            array2d< real64 >,
                            0,
                            LEVEL_0,
@@ -96,8 +96,8 @@ EXTRINSIC_MESH_DATA_TRAIT( isProppantMobile,
                            WRITE_AND_READ,
                            "Flag indicating whether proppant is mobile" );
 
-EXTRINSIC_MESH_DATA_TRAIT( oldComponentDensity,
-                           "oldComponentDensity",
+EXTRINSIC_MESH_DATA_TRAIT( componentDensity_n,
+                           "componentDensity_n",
                            array2d< real64 >,
                            0,
                            NOPLOT,

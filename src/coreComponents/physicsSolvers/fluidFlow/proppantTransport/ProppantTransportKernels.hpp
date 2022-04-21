@@ -134,9 +134,9 @@ struct AccumulationKernel
   GEOSX_HOST_DEVICE
   static void
   compute( localIndex const NC,
-           real64 const proppantConcOld,
+           real64 const proppantConc_n,
            real64 const proppantConcNew,
-           arraySlice1d< real64 const > const & componentDensOld,
+           arraySlice1d< real64 const > const & componentDens_n,
            arraySlice1d< real64 const > const & componentDensNew,
            arraySlice1d< real64 const > const & GEOSX_UNUSED_PARAM( dCompDens_dPres ),
            arraySlice2d< real64 const > const & dCompDens_dCompConc,
@@ -153,9 +153,9 @@ struct AccumulationKernel
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & elemGhostRank,
-          arrayView1d< real64 const > const & proppantConcOld,
+          arrayView1d< real64 const > const & proppantConc_n,
           arrayView1d< real64 const > const & proppantConc,
-          arrayView2d< real64 const > const & componentDensOld,
+          arrayView2d< real64 const > const & componentDens_n,
           arrayView3d< real64 const > const & componentDens,
           arrayView3d< real64 const > const & dCompDens_dPres,
           arrayView4d< real64 const > const & dCompDens_dCompConc,
@@ -334,7 +334,7 @@ struct FluxKernel
   static void
   computeCellBasedFlux( localIndex const numElems,
                         arraySlice1d< localIndex const > const & stencilElementIndices,
-                        arrayView1d< real64 const > const & presOld,
+                        arrayView1d< real64 const > const & pres_n,
                         arrayView1d< real64 const > const & gravDepth,
                         arrayView2d< real64 const > const & dens,
                         arrayView2d< real64 const > const & visc,

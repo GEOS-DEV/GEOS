@@ -64,7 +64,7 @@ struct FluxKernel
   using SinglePhaseFlowAccessors =
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::pressureOld,
+                      extrinsicMeshData::flow::pressure_n,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::mobility,
                       extrinsicMeshData::flow::dMobility_dPressure >;
@@ -455,7 +455,7 @@ struct AquiferBCKernel
           AquiferBoundaryCondition::KernelWrapper const & aquiferBCWrapper,
           real64 const & aquiferDens,
           ElementViewConst< arrayView1d< real64 const > > const & pres,
-          ElementViewConst< arrayView1d< real64 const > > const & presOld,
+          ElementViewConst< arrayView1d< real64 const > > const & pres_n,
           ElementViewConst< arrayView1d< real64 const > > const & gravCoef,
           ElementViewConst< arrayView2d< real64 const > > const & dens,
           ElementViewConst< arrayView2d< real64 const > > const & dDens_dPres,
@@ -488,7 +488,7 @@ struct AquiferBCKernel
       real64 const aquiferVolFlux = aquiferBCWrapper.compute( timeAtBeginningOfStep,
                                                               dt,
                                                               pres[er][esr][ei],
-                                                              presOld[er][esr][ei],
+                                                              pres_n[er][esr][ei],
                                                               gravCoef[er][esr][ei],
                                                               areaFraction,
                                                               dAquiferVolFlux_dPres );

@@ -869,7 +869,7 @@ struct ResidualNormKernel
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
           ElementViewConst< arrayView1d< real64 const > > const & elemVolume,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMobOld,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob_n,
           real64 & localResidualNorm )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
@@ -893,20 +893,20 @@ struct ResidualNormKernel
           if( !onBoundary && isInTarget )
           {
             // compute a normalizer to obtain a dimensionless norm
-            real64 sumMobOld = 0.0;
+            real64 sumMob_n = 0.0;
             for( integer ip = 0; ip < numPhases; ++ip )
             {
-              sumMobOld += phaseMobOld[er][esr][ei][ip];
+              sumMob_n += phaseMob_n[er][esr][ei][ip];
             }
-            real64 const totalMobOld = ( sumMobOld < 1e-3 ) ? 1e-3 : sumMobOld;
-            normalizer += elemVolume[er][esr][ei] / totalMobOld;
+            real64 const totalMob_n = ( sumMob_n < 1e-3 ) ? 1e-3 : sumMob_n;
+            normalizer += elemVolume[er][esr][ei] / totalMob_n;
             elemCounter++;
           }
         }
         normalizer /= elemCounter;
 
         localIndex const lid = LvArray::integerConversion< localIndex >( facePresDofNumber[iface] - rankOffset );
-        // note: unit of localResidual[lid] * totalMobOld: m^3, so this is dimensionless
+        // note: unit of localResidual[lid] * totalMob_n: m^3, so this is dimensionless
         real64 const val = localResidual[lid] / normalizer;
         sumScaled += val * val;
       }

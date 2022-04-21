@@ -1213,9 +1213,9 @@ AccumulationKernel::
            arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens,
            arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
            arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dPhaseCompFrac,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
-           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDensOld,
-           arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFracOld,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac_n,
+           arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDens_n,
+           arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFrac_n,
            real64 ( & localAccum )[NC],
            real64 ( & localAccumJacobian )[NC][NC + 1] )
 {
@@ -1239,7 +1239,7 @@ AccumulationKernel::
   for( integer ip = 0; ip < numPhases; ++ip )
   {
     real64 const phaseAmountNew = volume * phaseVolFrac[ip] * phaseDens[ip];
-    real64 const phaseAmountOld = volume * phaseVolFracOld[ip] * phaseDensOld[ip];
+    real64 const phaseAmount_n = volume * phaseVolFrac_n[ip] * phaseDens_n[ip];
 
     real64 const dPhaseAmount_dP = volume * ( dPhaseVolFrac_dPres[ip] * phaseDens[ip]
                                               + phaseVolFrac[ip] * dPhaseDens[ip][Deriv::dP] );
@@ -1258,12 +1258,12 @@ AccumulationKernel::
     for( integer ic = 0; ic < NC; ++ic )
     {
       real64 const phaseCompAmountNew = phaseAmountNew * phaseCompFrac[ip][ic];
-      real64 const phaseCompAmountOld = phaseAmountOld * phaseCompFracOld[ip][ic];
+      real64 const phaseCompAmount_n = phaseAmount_n * phaseCompFrac_n[ip][ic];
 
       real64 const dPhaseCompAmount_dP = dPhaseAmount_dP * phaseCompFrac[ip][ic]
                                          + phaseAmountNew * dPhaseCompFrac[ip][ic][Deriv::dP];
 
-      localAccum[ic] += phaseCompAmountNew - phaseCompAmountOld;
+      localAccum[ic] += phaseCompAmountNew - phaseCompAmount_n;
       localAccumJacobian[ic][0] += dPhaseCompAmount_dP;
 
       // jc - index of component w.r.t. whose compositional var the derivative is being taken
@@ -1298,9 +1298,9 @@ AccumulationKernel::
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac,
           arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFracOld,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld,
-          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFracOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac_n,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -1328,9 +1328,9 @@ AccumulationKernel::
                    dWellElemPhaseDens[iwelem][0],
                    wellElemPhaseCompFrac[iwelem][0],
                    dWellElemPhaseCompFrac[iwelem][0],
-                   wellElemPhaseVolFracOld[iwelem],
-                   wellElemPhaseDensOld[iwelem],
-                   wellElemPhaseCompFracOld[iwelem],
+                   wellElemPhaseVolFrac_n[iwelem],
+                   wellElemPhaseDens_n[iwelem],
+                   wellElemPhaseCompFrac_n[iwelem],
                    localAccum,
                    localAccumJacobian );
 
@@ -1382,9 +1382,9 @@ AccumulationKernel::
                   arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens, \
                   arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac, \
                   arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac, \
-                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFracOld, \
-                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld, \
-                  arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFracOld, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac_n, \
+                  arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n, \
+                  arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n, \
                   CRSMatrixView< real64, globalIndex const > const & localMatrix, \
                   arrayView1d< real64 > const & localRhs )
 

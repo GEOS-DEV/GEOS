@@ -31,7 +31,7 @@
 #include "mesh/SurfaceElementRegion.hpp"
 #include "mesh/MeshForLoopInterface.hpp"
 #include "mesh/mpiCommunications/NeighborCommunicator.hpp"
-#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp" // needed to register pressure(Old)
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp" // needed to register pressure(_n)
 #include "physicsSolvers/solidMechanics/SolidMechanicsLagrangianFEM.hpp"
 #include "physicsSolvers/surfaceGeneration/SurfaceGenerator.hpp"
 #include "physicsSolvers/contact/ContactExtrinsicData.hpp"
@@ -112,7 +112,7 @@ void LagrangianContactSolver::registerDataOnMesh( Group & meshBodies )
       subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressure >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
-      subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressureOld >( getName() ).
+      subRegion.registerExtrinsicData< extrinsicMeshData::flow::pressure_n >( getName() ).
         setPlotLevel( PlotLevel::NOPLOT ).
         setRegisteringObjects( this->getName());
 

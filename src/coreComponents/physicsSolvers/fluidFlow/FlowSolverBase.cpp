@@ -407,26 +407,24 @@ void FlowSolverBase::saveAquiferConvergedState( real64 const & time,
 
     AquiferBoundaryCondition::KernelWrapper aquiferBCWrapper = bc.createKernelWrapper();
 
-    using namespace extrinsicMeshData::flow;
+    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
+    pressure = elemManager.constructExtrinsicAccessor< extrinsicMeshData::flow::pressure >();
+    pressure.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure::key() );
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    m_pressure = elemManager.constructExtrinsicAccessor< pressure >();
-    m_pressure.setName( getName() + "/accessors/" + pressure::key() );
+    pressure_n = elemManager.constructExtrinsicAccessor< extrinsicMeshData::flow::pressure_n >();
+    pressure_n.setName( getName() + "/accessors/" + extrinsicMeshData::flow::pressure_n::key() );
 
     ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    m_pressureOld = elemManager.constructExtrinsicAccessor< pressureOld >();
-    m_pressureOld.setName( getName() + "/accessors/" + pressureOld::key() );
-
-    ElementRegionManager::ElementViewAccessor< arrayView1d< real64 const > >
-    m_gravCoef = elemManager.constructExtrinsicAccessor< gravityCoefficient >();
-    m_gravCoef.setName( getName() + "/accessors/" + gravityCoefficient::key() );
+    gravCoef = elemManager.constructExtrinsicAccessor< extrinsicMeshData::flow::gravityCoefficient >();
+    gravCoef.setName( getName() + "/accessors/" + extrinsicMeshData::flow::gravityCoefficient::key() );
 
     real64 const targetSetSumFluxes =
       fluxKernelsHelper::AquiferBCKernel::sumFluxes( stencil,
                                                      aquiferBCWrapper,
-                                                     m_pressure.toNestedViewConst(),
-                                                     m_pressureOld.toNestedViewConst(),
-                                                     m_gravCoef.toNestedViewConst(),
+                                                     pressure.toNestedViewConst(),
+                                                     pressure_n.toNestedViewConst(),
+                                                     gravCoef.toNestedViewConst(),
                                                      time,
                                                      dt );
 

@@ -77,7 +77,7 @@ void CompositionalMultiphaseHybridFVM::registerDataOnMesh( Group & meshBodies )
 
     // primary variables: face pressure changes
 
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressureOld >( getName() );
+    faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressure_n >( getName() );
 
     // auxiliary data for the buoyancy coefficient
     faceManager.registerExtrinsicData< extrinsicMeshData::flow::mimGravityCoefficient >( getName() );
@@ -256,11 +256,11 @@ void CompositionalMultiphaseHybridFVM::implicitStepSetup( real64 const & time_n,
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
-    arrayView1d< real64 > const & facePresOld =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
+    arrayView1d< real64 > const & facePres_n =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
     arrayView1d< real64 const > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-    facePresOld.setValues< parallelDevicePolicy<> >( facePres );
+    facePres_n.setValues< parallelDevicePolicy<> >( facePres );
   } );
 
 }
@@ -687,7 +687,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
 
     StencilAccessors< extrinsicMeshData::elementVolume,
-                      extrinsicMeshData::flow::phaseMobilityOld >
+                      extrinsicMeshData::flow::phaseMobility_n >
     compFlowAccessors( mesh.getElemManager(), getName() );
 
 
@@ -706,7 +706,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDensOld = fluid.totalDensityOld();
+      arrayView2d< real64 const, multifluid::USD_FLUID > const & totalDens_n = fluid.totalDensity_n();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solid = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
@@ -721,7 +721,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                               elemGhostRank,
                                                               referencePorosity,
                                                               volume,
-                                                              totalDensOld,
+                                                              totalDens_n,
                                                               subRegionResidualNorm );
       localResidualNorm += subRegionResidualNorm;
     } );
@@ -747,7 +747,7 @@ real64 CompositionalMultiphaseHybridFVM::calculateResidualNorm( DomainPartition 
                                                             elemSubRegionList.toNestedViewConst(),
                                                             elemList.toNestedViewConst(),
                                                             compFlowAccessors.get( extrinsicMeshData::elementVolume{} ),
-                                                            compFlowAccessors.get( extrinsicMeshData::flow::phaseMobilityOld{} ),
+                                                            compFlowAccessors.get( extrinsicMeshData::flow::phaseMobility_n{} ),
                                                             faceResidualNorm );
     localResidualNorm += faceResidualNorm;
   } );
@@ -832,11 +832,11 @@ void CompositionalMultiphaseHybridFVM::resetStateToBeginningOfStep( DomainPartit
   {
     FaceManager & faceManager = mesh.getFaceManager();
 
-    arrayView1d< real64 const > const & facePresOld =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
+    arrayView1d< real64 const > const & facePres_n =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
     arrayView1d< real64 > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-    facePres.setValues< parallelDevicePolicy<> >( facePresOld );
+    facePres.setValues< parallelDevicePolicy<> >( facePres_n );
   } );
 }
 

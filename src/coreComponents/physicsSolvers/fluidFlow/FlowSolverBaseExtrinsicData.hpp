@@ -40,8 +40,8 @@ EXTRINSIC_MESH_DATA_TRAIT( pressure,
                            WRITE_AND_READ,
                            "Pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( pressureOld,
-                           "pressureOld",
+EXTRINSIC_MESH_DATA_TRAIT( pressure_n,
+                           "pressure_n",
                            array1d< real64 >,
                            0,
                            LEVEL_0,
@@ -64,8 +64,8 @@ EXTRINSIC_MESH_DATA_TRAIT( facePressure,
                            WRITE_AND_READ,
                            "Face pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( facePressureOld,
-                           "facePressureOld",
+EXTRINSIC_MESH_DATA_TRAIT( facePressure_n,
+                           "facePressure_n",
                            array1d< real64 >,
                            0,
                            NOPLOT,

@@ -116,12 +116,12 @@ public:
     m_gravityAcceleration( LvArray::tensorOps::l2Norm< 3 >( inputGravityVector ) ),
     m_solidDensity( inputConstitutiveType.getDensity() ),
     m_fluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).density() ),
-    m_fluidDensityOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >() ),
+    m_fluidDensity_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >() ),
     m_initialFluidDensity( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).initialDensity() ),
     m_dFluidDensity_dPressure( elementSubRegion.template getConstitutiveModel< constitutive::SingleFluidBase >( elementSubRegion.template getReference< string >( fluidModelKey ) ).dDensity_dPressure() ),
     m_flowDofNumber( elementSubRegion.template getReference< array1d< globalIndex > >( inputFlowDofKey )),
     m_initialFluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::initialPressure >() ),
-    m_fluidPressureOld( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressureOld >() ),
+    m_fluidPressure_n( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure_n >() ),
     m_fluidPressure( elementSubRegion.template getExtrinsicData< extrinsicMeshData::flow::pressure >() )
   {}
 
@@ -250,7 +250,7 @@ public:
     // Using a weak formulation of the governing equation the following terms are assembled in this kernel
     //
     //   Rmom = - \int symmetricGradient( \eta ) : totalStress + \int \eta \cdot bodyForce = 0
-    //   Rmas = \int \chi ( fluidMassContent - fluidMassContentOld) = 0
+    //   Rmas = \int \chi ( fluidMassContent - fluidMassContent_n) = 0
     //
     //   dRmom_dVolStrain = - \int_Omega symmetricGradient( \eta ) : dTotalStress_dVolStrain
     //                      + \int \eta \cdot dBodyForce_dVolStrain
@@ -295,14 +295,14 @@ public:
     m_constitutiveUpdate.smallStrainUpdateSinglePhase( k,
                                                        q,
                                                        m_initialFluidPressure[k],
-                                                       m_fluidPressureOld[k],
+                                                       m_fluidPressure_n[k],
                                                        m_fluidPressure[k],
                                                        strainIncrement,
                                                        m_gravityAcceleration,
                                                        m_gravityVector,
                                                        m_solidDensity( k, q ),
                                                        m_initialFluidDensity( k, q ),
-                                                       m_fluidDensityOld( k ),
+                                                       m_fluidDensity_n( k ),
                                                        m_fluidDensity( k, q ),
                                                        m_dFluidDensity_dPressure( k, q ),
                                                        totalStress,
@@ -493,7 +493,7 @@ protected:
   /// The rank global densities
   arrayView2d< real64 const > const m_solidDensity;
   arrayView2d< real64 const > const m_fluidDensity;
-  arrayView1d< real64 const > const m_fluidDensityOld;
+  arrayView1d< real64 const > const m_fluidDensity_n;
   arrayView2d< real64 const > const m_initialFluidDensity;
   arrayView2d< real64 const > const m_dFluidDensity_dPressure;
 
@@ -504,7 +504,7 @@ protected:
   arrayView1d< real64 const > const m_initialFluidPressure;
 
   /// The rank-global fluid pressure arrays.
-  arrayView1d< real64 const > const m_fluidPressureOld;
+  arrayView1d< real64 const > const m_fluidPressure_n;
   arrayView1d< real64 const > const m_fluidPressure;
 
 };

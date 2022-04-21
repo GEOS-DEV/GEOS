@@ -69,7 +69,7 @@ void SinglePhaseHybridFVM::registerDataOnMesh( Group & meshBodies )
     FaceManager & faceManager = meshLevel.getFaceManager();
 
     // primary variables: face pressures at the previous converged time step
-    faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressureOld >( getName() );
+    faceManager.registerExtrinsicData< extrinsicMeshData::flow::facePressure_n >( getName() );
   } );
 }
 
@@ -170,9 +170,9 @@ void SinglePhaseHybridFVM::implicitStepSetup( real64 const & time_n,
     // get the face-based pressures
     arrayView1d< real64 const > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-    arrayView1d< real64 > const & facePresOld =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
-    facePresOld.setValues< parallelDevicePolicy<> >( facePres );
+    arrayView1d< real64 > const & facePres_n =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
+    facePres_n.setValues< parallelDevicePolicy<> >( facePres );
   } );
 }
 
@@ -437,14 +437,14 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
       arrayView1d< globalIndex const > const & elemDofNumber = subRegion.template getReference< array1d< globalIndex > >( elemDofKey );
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
       arrayView1d< real64 const > const & volume = subRegion.getElementVolume();
-      arrayView1d< real64 const > const & densOld = subRegion.template getExtrinsicData< extrinsicMeshData::flow::densityOld >();
+      arrayView1d< real64 const > const & dens_n = subRegion.template getExtrinsicData< extrinsicMeshData::flow::density_n >();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solidModel = subRegion.template getConstitutiveModel< CoupledSolidBase >( solidName );
 
       constitutive::ConstitutivePassThru< CompressibleSolidBase >::execute( solidModel, [=, &localResidualNorm] ( auto & castedSolidModel )
       {
-        arrayView2d< real64 const > const & porosityOld = castedSolidModel.getOldPorosity();
+        arrayView2d< real64 const > const & porosity_n = castedSolidModel.getPorosity_n();
 
         singlePhaseBaseKernels::
           ResidualNormKernel::launch< parallelDevicePolicy<> >( localRhs,
@@ -452,8 +452,8 @@ real64 SinglePhaseHybridFVM::calculateResidualNorm( DomainPartition const & doma
                                                                 elemDofNumber,
                                                                 elemGhostRank,
                                                                 volume,
-                                                                densOld,
-                                                                porosityOld,
+                                                                dens_n,
+                                                                porosity_n,
                                                                 localResidualNorm );
       } );
 
@@ -632,9 +632,9 @@ void SinglePhaseHybridFVM::resetStateToBeginningOfStep( DomainPartition & domain
     // get the face pressure update
     arrayView1d< real64 > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
-    arrayView1d< real64 const > const & facePresOld =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressureOld >();
-    facePres.setValues< parallelDevicePolicy<> >( facePresOld );
+    arrayView1d< real64 const > const & facePres_n =
+      faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure_n >();
+    facePres.setValues< parallelDevicePolicy<> >( facePres_n );
   } );
 }
 
