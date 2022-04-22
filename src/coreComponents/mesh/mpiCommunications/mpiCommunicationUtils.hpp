@@ -41,22 +41,9 @@ struct SyncFieldsID
     }
   }
 
-  std::map< string, std::vector<string> > const & getFields() const
+  std::map< string, array1d<string> > const & getFields() const
   {
     return m_fields;
-  }
-
-  array1d< string > getFieldNames() const
-  {
-    array1d< string > tmp;
-    tmp.reserve( fieldNames.size() );
-
-    for( auto const & field : fields.second )
-    {
-      tmp.emplace_back( field );
-    }
-
-    return tmp;
   }
   
   static string const getRegionName( string const & key )
@@ -89,7 +76,7 @@ struct SyncFieldsID
 
   private:
   
-  std::map< string, std::vector<string> > m_fields;
+  std::map< string, array1d<string> > m_fields;
 
   static string const generateKey( FieldLocation const location ) const
   
