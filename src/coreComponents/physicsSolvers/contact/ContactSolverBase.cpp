@@ -51,6 +51,10 @@ ContactSolverBase::ContactSolverBase( const string & name,
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Name of contact relation to enforce constraints on fracture boundary." );
 
+  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Name of the fracture region." );  
+
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
 }
@@ -237,7 +241,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 arrayView1d< string const > const & )
   {
     std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem,
-                                                                       {viewKeyStruct::fractureStateString()},
+                                                                       {extrinsicMeshData::contact::fractureState::key()},
                                                                        {getFractureRegionName()} ) };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

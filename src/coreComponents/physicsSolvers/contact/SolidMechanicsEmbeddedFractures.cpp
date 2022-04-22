@@ -45,10 +45,6 @@ SolidMechanicsEmbeddedFractures::SolidMechanicsEmbeddedFractures( const string &
                                                                   Group * const parent ):
   ContactSolverBase( name, parent )
 {
-  registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
-    setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );
-
   registerWrapper( viewKeyStruct::useStaticCondensationString(), &m_useStaticCondensation ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).

@@ -215,7 +215,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
   {
     mesh.getElemManager().forElementSubRegions< FaceElementSubRegion >( [&]( FaceElementSubRegion & subRegion )
     {
@@ -239,7 +239,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
     std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem,
                                                                        { extrinsicMeshData::contact::deltaTraction::key() },
-                                                                       regionNames ) };
+                                                                       { getFractureRegionName() } ) };
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -1677,10 +1677,11 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem, { getFractureRegionName() },
+    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem,
                                                                        {extrinsicMeshData::contact::traction::key(),
                                                                         extrinsicMeshData::contact::deltaTraction::key(),
-                                                                        extrinsicMeshData::contact::dispJump::key() } ) }; // This is used
+                                                                        extrinsicMeshData::contact::dispJump::key() }, 
+                                                                       { getFractureRegionName() } ) }; // This is used
                                                                                                                            // locally only,
                                                                                                                            // synchronized
                                                                                                                            // just for
