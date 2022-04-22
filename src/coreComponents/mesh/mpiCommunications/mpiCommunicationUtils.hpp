@@ -30,25 +30,26 @@ struct SyncFieldsID
   std::vector< string > fieldNames;
   std::vector< string > regionNames;
 
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields, arrayView1d< string const > const & regions ):
-    location( location ),
+  SyncFieldsID( FieldLocation const location_, std::vector< string > const & fields, arrayView1d< string const > const & regions ):
+    location( location_ ),
     fieldNames( fields ),
     regionNames( regions.begin(), regions.end() )
   {}
 
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields, std::vector< string > const & regions ):
-    location( location ),
+  SyncFieldsID( FieldLocation const location_, std::vector< string > const & fields, std::vector< string > const & regions ):
+    location( location_ ),
     fieldNames( fields ),
     regionNames( regions )
   {}
 
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields ):
-    SyncFieldsID( location, fields, std::vector< string >{""} )
+  SyncFieldsID( FieldLocation const location_, std::vector< string > const & fields ):
+    SyncFieldsID( location_, fields, std::vector< string >{} )
   {}
 
   array1d< string > getFieldNames() const
   {
     array1d< string > tmp;
+    tmp.reserve( fieldNames.size() );
 
     for( auto const & field : fieldNames )
     {

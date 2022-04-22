@@ -564,7 +564,7 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
     } );
 
     /// synchronize pressure fields
-    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } ) };
+    std::vector< SyncFieldsID > const fieldsToBeSync{ SyncFieldsID( FieldLocation::Node, { extrinsicMeshData::Pressure_np1::key() } ) };
 
     CommunicationTools & syncFields = CommunicationTools::getInstance();
     syncFields.synchronizeFields( fieldsToBeSync,
