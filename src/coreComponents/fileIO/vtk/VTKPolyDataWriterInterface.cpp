@@ -283,10 +283,10 @@ CellData getVtkCells( CellElementRegion const & region, localIndex const numNode
     forAll< parallelHostPolicy >( subRegion.size(), [&, nodeList]( localIndex const cellIdx )
     {
       auto const nodes = nodeList[cellIdx];
-      for( int nodeIdx : nodes )
+      for( localIndex i = 0; i < nodes.size(); ++i )
       {
         // use atomic write to avoid technical UB
-        RAJA::atomicExchange< parallelHostAtomic >( &newNodeIndices[nodeIdx], 1 );
+        RAJA::atomicExchange< parallelHostAtomic >( &newNodeIndices[nodes[i]], 1 );
       }
     } );
   } );

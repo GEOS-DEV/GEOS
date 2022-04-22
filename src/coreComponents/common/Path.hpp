@@ -35,30 +35,52 @@ public:
   using std::string::string;
 
   /**
+   * @brief Default constructor.
+   */
+  Path()
+  {}
+
+  /**
    * @brief Copy constructor.
    * @param rhs Path to be copied.
    */
-  Path( Path const & rhs ) = default;
+  Path( Path const & rhs ): std::string( rhs )
+  {}
 
   /**
    * @brief Move constructor.
    * @param rhs Path to be moved.
    */
-  Path( Path && rhs ) = default;
+  Path( Path && rhs ) noexcept: std::string( std::move( rhs ) )
+  {}
 
   /**
    * @brief Copy assignment.
    * @param rhs Path to be copied.
    * @return *this
    */
-  Path & operator=( Path const & rhs ) = default;
+  Path & operator=( Path const & rhs )
+  {
+    std::string::operator=( rhs );
+    return *this;
+  }
 
   /**
    * @brief Move assignment.
    * @param rhs Path to be moved.
    * @return *this
    */
-  Path & operator=( Path && rhs ) = default;
+  Path & operator=( Path && rhs ) noexcept
+  {
+    std::string::operator=( std::move( rhs ) );
+    return *this;
+  }
+
+  /**
+   * @brief Destructor.
+   */
+  ~Path()
+  {}
 
   /**
    * @brief Get the path prefix of the file
