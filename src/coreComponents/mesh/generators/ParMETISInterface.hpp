@@ -20,6 +20,7 @@
 #define GEOSX_MESH_GENERATORS_PARMETISINTERFACE_HPP_
 
 #include "common/DataTypes.hpp"
+#include "common/MpiWrapper.hpp"
 
 namespace geosx
 {
@@ -27,7 +28,7 @@ namespace parmetis
 {
 
 /**
- * @brief Partition a finite element mesh according to its dual graph.
+ * @brief Partition a mesh according to its dual graph.
  * @param elemToNodes the input mesh represented by its elem-node graph
  * @param comm the MPI communicator of processes to partition over
  * @param minCommonNodes minimum number of shared nodes to create an graph edge

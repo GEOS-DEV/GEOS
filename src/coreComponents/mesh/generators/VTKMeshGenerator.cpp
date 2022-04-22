@@ -150,18 +150,18 @@ loadMesh( Path const & filePath )
   return loadedMesh;
 }
 
-template< typename INDEX_TYPE >
+template< typename INDEX_TYPE, typename POLICY >
 ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
-buildElemToNodes( vtkUnstructuredGrid & mesh )
+buildElemToNodesImpl( vtkUnstructuredGrid & mesh )
 {
   localIndex const numCells = LvArray::integerConversion< localIndex >( mesh.GetNumberOfCells() );
   array1d< INDEX_TYPE > nodeCounts( numCells );
+  vtkCellArray & cells = *mesh.GetCells();
 
-  // GetCell() is not thread-safe, use serial policy
-  forAll< serialPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &mesh] ( localIndex const cellIdx )
+  // GetCellSize() is always thread-safe, can run in parallel
+  forAll< parallelHostPolicy >( numCells, [nodeCounts = nodeCounts.toView(), &cells] ( localIndex const cellIdx )
   {
-    vtkCell const * const cell = mesh.GetCell( cellIdx );
-    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cell->GetNumberOfPoints() );
+    nodeCounts[cellIdx] = LvArray::integerConversion< INDEX_TYPE >( cells.GetCellSize( cellIdx ) );
   } );
 
   ArrayOfArrays< INDEX_TYPE, INDEX_TYPE > elemToNodes;
@@ -169,18 +169,32 @@ buildElemToNodes( vtkUnstructuredGrid & mesh )
 
   vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( mesh.GetPointData()->GetGlobalIds() );
 
-  // GetCell() is not thread-safe, use serial policy
-  forAll< serialPolicy >( numCells, [&, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
+  // GetCellAtId() is conditionally thread-safe, use POLICY argument
+  forAll< POLICY >( numCells, [&cells, &globalPointId, elemToNodes = elemToNodes.toView()] ( localIndex const cellIdx )
   {
-    vtkCell * const cell = mesh.GetCell( cellIdx );
-    for( int a = 0; a < cell->GetNumberOfPoints(); ++a )
+    vtkIdType numPts;
+    vtkIdType const * points;
+    cells.GetCellAtId( cellIdx, numPts, points );
+    for( int a = 0; a < numPts; ++a )
     {
-      vtkIdType const pointIdx = globalPointId.GetValue( cell->GetPointId( a ) );
+      vtkIdType const pointIdx = globalPointId.GetValue( points[a] );
       elemToNodes.emplaceBack( cellIdx, LvArray::integerConversion< INDEX_TYPE >( pointIdx ) );
     }
   } );
 
   return elemToNodes;
+}
+
+template< typename INDEX_TYPE >
+ArrayOfArrays< INDEX_TYPE, INDEX_TYPE >
+buildElemToNodes( vtkUnstructuredGrid & mesh )
+{
+  // According to VTK docs, IsStorageShareable() indicates whether pointers extracted via
+  // vtkCellArray::GetCellAtId() are pointers into internal storage rather than temp buffer
+  // and thus results can be used in a thread-safe way.
+  return mesh.GetCells()->IsStorageShareable()
+       ? buildElemToNodesImpl< INDEX_TYPE, parallelHostPolicy >( mesh )
+       : buildElemToNodesImpl< INDEX_TYPE, serialPolicy >( mesh );
 }
 
 template< typename PART_INDEX >
@@ -288,8 +302,7 @@ findNeighborRanks( std::vector< vtkBoundingBox > boundingBoxes )
  * @brief Generate global point/cell IDs and redistribute the mesh among MPI ranks.
  * @param[in] loadedMesh the mesh that was loaded on one or several MPI ranks
  * @param[in] comm the MPI communicator
- * @param[in] useGraphPartitioning whether to
- * @param[in,out] mpiNeighbors the set of neighboring MPI ranks, will be updated
+ * @param[in] partitionRefinement number of graph partitioning refinement cycles
  */
 vtkSmartPointer< vtkUnstructuredGrid >
 redistributeMesh( vtkUnstructuredGrid & loadedMesh,
@@ -935,7 +948,7 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
   nodeGlobalIds.reserve( numPts );
 
   vtkIdTypeArray const & globalPointId = *vtkIdTypeArray::FastDownCast( m_vtkMesh->GetPointData()->GetGlobalIds() );
-  forAll< parallelHostPolicy >( numPts, [&, X, nodeLocalToGlobal]( localIndex const k )
+  forAll< serialPolicy >( numPts, [&, X, nodeLocalToGlobal]( localIndex const k )
   {
     double point[3];
     m_vtkMesh->GetPoint( k, point );
@@ -945,6 +958,7 @@ real64 VTKMeshGenerator::writeNodes( CellBlockManager & cellBlockManager ) const
     nodeLocalToGlobal[k] = pointGlobalID;
 
     // TODO: remove this check once the input mesh is cleaned of duplicate points via a filter
+    //       and make launch policy parallel again
     GEOSX_ERROR_IF( nodeGlobalIds.count( pointGlobalID ) > 0,
                     GEOSX_FMT( "Duplicate point detected: globalID = {}\n"
                                "Consider cleaning the dataset in Paraview using 'Clean to grid' filter.\n"
