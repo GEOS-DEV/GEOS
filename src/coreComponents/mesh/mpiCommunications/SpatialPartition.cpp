@@ -450,6 +450,7 @@ namespace geosx
 
       // (6) Pack a buffer for the particles to be sent to each neighbor, and send/receive
 
+      //int sizeBeforeParticleSend = subRegion.size(); // subregion size changes after this, so we need this here to use to size the deletion loop
       sendParticlesToNeighbor( subRegion,
                                newParticleStartingIndices,
                                numberOfIncomingParticles,
@@ -462,14 +463,16 @@ namespace geosx
       //     which will hopefully only occur at outflow boundary conditions.  If it happens for a particle in
       //     the global domain, print a warning.
 
+      arrayView2d< real64 > const particleCenterAfter = subRegion.getParticleCenter();
+      arrayView1d< int > const particleGhostRankAfter = subRegion.getParticleGhostRank();
       for(int pp = subRegion.size()-1; pp>=0; pp--)
       {
-        if( particleGhostRank[pp] == -1 )
+        if( particleGhostRankAfter[pp] == -1 )
         {
-          GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenter[pp] );
+          GEOSX_LOG_RANK( "Deleting orphan out-of-domain particle during repartition at p_x = " << particleCenterAfter[pp] );
           subRegion.erase(pp);
         }
-        else if( particleGhostRank[pp] != m_rank )
+        else if( particleGhostRankAfter[pp] != m_rank )
         {
           subRegion.erase(pp);
         }
