@@ -49,6 +49,7 @@ struct SyncFieldsID
   array1d< string > getFieldNames() const
   {
     array1d< string > tmp;
+    tmp.reserve( fieldNames.size() );
 
     for( auto const & field : fields.second )
     {

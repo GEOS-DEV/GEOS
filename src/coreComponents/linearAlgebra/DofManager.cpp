@@ -186,7 +186,7 @@ void DofManager::createIndexArray( FieldDescription const & field )
       FieldLocation constexpr LOC = decltype(loc)::value;
       using helper = ArrayHelper< globalIndex, LOC >;
 
-      std::vector< SyncFieldsID > fieldsToBeSync = { SyncFieldsID( field.location, {field.key}, regions ) };
+      std::vector< SyncFieldsID > const fieldsToBeSync{ SyncFieldsID( field.location, { field.key }, regions ) };
 
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );

@@ -179,9 +179,9 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem,
-                                                                       { extrinsicMeshData::flow::deltaPressure::key() },
-                                                                       regionNames ) };
+    std::vector< SyncFieldsID > const fieldsToBeSync{
+      SyncFieldsID( FieldLocation::Elem, { extrinsicMeshData::flow::deltaPressure::key() }, regionNames )
+    };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );
