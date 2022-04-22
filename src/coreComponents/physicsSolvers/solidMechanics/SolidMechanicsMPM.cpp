@@ -845,7 +845,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   // Particle repartitioning
   partition.repartitionMasterParticlesToNeighbors( domain, m_iComm );
 
-
   // Calculate stable time step
   real64 wavespeed = 0.0;
   real64 length = std::fmin(m_hx[0],std::fmin(m_hx[1],m_hx[2]));
@@ -857,8 +856,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
     arrayView2d< real64 > const rho = constitutiveRelation.getDensity();
     arrayView1d< real64 > const g = constitutiveRelation.shearModulus();
     arrayView1d< real64 > const k = constitutiveRelation.bulkModulus();
-    //for(int p=0; p<subRegion.size(); p++)
-    for(int p=0; p<rho.size(); p++)
+    for(int p=0; p<subRegion.size(); p++)
     {
       wavespeed = std::max(wavespeed,sqrt((k[p]+(4.0/3.0)*g[p])/rho[p][0]));
     }
