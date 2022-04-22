@@ -625,7 +625,7 @@ void NeighborCommunicator::unpackAndRebuildSyncLists( MeshLevel & mesh,
 
 ///////////////////////////  New versions of the packing and unpacking functions
 /// //////////////////////////////////////////////////////////////
-int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
+int NeighborCommunicator::packCommSizeForSync( SyncFieldsID const & fieldsToBeSync,
                                                MeshLevel const & mesh,
                                                int const commID,
                                                bool onDevice,
@@ -644,34 +644,33 @@ int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const
 
   int bufferSize = 0;
 
-  for( SyncFieldsID const & fieldsID : fieldsToBeSync )
+  for ( auto const & iter : fieldsToBeSync.getFields() ) 
   {
-    switch( fieldsID.location )
+     switch( fieldsToBeSync.getLocation(iter->first) )
     {
       case FieldLocation::Node:
       {
-        bufferSize += nodeManager.packSize( fieldsID.getFieldNames(), nodeGhostsToSend, 0, onDevice, events );
+        bufferSize += nodeManager.packSize( iter->second, nodeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        bufferSize += edgeManager.packSize( fieldsID.getFieldNames(), edgeGhostsToSend, 0, onDevice, events );
+        bufferSize += edgeManager.packSize( iter->second, edgeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        bufferSize += faceManager.packSize( fieldsID.getFieldNames(), faceGhostsToSend, 0, onDevice, events );
+        bufferSize += faceManager.packSize( iter->second, faceGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
-        elemManager.forElementSubRegions< ElementSubRegionBase >( fieldsID.regionNames, [&]( localIndex const, ElementSubRegionBase const & subRegion )
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter->first ) ).forSubRegion< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
         {
-          bufferSize += subRegion.packSize( fieldsID.getFieldNames(), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          bufferSize += subRegion.packSize( iter->second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
         break;
       }
-    }
   }
 
   this->m_sendBufferSize[commID] = bufferSize;
@@ -679,7 +678,7 @@ int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const
 }
 
 
-void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
+void NeighborCommunicator::packCommBufferForSync( SyncFieldsID const & fieldsToBeSync,
                                                   MeshLevel const & mesh,
                                                   int const commID,
                                                   bool onDevice,

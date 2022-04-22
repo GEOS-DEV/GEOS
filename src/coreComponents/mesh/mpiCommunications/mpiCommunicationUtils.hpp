@@ -26,36 +26,117 @@ namespace geosx
 
 struct SyncFieldsID
 {
-  FieldLocation location;
-  std::vector< string > fieldNames;
-  std::vector< string > regionNames;
+  void addFields(FieldLocation const location, std::vector<string> const fieldNames )
+  {
+    string const key = generateKey(location);
+    addFields(fieldNames, key);
+  }
 
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields, arrayView1d< string const > const & regions ):
-    location( location ),
-    fieldNames( fields ),
-    regionNames( regions.begin(), regions.end() )
-  {}
+  void addFields(FieldLocation const location, std::vector<string> const fieldNames, std::vector<string> const regionNames )
+  {
+    for (auto const & regionName : regionNames)
+    {
+      string const key = generateKey(location, regionName);
+      addFields(fieldNames, key);
+    }
+  }
 
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields, std::vector< string > const & regions ):
-    location( location ),
-    fieldNames( fields ),
-    regionNames( regions )
-  {}
-
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields ):
-    SyncFieldsID( location, fields, std::vector< string >{""} )
-  {}
+  std::map< string, std::vector<string> > const & getFields() const
+  {
+    return m_fields;
+  }
 
   array1d< string > getFieldNames() const
   {
     array1d< string > tmp;
 
-    for( auto const & field : fieldNames )
+    for( auto const & field : fields.second )
     {
       tmp.emplace_back( field );
     }
 
     return tmp;
+  }
+  
+  static string const getRegionName( string const & key )
+  {
+    string regionName(key);
+    regionName.erase(0, 5);
+    return regionName;
+  }
+
+  static FieldLocation const getLocation( string const & key )
+  {
+    FiedlLocation location;
+    if (key.contains("nodes"))
+    {
+      location = FieldLocation::Node;
+    }else if ( key.contains("edges") )
+    {
+      location = FieldLocation::Edge;
+    }
+    else if ( key.contains("faces") )
+    {
+      location = FieldLocation::Face;
+    }
+    else if ( key.contains("elems") )
+    {
+      location = FieldLocation::Elem;
+    }
+    return location;
+  }
+
+  private:
+  
+  std::map< string, std::vector<string> > m_fields;
+
+  static string const generateKey( FieldLocation const location ) const
+  
+  {
+    string key;
+    switch(location)
+    {
+      case FieldLocation::Node:
+      {
+        key = "nodes"; 
+        break;
+      }
+      case FieldLocation::Edge:
+      {
+       key = "edges"
+        break;
+      }
+      case FieldLocation::Face:
+      {
+        key = "faces"
+        break;
+      }
+      case FieldLocation::Elem:
+      {
+        GEOSX_ERROR("An element located field also requires a region name to be specified.")
+        break;
+      } 
+      return key;
+    }
+  }
+
+  static string const generateKey( FieldLocation const location, string const regionName ) const
+  {
+    if ( location == FieldLocation::Elem ) 
+    {
+      return strcat("elems/", regionName);
+    }else
+    {
+      return generateKey(location);
+    }
+  }
+
+  void addFields(std::vector<string> const fieldNames, string const key)
+  {
+    for ( auto const & field : filedNames )
+    {
+      fields[key].emplace_back(field);
+    }
   }
 };
 
