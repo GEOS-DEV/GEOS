@@ -105,7 +105,7 @@ set( mesh_sources
      utilities/ComputationalGeometry.cpp
      )
 
-set( dependencyList schema dataRepository constitutive metis )
+set( dependencyList schema dataRepository constitutive finiteElement metis )
 
 if ( ENABLE_CUDA )
   set( dependencyList ${dependencyList} cuda )

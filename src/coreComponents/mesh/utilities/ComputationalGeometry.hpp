@@ -21,6 +21,10 @@
 
 #include "common/DataTypes.hpp"
 #include "common/DataLayouts.hpp"
+#include "finiteElement/elementFormulations/H1_Hexahedron_Lagrange1_GaussLegendre2.hpp"
+#include "finiteElement/elementFormulations/H1_Pyramid_Lagrange1_Gauss5.hpp"
+#include "finiteElement/elementFormulations/H1_Tetrahedron_Lagrange1_Gauss1.hpp"
+#include "finiteElement/elementFormulations/H1_Wedge_Lagrange1_Gauss6.hpp"
 #include "LvArray/src/output.hpp"
 #include "LvArray/src/tensorOps.hpp"
 
@@ -446,47 +450,15 @@ void getBoundingBox( localIndex const elemIndex,
  */
 GEOSX_HOST_DEVICE
 inline
-real64 hexVolume( real64 const X[][3] )
+real64 hexVolume( real64 const (&X)[8][3] )
 {
-  real64 X7_X1[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X1, X[1] );
-
-  real64 X6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[6] );
-  LvArray::tensorOps::subtract< 3 >( X6_X0, X[0] );
-
-  real64 X7_X2[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X2, X[2] );
-
-  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
-
-  real64 X5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] );
-  LvArray::tensorOps::subtract< 3 >( X5_X0, X[0] );
-
-  real64 X7_X4[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[7] );
-  LvArray::tensorOps::subtract< 3 >( X7_X4, X[4] );
-
-  real64 X7_X1plusX6_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X1 );
-  LvArray::tensorOps::add< 3 >( X7_X1plusX6_X0, X6_X0 );
-
-  real64 X7_X2plusX5_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X2 );
-  LvArray::tensorOps::add< 3 >( X7_X2plusX5_X0, X5_X0 );
-
-  real64 X7_X4plusX3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X7_X4 );
-  LvArray::tensorOps::add< 3 >( X7_X4plusX3_X0, X3_X0 );
-
-  real64 X7_X2crossX3_X0[3];
-  LvArray::tensorOps::crossProduct( X7_X2crossX3_X0, X7_X2, X3_X0 );
-
-  real64 X7_X2plusX5_X0crossX7_X4[3];
-  LvArray::tensorOps::crossProduct( X7_X2plusX5_X0crossX7_X4, X7_X2plusX5_X0, X7_X4 );
-
-  real64 X5_X0crossX7_X4plusX3_X0[3];
-  LvArray::tensorOps::crossProduct( X5_X0crossX7_X4plusX3_X0, X5_X0, X7_X4plusX3_X0 );
-
-  return 1.0/12.0 * ( LvArray::tensorOps::AiBi< 3 >( X7_X1plusX6_X0, X7_X2crossX3_X0 ) +
-                      LvArray::tensorOps::AiBi< 3 >( X6_X0, X7_X2plusX5_X0crossX7_X4 ) +
-                      LvArray::tensorOps::AiBi< 3 >( X7_X1, X5_X0crossX7_X4plusX3_X0 ) );
+  constexpr integer numQuadraturePoints = 8;
+  real64 result =  finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2::transformedQuadratureWeight( 0, X );
+  for( localIndex q=1; q<numQuadraturePoints; ++q )
+  {
+    result = result + finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2::transformedQuadratureWeight( q, X );
+  }
+  return result;
 }
 
 /**
@@ -496,21 +468,9 @@ real64 hexVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 tetVolume( real64 const X[][3] )
+real64 tetVolume( real64 const (&X)[4][3] )
 {
-  real64 X1_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] );
-  LvArray::tensorOps::subtract< 3 >( X1_X0, X[0] );
-
-  real64 X2_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] );
-  LvArray::tensorOps::subtract< 3 >( X2_X0, X[0] );
-
-  real64 X3_X0[ 3 ] = LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] );
-  LvArray::tensorOps::subtract< 3 >( X3_X0, X[0] );
-
-  real64 X2_X0crossX3_X0[ 3 ];
-  LvArray::tensorOps::crossProduct( X2_X0crossX3_X0, X2_X0, X3_X0 );
-
-  return LvArray::math::abs( LvArray::tensorOps::AiBi< 3 >( X1_X0, X2_X0crossX3_X0 ) / 6.0 );
+  return finiteElement::H1_Tetrahedron_Lagrange1_Gauss1::transformedQuadratureWeight( 0, X );
 }
 
 /**
@@ -520,24 +480,15 @@ real64 tetVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 wedgeVolume( real64 const X[][3] )
+real64 wedgeVolume( real64 const (&X)[6][3] )
 {
-  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
-
-  real64 const tet3[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[5] ) };
-
-  return tetVolume( tet1 ) + tetVolume( tet2 ) + tetVolume( tet3 );
+  constexpr integer numQuadraturePoints = 6;
+  real64 result =  finiteElement::H1_Wedge_Lagrange1_Gauss6::transformedQuadratureWeight( 0, X );
+  for( localIndex q=1; q<numQuadraturePoints; ++q )
+  {
+    result = result + finiteElement::H1_Wedge_Lagrange1_Gauss6::transformedQuadratureWeight( q, X );
+  }
+  return result;
 }
 
 /**
@@ -547,19 +498,15 @@ real64 wedgeVolume( real64 const X[][3] )
  */
 GEOSX_HOST_DEVICE
 inline
-real64 pyramidVolume( real64 const X[][3] )
+real64 pyramidVolume( real64 const (&X)[5][3] )
 {
-  real64 const tet1[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[1] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  real64 const tet2[4][3] = { LVARRAY_TENSOROPS_INIT_LOCAL_3( X[0] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[2] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[3] ),
-                              LVARRAY_TENSOROPS_INIT_LOCAL_3( X[4] ) };
-
-  return tetVolume( tet1 ) + tetVolume( tet2 );
+  constexpr integer numQuadraturePoints = 5;
+  real64 result =  finiteElement::H1_Pyramid_Lagrange1_Gauss5::transformedQuadratureWeight( 0, X );
+  for( localIndex q=1; q<numQuadraturePoints; ++q )
+  {
+    result = result + finiteElement::H1_Pyramid_Lagrange1_Gauss5::transformedQuadratureWeight( q, X );
+  }
+  return result;
 }
 
 } /* namespace computationalGeometry */

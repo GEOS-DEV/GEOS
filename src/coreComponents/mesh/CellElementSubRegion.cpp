@@ -283,34 +283,50 @@ void CellElementSubRegion::
                                    arrayView2d< real64 const, nodes::REFERENCE_POSITION_USD > const & X ) const
 {
   LvArray::tensorOps::fill< 3 >( m_elementCenter[ k ], 0 );
-  real64 Xlocal[10][3];
-
-  for( localIndex a = 0; a < m_numNodesPerElement; ++a )
-  {
-    LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
-    LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
-  }
-  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 
   switch( m_elementType )
   {
     case ElementType::Hexahedron:
     {
+      real64 Xlocal[8][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
       m_elementVolume[k] = computationalGeometry::hexVolume( Xlocal );
       break;
     }
     case ElementType::Tetrahedron:
     {
+      real64 Xlocal[4][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
       m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
       break;
     }
     case ElementType::Prism:
     {
+      real64 Xlocal[6][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
       m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
       break;
     }
     case ElementType::Pyramid:
     {
+      real64 Xlocal[5][3];
+      for( localIndex a = 0; a < m_numNodesPerElement; ++a )
+      {
+        LvArray::tensorOps::copy< 3 >( Xlocal[ a ], X[ m_toNodesRelation( k, a ) ] );
+        LvArray::tensorOps::add< 3 >( m_elementCenter[ k ], Xlocal[ a ] );
+      }
       m_elementVolume[k] = computationalGeometry::pyramidVolume( Xlocal );
       break;
     }
@@ -320,6 +336,8 @@ void CellElementSubRegion::
                               m_elementType, getName() ) );
     }
   }
+
+  LvArray::tensorOps::scale< 3 >( m_elementCenter[ k ], 1.0 / m_numNodesPerElement );
 }
 
 void CellElementSubRegion::calculateElementGeometricQuantities( NodeManager const & nodeManager,
