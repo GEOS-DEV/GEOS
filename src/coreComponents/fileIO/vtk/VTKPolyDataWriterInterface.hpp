@@ -155,14 +155,6 @@ public:
 private:
 
   /**
-   * @brief Given a time-step \p time, returns the relative path
-   * to the subfolder containing the files concerning this time-step
-   * @param[in] cycle the current cycle number
-   * @return the relative path to the folder of the time step
-   */
-  string getCycleSubFolder( integer const cycle ) const;
-
-  /**
    * @brief Writes the files for all the CellElementRegions.
    * @details There will be one file written per CellElementRegion and per rank.
    * @param[in] time the time-step
@@ -215,9 +207,11 @@ private:
   /**
    * @brief Write all the fields associated to the nodes of \p nodeManager if their plotlevel is <= m_plotLevel
    * @param[in] pointData a VTK object containing all the fields associated with the nodes
+   * @param[in] nodeIndices list of local node indices to write
    * @param[in] nodeManager the NodeManager associated with the domain being written
    */
   void writeNodeFields( NodeManager const & nodeManager,
+                        arrayView1d< localIndex const > const & nodeIndices,
                         vtkPointData & pointData ) const;
 
   /**

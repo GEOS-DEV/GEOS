@@ -171,10 +171,10 @@ RAJA_INLINE void waitAllDeviceEvents( parallelDeviceEvents & events )
   GEOSX_ASYNC_WAIT( 6000000000, 10, testAllDeviceEvents( events ) );
 }
 
-template< typename POLICY, typename LAMBDA >
-RAJA_INLINE void forAll( localIndex const end, LAMBDA && body )
+template< typename POLICY, typename INDEX, typename LAMBDA >
+RAJA_INLINE void forAll( INDEX const end, LAMBDA && body )
 {
-  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< localIndex >( 0, end ), std::forward< LAMBDA >( body ) );
+  RAJA::forall< POLICY >( RAJA::TypedRangeSegment< INDEX >( 0, end ), std::forward< LAMBDA >( body ) );
 }
 
 template< typename POLICY, typename INDEX, typename LAMBDA >
