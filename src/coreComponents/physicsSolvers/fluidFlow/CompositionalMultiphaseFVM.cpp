@@ -594,14 +594,14 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
       fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,
                                                  { extrinsicMeshData::flow::deltaPressure::key(),
                                                    extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
-                                                   extrinsicMeshData::flow::deltaTemperature::key() }, 
-                                                  regionNames ) );
+                                                   extrinsicMeshData::flow::deltaTemperature::key() },
+                                                 regionNames ) );
     }
     else
     {
       fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,
                                                  { extrinsicMeshData::flow::deltaPressure::key(),
-                                                   extrinsicMeshData::flow::deltaGlobalCompDensity::key() }, 
+                                                   extrinsicMeshData::flow::deltaGlobalCompDensity::key() },
                                                  regionNames ) );
     }
 

@@ -428,7 +428,9 @@ void PhaseFieldDamageFEM::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< string const > const & )
   {
     std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Node,
-                                                                       {m_fieldName} ) };
+                                                                       {m_fieldName} )
+    }
+    ;
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

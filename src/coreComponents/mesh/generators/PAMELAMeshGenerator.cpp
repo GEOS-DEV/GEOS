@@ -508,7 +508,7 @@ void PAMELAMeshGenerator::importFields( DomainPartition & domain ) const
     regionNames.emplace_back( region.getName() );
   } );
 
-  std::vector<string> tmp( m_fieldNamesInGEOSX.begin(), m_fieldNamesInGEOSX.end() );
+  std::vector< string > tmp( m_fieldNamesInGEOSX.begin(), m_fieldNamesInGEOSX.end() );
   std::vector< SyncFieldsID > fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem, tmp, regionNames ) };
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

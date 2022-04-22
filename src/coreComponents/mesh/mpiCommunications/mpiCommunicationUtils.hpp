@@ -43,16 +43,16 @@ struct SyncFieldsID
   {}
 
   SyncFieldsID( FieldLocation const location, std::vector< string > const & fields ):
-    SyncFieldsID( location, fields, std::vector<string>{""} )
+    SyncFieldsID( location, fields, std::vector< string >{""} )
   {}
 
   array1d< string > getFieldNames() const
   {
     array1d< string > tmp;
 
-    for ( auto const & field : fieldNames)
+    for( auto const & field : fieldNames )
     {
-      tmp.emplace_back(field);
+      tmp.emplace_back( field );
     }
 
     return tmp;

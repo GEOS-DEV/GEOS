@@ -149,7 +149,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
 
   {
     std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Node,
-                                                                 {m_fieldName} ) };
+                                                                       {m_fieldName} ) };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

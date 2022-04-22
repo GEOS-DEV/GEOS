@@ -904,7 +904,7 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
     fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,
                                                { extrinsicMeshData::flow::deltaPressure::key(),
                                                  extrinsicMeshData::flow::deltaGlobalCompDensity::key() },
-                                                 regionNames ) );
+                                               regionNames ) );
 
     fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face,
                                                { extrinsicMeshData::flow::deltaFacePressure::key() } ) );

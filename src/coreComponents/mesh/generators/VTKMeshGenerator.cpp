@@ -868,7 +868,7 @@ void VTKMeshGenerator::importFields( DomainPartition & domain ) const
     }
   }
 
-  std::vector<string> tmp( m_fieldNamesInGEOSX.begin(), m_fieldNamesInGEOSX.end() ), regionNames;
+  std::vector< string > tmp( m_fieldNamesInGEOSX.begin(), m_fieldNamesInGEOSX.end() ), regionNames;
   std::vector< SyncFieldsID > fieldsToBeSync{ SyncFieldsID( FieldLocation::Elem, tmp, regionNames ) };
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
