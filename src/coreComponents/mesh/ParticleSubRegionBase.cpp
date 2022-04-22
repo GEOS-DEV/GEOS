@@ -88,17 +88,17 @@ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
                                                   bool doPack ) const
 {
   // Particle fields that are packed. TODO: This seems silly, can't we grab all registered fields all at once?
-  std::map< string, string_array > fieldNames;
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
+//  std::map< string, string_array > fieldNames;
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
 
   // Declarations
   parallelDeviceEvents events; // I have no idea what this thing is
@@ -107,12 +107,14 @@ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
   // Pack particle fields
   if(!doPack) // doPack == false, so we're just getting the size
   {
-    packedSize += ObjectManagerBase::packSize( fieldNames.at( "particles" ), localIndices, 0, false, events );
+    //packedSize += ObjectManagerBase::packSize( fieldNames.at( "particles" ), localIndices, 0, false, events );
+    packedSize += this->packSize( {}, localIndices, 0, false, events );
   }
   else // doPack == true, perform the pack
   {
     buffer_unit_type* bufferPtr = buffer.data();
-    packedSize += ObjectManagerBase::pack( bufferPtr, fieldNames.at( "particles" ), localIndices, 0, false, events );
+    //packedSize += ObjectManagerBase::pack( bufferPtr, fieldNames.at( "particles" ), localIndices, 0, false, events );
+    packedSize += this->pack( bufferPtr, {}, localIndices, 0, false, events );
   }
 
   // Pack constitutive fields?
@@ -125,17 +127,17 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
                                             int const & numberOfIncomingParticles )
 {
   // Particle fields that are unpacked
-  std::map< string, string_array > fieldNames;
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
-  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
+//  std::map< string, string_array > fieldNames;
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
+//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
 
   // Declarations
   parallelDeviceEvents events; // I have no idea what this thing is
@@ -150,7 +152,8 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   }
 
   // Unpack
-  ObjectManagerBase::unpack( receiveBufferPtr, indices, 0, false, events );
+  //ObjectManagerBase::unpack( receiveBufferPtr, indices, 0, false, events );
+  this->unpack( receiveBufferPtr, indices, 0, false, events );
 }
 
 void ParticleSubRegionBase::erase(localIndex pp)
@@ -192,8 +195,8 @@ void ParticleSubRegionBase::eraseVector(array2d< real64 > & vector, localIndex i
   temp.erase(3*index+1);
   temp.erase(3*index+0);
   vector.resize(newSize,3);
-  for(int i=0; i<3*newSize; i++)
-  {
+  for(int i=0; i<3*newSize; i++) // TODO: This can maybe be optimized to start from index since everything before index should be unchanged.
+  {                              //       Depends on whether resize preserves existing entries.
     vector[i/3][i%3] = temp[i];
   }
 }
