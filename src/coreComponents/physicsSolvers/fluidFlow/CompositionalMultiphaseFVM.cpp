@@ -591,16 +591,18 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     std::vector< SyncFieldsID > fieldsToBeSync;
     if( m_isThermal )
     {
-      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,
                                                  { extrinsicMeshData::flow::deltaPressure::key(),
                                                    extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
-                                                   extrinsicMeshData::flow::deltaTemperature::key() } ) );
+                                                   extrinsicMeshData::flow::deltaTemperature::key() }, 
+                                                  regionNames ) );
     }
     else
     {
-      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
+      fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,
                                                  { extrinsicMeshData::flow::deltaPressure::key(),
-                                                   extrinsicMeshData::flow::deltaGlobalCompDensity::key() } ) );
+                                                   extrinsicMeshData::flow::deltaGlobalCompDensity::key() }, 
+                                                 regionNames ) );
     }
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );

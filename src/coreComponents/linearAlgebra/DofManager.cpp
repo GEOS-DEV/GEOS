@@ -186,8 +186,7 @@ void DofManager::createIndexArray( FieldDescription const & field )
       FieldLocation constexpr LOC = decltype(loc)::value;
       using helper = ArrayHelper< globalIndex, LOC >;
 
-      std::vector< SyncFieldsID > fieldsToBeSync;
-      fieldsToBeSync.emplace_back( SyncFieldsID( field.location, regions, {field.key} ) );
+      std::vector< SyncFieldsID > fieldsToBeSync = { SyncFieldsID( field.location, {field.key}, regions ) };
 
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
@@ -1274,8 +1273,6 @@ void DofManager::reorderByRank()
   // ( MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
-  std::map< std::pair< string, string >, std::map< string, string_array > > fieldsToSync;
-
   std::map< std::pair< string, string >, std::vector< SyncFieldsID > > fieldsToBeSync;
 
   // adjust index arrays for owned locations
@@ -1297,7 +1294,7 @@ void DofManager::reorderByRank()
           ArrayHelper::reference( indexArray, locIdx ) += adjustment;
         } );
 
-        fieldsToBeSync[{ body.getName(), mesh.getName() }].emplace_back( SyncFieldsID ( field.location, regions, {field.key} ) );
+        fieldsToBeSync[{ body.getName(), mesh.getName() }].emplace_back( SyncFieldsID ( field.location, {field.key}, regions ) );
       } );
     } );
   }

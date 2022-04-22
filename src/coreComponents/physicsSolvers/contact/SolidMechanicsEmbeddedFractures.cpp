@@ -668,12 +668,10 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::vector< SyncFieldsID > fieldsToBeSync;
-
-    fieldsToBeSync.emplace_back( SyncFieldsID ( FieldLocation::Elem,
-                                                getFractureRegionName(),
-                                                {extrinsicMeshData::contact::dispJump::key(),
-                                                 extrinsicMeshData::contact::deltaDispJump::key()} ) );
+    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem,
+                                                                      { extrinsicMeshData::contact::dispJump::key(),
+                                                                        extrinsicMeshData::contact::deltaDispJump::key() }, 
+                                                                      { getFractureRegionName() } ) };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

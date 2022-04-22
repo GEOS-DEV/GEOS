@@ -217,24 +217,6 @@ public:
   void unpackAndRebuildSyncLists( MeshLevel & meshLevel,
                                   int const CommID );
 
-  // void packCommBufferForSync( std::map< string, string_array > const & fieldNames,
-  //                             MeshLevel const & meshLevel,
-  //                             int const commID,
-  //                             bool onDevice,
-  //                             parallelDeviceEvents & events );
-
-  // int packCommSizeForSync( std::map< string, string_array > const & fieldNames,
-  //                          MeshLevel const & meshLevel,
-  //                          int const commID,
-  //                          bool onDevice,
-  //                          parallelDeviceEvents & events );
-
-  // void unpackBufferForSync( std::map< string, string_array > const & fieldNames,
-  //                           MeshLevel & meshLevel,
-  //                           int const commID,
-  //                           bool onDevice,
-  //                           parallelDeviceEvents & events );
-
   void packCommBufferForSync( std::vector< SyncFieldsID > const & fieldsToBeSync,
                               MeshLevel const & meshLevel,
                               int const commID,

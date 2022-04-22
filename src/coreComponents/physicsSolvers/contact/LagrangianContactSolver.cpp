@@ -237,8 +237,9 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     } );
 
     // Need a synchronization of deltaTraction as will be used in AssembleStabilization
-    std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames, { extrinsicMeshData::contact::deltaTraction::key() } ) );
+    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem, 
+                                                                       { extrinsicMeshData::contact::deltaTraction::key() },
+                                                                       regionNames ) };
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -1676,13 +1677,11 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, getFractureRegionName(),
-                                               {extrinsicMeshData::contact::traction::key(),
-                                                extrinsicMeshData::contact::deltaTraction::key(),
-                                                extrinsicMeshData::contact::dispJump::key() } ) ); // This is used locally only,
-                                                                                                   // synchronized just for output reasons
-
+    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem, { getFractureRegionName() },
+                                                                       {extrinsicMeshData::contact::traction::key(),
+                                                                        extrinsicMeshData::contact::deltaTraction::key(),
+                                                                        extrinsicMeshData::contact::dispJump::key() } ) }; // This is used locally only,
+                                                                                                                           // synchronized just for output reasons
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

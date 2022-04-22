@@ -650,24 +650,24 @@ int NeighborCommunicator::packCommSizeForSync( std::vector< SyncFieldsID > const
     {
       case FieldLocation::Node:
       {
-        bufferSize += nodeManager.packSize( fieldsID.fieldNames, nodeGhostsToSend, 0, onDevice, events );
+        bufferSize += nodeManager.packSize( fieldsID.getFieldNames(), nodeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        bufferSize += edgeManager.packSize( fieldsID.fieldNames, edgeGhostsToSend, 0, onDevice, events );
+        bufferSize += edgeManager.packSize( fieldsID.getFieldNames(), edgeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        bufferSize += faceManager.packSize( fieldsID.fieldNames, faceGhostsToSend, 0, onDevice, events );
+        bufferSize += faceManager.packSize( fieldsID.getFieldNames(), faceGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
         elemManager.forElementSubRegions< ElementSubRegionBase >( fieldsID.regionNames, [&]( localIndex const, ElementSubRegionBase const & subRegion )
         {
-          bufferSize += subRegion.packSize( fieldsID.fieldNames, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          bufferSize += subRegion.packSize( fieldsID.getFieldNames(), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
         break;
       }
@@ -708,24 +708,24 @@ void NeighborCommunicator::packCommBufferForSync( std::vector< SyncFieldsID > co
     {
       case FieldLocation::Node:
       {
-        packedSize += nodeManager.pack( sendBufferPtr, fieldsID.fieldNames, nodeGhostsToSend, 0, onDevice, events );
+        packedSize += nodeManager.pack( sendBufferPtr, fieldsID.getFieldNames(), nodeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        packedSize += edgeManager.pack( sendBufferPtr, fieldsID.fieldNames, edgeGhostsToSend, 0, onDevice, events );
+        packedSize += edgeManager.pack( sendBufferPtr, fieldsID.getFieldNames(), edgeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        packedSize += faceManager.pack( sendBufferPtr, fieldsID.fieldNames, faceGhostsToSend, 0, onDevice, events );
+        packedSize += faceManager.pack( sendBufferPtr, fieldsID.getFieldNames(), faceGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
         elemManager.forElementSubRegions< ElementSubRegionBase >( fieldsID.regionNames, [&]( localIndex const, ElementSubRegionBase const & subRegion )
         {
-          packedSize += subRegion.pack( sendBufferPtr, fieldsID.fieldNames, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          packedSize += subRegion.pack( sendBufferPtr, fieldsID.getFieldNames(), subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
         break;
       }

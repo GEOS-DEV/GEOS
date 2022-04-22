@@ -236,8 +236,9 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, getFractureRegionName(), {viewKeyStruct::fractureStateString()} ) );
+    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Elem, 
+                                                                       {viewKeyStruct::fractureStateString()}, 
+                                                                       {getFractureRegionName()} ) };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

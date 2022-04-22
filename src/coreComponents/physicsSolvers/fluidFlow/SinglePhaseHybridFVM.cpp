@@ -649,10 +649,10 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
 
     std::vector< SyncFieldsID > fieldsToBeSync;
 
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
-                                               { extrinsicMeshData::flow::deltaPressure::key() } ) );
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem,
+                                               { extrinsicMeshData::flow::deltaPressure::key() }, regionNames ) );
 
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face, regionNames,
+    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face,
                                                { extrinsicMeshData::flow::deltaFacePressure::key() } ) );
 
 

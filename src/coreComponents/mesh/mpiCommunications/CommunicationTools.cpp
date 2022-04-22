@@ -781,7 +781,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( std::vector< SyncFieldsID
                                                        bool onDevice )
 {
   GEOSX_MARK_FUNCTION;
-  icomm.fieldsToBeSync() = fieldsToBeSync;
+  icomm.setFieldsToBeSync( fieldsToBeSync );
   icomm.resize( neighbors.size() );
 
   parallelDeviceEvents events;

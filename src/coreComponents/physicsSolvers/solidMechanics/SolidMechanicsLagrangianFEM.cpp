@@ -562,11 +562,9 @@ real64 SolidMechanicsLagrangianFEM::explicitStep( real64 const & time_n,
     arrayView2d< real64, nodes::INCR_DISPLACEMENT_USD > const & uhat = nodes.incrementalDisplacement();
     arrayView2d< real64, nodes::ACCELERATION_USD > const & acc = nodes.acceleration();
 
-    std::vector< SyncFieldsID > fieldsToBeSync;
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node,
-                                               regionNames,
-                                               {keys::Velocity, keys::Acceleration} ) );
-
+    std::vector< SyncFieldsID > const fieldsToBeSync = { SyncFieldsID( FieldLocation::Node,
+                                                                       {keys::Velocity,
+                                                                        keys::Acceleration} ) };
     m_iComm.resize( domain.getNeighbors().size() );
     CommunicationTools::getInstance().synchronizePackSendRecvSizes( fieldsToBeSync, mesh, domain.getNeighbors(), m_iComm, true );
 
@@ -1190,13 +1188,12 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
-                                                arrayView1d< string const > const & regionNames )
+                                                arrayView1d< string const > const & )
 
   {
-    std::vector< SyncFieldsID > fieldsToBeSync;
-
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, regionNames,
-                                               {keys::IncrementalDisplacement, keys::TotalDisplacement} ) );
+    std::vector< SyncFieldsID > const fieldsToBeSync = {SyncFieldsID( FieldLocation::Node,
+                                                                      {keys::IncrementalDisplacement, 
+                                                                       keys::TotalDisplacement} )};
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

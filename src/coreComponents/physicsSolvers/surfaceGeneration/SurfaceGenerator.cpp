@@ -523,8 +523,8 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   ArrayOfArrays< localIndex > const & nodeToElementMap = nodeManager.elementList();
 
   std::vector< SyncFieldsID > fieldsToBeSync;
-  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face, "", { extrinsicMeshData::RuptureState::key() } ) );
-  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, "", { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } ) );
+  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Face, { extrinsicMeshData::RuptureState::key() } ) );
+  fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Node, { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } ) );
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 

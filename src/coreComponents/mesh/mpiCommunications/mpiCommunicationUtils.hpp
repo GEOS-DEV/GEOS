@@ -27,61 +27,35 @@ namespace geosx
 struct SyncFieldsID
 {
   FieldLocation location;
-  array1d< string > regionNames;
-  array1d< string > fieldNames;
+  std::vector< string > fieldNames;
+  std::vector< string > regionNames;
 
-  SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, arrayView1d< string const > const & fields ):
-    location( location )
-  {
-    fillRegions( regions );
-    fillFields( fields );
-  }
+  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields, arrayView1d< string const > const & regions ):
+    location( location ),
+    fieldNames( fields ),
+    regionNames( regions.begin(), regions.end() )
+  {}
 
-  SyncFieldsID( FieldLocation const location, arrayView1d< string const > const & regions, std::initializer_list< string > fields ):
-    location( location )
-  {
-    fillRegions( regions );
-    fillFields( fields );
-  }
+  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields, std::vector< string > const & regions ):
+    location( location ),
+    fieldNames( fields ),
+    regionNames( regions )
+  {}
 
-  SyncFieldsID( FieldLocation const location, std::vector< string > const & regions, std::initializer_list< string > fields ):
-    location( location )
-  {
-    fillRegions( regions );
-    fillFields( fields );
-  }
+  SyncFieldsID( FieldLocation const location, std::vector< string > const & fields ):
+    SyncFieldsID( location, fields, std::vector<string>{""} )
+  {}
 
-  SyncFieldsID( FieldLocation const location, string const & region, std::initializer_list< string > fields ):
-    location( location )
+  array1d< string > getFieldNames() const
   {
-    regionNames.emplace_back( region );
-    fillFields( fields );
-  }
+    array1d< string > tmp;
 
-  template< typename T >
-  void fillRegions( T const & regions )
-  {
-    regionNames.resize( regions.size());
-    for( integer i = 0; i < regionNames.size(); i++ )
+    for ( auto const & field : fieldNames)
     {
-      regionNames[i] = regions[i];
+      tmp.emplace_back(field);
     }
-  }
 
-  void fillFields( arrayView1d< string const > const & fields )
-  {
-    for( auto field : fields )
-    {
-      fieldNames.emplace_back( field );
-    }
-  }
-
-  void fillFields( std::initializer_list< string > fields )
-  {
-    for( auto field : fields )
-    {
-      fieldNames.emplace_back( field );
-    }
+    return tmp;
   }
 };
 

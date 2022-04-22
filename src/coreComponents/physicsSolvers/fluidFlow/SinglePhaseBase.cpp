@@ -213,10 +213,9 @@ void SinglePhaseBase::initializePostInitialConditionsPreSubGroups()
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    std::vector< SyncFieldsID > fieldsToBeSync;
-
-    fieldsToBeSync.emplace_back( SyncFieldsID( FieldLocation::Elem, regionNames,
-                                               {extrinsicMeshData::flow::pressure::key()} ) );
+    std::vector< SyncFieldsID > fieldsToBeSync{ SyncFieldsID( FieldLocation::Elem,
+                                                              {extrinsicMeshData::flow::pressure::key()}, 
+                                                              regionNames ) };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 

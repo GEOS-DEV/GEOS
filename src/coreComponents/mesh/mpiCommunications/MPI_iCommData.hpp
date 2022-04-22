@@ -67,7 +67,7 @@ public:
   /**
    * @return Reference to the field names registered with the communication data.
    */
-  std::vector< SyncFieldsID > & fieldsToBeSync() { return m_fieldsToBeSync;}
+  void setFieldsToBeSync( std::vector< SyncFieldsID > const & fieldsToBeSync) { m_fieldsToBeSync = fieldsToBeSync;}
 
 
   MPI_Request * mpiSendBufferRequest() { return m_mpiSendBufferRequest.data(); }
