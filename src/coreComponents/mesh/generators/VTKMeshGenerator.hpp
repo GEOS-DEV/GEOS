@@ -113,9 +113,11 @@ public:
 
 private:
 
-  void buildCellBlocks( CellBlockManager & cellBlockManager ) const;
+  real64 writeNodes( CellBlockManager & cellBlockManager ) const;
 
-  void buildSurfaces( CellBlockManager & cellBlockManager ) const;
+  void writeCells( CellBlockManager & cellBlockManager ) const;
+
+  void writeSurfaces( CellBlockManager & cellBlockManager ) const;
 
   void importFieldOnCellElementSubRegion( int const regionId,
                                           ElementType const elemType,
@@ -128,6 +130,7 @@ private:
   struct viewKeyStruct
   {
     constexpr static char const * regionAttributeString() { return "regionAttribute"; }
+    constexpr static char const * partitionRefinementString() { return "partitionRefinement"; }
   };
   /// @endcond
 
@@ -139,6 +142,9 @@ private:
 
   /// Name of VTK dataset attribute used to mark regions
   string m_attributeName;
+
+  /// Number of graph partitioning refinement iterations
+  integer m_partitionRefinement = 0;
 
   /// Lists of VTK cell ids, organized by element type, then by region
   CellMapType m_cellMap;
