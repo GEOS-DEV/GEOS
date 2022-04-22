@@ -87,6 +87,9 @@ nightly-job:
     refs:
       - schedules
       - web
+    # Job only triggers if variable is set through UI
+    variables:
+      - $NIGHTLY_TEST_ENABLED
   tags:
    - shell
    - quartz
