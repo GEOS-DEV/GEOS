@@ -152,7 +152,6 @@ FluxKernel::
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
-          arrayView1d< real64 const > const & dConnRate,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
@@ -173,7 +172,7 @@ FluxKernel::
     localIndex const iwelemNext = nextWellElemIndex[iwelem];
 
     // there is nothing to upwind for single-phase flow
-    real64 const currentConnRate = connRate[iwelem] + dConnRate[iwelem];
+    real64 const currentConnRate = connRate[iwelem];
     real64 const flux = dt * currentConnRate;
     real64 const dFlux_dRate = dt;
 
@@ -246,7 +245,6 @@ PressureRelationKernel::
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -323,8 +321,8 @@ PressureRelationKernel::
       real64 const gravD = wellElemGravCoef[iwelemNext] - wellElemGravCoef[iwelem];
 
       // compute the current pressure in the two well elements
-      real64 const pressureCurrent = wellElemPressure[iwelem] + dWellElemPressure[iwelem];
-      real64 const pressureNext    = wellElemPressure[iwelemNext] + dWellElemPressure[iwelemNext];
+      real64 const pressureCurrent = wellElemPressure[iwelem];
+      real64 const pressureNext    = wellElemPressure[iwelemNext];
 
       // compute momentum flux and derivatives
       real64 const localPresRel = pressureNext - pressureCurrent - avgDensity * gravD;
@@ -357,14 +355,12 @@ GEOSX_HOST_DEVICE
 void
 PerforationKernel::
   compute( real64 const & resPressure,
-           real64 const & dResPressure,
            real64 const & resDensity,
            real64 const & dResDensity_dPres,
            real64 const & resViscosity,
            real64 const & dResViscosity_dPres,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPressure,
-           real64 const & dWellElemPressure,
            real64 const & wellElemDensity,
            real64 const & dWellElemDensity_dPres,
            real64 const & wellElemViscosity,
@@ -387,7 +383,7 @@ PerforationKernel::
 
 
   // get reservoir variables
-  pressure[TAG::RES] = resPressure + dResPressure;
+  pressure[TAG::RES] = resPressure;
   dPressure_dP[TAG::RES] = 1;
 
   // TODO: add a buoyancy term for the reservoir side here
@@ -399,7 +395,7 @@ PerforationKernel::
 
 
   // get well variables
-  pressure[TAG::WELL] = wellElemPressure + dWellElemPressure;
+  pressure[TAG::WELL] = wellElemPressure;
   dPressure_dP[TAG::WELL] = 1.0;
 
   real64 const gravD = ( perfGravCoef - wellElemGravCoef );
@@ -416,6 +412,7 @@ PerforationKernel::
     potDif += multiplier[i] * trans * pressure[i];
     dPerfRate_dPres[i] = multiplier[i] * trans * dPressure_dP[i];
   }
+
 
   // choose upstream cell based on potential difference
   localIndex const k_up = (potDif >= 0) ? TAG::RES : TAG::WELL;
@@ -461,14 +458,12 @@ void
 PerforationKernel::
   launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
           ElementViewConst< arrayView2d< real64 const > > const & resDensity,
           ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
           ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
           ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
           arrayView2d< real64 const > const & wellElemViscosity,
@@ -495,14 +490,12 @@ PerforationKernel::
     localIndex const iwelem = perfWellElemIndex[iperf];
 
     compute( resPressure[er][esr][ei],
-             dResPressure[er][esr][ei],
              resDensity[er][esr][ei][0],
              dResDensity_dPres[er][esr][ei][0],
              resViscosity[er][esr][ei][0],
              dResViscosity_dPres[er][esr][ei][0],
              wellElemGravCoef[iwelem],
              wellElemPressure[iwelem],
-             dWellElemPressure[iwelem],
              wellElemDensity[iwelem][0],
              dWellElemDensity_dPres[iwelem][0],
              wellElemViscosity[iwelem][0],
@@ -528,7 +521,7 @@ AccumulationKernel::
           arrayView1d< real64 const > const & wellElemVolume,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView1d< real64 const > const & wellElemDensityOld,
+          arrayView1d< real64 const > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs )
 {
@@ -543,7 +536,7 @@ AccumulationKernel::
     localIndex const eqnRowIndex = wellElemDofNumber[iwelem] + ROFFSET::MASSBAL - rankOffset;
     globalIndex const presDofColIndex = wellElemDofNumber[iwelem] + COFFSET::DPRES;
 
-    real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensityOld[iwelem] );
+    real64 const localAccum = wellElemVolume[iwelem] * ( wellElemDensity[iwelem][0] - wellElemDensity_n[iwelem] );
     real64 const localAccumJacobian = wellElemVolume[iwelem] * dWellElemDensity_dPres[iwelem][0];
 
     // add contribution to global residual and jacobian (no need for atomics here)
