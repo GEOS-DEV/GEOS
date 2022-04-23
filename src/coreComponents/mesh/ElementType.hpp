@@ -36,7 +36,7 @@ enum class ElementType : integer
   Polygon,       ///< General polygonal element
   Tetrahedron,   ///< Four-node tetrahedral element
   Pyramid,       ///< Five-node pyramid element
-  Prism,         ///< Six-node wedge element
+  Wedge,         ///< Six-node wedge element
   Hexahedron,    ///< Eight-node hexahedral element
   Polyhedron,    ///< General polyhedral element
   // NOTE: If you add anything below Polyhedron,
@@ -68,7 +68,7 @@ inline int getElementDim( ElementType const elementType )
     case ElementType::Polygon:       return 2;
     case ElementType::Tetrahedron:
     case ElementType::Pyramid:
-    case ElementType::Prism:
+    case ElementType::Wedge:
     case ElementType::Hexahedron:
     case ElementType::Polyhedron:    return 3;
   }
