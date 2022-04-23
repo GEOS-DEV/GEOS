@@ -34,20 +34,20 @@ struct FluidUpdateKernel
   template< typename FLUID_WRAPPER >
   static void launch( FLUID_WRAPPER const & fluidWrapper,
                       arrayView1d< real64 const > const & pres,
-                      arrayView1d< real64 const > const & dPres,
                       arrayView1d< real64 const > const & proppantConcentration,
-                      arrayView1d< real64 const > const & dProppantConcentration,
                       arrayView2d< real64 const > const & componentConcentration,
                       arrayView2d< real64 const > const & cellBasedFlux,
                       arrayView1d< integer const > const & isProppantBoundaryElement )
   {
     forAll< parallelDevicePolicy<> >( fluidWrapper.numElems(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
+
       for( localIndex q = 0; q < fluidWrapper.numGauss(); ++q )
       {
+
         fluidWrapper.update( a, q,
-                             pres[a] + dPres[a],
-                             proppantConcentration[a] + dProppantConcentration[a],
+                             pres[a],
+                             proppantConcentration[a],
                              componentConcentration[a],
                              LvArray::tensorOps::l2Norm< 3 >( cellBasedFlux[a] ),
                              isProppantBoundaryElement[a] );

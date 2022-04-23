@@ -204,8 +204,6 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
     arrayView1d< real64 > const & facePres =
       faceManager.getExtrinsicData< extrinsicMeshData::flow::facePressure >();
     facePres.move( LvArray::MemorySpace::host, false );
-    arrayView1d< real64 > const & dFacePres =
-      faceManager.getExtrinsicData< extrinsicMeshData::flow::deltaFacePressure >();
 
     string const faceDofKey = dofManager.getKey( CompositionalMultiphaseHybridFVM::viewKeyStruct::faceDofFieldString() );
 
@@ -225,9 +223,13 @@ void testNumericalJacobian( CompositionalMultiphaseHybridFVM & solver,
 
       solver.resetStateToBeginningOfStep( domain );
 
+      facePres.move( LvArray::MemorySpace::host, true ); // to get the correct facePres after reset
       real64 const dFP = perturbParameter * ( facePres[iface] + perturbParameter );
-      dFacePres.move( LvArray::MemorySpace::host, true );
-      dFacePres[iface] = dFP;
+      facePres[iface] += dFP;
+#if defined(GEOSX_USE_CUDA)
+      facePres.move( LvArray::MemorySpace::cuda, false );
+#endif
+
 
       residual.zero();
       jacobian.zero();
