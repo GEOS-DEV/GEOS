@@ -803,7 +803,7 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    std::vector< SyncFieldsID > const fieldsToBeSync{
+    FieldIdentifiers const fieldsToBeSync{
       SyncFieldsID( FieldLocation::Elem,
                     { extrinsicMeshData::well::deltaPressure::key(), extrinsicMeshData::well::deltaConnectionRate::key() },
                     regionNames )

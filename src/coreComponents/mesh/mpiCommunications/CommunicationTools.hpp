@@ -70,24 +70,24 @@ public:
   void findMatchedPartitionBoundaryObjects( ObjectManagerBase & group,
                                             std::vector< NeighborCommunicator > & allNeighbors );
 
-  void synchronizeFields( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                           MeshLevel & mesh,
                           std::vector< NeighborCommunicator > & allNeighbors,
                           bool onDevice );
 
-  void synchronizePackSendRecvSizes( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,
                                      MeshLevel & mesh,
                                      std::vector< NeighborCommunicator > & neighbors,
                                      MPI_iCommData & icomm,
                                      bool onDevice );
 
-  void synchronizePackSendRecv( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
                                 MeshLevel & mesh,
                                 std::vector< NeighborCommunicator > & allNeighbors,
                                 MPI_iCommData & icomm,
                                 bool onDevice );
 
-  void asyncPack( std::vector< SyncFieldsID > const & fieldsToBeSync,
+  void asyncPack( FieldIdentifiers const & fieldsToBeSync,
                   MeshLevel & mesh,
                   std::vector< NeighborCommunicator > & neighbors,
                   MPI_iCommData & icomm,

@@ -62,12 +62,12 @@ public:
   /**
    * @return Reference to the field names registered with the communication data.
    */
-  std::vector< SyncFieldsID > const & getFieldsToBeSync() const { return m_fieldsToBeSync;}
+  FieldIdentifiers const & getFieldsToBeSync() const { return m_fieldsToBeSync;}
 
   /**
    * @return Reference to the field names registered with the communication data.
    */
-  void setFieldsToBeSync( std::vector< SyncFieldsID > const & fieldsToBeSync ) { m_fieldsToBeSync = fieldsToBeSync;}
+  void setFieldsToBeSync( FieldIdentifiers const & fieldsToBeSync ) { m_fieldsToBeSync = fieldsToBeSync;}
 
 
   MPI_Request * mpiSendBufferRequest() { return m_mpiSendBufferRequest.data(); }
@@ -100,7 +100,7 @@ private:
   /// A collection of field names keyed on object keys to pack/unpack from
   /// communication pipeline.
 
-  std::vector< SyncFieldsID > m_fieldsToBeSync;
+  FieldIdentifiers m_fieldsToBeSync;
 
   array1d< MPI_Request > m_mpiSendBufferRequest;
   array1d< MPI_Request > m_mpiRecvBufferRequest;

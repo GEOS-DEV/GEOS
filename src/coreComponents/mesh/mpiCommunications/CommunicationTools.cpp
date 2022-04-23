@@ -774,7 +774,7 @@ void CommunicationTools::setupGhosts( MeshLevel & meshLevel,
   faceManager.compressRelationMaps();
 }
 
-void CommunicationTools::synchronizePackSendRecvSizes( std::vector< SyncFieldsID > const & fieldsToBeSync,
+void CommunicationTools::synchronizePackSendRecvSizes( FieldIdentifiers const & fieldsToBeSync,
                                                        MeshLevel & mesh,
                                                        std::vector< NeighborCommunicator > & neighbors,
                                                        MPI_iCommData & icomm,
@@ -801,7 +801,7 @@ void CommunicationTools::synchronizePackSendRecvSizes( std::vector< SyncFieldsID
 }
 
 
-void CommunicationTools::asyncPack( std::vector< SyncFieldsID > const & fieldsToBeSync,
+void CommunicationTools::asyncPack( FieldIdentifiers const & fieldsToBeSync,
                                     MeshLevel & mesh,
                                     std::vector< NeighborCommunicator > & neighbors,
                                     MPI_iCommData & icomm,
@@ -846,7 +846,7 @@ void CommunicationTools::asyncSendRecv( std::vector< NeighborCommunicator > & ne
   }
 }
 
-void CommunicationTools::synchronizePackSendRecv( std::vector< SyncFieldsID > const & fieldsToBeSync,
+void CommunicationTools::synchronizePackSendRecv( FieldIdentifiers const & fieldsToBeSync,
                                                   MeshLevel & mesh,
                                                   std::vector< NeighborCommunicator > & neighbors,
                                                   MPI_iCommData & icomm,
@@ -935,7 +935,7 @@ void CommunicationTools::synchronizeUnpack( MeshLevel & mesh,
   finalizeUnpack( mesh, neighbors, icomm, onDevice, events );
 }
 
-void CommunicationTools::synchronizeFields( std::vector< SyncFieldsID > const & fieldsToBeSync,
+void CommunicationTools::synchronizeFields( FieldIdentifiers const & fieldsToBeSync,
                                             MeshLevel & mesh,
                                             std::vector< NeighborCommunicator > & neighbors,
                                             bool onDevice )

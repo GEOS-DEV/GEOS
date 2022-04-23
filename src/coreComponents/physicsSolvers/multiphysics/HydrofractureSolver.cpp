@@ -208,7 +208,7 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       }
       else
       {
-        std::vector< SyncFieldsID > const fieldsToBeSync{
+        FieldIdentifiers const fieldsToBeSync{
           SyncFieldsID( FieldLocation::Node, { keys::IncrementalDisplacement, keys::TotalDisplacement } ),
           SyncFieldsID( FieldLocation::Elem,
                         { extrinsicMeshData::flow::pressure::key(), "elementAperture" },

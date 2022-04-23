@@ -646,7 +646,7 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    std::vector< SyncFieldsID > const fieldsToBeSync{
+    FieldIdentifiers const fieldsToBeSync{
       SyncFieldsID( FieldLocation::Elem, { extrinsicMeshData::flow::deltaPressure::key() }, regionNames ),
       SyncFieldsID( FieldLocation::Face, { extrinsicMeshData::flow::deltaFacePressure::key() } )
     };

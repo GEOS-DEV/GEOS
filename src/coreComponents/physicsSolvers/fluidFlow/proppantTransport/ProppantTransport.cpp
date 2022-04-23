@@ -331,7 +331,7 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    std::vector< SyncFieldsID > const fieldsToBeSync{
+    FieldIdentifiers const fieldsToBeSync{
       SyncFieldsID( FieldLocation::Elem,
                     { extrinsicMeshData::proppant::proppantConcentration::key(), extrinsicMeshData::proppant::componentConcentration::key() },
                     regionNames )
@@ -921,7 +921,7 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
                                                arrayView1d< string const > const & regionNames )
   {
 
-    std::vector< SyncFieldsID > const fieldsToBeSync{
+    FieldIdentifiers const fieldsToBeSync{
       SyncFieldsID( FieldLocation::Elem,
                     { extrinsicMeshData::proppant::deltaProppantConcentration::key(), extrinsicMeshData::proppant::deltaComponentConcentration::key() },
                     regionNames )
@@ -1023,7 +1023,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
                                                 cellBasedFluxAccessor.toNestedView() );
   } );
 
-  std::vector< SyncFieldsID > const fieldsToBeSync{
+  FieldIdentifiers const fieldsToBeSync{
     SyncFieldsID( FieldLocation::Elem, { extrinsicMeshData::proppant::cellBasedFlux::key() }, m_targetRegionNames )
   };
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
@@ -1094,7 +1094,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     } );
 
     {
-      std::vector< SyncFieldsID > const fieldsToBeSync{
+      FieldIdentifiers const fieldsToBeSync{
         SyncFieldsID( FieldLocation::Elem,
                       { extrinsicMeshData::proppant::proppantConcentration::key(),
                         extrinsicMeshData::proppant::proppantPackVolumeFraction::key(),
@@ -1127,7 +1127,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     } );
 
     {
-      std::vector< SyncFieldsID > const fieldsToBeSync{
+      FieldIdentifiers const fieldsToBeSync{
         SyncFieldsID( FieldLocation::Elem,
                       { extrinsicMeshData::proppant::proppantConcentration::key(), extrinsicMeshData::proppant::proppantPackVolumeFraction::key() },
                       regionNames )

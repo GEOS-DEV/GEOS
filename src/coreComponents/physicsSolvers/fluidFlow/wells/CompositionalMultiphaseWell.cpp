@@ -1485,7 +1485,7 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                arrayView1d< string const > const & regionNames )
   {
     // synchronize
-    std::vector< SyncFieldsID > const fieldsToBeSync{
+    FieldIdentifiers const fieldsToBeSync{
       SyncFieldsID( FieldLocation::Elem,
                     { extrinsicMeshData::well::deltaPressure::key(),
                       extrinsicMeshData::well::deltaGlobalCompDensity::key(),

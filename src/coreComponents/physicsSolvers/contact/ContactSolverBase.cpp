@@ -240,7 +240,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    std::vector< SyncFieldsID > const fieldsToBeSync{
+    FieldIdentifiers const fieldsToBeSync{
       SyncFieldsID( FieldLocation::Elem, { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } )
     };
 

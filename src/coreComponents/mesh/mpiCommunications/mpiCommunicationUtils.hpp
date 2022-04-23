@@ -24,19 +24,19 @@
 namespace geosx
 {
 
-struct SyncFieldsID
+struct FieldIdentifiers
 {
-  void addFields(FieldLocation const location, std::vector<string> const fieldNames )
+  void addFields( FieldLocation const location, std::vector<string> const fieldNames )
   {
     string const key = generateKey(location);
     addFields(fieldNames, key);
   }
 
-  void addFields(FieldLocation const location, std::vector<string> const fieldNames, std::vector<string> const regionNames )
+  void addElementFields( std::vector<string> const fieldNames, std::vector<string> const regionNames )
   {
-    for (auto const & regionName : regionNames)
+    for (string const & regionName : regionNames)
     {
-      string const key = generateKey(location, regionName);
+      string const key = generateKey( regionName );
       addFields(fieldNames, key);
     }
   }
@@ -49,25 +49,25 @@ struct SyncFieldsID
   static string const getRegionName( string const & key )
   {
     string regionName(key);
-    regionName.erase(0, 5);
+    regionName.erase(0, locationKeys.elemsKey().length());
     return regionName;
   }
 
   static FieldLocation const getLocation( string const & key )
   {
     FiedlLocation location;
-    if (key.contains("nodes"))
+    if (key.contains(locationKeys.nodesKey()))
     {
       location = FieldLocation::Node;
-    }else if ( key.contains("edges") )
+    }else if ( key.contains(locationKeys.edgesKey()) )
     {
       location = FieldLocation::Edge;
     }
-    else if ( key.contains("faces") )
+    else if ( key.contains(locationKeys.facesKey()) )
     {
       location = FieldLocation::Face;
     }
-    else if ( key.contains("elems") )
+    else if ( key.contains(locationKeys.elemsKey()) )
     {
       location = FieldLocation::Elem;
     }
@@ -78,6 +78,18 @@ struct SyncFieldsID
   
   std::map< string, array1d<string> > m_fields;
 
+  struct keysStruct 
+  {
+    /// @return String key for 
+    static constexpr char const * nodesKey() { return "nodes"; }
+    /// @return String key for 
+    static constexpr char const * edgesKey() { return "edges"; }
+    /// @return String key f
+    static constexpr char const * facesKey() { return "faces"; }
+    /// @return String key 
+    static constexpr char const * elemsKey() { return "elems/"; }
+  } locationKeys;
+
   static string const generateKey( FieldLocation const location ) const
   
   {
@@ -86,17 +98,17 @@ struct SyncFieldsID
     {
       case FieldLocation::Node:
       {
-        key = "nodes"; 
+        key = locationKeys.nodesKey(); 
         break;
       }
       case FieldLocation::Edge:
       {
-       key = "edges"
+       key = locationKeys.edgesKey();
         break;
       }
       case FieldLocation::Face:
       {
-        key = "faces"
+        key = locationKeys.facesKey();
         break;
       }
       case FieldLocation::Elem:
@@ -108,15 +120,9 @@ struct SyncFieldsID
     }
   }
 
-  static string const generateKey( FieldLocation const location, string const regionName ) const
+  static string const generateKey( string const regionName ) const
   {
-    if ( location == FieldLocation::Elem ) 
-    {
-      return strcat("elems/", regionName);
-    }else
-    {
-      return generateKey(location);
-    }
+      return strcat(locationKeys.elemsKey(), regionName);
   }
 
   void addFields(std::vector<string> const fieldNames, string const key)
