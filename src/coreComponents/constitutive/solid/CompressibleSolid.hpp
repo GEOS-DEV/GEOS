@@ -53,10 +53,9 @@ public:
   GEOSX_HOST_DEVICE
   virtual void updateStateFromPressure( localIndex const k,
                                         localIndex const q,
-                                        real64 const & pressure,
-                                        real64 const & deltaPressure ) const override final
+                                        real64 const & pressure ) const override final
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    m_porosityUpdate.updateFromPressure( k, q, pressure );
     real64 const porosity = m_porosityUpdate.getPorosity( k, q );
     m_permUpdate.updateFromPorosity( k, q, porosity );
   }
@@ -65,11 +64,10 @@ public:
   void updateStateFromPressureAndAperture( localIndex const k,
                                            localIndex const q,
                                            real64 const & pressure,
-                                           real64 const & deltaPressure,
                                            real64 const & oldHydraulicAperture,
                                            real64 const & newHydraulicAperture ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    m_porosityUpdate.updateFromPressure( k, q, pressure );
     m_permUpdate.updateFromAperture( k, q, oldHydraulicAperture, newHydraulicAperture );
   }
 
@@ -77,12 +75,11 @@ public:
   void updateStateFromPressureApertureAndJump( localIndex const k,
                                                localIndex const q,
                                                real64 const & pressure,
-                                               real64 const & deltaPressure,
                                                real64 const & oldHydraulicAperture,
                                                real64 const & newHydraulicAperture,
                                                real64 const ( &dispJump )[3] ) const
   {
-    m_porosityUpdate.updateFromPressure( k, q, pressure + deltaPressure );
+    m_porosityUpdate.updateFromPressure( k, q, pressure );
     m_permUpdate.updateFromApertureAndShearDisplacement( k, q, oldHydraulicAperture, newHydraulicAperture, dispJump );
   }
 

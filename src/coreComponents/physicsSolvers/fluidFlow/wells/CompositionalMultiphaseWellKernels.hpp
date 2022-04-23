@@ -160,7 +160,6 @@ struct FluxKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
-          arrayView1d< real64 const > const & dConnRate,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompFrac,
           arrayView3d< real64 const, compflow::USD_COMP_DC > const & dWellElemCompFrac_dCompDens,
           real64 const & dt,
@@ -185,8 +184,6 @@ struct PressureRelationKernel
              real64 const & gravCoefNext,
              real64 const & pres,
              real64 const & presNext,
-             real64 const & dPres,
-             real64 const & dPresNext,
              real64 const & totalMassDens,
              real64 const & totalMassDensNext,
              real64 const & dTotalMassDens_dPres,
@@ -209,7 +206,6 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
@@ -228,7 +224,6 @@ struct PerforationKernel
 
   using CompFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
                       extrinsicMeshData::flow::phaseVolumeFraction,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dGlobalCompDensity,
@@ -265,7 +260,6 @@ struct PerforationKernel
   static void
   compute( bool const & disableReservoirToWellFlow,
            real64 const & resPres,
-           real64 const & dResPres,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & resPhaseVolFrac,
            arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & dResPhaseVolFrac_dPres,
            arraySlice2d< real64 const, compflow::USD_PHASE_DC - 1 > const & dResPhaseVolFrac_dComp,
@@ -280,9 +274,7 @@ struct PerforationKernel
            arraySlice2d< real64 const, relperm::USD_RELPERM_DS - 2 > const & dResPhaseRelPerm_dPhaseVolFrac,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPres,
-           real64 const & dWellElemPres,
            arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & wellElemCompDens,
-           arraySlice1d< real64 const, compflow::USD_COMP - 1 > const & dWellElemCompDens,
            real64 const & wellElemTotalMassDens,
            real64 const & dWellElemTotalMassDens_dPres,
            arraySlice1d< real64 const, compflow::USD_FLUID_DC - 1 > const & dWellElemTotalMassDens_dCompDens,
@@ -299,7 +291,6 @@ struct PerforationKernel
   launch( localIndex const size,
           bool const disableReservoirToWellFlow,
           ElementViewConst< arrayView1d< real64 const > > const & resPres,
-          ElementViewConst< arrayView1d< real64 const > > const & dResPres,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & resPhaseVolFrac,
           ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & dResPhaseVolFrac_dPres,
           ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_DC > > const & dResPhaseVolFrac_dComp,
@@ -314,9 +305,7 @@ struct PerforationKernel
           ElementViewConst< arrayView4d< real64 const, relperm::USD_RELPERM_DS > > const & dResPhaseRelPerm_dPhaseVolFrac,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPres,
-          arrayView1d< real64 const > const & dWellElemPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens,
           arrayView1d< real64 const > const & wellElemTotalMassDens,
           arrayView1d< real64 const > const & dWellElemTotalMassDens_dPres,
           arrayView2d< real64 const, compflow::USD_FLUID_DC > const & dWellElemTotalMassDens_dCompDens,
@@ -355,9 +344,9 @@ struct AccumulationKernel
              arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dPhaseDens,
              arraySlice2d< real64 const, multifluid::USD_PHASE_COMP - 2 > const & phaseCompFrac,
              arraySlice3d< real64 const, multifluid::USD_PHASE_COMP_DC - 2 > const & dPhaseCompFrac,
-             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFracOld,
-             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDensOld,
-             arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFracOld,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseVolFrac_n,
+             arraySlice1d< real64 const, compflow::USD_PHASE - 1 > const & phaseDens_n,
+             arraySlice2d< real64 const, compflow::USD_PHASE_COMP - 1 > const & phaseCompFrac_n,
              real64 ( &localAccum )[NC],
              real64 ( &localAccumJacobian )[NC][NC + 1] );
 
@@ -377,9 +366,9 @@ struct AccumulationKernel
           arrayView4d< real64 const, multifluid::USD_PHASE_DC > const & dWellElemPhaseDens,
           arrayView4d< real64 const, multifluid::USD_PHASE_COMP > const & wellElemPhaseCompFrac,
           arrayView5d< real64 const, multifluid::USD_PHASE_COMP_DC > const & dWellElemPhaseCompFrac,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFracOld,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld,
-          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFracOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseVolFrac_n,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n,
+          arrayView3d< real64 const, compflow::USD_PHASE_COMP > const & wellElemPhaseCompFrac_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -672,8 +661,8 @@ struct ResidualNormKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > wellElemVolume,
-          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDensOld,
-          arrayView1d< real64 const > const & wellElemTotalDensOld,
+          arrayView2d< real64 const, compflow::USD_PHASE > const & wellElemPhaseDens_n,
+          arrayView1d< real64 const > const & wellElemTotalDens_n,
           real64 const & timeAtEndOfStep,
           real64 const dt,
           real64 * localResidualNorm )
@@ -731,15 +720,15 @@ struct ResidualNormKernel
           {
             if( isProducer ) // only PHASEVOLRATE is supported for now
             {
-              normalizer = dt * absTargetPhaseRate * wellElemPhaseDensOld[iwelem][targetPhaseIndex];
+              normalizer = dt * absTargetPhaseRate * wellElemPhaseDens_n[iwelem][targetPhaseIndex];
             }
             else // Type::INJECTOR, only TOTALVOLRATE is supported for now
             {
-              normalizer = dt * absTargetTotalRate * wellElemTotalDensOld[iwelem];
+              normalizer = dt * absTargetTotalRate * wellElemTotalDens_n[iwelem];
             }
 
             // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDensOld[iwelem] );
+            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemTotalDens_n[iwelem] );
           }
           // Step 3: compute a normalizer for the volume balance equations
 
@@ -783,9 +772,7 @@ struct SolutionScalingKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemPres,
-          arrayView1d< real64 const > const & dWellElemPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens,
           real64 const maxRelativePresChange,
           real64 const maxCompFracChange )
   {
@@ -800,7 +787,7 @@ struct SolutionScalingKernel
 
         // the scaling of the pressures is particularly useful for the beginning of the simulation
         // with active rate control, but is useless otherwise
-        real64 const pres = wellElemPres[iwelem] + dWellElemPres[iwelem];
+        real64 const pres = wellElemPres[iwelem];
         real64 const absPresChange = LvArray::math::abs( localSolution[wellElemDofNumber[iwelem] - rankOffset] );
         if( pres < eps )
         {
@@ -814,7 +801,7 @@ struct SolutionScalingKernel
         real64 prevTotalDens = 0;
         for( integer ic = 0; ic < numComponents; ++ic )
         {
-          prevTotalDens += wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic];
+          prevTotalDens += wellElemCompDens[iwelem][ic];
         }
 
         for( integer ic = 0; ic < numComponents; ++ic )
@@ -856,9 +843,7 @@ struct SolutionCheckKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const, compflow::USD_COMP > const & wellElemCompDens,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dWellElemCompDens,
           integer const allowCompDensChopping,
           real64 const scalingFactor )
   {
@@ -874,8 +859,7 @@ struct SolutionCheckKernel
       {
         // pressure
         localIndex lid = wellElemDofNumber[iwelem] + COFFSET::DPRES - rankOffset;
-        real64 const newPres = wellElemPressure[iwelem] + dWellElemPressure[iwelem]
-                               + scalingFactor * localSolution[lid];
+        real64 const newPres = wellElemPressure[iwelem] + scalingFactor * localSolution[lid];
 
         // the pressure must be positive
         if( newPres < 0.0 )
@@ -891,8 +875,7 @@ struct SolutionCheckKernel
           for( integer ic = 0; ic < numComponents; ++ic )
           {
             lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
-            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
-                                   + scalingFactor * localSolution[lid];
+            real64 const newDens = wellElemCompDens[iwelem][ic] + scalingFactor * localSolution[lid];
 
             if( newDens < 0 )
             {
@@ -906,8 +889,7 @@ struct SolutionCheckKernel
           for( integer ic = 0; ic < numComponents; ++ic )
           {
             lid = wellElemDofNumber[iwelem] + ic + 1 - rankOffset;
-            real64 const newDens = wellElemCompDens[iwelem][ic] + dWellElemCompDens[iwelem][ic]
-                                   + scalingFactor * localSolution[lid];
+            real64 const newDens = wellElemCompDens[iwelem][ic] + scalingFactor * localSolution[lid];
             totalDens += (newDens > 0.0) ? newDens : 0.0;
           }
           if( totalDens < eps )

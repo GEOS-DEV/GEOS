@@ -115,11 +115,6 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
   /**@}*/
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
