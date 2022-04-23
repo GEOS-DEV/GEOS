@@ -91,7 +91,7 @@ FiniteElementDiscretization::factory( ElementType const parentElementShape ) con
           return std::make_unique< H1_Pyramid_Lagrange1_Gauss5 >();
         }
       }
-      case ElementType::Prism:
+      case ElementType::Wedge:
       {
         if( m_useVem == 1 )
         {

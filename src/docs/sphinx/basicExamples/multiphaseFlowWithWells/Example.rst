@@ -381,7 +381,7 @@ This is followed by the creation of the 18553 hexahedral cells of the imported m
   0 >>> Number of tetrahedra = 0
   0 >>> Number of hexahedra = 18553
   0 >>> Number of pyramids = 0
-  0 >>> Number of prisms = 0
+  0 >>> Number of wedges = 0
   0 >>> *** Done
   0 >>> *** Creating Polygons from Polyhedra...
   0 >>> 59205 polygons have been created

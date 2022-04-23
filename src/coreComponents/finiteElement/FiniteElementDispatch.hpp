@@ -66,7 +66,7 @@ dispatch3D( FiniteElementBase const & input,
   {
     lambda( *ptr6 );
   }
-  else if( auto const * const ptr7 = dynamic_cast< H1_Wedge_VEM_Gauss1 const * >(&input) ) // VEM on Prism / Wedge
+  else if( auto const * const ptr7 = dynamic_cast< H1_Wedge_VEM_Gauss1 const * >(&input) ) // VEM on Wedge
   {
     lambda( *ptr7 );
   }
@@ -112,7 +112,7 @@ dispatch3D( FiniteElementBase & input,
   {
     lambda( *ptr6 );
   }
-  else if( auto * const ptr7 = dynamic_cast< H1_Wedge_VEM_Gauss1 * >(&input) ) // VEM on Prism / Wedge
+  else if( auto * const ptr7 = dynamic_cast< H1_Wedge_VEM_Gauss1 * >(&input) ) // VEM on Wedge
   {
     lambda( *ptr7 );
   }
