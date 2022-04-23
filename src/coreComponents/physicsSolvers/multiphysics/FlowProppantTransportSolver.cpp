@@ -97,7 +97,6 @@ void FlowProppantTransportSolver::preStepUpdate( real64 const & time_n,
   m_proppantSolver->implicitStepSetup( time_n, dt, domain );
 
   m_proppantSolver->preStepUpdate( time_n, dt, domain );
-
 }
 
 void FlowProppantTransportSolver::postStepUpdate( real64 const & time_n,
