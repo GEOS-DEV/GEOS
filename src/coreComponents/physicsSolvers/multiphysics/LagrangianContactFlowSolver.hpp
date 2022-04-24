@@ -233,7 +233,6 @@ private:
   integer m_activeSetIter = 0;
 
   string const m_pressureKey = extrinsicMeshData::flow::pressure::key();
-  string const m_deltaPressureKey = extrinsicMeshData::flow::deltaPressure::key();
 
   real64 m_initialResidual[4] = {0.0, 0.0, 0.0, 0.0};
 
