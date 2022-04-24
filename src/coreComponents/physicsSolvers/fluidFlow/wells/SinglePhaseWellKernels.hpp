@@ -117,7 +117,6 @@ struct FluxKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & connRate,
-          arrayView1d< real64 const > const & dConnRate,
           real64 const & dt,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
@@ -145,7 +144,6 @@ struct PressureRelationKernel
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< localIndex const > const & nextWellElemIndex,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
@@ -162,8 +160,7 @@ struct PerforationKernel
   using TAG = singlePhaseWellKernels::SubRegionTag;
 
   using SinglePhaseFlowAccessors =
-    StencilAccessors< extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure >;
+    StencilAccessors< extrinsicMeshData::flow::pressure >;
 
   using SingleFluidAccessors =
     StencilMaterialAccessors< constitutive::SingleFluidBase,
@@ -185,14 +182,12 @@ struct PerforationKernel
   GEOSX_HOST_DEVICE
   static void
   compute( real64 const & resPressure,
-           real64 const & dResPressure,
            real64 const & resDensity,
            real64 const & dResDensity_dPres,
            real64 const & resViscosity,
            real64 const & dResViscosity_dPres,
            real64 const & wellElemGravCoef,
            real64 const & wellElemPressure,
-           real64 const & dWellElemPressure,
            real64 const & wellElemDensity,
            real64 const & dWellElemDensity_dPres,
            real64 const & wellElemViscosity,
@@ -205,14 +200,12 @@ struct PerforationKernel
   static void
   launch( localIndex const size,
           ElementViewConst< arrayView1d< real64 const > > const & resPressure,
-          ElementViewConst< arrayView1d< real64 const > > const & dResPressure,
           ElementViewConst< arrayView2d< real64 const > > const & resDensity,
           ElementViewConst< arrayView2d< real64 const > > const & dResDensity_dPres,
           ElementViewConst< arrayView2d< real64 const > > const & resViscosity,
           ElementViewConst< arrayView2d< real64 const > > const & dResViscosity_dPres,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 const > const & wellElemPressure,
-          arrayView1d< real64 const > const & dWellElemPressure,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
           arrayView2d< real64 const > const & wellElemViscosity,
@@ -244,7 +237,7 @@ struct AccumulationKernel
           arrayView1d< real64 const > const & wellElemVolume,
           arrayView2d< real64 const > const & wellElemDensity,
           arrayView2d< real64 const > const & dWellElemDensity_dPres,
-          arrayView1d< real64 const > const & wellElemDensityOld,
+          arrayView1d< real64 const > const & wellElemDensity_n,
           CRSMatrixView< real64, globalIndex const > const & localMatrix,
           arrayView1d< real64 > const & localRhs );
 
@@ -318,7 +311,7 @@ struct ResidualNormKernel
           arrayView1d< globalIndex const > const & wellElemDofNumber,
           arrayView1d< integer const > const & wellElemGhostRank,
           arrayView1d< real64 const > wellElemVolume,
-          arrayView1d< real64 const > const & wellElemDensOld,
+          arrayView1d< real64 const > const & wellElemDens_n,
           real64 const & timeAtEndOfStep,
           real64 const dt,
           real64 * localResidualNorm )
@@ -359,10 +352,10 @@ struct ResidualNormKernel
           }
           else // SinglePhaseWell::RowOffset::MASSBAL
           {
-            normalizer = dt * absTargetRate * wellElemDensOld[iwelem];
+            normalizer = dt * absTargetRate * wellElemDens_n[iwelem];
 
             // to make sure that everything still works well if the rate is zero, we add this check
-            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemDensOld[iwelem] );
+            normalizer = LvArray::math::max( normalizer, wellElemVolume[iwelem] * wellElemDens_n[iwelem] );
           }
           localIndex const lid = wellElemDofNumber[iwelem] + idof - rankOffset;
           real64 const val = localResidual[lid] / normalizer;
@@ -386,7 +379,6 @@ struct SolutionCheckKernel
           arrayView1d< globalIndex const > const & presDofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
           real64 const scalingFactor )
   {
     RAJA::ReduceMin< ReducePolicy< POLICY >, localIndex > minVal( 1 );
@@ -396,7 +388,7 @@ struct SolutionCheckKernel
       if( ghostRank[ei] < 0 && presDofNumber[ei] >= 0 )
       {
         localIndex const lid = presDofNumber[ei] - rankOffset;
-        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[lid];
+        real64 const newPres = pres[ei] + scalingFactor * localSolution[lid];
 
         if( newPres < 0.0 )
         {

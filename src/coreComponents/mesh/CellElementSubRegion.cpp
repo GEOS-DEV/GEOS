@@ -308,7 +308,7 @@ void CellElementSubRegion::
       m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       real64 Xlocal[6][3];
       for( localIndex a = 0; a < m_numNodesPerElement; ++a )

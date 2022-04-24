@@ -384,7 +384,7 @@ ElementType convertVtkToGeosxElementType( VTKCellType const cellType )
     case VTK_POLYGON:    return ElementType::Polygon;
     case VTK_TETRA:      return ElementType::Tetrahedron;
     case VTK_PYRAMID:    return ElementType::Pyramid;
-    case VTK_WEDGE:      return ElementType::Prism;
+    case VTK_WEDGE:      return ElementType::Wedge;
     case VTK_HEXAHEDRON: return ElementType::Hexahedron;
     case VTK_POLYHEDRON: return ElementType::Polyhedron;
     default:
@@ -585,7 +585,7 @@ std::vector< int > getGeosxToVtkNodeOrdering( ElementType const elemType )
     case ElementType::Polygon:       return { 0, 1, 2, 3, 4, 5, 6, 7, 8 }; // TODO
     case ElementType::Tetrahedron:   return { 0, 1, 2, 3 };
     case ElementType::Pyramid:       return { 0, 1, 3, 2, 4 };
-    case ElementType::Prism:         return { 0, 3, 2, 5, 1, 4 };
+    case ElementType::Wedge:         return { 0, 3, 2, 5, 1, 4 };
     case ElementType::Hexahedron:    return { 0, 1, 3, 2, 4, 5, 7, 6 };
     case ElementType::Polyhedron:    return { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 }; // TODO
   }
@@ -637,7 +637,7 @@ string getElementTypeName( ElementType const type )
   {
     case ElementType::Hexahedron:  return "hexahedra";
     case ElementType::Tetrahedron: return "tetrahedra";
-    case ElementType::Prism:       return "wedges";
+    case ElementType::Wedge:       return "wedges";
     case ElementType::Pyramid:     return "pyramids";
     case ElementType::Polyhedron:  return "polyhedra";
     default:
