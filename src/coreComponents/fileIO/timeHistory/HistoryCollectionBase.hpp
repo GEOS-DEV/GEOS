@@ -69,11 +69,14 @@ public:
 
 protected:
 
+  ///@cond DO_NOT_DOCUMENT
+  // Doxygen fails with error message `warning: documented empty return type of...`
   /**
    * @brief Update the indices from the sets being collected.
    * @param[in] domain The DomainPartition of the problem.
    */
   virtual void updateSetsIndices( DomainPartition const & domain ) = 0;
+/// @endcond
 
   /**
    * @brief Retrieve the target object from the data repository.
