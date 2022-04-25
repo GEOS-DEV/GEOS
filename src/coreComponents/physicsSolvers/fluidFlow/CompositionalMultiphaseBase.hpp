@@ -341,6 +341,9 @@ protected:
   void initializeAquiferBC( constitutive::ConstitutiveManager const & cm ) const;
 
 
+  /// flag to specify whether the sparsity pattern needs to be rebuilt
+  bool m_systemSetupDone;
+
   /// the max number of fluid phases
   integer m_numPhases;
 
