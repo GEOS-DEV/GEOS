@@ -332,7 +332,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 
       string const & fluidName = subRegion.getReference< string >( viewKeyStruct::fluidNamesString() );
       MultiFluidBase const & fluid = getConstitutiveModel< MultiFluidBase >( subRegion, fluidName );
-      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDensOld = fluid.totalDensityOld();
+      arrayView2d< real64 const, multifluid::USD_FLUID > const totalDens_n = fluid.totalDensity_n();
 
       string const & solidName = subRegion.getReference< string >( viewKeyStruct::solidNamesString() );
       CoupledSolidBase const & solidModel = getConstitutiveModel< CoupledSolidBase >( subRegion, solidName );
@@ -343,14 +343,14 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
 
       if( m_isThermal )
       {
-        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFracOld =
-          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFractionOld >();
-        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDensOld = fluid.phaseDensityOld();
-        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergyOld = fluid.phaseInternalEnergyOld();
+        arrayView2d< real64 const, compflow::USD_PHASE > const phaseVolFrac_n =
+          subRegion.getExtrinsicData< extrinsicMeshData::flow::phaseVolumeFraction_n >();
+        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseDens_n = fluid.phaseDensity_n();
+        arrayView3d< real64 const, multifluid::USD_PHASE > const phaseInternalEnergy_n = fluid.phaseInternalEnergy_n();
 
         string const & solidInternalEnergyName = subRegion.getReference< string >( viewKeyStruct::solidInternalEnergyNamesString() );
         SolidInternalEnergy const & solidInternalEnergy = getConstitutiveModel< SolidInternalEnergy >( subRegion, solidInternalEnergyName );
-        arrayView2d< real64 const > const solidInternalEnergyOld = solidInternalEnergy.getOldInternalEnergy();
+        arrayView2d< real64 const > const solidInternalEnergy_n = solidInternalEnergy.getInternalEnergy_n();
 
         thermalCompositionalMultiphaseBaseKernels::
           ResidualNormKernel::
@@ -362,11 +362,11 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                             elemGhostRank,
                                             referencePorosity,
                                             volume,
-                                            solidInternalEnergyOld,
-                                            phaseVolFracOld,
-                                            totalDensOld,
-                                            phaseDensOld,
-                                            phaseInternalEnergyOld,
+                                            solidInternalEnergy_n,
+                                            phaseVolFrac_n,
+                                            totalDens_n,
+                                            phaseDens_n,
+                                            phaseInternalEnergy_n,
                                             subRegionFlowResidualNorm,
                                             subRegionEnergyResidualNorm );
       }
@@ -381,7 +381,7 @@ real64 CompositionalMultiphaseFVM::calculateResidualNorm( DomainPartition const 
                                             elemGhostRank,
                                             referencePorosity,
                                             volume,
-                                            totalDensOld,
+                                            totalDens_n,
                                             subRegionFlowResidualNorm );
       }
       localFlowResidualNorm   += subRegionFlowResidualNorm;
@@ -448,8 +448,6 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
 
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       RAJA::ReduceMin< parallelDeviceReduce, real64 > minVal( 1.0 );
 
@@ -460,7 +458,7 @@ real64 CompositionalMultiphaseFVM::scalingForSystemSolution( DomainPartition con
           real64 prevTotalDens = 0;
           for( localIndex ic = 0; ic < NC; ++ic )
           {
-            prevTotalDens += compDens[ei][ic] + dCompDens[ei][ic];
+            prevTotalDens += compDens[ei][ic];
           }
 
           // compute the change in component densities and component fractions
@@ -518,11 +516,8 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
       arrayView1d< integer const > const & elemGhostRank = subRegion.ghostRank();
 
       arrayView1d< real64 const > const & pres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::pressure::key() );
-      arrayView1d< real64 const > const & dPres = subRegion.getReference< array1d< real64 > >( extrinsicMeshData::flow::deltaPressure::key() );
       arrayView2d< real64 const, compflow::USD_COMP > const & compDens =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompDensity >();
-      arrayView2d< real64 const, compflow::USD_COMP > const & dCompDens =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompDensity >();
 
       localIndex const subRegionSolutionCheck =
         isothermalCompositionalMultiphaseBaseKernels::
@@ -532,9 +527,7 @@ bool CompositionalMultiphaseFVM::checkSystemSolution( DomainPartition const & do
                                                                  dofNumber,
                                                                  elemGhostRank,
                                                                  pres,
-                                                                 dPres,
                                                                  compDens,
-                                                                 dCompDens,
                                                                  m_allowCompDensChopping,
                                                                  scalingFactor );
 
@@ -557,13 +550,13 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::deltaPressure::key(),
+                               extrinsicMeshData::flow::pressure::key(),
                                scalingFactor,
                                pressureMask );
 
   dofManager.addVectorToField( localSolution,
                                viewKeyStruct::elemDofFieldString(),
-                               extrinsicMeshData::flow::deltaGlobalCompDensity::key(),
+                               extrinsicMeshData::flow::globalCompDensity::key(),
                                scalingFactor,
                                componentMask );
 
@@ -572,7 +565,7 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     DofManager::CompMask temperatureMask( m_numDofPerCell, m_numComponents+1, m_numComponents+2 );
     dofManager.addVectorToField( localSolution,
                                  viewKeyStruct::elemDofFieldString(),
-                                 extrinsicMeshData::flow::deltaTemperature::key(),
+                                 extrinsicMeshData::flow::temperature::key(),
                                  scalingFactor,
                                  temperatureMask );
   }
@@ -588,10 +581,10 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    std::vector< string > fields{ extrinsicMeshData::flow::deltaPressure::key(), extrinsicMeshData::flow::deltaGlobalCompDensity::key() };
+    std::vector< string > fields{ extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::globalCompDensity::key() };
     if( m_isThermal )
     {
-      fields.emplace_back( extrinsicMeshData::flow::deltaTemperature::key() );
+      fields.emplace_back( extrinsicMeshData::flow::temperature::key() );
     }
     FieldIdentifiers const fieldsToBeSync{ SyncFieldsID( FieldLocation::Elem, fields, regionNames ) };
 
@@ -709,7 +702,7 @@ void CompositionalMultiphaseFVM::applyAquiferBC( real64 const time,
                                                                         aquiferWaterPhaseCompFrac,
                                                                         compFlowAccessors.get( extrinsicMeshData::ghostRank{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::pressure{} ),
-                                                                        compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure{} ),
+                                                                        compFlowAccessors.get( extrinsicMeshData::flow::pressure_n{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFraction{} ),
                                                                         compFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dPressure{} ),

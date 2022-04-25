@@ -302,20 +302,20 @@ using SortedArrayView = LvArray::SortedArrayView< T, localIndex, LvArray::ChaiBu
 ///@{
 
 /// Array of variable-sized arrays. See LvArray::ArrayOfArrays for details.
-template< typename T >
-using ArrayOfArrays = LvArray::ArrayOfArrays< T, localIndex, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex >
+using ArrayOfArrays = LvArray::ArrayOfArrays< T, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized arrays. See LvArray::ArrayOfArraysView for details.
-template< typename T, bool CONST_SIZES=std::is_const< T >::value >
-using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, localIndex const, CONST_SIZES, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex, bool CONST_SIZES=std::is_const< T >::value >
+using ArrayOfArraysView = LvArray::ArrayOfArraysView< T, INDEX_TYPE const, CONST_SIZES, LvArray::ChaiBuffer >;
 
 /// Array of variable-sized sets. See LvArray::ArrayOfSets for details.
-template< typename T >
-using ArrayOfSets = LvArray::ArrayOfSets< T, localIndex, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex >
+using ArrayOfSets = LvArray::ArrayOfSets< T, INDEX_TYPE, LvArray::ChaiBuffer >;
 
 /// View of array of variable-sized sets. See LvArray::ArrayOfSetsView for details.
-template< typename T >
-using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, localIndex const, LvArray::ChaiBuffer >;
+template< typename T, typename INDEX_TYPE=localIndex >
+using ArrayOfSetsView = LvArray::ArrayOfSetsView< T, INDEX_TYPE const, LvArray::ChaiBuffer >;
 
 /// Alias for Sparsity pattern class.
 template< typename COL_INDEX, typename INDEX_TYPE=localIndex >

@@ -45,13 +45,13 @@ public:
   localIndex numGauss() const { return m_newPorosity.size( 1 ); }
 
   BiotPorosityUpdates( arrayView2d< real64 > const & newPorosity,
-                       arrayView2d< real64 > const & oldPorosity,
+                       arrayView2d< real64 > const & porosity_n,
                        arrayView2d< real64 > const & dPorosity_dPressure,
                        arrayView2d< real64 > const & initialPorosity,
                        arrayView1d< real64 > const & referencePorosity,
                        arrayView1d< real64 > const & biotCoefficient,
                        real64 const & grainBulkModulus ): PorosityBaseUpdates( newPorosity,
-                                                                               oldPorosity,
+                                                                               porosity_n,
                                                                                dPorosity_dPressure,
                                                                                initialPorosity,
                                                                                referencePorosity ),
@@ -78,7 +78,7 @@ public:
   {
     real64 const biotSkeletonModulusInverse = (m_biotCoefficient[k] - m_referencePorosity[k]) / m_grainBulkModulus;
 
-    real64 const porosity = m_oldPorosity[k][q] +
+    real64 const porosity = m_porosity_n[k][q] +
                             +m_biotCoefficient[k] * LvArray::tensorOps::symTrace< 3 >( strainIncrement ) + biotSkeletonModulusInverse * deltaPressure;
 
     dPorosity_dPressure = biotSkeletonModulusInverse;
@@ -130,7 +130,7 @@ public:
   KernelWrapper createKernelUpdates() const
   {
     return KernelWrapper( m_newPorosity,
-                          m_oldPorosity,
+                          m_porosity_n,
                           m_dPorosity_dPressure,
                           m_initialPorosity,
                           m_referencePorosity,

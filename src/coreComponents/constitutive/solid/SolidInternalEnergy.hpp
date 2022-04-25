@@ -97,7 +97,7 @@ public:
   struct viewKeyStruct : public ConstitutiveBase::viewKeyStruct
   {
     static constexpr char const * internalEnergyString() { return "internalEnergy"; }
-    static constexpr char const * oldInternalEnergyString() { return "oldInternalEnergy"; }
+    static constexpr char const * oldInternalEnergyString() { return "internalEnergy_n"; }
     static constexpr char const * dInternalEnergy_dTemperatureString() { return "dInternalEnergy_dTemperature"; }
     static constexpr char const * volumetricHeatCapacityString() { return "volumetricHeatCapacity"; }
     static constexpr char const * referenceTemperatureString() { return "referenceTemperature"; }
@@ -127,10 +127,10 @@ public:
   arrayView2d< real64 const > const  getInternalEnergy() const { return m_internalEnergy; }
 
   /**
-   * @brief Const/non-mutable accessor for oldInternalEnergy.
+   * @brief Const/non-mutable accessor for internalEnergy_n.
    * @return Accessor
    */
-  arrayView2d< real64 const > const  getOldInternalEnergy() const { return m_oldInternalEnergy; }
+  arrayView2d< real64 const > const  getInternalEnergy_n() const { return m_internalEnergy_n; }
 
   /**
    * @brief Const/non-mutable accessor for dInternalEnergy_dTemperature.
@@ -147,7 +147,7 @@ private:
   array2d< real64 > m_internalEnergy;
 
   /// Old solid internal energy
-  array2d< real64 > m_oldInternalEnergy;
+  array2d< real64 > m_internalEnergy_n;
 
   /// Derivative of the solid internal energy w.r.t. the temperature
   array2d< real64 > m_dInternalEnergy_dTemperature;

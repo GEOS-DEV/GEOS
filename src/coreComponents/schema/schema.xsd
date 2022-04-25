@@ -642,7 +642,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--positionTolerance => A position tolerance to verify if a node belong to a nodeset-->
 		<xsd:attribute name="positionTolerance" type="real64" default="1e-10" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<!--trianglePattern => Pattern by which to decompose the hex mesh into wedges-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--xBias => Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
 		<xsd:attribute name="xBias" type="real64_array" default="{1}" />
@@ -721,7 +721,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="theta" type="real64_array" use="required" />
 		<!--trajectory => Coordinates defining the wellbore trajectory-->
 		<xsd:attribute name="trajectory" type="real64_array2d" default="{{0}}" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<!--trianglePattern => Pattern by which to decompose the hex mesh into wedges-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--useCartesianOuterBoundary => Enforce a Cartesian aligned outer boundary on the outer block starting with the radial block specified in this value-->
 		<xsd:attribute name="useCartesianOuterBoundary" type="integer" default="1000000" />
@@ -761,7 +761,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--regionAttribute => Translate the coordinates of the vertices by a given vector-->
+		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
+		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
+		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
 		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
