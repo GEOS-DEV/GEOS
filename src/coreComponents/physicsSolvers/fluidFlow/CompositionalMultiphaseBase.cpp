@@ -57,6 +57,7 @@ CompositionalMultiphaseBase::CompositionalMultiphaseBase( const string & name,
                                                           Group * const parent )
   :
   FlowSolverBase( name, parent ),
+  m_systemSetupDone( false ),
   m_numPhases( 0 ),
   m_numComponents( 0 ),
   m_computeCFLNumbers( 0 ),
@@ -1060,11 +1061,10 @@ real64 CompositionalMultiphaseBase::solverStep( real64 const & time_n,
 
   // Only build the sparsity pattern once
   // TODO: this should be triggered by a topology change indicator
-  static bool systemSetupDone = false;
-  if( !systemSetupDone )
+  if( !m_systemSetupDone )
   {
     setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
-    systemSetupDone = true;
+    m_systemSetupDone = true;
   }
 
   implicitStepSetup( time_n, dt, domain );
