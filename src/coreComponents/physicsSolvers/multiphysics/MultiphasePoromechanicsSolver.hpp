@@ -121,6 +121,8 @@ public:
 
     // String key for the member level field for the element macroelement ID number.
     static constexpr char const * elementMacroIDString() { return "elementMacroID"; }
+
+    constexpr static char const * computeMacroElementsFlagString() { return "computeMacroElements"; }
   };
 
 protected:
@@ -141,6 +143,8 @@ protected:
   SolidMechanicsLagrangianFEM * m_solidSolver;
 
   integer m_useStab;
+
+  integer m_computeMacroElements;
 
 };
 

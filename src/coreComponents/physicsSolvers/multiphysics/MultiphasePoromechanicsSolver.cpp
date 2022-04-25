@@ -49,7 +49,8 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
   SolverBase( name, parent ),
   m_solidSolverName(),
   m_flowSolverName(),
-  m_useStab( 0 )
+  m_useStab( 0 ), 
+  m_computeMacroElements( 0 )
 
 {
   registerWrapper( viewKeyStruct::solidSolverNameString(), &m_solidSolverName ).
@@ -64,6 +65,11 @@ MultiphasePoromechanicsSolver::MultiphasePoromechanicsSolver( const string & nam
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
     setDescription( "Use pressure jump stabilization in flux" );
+
+  registerWrapper( viewKeyStruct::computeMacroElementsFlagString(), &m_computeMacroElements ).
+    setApplyDefaultValue( 0 ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setDescription( "Compute macroelements for pressure jump stabilization in flux" );
 
   m_linearSolverParameters.get().mgr.strategy = LinearSolverParameters::MGR::StrategyType::multiphasePoromechanics;
   m_linearSolverParameters.get().mgr.separateComponents = true;
@@ -136,6 +142,9 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
 {
 
   SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  if ( m_computeMacroElements )
+  {
 
   DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
 
@@ -214,7 +223,9 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
   // will have to see how it works. 
 
 
- } );
+  } );
+
+  }
 
 }
 
