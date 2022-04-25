@@ -181,6 +181,9 @@ void WellSolverBase::assembleSystem( real64 const time,
 
   // then assemble the pressure relations between well elements
   assemblePressureRelations( domain, dofManager, localMatrix, localRhs );
+
+  // then compute the perforation rates (later assembled by the coupled solver)
+  computePerforationRates( domain );
 }
 
 void WellSolverBase::updateState( DomainPartition & domain )
@@ -193,11 +196,9 @@ void WellSolverBase::updateState( DomainPartition & domain )
     mesh.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                           WellElementSubRegion & subRegion )
     {
-      updateSubRegionState( mesh, subRegion );
+      updateSubRegionState( subRegion );
     } );
   } );
-
-
 }
 
 void WellSolverBase::initializePreSubGroups()

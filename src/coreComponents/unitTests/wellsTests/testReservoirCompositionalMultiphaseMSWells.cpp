@@ -290,18 +290,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
                 } );
               } );
 
-              wellSolver.forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
-                                                                       MeshLevel & mesh3,
-                                                                       arrayView1d< string const > const & regionNames3 )
-              {
-                mesh3.getElemManager().forElementSubRegions< WellElementSubRegion >( regionNames3,
-                                                                                     [&]( localIndex const,
-                                                                                          WellElementSubRegion & subRegion3 )
-                {
-                  wellSolver.updateSubRegionState( mesh3, subRegion3 );
-                } );
-              } );
-
+              wellSolver.updateState( domain );
 
               residual.zero();
               jacobian.zero();
@@ -398,7 +387,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           wellElemPressure[iwelem] += dP;
 
           // after perturbing, update the pressure-dependent quantities in the well
-          wellSolver.updateSubRegionState( mesh, subRegion );
+          wellSolver.updateState( domain );
 
           residual.zero();
           jacobian.zero();
@@ -419,7 +408,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           wellElemCompDens.move( LvArray::MemorySpace::host, true );
           wellElemCompDens[iwelem][jc] += dRho;
 
-          wellSolver.updateSubRegionState( mesh, subRegion );
+          wellSolver.updateState( domain );
 
           residual.zero();
           jacobian.zero();
@@ -444,7 +433,7 @@ void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
           connRate.move( LvArray::MemorySpace::host, true );
           connRate[iwelem] += dRate;
 
-          wellSolver.updateSubRegionState( mesh, subRegion );
+          wellSolver.updateState( domain );
 
           residual.zero();
           jacobian.zero();

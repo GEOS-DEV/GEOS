@@ -451,6 +451,7 @@ struct PresTempCompFracInitializationKernel
           arrayView1d< localIndex const > const & resElementRegion,
           arrayView1d< localIndex const > const & resElementSubRegion,
           arrayView1d< localIndex const > const & resElementIndex,
+          arrayView1d< real64 const > const & perfGravCoef,
           arrayView1d< real64 const > const & wellElemGravCoef,
           arrayView1d< real64 > const & wellElemPres,
           arrayView1d< real64 > const & wellElemTemp,
@@ -788,7 +789,7 @@ struct SolutionScalingKernel
         // with active rate control, but is useless otherwise
         real64 const pres = wellElemPres[iwelem];
         real64 const absPresChange = LvArray::math::abs( localSolution[wellElemDofNumber[iwelem] - rankOffset] );
-        if( pres < eps )
+        if( pres > eps )
         {
           real64 const relativePresChange = LvArray::math::abs( absPresChange ) / pres;
           if( relativePresChange > maxRelativePresChange )
