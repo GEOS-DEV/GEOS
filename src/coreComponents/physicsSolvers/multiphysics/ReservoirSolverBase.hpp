@@ -205,6 +205,9 @@ protected:
    */
   virtual void resetViews( DomainPartition & domain );
 
+  /// flag to specify whether the sparsity pattern needs to be rebuilt or not
+  bool m_systemSetupDone;
+
   /// solver that assembles the reservoir equations
   string m_flowSolverName;
 
