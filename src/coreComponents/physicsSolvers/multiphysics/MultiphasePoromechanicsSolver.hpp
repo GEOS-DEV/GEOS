@@ -118,6 +118,9 @@ public:
     constexpr static char const * porousMaterialNamesString() { return "porousMaterialNames"; }
 
     constexpr static char const * useStabFlagString() { return "useStab"; }
+
+    // String key for the member level field for the element macroelement ID number.
+    static constexpr char const * elementMacroIDString() { return "elementMacroID"; }
   };
 
 protected:
@@ -125,6 +128,8 @@ protected:
   virtual void postProcessInput() override;
 
   virtual void initializePreSubGroups() override;
+
+  virtual void initializePostInitialConditionsPreSubGroups() override;
 
   string m_solidSolverName;
   string m_flowSolverName;

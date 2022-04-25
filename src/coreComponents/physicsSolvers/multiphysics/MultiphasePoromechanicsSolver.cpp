@@ -102,6 +102,10 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
         setPlotLevel( PlotLevel::NOPLOT ).
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
+
+        subRegion.registerWrapper< array1d <integer> >( viewKeyStruct::elementMacroIDString() ).
+        setApplyDefaultValue( -1 ).
+        setPlotLevel( PlotLevel::LEVEL_1 );
     } );
   } );
 }
@@ -126,6 +130,92 @@ void MultiphasePoromechanicsSolver::initializePreSubGroups()
       GEOSX_ERROR_IF( porousName.empty(), GEOSX_FMT( "Solid model not found on subregion {}", subRegion.getName() ) );
     } );
   } );
+}
+
+void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups()
+{
+
+  SolverBase::initializePostInitialConditionsPreSubGroups();
+
+  DomainPartition & domain = this->getGroupByPath< DomainPartition >( "/Problem/domain" );
+
+  forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
+                                    MeshLevel & mesh,
+                                    arrayView1d< string const > const & regionNames )
+  {
+
+    ElementRegionManager & elemManager = mesh.getElemManager();
+
+      GEOSX_UNUSED_VAR(regionNames);
+
+      NodeManager const & nodeManager = mesh.getNodeManager();
+
+      ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemMacroID =
+            elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::elementMacroIDString() );
+
+      array1d< integer > nodeVisited( nodeManager.size() );
+      nodeVisited.setValues< serialPolicy>( 0 );
+      arrayView1d< integer > const nodeVisitedView = nodeVisited.toView();
+
+      arrayView1d<integer const> const bdryNodes = nodeManager.getDomainBoundaryIndicator();
+
+      ArrayOfArraysView< localIndex const > elemRegionList = nodeManager.elementRegionList();
+      ArrayOfArraysView< localIndex const > elemSubRegionList = nodeManager.elementSubRegionList();
+      ArrayOfArraysView< localIndex const > elemList = nodeManager.elementList();
+
+      integer currentID = 0;
+
+      forAll< serialPolicy >( nodeManager.size(), [&] GEOSX_HOST_DEVICE ( localIndex const a )
+      {
+
+        if (bdryNodes[a] == 1) 
+        {
+          nodeVisitedView[a] = 1;
+        }
+
+        if (nodeVisitedView[a] != 1) 
+        {
+
+          for( localIndex k = 0; k < elemRegionList[a].size(); ++k )
+          {
+            // collect the element number
+            localIndex const er = elemRegionList[a][k];
+            localIndex const esr = elemSubRegionList[a][k];
+            localIndex const ei = elemList[a][k];
+
+            elemMacroID[er][esr][ei] = currentID;
+
+            // get the elemToNodes maps 
+            ElementRegionBase const & region = elemManager.getRegion( er );
+            CellElementSubRegion const & subRegion = region.getSubRegion< CellElementSubRegion, localIndex >( esr );
+            arrayView2d< localIndex const, cells::NODE_MAP_USD > const & elemsToNodes = subRegion.nodeList(); 
+
+            // get the nodes connected to this element
+            for( localIndex l = 0; l < elemsToNodes[ei].size(); ++l )
+            {
+              localIndex const iNode = elemsToNodes[ei][l]; // ensure this is a global index compatible with vector
+              nodeVisitedView[iNode] = 1;
+            }     
+          }
+
+          ++currentID;
+        }
+
+      } );
+
+
+  // part 2 - assign any unassigned cell
+  // loop through all elements and check if each has been assigned a macroelement (ie, when you index into ID it should be >0)
+  // If not, check elements that share a face and add it to one of their macroelements
+  // If no neighbors in a macroelement, reconsider this element at the end of the loop
+
+  // This may not be strictly necessary, per our discussions. Any clumps of elements that were not visited have ID of -1, and therefore will
+  // also be treated as macro elements. The main issue may be if there are a lot of single element macro elements in the mesh, but we 
+  // will have to see how it works. 
+
+
+ } );
+
 }
 
 void MultiphasePoromechanicsSolver::setupSystem( DomainPartition & domain,
