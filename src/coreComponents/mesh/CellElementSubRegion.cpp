@@ -304,7 +304,7 @@ void CellElementSubRegion::
       m_elementVolume[k] = computationalGeometry::tetVolume( Xlocal );
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       m_elementVolume[k] = computationalGeometry::wedgeVolume( Xlocal );
       break;
