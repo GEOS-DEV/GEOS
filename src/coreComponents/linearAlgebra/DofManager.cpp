@@ -186,7 +186,14 @@ void DofManager::createIndexArray( FieldDescription const & field )
       FieldLocation constexpr LOC = decltype(loc)::value;
       using helper = ArrayHelper< globalIndex, LOC >;
 
-      FieldIdentifiers const fieldsToBeSync{ SyncFieldsID( field.location, { field.key }, regions ) };
+      FieldIdentifiers fieldsToBeSync;
+      if ( field.location == FieldLocation::Elem )
+      {
+        fieldsToBeSync.addElementFields( { field.key }, regions );
+      }else
+      { 
+        fieldsToBeSync.addFields( field.location, { field.key } );
+      }
 
       // register index array
       helper::template create<>( mesh, field.key, field.docstring, regions );
@@ -1273,7 +1280,7 @@ void DofManager::reorderByRank()
   // ( MeshBody name, MeshLevel name), and a value that is another map with a
   // key that indicates the name of the object that contains the field to be
   // synced, and a value that contans the name of the field to be synced.
-  std::map< std::pair< string, string >, std::vector< SyncFieldsID > > fieldsToBeSync;
+  std::map< std::pair< string, string >, FieldIdentifiers > fieldsToBeSync;
 
   // adjust index arrays for owned locations
   for( FieldDescription const & field : m_fields )
@@ -1294,7 +1301,15 @@ void DofManager::reorderByRank()
           ArrayHelper::reference( indexArray, locIdx ) += adjustment;
         } );
 
-        fieldsToBeSync[{ body.getName(), mesh.getName() }].emplace_back( SyncFieldsID ( field.location, {field.key}, regions ) );
+        if (field.location == FieldLocation::Elem)
+        {
+          fieldsToBeSync[{ body.getName(), mesh.getName() }].addElementFields( {field.key}, regions );
+
+        } else
+        {
+          fieldsToBeSync[{ body.getName(), mesh.getName() }].addFields( field.location, {field.key} );
+        }
+
       } );
     } );
   }

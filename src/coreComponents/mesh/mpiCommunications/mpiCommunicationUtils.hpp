@@ -24,8 +24,10 @@
 namespace geosx
 {
 
-struct FieldIdentifiers
+class FieldIdentifiers
 {
+  public: 
+  
   void addFields( FieldLocation const location, std::vector<string> const fieldNames )
   {
     string const key = generateKey(location);

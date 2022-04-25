@@ -240,9 +240,9 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & )
   {
-    FieldIdentifiers const fieldsToBeSync{
-      SyncFieldsID( FieldLocation::Elem, { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } )
-    };
+    FieldIdentifiers fieldsToBeSync;
+    
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

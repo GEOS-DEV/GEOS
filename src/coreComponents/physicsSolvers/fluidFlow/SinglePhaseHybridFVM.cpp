@@ -607,17 +607,10 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-<<<<<<< HEAD
-    FieldIdentifiers const fieldsToBeSync{
-      SyncFieldsID( FieldLocation::Elem, { extrinsicMeshData::flow::deltaPressure::key() }, regionNames ),
-      SyncFieldsID( FieldLocation::Face, { extrinsicMeshData::flow::deltaFacePressure::key() } )
-    };
-=======
-    // the tags in fieldNames have to match the tags used in NeighborCommunicator.cpp
-    std::map< string, string_array > fieldNames;
-    fieldNames["face"].emplace_back( extrinsicMeshData::flow::facePressure::key() );
-    fieldNames["elems"].emplace_back( extrinsicMeshData::flow::pressure::key() );
->>>>>>> origin/develop
+    FieldIdentifiers fieldsToBeSync;
+    
+      fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
+      fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );

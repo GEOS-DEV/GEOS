@@ -1444,13 +1444,13 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
                                                arrayView1d< string const > const & regionNames )
   {
     // synchronize
-    FieldIdentifiers const fieldsToBeSync{
-      SyncFieldsID( FieldLocation::Elem,
-                    { extrinsicMeshData::well::pressure::key(),
-                      extrinsicMeshData::well::globalCompDensity::key(),
-                      extrinsicMeshData::well::mixtureConnectionRate::key() },
-                    regionNames )
-    };
+    FieldIdentifiers fieldsToBeSync;
+    
+    {
+      fieldsToBeSync.addElementFields( { extrinsicMeshData::well::pressure::key(),
+                                         extrinsicMeshData::well::globalCompDensity::key(),
+                                         extrinsicMeshData::well::mixtureConnectionRate::key() },
+                                       regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

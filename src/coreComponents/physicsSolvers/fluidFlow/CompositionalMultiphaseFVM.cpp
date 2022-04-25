@@ -586,7 +586,8 @@ void CompositionalMultiphaseFVM::applySystemSolution( DofManager const & dofMana
     {
       fields.emplace_back( extrinsicMeshData::flow::temperature::key() );
     }
-    FieldIdentifiers const fieldsToBeSync{ SyncFieldsID( FieldLocation::Elem, fields, regionNames ) };
+    FieldIdentifiers fieldsToBeSync;
+    fieldsToBeSync.addElementFields( fields, regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );

@@ -806,13 +806,14 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
   {
-    FieldIdentifiers const fieldsToBeSync{
-      SyncFieldsID( FieldLocation::Elem,
-                    { extrinsicMeshData::flow::pressure::key(), extrinsicMeshData::flow::globalCompDensity::key() },
-                    regionNames ),
+    FieldIdentifiers fieldsToBeSync;
+    
+    {
+      fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(), 
+                                        extrinsicMeshData::flow::globalCompDensity::key() },
+                                       regionNames );
 
-      SyncFieldsID( FieldLocation::Face,
-                    { extrinsicMeshData::flow::facePressure::key() } )
+      fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
     };
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
