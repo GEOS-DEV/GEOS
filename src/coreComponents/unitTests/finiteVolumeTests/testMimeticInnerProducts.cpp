@@ -79,7 +79,7 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
       Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
       LvArray::tensorOps::add< 3 >( elemCenter, Xlocal[a] );
     }
-    elemVolume = computationalGeometry::hexVolume( Xlocal );
+    elemVolume = computationalGeometry::elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( Xlocal );
   }
   else if( numNodes == 4 )
   {
@@ -91,7 +91,7 @@ void computeVolumeAndCenter( array2d< real64, nodes::REFERENCE_POSITION_PERM > c
       Xlocal[a][2] = nodePosition( toNodes( a ), 2 );
       LvArray::tensorOps::add< 3 >( elemCenter, Xlocal[a] );
     }
-    elemVolume = computationalGeometry::tetVolume( Xlocal );
+    elemVolume = computationalGeometry::elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( Xlocal );
   }
   LvArray::tensorOps::scale< 3 >( elemCenter, 1.0 / numNodes );
 }
