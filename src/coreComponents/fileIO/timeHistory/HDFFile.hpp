@@ -29,24 +29,24 @@ class HDFFile
 public:
   /**
    * @brief Constructor -- this creates/opens the target file for read/write.
-   * @param fnm The filename.
-   * @param deleteExisting Whether to remove/recreate if a file with the same name exists.
-   * @param parallelAccess Whether to access one file in parallel or one file per rank in the comm.
-   * @param comm An MPI communicator where each rank in the communicator will be accesing the target file.
+   * @param[in] fnm The filename.
+   * @param[in] deleteExisting Whether to remove/recreate if a file with the same name exists.
+   * @param[in] parallelAccess Whether to access one file in parallel or one file per rank in the comm.
+   * @param[in] comm An MPI communicator where each rank in the communicator will be accessing the target file.
    */
   HDFFile( string const & fnm, bool deleteExisting, bool parallelAccess, MPI_Comm comm );
 
   /**
-   * Destructor -- Close the file and acccessors.
+   * @brief Closes the file and accessors.
    */
   ~HDFFile();
 
   /**
    * @brief Whether a dataset/group with the specified name exists in the target.
-   * @param name The dataset/group name to check for.
+   * @param[in] name The dataset/group name to check for.
    * @return Whether the dataset/group exists in the target.
    */
-  bool checkInTarget( const string & name ) const;
+  bool hasDataset( const string & name ) const;
 
   /**
    * @brief Get the HDF hid_t file identifier.

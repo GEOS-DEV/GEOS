@@ -214,7 +214,7 @@ void HDFHistoryIO::init( bool existsOkay )
     historyFileDims[1] = LvArray::integerConversion< hsize_t >( m_globalIdxCount );
 
     HDFFile target( m_filename, false, true, subcomm );
-    bool inTarget = target.checkInTarget( m_name );
+    bool inTarget = target.hasDataset( m_name );
     if( !inTarget )
     {
       hid_t dcplId = 0;

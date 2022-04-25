@@ -82,7 +82,7 @@ HDFFile::~HDFFile()
   H5Fclose( m_fileId );
 }
 
-bool HDFFile::checkInTarget( const string & name ) const
+bool HDFFile::hasDataset( const string & name ) const
 {
   int exists = 0;
   H5E_BEGIN_TRY

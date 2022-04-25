@@ -47,24 +47,23 @@ public:
   virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const override;
 
   /// @copydoc geosx::HistoryCollection::getTargetName
-  virtual const string & getTargetName( ) const override
+  virtual const string & getTargetName() const override
   {
     return m_fieldName;
   }
 
   /**
    * @brief Update the indices related to the sets being collected.
-   * @param domain The domain partition.
+   * @param[in] domain The domain partition.
    * @note This is only required because we don't want to copy/move the
    *       indices each collection execution, because that causes data movement
    *       when collecting data from the device.
-   * @note Refactoring the packing functions to allow direct usage of set indices
-   *       from SortedArrayView instead of only ArrayViews will remove this
-   *       duplication.
+   * @deprecated Refactoring the packing functions to allow direct usage of set indices
+   *             from SortedArrayView instead of only ArrayViews will remove this duplication.
    */
   virtual void updateSetsIndices( DomainPartition const & domain ) override final;
 
-  virtual localIndex numMetaDataCollectors( ) const override final;
+  virtual localIndex numMetaDataCollectors() const override final;
 
 private:
 

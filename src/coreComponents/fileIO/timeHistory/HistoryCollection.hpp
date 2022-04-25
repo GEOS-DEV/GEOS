@@ -45,7 +45,7 @@ public:
   /// Type of time buffer provider
   using TimeBufferProvider = std::function< buffer_unit_type *() >;
 
-  /// Forwarding public...
+  /// Forwarding public initializing function...
   void initializePostSubGroups() override {};
 
   /**
@@ -56,8 +56,8 @@ public:
 
   /**
    * @brief Get the metadata for what this collector collects.
-   * @param domain The DomainPartition.
-   * @param collectionIdx Which collected item to get metadata for.
+   * @param[in] domain The DomainPartition.
+   * @param[in] collectionIdx Which collected item to get metadata for.
    * @return A HistoryMetadata object describing  the history data being collected by this collector.
    */
   virtual HistoryMetadata getMetaData( DomainPartition const & domain, localIndex collectionIdx ) const = 0;
@@ -70,10 +70,10 @@ public:
 
   /**
    * @brief Register a callback that provides the current head of the time history data buffer.
-   * @param collectionIdx Which collection item to register the buffer callback for.
-   * @param bufferProvider A functional that when invoked returns a pointer to the head of a buffer at least large enough to
-   *                       serialize one time step of history data into.
-   * @note This is typically meant to callback to BufferedHistoryIO::getBufferHead( )
+   * @param[in] collectionIdx Which collection item to register the buffer callback for.
+   * @param[in] bufferProvider A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   *                           serialize one time step of history data into.
+   * @note This is typically meant to callback to BufferedHistoryIO::getBufferHead()
    */
   virtual void registerBufferProvider( localIndex collectionIdx, BufferProvider bufferProvider ) = 0;
 
@@ -85,9 +85,9 @@ public:
 
   /**
    * @brief Register a callback that gives the current head of the time data buffer.
-   * @param timeBufferProvider A functional that when invoked returns a pointer to the head of a buffer at least large enough to
-   *                       serialize one instance of the Time variable into.
-   * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead( )
+   * @param[in] timeBufferProvider A functional that when invoked returns a pointer to the head of a buffer at least large enough to
+   *                               serialize one instance of the Time variable into.
+   * @note This is typically meant to callback to BufferedHistoryIO::GetBufferHead()
    */
   virtual void registerTimeBufferProvider( TimeBufferProvider timeBufferProvider ) = 0;
 
@@ -99,9 +99,9 @@ public:
 
   /**
    * @brief Get a pointer to a collector of meta-information for this collector.
-   * @param metaIdx Which of the meta-info collectors to return. (see HistoryCollection::numMetaDataCollectors()).
-   * @return A unique pointer to the HistoryCollection object used for meta-info collection. Intented to fall out of scope and desctruct
-   * immediately after being used to perform output during simulation initialization.
+   * @param[in] metaIdx Which of the meta-info collectors to return. (see HistoryCollection::numMetaDataCollectors()).
+   * @return A unique pointer to the HistoryCollection object used for meta-info collection.
+   *         Intended to fall out of scope and destruct immediately after being used to perform output during simulation initialization.
    */
   virtual HistoryCollection & getMetaDataCollector( localIndex metaIdx ) = 0;
 };

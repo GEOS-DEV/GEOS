@@ -34,15 +34,13 @@ public:
   /**
    * @brief Get the head of the internal history storage buffer.
    * @return The head of the internal history storage buffer to be written to.
-   * @note Depends on the virtual function resizeBuffer() being implemented correctly in
-   *        an inheriting class.
    */
   virtual buffer_unit_type * getBufferHead() = 0;
 
   /**
    * @brief Perform and intialization needed for time-history output.
-   * @param existsOkay Whether it is acceptable for the intended output target to already exist ( false on start from scratch, true on
-   *                    restart ).
+   * @param[in] existsOkay Whether it is acceptable for the intended output target to already exist
+   *                       ( false on start from scratch, true on restart ).
    */
   virtual void init( bool existsOkay ) = 0;
 
@@ -69,9 +67,9 @@ public:
    * @note Since the size of each discrete time history can change, this should not be used
    *       to calculate size, but is useful to check for consistency between collectors
    *       that should be operating at the same cadence (ie the time collector and the data collector).
-   * @note Also, note that this member function is related to restarting HDF5 files.
-   *       Which means that getting this information popping through the abstract interface
-   *       is a shortcut that should eventually be fixed by keeping this information in the HDF5 buffer.
+   * @deprecated Also, note that this member function is related to restarting HDF5 files.
+   *             Which means that getting this information popping through the abstract interface
+   *             is a shortcut that should eventually be fixed by keeping this information in the HDF5 buffer.
    */
   virtual localIndex getBufferedCount() = 0;
 };

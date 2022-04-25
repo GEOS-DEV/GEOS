@@ -58,11 +58,11 @@ public:
 
   HistoryCollection & getMetaDataCollector( localIndex metaIdx ) override;
 
+#if defined(GEOSX_USE_PYGEOSX)
   /**
    * @brief Return PyHistoryCollection type.
    * @return Return PyHistoryCollection type.
    */
-#if defined(GEOSX_USE_PYGEOSX)
   virtual PyTypeObject * getPythonType() const override
   { return python::getPyHistoryCollectionType(); }
 #endif
@@ -80,8 +80,8 @@ protected:
 
   /**
    * @brief Retrieve the target object from the data repository.
-   * @param domain The DomainPartition of the problem.
-   * @param objectPath The data repo path of the target object.
+   * @param[in] domain The DomainPartition of the problem.
+   * @param[in] objectPath The data repo path of the target object.
    * @return The target object as a Group
    * @note If the object path is absolute this returns the target object by calling getGroupByPath. If the
    *        object path is relative, it searches relative to the mesh in the same way the fieldSpecification does,
@@ -91,9 +91,9 @@ protected:
 
   /**
    * @brief Collect history information into the provided buffer. Typically called from HistoryCollection::execute .
-   * @param domain The DomainPartition to collect time history on.
-   * @param collectionIdx The index of the collection operation to collect from the targeted collection event.
-   * @param buffer A properly-sized buffer to serialize history data into.
+   * @param[in] domain The DomainPartition to collect time history on.
+   * @param[in] collectionIdx The index of the collection operation to collect from the targeted collection event.
+   * @param[in,out] buffer A properly-sized buffer to serialize history data into.
    */
   virtual void collect( DomainPartition const & domain,
                         localIndex const collectionIdx,

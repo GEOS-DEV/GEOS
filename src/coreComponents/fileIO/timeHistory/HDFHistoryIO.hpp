@@ -34,15 +34,15 @@ class HDFHistoryIO : public BufferedHistoryIO
 public:
   /**
    * @brief Constructor
-   * @param filename The filename to perform history output to.
-   * @param rank The rank of the history data being collected.
-   * @param dims The dimensional extent for each dimension of the history data being collected.
-   * @param name The name to use to create/modify the dataset for the history data.
-   * @param typeId The std::type_index(typeid(T)) of the underlying data type.
-   * @param writeHead How many time history states have been written to the file (used on restart and to compress data on exit).
-   * @param initAlloc How many states to preallocate the internal buffer to hold.
-   * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
-   * @param comm A communicator where every rank will participate in writting to the output file.
+   * @param[in] filename The filename to perform history output to.
+   * @param[in] rank The rank of the history data being collected.
+   * @param[in] dims The dimensional extent for each dimension of the history data being collected.
+   * @param[in] name The name to use to create/modify the dataset for the history data.
+   * @param[in] typeId The std::type_index(typeid(T)) of the underlying data type.
+   * @param[in] writeHead How many time history states have been written to the file (used on restart and to compress data on exit).
+   * @param[in] initAlloc How many states to preallocate the internal buffer to hold.
+   * @param[in] overallocMultiple Integer to scale the internal buffer when we fill the existing space.
+   * @param[in] comm A communicator where every rank will participate in writting to the output file.
    */
   HDFHistoryIO( string const & filename,
                 localIndex rank,
@@ -56,12 +56,12 @@ public:
 
   /**
    * @brief Constructor
-   * @param filename The filename to perform history output to.
-   * @param spec HistoryMetadata to use to call the other constructor.
-   * @param writeHead How many time states have been written to the file (used on restart and to compress data on exit).
-   * @param initAlloc How many states to preallocate the internal buffer to hold.
-   * @param overallocMultiple Integer to scale the internal buffer when we fill the existing space.
-   * @param comm A communicator where every rank will participate in writing to the output file.
+   * @param[in] filename The filename to perform history output to.
+   * @param[in] spec HistoryMetadata to use to call the other constructor.
+   * @param[in] writeHead How many time states have been written to the file (used on restart and to compress data on exit).
+   * @param[in] initAlloc How many states to preallocate the internal buffer to hold.
+   * @param[in] overallocMultiple Integer to scale the internal buffer when we fill the existing space.
+   * @param[in] comm A communicator where every rank will participate in writing to the output file.
    */
   HDFHistoryIO( string const & filename,
                 const HistoryMetadata & spec,
@@ -113,22 +113,22 @@ private:
 
   /**
    * @brief Setup the parallel 'partitioning' of the data to allow dynamically sized output over time
-   * @param localIdxCount The number of pieces of data associated with the local rank
+   * @param[in] localIdxCount The number of pieces of data associated with the local rank
    * @note This is collective over the communicator provided in the constructor
    */
   void setupPartition( globalIndex localIdxCount );
 
   /**
    * @brief Update the extent of the dataset in the target file.
-   * @param rowLimit The new discrete 'row' count (the first output dim) to extend the extent to.
+   * @param[in] rowLimit The new discrete 'row' count (the first output dim) to extend the extent to.
    * @note The second dimension is set to the global index highwater ( the largest number of output
-   *        pieces of data encountered during execution ).
+   *       pieces of data encountered during execution ).
    */
   void updateDatasetExtent( hsize_t rowLimit );
 
   /**
    * @brief Resize the dataspace in the target file if needed to perform the current write of buffered states.
-   * @param bufferedCount The number of buffered states to use to determine if the file needs to be resized.
+   * @param[in] bufferedCount The number of buffered states to use to determine if the file needs to be resized.
    */
   void resizeFileIfNeeded( localIndex bufferedCount );
 
