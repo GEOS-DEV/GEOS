@@ -789,7 +789,7 @@ struct SolutionScalingKernel
         // with active rate control, but is useless otherwise
         real64 const pres = wellElemPres[iwelem];
         real64 const absPresChange = LvArray::math::abs( localSolution[wellElemDofNumber[iwelem] - rankOffset] );
-        if( pres < eps )
+        if( pres > eps )
         {
           real64 const relativePresChange = LvArray::math::abs( absPresChange ) / pres;
           if( relativePresChange > maxRelativePresChange )

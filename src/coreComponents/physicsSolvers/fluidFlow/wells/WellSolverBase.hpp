@@ -238,7 +238,7 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updatePerforationRates( DomainPartition & domain ) = 0;
+  virtual void computePerforationRates( DomainPartition & domain ) = 0;
 
   /**
    * @brief Backup current values of all constitutive fields that participate in the accumulation term

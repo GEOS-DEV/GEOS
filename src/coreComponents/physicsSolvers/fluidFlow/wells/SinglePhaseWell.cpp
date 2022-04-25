@@ -575,7 +575,7 @@ void SinglePhaseWell::assembleVolumeBalanceTerms( DomainPartition const & GEOSX_
   // not implemented for single phase flow
 }
 
-void SinglePhaseWell::updatePerforationRates( DomainPartition & domain )
+void SinglePhaseWell::computePerforationRates( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -792,8 +792,6 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
 
   } );
 
-  // update properties
-  updateState( domain );
 }
 
 void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
@@ -821,11 +819,10 @@ void SinglePhaseWell::resetStateToBeginningOfStep( DomainPartition & domain )
       arrayView1d< real64 const > const & connRate_n =
         subRegion.getExtrinsicData< extrinsicMeshData::well::connectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
+
+      updateSubRegionState( subRegion );
     } );
   } );
-
-  // call constitutive models
-  updateState( domain );
 }
 
 

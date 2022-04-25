@@ -147,7 +147,7 @@ public:
    * @brief Recompute the perforation rates for all the wells
    * @param domain the domain containing the mesh and fields
    */
-  virtual void updatePerforationRates( DomainPartition & domain ) override;
+  virtual void computePerforationRates( DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well

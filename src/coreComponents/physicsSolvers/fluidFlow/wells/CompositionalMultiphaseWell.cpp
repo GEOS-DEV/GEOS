@@ -926,6 +926,7 @@ void CompositionalMultiphaseWell::initializeWells( DomainPartition & domain )
                 wellElemTotalDens,
                 connRate );
     } );
+
   } );
 }
 
@@ -1291,7 +1292,7 @@ CompositionalMultiphaseWell::checkSystemSolution( DomainPartition const & domain
   return MpiWrapper::min( localCheck );
 }
 
-void CompositionalMultiphaseWell::updatePerforationRates( DomainPartition & domain )
+void CompositionalMultiphaseWell::computePerforationRates( DomainPartition & domain )
 {
   GEOSX_MARK_FUNCTION;
 
@@ -1517,11 +1518,10 @@ void CompositionalMultiphaseWell::resetStateToBeginningOfStep( DomainPartition &
       arrayView1d< real64 const > const & connRate_n =
         subRegion.getExtrinsicData< extrinsicMeshData::well::mixtureConnectionRate_n >();
       connRate.setValues< parallelDevicePolicy<> >( connRate_n );
+
+      updateSubRegionState( subRegion );
     } );
   } );
-
-  // call constitutive models
-  updateState( domain );
 }
 
 void CompositionalMultiphaseWell::backupFields( MeshLevel & mesh, arrayView1d< string const > const & regionNames ) const
