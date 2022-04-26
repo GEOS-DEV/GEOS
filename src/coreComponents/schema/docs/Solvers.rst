@@ -7,7 +7,6 @@ gravityVector                             R1Tensor {0,0,-9.81} Gravity vector us
 AcousticSEM                               node                 :ref:`XML_AcousticSEM`                               
 CompositionalMultiphaseFVM                node                 :ref:`XML_CompositionalMultiphaseFVM`                
 CompositionalMultiphaseHybridFVM          node                 :ref:`XML_CompositionalMultiphaseHybridFVM`          
-CompositionalMultiphaseReservoir          node                 :ref:`XML_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseReservoirFVM       node                 :ref:`XML_CompositionalMultiphaseReservoirFVM`       
 CompositionalMultiphaseReservoirHybridFVM node                 :ref:`XML_CompositionalMultiphaseReservoirHybridFVM` 
 CompositionalMultiphaseWell               node                 :ref:`XML_CompositionalMultiphaseWell`               
@@ -25,7 +24,6 @@ SinglePhaseHybridFVM                      node                 :ref:`XML_SingleP
 SinglePhasePoromechanics                  node                 :ref:`XML_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
-SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      
 SinglePhaseReservoirFVM                   node                 :ref:`XML_SinglePhaseReservoirFVM`                   
 SinglePhaseReservoirHybridFVM             node                 :ref:`XML_SinglePhaseReservoirHybridFVM`             
 SinglePhaseWell                           node                 :ref:`XML_SinglePhaseWell`                           

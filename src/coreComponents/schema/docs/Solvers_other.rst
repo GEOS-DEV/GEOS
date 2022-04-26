@@ -6,7 +6,6 @@ Name                                      Type Description
 AcousticSEM                               node :ref:`DATASTRUCTURE_AcousticSEM`                               
 CompositionalMultiphaseFVM                node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                
 CompositionalMultiphaseHybridFVM          node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`          
-CompositionalMultiphaseReservoir          node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`          
 CompositionalMultiphaseReservoirFVM       node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirFVM`       
 CompositionalMultiphaseReservoirHybridFVM node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirHybridFVM` 
 CompositionalMultiphaseWell               node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`               
@@ -24,7 +23,6 @@ SinglePhaseHybridFVM                      node :ref:`DATASTRUCTURE_SinglePhaseHy
 SinglePhasePoromechanics                  node :ref:`DATASTRUCTURE_SinglePhasePoromechanics`                  
 SinglePhasePoromechanicsEmbeddedFractures node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                    
-SinglePhaseReservoir                      node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                      
 SinglePhaseReservoirFVM                   node :ref:`DATASTRUCTURE_SinglePhaseReservoirFVM`                   
 SinglePhaseReservoirHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseReservoirHybridFVM`             
 SinglePhaseWell                           node :ref:`DATASTRUCTURE_SinglePhaseWell`                           

@@ -162,13 +162,6 @@ Element: CompositionalMultiphaseHybridFVM
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseHybridFVM.rst
 
 
-.. _XML_CompositionalMultiphaseReservoir:
-
-Element: CompositionalMultiphaseReservoir
-=========================================
-.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
-
-
 .. _XML_CompositionalMultiphaseReservoirFVM:
 
 Element: CompositionalMultiphaseReservoirFVM
@@ -806,13 +799,6 @@ Element: SinglePhaseProppantFVM
 .. include:: ../../coreComponents/schema/docs/SinglePhaseProppantFVM.rst
 
 
-.. _XML_SinglePhaseReservoir:
-
-Element: SinglePhaseReservoir
-=============================
-.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
-
-
 .. _XML_SinglePhaseReservoirFVM:
 
 Element: SinglePhaseReservoirFVM
@@ -1200,13 +1186,6 @@ Datastructure: CompositionalMultiphaseFluid
 Datastructure: CompositionalMultiphaseHybridFVM
 ===============================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseHybridFVM_other.rst
-
-
-.. _DATASTRUCTURE_CompositionalMultiphaseReservoir:
-
-Datastructure: CompositionalMultiphaseReservoir
-===============================================
-.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseReservoirFVM:
@@ -1872,13 +1851,6 @@ Datastructure: SinglePhasePoromechanicsEmbeddedFractures
 Datastructure: SinglePhaseProppantFVM
 =====================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseProppantFVM_other.rst
-
-
-.. _DATASTRUCTURE_SinglePhaseReservoir:
-
-Datastructure: SinglePhaseReservoir
-===================================
-.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseReservoirFVM:
