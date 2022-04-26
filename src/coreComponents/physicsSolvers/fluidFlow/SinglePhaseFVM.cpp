@@ -181,7 +181,7 @@ void SinglePhaseFVM< BASE >::applySystemSolution( DofManager const & dofManager,
   {
     FieldIdentifiers fieldsToBeSync;
     
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames )
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );

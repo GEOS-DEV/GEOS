@@ -20,6 +20,7 @@
 #define GEOSX_MESH_MPICOMMUNICATIONS_MPICOMMUNICATIONUTILS_HPP_
 
 #include "common/DataTypes.hpp"
+#include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
@@ -28,19 +29,27 @@ class FieldIdentifiers
 {
   public: 
   
-  void addFields( FieldLocation const location, std::vector<string> const fieldNames )
+  void addFields( FieldLocation const location, std::vector<string> const & fieldNames )
   {
-    string const key = generateKey(location);
+    string key;
+    generateKey(location, key);
     addFields(fieldNames, key);
   }
 
-  void addElementFields( std::vector<string> const fieldNames, std::vector<string> const regionNames )
+  void addElementFields( std::vector<string> const & fieldNames, std::vector<string> const & regionNames )
   {
     for (string const & regionName : regionNames)
     {
-      string const key = generateKey( regionName );
+      string key;
+      generateKey( regionName, key );
       addFields(fieldNames, key);
     }
+  }
+
+  void addElementFields( std::vector<string> const & fieldNames, arrayView1d< string const > const & regionNames )
+  {
+    std::vector<string> regions(regionNames.begin(), regionNames.end());
+    addElementFields( fieldNames, regions );
   }
 
   std::map< string, array1d<string> > const & getFields() const
@@ -48,32 +57,34 @@ class FieldIdentifiers
     return m_fields;
   }
   
-  static string const getRegionName( string const & key )
+  string getRegionName( string const & key ) const
   {
     string regionName(key);
-    regionName.erase(0, locationKeys.elemsKey().length());
+    regionName.erase(0, std::string(m_locationKeys.elemsKey()).length());
     return regionName;
   }
 
-  static FieldLocation const getLocation( string const & key )
+   void getLocation( string const & key,
+                     FieldLocation & location ) const
   {
-    FiedlLocation location;
-    if (key.contains(locationKeys.nodesKey()))
+    if (key.find(m_locationKeys.nodesKey() ) != string::npos )
     {
       location = FieldLocation::Node;
-    }else if ( key.contains(locationKeys.edgesKey()) )
+    }else if ( key.find(m_locationKeys.edgesKey()) != string::npos )
     {
       location = FieldLocation::Edge;
     }
-    else if ( key.contains(locationKeys.facesKey()) )
+    else if ( key.find(m_locationKeys.facesKey()) != string::npos )
     {
       location = FieldLocation::Face;
     }
-    else if ( key.contains(locationKeys.elemsKey()) )
+    else if ( key.find(m_locationKeys.elemsKey()) != string::npos )
     {
       location = FieldLocation::Elem;
+    }else
+    {
+      GEOSX_ERROR("Invalid key was provided, location cannot be retrieved.");
     }
-    return location;
   }
 
   private:
@@ -90,48 +101,47 @@ class FieldIdentifiers
     static constexpr char const * facesKey() { return "faces"; }
     /// @return String key 
     static constexpr char const * elemsKey() { return "elems/"; }
-  } locationKeys;
+  } m_locationKeys;
 
-  static string const generateKey( FieldLocation const location ) const
+  void generateKey( FieldLocation const location,
+                    string & key ) const
   
   {
-    string key;
     switch(location)
     {
       case FieldLocation::Node:
       {
-        key = locationKeys.nodesKey(); 
+        key = m_locationKeys.nodesKey(); 
         break;
       }
       case FieldLocation::Edge:
       {
-       key = locationKeys.edgesKey();
+       key = m_locationKeys.edgesKey();
         break;
       }
       case FieldLocation::Face:
       {
-        key = locationKeys.facesKey();
+        key = m_locationKeys.facesKey();
         break;
       }
       case FieldLocation::Elem:
       {
-        GEOSX_ERROR("An element located field also requires a region name to be specified.")
+        GEOSX_ERROR("An element located field also requires a region name to be specified.");
         break;
       } 
-      return key;
     }
   }
 
-  static string const generateKey( string const regionName ) const
+  void generateKey( string regionName, string & key ) const
   {
-      return strcat(locationKeys.elemsKey(), regionName);
+      key = stringutilities::concat(m_locationKeys.elemsKey(), regionName);
   }
 
   void addFields(std::vector<string> const fieldNames, string const key)
   {
-    for ( auto const & field : filedNames )
+    for ( string const & field : fieldNames )
     {
-      fields[key].emplace_back(field);
+      m_fields[key].emplace_back(field);
     }
   }
 };

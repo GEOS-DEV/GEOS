@@ -1069,7 +1069,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
     } );
 
     {
-      FieldIdentifier fieldsToBeSync;
+      FieldIdentifiers fieldsToBeSync;
       fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(),
                                          extrinsicMeshData::proppant::proppantPackVolumeFraction::key(),
                                          extrinsicMeshData::proppant::proppantExcessPackVolume::key(),
@@ -1103,7 +1103,7 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
         
       fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(), 
                                          extrinsicMeshData::proppant::proppantPackVolumeFraction::key() },
-                                         regionNames )
+                                         regionNames );
 
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
     }

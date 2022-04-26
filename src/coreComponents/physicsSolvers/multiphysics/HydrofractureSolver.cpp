@@ -210,15 +210,14 @@ real64 HydrofractureSolver::solverStep( real64 const & time_n,
       {
         FieldIdentifiers fieldsToBeSync;
 
-        fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::pressure::key(),
-                                           extrinsicMeshData::contact::pressure_n::key(),
+        fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
+                                           extrinsicMeshData::flow::pressure_n::key(),
                                            "elementAperture" },
-                                           { getFractureRegionName() } );
+                                           { m_surfaceGenerator->getFractureRegionName() } );
 
         fieldsToBeSync.addFields( FieldLocation::Node, 
                                   { keys::IncrementalDisplacement,
-                                    keys::TotalDisplacement }
-                                    m_targetRegionNames );                                   
+                                    keys::TotalDisplacement } );                                   
         
         CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                              domain.getMeshBody( 0 ).getMeshLevel( 0 ),

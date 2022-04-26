@@ -500,39 +500,40 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
 
   for ( auto const & iter : fieldsToBeSync.getFields() ) 
   {
-     switch( fieldsToBeSync.getLocation(iter->first) )
+    FieldLocation location;
+    fieldsToBeSync.getLocation(iter.first, location);
+    switch( location )
     {
       case FieldLocation::Node:
       {
-        bufferSize += nodeManager.packSize( iter->second, nodeGhostsToSend, 0, onDevice, events );
+        bufferSize += nodeManager.packSize( iter.second, nodeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        bufferSize += edgeManager.packSize( iter->second, edgeGhostsToSend, 0, onDevice, events );
+        bufferSize += edgeManager.packSize( iter.second, edgeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        bufferSize += faceManager.packSize( iter->second, faceGhostsToSend, 0, onDevice, events );
+        bufferSize += faceManager.packSize( iter.second, faceGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
-        elemManager.getRegion( fieldsToBeSync.getRegionName( iter->first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
         {
-          bufferSize += subRegion.packSize( iter->second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          bufferSize += subRegion.packSize( iter.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
         break;
       }
+   }
   }
-
   this->m_sendBufferSize[commID] = bufferSize;
   return bufferSize;
 }
 
-
-void NeighborCommunicator::packCommBufferForSync( SyncFieldsID const & fieldsToBeSync,
+void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & fieldsToBeSync,
                                                   MeshLevel const & mesh,
                                                   int const commID,
                                                   bool onDevice,
@@ -557,28 +558,30 @@ void NeighborCommunicator::packCommBufferForSync( SyncFieldsID const & fieldsToB
 
   for ( auto const & iter : fieldsToBeSync.getFields() ) 
   {
-    switch( fieldsToBeSync.getLocation(iter->first) )
+    FieldLocation location;
+    fieldsToBeSync.getLocation(iter.first, location);
+    switch( location )
     {
       case FieldLocation::Node:
       {
-        packedSize += nodeManager.pack( sendBufferPtr, iter->second, nodeGhostsToSend, 0, onDevice, events );
+        packedSize += nodeManager.pack( sendBufferPtr, iter.second, nodeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Edge:
       {
-        packedSize += edgeManager.pack( sendBufferPtr, iter->second, edgeGhostsToSend, 0, onDevice, events );
+        packedSize += edgeManager.pack( sendBufferPtr, iter.second, edgeGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Face:
       {
-        packedSize += faceManager.pack( sendBufferPtr, iter->second, faceGhostsToSend, 0, onDevice, events );
+        packedSize += faceManager.pack( sendBufferPtr, iter.second, faceGhostsToSend, 0, onDevice, events );
         break;
       }
       case FieldLocation::Elem:
       {
-        elemManager.getRegion( fieldsToBeSync.getRegionName( iter->first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
         {
-          packedSize += subRegion.pack( sendBufferPtr, iter->second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
+          packedSize += subRegion.pack( sendBufferPtr, iter.second, subRegion.getNeighborData( m_neighborRank ).ghostsToSend(), 0, onDevice, events );
         } );
         break;
       }
@@ -613,7 +616,9 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
 
   for ( auto const & iter : fieldsToBeSync.getFields() ) 
   {
-    switch( fieldsToBeSync.getLocation(iter->first) )
+    FieldLocation location;
+    fieldsToBeSync.getLocation(iter.first, location);
+    switch( location )
     {
       case FieldLocation::Node:
       {
@@ -632,7 +637,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
       }
       case FieldLocation::Elem:
       {
-        elemManager.getRegion( fieldsToBeSync.getRegionName( iter->first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase const & subRegion )
+        elemManager.getRegion( fieldsToBeSync.getRegionName( iter.first ) ).forElementSubRegions< ElementSubRegionBase >( [&]( ElementSubRegionBase & subRegion )
         {
           unpackedSize += subRegion.unpack( receiveBufferPtr, subRegion.getNeighborData( m_neighborRank ).ghostsToReceive(), 0, onDevice, events );
         } );
@@ -641,4 +646,7 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
     }
   }
 }
+
+
+
 } /* namespace geosx */
