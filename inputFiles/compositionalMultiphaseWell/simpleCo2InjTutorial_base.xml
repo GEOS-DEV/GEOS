@@ -8,7 +8,7 @@
 
   <!-- SPHINX_FIELD_CASE_Co2_SOLVER -->
   <Solvers>
-    <CompositionalMultiphaseReservoir
+    <CompositionalMultiphaseReservoirFVM
       name="coupledFlowAndWells"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
@@ -26,7 +26,7 @@
         krylovTol="1e-4"
         krylovAdaptiveTol="1"
         krylovWeakestTol="1e-2"/>
-    </CompositionalMultiphaseReservoir>
+    </CompositionalMultiphaseReservoirFVM>
 
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"

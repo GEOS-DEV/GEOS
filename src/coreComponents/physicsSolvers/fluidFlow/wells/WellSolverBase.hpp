@@ -152,6 +152,14 @@ public:
                                      real64 const & GEOSX_UNUSED_PARAM( dt ),
                                      DomainPartition & GEOSX_UNUSED_PARAM( domain ) ) override {}
 
+  virtual void applyBoundaryConditions( real64 const GEOSX_UNUSED_PARAM( time_n ),
+                                        real64 const GEOSX_UNUSED_PARAM( dt ),
+                                        DomainPartition & GEOSX_UNUSED_PARAM( domain ),
+                                        DofManager const & GEOSX_UNUSED_PARAM( dofManager ),
+                                        CRSMatrixView< real64, globalIndex const > const & GEOSX_UNUSED_PARAM( localMatrix ),
+                                        arrayView1d< real64 > const & GEOSX_UNUSED_PARAM( localRhs ) ) override {}
+
+
   /**@}*/
 
   /**

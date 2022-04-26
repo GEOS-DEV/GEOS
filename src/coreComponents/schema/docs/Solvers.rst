@@ -8,6 +8,8 @@ AcousticSEM                               node                 :ref:`XML_Acousti
 CompositionalMultiphaseFVM                node                 :ref:`XML_CompositionalMultiphaseFVM`                
 CompositionalMultiphaseHybridFVM          node                 :ref:`XML_CompositionalMultiphaseHybridFVM`          
 CompositionalMultiphaseReservoir          node                 :ref:`XML_CompositionalMultiphaseReservoir`          
+CompositionalMultiphaseReservoirFVM       node                 :ref:`XML_CompositionalMultiphaseReservoirFVM`       
+CompositionalMultiphaseReservoirHybridFVM node                 :ref:`XML_CompositionalMultiphaseReservoirHybridFVM` 
 CompositionalMultiphaseWell               node                 :ref:`XML_CompositionalMultiphaseWell`               
 EmbeddedSurfaceGenerator                  node                 :ref:`XML_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node                 :ref:`XML_FlowProppantTransport`                     
@@ -24,6 +26,8 @@ SinglePhasePoromechanics                  node                 :ref:`XML_SingleP
 SinglePhasePoromechanicsEmbeddedFractures node                 :ref:`XML_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node                 :ref:`XML_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node                 :ref:`XML_SinglePhaseReservoir`                      
+SinglePhaseReservoirFVM                   node                 :ref:`XML_SinglePhaseReservoirFVM`                   
+SinglePhaseReservoirHybridFVM             node                 :ref:`XML_SinglePhaseReservoirHybridFVM`             
 SinglePhaseWell                           node                 :ref:`XML_SinglePhaseWell`                           
 SolidMechanicsEmbeddedFractures           node                 :ref:`XML_SolidMechanicsEmbeddedFractures`           
 SolidMechanicsLagrangianSSLE              node                 :ref:`XML_SolidMechanicsLagrangianSSLE`              

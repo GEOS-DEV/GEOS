@@ -59,10 +59,6 @@ public:
 
   virtual void registerDataOnMesh( Group & MeshBodies ) override;
 
-  void setPoroElasticCoupling() { m_poroElasticFlag = 1; }
-
-  void setReservoirWellsCoupling() { m_coupledWellsFlag = 1; }
-
   localIndex numDofPerCell() const { return m_numDofPerCell; }
 
   struct viewKeyStruct : SolverBase::viewKeyStruct
@@ -121,12 +117,6 @@ protected:
   virtual void initializePostInitialConditionsPreSubGroups() override;
 
   virtual void setConstitutiveNamesCallSuper( ElementSubRegionBase & subRegion ) const override;
-
-  /// flag to determine whether or not coupled with solid solver
-  integer m_poroElasticFlag;
-
-  /// flag to determine whether or not coupled with wells
-  integer m_coupledWellsFlag;
 
   /// the number of Degrees of Freedom per cell
   integer m_numDofPerCell;

@@ -1,9 +1,8 @@
 <?xml version="1.0" ?>
 
 <Problem>
-  <Solvers
-    gravityVector="{ 0.0, 0.0, -9.81 }">
-    <CompositionalMultiphaseReservoir
+  <Solvers>
+    <CompositionalMultiphaseReservoirHybridFVM
       name="reservoirSystem"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
@@ -13,7 +12,7 @@
         newtonMaxIter="40"/>
       <LinearSolverParameters
         directParallel="0"/>
-    </CompositionalMultiphaseReservoir>
+    </CompositionalMultiphaseReservoirHybridFVM>
 
     <CompositionalMultiphaseHybridFVM
       name="compositionalMultiphaseFlow"

@@ -169,6 +169,20 @@ Element: CompositionalMultiphaseReservoir
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir.rst
 
 
+.. _XML_CompositionalMultiphaseReservoirFVM:
+
+Element: CompositionalMultiphaseReservoirFVM
+============================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirFVM.rst
+
+
+.. _XML_CompositionalMultiphaseReservoirHybridFVM:
+
+Element: CompositionalMultiphaseReservoirHybridFVM
+==================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirHybridFVM.rst
+
+
 .. _XML_CompositionalMultiphaseWell:
 
 Element: CompositionalMultiphaseWell
@@ -799,6 +813,20 @@ Element: SinglePhaseReservoir
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir.rst
 
 
+.. _XML_SinglePhaseReservoirFVM:
+
+Element: SinglePhaseReservoirFVM
+================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirFVM.rst
+
+
+.. _XML_SinglePhaseReservoirHybridFVM:
+
+Element: SinglePhaseReservoirHybridFVM
+======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirHybridFVM.rst
+
+
 .. _XML_SinglePhaseWell:
 
 Element: SinglePhaseWell
@@ -1179,6 +1207,20 @@ Datastructure: CompositionalMultiphaseHybridFVM
 Datastructure: CompositionalMultiphaseReservoir
 ===============================================
 .. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirFVM:
+
+Datastructure: CompositionalMultiphaseReservoirFVM
+==================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirFVM_other.rst
+
+
+.. _DATASTRUCTURE_CompositionalMultiphaseReservoirHybridFVM:
+
+Datastructure: CompositionalMultiphaseReservoirHybridFVM
+========================================================
+.. include:: ../../coreComponents/schema/docs/CompositionalMultiphaseReservoirHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_CompositionalMultiphaseWell:
@@ -1837,6 +1879,20 @@ Datastructure: SinglePhaseProppantFVM
 Datastructure: SinglePhaseReservoir
 ===================================
 .. include:: ../../coreComponents/schema/docs/SinglePhaseReservoir_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoirFVM:
+
+Datastructure: SinglePhaseReservoirFVM
+======================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirFVM_other.rst
+
+
+.. _DATASTRUCTURE_SinglePhaseReservoirHybridFVM:
+
+Datastructure: SinglePhaseReservoirHybridFVM
+============================================
+.. include:: ../../coreComponents/schema/docs/SinglePhaseReservoirHybridFVM_other.rst
 
 
 .. _DATASTRUCTURE_SinglePhaseWell:

@@ -22,8 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
-#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoir.hpp"
+#include "physicsSolvers/multiphysics/CompositionalMultiphaseReservoirAndWells.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWell.hpp"
 #include "physicsSolvers/fluidFlow/wells/CompositionalMultiphaseWellKernels.hpp"
@@ -40,7 +39,7 @@ CommandLineOptions g_commandLineOptions;
 char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
-  "    <CompositionalMultiphaseReservoir name=\"reservoirSystem\"\n"
+  "    <CompositionalMultiphaseReservoirFVM name=\"reservoirSystem\"\n"
   "               flowSolverName=\"compositionalMultiphaseFlow\"\n"
   "               wellSolverName=\"compositionalMultiphaseWell\"\n"
   "               logLevel=\"1\"\n"
@@ -48,7 +47,7 @@ char const * xmlInput =
   "      <NonlinearSolverParameters newtonMaxIter=\"40\"/>\n"
   "      <LinearSolverParameters solverType=\"direct\"\n"
   "                              logLevel=\"2\"/>\n"
-  "    </CompositionalMultiphaseReservoir>\n"
+  "    </CompositionalMultiphaseReservoirFVM>\n"
   "    <CompositionalMultiphaseFVM name=\"compositionalMultiphaseFlow\"\n"
   "                                logLevel=\"1\"\n"
   "                                discretization=\"fluidTPFA\"\n"
@@ -197,14 +196,14 @@ char const * xmlInput =
 
 
 template< typename LAMBDA >
-void testNumericalJacobian( CompositionalMultiphaseReservoir & solver,
+void testNumericalJacobian( CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseFVM > & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  CompositionalMultiphaseWell & wellSolver = dynamicCast< CompositionalMultiphaseWell & >( *solver.getWellSolver() );
-  CompositionalMultiphaseFVM & flowSolver = dynamicCast< CompositionalMultiphaseFVM & >( *solver.getFlowSolver() );
+  CompositionalMultiphaseWell & wellSolver = *solver.getWellSolver();
+  CompositionalMultiphaseFVM & flowSolver = *solver.getReservoirSolver();
 
   localIndex const NC = flowSolver.numFluidComponents();
 
@@ -483,7 +482,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoir >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseFVM > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -501,7 +500,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  CompositionalMultiphaseReservoir * solver;
+  CompositionalMultiphaseReservoirAndWells< CompositionalMultiphaseFVM > * solver;
 };
 
 real64 constexpr CompositionalMultiphaseReservoirSolverTest::time;

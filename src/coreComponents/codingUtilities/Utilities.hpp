@@ -255,7 +255,7 @@ void forEachArgInTuple( std::tuple< Ts ... > const & tuple, F && func )
  * @return the integer conversion of @p value
  */
 template< typename ENUMERATION >
-std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
+constexpr std::underlying_type_t< ENUMERATION > toUnderlying( ENUMERATION const value )
 {
   return static_cast< std::underlying_type_t< ENUMERATION > >( value );
 }

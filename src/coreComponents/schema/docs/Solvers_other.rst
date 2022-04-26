@@ -7,6 +7,8 @@ AcousticSEM                               node :ref:`DATASTRUCTURE_AcousticSEM`
 CompositionalMultiphaseFVM                node :ref:`DATASTRUCTURE_CompositionalMultiphaseFVM`                
 CompositionalMultiphaseHybridFVM          node :ref:`DATASTRUCTURE_CompositionalMultiphaseHybridFVM`          
 CompositionalMultiphaseReservoir          node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoir`          
+CompositionalMultiphaseReservoirFVM       node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirFVM`       
+CompositionalMultiphaseReservoirHybridFVM node :ref:`DATASTRUCTURE_CompositionalMultiphaseReservoirHybridFVM` 
 CompositionalMultiphaseWell               node :ref:`DATASTRUCTURE_CompositionalMultiphaseWell`               
 EmbeddedSurfaceGenerator                  node :ref:`DATASTRUCTURE_EmbeddedSurfaceGenerator`                  
 FlowProppantTransport                     node :ref:`DATASTRUCTURE_FlowProppantTransport`                     
@@ -23,6 +25,8 @@ SinglePhasePoromechanics                  node :ref:`DATASTRUCTURE_SinglePhasePo
 SinglePhasePoromechanicsEmbeddedFractures node :ref:`DATASTRUCTURE_SinglePhasePoromechanicsEmbeddedFractures` 
 SinglePhaseProppantFVM                    node :ref:`DATASTRUCTURE_SinglePhaseProppantFVM`                    
 SinglePhaseReservoir                      node :ref:`DATASTRUCTURE_SinglePhaseReservoir`                      
+SinglePhaseReservoirFVM                   node :ref:`DATASTRUCTURE_SinglePhaseReservoirFVM`                   
+SinglePhaseReservoirHybridFVM             node :ref:`DATASTRUCTURE_SinglePhaseReservoirHybridFVM`             
 SinglePhaseWell                           node :ref:`DATASTRUCTURE_SinglePhaseWell`                           
 SolidMechanicsEmbeddedFractures           node :ref:`DATASTRUCTURE_SolidMechanicsEmbeddedFractures`           
 SolidMechanicsLagrangianSSLE              node :ref:`DATASTRUCTURE_SolidMechanicsLagrangianSSLE`              

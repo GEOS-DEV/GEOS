@@ -22,8 +22,7 @@
 #include "mainInterface/GeosxState.hpp"
 #include "mesh/WellElementSubRegion.hpp"
 #include "physicsSolvers/PhysicsSolverManager.hpp"
-#include "physicsSolvers/multiphysics/ReservoirSolverBase.hpp"
-#include "physicsSolvers/multiphysics/SinglePhaseReservoir.hpp"
+#include "physicsSolvers/multiphysics/SinglePhaseReservoirAndWells.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseBase.hpp"
 #include "physicsSolvers/fluidFlow/SinglePhaseFVM.hpp"
 #include "physicsSolvers/fluidFlow/wells/SinglePhaseWell.hpp"
@@ -41,7 +40,7 @@ CommandLineOptions g_commandLineOptions;
 char const * xmlInput =
   "<Problem>\n"
   "  <Solvers gravityVector=\"{ 0.0, 0.0, -9.81 }\">\n"
-  "    <SinglePhaseReservoir name=\"reservoirSystem\"\n"
+  "    <SinglePhaseReservoirFVM name=\"reservoirSystem\"\n"
   "               flowSolverName=\"singlePhaseFlow\"\n"
   "               wellSolverName=\"singlePhaseWell\"\n"
   "               logLevel=\"1\"\n"
@@ -49,7 +48,7 @@ char const * xmlInput =
   "      <NonlinearSolverParameters newtonMaxIter=\"40\"/>\n"
   "      <LinearSolverParameters solverType=\"direct\"\n"
   "                              logLevel=\"2\"/>\n"
-  "    </SinglePhaseReservoir>\n"
+  "    </SinglePhaseReservoirFVM>\n"
   "    <SinglePhaseFVM name=\"singlePhaseFlow\"\n"
   "                             logLevel=\"1\"\n"
   "                             discretization=\"singlePhaseTPFA\"\n"
@@ -153,14 +152,14 @@ char const * xmlInput =
   "</Problem>";
 
 template< typename LAMBDA >
-void testNumericalJacobian( SinglePhaseReservoir & solver,
+void testNumericalJacobian( SinglePhaseReservoirAndWells< SinglePhaseFVM< SinglePhaseBase > > & solver,
                             DomainPartition & domain,
                             real64 const perturbParameter,
                             real64 const relTol,
                             LAMBDA && assembleFunction )
 {
-  SinglePhaseWell & wellSolver = dynamicCast< SinglePhaseWell & >( *solver.getWellSolver() );
-  SinglePhaseFVM< SinglePhaseBase > & flowSolver = dynamicCast< SinglePhaseFVM< SinglePhaseBase > & >( *solver.getFlowSolver() );
+  SinglePhaseWell & wellSolver = *solver.getWellSolver();
+  SinglePhaseFVM< SinglePhaseBase > & flowSolver = *solver.getReservoirSolver();
 
   CRSMatrix< real64, globalIndex > const & jacobian = solver.getLocalMatrix();
   array1d< real64 > residual( jacobian.numRows() );
@@ -197,7 +196,6 @@ void testNumericalJacobian( SinglePhaseReservoir & solver,
     meshBody.forMeshLevels( [&] ( MeshLevel & mesh )
     {
       ElementRegionManager & elemManager = mesh.getElemManager();
-
 
       for( localIndex er = 0; er < elemManager.numRegions(); ++er )
       {
@@ -373,7 +371,7 @@ protected:
   void SetUp() override
   {
     setupProblemFromXML( state.getProblemManager(), xmlInput );
-    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoir >( "reservoirSystem" );
+    solver = &state.getProblemManager().getPhysicsSolverManager().getGroup< SinglePhaseReservoirAndWells< SinglePhaseFVM< SinglePhaseBase > > >( "reservoirSystem" );
 
     DomainPartition & domain = state.getProblemManager().getDomainPartition();
 
@@ -391,7 +389,7 @@ protected:
   static real64 constexpr eps = std::numeric_limits< real64 >::epsilon();
 
   GeosxState state;
-  SinglePhaseReservoir * solver;
+  SinglePhaseReservoirAndWells< SinglePhaseFVM< SinglePhaseBase > > * solver;
 };
 
 real64 constexpr SinglePhaseReservoirSolverTest::time;

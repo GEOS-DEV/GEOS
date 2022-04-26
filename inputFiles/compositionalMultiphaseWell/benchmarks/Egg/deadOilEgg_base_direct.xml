@@ -3,7 +3,7 @@
 <Problem>
   <!-- SPHINX_TUT_DEAD_OIL_EGG_SOLVERS -->
   <Solvers>
-    <CompositionalMultiphaseReservoir
+    <CompositionalMultiphaseReservoirFVM
       name="coupledFlowAndWells"
       flowSolverName="compositionalMultiphaseFlow"
       wellSolverName="compositionalMultiphaseWell"
@@ -21,7 +21,7 @@
       <LinearSolverParameters
         solverType="direct"
         directParallel="0"/>
-    </CompositionalMultiphaseReservoir>
+    </CompositionalMultiphaseReservoirFVM>
 
     <CompositionalMultiphaseFVM
       name="compositionalMultiphaseFlow"
