@@ -17,7 +17,7 @@
 
 #include "CommID.hpp"
 
-#include "mpiCommunicationUtils.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 namespace geosx
 {

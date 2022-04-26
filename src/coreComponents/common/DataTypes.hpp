@@ -724,14 +724,6 @@ struct TypeName
   }
 };
 
-enum class FieldLocation
-{
-  Elem,   //!< location is element (like pressure in finite volumes)
-  Face,   //!< location is face (like flux in mixed finite elements)
-  Edge,   //!< location is edge (like flux between fracture elements)
-  Node    //!< location is node (like displacements in finite elements)
-};
-
 }
 
 

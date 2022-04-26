@@ -13,17 +13,25 @@
  */
 
 /**
- * @file CommID.hpp
+ * @file FieldIdentifiers.hpp
  */
 
-#ifndef GEOSX_MESH_MPICOMMUNICATIONS_MPICOMMUNICATIONUTILS_HPP_
-#define GEOSX_MESH_MPICOMMUNICATIONS_MPICOMMUNICATIONUTILS_HPP_
+#ifndef GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
+#define GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_
 
 #include "common/DataTypes.hpp"
 #include "codingUtilities/StringUtilities.hpp"
 
 namespace geosx
 {
+
+enum class FieldLocation
+{
+  Elem,   //!< location is element (like pressure in finite volumes)
+  Face,   //!< location is face (like flux in mixed finite elements)
+  Edge,   //!< location is edge (like flux between fracture elements)
+  Node    //!< location is node (like displacements in finite elements)
+};
 
 class FieldIdentifiers
 {
@@ -40,9 +48,7 @@ class FieldIdentifiers
   {
     for (string const & regionName : regionNames)
     {
-      string key;
-      generateKey( regionName, key );
-      addFields(fieldNames, key);
+      addFields(fieldNames, generateKey( regionName ) );
     }
   }
 
@@ -67,7 +73,7 @@ class FieldIdentifiers
    void getLocation( string const & key,
                      FieldLocation & location ) const
   {
-    if (key.find(m_locationKeys.nodesKey() ) != string::npos )
+    if ( key.find(m_locationKeys.nodesKey() ) != string::npos )
     {
       location = FieldLocation::Node;
     }else if ( key.find(m_locationKeys.edgesKey()) != string::npos )
@@ -83,7 +89,7 @@ class FieldIdentifiers
       location = FieldLocation::Elem;
     }else
     {
-      GEOSX_ERROR("Invalid key was provided, location cannot be retrieved.");
+      GEOSX_ERROR( GEOSX_FMT( "Invalid key, {}, was provided. Location cannot be retrieved.", key) );
     }
   }
 
@@ -132,9 +138,9 @@ class FieldIdentifiers
     }
   }
 
-  void generateKey( string regionName, string & key ) const
+  string generateKey( string const & regionName ) const
   {
-      key = stringutilities::concat(m_locationKeys.elemsKey(), regionName);
+    return stringutilities::concat("", m_locationKeys.elemsKey(), regionName);  
   }
 
   void addFields(std::vector<string> const fieldNames, string const key)
@@ -148,4 +154,4 @@ class FieldIdentifiers
 
 } /* namespace geosx */
 
-#endif /* GEOSX_MESH_MPICOMMUNICATIONS_MPICOMMUNICATIONUTILS_HPP_ */
+#endif /* GEOSX_MESH_MPICOMMUNICATIONS_FIELDIDENTIFIERS_HPP_ */

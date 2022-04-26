@@ -14,6 +14,7 @@ set( mesh_headers
      ExtrinsicMeshData.hpp
      FaceElementSubRegion.hpp
      FaceManager.hpp
+     FieldIdentifiers.hpp
      InterObjectRelation.hpp
      MeshBody.hpp
      MeshForLoopInterface.hpp
@@ -41,7 +42,6 @@ set( mesh_headers
      generators/ParMETISInterface.hpp
      mpiCommunications/CommID.hpp
      mpiCommunications/CommunicationTools.hpp
-     mpiCommunications/mpiCommunicationUtils.hpp
      mpiCommunications/MPI_iCommData.hpp
      mpiCommunications/NeighborCommunicator.hpp
      mpiCommunications/NeighborData.hpp

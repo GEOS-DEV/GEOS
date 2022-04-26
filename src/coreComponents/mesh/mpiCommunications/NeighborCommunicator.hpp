@@ -16,7 +16,7 @@
 #define GEOSX_MESH_MPICOMMUNICATIONS_NEIGHBORCOMMUNICATOR_HPP_
 
 #include "common/MpiWrapper.hpp"
-#include "mpiCommunicationUtils.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 #include "common/GEOS_RAJA_Interface.hpp"
 #include "dataRepository/ReferenceWrapper.hpp"

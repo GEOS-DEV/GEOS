@@ -21,6 +21,7 @@
 
 #include "common/DataTypes.hpp"
 #include "linearAlgebra/utilities/ComponentMask.hpp"
+#include "mesh/FieldIdentifiers.hpp"
 
 #include <numeric>
 
