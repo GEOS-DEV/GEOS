@@ -87,19 +87,6 @@ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
                                                   arrayView1d< localIndex > const & localIndices,
                                                   bool doPack ) const
 {
-  // Particle fields that are packed. TODO: This seems silly, can't we grab all registered fields all at once?
-//  std::map< string, string_array > fieldNames;
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
-
   // Declarations
   parallelDeviceEvents events; // I have no idea what this thing is
   unsigned int packedSize = 0;
@@ -107,17 +94,13 @@ unsigned int ParticleSubRegionBase::particlePack( buffer_type & buffer,
   // Pack particle fields
   if(!doPack) // doPack == false, so we're just getting the size
   {
-    //packedSize += ObjectManagerBase::packSize( fieldNames.at( "particles" ), localIndices, 0, false, events );
     packedSize += this->packSize( {}, localIndices, 0, false, events );
   }
   else // doPack == true, perform the pack
   {
     buffer_unit_type* bufferPtr = buffer.data();
-    //packedSize += ObjectManagerBase::pack( bufferPtr, fieldNames.at( "particles" ), localIndices, 0, false, events );
     packedSize += this->pack( bufferPtr, {}, localIndices, 0, false, events );
   }
-
-  // Pack constitutive fields?
 
   return packedSize;
 }
@@ -126,19 +109,6 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
                                             int const & startingIndex,
                                             int const & numberOfIncomingParticles )
 {
-  // Particle fields that are unpacked
-//  std::map< string, string_array > fieldNames;
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleGhostRankString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleIDString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleCenterString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVelocityString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolumeString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleVolume0String() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleMassString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleDeformationGradientString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectorsString() );
-//  fieldNames["particles"].emplace_back( viewKeyStruct::particleRVectors0String() );
-
   // Declarations
   parallelDeviceEvents events; // I have no idea what this thing is
   const buffer_unit_type* receiveBufferPtr = buffer.data(); // needed for const cast
@@ -152,7 +122,6 @@ void ParticleSubRegionBase::particleUnpack( buffer_type & buffer,
   }
 
   // Unpack
-  //ObjectManagerBase::unpack( receiveBufferPtr, indices, 0, false, events );
   this->unpack( receiveBufferPtr, indices, 0, false, events );
 }
 
@@ -162,21 +131,22 @@ void ParticleSubRegionBase::erase(localIndex pp)
   int oldSize = this->size();
   int newSize = this->size()-1;
 
-  // scalar fields:
+  // Scalar fields:
   m_particleGhostRank.erase(pp); // TODO: Can we automatically loop over all registered wrappers and erase that way?
   m_particleID.erase(pp);
   m_particleVolume.erase(pp);
   m_particleVolume0.erase(pp);
   m_particleMass.erase(pp);
 
-  // vector fields:
+  // Vector fields:
   this->eraseVector( m_particleCenter, pp );
   this->eraseVector( m_particleVelocity, pp );
 
-  // matrix fields:
+  // Matrix fields:
   this->eraseTensor( m_particleDeformationGradient, pp );
   this->eraseTensor( m_particleRVectors, pp );
   this->eraseTensor( m_particleRVectors0, pp );
+
   // Decrement the size of this subregion
   this->resize(newSize);
 }
