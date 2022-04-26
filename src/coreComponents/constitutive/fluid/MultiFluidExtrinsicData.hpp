@@ -62,8 +62,8 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseDensity,
                            WRITE_AND_READ,
                            "Phase density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseDensityOld,
-                           "phaseDensityOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseDensity_n,
+                           "phaseDensity_n",
                            array3dLayoutPhase,
                            0,
                            NOPLOT,
@@ -118,8 +118,8 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy,
                            NO_WRITE,
                            "Phase enthalpy" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpyOld,
-                           "phaseEnthalpyOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseEnthalpy_n,
+                           "phaseEnthalpy_n",
                            array3dLayoutPhase,
                            0,
                            NOPLOT,
@@ -142,8 +142,8 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy,
                            NO_WRITE,
                            "Phase internal energy" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergyOld,
-                           "phaseInternalEnergyOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseInternalEnergy_n,
+                           "phaseInternalEnergy_n",
                            array3dLayoutPhase,
                            0,
                            NOPLOT,
@@ -156,7 +156,7 @@ EXTRINSIC_MESH_DATA_TRAIT( dPhaseInternalEnergy,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fraction" );
+                           "Derivative of phase internal energy with respect to pressure, temperature, and global component fractions" );
 
 EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            "phaseCompFraction",
@@ -166,8 +166,8 @@ EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction,
                            WRITE_AND_READ,
                            "Phase component fraction" );
 
-EXTRINSIC_MESH_DATA_TRAIT( phaseCompFractionOld,
-                           "phaseCompFractionOld",
+EXTRINSIC_MESH_DATA_TRAIT( phaseCompFraction_n,
+                           "phaseCompFraction_n",
                            array4dLayoutPhaseComp,
                            0,
                            NOPLOT,
@@ -190,8 +190,8 @@ EXTRINSIC_MESH_DATA_TRAIT( totalDensity,
                            WRITE_AND_READ,
                            "Total density" );
 
-EXTRINSIC_MESH_DATA_TRAIT( totalDensityOld,
-                           "totalDensityOld",
+EXTRINSIC_MESH_DATA_TRAIT( totalDensity_n,
+                           "totalDensity_n",
                            array2dLayoutFluid,
                            0,
                            NOPLOT,

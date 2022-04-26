@@ -40,6 +40,8 @@ Validation and Verification Studies
    pennyFracToughnessDominated/Example
 
    pennyFracViscosityDominated/Example
+
+   pknFracViscosityDominated/Example
  
    proppantSlotTest/Example
 

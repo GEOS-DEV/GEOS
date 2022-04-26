@@ -27,8 +27,9 @@
 #include "mesh/ElementRegionManager.hpp"
 #include "mesh/ObjectManagerBase.hpp"
 #include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseExtrinsicData.hpp"
-#include "physicsSolvers/fluidFlow/CompositionalMultiphaseBaseKernels.hpp"
+#include "physicsSolvers/fluidFlow/IsothermalCompositionalMultiphaseBaseKernels.hpp"
 #include "physicsSolvers/fluidFlow/StencilAccessors.hpp"
+
 
 namespace geosx
 {
@@ -261,11 +262,9 @@ struct AssemblerKernelHelper
   /**
    * @brief In a given element, compute the transmissibility-weighted pressure gradients in the cell
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh facesb
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] phaseDens the phase densities in the element
    * @param[in] dPhaseDens the derivatives of the phase densities in the element wrt pressure and component fractions
@@ -283,11 +282,9 @@ struct AssemblerKernelHelper
   GEOSX_HOST_DEVICE
   static void
     applyGradient( arrayView1d< real64 const > const & facePres,
-                   arrayView1d< real64 const > const & dFacePres,
                    arrayView1d< real64 const > const & faceGravCoef,
                    arraySlice1d< localIndex const > const & elemToFaces,
                    real64 const & elemPres,
-                   real64 const & dElemPres,
                    real64 const & elemGravCoef,
                    arraySlice1d< real64 const, multifluid::USD_PHASE - 2 > const & elemPhaseMassDens,
                    arraySlice2d< real64 const, multifluid::USD_PHASE_DC - 2 > const & dElemPhaseMassDens,
@@ -492,11 +489,9 @@ struct AssemblerKernel
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank ghost rank of each face
    * @param[in] facePres the pressure at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravCoef the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravCoef the depth at this element's center
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
@@ -527,12 +522,10 @@ struct AssemblerKernel
            arrayView1d< globalIndex const > const & faceDofNumber,
            arrayView1d< integer const > const & faceGhostRank,
            arrayView1d< real64 const > const & facePres,
-           arrayView1d< real64 const > const & dFacePres,
            arrayView1d< real64 const > const & faceGravCoef,
            arrayView1d< real64 const > const & mimFaceGravCoef,
            arraySlice1d< localIndex const > const & elemToFaces,
            real64 const & elemPres,
-           real64 const & dElemPres,
            real64 const & elemGravCoef,
            ElementViewConst< arrayView3d< real64 const, multifluid::USD_PHASE > > const & phaseDens,
            ElementViewConst< arrayView4d< real64 const, multifluid::USD_PHASE_DC > > const & dPhaseDens,
@@ -601,11 +594,9 @@ struct FluxKernel
    * @param[in] faceDofNumber the dof numbers of the face pressures
    * @param[in] faceGhostRank  the ghost ranks of the face pressures
    * @param[in] facePres the pressures at the mesh faces at the beginning of the time step
-   * @param[in] dFacePres the accumulated pressure updates at the mesh face
    * @param[in] faceGravDepth the depth at the mesh faces
    * @param[in] elemToFaces the map from one-sided face to face
    * @param[in] elemPres the pressure at this element's center
-   * @param[in] dElemPres the accumulated pressure updates at this element's center
    * @param[in] elemGravDepth the depth at this element's center
    * @param[in] phaseDens the phase densities in the domain (non-local)
    * @param[in] dPhaseDens the derivatives of the phase densities in the domain wrt pressure and component fractions (non-local)
@@ -637,7 +628,6 @@ struct FluxKernel
           arrayView1d< globalIndex const > const & faceDofNumber,
           arrayView1d< integer const > const & faceGhostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           arrayView1d< real64 const > const & faceGravCoef,
           arrayView1d< real64 const > const & mimFaceGravCoef,
           arrayView1d< real64 const > const & transMultiplier,
@@ -670,11 +660,11 @@ struct FluxKernel
  * @brief Define the interface for the property kernel in charge of computing the phase mobilities
  */
 template< integer NUM_COMP, integer NUM_PHASE >
-class PhaseMobilityKernel : public compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
+class PhaseMobilityKernel : public isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >
 {
 public:
 
-  using Base = compositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
+  using Base = isothermalCompositionalMultiphaseBaseKernels::PropertyKernelBase< NUM_COMP >;
   using Base::numComp;
 
   /// Compile time value for the number of phases
@@ -709,10 +699,10 @@ public:
    * @param[in] ei the element index
    * @param[in] phaseMobilityKernelOp the function used to customize the kernel
    */
-  template< typename FUNC = compositionalMultiphaseBaseKernels::NoOpFunc >
+  template< typename FUNC = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc >
   GEOSX_HOST_DEVICE
   void compute( localIndex const ei,
-                FUNC && phaseMobilityKernelOp = compositionalMultiphaseBaseKernels::NoOpFunc{} ) const
+                FUNC && phaseMobilityKernelOp = isothermalCompositionalMultiphaseBaseKernels::NoOpFunc{} ) const
   {
     using Deriv = multifluid::DerivativeOffset;
 
@@ -841,7 +831,7 @@ public:
   {
     if( numPhase == 2 )
     {
-      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 2 > kernel( subRegion, fluid, relperm );
@@ -850,7 +840,7 @@ public:
     }
     else if( numPhase == 3 )
     {
-      compositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
+      isothermalCompositionalMultiphaseBaseKernels::internal::kernelLaunchSelectorCompSwitch( numComp, [&] ( auto NC )
       {
         integer constexpr NUM_COMP = NC();
         PhaseMobilityKernel< NUM_COMP, 3 > kernel( subRegion, fluid, relperm );
@@ -867,7 +857,7 @@ struct ResidualNormKernel
   template< typename VIEWTYPE >
   using ElementViewConst = ElementRegionManager::ElementViewConst< VIEWTYPE >;
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void
   launch( arrayView1d< real64 const > const & localResidual,
           globalIndex const rankOffset,
@@ -879,10 +869,10 @@ struct ResidualNormKernel
           arrayView2d< localIndex const > const & elemSubRegionList,
           arrayView2d< localIndex const > const & elemList,
           ElementViewConst< arrayView1d< real64 const > > const & elemVolume,
-          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMobOld,
+          ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const & phaseMob_n,
           real64 & localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > sumScaled( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > sumScaled( 0.0 );
 
     forAll< POLICY >( facePresDofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
@@ -903,20 +893,20 @@ struct ResidualNormKernel
           if( !onBoundary && isInTarget )
           {
             // compute a normalizer to obtain a dimensionless norm
-            real64 sumMobOld = 0.0;
+            real64 sumMob_n = 0.0;
             for( integer ip = 0; ip < numPhases; ++ip )
             {
-              sumMobOld += phaseMobOld[er][esr][ei][ip];
+              sumMob_n += phaseMob_n[er][esr][ei][ip];
             }
-            real64 const totalMobOld = ( sumMobOld < 1e-3 ) ? 1e-3 : sumMobOld;
-            normalizer += elemVolume[er][esr][ei] / totalMobOld;
+            real64 const totalMob_n = ( sumMob_n < 1e-3 ) ? 1e-3 : sumMob_n;
+            normalizer += elemVolume[er][esr][ei] / totalMob_n;
             elemCounter++;
           }
         }
         normalizer /= elemCounter;
 
         localIndex const lid = LvArray::integerConversion< localIndex >( facePresDofNumber[iface] - rankOffset );
-        // note: unit of localResidual[lid] * totalMobOld: m^3, so this is dimensionless
+        // note: unit of localResidual[lid] * totalMob_n: m^3, so this is dimensionless
         real64 const val = localResidual[lid] / normalizer;
         sumScaled += val * val;
       }
@@ -932,17 +922,16 @@ struct ResidualNormKernel
 struct SolutionCheckKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & facePres,
-          arrayView1d< real64 const > const & dFacePres,
           real64 const scalingFactor )
   {
-    RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const iface )
     {
@@ -950,7 +939,7 @@ struct SolutionCheckKernel
       {
         localIndex const localRow = LvArray::integerConversion< localIndex >( dofNumber[iface] - rankOffset );
         {
-          real64 const newFacePres = facePres[iface] + dFacePres[iface] + scalingFactor * localSolution[localRow];
+          real64 const newFacePres = facePres[iface] + scalingFactor * localSolution[localRow];
           check.min( newFacePres >= 0.0 );
         }
       }
