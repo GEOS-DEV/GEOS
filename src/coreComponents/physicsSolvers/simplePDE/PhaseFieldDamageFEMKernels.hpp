@@ -196,13 +196,6 @@ public:
     real64 const threshold = m_constitutiveUpdate.getEnergyThreshold();
     real64 const extDrivingForce = m_constitutiveUpdate.getExtDrivingForce( k, q ); 
 
-    real64 D = 0;                                                                   //max between threshold and
-                                                                                    // Elastic energy
-    if( m_localDissipationOption == 1 )
-    {
-      D = fmax( threshold, strainEnergyDensity );
-    }
-
     //Interpolate d and grad_d
     real64 N[ numNodesPerElem ];
     real64 dNdX[ numNodesPerElem ][ 3 ];
@@ -213,45 +206,56 @@ public:
     real64 qp_grad_damage[3] = {0, 0, 0};
     FE_TYPE::valueAndGradient( N, dNdX, stack.nodalDamageLocal, qp_damage, qp_grad_damage );
 
+    real64 D = 0;                                                                   //max between threshold and
+                                                                                    // Elastic energy
+    if( m_localDissipationOption == 1 )
+    {
+      D = fmax( threshold, strainEnergyDensity );
+    }
+
+    real64 drivingForceThreshold = 3./16. * Gc / ell;
+
+    if ( m_extDrivingForceOption == 1 )
+      drivingForceThreshold += 0.5 * extDrivingForce;  
+
+    if ( D < drivingForceThreshold )
+      D = drivingForceThreshold; 
+
     for( localIndex a = 0; a < numNodesPerElem; ++a )
     {
       if( m_localDissipationOption == 1 )
       {
         stack.localResidual[ a ] += detJ * ( - 3 * N[a] / 16  
                                              - 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) 
-                                             - (0.5 * ell * D/Gc) * N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) );  
+                                             - (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * N[a] );  
 
         if ( m_extDrivingForceOption == 1 )
-        {
-          stack.localResidual[ a ] -= detJ * ( extDrivingForce / 2. / Gc * ell * N[a] ); // External driving force added
-        }
+          stack.localResidual[ a ] -= detJ * ( 0.5 * ell * extDrivingForce/Gc * N[a] ); 
       }
       else
       {
         stack.localResidual[ a ] -= detJ * ( N[a] * qp_damage 
                                              + (pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( qp_grad_damage, dNdX[a] ) 
-                                             + N[a] * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) * (ell*strainEnergyDensity/Gc)) ); 
+                                             + N[a] * (ell*D/Gc) * m_constitutiveUpdate.getDegradationDerivative( qp_damage ) ) ); 
 
         if ( m_extDrivingForceOption == 1 )
-        { 
-          stack.localResidual[ a ] -= detJ * ( extDrivingForce / 2. / Gc * ell * N[a] ); // External driving force added
-        }
+          stack.localResidual[ a ] -= detJ * ( ell * extDrivingForce/Gc * N[a] ); 
+
       }
       for( localIndex b = 0; b < numNodesPerElem; ++b )
       {
         if( m_localDissipationOption == 1 )
         {
           stack.localJacobian[ a ][ b ] -= detJ *
-                                           (0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                            (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b]);
+                                           ( 0.375*pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
+                                           (0.5 * ell * D/Gc) * m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * N[a] * N[b] );
 
         }
         else
         {
           stack.localJacobian[ a ][ b ] -= detJ *
                                            ( pow( ell, 2 ) * LvArray::tensorOps::AiBi< 3 >( dNdX[a], dNdX[b] ) +
-                                             N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell*strainEnergyDensity/Gc )
-                                           );
+                                            N[a] * N[b] * (1 + m_constitutiveUpdate.getDegradationSecondDerivative( qp_damage ) * ell * strainEnergyDensity/Gc ) );
         }
       }
     }
