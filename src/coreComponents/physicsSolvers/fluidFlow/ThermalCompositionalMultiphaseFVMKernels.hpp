@@ -222,7 +222,6 @@ public:
 
   using ThermalCompFlowAccessors =
     StencilAccessors< extrinsicMeshData::flow::temperature,
-                      extrinsicMeshData::flow::deltaTemperature,
                       extrinsicMeshData::flow::dPhaseMobility_dTemperature,
                       extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature >;
 
@@ -282,7 +281,6 @@ public:
             localMatrix,
             localRhs ),
     m_temp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::deltaTemperature {} ) ),
     m_dPhaseMob_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseMobility_dTemperature {} ) ),
     m_dPhaseVolFrac_dTemp( thermalCompFlowAccessors.get( extrinsicMeshData::flow::dPhaseVolumeFraction_dTemperature {} ) ),
     m_phaseEnthalpy( thermalMultiFluidAccessors.get( extrinsicMeshData::multifluid::phaseEnthalpy {} ) ),
@@ -510,7 +508,7 @@ public:
       localIndex const esr = m_sesri( iconn, i );
       localIndex const ei  = m_sei( iconn, i );
 
-      stack.energyFlux += stack.thermalTransmissibility[0][i] * ( m_temp[er][esr][ei] + m_dTemp[er][esr][ei] );
+      stack.energyFlux += stack.thermalTransmissibility[0][i] * m_temp[er][esr][ei];
       stack.dEnergyFlux_dT[i] += stack.thermalTransmissibility[0][i];
     }
 
@@ -583,7 +581,6 @@ protected:
 
   /// Views on temperature
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
-  ElementViewConst< arrayView1d< real64 const > > const m_dTemp;
 
   /// Views on derivatives of phase mobilities, volume fractions, mass densities and phase comp fractions
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_dPhaseMob_dTemp;

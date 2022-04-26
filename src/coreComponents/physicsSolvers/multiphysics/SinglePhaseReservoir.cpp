@@ -143,7 +143,7 @@ void SinglePhaseReservoir::addCouplingSparsityPattern( DomainPartition const & d
   } );
 }
 
-void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
+void SinglePhaseReservoir::assembleCouplingTerms( real64 const GEOSX_UNUSED_PARAM( time_n ),
                                                   real64 const dt,
                                                   DomainPartition const & domain,
                                                   DofManager const & dofManager,
@@ -171,14 +171,6 @@ void SinglePhaseReservoir::assembleCouplingTerms( real64 const time_n,
     elemManager.forElementSubRegions< WellElementSubRegion >( regionNames, [&]( localIndex const,
                                                                                 WellElementSubRegion const & subRegion )
     {
-
-      // if the well is shut, we neglect reservoir-well flow that may occur despite the zero rate
-      // therefore, we do not want to compute perforation rates and we simply assume they are zero
-      WellControls const & wellControls = m_wellSolver->getWellControls( subRegion );
-      if( !wellControls.isWellOpen( time_n + dt ) )
-      {
-        return;
-      }
 
       PerforationData const * const perforationData = subRegion.getPerforationData();
 

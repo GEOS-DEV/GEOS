@@ -1300,7 +1300,6 @@ void LagrangianContactFlowSolver::
         arrayView1d< globalIndex const > const &
         presDofNumber = subRegion.getReference< globalIndex_array >( presDofKey );
         arrayView1d< real64 const > const & pressure = subRegion.getReference< array1d< real64 > >( m_pressureKey );
-        arrayView1d< real64 const > const & deltaPressure = subRegion.getReference< array1d< real64 > >( m_deltaPressureKey );
         arrayView2d< localIndex const > const & elemsToFaces = subRegion.faceList();
 
         forAll< serialPolicy >( subRegion.size(), [=]( localIndex const kfe )
@@ -1330,7 +1329,7 @@ void LagrangianContactFlowSolver::
               array1d< real64 > nodalArea;
               m_contactSolver->computeFaceNodalArea( nodePosition, faceToNodeMap, elemsToFaces[kfe][kf], nodalArea );
 
-              real64 const nodalForceMag = -( pressure[kfe] + deltaPressure[kfe] ) * nodalArea[a];
+              real64 const nodalForceMag = -( pressure[kfe] ) * nodalArea[a];
               array1d< real64 > globalNodalForce( 3 );
               LvArray::tensorOps::scaledCopy< 3 >( globalNodalForce, Nbar, nodalForceMag );
 
@@ -1561,8 +1560,6 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
     // Get the pressures
     arrayView1d< real64 const > const &
     pressure = fractureSubRegion.getReference< array1d< real64 > >( m_pressureKey );
-    arrayView1d< real64 const > const &
-    deltaPressure = fractureSubRegion.getReference< array1d< real64 > >( m_deltaPressureKey );
 
     //  string const &
     //  fluidName = m_flowSolver->fluidModelNames()[m_flowSolver->targetRegionIndex( fractureRegion.getName() )];
@@ -1813,11 +1810,11 @@ void LagrangianContactFlowSolver::assembleStabilization( DomainPartition const &
           real64 rhs0 = 0.0;
           if( nDof[0] > 0 )
           {
-            rhs0 -= totalInvStiffApproxDiag( 0 ) * ( -( pressure[fractureIndex[0]] + deltaPressure[fractureIndex[0]] ) );
+            rhs0 -= totalInvStiffApproxDiag( 0 ) * ( -( pressure[fractureIndex[0]] ) );
           }
           if( nDof[1] > 0 )
           {
-            rhs0 += totalInvStiffApproxDiag( 0 ) * ( -( pressure[fractureIndex[1]] + deltaPressure[fractureIndex[1]] ) );
+            rhs0 += totalInvStiffApproxDiag( 0 ) * ( -( pressure[fractureIndex[1]] ) );
           }
           real64 rhs1 = -rhs0;
 
