@@ -721,51 +721,51 @@ TEST( testMimeticInnerProducts, BdVLM_hexa )
 }
 
 
-TEST( testMimeticInnerProducts, TPFA_tetra )
-{
-  localIndex constexpr NF = 4;
+// TEST( testMimeticInnerProducts, TPFA_tetra )
+// {
+//   localIndex constexpr NF = 4;
 
-  array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
-  FaceManager::NodeMapType faceToNodes;
-  array1d< localIndex > elemToFaces;
-  real64 elemCenter[3];
-  real64 elemPerm[3];
-  real64 elemVolume = 0;
-  real64 lengthTolerance = 0;
-  stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
+//   array2d< real64, nodes::REFERENCE_POSITION_PERM > nodePosition;
+//   FaceManager::NodeMapType faceToNodes;
+//   array1d< localIndex > elemToFaces;
+//   real64 elemCenter[3];
+//   real64 elemPerm[3];
+//   real64 elemVolume = 0;
+//   real64 lengthTolerance = 0;
+//   stackArray2d< real64, NF *NF > transMatrixRef( NF, NF );
 
-  makeTetra( nodePosition,
-             faceToNodes,
-             elemToFaces,
-             elemCenter,
-             elemVolume,
-             elemPerm,
-             lengthTolerance,
-             InnerProductType::TPFA,
-             transMatrixRef );
+//   makeTetra( nodePosition,
+//              faceToNodes,
+//              elemToFaces,
+//              elemCenter,
+//              elemVolume,
+//              elemPerm,
+//              lengthTolerance,
+//              InnerProductType::TPFA,
+//              transMatrixRef );
 
-  stackArray2d< real64, NF *NF > transMatrix( NF, NF );
-  array1d< real64 > transMultiplier( NF );
-  transMultiplier.setValues< parallelHostPolicy >( 1.0 );
+//   stackArray2d< real64, NF *NF > transMatrix( NF, NF );
+//   array1d< real64 > transMultiplier( NF );
+//   transMultiplier.setValues< parallelHostPolicy >( 1.0 );
 
-  stackArray1d< real64, 3 > center( 3 );
-  center[0] = elemCenter[0];
-  center[1] = elemCenter[1];
-  center[2] = elemCenter[2];
-  real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
+//   stackArray1d< real64, 3 > center( 3 );
+//   center[0] = elemCenter[0];
+//   center[1] = elemCenter[1];
+//   center[2] = elemCenter[2];
+//   real64 const perm[ 3 ] = { elemPerm[0], elemPerm[1], elemPerm[2] };
 
-  TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
-                                   transMultiplier.toViewConst(),
-                                   faceToNodes.toViewConst(),
-                                   elemToFaces.toSliceConst(),
-                                   center,
-                                   elemVolume,
-                                   perm,
-                                   lengthTolerance,
-                                   transMatrix.toSlice() );
+//   TPFAInnerProduct::compute< NF >( nodePosition.toViewConst(),
+//                                    transMultiplier.toViewConst(),
+//                                    faceToNodes.toViewConst(),
+//                                    elemToFaces.toSliceConst(),
+//                                    center,
+//                                    elemVolume,
+//                                    perm,
+//                                    lengthTolerance,
+//                                    transMatrix.toSlice() );
 
-  compareTransmissibilityMatrices( transMatrix, transMatrixRef );
-}
+//   compareTransmissibilityMatrices( transMatrix, transMatrixRef );
+// }
 
 
 TEST( testMimeticInnerProducts, QTPFA_tetra )
