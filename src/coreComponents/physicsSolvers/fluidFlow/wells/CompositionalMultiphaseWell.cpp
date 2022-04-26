@@ -1445,11 +1445,11 @@ CompositionalMultiphaseWell::applySystemSolution( DofManager const & dofManager,
   {
     // synchronize
     FieldIdentifiers fieldsToBeSync;
-    
+
     fieldsToBeSync.addElementFields( { extrinsicMeshData::well::pressure::key(),
-                                         extrinsicMeshData::well::globalCompDensity::key(),
-                                         extrinsicMeshData::well::mixtureConnectionRate::key() },
-                                       regionNames );
+                                       extrinsicMeshData::well::globalCompDensity::key(),
+                                       extrinsicMeshData::well::mixtureConnectionRate::key() },
+                                     regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

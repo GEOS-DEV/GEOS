@@ -1191,7 +1191,7 @@ SolidMechanicsLagrangianFEM::applySystemSolution( DofManager const & dofManager,
 
   {
     FieldIdentifiers fieldsToBeSync;
-    
+
     fieldsToBeSync.addFields( FieldLocation::Node, { keys::IncrementalDisplacement, keys::TotalDisplacement } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

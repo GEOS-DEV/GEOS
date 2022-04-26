@@ -608,9 +608,9 @@ void SinglePhaseHybridFVM::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
-    
-      fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
-      fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key() }, regionNames );
+    fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
   } );

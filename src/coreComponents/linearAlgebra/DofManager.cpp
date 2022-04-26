@@ -187,11 +187,12 @@ void DofManager::createIndexArray( FieldDescription const & field )
       using helper = ArrayHelper< globalIndex, LOC >;
 
       FieldIdentifiers fieldsToBeSync;
-      if ( field.location == FieldLocation::Elem )
+      if( field.location == FieldLocation::Elem )
       {
         fieldsToBeSync.addElementFields( { field.key }, regions );
-      }else
-      { 
+      }
+      else
+      {
         fieldsToBeSync.addFields( field.location, { field.key } );
       }
 
@@ -1301,11 +1302,12 @@ void DofManager::reorderByRank()
           ArrayHelper::reference( indexArray, locIdx ) += adjustment;
         } );
 
-        if (field.location == FieldLocation::Elem)
+        if( field.location == FieldLocation::Elem )
         {
           fieldsToBeSync[{ body.getName(), mesh.getName() }].addElementFields( {field.key}, regions );
 
-        } else
+        }
+        else
         {
           fieldsToBeSync[{ body.getName(), mesh.getName() }].addFields( field.location, {field.key} );
         }

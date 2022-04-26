@@ -665,10 +665,10 @@ void SolidMechanicsEmbeddedFractures::applySystemSolution( DofManager const & do
                                                 arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::dispJump::key(), 
-                                         extrinsicMeshData::contact::deltaDispJump::key() },
-                                       { getFractureRegionName() } );
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::dispJump::key(),
+                                       extrinsicMeshData::contact::deltaDispJump::key() },
+                                     { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

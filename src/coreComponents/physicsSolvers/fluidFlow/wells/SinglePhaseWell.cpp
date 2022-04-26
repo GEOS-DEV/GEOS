@@ -781,10 +781,10 @@ SinglePhaseWell::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
-    
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::well::pressure::key(), 
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::well::pressure::key(),
                                        extrinsicMeshData::well::connectionRate::key() },
-                                       regionNames );
+                                     regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

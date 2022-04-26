@@ -321,11 +321,11 @@ void ProppantTransport::initializePostInitialConditionsPreSubGroups()
                                                MeshLevel & mesh,
                                                arrayView1d< string const > const & regionNames )
   {
-    FieldIdentifiers fieldsToBeSync; 
-    
-      fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(), 
-                                         extrinsicMeshData::proppant::componentConcentration::key() },
-                                       regionNames );
+    FieldIdentifiers fieldsToBeSync;
+
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(),
+                                       extrinsicMeshData::proppant::componentConcentration::key() },
+                                     regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 
@@ -901,9 +901,9 @@ void ProppantTransport::applySystemSolution( DofManager const & dofManager,
   {
 
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields({ extrinsicMeshData::proppant::proppantConcentration::key(), 
-                                      extrinsicMeshData::proppant::componentConcentration::key() },
-                                      regionNames );
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(),
+                                       extrinsicMeshData::proppant::componentConcentration::key() },
+                                     regionNames );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
 
@@ -998,7 +998,7 @@ void ProppantTransport::updateCellBasedFlux( real64 const GEOSX_UNUSED_PARAM( ti
                                                 cellBasedFluxAccessor.toNestedView() );
   } );
 
-  FieldIdentifiers fieldsToBeSync; 
+  FieldIdentifiers fieldsToBeSync;
   fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::cellBasedFlux::key() }, m_targetRegionNames );
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
@@ -1100,10 +1100,10 @@ void ProppantTransport::updateProppantPackVolume( real64 const GEOSX_UNUSED_PARA
 
     {
       FieldIdentifiers fieldsToBeSync;
-        
-      fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(), 
+
+      fieldsToBeSync.addElementFields( { extrinsicMeshData::proppant::proppantConcentration::key(),
                                          extrinsicMeshData::proppant::proppantPackVolumeFraction::key() },
-                                         regionNames );
+                                       regionNames );
 
       CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), true );
     }

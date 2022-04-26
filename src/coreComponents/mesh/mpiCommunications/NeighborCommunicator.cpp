@@ -498,10 +498,10 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
 
   int bufferSize = 0;
 
-  for ( auto const & iter : fieldsToBeSync.getFields() ) 
+  for( auto const & iter : fieldsToBeSync.getFields() )
   {
     FieldLocation location;
-    fieldsToBeSync.getLocation(iter.first, location);
+    fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
       case FieldLocation::Node:
@@ -527,7 +527,7 @@ int NeighborCommunicator::packCommSizeForSync( FieldIdentifiers const & fieldsTo
         } );
         break;
       }
-   }
+    }
   }
   this->m_sendBufferSize[commID] = bufferSize;
   return bufferSize;
@@ -556,10 +556,10 @@ void NeighborCommunicator::packCommBufferForSync( FieldIdentifiers const & field
 
   int packedSize = 0;
 
-  for ( auto const & iter : fieldsToBeSync.getFields() ) 
+  for( auto const & iter : fieldsToBeSync.getFields() )
   {
     FieldLocation location;
-    fieldsToBeSync.getLocation(iter.first, location);
+    fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
       case FieldLocation::Node:
@@ -614,10 +614,10 @@ void NeighborCommunicator::unpackBufferForSync( FieldIdentifiers const & fieldsT
 
   int unpackedSize = 0;
 
-  for ( auto const & iter : fieldsToBeSync.getFields() ) 
+  for( auto const & iter : fieldsToBeSync.getFields() )
   {
     FieldLocation location;
-    fieldsToBeSync.getLocation(iter.first, location);
+    fieldsToBeSync.getLocation( iter.first, location );
     switch( location )
     {
       case FieldLocation::Node:

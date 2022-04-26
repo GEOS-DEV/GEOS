@@ -807,10 +807,10 @@ void CompositionalMultiphaseHybridFVM::applySystemSolution( DofManager const & d
                                                 arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
-    
+
     {
-      fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(), 
-                                        extrinsicMeshData::flow::globalCompDensity::key() },
+      fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
+                                         extrinsicMeshData::flow::globalCompDensity::key() },
                                        regionNames );
 
       fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::flow::facePressure::key() } );

@@ -53,7 +53,7 @@ ContactSolverBase::ContactSolverBase( const string & name,
 
   registerWrapper( viewKeyStruct::fractureRegionNameString(), &m_fractureRegionName ).
     setInputFlag( InputFlags::REQUIRED ).
-    setDescription( "Name of the fracture region." );  
+    setDescription( "Name of the fracture region." );
 
   this->getWrapper< string >( viewKeyStruct::discretizationString() ).
     setInputFlag( InputFlags::FALSE );
@@ -241,7 +241,7 @@ void ContactSolverBase::synchronizeFractureState( DomainPartition & domain ) con
                                                 arrayView1d< string const > const & )
   {
     FieldIdentifiers fieldsToBeSync;
-    
+
     fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::fractureState::key() }, { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

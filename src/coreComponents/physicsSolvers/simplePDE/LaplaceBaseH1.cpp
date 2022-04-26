@@ -148,7 +148,7 @@ void LaplaceBaseH1::applySystemSolution( DofManager const & dofManager,
                                                 arrayView1d< string const > const & )
 
   {
-    FieldIdentifiers fieldsToBeSync; 
+    FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addFields( FieldLocation::Node, { m_fieldName } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,

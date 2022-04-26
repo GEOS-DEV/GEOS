@@ -245,7 +245,7 @@ void LagrangianContactSolver::implicitStepComplete( real64 const & time_n,
     FieldIdentifiers fieldsToBeSync;
     fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::deltaTraction::key() },
                                      { getFractureRegionName() } );
-                                     
+
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,
                                                          domain.getNeighbors(),
@@ -1688,7 +1688,7 @@ void LagrangianContactSolver::applySystemSolution( DofManager const & dofManager
     fieldsToBeSync.addElementFields( { extrinsicMeshData::contact::traction::key(),
                                        extrinsicMeshData::contact::deltaTraction::key(),
                                        extrinsicMeshData::contact::dispJump::key() },
-                                       { getFractureRegionName() } ); 
+                                     { getFractureRegionName() } );
 
     CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync,
                                                          mesh,

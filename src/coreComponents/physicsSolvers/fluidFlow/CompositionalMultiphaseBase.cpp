@@ -1033,7 +1033,7 @@ void CompositionalMultiphaseBase::initializePostInitialConditionsPreSubGroups()
                                                arrayView1d< string const > const & regionNames )
   {
     FieldIdentifiers fieldsToBeSync;
-    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(), 
+    fieldsToBeSync.addElementFields( { extrinsicMeshData::flow::pressure::key(),
                                        extrinsicMeshData::flow::globalCompDensity::key() },
                                      regionNames );
 
