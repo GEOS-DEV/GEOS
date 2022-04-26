@@ -525,7 +525,10 @@ int SurfaceGenerator::separationDriver( DomainPartition & domain,
   FieldIdentifiers fieldsToBeSync;
 
   fieldsToBeSync.addFields( FieldLocation::Face, { extrinsicMeshData::RuptureState::key() } );
-  fieldsToBeSync.addFields( FieldLocation::Node, { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } );
+  if( nodeManager.hasWrapper( SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() ) )
+  {
+    fieldsToBeSync.addFields( FieldLocation::Node, { SolidMechanicsLagrangianFEM::viewKeyStruct::forceExternalString() } );
+  }
 
   CommunicationTools::getInstance().synchronizeFields( fieldsToBeSync, mesh, domain.getNeighbors(), false );
 

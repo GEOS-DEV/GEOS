@@ -60,12 +60,12 @@ public:
   int commID() const { return m_commID; }
 
   /**
-   * @return Reference to the field names registered with the communication data.
+   * @return Const Reference to the field names registered with the communication data.
    */
   FieldIdentifiers const & getFieldsToBeSync() const { return m_fieldsToBeSync;}
 
   /**
-   * @return Reference to the field names registered with the communication data.
+   * @return Setter of the names registered with the communication data.
    */
   void setFieldsToBeSync( FieldIdentifiers const & fieldsToBeSync ) { m_fieldsToBeSync = fieldsToBeSync; }
 
