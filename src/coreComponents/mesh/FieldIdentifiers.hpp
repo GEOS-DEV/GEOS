@@ -24,7 +24,10 @@
 
 namespace geosx
 {
-
+/**
+ * @brief Enum defining the possible location of a field on the mesh.
+ *
+ */
 enum class FieldLocation
 {
   Elem,   //!< location is element (like pressure in finite volumes)
@@ -33,17 +36,32 @@ enum class FieldLocation
   Node    //!< location is node (like displacements in finite elements)
 };
 
+
+/**
+ * Class to
+ */
 class FieldIdentifiers
 {
 public:
 
+/**
+ * @brief adds fields to the fields map using the location to define a convenient key.
+ *
+ * @param location location where the fields provided have been registered.
+ * @param fieldNames vector of names of the  element-based fields to be added to the map.
+ */
   void addFields( FieldLocation const location, std::vector< string > const & fieldNames )
   {
     string key;
     generateKey( location, key );
     addFields( fieldNames, key );
   }
-
+/**
+ * @brief adds element-based fields to the fields map using the element region names to define keys.
+ *
+ * @param fieldNames vector of names of the  element-based fields to be added to the map.
+ * @param regionNames vector of the regions on which these fields exist.
+ */
   void addElementFields( std::vector< string > const & fieldNames, std::vector< string > const & regionNames )
   {
     for( string const & regionName : regionNames )
@@ -51,25 +69,44 @@ public:
       addFields( fieldNames, generateKey( regionName ) );
     }
   }
-
+/**
+ * @brief
+ *
+ * @param fieldNames array1d of names of the element-based fields to be added to the map.
+ * @param regionNames vector of the regions on which these fields exist.
+ */
   void addElementFields( std::vector< string > const & fieldNames, arrayView1d< string const > const & regionNames )
   {
     std::vector< string > regions( regionNames.begin(), regionNames.end());
     addElementFields( fieldNames, regions );
   }
-
+/**
+ * @brief Get the Fields object which is the map containing the fields existing for each location.
+ *
+ * @return std::map< string, array1d< string > > const&
+ */
   std::map< string, array1d< string > > const & getFields() const
   {
     return m_fields;
   }
-
+/**
+ * @brief Get the Region Name object
+ *
+ * @param key key used to store the list of fields in the map.
+ * @return name of the region extracted from the key.
+ */
   string getRegionName( string const & key ) const
   {
     string regionName( key );
     regionName.erase( 0, std::string( m_locationKeys.elemsKey()).length());
     return regionName;
   }
-
+/**
+ * @brief Get the Location object
+ *
+ * @param key key used to store the list of fields in the map.
+ * @param location mesh location where fields defined by the key provided were registered.
+ */
   void getLocation( string const & key,
                     FieldLocation & location ) const
   {
@@ -96,7 +133,7 @@ public:
   }
 
 private:
-
+  ///
   std::map< string, array1d< string > > m_fields;
 
   struct keysStruct
@@ -111,6 +148,12 @@ private:
     static constexpr char const * elemsKey() { return "elems/"; }
   } m_locationKeys;
 
+/**
+ * @brief
+ *
+ * @param location the locaiton on the mesh
+ * @param key the key generated based on the loction provided
+ */
   void generateKey( FieldLocation const location,
                     string & key ) const
 
@@ -139,12 +182,22 @@ private:
       }
     }
   }
-
+/**
+ * @brief
+ *
+ * @param regionName name of the element region.
+ * @return string idetifying the key to be used in the map formed as elem/regionName;
+ */
   string generateKey( string const & regionName ) const
   {
     return stringutilities::concat( "", m_locationKeys.elemsKey(), regionName );
   }
-
+/**
+ * @brief add a list of field names to the map using the key provided.
+ *
+ * @param fieldNames list of the names of the fields to sync
+ * @param key key used to registered teh fields in the map.
+ */
   void addFields( std::vector< string > const fieldNames, string const key )
   {
     for( string const & field : fieldNames )
