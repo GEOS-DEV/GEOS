@@ -1265,6 +1265,10 @@ the relative residual norm satisfies:
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
 		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
+		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells: 
+ - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
+ - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
+		<xsd:attribute name="initialPressureCoefficient" type="real64" default="0.1" />
 		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
