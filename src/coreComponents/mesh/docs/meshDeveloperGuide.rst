@@ -138,3 +138,13 @@ tetrahedra, one for all hexahedra, one for all wedges and one for all the pyrami
 
 Now that all the classes of the mesh hierarchy has been described, we propose to adapt the diagram
 presented in :numref:`diagMeshDevFig` to match with the example presented in :numref:`modelMeshDevFig`.
+
+.. uml::
+
+   @startuml
+   user -> (use PlantUML)
+
+   note left of user
+      Hello!
+   end note
+   @enduml
