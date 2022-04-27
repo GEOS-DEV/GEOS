@@ -36,7 +36,7 @@ namespace chemicalReactions
 
 } // namespace
 
-EquilibriumReaction::EquilibriumReaction( string const & name,
+ReactionBase::ReactionBase( string const & name,
                                           string_array const & inputParams,
                                           string_array const & phaseNames,
                                           string_array const & componentNames,
@@ -47,11 +47,87 @@ EquilibriumReaction::EquilibriumReaction( string const & name,
 {
 }
 
-EquilibriumReaction::KernelWrapper EquilibriumReaction::createKernelWrapper() const
+ReactionBase::KernelWrapper ReactionBase::createKernelWrapper() const
 {
   return KernelWrapper(  );
 }
 
+
+
+// function to compute the derivative of the concentration of dependent species with respect to the concentration of the basis species. 
+void ReactionBase::ComputeLog10SecConcAndDerivative( real64 const temperature,
+                                   arraySlice1d< real64 const > const & log10PrimaryConc,		
+                                   arraySlice1d< real64 > & log10SecConc,		
+                                   arraySlice2d< real64 > & dLog10SecConc_dLog10PrimaryConc)
+{
+
+// Compute d(concentration of dependent species)/d(concentration of basis species)
+// Initialize the derivative to 0. Not sure if this is the right way of doing this
+  dLog10SecConc_dLog10PrimaryConc[:][:] = 0;
+
+  for( localIndex iSec = 0; iSec < m_numSecSpecies; ++iSec )
+  {
+    log10SecConc[iSec] = -m_log10EqConst[iSec] - m_log10SecActCoeff[iSec];	
+    for( localIndex jPri = 0; j < m_numPrimarySpecies; ++j )
+    {
+      log10SecConc[iSec] += m_stochMatrix[iSec][jPri] * (log10PrimaryConc[jPri] + m_log10PrimaryActCoeff[jPri]);
+      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stochMatrix[iSec][jPri];
+    }
+  }
+
+}
+
+
+// This function computes the total concentration and its derivative with respect to log10(basis species concentrations). 
+void ReactionBase::ComputeTotalConcAndDerivative( real64 const & temperature,
+                                            arraySlice1d< real64 const > const & log10PrimaryConc,
+                                            arraySlice1d< real64 const > const & log10SecConc,
+                                            arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
+                                            arraySlice1d< real64 > const & totalConc,
+                                            arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc)
+
+{
+// Initialize the derivative to 0. Not sure if this is the right way of doing this
+  dTotalConc_dLog10PrimaryConc[:][:] = 0;
+
+  for( localIndex iPri = 0; iPri < m_numPrimarySpecies; ++iPri )
+  {
+    real64 primaryConc = pow( 10.0, log10PrimaryConc[iPri] );		
+    totalConc[iPri] = primaryConc;			
+    dTotalConc_dLog10PrimaryConc[iPri][iPri] = log( 10.0 ) * primaryConc;		// d(total concentration)/d(log10(concentration))
+    // contribution from all dependent species
+    for( localIndex jSec = 0;  jSec < m_numSecSpecies; ++jSec )
+    {
+      real64 concSec = pow( 10.0, log10SecConc[jSec] );
+      totalConc[iPri] += m_stochMatrix[jSec][iPri] * concSec;	// not entirely sure why the negative sign is introduced. m_stochMatrix can be defined such that the negative sign makes sense as long as we are consistent everywhere
+      for( localIndex kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )		// add contribution to the derivtive from dependent species via the chain rule
+      {
+        dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stochMatrix[jSec][iPri] * log( 10.0 ) * concSec * dLog10SecConc_dLog10PrimaryConc[jSec][kDerivative];
+      }
+    }
+  }
+}
+
+// This computes the value of the function we are trying to solve (mass balance equation) 
+void ReactionBase::Compute( real64 const & temperature,
+                                            arraySlice1d< real64 const > const & inputTotalConc,
+                                            arraySlice1d< real64 const > const & log10PrimaryConc,
+                                            arraySlice1d< real64 const > const & log10SecConc,
+                                            arraySlice2d< real64 const > const & dLog10SecConc_dLog10PrimaryConc,
+                                            arraySlice1d< real64 > const & totalConc,
+                                            arraySlice2d< real64 > const & dTotalConc_dLog10PrimaryConc)
+
+{
+  ComputeLog10SecConcAndDerivative( temperature,&log10PrimaryConc, &log10SecConc, &dLog10SecConc_dLog10PrimaryConc)
+  ComputeTotalConcAndDerivative( temperature, &log10PrimaryConc, &log10SecConc, &dLog10SecConc_dLog10PrimaryConc, &totalConc, &dTotalConc_dLog10PrimaryConc)
+  arraySlice1d< real64 > funValue = totalConc-inputTotalConc
+}
+
+
+
+
+
+/* 	Commented out for now because for the first example we will assume that the activity coefficient is 1. 
 void EquilibriumReaction::allocateConstitutiveData( dataRepository::Group & const parent,
                                                     localIndex const numConstitutivePointsPerParentIndex )
 {
@@ -89,17 +165,26 @@ void EquilibriumReaction::allocateConstitutiveData( dataRepository::Group & cons
   resizeFields( parent.size() );
 }
 
+
 // initialize the concentration of the basis and dependent species and their derivatives. 
-// assignemnts associated with kinetic reaction rates have been commented out. 
-void EquilibriumReaction::resizeFields( localIndex const size )
+// assignemnts associated with kinetic reaction rates have been commented out.
+void ReactionBase::resizeFields( localIndex const size )	//what size is being passed here? I don't understand it but I have kept it as is. 
 {
-  localIndex const NBasis = numBasisSpecies();		//These functions need to be defined somehwere
-  localIndex const NDependent = numDependentSpecies();
+  localIndex const NBasis = m_numPrimarySpecies;		
+  localIndex const NDependent = m_numSecSpecies;
 //  localIndex const NReaction = numKineticReaction();	**** commented out as this isn't equilibrium
 
+
+// Changed names to be consistent with new names. ALso not including water, O2 gas and Ionic strangth for the example problem
+  m_secConc.resize( size, NDependent );
+  m_dSecConc_dPrimaryConc.resize( size, NDependent, NBasis );
+
+
+// Have to fix this depending on what variables we need
   m_concentrationAct.resize( size, NBasis );		// I think concentration*ActivityCoefficient for the basis species
   m_dependentConc.resize( size, NDependent + 1 );
   m_dDependentConc_dConc.resize( size, NDependent + 1, NBasis + 1 );
+
 
 //  m_kineticReactionRate.resize( size, NReaction );	**** commented out as this isn't equilibrium
 //  m_dKineticReactionRate_dConc.resize( size, NReaction, NBasis );
@@ -111,10 +196,12 @@ void EquilibriumReaction::resizeFields( localIndex const size )
   m_dTotalConc_dConc.resize( size, NBasis, NBasis );
 }
 
+
+	
 // Compute log10(ActivityCoefficient) for basis and dependent species along with their derivatives with respect of Ionic strength. 
 // Only B-Dot model has been impletemented. 
 // If there are plans to implement other models, maybe it is better to create multiple functions, one each for each activity coefficient model. 
-void EquilibriumReaction::ComputeLogActCoef( real64 const pressure,
+void ReactionBase::ComputeLogActCoef( real64 const pressure,
                                              real64 const temperature,
                                              real64 const ionicStrength,
                                              array1d< real64 > & logActCoef1,
@@ -187,7 +274,9 @@ void EquilibriumReaction::ComputeLogActCoef( real64 const pressure,
   else
     GEOSX_ERROR( "wrong activity coef model" );
 }
+*/
 
+/*	Commented out as a new version called ComputeLog10SecConcAndDerivative has been written
 // function to compute the derivative of the concentration of dependent species with respect to the concentration of the basis species. 
 // also seems to update the concentration of the dependent species
 // computes ionic strength using the input concentration of dependent species. In other words, ionic strength is computed using old dependent concentrations not the ones computed later in the function
@@ -201,8 +290,9 @@ void EquilibriumReaction::Compute( real64 const pressure,
                                    arraySlice1d< real64 > const & concentrationAct,
                                    ThermoDatabase & thermoDatabase )
 {
-  localIndex const NBasis = numBasisSpecies();
-  localIndex const NDependent = numDependentSpecies();
+  localIndex const NBasis = m_numPrimarySpecies;
+  localIndex const NDependent = m_numSecSpecies();
+
   const array1d< Species > & dependentSpecies = thermoDatabase->GetDependentSpecies();
   const array1d< Species > & basisSpecies = m_thermoDatabase->GetBasisSpecies();
   const array1d< localIndex > & basisSpeciesIndices = m_thermoDatabase->GetBasisSpeciesIndices();
@@ -238,6 +328,8 @@ void EquilibriumReaction::Compute( real64 const pressure,
   array1d< real64 > logActCoef2;
   array1d< real64 > dLogActCoef2;
   ComputeLogActCoef( pressure, temperature, dependentConc[NDependent], logActCoef1, dLogActCoef1, logActCoef2, dLogActCoef2 );
+
+
 
 // Compute d(concentration of dependent species)/d(concentration of basis species)
   real64 logK;
@@ -280,6 +372,8 @@ void EquilibriumReaction::Compute( real64 const pressure,
     concentrationAct[i] = concentration[i] + logActCoef1[i] * m_useActCoef;
 
 }
+
+
 
 // currently this function computes the total concentration and its derivative with respect to log10(basis species concentrations). 
 // for each basis species, total concentration = basis concentration + sum of the contribution of all dependent species to the basis species.  
@@ -329,7 +423,7 @@ void EquilibriumReaction::ComputeChemistry( real64 const & temperature,
     }
   }
 
-/* Has to do with dynamic reactions
+ Has to do with dynamic reactions
   const array1d< KineticReaction > & kineticReactionArray = kineticReactions->GetKineticReactions();
 
   for( localIndex ir = 0; ir < NReaction; ++ir )
@@ -400,8 +494,6 @@ void EquilibriumReaction::ComputeChemistry( real64 const & temperature,
     }
 
   }
-*/
-
 }
 
 // function to calculation the reaction rate. Includes impact of temperature, concentration, surface area, volume fraction and porosity
@@ -437,7 +529,7 @@ void EquilibriumReaction::ComputeKineticReactionRate( real64 const & temperature
   }
 }
 
-
+*/
 
 REGISTER_CATALOG_ENTRY( ReactionBase, EquilibriumReaction, string const &, string_array const &, string_array const &, string_array const &, array1d< real64 > const & )
 
