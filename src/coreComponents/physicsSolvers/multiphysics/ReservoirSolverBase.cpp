@@ -35,6 +35,7 @@ using namespace constitutive;
 ReservoirSolverBase::ReservoirSolverBase( const string & name,
                                           Group * const parent ):
   SolverBase( name, parent ),
+  m_systemSetupDone( false ),
   m_flowSolverName(),
   m_wellSolverName()
 {
@@ -106,7 +107,11 @@ real64 ReservoirSolverBase::solverStep( real64 const & time_n,
   real64 dt_return = dt;
 
   // setup the coupled linear system
-  setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+  if( !m_systemSetupDone )
+  {
+    setupSystem( domain, m_dofManager, m_localMatrix, m_rhs, m_solution );
+    m_systemSetupDone = true;
+  }
 
   // setup reservoir and well systems
   implicitStepSetup( time_n, dt, domain );
