@@ -461,65 +461,53 @@ real64 elementVolume( real64 const (&X)[FE_TYPE::numNodes][3] )
   return result;
 }
 
-///**
-// * @brief Compute the volume of an hexahedron
-// * @param[in] X vertices of the hexahedron
-// * @return the volume of the hexahedron
-// */
-//GEOSX_HOST_DEVICE
-//inline
-//real64 hexVolume( real64 const (&X)[8][3] )
-//{
-//  return elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( X );
-//}
-//
-///**
-// * @brief Compute the volume of an tetrahedron
-// * @param[in] X vertices of the tetrahedron
-// * @return the volume of the tetrahedron
-// */
-//GEOSX_HOST_DEVICE
-//inline
-//real64 tetVolume( real64 const (&X)[4][3] )
-//{
-//  return finiteElement::H1_Tetrahedron_Lagrange1_Gauss1::transformedQuadratureWeight( 0, X );
-//}
-//
-///**
-// * @brief Compute the volume of a wedge
-// * @param[in] X vertices of the wedge
-// * @return the volume of the wedge
-// */
-//GEOSX_HOST_DEVICE
-//inline
-//real64 wedgeVolume( real64 const (&X)[6][3] )
-//{
-//  constexpr integer numQuadraturePoints = 6;
-//  real64 result =  finiteElement::H1_Wedge_Lagrange1_Gauss6::transformedQuadratureWeight( 0, X );
-//  for( localIndex q=1; q<numQuadraturePoints; ++q )
-//  {
-//    result = result + finiteElement::H1_Wedge_Lagrange1_Gauss6::transformedQuadratureWeight( q, X );
-//  }
-//  return result;
-//}
-//
-///**
-// * @brief Compute the volume of a pyramid
-// * @param[in] X vertices of the pyramid
-// * @return the volume of the pyramid
-// */
-//GEOSX_HOST_DEVICE
-//inline
-//real64 pyramidVolume( real64 const (&X)[5][3] )
-//{
-//  constexpr integer numQuadraturePoints = 5;
-//  real64 result =  finiteElement::H1_Pyramid_Lagrange1_Gauss5::transformedQuadratureWeight( 0, X );
-//  for( localIndex q=1; q<numQuadraturePoints; ++q )
-//  {
-//    result = result + finiteElement::H1_Pyramid_Lagrange1_Gauss5::transformedQuadratureWeight( q, X );
-//  }
-//  return result;
-//}
+/**
+ * @brief Compute the volume of an hexahedron
+ * @param[in] X vertices of the hexahedron
+ * @return the volume of the hexahedron
+ */
+GEOSX_HOST_DEVICE
+inline
+real64 hexVolume( real64 const (&X)[8][3] )
+{
+  return elementVolume< finiteElement::H1_Hexahedron_Lagrange1_GaussLegendre2 >( X );
+}
+
+/**
+ * @brief Compute the volume of an tetrahedron
+ * @param[in] X vertices of the tetrahedron
+ * @return the volume of the tetrahedron
+ */
+GEOSX_HOST_DEVICE
+inline
+real64 tetVolume( real64 const (&X)[4][3] )
+{
+  return elementVolume< finiteElement::H1_Tetrahedron_Lagrange1_Gauss1 >( X );
+}
+
+/**
+ * @brief Compute the volume of a wedge
+ * @param[in] X vertices of the wedge
+ * @return the volume of the wedge
+ */
+GEOSX_HOST_DEVICE
+inline
+real64 wedgeVolume( real64 const (&X)[6][3] )
+{
+  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 > ( X );
+}
+
+/**
+ * @brief Compute the volume of a pyramid
+ * @param[in] X vertices of the pyramid
+ * @return the volume of the pyramid
+ */
+GEOSX_HOST_DEVICE
+inline
+real64 pyramidVolume( real64 const (&X)[5][3] )
+{
+  return elementVolume< finiteElement::H1_Pyramid_Lagrange1_Gauss5 >( X );
+}
 
 } /* namespace computationalGeometry */
 } /* namespace geosx */
