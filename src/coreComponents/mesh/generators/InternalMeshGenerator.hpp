@@ -50,14 +50,6 @@ public:
    */
   static string catalogName() { return "InternalMesh"; }
 
-  /**
-   * @brief Create a new geometric object (box, plane, etc) as a child of this group.
-   * @param childKey the catalog key of the new geometric object to create
-   * @param childName the name of the new geometric object in the repository
-   * @return the group child
-   */
-  virtual Group * createChild( string const & childKey, string const & childName ) override;
-
   virtual void generateMesh( DomainPartition & domain ) override;
 
   /**
@@ -207,7 +199,40 @@ private:
 
   /**
    * @brief Member variable for triangle pattern seletion.
-   * @note In pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
+   * @note In Pattern 0, half nodes have 4 edges and the other half have 8; for Pattern 1, every node has 6.
+   * @verbatim
+   *
+   *                           Pattern 0
+   *
+   *         |     |     |     |      \|/    |    \|/    |
+   *       --o-----o-----o-----o--   --o-----o-----o-----o--
+   *         |     |     |     |     _/|\__  | ___/|\___ | _
+   *         |     |     |     |       |   \ |/    |    \|/
+   *       --o-----o-----o-----o--   --o-----o-----o-----o--
+   *         |     |     |     |     _ | ___/|\___ | ___/|\_
+   *         |     |     |     |      \|/    |    \|/    |
+   *       --o-----o-----o-----o--   --o-----o-----o-----o--
+   *         |     |     |     |     _/|\___ | ___/|\___ | _
+   *         |     |     |     |       |    \|/    |    \|/
+   *       --o-----o-----o-----o--   --o-----o-----o-----o--
+   *         |     |     |     |     _ | ___/|\___ | ___/|\_
+   *
+   *
+   *                           Pattern 1
+   *
+   *         |     |     |     |      \ /   \ /   \ /   \ /
+   *       --o-----o-----o-----o--   --o-----o-----o-----o--
+   *         |     |     |     |      / \   / \   / \   / \
+   *         |     |     |     |         \ /   \ /   \ /   \
+   *       --o-----o-----o-----o--      --o-----o-----o-----o--
+   *         |     |     |     |           \   / \   / \
+   *         |     |     |     |      \ /   \ /   \ /   \ /
+   *       --o-----o-----o-----o--   --o-----o-----o-----o--
+   *         |     |     |     |      / \   / \   / \   / \
+   *         |     |     |     |         \ /   \ /   \ /   \ /
+   *       --o-----o-----o-----o--      --o-----o-----o-----o--
+   *         |     |     |     |         / \   / \   / \   / \
+   * @endverbatim
    */
   int m_trianglePattern;
 

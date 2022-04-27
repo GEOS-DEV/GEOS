@@ -290,9 +290,10 @@ struct MeshVisitor< LOC, LOC, VISIT_GHOSTS >
       forAll< parallelHostPolicy >( subRegion.size(), [=, visited = visited.toView()]( localIndex const ei )
       {
         // loop over all locations incident on an element and increment visitation counter
-        for( localIndex a = 0; a < meshMapUtilities::size1( elemToLocMap, ei ); ++a )
+        auto const locList = elemToLocMap[ei];
+        for( localIndex a = 0; a < locList.size(); ++a )
         {
-          localIndex const locIdx = meshMapUtilities::value( elemToLocMap, ei, a );
+          localIndex const locIdx = locList[a];
           if( VISIT_GHOSTS || ghostRank[locIdx] < 0 )
           {
             RAJA::atomicInc< parallelHostAtomic >( &visited[locIdx] );
@@ -363,10 +364,10 @@ struct MeshVisitor
                                                       localIndex const )
     {
       // loop over all connected locations
-      for( localIndex b = 0; b < meshMapUtilities::size1( locToConnMap, locIdx ); ++b )
+      auto const connList = locToConnMap[locIdx];
+      for( localIndex b = 0; b < connList.size(); ++b )
       {
-        auto const connIdx = meshMapUtilities::value( locToConnMap, locIdx, b );
-        lambda( locIdx, connIdx, b );
+        lambda( locIdx, connList[b], b );
       }
     } );
   }
@@ -396,12 +397,13 @@ struct MeshVisitor< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
     ObjectManagerLoc const & objectManager = getObjectManager< LOC >( meshLevel );
 
     // access to location-to-element map
+    using keys = typename ObjectManagerLoc::viewKeyStruct;
     auto const & elemRegionList =
-      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementRegionListString() ).toViewConst();
+      objectManager.template getReference< ToElemMapType >( keys::elementRegionListString() ).toViewConst();
     auto const & elemSubRegionList =
-      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementSubRegionListString() ).toViewConst();
+      objectManager.template getReference< ToElemMapType >( keys::elementSubRegionListString() ).toViewConst();
     auto const & elemIndexList =
-      objectManager.template getReference< ToElemMapType >( ObjectManagerLoc::viewKeyStruct::elementListString() ).toViewConst();
+      objectManager.template getReference< ToElemMapType >( keys::elementListString() ).toViewConst();
 
     // call the specialized version first, then add an extra loop over connected elements
     MeshVisitor< LOC, LOC, VISIT_GHOSTS >::
@@ -411,15 +413,17 @@ struct MeshVisitor< LOC, DofManager::Location::Elem, VISIT_GHOSTS >
                                                       localIndex const )
     {
       // loop over all connected locations
-      for( localIndex b = 0; b < meshMapUtilities::size1( elemIndexList, locIdx ); ++b )
+      auto const elemRegions = elemRegionList[ locIdx ];
+      auto const elemSubRegions = elemSubRegionList[ locIdx ];
+      auto const elemIndices = elemIndexList[ locIdx ];
+      for( localIndex b = 0; b < elemIndices.size(); ++b )
       {
-        localIndex const er  = meshMapUtilities::value( elemRegionList, locIdx, b );
-        localIndex const esr = meshMapUtilities::value( elemSubRegionList, locIdx, b );
-        localIndex const ei  = meshMapUtilities::value( elemIndexList, locIdx, b );
+        MeshHelper< DofManager::Location::Elem >::LocalIndexType const elemIdx =
+        { elemRegions[b], elemSubRegions[b], elemIndices[b] };
 
-        if( er >= 0 && esr >= 0 && ei >= 0 )
+        if( elemIdx[0] >= 0 && elemIdx[1] >= 0 && elemIdx[2] >= 0 )
         {
-          lambda( locIdx, MeshHelper< DofManager::Location::Elem >::LocalIndexType{ er, esr, ei }, b );
+          lambda( locIdx, elemIdx, b );
         }
       }
     } );
@@ -463,11 +467,11 @@ struct MeshVisitor< DofManager::Location::Elem, CONN_LOC, VISIT_GHOSTS >
         if( VISIT_GHOSTS || ghostRank[ei] < 0 )
         {
           auto const elemIdx = MeshHelper< DofManager::Location::Elem >::LocalIndexType{ er, esr, ei };
+          auto const connList = elemToConnMap[ei];
 
-          for( localIndex a = 0; a < meshMapUtilities::size1( elemToConnMap, ei ); ++a )
+          for( localIndex a = 0; a < connList.size(); ++a )
           {
-            localIndex const locIdx = meshMapUtilities::value( elemToConnMap, ei, a );
-            lambda( elemIdx, locIdx, a );
+            lambda( elemIdx, connList[a], a );
           }
         }
       } );
@@ -500,7 +504,7 @@ struct MeshVisitor< DofManager::Location::Elem, DofManager::Location::Elem, VISI
       {
         if( VISIT_GHOSTS || ghostRank[ei] < 0 )
         {
-          auto const elemIdx = MeshHelper< DofManager::Location::Elem >::LocalIndexType{ er, esr, ei };
+          MeshHelper< DofManager::Location::Elem >::LocalIndexType elemIdx{ er, esr, ei };
           lambda( elemIdx, elemIdx, 0 );
         }
       } );

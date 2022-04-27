@@ -21,6 +21,7 @@
 
 namespace geosx
 {
+
 using namespace dataRepository;
 
 MeshBody::MeshBody( string const & name,
@@ -29,13 +30,6 @@ MeshBody::MeshBody( string const & name,
   m_meshLevels( registerGroup( groupStructKeys::meshLevelsString() ) ),
   m_globalLengthScale( 0 )
 {}
-
-MeshBody::~MeshBody()
-{
-  // TODO Auto-generated destructor stub
-}
-
-
 
 MeshLevel & MeshBody::createMeshLevel( localIndex const newLevel )
 {
@@ -49,10 +43,7 @@ void MeshBody::setGlobalLengthScale( real64 scale )
 
 string MeshBody::intToMeshLevelString( localIndex const meshLevel )
 {
-  char temp[100] = {0};
-  // for now, the integer conversion is needed to avoid a warning on Lassen
-  sprintf( temp, "Level%.1d", LvArray::integerConversion< integer >( meshLevel ) );
-  return temp;
+  return GEOSX_FMT( "Level{}", meshLevel );
 }
 
 

@@ -103,11 +103,6 @@ else()
   set( extraComponentsLinkList ${extraComponentsLinkList} ${geosx_core_libs} )
 endif()
 
-if( ENABLE_PYGEOSX )
-  set( extraComponentsLinkList ${extraComponentsLinkList} pygroup pyfileIO pysolver )
-endif()
-
-
 blt_add_executable( NAME geosx
                     SOURCES main/main.cpp
                     DEPENDS_ON ${extraComponentsLinkList}
@@ -155,14 +150,16 @@ blt_add_executable( NAME geosx
 
 			       add_custom_target( geosx_validate_all_xml_files
 				 ALL
-				 COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples
+				 COMMAND bash ${SCRIPT_DIR}/validateXMLFiles.bash -g ${SCHEMA_DIR}/schema.xsd ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/../examples ${CMAKE_SOURCE_DIR}/../inputFiles
 				 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 				 DEPENDS geosx_update_rst_tables
 				 COMMENT "Validating all XML files in the repository against the schema"
 				 )
 			     endif()
 
-
+if( ENABLE_PYGEOSX )
+   add_subdirectory( pygeosx )
+endif()
 
 if( SPHINX_FOUND )
   blt_add_sphinx_target( geosx_docs )
@@ -175,6 +172,3 @@ install( DIRECTORY ../examples/
 install( DIRECTORY ../scripts/
          DESTINATION scripts )
 
-if( ENABLE_PYGEOSX )
-  add_subdirectory( pygeosx )
-endif()
