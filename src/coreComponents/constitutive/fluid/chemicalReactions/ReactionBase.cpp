@@ -70,8 +70,8 @@ void ReactionBase::ComputeLog10SecConcAndDerivative( real64 const temperature,
     log10SecConc[iSec] = -m_log10EqConst[iSec] - m_log10SecActCoeff[iSec];	
     for( localIndex jPri = 0; j < m_numPrimarySpecies; ++j )
     {
-      log10SecConc[iSec] += m_stochMatrix[iSec][jPri] * (log10PrimaryConc[jPri] + m_log10PrimaryActCoeff[jPri]);
-      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stochMatrix[iSec][jPri];
+      log10SecConc[iSec] += m_stoichMatrix[iSec][jPri] * (log10PrimaryConc[jPri] + m_log10PrimaryActCoeff[jPri]);
+      dLog10SecConc_dLog10PrimaryConc[iSec][jPri] += m_stoichMatrix[iSec][jPri];
     }
   }
 
@@ -99,10 +99,10 @@ void ReactionBase::ComputeTotalConcAndDerivative( real64 const & temperature,
     for( localIndex jSec = 0;  jSec < m_numSecSpecies; ++jSec )
     {
       real64 concSec = pow( 10.0, log10SecConc[jSec] );
-      totalConc[iPri] += m_stochMatrix[jSec][iPri] * concSec;	// not entirely sure why the negative sign is introduced. m_stochMatrix can be defined such that the negative sign makes sense as long as we are consistent everywhere
+      totalConc[iPri] += m_stoichMatrix[jSec][iPri] * concSec;	// not entirely sure why the negative sign is introduced. m_stoichMatrix can be defined such that the negative sign makes sense as long as we are consistent everywhere
       for( localIndex kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )		// add contribution to the derivtive from dependent species via the chain rule
       {
-        dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stochMatrix[jSec][iPri] * log( 10.0 ) * concSec * dLog10SecConc_dLog10PrimaryConc[jSec][kDerivative];
+        dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stoichMatrix[jSec][iPri] * log( 10.0 ) * concSec * dLog10SecConc_dLog10PrimaryConc[jSec][kDerivative];
       }
     }
   }
@@ -415,10 +415,10 @@ void EquilibriumReaction::ComputeChemistry( real64 const & temperature,
     for( localIndex id = 0; id < NDependent; ++id )
     {
       real64 concDependent = pow( 10.0, dependentConc[id] );
-      totalConc[ic] -= m_stochMatrix[ic][id] * concDependent;	// not entirely sure why the negative sign is introduced. m_stochMatrix can be defined such that the negative sign makes sense as long as we are consistent everywhere
+      totalConc[ic] -= m_stoichMatrix[ic][id] * concDependent;	// not entirely sure why the negative sign is introduced. m_stoichMatrix can be defined such that the negative sign makes sense as long as we are consistent everywhere
       for( localIndex idc = 0; idc < NBasis; ++idc )		// add contribution to the derivtive from dependent species via the chain rule
       {
-        dTotalConc_dConc[ic][idc] -= m_stochMatrix[ic][id] * log( 10.0 ) * concDependent * dDependentConc_dConc[id][idc];
+        dTotalConc_dConc[ic][idc] -= m_stoichMatrix[ic][id] * log( 10.0 ) * concDependent * dDependentConc_dConc[id][idc];
       }
     }
   }

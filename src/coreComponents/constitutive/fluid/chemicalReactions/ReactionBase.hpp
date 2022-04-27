@@ -92,32 +92,32 @@ protected:
 
 // First index: 0 = OH-, 1 = CO2, 2 = CO3-2, 3 = H2CO3, 4 = CaHCO3+, 5 = CaCO3, 6 = CaSO4, 7 = CaCl+, 8 = CaCl2, 9 = MgSO4, 10 = NaSO4-
 // Second index: 0 = H+, 1 = HCO3-, 2 = Ca+2, 3 = SO4-2, 4 = Cl-, 5 = Mg+2, 6 = Na+1
-  arrayView2d<real64>  m_stochMatrix;	
-  m_stochMatrix.resize( m_numSecSpecies, m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
+  arrayView2d<real64>  m_stoichMatrix;	
+  m_stoichMatrix.resize( m_numSecSpecies, m_numPrimarySpecies );	// Not sure if this is the correct way of allocating the size
 // Not sure if this works
-  m_stochMatrix[0:10][0:6] = 0;		
-  m_stochMatrix[0][0] = -1;		
-  m_stochMatrix[1][0] = 1;		
-  m_stochMatrix[1][1] = 1;
-  m_stochMatrix[2][0] = -1;
-  m_stochMatrix[2][1] = 1;
-  m_stochMatrix[3][0] = 1;
-  m_stochMatrix[3][1] = 1;
-  m_stochMatrix[4][1] = 1;
-  m_stochMatrix[4][2] = 1;
-  m_stochMatrix[5][0] = -1;
-  m_stochMatrix[5][1] = 1;
-  m_stochMatrix[5][2] = 1;
-  m_stochMatrix[6][2] = 1;
-  m_stochMatrix[6][3] = 1;
-  m_stochMatrix[7][2] = 1;
-  m_stochMatrix[7][4] = 1;
-  m_stochMatrix[8][2] = 1;
-  m_stochMatrix[8][4] = 2;
-  m_stochMatrix[9][5] = 1;
-  m_stochMatrix[9][3] = 1;
-  m_stochMatrix[10][6] = 1;
-  m_stochMatrix[10][3] = 1;
+  m_stoichMatrix[0:10][0:6] = 0;		
+  m_stoichMatrix[0][0] = -1;		
+  m_stoichMatrix[1][0] = 1;		
+  m_stoichMatrix[1][1] = 1;
+  m_stoichMatrix[2][0] = -1;
+  m_stoichMatrix[2][1] = 1;
+  m_stoichMatrix[3][0] = 1;
+  m_stoichMatrix[3][1] = 1;
+  m_stoichMatrix[4][1] = 1;
+  m_stoichMatrix[4][2] = 1;
+  m_stoichMatrix[5][0] = -1;
+  m_stoichMatrix[5][1] = 1;
+  m_stoichMatrix[5][2] = 1;
+  m_stoichMatrix[6][2] = 1;
+  m_stoichMatrix[6][3] = 1;
+  m_stoichMatrix[7][2] = 1;
+  m_stoichMatrix[7][4] = 1;
+  m_stoichMatrix[8][2] = 1;
+  m_stoichMatrix[8][4] = 2;
+  m_stoichMatrix[9][5] = 1;
+  m_stoichMatrix[9][3] = 1;
+  m_stoichMatrix[10][6] = 1;
+  m_stoichMatrix[10][3] = 1;
 
 
 };
