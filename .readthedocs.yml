@@ -30,5 +30,6 @@ python:
 submodules:
   include: 
     - src/coreComponents/LvArray
+    - src/coreComponents/constitutive/PVTPackage
     - integratedTests
   recursive: true
