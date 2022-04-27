@@ -100,19 +100,6 @@ string concat( S const & delim, T const & v, Ts const & ... vs )
 string_array tokenize( string const & str, string const & delimiters );
 
 /**
- * @brief Retuns a string containing a padded value
- * @param[in] value to be padded
- * @param[in] size size of the padding
- */
-template< typename T >
-string padValue( T value, int size )
-{
-  std::stringstream paddedStringStream;
-  paddedStringStream << std::setfill( '0' ) << std::setw( size ) << value;
-  return paddedStringStream.str();
-}
-
-/**
  * @brief Trim the string
  * @param[in] str the string to trim
  * @param[in] charsToRemove the list of characters to remove
