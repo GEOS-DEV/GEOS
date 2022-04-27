@@ -236,6 +236,8 @@ void SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete( real
     arrayView2d< real64, nodes::TOTAL_DISPLACEMENT_USD > const disp = nodeManager.totalDisplacement();
     double * min_disp = std::min_element( disp.begin(), disp.end());
     GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- min disp {:15.6e}", *min_disp ) );
+    double * max_disp = std::max_element( disp.begin(), disp.end());
+    GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- max disp {:15.6e}", *max_disp ) );
 
     real64 const totalFlux = m_flowSolver->computeFluxFaceDirichlet( time_n, dt, m_dofManager, domain );
     GEOSX_LOG_RANK_0( GEOSX_FMT( "SinglePhasePoromechanicsLagrangianContactSolver::implicitStepComplete -- total flux through Dirichlet faces {:15.6e}", totalFlux ) );
