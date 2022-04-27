@@ -183,8 +183,6 @@ private:
   /// initial R-vectors
   array3d< real64 > m_particleRVectors0;
 
-
-
   std::list< dataRepository::WrapperBase * > getExternalProperties() override
   {
     std::list< dataRepository::WrapperBase * > result;

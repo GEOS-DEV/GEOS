@@ -49,9 +49,8 @@ void ParticleRegion::generateMesh( Group & particleBlocks )
   }
 }
 
-// TODO This isn't great because really this calculation should only happen once, classic speed/memory trade-off. It just seems silly having multiple versions of the particle coordinates owned by the manager, regions and subregions.
-// TODO This should ABSOLUTELY be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that we can access those functions directly if needed
-array2d< real64 > ParticleRegion::getParticleCoordinates() const
+// TODO This should be changed to call a ParticleSubRegion::getParticleCoordinates (and/or getParticleCorners) on each subregion such that we can access those functions directly if needed
+array2d< real64 > ParticleRegion::getParticleCorners() const
 {
   int size = 8*(this->size()); // number of particle corners in this region
   array2d< real64 > coords(size, 3);
@@ -67,7 +66,7 @@ array2d< real64 > ParticleRegion::getParticleCoordinates() const
   this->forParticleSubRegions( [&]( auto & subRegion )
   {
     arrayView2d< real64 const > particleCenter = subRegion.getParticleCenter();
-    if(!subRegion.getHasRVectors()) // if no r-vectors, return coordinates of a cube centered at the particle with side length = volume^(1/3)
+    if(!subRegion.hasRVectors()) // if no r-vectors, return coordinates of a cube centered at the particle with side length = volume^(1/3)
     {
       arrayView1d< real64 const > particleVolume = subRegion.getParticleVolume();
       for(int p=0; p<subRegion.size(); p++)

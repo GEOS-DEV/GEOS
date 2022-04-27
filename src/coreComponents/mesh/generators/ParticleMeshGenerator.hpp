@@ -61,15 +61,6 @@ public:
 
   virtual void generateMesh( DomainPartition & domain ) override;
 
-  /**
-   * @return Whether or not a Cartesian mesh is being generated.
-   */
-  virtual inline bool isCartesian() const
-  {
-    return true;
-  }
-
-
 protected:
 
   ///@cond DO_NOT_DOCUMENT
@@ -79,7 +70,6 @@ protected:
     constexpr static char const * headerFilePathString() { return "headerFile"; }
     constexpr static char const * particleBlockNamesString() { return "particleBlockNames"; }
     constexpr static char const * particleTypesString() { return "particleTypes"; }
-    constexpr static char const * positionToleranceString() { return "positionTolerance"; }
   };
   /// @endcond
 
@@ -93,9 +83,6 @@ protected:
 
   /// Maximum extent of particle coordinates
   real64 m_max[3];
-
-  /// Array of particle coordinates
-  array1d< real64 > m_pCoord[3];
 
 private:
 
