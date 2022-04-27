@@ -33,7 +33,7 @@ foreach(test ${gtest_geosx_tests})
     # to some sort of possible conversion from int to long unsigned.
     # See also discussion here: https://github.com/GEOSX/LvArray/pull/250
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-      if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.0.0)
+      if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.3.1)
         target_compile_options(${test_name} PRIVATE "-Wno-stringop-overflow")
       endif()
     endif()
