@@ -99,7 +99,7 @@ void ReactionBase::ComputeTotalConcAndDerivative( real64 const & temperature,
     for( localIndex jSec = 0;  jSec < m_numSecSpecies; ++jSec )
     {
       real64 concSec = pow( 10.0, log10SecConc[jSec] );
-      totalConc[iPri] += m_stoichMatrix[jSec][iPri] * concSec;	// not entirely sure why the negative sign is introduced. m_stoichMatrix can be defined such that the negative sign makes sense as long as we are consistent everywhere
+      totalConc[iPri] += m_stoichMatrix[jSec][iPri] * concSec;	
       for( localIndex kDerivative = 0; kDerivative < m_numPrimarySpecies; ++kDerivative )		// add contribution to the derivtive from dependent species via the chain rule
       {
         dTotalConc_dLog10PrimaryConc[iPri][kDerivative] += m_stoichMatrix[jSec][iPri] * log( 10.0 ) * concSec * dLog10SecConc_dLog10PrimaryConc[jSec][kDerivative];
