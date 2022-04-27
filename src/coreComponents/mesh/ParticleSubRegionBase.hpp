@@ -62,20 +62,6 @@ public:
   ///@}
 
   /**
-   * @name Geometry computation / Connectivity
-   */
-  ///@{
-
-  /**
-   * @brief Call ObjectManagerBase::fixUpDownMaps for the connectivity maps needed by
-   *        the derived class
-   * @param[in] clearIfUnmapped clearIfUnmapped
-   */
-  virtual void fixUpDownMaps( bool const clearIfUnmapped ) { GEOSX_UNUSED_VAR( clearIfUnmapped ); }
-
-  ///@}
-
-  /**
    * @name Getters / Setters
    */
   ///@{
@@ -83,7 +69,7 @@ public:
   /**
    * @brief Get whether particle has r-vectors.
    */
-  bool getHasRVectors() const
+  bool hasRVectors() const
   { return m_hasRVectors; }
 
   /**

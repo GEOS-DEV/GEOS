@@ -37,8 +37,7 @@ ParticleMeshGenerator::ParticleMeshGenerator( string const & name, Group * const
   MeshGeneratorBase( name, parent ),
   m_dim( 3 ),
   m_min(),
-  m_max(),
-  m_pCoord{}
+  m_max()
 {
   registerWrapper( viewKeyStruct::particleFilePathString(), &m_particleFilePath ).
     setInputFlag( InputFlags::REQUIRED ).

@@ -59,8 +59,8 @@ localIndex ParticleManager::numParticleBlocks() const
 }
 
 void ParticleManager::resize( integer_array const & numParticles,
-                                   string_array const & regionNames,
-                                   string_array const & GEOSX_UNUSED_PARAM( particleTypes ) )
+                              string_array const & regionNames,
+                              string_array const & GEOSX_UNUSED_PARAM( particleTypes ) )
 {
   localIndex const n_regions = LvArray::integerConversion< localIndex >( regionNames.size());
   for( localIndex reg=0; reg<n_regions; ++reg )
@@ -82,8 +82,6 @@ void ParticleManager::setMaxGlobalIndex()
                          MPI_MAX,
                          MPI_COMM_GEOSX );
 }
-
-
 
 Group * ParticleManager::createChild( string const & childKey, string const & childName )
 {
@@ -112,10 +110,9 @@ void ParticleManager::expandObjectCatalogs()
   }
 }
 
-
 void ParticleManager::setSchemaDeviations( xmlWrapper::xmlNode schemaRoot,
-                                                xmlWrapper::xmlNode schemaParent,
-                                                integer documentationType )
+                                           xmlWrapper::xmlNode schemaParent,
+                                           integer documentationType )
 {
   xmlWrapper::xmlNode targetChoiceNode = schemaParent.child( "xsd:choice" );
   if( targetChoiceNode.empty() )
@@ -145,24 +142,16 @@ void ParticleManager::generateMesh( Group & particleBlockManager )
   } );
 }
 
-//void ParticleManager::generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager )
-//{
-//  this->forParticleRegions< ParticleRegion >( [&]( ParticleRegion & particleRegion )
-//  {
-//    particleRegion.generateAggregates( faceManager, nodeManager );
-//  } );
-//}
-
 int ParticleManager::PackSize( string_array const & wrapperNames,
-                                    ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                               ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackPrivate< false >( junk, wrapperNames, packList );
 }
 
 int ParticleManager::Pack( buffer_unit_type * & buffer,
-                                string_array const & wrapperNames,
-                                ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                           string_array const & wrapperNames,
+                           ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   return PackPrivate< true >( buffer, wrapperNames, packList );
 }
@@ -170,8 +159,8 @@ int ParticleManager::Pack( buffer_unit_type * & buffer,
 template< bool DOPACK >
 int
 ParticleManager::PackPrivate( buffer_unit_type * & buffer,
-                                   string_array const & wrapperNames,
-                                   ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                              string_array const & wrapperNames,
+                              ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
 
@@ -211,13 +200,13 @@ ParticleManager::PackPrivate( buffer_unit_type * & buffer,
 
 
 int ParticleManager::Unpack( buffer_unit_type const * & buffer,
-                                  ElementViewAccessor< arrayView1d< localIndex > > & packList )
+                             ParticleViewAccessor< arrayView1d< localIndex > > & packList )
 {
   return unpackPrivate( buffer, packList );
 }
 
 int ParticleManager::Unpack( buffer_unit_type const * & buffer,
-                                  ElementReferenceAccessor< array1d< localIndex > > & packList )
+                             ParticleReferenceAccessor< array1d< localIndex > > & packList )
 {
   return unpackPrivate( buffer, packList );
 }
@@ -263,21 +252,21 @@ int ParticleManager::unpackPrivate( buffer_unit_type const * & buffer,
   return unpackedSize;
 }
 
-int ParticleManager::PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+int ParticleManager::PackGlobalMapsSize( ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   buffer_unit_type * junk = nullptr;
   return PackGlobalMapsPrivate< false >( junk, packList );
 }
 
 int ParticleManager::PackGlobalMaps( buffer_unit_type * & buffer,
-                                          ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                                          ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   return PackGlobalMapsPrivate< true >( buffer, packList );
 }
 template< bool DOPACK >
 int
 ParticleManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                                             ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
+                                             ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const
 {
   int packedSize = 0;
 
@@ -312,7 +301,7 @@ ParticleManager::PackGlobalMapsPrivate( buffer_unit_type * & buffer,
 
 int
 ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
-                                        ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
+                                        ParticleViewAccessor< ReferenceWrapper< localIndex_array > > & packList )
 {
   int unpackedSize = 0;
 
@@ -345,111 +334,6 @@ ParticleManager::UnpackGlobalMaps( buffer_unit_type const * & buffer,
 
   return unpackedSize;
 }
-
-
-
-int ParticleManager::PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
-{
-  buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
-}
-int ParticleManager::PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
-{
-  buffer_unit_type * junk = nullptr;
-  return packUpDownMapsPrivate< false >( junk, packList );
-}
-
-int ParticleManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                          ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const
-{
-  return packUpDownMapsPrivate< true >( buffer, packList );
-}
-int ParticleManager::PackUpDownMaps( buffer_unit_type * & buffer,
-                                          ElementReferenceAccessor< array1d< localIndex > > const & packList ) const
-{
-  return packUpDownMapsPrivate< true >( buffer, packList );
-}
-
-template< bool DOPACK, typename T >
-int
-ParticleManager::packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                                             T const & packList ) const
-{
-  int packedSize = 0;
-
-  packedSize += bufferOps::Pack< DOPACK >( buffer, numRegions() );
-
-  for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
-  {
-    ParticleRegionBase const & particleRegion = getRegion( kReg );
-    packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.getName() );
-
-    packedSize += bufferOps::Pack< DOPACK >( buffer, particleRegion.numSubRegions() );
-    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
-      [&]( localIndex const esr, ParticleSubRegionBase const & subRegion )
-    {
-      packedSize += bufferOps::Pack< DOPACK >( buffer, subRegion.getName() );
-
-      arrayView1d< localIndex > const particleList = packList[kReg][esr];
-      if( DOPACK )
-      {
-        packedSize += subRegion.packUpDownMaps( buffer, particleList );
-      }
-      else
-      {
-        packedSize += subRegion.packUpDownMapsSize( particleList );
-      }
-    } );
-  }
-
-  return packedSize;
-}
-//template int
-//ParticleManager::
-//PackUpDownMapsPrivate<true>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
-//template int
-//ParticleManager::
-//PackUpDownMapsPrivate<false>( buffer_unit_type * & buffer,
-//                             ElementViewAccessor<arrayView1d<localIndex>> const & packList ) const;
-
-
-int
-ParticleManager::UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                                        ElementReferenceAccessor< localIndex_array > & packList,
-                                        bool const overwriteMap )
-{
-  int unpackedSize = 0;
-
-  localIndex numRegionsRead;
-  unpackedSize += bufferOps::Unpack( buffer, numRegionsRead );
-
-  for( localIndex kReg=0; kReg<numRegionsRead; ++kReg )
-  {
-    string regionName;
-    unpackedSize += bufferOps::Unpack( buffer, regionName );
-
-    ParticleRegionBase & particleRegion = getRegion( regionName );
-
-    localIndex numSubRegionsRead;
-    unpackedSize += bufferOps::Unpack( buffer, numSubRegionsRead );
-    particleRegion.forParticleSubRegionsIndex< ParticleSubRegionBase >(
-      [&]( localIndex const kSubReg, ParticleSubRegionBase & subRegion )
-    {
-      string subRegionName;
-      unpackedSize += bufferOps::Unpack( buffer, subRegionName );
-
-      /// THIS IS WRONG
-      localIndex_array & particleList = packList[kReg][kSubReg];
-      unpackedSize += subRegion.unpackUpDownMaps( buffer, particleList, false, overwriteMap );
-    } );
-  }
-
-  return unpackedSize;
-}
-
-
-
 
 REGISTER_CATALOG_ENTRY( ObjectManagerBase, ParticleManager, string const &, Group * const )
 }

@@ -105,7 +105,7 @@ public:
 
   ///@}
 
-  array2d< real64 > getParticleCoordinates() const;
+  array2d< real64 > getParticleCorners() const;
 
   /**
    * @brief A struct to serve as a container for variable strings and keys.

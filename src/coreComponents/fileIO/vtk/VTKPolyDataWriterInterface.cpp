@@ -171,7 +171,7 @@ getVtkPoints( ParticleRegion const & particleRegion )
 {
   vtkSmartPointer< vtkPoints > points = vtkPoints::New();
   points->SetNumberOfPoints( 8*particleRegion.size() );
-  array2d< real64 > const coord = particleRegion.getParticleCoordinates();
+  array2d< real64 > const coord = particleRegion.getParticleCorners();
   for( localIndex v = 0; v < 8*particleRegion.size(); v++ )
   {
     points->SetPoint( v, coord[v][0], coord[v][1], coord[v][2] );
