@@ -38,6 +38,8 @@
 
 #include "physicsSolvers/multiphysics/MultiphasePoromechanicsKernel.hpp"
 
+#include "physicsSolvers/fluidFlow/FlowSolverBaseExtrinsicData.hpp"
+
 namespace geosx
 {
 
@@ -109,9 +111,10 @@ void MultiphasePoromechanicsSolver::registerDataOnMesh( Group & meshBodies )
         setRestartFlags( RestartFlags::NO_WRITE ).
         setSizedFromParent( 0 );
 
-        subRegion.registerWrapper< array1d <integer> >( viewKeyStruct::elementMacroIDString() ).
-        setApplyDefaultValue( -1 ).
-        setPlotLevel( PlotLevel::LEVEL_1 );
+        // subRegion.registerWrapper< array1d <integer> >( viewKeyStruct::elementMacroIDString() ).
+        // setApplyDefaultValue( -1 ).
+        // setPlotLevel( PlotLevel::LEVEL_1 );
+        subRegion.registerExtrinsicData <extrinsicMeshData::flow::elementMacroID> (getName());
     } );
   } );
 }
@@ -160,7 +163,7 @@ void MultiphasePoromechanicsSolver::initializePostInitialConditionsPreSubGroups(
       NodeManager const & nodeManager = mesh.getNodeManager();
 
       ElementRegionManager::ElementViewAccessor< arrayView1d< integer > > elemMacroID =
-            elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( viewKeyStruct::elementMacroIDString() );
+            elemManager.constructViewAccessor< array1d< integer >, arrayView1d< integer > >( extrinsicMeshData::flow::elementMacroID::key() );
 
       array1d< integer > nodeVisited( nodeManager.size() );
       nodeVisited.setValues< serialPolicy>( 0 );

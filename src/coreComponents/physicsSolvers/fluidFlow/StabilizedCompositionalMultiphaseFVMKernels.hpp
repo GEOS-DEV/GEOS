@@ -67,7 +67,8 @@ public:
 
   using StabCompFlowAccessors = StencilAccessors< extrinsicMeshData::flow::phaseVolumeFractionOld,
                                                   extrinsicMeshData::flow::phaseDensityOld,
-                                                  extrinsicMeshData::flow::phaseComponentFractionOld >;
+                                                  extrinsicMeshData::flow::phaseComponentFractionOld,
+                                                  extrinsicMeshData::flow::elementMacroID >;
 
   using SolidAccessors = StencilMaterialAccessors< SolidBase,
                                                    extrinsicMeshData::solid::bulkModulus,
@@ -103,7 +104,6 @@ public:
   using Base::m_seri;
   using Base::m_sesri;
   using Base::m_sei;
-
 
   /**
    * @brief Constructor for the kernel interface
@@ -150,6 +150,7 @@ public:
     m_phaseDensOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseDensityOld {} ) ),
     m_phaseCompFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseComponentFractionOld {} )),
     m_phaseVolFracOld( stabCompFlowAccessors.get( extrinsicMeshData::flow::phaseVolumeFractionOld {} )),
+    m_elementMacroID( stabCompFlowAccessors.get( extrinsicMeshData::flow::elementMacroID {} )),
     m_bulkModulus( solidAccessors.get( extrinsicMeshData::solid::bulkModulus {} )),
     m_shearModulus( solidAccessors.get( extrinsicMeshData::solid::shearModulus {} )),
     m_biotCoefficient( porosityAccessors.get( extrinsicMeshData::porosity::biotCoefficient {} )),
@@ -218,8 +219,9 @@ public:
       real64 dPresGradStab{};
 
       real64 tauStab = 0.0;
-
       real64 tauC = 1.0;
+
+      stackArray1d< integer, 2 > stencilMacroElements( 2 );
 
       // compute potential difference MPFA-style
       for( integer i = 0; i < stack.stencilSize; ++i )
@@ -227,6 +229,8 @@ public:
         localIndex const er  = m_seri( iconn, i );
         localIndex const esr = m_sesri( iconn, i );
         localIndex const ei  = m_sei( iconn, i );
+
+        stencilMacroElements[i] = m_elementMacroID[er][esr][ei];
 
         // tauStab = (m_biotCoefficient[er][esr][ei] * m_biotCoefficient[er][esr][ei]) / (4.0 * (4.0 * m_shearModulus[er][esr][ei] / 3.0 + m_bulkModulus[er][esr][ei]));
         
@@ -238,18 +242,31 @@ public:
       // modify stabilization flux
       // multiply dPresGrad with upwind, lagged quantities
 
-      for( integer ic = 0; ic < numComp; ++ic )
+      localIndex const k_up_stab = (dPresGradStab >= 0) ? 0 : 1;
+
+      localIndex const er_up_stab   = m_seri( iconn, k_up_stab );
+      localIndex const esr_up_stab  = m_sesri( iconn, k_up_stab );
+      localIndex const ei_up_stab   = m_sei( iconn, k_up_stab );
+
+      real64 const mobility = m_phaseMob[er_up_stab ][esr_up_stab ][ei_up_stab ][ip];
+
+      if (stencilMacroElements[0] == stencilMacroElements[1] && LvArray::math::abs( mobility ) > 1e-20 )
       {
 
-        real64 laggedUpwind = m_phaseDensOld[er_up][esr_up][ei_up][ip]
-                              * m_phaseCompFracOld[er_up][esr_up][ei_up][ip][ic]
-                              * m_phaseVolFracOld[er_up][esr_up][ei_up][ip];
-
-        stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
-
-        for( integer ke = 0; ke < stack.stencilSize; ++ke )
+        for( integer ic = 0; ic < numComp; ++ic )
         {
-          stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwind;
+
+        
+          real64 laggedUpwind = m_phaseDensOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip]
+                              * m_phaseCompFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip][ic]
+                              * m_phaseVolFracOld[er_up_stab ][esr_up_stab ][ei_up_stab ][ip];
+
+          stack.stabFlux[ic] += dPresGradStab * laggedUpwind;
+        
+          for( integer ke = 0; ke < stack.stencilSize; ++ke )
+          {
+            stack.dStabFlux_dP[ke][ic] += tauStab * m_stabWeights( iconn, ke ) * laggedUpwind;
+          }
         }
       }
 
@@ -294,6 +311,7 @@ protected:
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseDensOld;
   ElementViewConst< arrayView3d< real64 const, compflow::USD_PHASE_COMP > > const m_phaseCompFracOld;
   ElementViewConst< arrayView2d< real64 const, compflow::USD_PHASE > > const m_phaseVolFracOld;
+  ElementViewConst< arrayView1d< integer const > > const m_elementMacroID;
 
   ElementViewConst< arrayView1d< real64 const > > const m_bulkModulus;
   ElementViewConst< arrayView1d< real64 const > > const m_shearModulus;

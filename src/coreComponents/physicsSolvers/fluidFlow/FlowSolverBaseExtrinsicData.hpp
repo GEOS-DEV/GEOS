@@ -112,6 +112,14 @@ EXTRINSIC_MESH_DATA_TRAIT( mimGravityCoefficient,
                            WRITE_AND_READ,
                            "Mimetic gravity coefficient" );
 
+EXTRINSIC_MESH_DATA_TRAIT( elementMacroID,
+                           "elementMacroID",
+                           array1d< integer >,
+                           -1,
+                           LEVEL_1,
+                           WRITE_AND_READ,
+                           "ID number of macroelement" );
+
 }
 
 }

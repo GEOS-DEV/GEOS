@@ -120,7 +120,7 @@ public:
     constexpr static char const * useStabFlagString() { return "useStab"; }
 
     // String key for the member level field for the element macroelement ID number.
-    static constexpr char const * elementMacroIDString() { return "elementMacroID"; }
+    // static constexpr char const * elementMacroIDString() { return "elementMacroID"; }
 
     constexpr static char const * computeMacroElementsFlagString() { return "computeMacroElements"; }
   };
