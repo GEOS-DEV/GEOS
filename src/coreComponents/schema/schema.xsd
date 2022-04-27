@@ -642,7 +642,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="nz" type="integer_array" use="required" />
 		<!--positionTolerance => A position tolerance to verify if a node belong to a nodeset-->
 		<xsd:attribute name="positionTolerance" type="real64" default="1e-10" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<!--trianglePattern => Pattern by which to decompose the hex mesh into wedges-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--xBias => Bias of element sizes in the x-direction within each mesh block (dx_left=(1+b)*L/N, dx_right=(1-b)*L/N)-->
 		<xsd:attribute name="xBias" type="real64_array" default="{1}" />
@@ -721,7 +721,7 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="theta" type="real64_array" use="required" />
 		<!--trajectory => Coordinates defining the wellbore trajectory-->
 		<xsd:attribute name="trajectory" type="real64_array2d" default="{{0}}" />
-		<!--trianglePattern => Pattern by which to decompose the hex mesh into prisms (more explanation required)-->
+		<!--trianglePattern => Pattern by which to decompose the hex mesh into wedges-->
 		<xsd:attribute name="trianglePattern" type="integer" default="0" />
 		<!--useCartesianOuterBoundary => Enforce a Cartesian aligned outer boundary on the outer block starting with the radial block specified in this value-->
 		<xsd:attribute name="useCartesianOuterBoundary" type="integer" default="1000000" />
@@ -761,7 +761,9 @@ stress - traction is applied to the faces as specified by the inner product of i
 		<xsd:attribute name="file" type="path" use="required" />
 		<!--logLevel => Log level-->
 		<xsd:attribute name="logLevel" type="integer" default="0" />
-		<!--regionAttribute => Translate the coordinates of the vertices by a given vector-->
+		<!--partitionRefinement => Number of partitioning refinement iterations (defaults to 1, recommended value).A value of 0 disables graph partitioning and keeps simple kd-tree partitions (not recommended). Values higher than 1 may lead to slightly improved partitioning, but yield diminishing returns.-->
+		<xsd:attribute name="partitionRefinement" type="integer" default="1" />
+		<!--regionAttribute => Name of the VTK cell attribute to use as region marker-->
 		<xsd:attribute name="regionAttribute" type="string" default="attribute" />
 		<!--scale => Scale the coordinates of the vertices by given scale factors (after translation)-->
 		<xsd:attribute name="scale" type="R1Tensor" default="{1,1,1}" />
@@ -1262,6 +1264,10 @@ the relative residual norm satisfies:
  - If the flag is set to 1, both reservoir-to-well flow and well-to-reservoir flow are allowed at the perforations. 
  - If the flag is set to 0, we only allow well-to-reservoir flow at the perforations.-->
 		<xsd:attribute name="enableCrossflow" type="integer" default="1" />
+		<!--initialPressureCoefficient => Tuning coefficient for the initial well pressure of rate-controlled wells: 
+ - Injector pressure at reference depth initialized as: (1+initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) 
+ - Producer pressure at reference depth initialized as: (1-initialPressureCoefficient)*reservoirPressureAtClosestPerforation + density*g*( zRef - zPerf ) -->
+		<xsd:attribute name="initialPressureCoefficient" type="real64" default="0.1" />
 		<!--injectionStream => Global component densities of the injection stream [moles/m^3 or kg/m^3]-->
 		<xsd:attribute name="injectionStream" type="real64_array" default="{-1}" />
 		<!--injectionTemperature => Temperature of the injection stream [K]-->
@@ -2255,6 +2261,8 @@ The expected format is "{ waterMax, oilMax }", in that order-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
 		<!--cohesion => Cohesion-->
 		<xsd:attribute name="cohesion" type="real64" use="required" />
+		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
+		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
 		<!--frictionCoefficient => Friction coefficient-->
 		<xsd:attribute name="frictionCoefficient" type="real64" use="required" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
@@ -2525,6 +2533,8 @@ For instance, if "oil" is before "gas" in "phaseNames", the table order should b
 		<xsd:attribute name="apertureTableName" type="string" use="required" />
 		<!--apertureTolerance => Value to be used to avoid floating point errors in expressions involving aperture. For example in the case of dividing by the actual aperture (not the effective aperture that results from the aperture function) this value may be used to avoid the 1/0 error. Note that this value may have some physical significance in its usage, as it may be used to smooth out highly nonlinear behavior associated with 1/0 in addition to avoiding the 1/0 error.-->
 		<xsd:attribute name="apertureTolerance" type="real64" default="1e-09" />
+		<!--displacementJumpThreshold => A threshold valued to determine whether a fracture is open or not.-->
+		<xsd:attribute name="displacementJumpThreshold" type="real64" default="2.22045e-16" />
 		<!--penaltyStiffness => Value of the penetration penalty stiffness. Units of Pressure/length-->
 		<xsd:attribute name="penaltyStiffness" type="real64" default="0" />
 		<!--shearStiffness => Value of the shear elastic stiffness. Units of Pressure/length-->
