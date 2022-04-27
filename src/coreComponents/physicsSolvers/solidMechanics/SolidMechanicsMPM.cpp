@@ -149,7 +149,7 @@ SolidMechanicsMPM::~SolidMechanicsMPM()
 }
 
 
-void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I wasted time on this and it's not actually called by anything... SJP
+void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies )
 {
   ExecutableGroup::registerDataOnMesh( meshBodies );
 
@@ -275,8 +275,6 @@ void SolidMechanicsMPM::registerDataOnMesh( Group & meshBodies ) // Apparently I
 
   } );
 }
-
-
 
 void SolidMechanicsMPM::initializePreSubGroups()
 {
@@ -462,7 +460,6 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
     string const & solidMaterialName = subRegion.template getReference< string >( viewKeyStruct::solidMaterialNamesString() );
     SolidBase & constitutiveRelation = getConstitutiveModel< SolidBase >( subRegion, solidMaterialName ); // For the time being we restrict our attention to elastic isotropic solids. TODO: Have all constitutive models automatically calculate a wave speed.
     arrayView2d< real64 > const particleDensity = constitutiveRelation.getDensity(); // 2d array because there's a density for each quadrature point, we just access with [particle][0]
-    //arrayView3d< real64, solid::STRESS_USD > const particleStress = constitutiveRelation.getStress();
     arrayView1d< real64 > const particleVolume = subRegion.getParticleVolume();
     arrayView1d< real64 > const particleMass = subRegion.getParticleMass();
     arrayView3d< real64 > const particleDeformationGradient = subRegion.getParticleDeformationGradient();
@@ -472,9 +469,6 @@ void SolidMechanicsMPM::initialize(arrayView2d< real64, nodes::REFERENCE_POSITIO
     {
       particleMass[i] = particleDensity[i][0]*particleVolume[i]; // TODO: This should probably be done in ParticleMeshGenerator...
     }
-
-    // stress
-    //particleStress.zero(); // This is actually handled by SolidBase.cpp - stress gets initialized to zero by default in the constructor
 
     // deformation gradient - TODO: there's probably a LvArray function that makes this a one-liner - I don't think the ParticleSubRegionBase constructor can easily initialize this to identity
     for(int p=0; p<subRegion.size(); p++)
@@ -507,10 +501,6 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
   GEOSX_MARK_FUNCTION;
 
   #define USE_PHYSICS_LOOP
-
-
-  // Constitutive manager
-  //ConstitutiveManager & constitutiveManager = domain.getConstitutiveManager();
 
   // Spatial Partition
   SpatialPartition & partition = dynamic_cast< SpatialPartition & >(domain.getReference< PartitionBase >( keys::partitionManager ) );
@@ -666,7 +656,7 @@ real64 SolidMechanicsMPM::explicitStep( real64 const & time_n,
 //      g_V[i][0] = -r*sin(theta)*50.0;
 //      g_V[i][1] = r*cos(theta)*50.0;
 //      g_V[i][2] = 0.0;
-//      // hard-coded simple shear
+//      // hard-coded shear
 //      g_V[i][0] = 50.0*(g_X[i][1] - 0.5*(m_xGlobalMax[1] - m_xGlobalMin[1]));
 //      g_V[i][1] = 25.0*(g_X[i][0] - 0.5*(m_xGlobalMax[0] - m_xGlobalMin[0]));
 //      g_V[i][2] = 0.0;

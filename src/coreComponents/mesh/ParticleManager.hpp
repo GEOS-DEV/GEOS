@@ -52,39 +52,39 @@ public:
   };
 
    /**
-   * @brief The ElementViewAccessor at the ParticleManager level is an array of array of VIEWTYPE.
+   * @brief The ParticleViewAccessor at the ParticleManager level is an array of array of VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
-  using ElementViewAccessor = array1d< array1d< VIEWTYPE > >;
+  using ParticleViewAccessor = array1d< array1d< VIEWTYPE > >;
 
   /**
-   * @brief The ElementViewAccessor at the ParticleManager level is the
-   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedView().
+   * @brief The ParticleViewAccessor at the ParticleManager level is the
+   *   type resulting from ParticleViewAccessor< VIEWTYPE >::toNestedView().
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
-  using ElementView = typename ElementViewAccessor< VIEWTYPE >::NestedViewType;
+  using ParticleView = typename ParticleViewAccessor< VIEWTYPE >::NestedViewType;
 
   /**
-   * @brief The ElementViewAccessor at the ParticleManager level is the
-   *   type resulting from ElementViewAccessor< VIEWTYPE >::toNestedViewConst().
+   * @brief The ParticleViewAccessor at the ParticleManager level is the
+   *   type resulting from ParticleViewAccessor< VIEWTYPE >::toNestedViewConst().
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
-  using ElementViewConst = typename ElementViewAccessor< VIEWTYPE >::NestedViewTypeConst;
+  using ParticleViewConst = typename ParticleViewAccessor< VIEWTYPE >::NestedViewTypeConst;
 
   /**
-   * @brief The ElementViewAccessor at the ParticleManager level is a 2D array of ReferenceWrapper around VIEWTYPE.
+   * @brief The ParticleViewAccessor at the ParticleManager level is a 2D array of ReferenceWrapper around VIEWTYPE.
    * @tparam VIEWTYPE data type
    */
   template< typename VIEWTYPE >
-  using ElementReferenceAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > >;
+  using ParticleReferenceAccessor = array1d< array1d< ReferenceWrapper< VIEWTYPE > > >;
 
   /**
    * @brief The MaterialViewAccessor at the ParticleManager level is a 3D array of VIEWTYPE.
    * @tparam VIEWTYPE data type
-   * var[particleRegionIndex][elementSubRegionIndex][materialIndexInRegion]
+   * var[particleRegionIndex][particleSubRegionIndex][materialIndexInRegion]
    */
   template< typename VIEWTYPE >
   using MaterialViewAccessor = array1d< array1d< array1d< VIEWTYPE > > >;
@@ -123,8 +123,8 @@ public:
   virtual ~ParticleManager() override;
 
   /**
-   * @brief Get the number of elements in all ParticleSubRegions of type T.
-   * @return number of elements
+   * @brief Get the number of particles in all ParticleSubRegions of type T.
+   * @return number of particles
    */
   template< typename T = ParticleSubRegionBase >
   localIndex getNumberOfParticles() const
@@ -144,13 +144,6 @@ public:
    * @param [in] particleBlockManager pointer to the ParticleBlockManager
    */
   void generateMesh( Group & particleBlockManager );
-
-  /**
-   * @brief Generate the aggregates.
-   * @param [in] faceManager pointer to the FaceManager
-   * @param [in] nodeManager pointer to the NodeManager
-   */
-//  void generateAggregates( FaceManager const & faceManager, NodeManager const & nodeManager );
 
   /**
    * @brief Create a new ParticleRegion object as a child of this group.
@@ -179,7 +172,7 @@ public:
   using Group::resize;
 
   /**
-   * @brief Set the number of elements for a set of particle regions.
+   * @brief Set the number of particles for a set of particle regions.
    * @param numParticles list of the new particle numbers
    * @param regionNames list of the particle region names
    * @param particleTypes list of the particle types
@@ -240,8 +233,8 @@ public:
   }
 
   /**
-   * @brief Get number of the regions.
-   * @return number of the regions
+   * @brief Get the number of regions.
+   * @return number of regions
    */
   localIndex numRegions() const
   {
@@ -249,8 +242,8 @@ public:
   }
 
   /**
-   * @brief Get number of the cell blocks.
-   * @return number of the cell blocks
+   * @brief Get the number of particle blocks.
+   * @return number of particle blocks
    */
   localIndex numParticleBlocks() const;
 
@@ -722,70 +715,70 @@ public:
 
 
   /**
-   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @brief This is a const function to construct a ParticleViewAccessor to access the data registered on the mesh.
    * @tparam TRAIT data type
    * @param neighborName neighbor data name
-   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
    */
   template< typename TRAIT >
-  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
   constructExtrinsicAccessor( string const & neighborName = string() ) const;
 
   /**
-   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @brief This is a const function to construct a ParticleViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param name view name of the data
    * @param neighborName neighbor data name
-   * @return ElementViewAccessor that contains VIEWTYPE data
+   * @return ParticleViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS >
+  ParticleViewAccessor< LHS >
   constructViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
-   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @brief This is a function to construct a ParticleViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param name view name of the data
    * @param neighborName neighbor data name
-   * @return ElementViewAccessor that contains VIEWTYPE data
+   * @return ParticleViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS >
+  ParticleViewAccessor< LHS >
   constructViewAccessor( string const & name, string const & neighborName = string() );
 
   /**
-   * @brief This is a function to construct a ElementViewAccessor to access array data registered on the mesh.
+   * @brief This is a function to construct a ParticleViewAccessor to access array data registered on the mesh.
    * @tparam T data type
    * @tparam NDIM number of array dimensions
    * @tparam PERM layout permutation sequence type
    * @param name view name of the data
    * @param neighborName neighbor data name
-   * @return ElementViewAccessor that contains ArrayView<T const, NDIM> of data
+   * @return ParticleViewAccessor that contains ArrayView<T const, NDIM> of data
    */
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructArrayViewAccessor( string const & name, string const & neighborName = string() ) const;
 
   /**
-   * @brief This is a const function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @brief This is a const function to construct a ParticleViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param neighborName neighbor data name
-   * @return ElementViewAccessor that contains pointers to wrapped VIEWTYPE data
+   * @return ParticleViewAccessor that contains pointers to wrapped VIEWTYPE data
    */
   template< typename VIEWTYPE >
-  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
+  ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > >
   constructReferenceAccessor( string const & viewName, string const & neighborName = string() ) const;
 
   /**
-   * @brief This is a function to construct a ElementViewAccessor to access the data registered on the mesh.
+   * @brief This is a function to construct a ParticleViewAccessor to access the data registered on the mesh.
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
    * @param neighborName neighbor data name
-   * @return ElementViewAccessor that contains pointers to wrapped VIEWTYPE data
+   * @return ParticleViewAccessor that contains pointers to wrapped VIEWTYPE data
    */
   template< typename VIEWTYPE >
-  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
+  ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > >
   constructReferenceAccessor( string const & viewName, string const & neighborName = string() );
 
   /**
@@ -820,10 +813,10 @@ public:
    * @param materialNames list of corresponding material names
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
-   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
    */
   template< typename TRAIT >
-  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
   constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
                                       arrayView1d< string const > const & materialNames,
                                       bool const allowMissingViews = false ) const;
@@ -835,10 +828,10 @@ public:
    * @tparam TRAIT mesh data trait
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
-   * @return ElementViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
+   * @return ParticleViewAccessor that contains traits::ViewTypeConst< typename TRAIT::type > data
    */
   template< typename MATERIALTYPE, typename TRAIT >
-  ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+  ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
   constructMaterialExtrinsicAccessor( bool const allowMissingViews = false ) const;
 
 
@@ -851,10 +844,10 @@ public:
    * @param materialNames list of corresponding material names
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
-   * @return ElementViewAccessor that contains VIEWTYPE data
+   * @return ParticleViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS >
+  ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
                                  string const & materialKeyName,
@@ -869,10 +862,10 @@ public:
    * @param materialNames list of corresponding material names
    * @param allowMissingViews flag to indicate whether it is allowed to miss the specified material data in material
    * list
-   * @return ElementViewAccessor that contains VIEWTYPE data
+   * @return ParticleViewAccessor that contains VIEWTYPE data
    */
   template< typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS >
+  ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName,
                                  arrayView1d< string const > const & regionNames,
                                  string const & materialKeyName,
@@ -890,7 +883,7 @@ public:
    * @return MaterialViewAccessor that contains the data views
    */
   template< typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
                                       string const & materialKeyName,
@@ -901,11 +894,11 @@ public:
    * @tparam MATERIALTYPE base type of material model
    * @tparam VIEWTYPE data type
    * @param viewName view name of the data
-   * @return ElementViewAccessor that contains VIEWTYPE data. Empty views are returned
+   * @return ParticleViewAccessor that contains VIEWTYPE data. Empty views are returned
    *         for subregions that don't contain a model derived from MODELTYPE.
    */
   template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS=VIEWTYPE >
-  ElementViewAccessor< LHS >
+  ParticleViewAccessor< LHS >
   constructMaterialViewAccessor( string const & viewName ) const;
 
   /**
@@ -919,7 +912,7 @@ public:
    *         for subregions that don't contain a model derived from MODELTYPE.
    */
   template< typename MATERIALTYPE, typename T, int NDIM, typename PERM = defaultLayout< NDIM > >
-  ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+  ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
   constructMaterialArrayViewAccessor( string const & viewName ) const;
 
   /**
@@ -948,9 +941,6 @@ public:
   using ObjectManagerBase::packGlobalMapsSize;
   using ObjectManagerBase::packGlobalMaps;
   using ObjectManagerBase::unpackGlobalMaps;
-  using ObjectManagerBase::packUpDownMapsSize;
-  using ObjectManagerBase::packUpDownMaps;
-  using ObjectManagerBase::unpackUpDownMaps;
 
   /**
    * @brief Get the buffer size needed to pack a list of wrappers.
@@ -959,7 +949,7 @@ public:
    * @return the size of the buffer required to pack the wrappers
    */
   int PackSize( string_array const & wrapperNames,
-                ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+                ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack a list of wrappers to a buffer.
@@ -970,7 +960,7 @@ public:
    */
   int Pack( buffer_unit_type * & buffer,
             string_array const & wrapperNames,
-            ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+            ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /// @copydoc dataRepository::Group::unpack
   using ObjectManagerBase::unpack;
@@ -982,7 +972,7 @@ public:
    * @return the size of data unpacked
    */
   int Unpack( buffer_unit_type const * & buffer,
-              ElementViewAccessor< arrayView1d< localIndex > > & packList );
+              ParticleViewAccessor< arrayView1d< localIndex > > & packList );
 
   /**
    * @brief Unpack a buffer.
@@ -991,14 +981,14 @@ public:
    * @return the size of data unpacked.
    */
   int Unpack( buffer_unit_type const * & buffer,
-              ElementReferenceAccessor< array1d< localIndex > > & packList );
+              ParticleReferenceAccessor< array1d< localIndex > > & packList );
 
   /**
    * @brief Get the size of the buffer to be packed.
    * @param packList list of indices to pack
    * @return the size of the data packed
    */
-  int PackGlobalMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+  int PackGlobalMapsSize( ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Pack a buffer.
@@ -1007,7 +997,7 @@ public:
    * @return the size of the data packed
    */
   int PackGlobalMaps( buffer_unit_type * & buffer,
-                      ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
+                      ParticleViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
   /**
    * @brief Unpack a buffer.
@@ -1016,50 +1006,9 @@ public:
    * @return the size of the data unpacked
    */
   int UnpackGlobalMaps( buffer_unit_type const * & buffer,
-                        ElementViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
+                        ParticleViewAccessor< ReferenceWrapper< localIndex_array > > & packList );
 
-  /**
-   * @brief Get the buffer size needed to pack particle-to-node and particle-to-face maps.
-   * @param packList list of indices to pack
-   * @return the size of data packed.
-   */
-  int PackUpDownMapsSize( ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
 
-  /**
-   * @brief Get the buffer size needed to pack particle-to-node and particle-to-face maps.
-   * @param packList list of indices to pack
-   * @return the size of data packed.
-   */
-  int PackUpDownMapsSize( ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
-
-  /**
-   * @brief Pack particle-to-node and particle-to-face maps.
-   * @param buffer pointer to the buffer to be packed
-   * @param packList list of indices to pack
-   * @return the size of data packed.
-   */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
-                      ElementViewAccessor< arrayView1d< localIndex > > const & packList ) const;
-
-  /**
-   * @brief Pack particle-to-node and particle-to-face maps.
-   * @param buffer pointer to the buffer to be packed
-   * @param packList list of indices to pack
-   * @return the size of data packed.
-   */
-  int PackUpDownMaps( buffer_unit_type * & buffer,
-                      ElementReferenceAccessor< array1d< localIndex > > const & packList ) const;
-
-  /**
-   * @brief Unpack particle-to-node and particle-to-face maps.
-   * @param buffer pointer to the buffer to be unpacked
-   * @param packList list of indices to pack
-   * @param overwriteMap flag to indicate whether to overwrite the local map
-   * @return the size of data packed.
-   */
-  int UnpackUpDownMaps( buffer_unit_type const * & buffer,
-                        ElementReferenceAccessor< localIndex_array > & packList,
-                        bool const overwriteMap );
 
 
 private:
@@ -1074,7 +1023,7 @@ private:
   template< bool DOPACK >
   int PackPrivate( buffer_unit_type * & buffer,
                    string_array const & wrapperNames,
-                   ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+                   ParticleViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
   /**
    * @brief Pack a buffer or get the buffer size.
@@ -1084,18 +1033,8 @@ private:
    */
   template< bool DOPACK >
   int PackGlobalMapsPrivate( buffer_unit_type * & buffer,
-                             ElementViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
+                             ParticleViewAccessor< arrayView1d< localIndex > > const & viewAccessor ) const;
 
-  /**
-   * @brief Pack particle-to-node and particle-to-face maps to a buffer or get the buffer size.
-   * @param buffer pointer to the buffer to be packed
-   * @param packList list of indices to pack
-   * @return the size of the data packed
-   */
-  template< bool DOPACK, typename T >
-  int
-  packUpDownMapsPrivate( buffer_unit_type * & buffer,
-                         T const & packList ) const;
   /**
    * @brief Unpack particle-to-node and particle-to-face maps.
    * @param buffer pointer to the buffer to be unpacked
@@ -1121,10 +1060,10 @@ private:
 
 
 template< typename VIEWTYPE, typename LHS >
-ParticleManager::ElementViewAccessor< LHS >
+ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructViewAccessor( string const & viewName, string const & neighborName ) const
 {
-  ElementViewAccessor< LHS > viewAccessor;
+  ParticleViewAccessor< LHS > viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
@@ -1152,11 +1091,10 @@ ParticleManager::constructViewAccessor( string const & viewName, string const & 
 
 
 template< typename VIEWTYPE, typename LHS >
-ParticleManager::ElementViewAccessor< LHS >
-ParticleManager::
-  constructViewAccessor( string const & viewName, string const & neighborName )
+ParticleManager::ParticleViewAccessor< LHS >
+ParticleManager::constructViewAccessor( string const & viewName, string const & neighborName )
 {
-  ElementViewAccessor< LHS > viewAccessor;
+  ParticleViewAccessor< LHS > viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
@@ -1183,9 +1121,8 @@ ParticleManager::
 }
 
 template< typename TRAIT >
-ParticleManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-ParticleManager::
-  constructExtrinsicAccessor( string const & neighborName ) const
+ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ParticleManager::constructExtrinsicAccessor( string const & neighborName ) const
 {
   return constructViewAccessor< typename TRAIT::type,
                                 traits::ViewTypeConst< typename TRAIT::type > >( TRAIT::key(), neighborName );
@@ -1193,9 +1130,8 @@ ParticleManager::
 
 
 template< typename T, int NDIM, typename PERM >
-ParticleManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
-ParticleManager::
-  constructArrayViewAccessor( string const & name, string const & neighborName ) const
+ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ParticleManager::constructArrayViewAccessor( string const & name, string const & neighborName ) const
 {
   return constructViewAccessor< Array< T, NDIM, PERM >,
                                 ArrayView< T const, NDIM, getUSD< PERM > >
@@ -1203,11 +1139,10 @@ ParticleManager::
 }
 
 template< typename VIEWTYPE >
-ParticleManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
-ParticleManager::
-  constructReferenceAccessor( string const & viewName, string const & neighborName ) const
+ParticleManager::ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > >
+ParticleManager::constructReferenceAccessor( string const & viewName, string const & neighborName ) const
 {
-  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
+  ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
@@ -1233,11 +1168,10 @@ ParticleManager::
 }
 
 template< typename VIEWTYPE >
-ParticleManager::ElementViewAccessor< ReferenceWrapper< VIEWTYPE > >
-ParticleManager::
-  constructReferenceAccessor( string const & viewName, string const & neighborName )
+ParticleManager::ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > >
+ParticleManager::constructReferenceAccessor( string const & viewName, string const & neighborName )
 {
-  ElementViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
+  ParticleViewAccessor< ReferenceWrapper< VIEWTYPE > > viewAccessor;
   viewAccessor.resize( numRegions() );
   for( typename dataRepository::indexType kReg=0; kReg<numRegions(); ++kReg )
   {
@@ -1264,8 +1198,7 @@ ParticleManager::
 
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::MaterialViewAccessor< LHS >
-ParticleManager::
-  constructFullMaterialViewAccessor( string const & viewName,
+ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const & cm ) const
 {
   MaterialViewAccessor< LHS > accessor;
@@ -1302,8 +1235,7 @@ ParticleManager::
 
 template< typename VIEWTYPE, typename LHS >
 ParticleManager::MaterialViewAccessor< LHS >
-ParticleManager::
-  constructFullMaterialViewAccessor( string const & viewName,
+ParticleManager::constructFullMaterialViewAccessor( string const & viewName,
                                      constitutive::ConstitutiveManager const & cm )
 {
   MaterialViewAccessor< LHS > accessor;
@@ -1339,13 +1271,13 @@ ParticleManager::
 }
 
 template< typename VIEWTYPE, typename LHS >
-ParticleManager::ElementViewAccessor< LHS >
+ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews ) const
 {
-  ElementViewAccessor< LHS > accessor;
+  ParticleViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
   accessor.resize( numRegions() );
@@ -1387,13 +1319,13 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 }
 
 template< typename VIEWTYPE, typename LHS >
-ParticleManager::ElementViewAccessor< LHS >
+ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName,
                                                      arrayView1d< string const > const & regionNames,
                                                      string const & materialKeyName,
                                                      bool const allowMissingViews )
 {
-  ElementViewAccessor< LHS > accessor;
+  ParticleViewAccessor< LHS > accessor;
 
   // Resize the accessor to all regions and subregions
   accessor.resize( numRegions() );
@@ -1434,9 +1366,8 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName,
 }
 
 template< typename TRAIT >
-ParticleManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-ParticleManager::
-  constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
+ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ParticleManager::constructMaterialExtrinsicAccessor( arrayView1d< string const > const & regionNames,
                                       arrayView1d< string const > const & materialNames,
                                       bool const allowMissingViews ) const
 {
@@ -1448,9 +1379,8 @@ ParticleManager::
 }
 
 template< typename MATERIALTYPE, typename TRAIT >
-ParticleManager::ElementViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
-ParticleManager::
-  constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
+ParticleManager::ParticleViewAccessor< traits::ViewTypeConst< typename TRAIT::type > >
+ParticleManager::constructMaterialExtrinsicAccessor( bool const allowMissingViews ) const
 {
   GEOSX_UNUSED_VAR(allowMissingViews);
   return constructMaterialViewAccessor< MATERIALTYPE, typename TRAIT::type,
@@ -1459,9 +1389,8 @@ ParticleManager::
 
 
 template< typename T, int NDIM, typename PERM >
-ParticleManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
-ParticleManager::
-  constructMaterialArrayViewAccessor( string const & viewName,
+ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ParticleManager::constructMaterialArrayViewAccessor( string const & viewName,
                                       arrayView1d< string const > const & regionNames,
                                       string const & materialKeyName,
                                       bool const allowMissingViews ) const
@@ -1473,10 +1402,10 @@ ParticleManager::
 }
 
 template< typename MATERIALTYPE, typename VIEWTYPE, typename LHS >
-ParticleManager::ElementViewAccessor< LHS >
+ParticleManager::ParticleViewAccessor< LHS >
 ParticleManager::constructMaterialViewAccessor( string const & viewName ) const
 {
-  ElementViewAccessor< LHS > accessor( numRegions() );
+  ParticleViewAccessor< LHS > accessor( numRegions() );
 
   // Resize the accessor to all regions and subregions
   for( localIndex er = 0; er < numRegions(); ++er )
@@ -1509,7 +1438,7 @@ ParticleManager::constructMaterialViewAccessor( string const & viewName ) const
 }
 
 template< typename MATERIALTYPE, typename T, int NDIM, typename PERM >
-ParticleManager::ElementViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
+ParticleManager::ParticleViewAccessor< ArrayView< T const, NDIM, getUSD< PERM > > >
 ParticleManager::constructMaterialArrayViewAccessor( string const & viewName ) const
 {
   return constructMaterialViewAccessor< MATERIALTYPE, Array< T, NDIM, PERM >, ArrayView< T const, NDIM, getUSD< PERM > > >( viewName );
