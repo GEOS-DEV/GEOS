@@ -224,7 +224,7 @@ public:
     // scaling the whole system might be even better solution (every pressure column needs to be multiplied by pascalToBarMult)
   }
 
-protected:
+private:
 
   // inputs
   MultivariableTableFunctionStaticKernel< numDofs, numOps > m_OBLOperatorsTable;
@@ -374,8 +374,6 @@ public:
    */
   struct StackVariables
   {
-public:
-
     /// Index of the local row corresponding to this element
     localIndex localRow = -1;
 
@@ -805,7 +803,7 @@ public:
   // temperature
   static constexpr integer RE_TEMP_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 1;
   // rock conduction
-  static constexpr integer ROCK_COND = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2;
+  static constexpr integer ROCK_COND_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 2;
   // gravity (density)
   static constexpr integer GRAV_OP = numDofs + numDofs * numPhases + numPhases + numDofs * numPhases + numDofs + 3;
   // capillary pressure
@@ -863,7 +861,6 @@ public:
    */
   struct StackVariables
   {
-public:
 
     /**
      * @brief Constructor for the stack variables
@@ -1103,14 +1100,14 @@ public:
       real64 const rockCondUp = m_rockThermalConductivity[erUp][esrUp][eiUp];
 
       // rock heat transfers flows from cell i to j
-      stack.localFlux[numComps] -= gammaTDiff * OBLValsUp[ROCK_COND] * (1 - poroUp) * rockCondUp;
+      stack.localFlux[numComps] -= gammaTDiff * OBLValsUp[ROCK_COND_OP] * (1 - poroUp) * rockCondUp;
       for( integer v = 0; v < numDofs; ++v )
       {
-        stack.localFluxJacobian[numComps][v + upOffset] -= gammaTDiff * OBLDersUp[ROCK_COND][v] * (1 - poroUp) * rockCondUp;
+        stack.localFluxJacobian[numComps][v + upOffset] -= gammaTDiff * OBLDersUp[ROCK_COND_OP][v] * (1 - poroUp) * rockCondUp;
         // the last variable - T
         if( v == numDofs - 1 )
         {
-          real64 const tFlux = transD * m_dt * OBLValsUp[ROCK_COND] * (1 - poroUp) * rockCondUp;
+          real64 const tFlux = transD * m_dt * OBLValsUp[ROCK_COND_OP] * (1 - poroUp) * rockCondUp;
           stack.localFluxJacobian[numComps][v] += tFlux;
           stack.localFluxJacobian[numComps][numDofs + v] -= tFlux;
         }
@@ -1280,7 +1277,7 @@ public:
 struct ResidualNormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
                       integer const numDofs,
@@ -1290,7 +1287,7 @@ struct ResidualNormKernel
                       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLOperatorValuesOld,
                       real64 & localResidualNorm )
   {
-    RAJA::ReduceSum< REDUCE_POLICY, real64 > localSum( 0.0 );
+    RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {
@@ -1312,7 +1309,7 @@ struct ResidualNormKernel
 struct ResidualDARTSL2NormKernel
 {
 
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static void launch( arrayView1d< real64 const > const & localResidual,
                       globalIndex const rankOffset,
                       integer const numDofs,
@@ -1326,7 +1323,7 @@ struct ResidualDARTSL2NormKernel
 
     for( integer idof = 0; idof < numDofs; ++idof )
     {
-      RAJA::ReduceSum< REDUCE_POLICY, real64 > localResSum( 0.0 ), localNormSum( 0.0 );
+      RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localResSum( 0.0 ), localNormSum( 0.0 );
 
       forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
       {
@@ -1354,7 +1351,7 @@ struct ResidualDARTSL2NormKernel
 
 struct SolutionCheckKernel
 {
-  template< typename POLICY, typename REDUCE_POLICY >
+  template< typename POLICY >
   static localIndex
   launch( arrayView1d< real64 const > const & localSolution,
           globalIndex const rankOffset,
@@ -1373,7 +1370,7 @@ struct SolutionCheckKernel
   {
     real64 constexpr eps = minValueForDivision;
 
-    RAJA::ReduceMin< REDUCE_POLICY, integer > check( 1 );
+    RAJA::ReduceMin< ReducePolicy< POLICY >, integer > check( 1 );
 
     forAll< POLICY >( dofNumber.size(), [=] GEOSX_HOST_DEVICE ( localIndex const ei )
     {

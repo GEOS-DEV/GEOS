@@ -265,6 +265,14 @@ public:
                      arrayView1d< string const > const & regionNames ) const;
 
   /**
+   * @brief Function to perform checks before applying Dirichlet type BC's
+   * @param domain the domain
+   * @param time the current time
+   */
+  bool validateDirichletBC( DomainPartition & domain,
+                            real64 const time ) const;
+
+  /**
    * @brief Function to perform the Application of Dirichlet type BC's
    * @param time current time
    * @param dt time step
@@ -295,7 +303,7 @@ public:
   virtual void initializePreSubGroups() override;
 
 
-protected:
+private:
 
   virtual void postProcessInput() override;
 
@@ -337,6 +345,9 @@ protected:
 
   /// flag indicating whether DARTS L2 norm is used for Newton convergence criterion
   integer m_useDARTSL2Norm;
+
+  /// flag to decide whether the sparsity pattern has to be formed again
+  bool m_systemSetupDone;
 };
 
 

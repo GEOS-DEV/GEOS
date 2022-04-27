@@ -168,13 +168,13 @@ public:
    * @brief Get the number of table dimensions
    * @return the number of table dimensions
    */
-  integer  getNumDims() const {return m_numDims;};
+  integer  numDims() const {return m_numDims;};
 
   /**
    * @brief Get the number of operators (functions to be interpolated)
    * @return the number of operators (functions to be interpolated)
    */
-  integer  getNumOps() const {return m_numOps;};
+  integer  numOps() const {return m_numOps;};
 
 private:
 

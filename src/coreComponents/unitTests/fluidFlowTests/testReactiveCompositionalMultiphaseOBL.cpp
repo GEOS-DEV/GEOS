@@ -531,7 +531,6 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_flux )
  * happenning in the kernel for the particular set of initial conditions we're running.
  * The test should be re-enabled and fixed at some point.
  */
-#if 1
 TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
 {
   real64 const perturb = sqrt( eps );
@@ -546,13 +545,11 @@ TEST_F( CompositionalMultiphaseFlowTest, jacobianNumericalCheck_accumulation )
     solver->assembleAccumulationTerms( dt, domain, solver->getDofManager(), localMatrix, localRhs );
   } );
 }
-#endif
 
 int main( int argc, char * * argv )
 {
   ::testing::InitGoogleTest( &argc, argv );
   g_commandLineOptions = *geosx::basicSetup( argc, argv );
-//  chai::ArrayManager::getInstance()->disableCallbacks();
   int const result = RUN_ALL_TESTS();
   geosx::basicCleanup();
   return result;
