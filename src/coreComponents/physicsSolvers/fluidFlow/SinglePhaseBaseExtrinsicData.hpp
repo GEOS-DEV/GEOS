@@ -48,8 +48,8 @@ EXTRINSIC_MESH_DATA_TRAIT( dMobility_dPressure,
                            NO_WRITE,
                            "Derivative of mobility with respect to pressure" );
 
-EXTRINSIC_MESH_DATA_TRAIT( densityOld,
-                           "densityOld",
+EXTRINSIC_MESH_DATA_TRAIT( density_n,
+                           "density_n",
                            array1d< real64 >,
                            0,
                            NOPLOT,

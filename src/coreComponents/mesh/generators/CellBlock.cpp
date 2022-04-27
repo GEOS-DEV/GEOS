@@ -44,7 +44,7 @@ void CellBlock::setElementType( ElementType elementType )
       m_numFacesPerElement = 4;
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       m_numNodesPerElement = 6;
       m_numEdgesPerElement = 9;
