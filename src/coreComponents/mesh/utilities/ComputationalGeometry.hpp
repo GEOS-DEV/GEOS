@@ -494,7 +494,7 @@ GEOSX_HOST_DEVICE
 inline
 real64 wedgeVolume( real64 const (&X)[6][3] )
 {
-  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 > ( X );
+  return elementVolume< finiteElement::H1_Wedge_Lagrange1_Gauss6 >( X );
 }
 
 /**
