@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -24,6 +24,7 @@
 #include "mesh/generators/cornerPointMesh/utilities/GeometryUtilities.hpp"
 #include "mesh/generators/cornerPointMesh/utilities/OutputUtilities.hpp"
 #include <chrono>
+
 namespace geosx
 {
 
@@ -84,16 +85,18 @@ void CornerPointMeshBuilder::postProcessMesh()
   // construct map linking a region to its cells
   formRegions();
 
-  // output VTK for testing purposes
-  //outputDebugVTKFile( m_vertices, m_faces, m_cells );
-  updateVertex();
+  // copy over the unique vertices (some new vertices may have been added while building faces)
+  updateVerticesAfterFaceBuilding();
 
+  // output VTK for testing purposes
   int const numRanks = MpiWrapper::commSize();
-  if (!(numRanks > 1))
-    outputDebugVTKFileWithFaces( m_vertices, m_faces, m_cells);
+  if( numRanks == 1 )
+  {
+    outputDebugVTKFileWithFaces( m_vertices, m_faces, m_cells );
+  }
 }
 
-void CornerPointMeshBuilder::updateVertex()
+void CornerPointMeshBuilder::updateVerticesAfterFaceBuilding()
 {
   std::set< Vertex > const & uniqueVerticesHelper = m_vertices.m_uniqueVerticesHelper;
   array2d< real64 > & vertexPositions = m_vertices.m_vertexPositions;
@@ -109,260 +112,20 @@ void CornerPointMeshBuilder::updateVertex()
 
 }
 
-void CornerPointMeshBuilder::buildCornerPointCells()
+
+namespace internal
 {
-  // local and global dimensions
-  localIndex const nX = m_dims.nX();
-  localIndex const nY = m_dims.nY();
 
-  localIndex const iMinLocal = m_dims.iMinLocal();
-  localIndex const jMinLocal = m_dims.jMinLocal();
-  localIndex const kMinLocal = 0;
-
-  localIndex const iMinOverlap = m_dims.iMinOverlap();
-  localIndex const jMinOverlap = m_dims.jMinOverlap();
-  localIndex const iMaxOverlap = m_dims.iMaxOverlap();
-  localIndex const jMaxOverlap = m_dims.jMaxOverlap();
-
-  localIndex const nXLocal = m_dims.nXLocal();
-  localIndex const nYLocal = m_dims.nYLocal();
-  localIndex const nZLocal = m_dims.nZLocal() + 2; // add two layers of auxillary cells for building faces
-
-  // Auxillary layers need to be appended to coord, zcorn, and actnum before computing vertice coordinates
-  appendAuxillaryLayer();
-
-  localIndex const nLocalCells = nXLocal*nYLocal*nZLocal;
-  localIndex constexpr nCPVerticesPerCell = 8;
-  localIndex const nCPVertices = nCPVerticesPerCell*nLocalCells;
-
-  array1d< localIndex > const & actnum = m_parser.actnum();
-  array1d< real64 > const & coord = m_parser.coord();
-  array1d< real64 > const & zcorn = m_parser.zcorn();
-
-  // vertex maps
-  array2d< real64 > & cpVertexPositions = m_vertices.m_cpVertexPositions;
-  array1d< globalIndex > & cpVertexToGlobalCPVertex = m_vertices.m_cpVertexToGlobalCPVertex;
-  array1d< bool > & cpVertexIsInsidePartition = m_vertices.m_cpVertexIsInsidePartition;
-  cpVertexPositions.resizeDimension< 0, 1 >( nCPVertices, 3 );
-  cpVertexToGlobalCPVertex.resize( nCPVertices );
-  cpVertexIsInsidePartition.resize( nCPVertices );
-
-  // cell maps
-  array1d< globalIndex > & ownedActiveCellToGlobalCell = m_cells.m_ownedActiveCellToGlobalCell;
-  array1d< localIndex > & ownedActiveCellToActiveCell = m_cells.m_ownedActiveCellToActiveCell;
-  array1d< localIndex > & activeCellToCell = m_cells.m_activeCellToCell;
-  array1d< localIndex > & cellToCPVertices = m_cells.m_cellToCPVertices;
-  ownedActiveCellToGlobalCell.reserve( nLocalCells );
-  ownedActiveCellToActiveCell.reserve( nLocalCells );
-  activeCellToCell.reserve( nLocalCells );
-  cellToCPVertices.resize( nLocalCells );
-
-  array1d< real64 > xPos( nCPVerticesPerCell );
-  array1d< real64 > yPos( nCPVerticesPerCell );
-  array1d< real64 > zPos( nCPVerticesPerCell );
-
-  array1d< bool > cpVertexIsInside( nCPVerticesPerCell );
-
-  // loop over all cells in the MPI domain, including overlaps
-  for( localIndex k = 0; k < nZLocal; ++k )
-  {
-    for( localIndex j = 0; j < nYLocal; ++j )
-    {
-      for( localIndex i = 0; i < nXLocal; ++i )
-      {
-        bool isValid = false;
-        // compute explicit local and global indices using the ijk structure
-        localIndex const iLocalCell = k*nXLocal*nYLocal + j*nXLocal + i;
-        globalIndex const iGlobalCell = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + (i+iMinLocal);
-        // TODO: inactive cells' vertex information is important for finding intersection points (discuss with francois)
-        //        if( actnum( iLocalCell ) == 1 )
-        //        {
-        //          // compute the positions of the eight vertices
-        //          isValid =
-        //            computeCellCoordinates( i, j, k, nXLocal, nYLocal,
-        //                                    iMinOverlap, iMaxOverlap, jMinOverlap, jMaxOverlap,
-        //                                    coord, zcorn,
-        //                                    xPos, yPos, zPos, cpVertexIsInside );
-        //        }
-        //compute the positions of the eight vertices
-        isValid =
-          computeCellCoordinates( i, j, k, nXLocal, nYLocal,
-                                  iMinOverlap, iMaxOverlap, jMinOverlap, jMaxOverlap,
-                                  coord, zcorn,
-                                  xPos, yPos, zPos, cpVertexIsInside );
-
-        if( isValid )
-        {
-          // cell maps
-          // assign local and global indices
-          if( actnum( iLocalCell ) == 1 )
-          {
-            activeCellToCell.emplace_back( iLocalCell );
-            // decide flag specifying whether the cell is in the overlap or not
-            if( m_dims.columnIsInsidePartition( i, j ) )
-            {
-              ownedActiveCellToActiveCell.emplace_back( activeCellToCell.size()-1 );
-              ownedActiveCellToGlobalCell.emplace_back( iGlobalCell );
-            }
-          }
-
-          // vertex maps
-
-          // construct the map from local cell to first CP vertex of the cell
-          localIndex const iFirstVertexLocal = nCPVerticesPerCell * iLocalCell;
-          globalIndex const iFirstVertexGlobal = nCPVerticesPerCell * iGlobalCell;
-          cellToCPVertices( iLocalCell ) = iFirstVertexLocal;
-          // TODO: can we add an illustration as follow:
-          //      6__ __ __7
-          //     /        /|
-          //    /        / |
-          //   /        /  |    z
-          //  4__ __ __5   3    |__ x
-          //  |        |  /    /
-          //  |        | /    y
-          //  |        |/
-          //  0__ __ __1
-          // save the position of the eight vertices, and assign global CP vertex indices
-          localIndex const order[nCPVerticesPerCell] = { 4, 5, 6, 7, 0, 1, 2, 3 };
-          for( localIndex pos = 0; pos < nCPVerticesPerCell; ++pos )
-          {
-            cpVertexPositions( iFirstVertexLocal + pos, 0 ) = xPos( order[pos] );
-            cpVertexPositions( iFirstVertexLocal + pos, 1 ) = yPos( order[pos] );
-            cpVertexPositions( iFirstVertexLocal + pos, 2 ) = -zPos( order[pos] );
-            cpVertexToGlobalCPVertex( iFirstVertexLocal + pos ) = iFirstVertexGlobal + order[pos];
-            cpVertexIsInsidePartition( iFirstVertexLocal + pos ) = cpVertexIsInside( order[pos] );
-          }
-        }
-      }
-    }
-  }
-  populateReverseCellMaps( nLocalCells, activeCellToCell.size(),
-                           activeCellToCell, ownedActiveCellToActiveCell,
-                           m_cells.m_cellToActiveCell, m_cells.m_activeCellToOwnedActiveCell );
-}
-
-void CornerPointMeshBuilder::populateReverseCellMaps( localIndex const nCells,
-                                                      localIndex const nActiveCells,
-                                                      array1d< localIndex > const & activeCellToCell,
-                                                      array1d< localIndex > const & ownedActiveCellToActiveCell,
-                                                      array1d< localIndex > & cellToActiveCell,
-                                                      array1d< localIndex > & activeCellToOwnedActiveCell )
-{
-  cellToActiveCell.resize( nCells );
-  activeCellToOwnedActiveCell.resize( nActiveCells );
-  cellToActiveCell.setValues< serialPolicy >( -1 );
-  activeCellToOwnedActiveCell.setValues< serialPolicy >( -1 );
-
-  for( localIndex iActiveCell = 0; iActiveCell < activeCellToCell.size(); ++iActiveCell )
-  {
-    cellToActiveCell( activeCellToCell( iActiveCell ) ) = iActiveCell;
-  }
-  for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < ownedActiveCellToActiveCell.size(); ++iOwnedActiveCell )
-  {
-    activeCellToOwnedActiveCell( ownedActiveCellToActiveCell( iOwnedActiveCell ) ) = iOwnedActiveCell;
-  }
-}
-
-void CornerPointMeshBuilder::appendAuxillaryLayer()
-{
-  // Append top and bottom auxillary layers to zcorn and adjust actnum
-  array1d< real64 > & zcorn = m_parser.zcorn();
-  localIndex const nXLocal = m_dims.nXLocal() * 2;
-  localIndex const nYLocal = m_dims.nYLocal() * 2;
-
-  // step 1: Find highest and lowest points to set as up and bottom boundaries
-  real64 const minZcorn = *( std::min_element( zcorn.begin(), zcorn.end() ) ) - m_offset;
-  real64 const maxZcorn = *( std::max_element( zcorn.begin(), zcorn.end() ) ) + m_offset;
-
-  // loop over all zcorns of elements at top/bottom layer in the MPI domain, including overlaps
-  localIndex const k = m_dims.nZLocal() * 2; // lower layer
-
-  for( localIndex j = 0; j < nYLocal; ++j )
-  {
-    for( localIndex i = 0; i < nXLocal; ++i )
-    {
-      // compute explicit local and global indices using the ijk structure
-      // Step 2: assign values to zcorn array associated with auxillary layers
-      localIndex const iLocalTopZcorn = j*nXLocal + i + 2* nYLocal * nXLocal;
-      localIndex const iLocalBottomZcorn = iLocalTopZcorn + (k -1) * nYLocal * nXLocal;
-
-      zcorn( iLocalTopZcorn -  nYLocal * nXLocal) = zcorn( iLocalTopZcorn );
-      zcorn( iLocalBottomZcorn +  nYLocal * nXLocal)= zcorn( iLocalBottomZcorn );
-
-      zcorn( iLocalTopZcorn - 2*nYLocal * nXLocal ) = minZcorn;
-      zcorn( iLocalBottomZcorn + 2*nYLocal * nXLocal ) = maxZcorn;
-    }
-  }
-
-  appendCellDataForAuxillaryLayer();
-  //printDataForDebugging();
-}
-
-void CornerPointMeshBuilder::appendCellDataForAuxillaryLayer()
-{
-  // regionID and actnum
-  array1d< localIndex > & regionId = m_parser.regionId();
-  array1d< localIndex > & actnum = m_parser.actnum();
-  // Field data
-  array1d< real64 > & poro = m_parser.poro();
-  array2d< real64 > & perm = m_parser.perm();
-  bool hasPoro = poro.size() > 0 ? true : false;
-  bool hasPerm = perm.size( 0 ) > 0 ? true : false;
-
-  localIndex const nXLocal = m_dims.nXLocal();
-  localIndex const nYLocal = m_dims.nYLocal();
-  localIndex const k = m_dims.nZLocal();
-
-  // default values for auxillary cells
-  //localIndex const inactiveRegionID = -1;
-  localIndex const inactiveness = -1;
-  real64 const inactivePoro = 0.0;
-  const std::vector<real64> inactivePerm = {0.0, 0.0, 0.0};
-
-  for( localIndex j = 0; j < nYLocal; ++j )
-  {
-    for( localIndex i = 0; i < nXLocal; ++i )
-    {
-      localIndex const iLocalTopCell = j*nXLocal + i + nYLocal * nXLocal;
-      localIndex const iLocalBottomCell = iLocalTopCell + (k-1) * nYLocal * nXLocal;
-
-      localIndex const iLocalTopAuxCell = j*nXLocal + i;
-      localIndex const iLocalBottomAuxCell = iLocalBottomCell + nYLocal * nXLocal;
-
-      regionId( iLocalTopAuxCell ) = regionId(iLocalTopCell);
-      actnum( iLocalTopAuxCell ) = inactiveness;
-
-      regionId( iLocalBottomAuxCell ) = regionId(iLocalBottomCell);
-      actnum( iLocalBottomAuxCell ) = inactiveness;
-
-      if (hasPoro)
-      {
-        poro( iLocalTopAuxCell ) = 0.0;
-        poro( iLocalBottomAuxCell ) = 0.0;
-      }
-
-      if (hasPerm)
-      {
-        for( localIndex dim = 0; dim < 3; ++dim )
-        {
-          perm(iLocalTopAuxCell, dim) = inactivePerm[dim];
-          perm(iLocalBottomAuxCell, dim) = inactivePerm[dim];
-        }
-      }
-    }
-  }
-}
-
-bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,
-                                                     localIndex const nXLocal, localIndex const nYLocal,
-                                                     localIndex const iMinOverlap, localIndex const iMaxOverlap,
-                                                     localIndex const jMinOverlap, localIndex const jMaxOverlap,
-                                                     array1d< real64 > const & coord,
-                                                     array1d< real64 > const & zcorn,
-                                                     array1d< real64 > & xPos,
-                                                     array1d< real64 > & yPos,
-                                                     array1d< real64 > & zPos,
-                                                     array1d< bool > & cpVertexIsInside )
+bool computeCellCoordinates( localIndex const i, localIndex const j, localIndex const k,
+                             localIndex const nXLocal, localIndex const nYLocal,
+                             localIndex const iMinOverlap, localIndex const iMaxOverlap,
+                             localIndex const jMinOverlap, localIndex const jMaxOverlap,
+                             array1d< real64 > const & coord,
+                             array1d< real64 > const & zcorn,
+                             array1d< real64 > & xPos,
+                             array1d< real64 > & yPos,
+                             array1d< real64 > & zPos,
+                             array1d< bool > & cpVertexIsInside )
 {
   localIndex const iXmLocal = k*8*nXLocal*nYLocal + j*4*nXLocal + 2*i;
   localIndex const iXpLocal = iXmLocal + 2*nXLocal;
@@ -472,6 +235,374 @@ bool CornerPointMeshBuilder::computeCellCoordinates( localIndex const i, localIn
   return true;
 }
 
+void populateReverseCellMaps( localIndex const nCells,
+                              localIndex const nActiveCells,
+                              array1d< localIndex > const & activeCellToCell,
+                              array1d< localIndex > const & ownedActiveCellToActiveCell,
+                              array1d< localIndex > & cellToActiveCell,
+                              array1d< localIndex > & activeCellToOwnedActiveCell )
+{
+  cellToActiveCell.resize( nCells );
+  activeCellToOwnedActiveCell.resize( nActiveCells );
+  cellToActiveCell.setValues< serialPolicy >( -1 );
+  activeCellToOwnedActiveCell.setValues< serialPolicy >( -1 );
+
+  for( localIndex iActiveCell = 0; iActiveCell < activeCellToCell.size(); ++iActiveCell )
+  {
+    cellToActiveCell( activeCellToCell( iActiveCell ) ) = iActiveCell;
+  }
+  for( localIndex iOwnedActiveCell = 0; iOwnedActiveCell < ownedActiveCellToActiveCell.size(); ++iOwnedActiveCell )
+  {
+    activeCellToOwnedActiveCell( ownedActiveCellToActiveCell( iOwnedActiveCell ) ) = iOwnedActiveCell;
+  }
+}
+
+bool computeFaceGeometry( std::vector< Face > const & adjacentFaces,
+                          std::vector< Vertex > & newVertices )
+{
+  //  Performs 3D geometrical calculation for two intersected faces, both of which are represented by multiple points
+
+  bool isValid;
+  newVertices = adjacentFaces[0].findIntersectionPoints( adjacentFaces[1], isValid );
+  return isValid;
+}
+
+bool checkFaceOverlap( array2d< real64 > const & vertexPositions,
+                       localIndex const (&nextfaceVertices)[ 4 ],
+                       localIndex const (&prevfaceVertices)[ 4 ],
+                       std::vector< Face > & adjacentFaces )
+{
+  // TODO: this is super ugly. at some corner cases, the algorithm might fail
+  // edges of next cell
+  Vertex const pointNext0 = { vertexPositions( nextfaceVertices[0], 0 ),
+                              vertexPositions( nextfaceVertices[0], 1 ),
+                              vertexPositions( nextfaceVertices[0], 2 ) };
+
+  Vertex const pointNext2 = { vertexPositions( nextfaceVertices[1], 0 ),
+                              vertexPositions( nextfaceVertices[1], 1 ),
+                              vertexPositions( nextfaceVertices[1], 2 ) };
+  Line const nextEdge02( pointNext0, pointNext2 );
+
+  Vertex const pointNext4 = { vertexPositions( nextfaceVertices[2], 0 ),
+                              vertexPositions( nextfaceVertices[2], 1 ),
+                              vertexPositions( nextfaceVertices[2], 2 ) };
+
+  Vertex const pointNext6 = { vertexPositions( nextfaceVertices[3], 0 ),
+                              vertexPositions( nextfaceVertices[3], 1 ),
+                              vertexPositions( nextfaceVertices[3], 2 ) };
+
+  Line const nextEdge46( pointNext4, pointNext6 );
+
+  // edges of previous cell
+  Vertex const pointPrev1 = { vertexPositions( prevfaceVertices[0], 0 ),
+                              vertexPositions( prevfaceVertices[0], 1 ),
+                              vertexPositions( prevfaceVertices[0], 2 ) };
+
+  Vertex const pointPrev3 = { vertexPositions( prevfaceVertices[1], 0 ),
+                              vertexPositions( prevfaceVertices[1], 1 ),
+                              vertexPositions( prevfaceVertices[1], 2 ) };
+
+  Line const prevEdge13( pointPrev1, pointPrev3 );
+
+  Vertex const pointPrev5 = { vertexPositions( prevfaceVertices[2], 0 ),
+                              vertexPositions( prevfaceVertices[2], 1 ),
+                              vertexPositions( prevfaceVertices[2], 2 ) };
+
+  Vertex const pointPrev7 = { vertexPositions( prevfaceVertices[3], 0 ),
+                              vertexPositions( prevfaceVertices[3], 1 ),
+                              vertexPositions( prevfaceVertices[3], 2 ) };
+
+  Line const prevEdge57( pointPrev5, pointPrev7 );
+
+  // TODO: is there a better way to compare the position between two cells
+
+  bool const isPrevCellHigher = prevEdge13.compare( nextEdge46 );
+  bool const isPrevCellLower = nextEdge02.compare( prevEdge57 );
+
+  if( isPrevCellHigher || isPrevCellLower )
+  {
+    return false;
+  }
+  else
+  {
+    Face faceNext( pointNext0, pointNext2, pointNext4, pointNext6 );
+    Face facePrev( pointPrev1, pointPrev3, pointPrev5, pointPrev7 );
+
+    faceNext.setIndexForFacePoints( nextfaceVertices );
+    facePrev.setIndexForFacePoints( prevfaceVertices );
+
+    adjacentFaces.emplace_back( faceNext );
+    adjacentFaces.emplace_back( facePrev );
+  }
+  return true;
+}
+
+void updateVerticalFaceMaps( localIndex const iOwnedActiveCellPrev,
+                             localIndex const iOwnedActiveCellNext,
+                             ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
+                             ArrayOfArrays< localIndex > & faceToVertices,
+                             std::vector< Vertex > & newVertices,
+                             std::set< Vertex > & uniqueVerticesHelper )
+{
+  //  some new points might be created when two faces intersect with each other. split these points, which latter
+  //  be added to coord array and update corner index
+
+  localIndex const newFaceId = faceToVertices.size();
+  faceToVertices.appendArray( newVertices.size() );
+  localIndex count( 0 );
+  for( auto iter = newVertices.begin(); iter != newVertices.end(); ++iter )
+  {
+    if( (*iter).m_localIndex < 0 )
+    {
+      // find  a possible newly created vertex
+      if( uniqueVerticesHelper.find( (*iter)) != uniqueVerticesHelper.end() )
+      {
+        // already existed and get the index
+        localIndex const oldLocalIdx = (*uniqueVerticesHelper.find( (*iter))).m_localIndex;
+        (*iter).setIndex( oldLocalIdx );
+      }
+      else
+      {
+        // a newly created point
+        localIndex const newLocalIdx = uniqueVerticesHelper.size();
+        (*iter).setIndex( newLocalIdx );
+        uniqueVerticesHelper.insert( (*iter) );
+      }
+    }
+
+    faceToVertices( newFaceId, count ) = (*iter).m_localIndex;
+    ++count;
+  }
+
+  // populate the cell-to-face map
+  if( iOwnedActiveCellPrev != -1 )
+  {
+    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellPrev, newFaceId );
+  }
+  if( iOwnedActiveCellNext != -1 )
+  {
+    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellNext, newFaceId );
+  }
+
+}
+
+
+};
+
+
+void CornerPointMeshBuilder::buildCornerPointCells()
+{
+  // local and global dimensions
+  localIndex const nX = m_dims.nX();
+  localIndex const nY = m_dims.nY();
+
+  localIndex const iMinLocal = m_dims.iMinLocal();
+  localIndex const jMinLocal = m_dims.jMinLocal();
+  localIndex const kMinLocal = 0;
+
+  localIndex const iMinOverlap = m_dims.iMinOverlap();
+  localIndex const jMinOverlap = m_dims.jMinOverlap();
+  localIndex const iMaxOverlap = m_dims.iMaxOverlap();
+  localIndex const jMaxOverlap = m_dims.jMaxOverlap();
+
+  localIndex const nXLocal = m_dims.nXLocal();
+  localIndex const nYLocal = m_dims.nYLocal();
+  localIndex const nZLocal = m_dims.nZLocal() + 2; // add two layers of auxillary cells for building faces
+
+  // Auxillary layers need to be appended to coord, zcorn, and actnum before computing vertice coordinates
+  appendAuxillaryLayer();
+
+  localIndex const nLocalCells = nXLocal*nYLocal*nZLocal;
+  localIndex constexpr nCPVerticesPerCell = 8;
+  localIndex const nCPVertices = nCPVerticesPerCell*nLocalCells;
+
+  array1d< localIndex > const & actnum = m_parser.actnum();
+  array1d< real64 > const & coord = m_parser.coord();
+  array1d< real64 > const & zcorn = m_parser.zcorn();
+
+  // vertex maps
+  array2d< real64 > & cpVertexPositions = m_vertices.m_cpVertexPositions;
+  array1d< globalIndex > & cpVertexToGlobalCPVertex = m_vertices.m_cpVertexToGlobalCPVertex;
+  array1d< bool > & cpVertexIsInsidePartition = m_vertices.m_cpVertexIsInsidePartition;
+  cpVertexPositions.resizeDimension< 0, 1 >( nCPVertices, 3 );
+  cpVertexToGlobalCPVertex.resize( nCPVertices );
+  cpVertexIsInsidePartition.resize( nCPVertices );
+
+  // cell maps
+  array1d< globalIndex > & ownedActiveCellToGlobalCell = m_cells.m_ownedActiveCellToGlobalCell;
+  array1d< localIndex > & ownedActiveCellToActiveCell = m_cells.m_ownedActiveCellToActiveCell;
+  array1d< localIndex > & activeCellToCell = m_cells.m_activeCellToCell;
+  array1d< localIndex > & cellToCPVertices = m_cells.m_cellToCPVertices;
+  ownedActiveCellToGlobalCell.reserve( nLocalCells );
+  ownedActiveCellToActiveCell.reserve( nLocalCells );
+  activeCellToCell.reserve( nLocalCells );
+  cellToCPVertices.resize( nLocalCells );
+
+  array1d< real64 > xPos( nCPVerticesPerCell );
+  array1d< real64 > yPos( nCPVerticesPerCell );
+  array1d< real64 > zPos( nCPVerticesPerCell );
+
+  array1d< bool > cpVertexIsInside( nCPVerticesPerCell );
+
+  // loop over all cells in the MPI domain, including overlaps
+  for( localIndex k = 0; k < nZLocal; ++k )
+  {
+    for( localIndex j = 0; j < nYLocal; ++j )
+    {
+      for( localIndex i = 0; i < nXLocal; ++i )
+      {
+        bool isValid = false;
+        // compute explicit local and global indices using the ijk structure
+        localIndex const iLocalCell = k*nXLocal*nYLocal + j*nXLocal + i;
+        globalIndex const iGlobalCell = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + (i+iMinLocal);
+
+        //compute the positions of the eight vertices
+        isValid =
+          internal::computeCellCoordinates( i, j, k,
+                                            nXLocal, nYLocal,
+                                            iMinOverlap, iMaxOverlap,
+                                            jMinOverlap, jMaxOverlap,
+                                            coord, zcorn,
+                                            xPos, yPos, zPos, cpVertexIsInside );
+
+        if( isValid )
+        {
+          // cell maps
+          // assign local and global indices
+          if( actnum( iLocalCell ) == 1 )
+          {
+            activeCellToCell.emplace_back( iLocalCell );
+            // decide flag specifying whether the cell is in the overlap or not
+            if( m_dims.columnIsInsidePartition( i, j ) )
+            {
+              ownedActiveCellToActiveCell.emplace_back( activeCellToCell.size()-1 );
+              ownedActiveCellToGlobalCell.emplace_back( iGlobalCell );
+            }
+          }
+
+          // vertex maps
+
+          // construct the map from local cell to first CP vertex of the cell
+          localIndex const iFirstVertexLocal = nCPVerticesPerCell * iLocalCell;
+          globalIndex const iFirstVertexGlobal = nCPVerticesPerCell * iGlobalCell;
+          cellToCPVertices( iLocalCell ) = iFirstVertexLocal;
+
+          //      6__ __ __7
+          //     /        /|
+          //    /        / |
+          //   /        /  |    z
+          //  4__ __ __5   3    |__ x
+          //  |        |  /    /
+          //  |        | /    y
+          //  |        |/
+          //  0__ __ __1
+
+          // save the position of the eight vertices, and assign global CP vertex indices
+          localIndex const order[nCPVerticesPerCell] = { 4, 5, 6, 7, 0, 1, 2, 3 };
+          for( localIndex pos = 0; pos < nCPVerticesPerCell; ++pos )
+          {
+            cpVertexPositions( iFirstVertexLocal + pos, 0 ) = xPos( order[pos] );
+            cpVertexPositions( iFirstVertexLocal + pos, 1 ) = yPos( order[pos] );
+            cpVertexPositions( iFirstVertexLocal + pos, 2 ) = -zPos( order[pos] );
+            cpVertexToGlobalCPVertex( iFirstVertexLocal + pos ) = iFirstVertexGlobal + order[pos];
+            cpVertexIsInsidePartition( iFirstVertexLocal + pos ) = cpVertexIsInside( order[pos] );
+          }
+        }
+      }
+    }
+  }
+  internal::populateReverseCellMaps( nLocalCells, activeCellToCell.size(),
+                                     activeCellToCell, ownedActiveCellToActiveCell,
+                                     m_cells.m_cellToActiveCell,
+                                     m_cells.m_activeCellToOwnedActiveCell );
+}
+
+
+void CornerPointMeshBuilder::appendAuxillaryLayer()
+{
+  // Append top and bottom auxillary layers to zcorn and adjust actnum
+  array1d< real64 > & zcorn = m_parser.zcorn();
+  localIndex const nXLocal = m_dims.nXLocal() * 2;
+  localIndex const nYLocal = m_dims.nYLocal() * 2;
+
+  // step 1: Find highest and lowest points to set as up and bottom boundaries
+  real64 const minZcorn = *( std::min_element( zcorn.begin(), zcorn.end() ) ) - m_offset;
+  real64 const maxZcorn = *( std::max_element( zcorn.begin(), zcorn.end() ) ) + m_offset;
+
+  // loop over all zcorns of elements at top/bottom layer in the MPI domain, including overlaps
+  localIndex const k = m_dims.nZLocal() * 2; // lower layer
+
+  for( localIndex j = 0; j < nYLocal; ++j )
+  {
+    for( localIndex i = 0; i < nXLocal; ++i )
+    {
+      // compute explicit local and global indices using the ijk structure
+      // Step 2: assign values to zcorn array associated with auxillary layers
+      localIndex const iLocalTopZcorn = j*nXLocal + i + 2* nYLocal * nXLocal;
+      localIndex const iLocalBottomZcorn = iLocalTopZcorn + (k -1) * nYLocal * nXLocal;
+
+      zcorn( iLocalTopZcorn -  nYLocal * nXLocal ) = zcorn( iLocalTopZcorn );
+      zcorn( iLocalBottomZcorn +  nYLocal * nXLocal )= zcorn( iLocalBottomZcorn );
+
+      zcorn( iLocalTopZcorn - 2*nYLocal * nXLocal ) = minZcorn;
+      zcorn( iLocalBottomZcorn + 2*nYLocal * nXLocal ) = maxZcorn;
+    }
+  }
+
+  appendCellDataForAuxillaryLayer();
+}
+
+void CornerPointMeshBuilder::appendCellDataForAuxillaryLayer()
+{
+  // regionID and actnum
+  array1d< localIndex > & regionId = m_parser.regionId();
+  array1d< localIndex > & actnum = m_parser.actnum();
+  // Field data
+  array1d< real64 > & poro = m_parser.poro();
+  array2d< real64 > & perm = m_parser.perm();
+  bool const hasPoro = ( poro.size() > 0 );
+  bool const hasPerm = ( perm.size( 0 ) > 0 );
+
+  localIndex const nXLocal = m_dims.nXLocal();
+  localIndex const nYLocal = m_dims.nYLocal();
+  localIndex const k = m_dims.nZLocal();
+
+  // default values for auxillary cells
+
+  for( localIndex j = 0; j < nYLocal; ++j )
+  {
+    for( localIndex i = 0; i < nXLocal; ++i )
+    {
+      localIndex const iLocalTopCell = j*nXLocal + i + nYLocal * nXLocal;
+      localIndex const iLocalBottomCell = iLocalTopCell + (k-1) * nYLocal * nXLocal;
+
+      localIndex const iLocalTopAuxCell = j*nXLocal + i;
+      localIndex const iLocalBottomAuxCell = iLocalBottomCell + nYLocal * nXLocal;
+
+      regionId( iLocalTopAuxCell ) = regionId( iLocalTopCell );
+      actnum( iLocalTopAuxCell ) = -1;
+
+      regionId( iLocalBottomAuxCell ) = regionId( iLocalBottomCell );
+      actnum( iLocalBottomAuxCell ) = -1;
+
+      if( hasPoro )
+      {
+        poro( iLocalTopAuxCell ) = 0.0;
+        poro( iLocalBottomAuxCell ) = 0.0;
+      }
+
+      if( hasPerm )
+      {
+        for( localIndex dim = 0; dim < 3; ++dim )
+        {
+          perm( iLocalTopAuxCell, dim ) = 0.0;
+          perm( iLocalBottomAuxCell, dim ) = 0.0;
+        }
+      }
+    }
+  }
+}
+
 
 void CornerPointMeshBuilder::formRegions()
 {
@@ -518,8 +649,6 @@ void CornerPointMeshBuilder::filterVertices()
   array1d< globalIndex > const & cpVertexToGlobalCPVertex = m_vertices.m_cpVertexToGlobalCPVertex;
   array1d< localIndex > & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
   cpVertexToVertex.resize( cpVertexPositions.size() );
-
-  // TODO: cpVertexToVertex.resize( cpVertexPositions.size( 0 ) );
 
   // First step: filter the unique vertices using a set
   // the compareVertex struct has been replaced less than operator for set's sortting purpose
@@ -590,7 +719,7 @@ void CornerPointMeshBuilder::buildFaces()
   // allocate space for the maps
   localIndex const nOwnedActiveCells = m_cells.m_ownedActiveCellToActiveCell.size();
   // TODO: we might need to dynamically allocate memory when finding more intersection points, which in turn creates more faces
-  localIndex const faceCapacity = 6; // This hard-coded 6 only works for conforming catersian grid.
+  localIndex const faceCapacity = 6; // This hard-coded 6 only works for conforming cartesian grid.
 
   ArrayOfArrays< localIndex > & ownedActiveCellToFaces = m_cells.m_ownedActiveCellToFaces;
   ownedActiveCellToFaces.resize( nOwnedActiveCells, faceCapacity );
@@ -610,13 +739,11 @@ void CornerPointMeshBuilder::buildFaces()
 
 void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
 {
-  // not ready for review, in construction
-  //GEOSX_UNUSED_VAR( direction );
+
   //  Finds all vertical faces perpendicular to either i or j direction. Two steps are involved: first find all
   //  regular faces that contain internal, not faulted faces and boundary faces where only one cell is connected.
   //  Second, find all faulted faces and compute intersections between them.
 
-  // TODO: to see if there is a better way to search for vertical faces
   localIndex const nXLocal = m_dims.nXLocal();
   localIndex const nYLocal = m_dims.nYLocal();
   localIndex const nZLocal = m_dims.nZLocal();
@@ -635,20 +762,21 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
 
   // index switch. i, j corresponding to x, y
   localIndex iOffset, jOffset, iPillar, jPillar;
-  localIndex iPadding = 0; localIndex jPadding = 0;
+  localIndex iPadding = 0;
+  localIndex jPadding = 0;
   bool isInternalFace = true;
   bool isXAxis = true;
   bool onFrontBoundary = false;
   bool onBackBoundary = false;
 
-  if (direction == "X")
+  if( direction == "X" )
   {
     iOffset = 1;
     jOffset = 0;
     iPillar = nXLocal + 1;
     jPillar = nYLocal;
   }
-  else if (direction == "Y")
+  else if( direction == "Y" )
   {
     iOffset = 0;
     jOffset = 1;
@@ -666,13 +794,13 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
   // Cells at z direction has 2 auxillary cells.
 
   // loop over pillar or cell
-  for (localIndex i = 0; i < iPillar; ++i)
+  for( localIndex i = 0; i < iPillar; ++i )
   {
     // loop over pillar or cell
-    for (localIndex j = 0; j < jPillar; ++j)
+    for( localIndex j = 0; j < jPillar; ++j )
     {
 
-      if (isXAxis)
+      if( isXAxis )
       {
         // Found the boundary faces perpendicular to x axis
         onFrontBoundary = (i == 0);
@@ -701,7 +829,7 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
         // local index of the next active cell
         localIndex iActiveCellNext = -1;
         // loop over cells in k direction
-        for (localIndex k = 0; k < nZLocal + 2; ++k)
+        for( localIndex k = 0; k < nZLocal + 2; ++k )
         {
           if( !onFrontBoundary )
           {
@@ -716,30 +844,30 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
 
           bool const prevIsActive = (iActiveCellPrev != -1);
           bool const nextIsActive = (iActiveCellNext != -1);
+
           // Pre-defined order for finding faces. Faces along different axis have varying orders
           // order arrays are initialized with orders along x axis
 
-          std::vector<localIndex > orderPrev(4);
-          std::vector<localIndex > orderNext(4);
+          std::vector< localIndex > orderPrev( 4 );
+          std::vector< localIndex > orderNext( 4 );
 
-          if (isXAxis)
+          if( isXAxis )
           {
-            orderPrev = {1, 3, 7, 5};
-            orderNext = {0, 2, 6, 4};
+            orderPrev = { 1, 3, 7, 5 };
+            orderNext = { 0, 2, 6, 4 };
           }
           else
           {
-            orderPrev = {2, 3, 7, 6};
-            orderNext = {0, 1, 5, 4};
+            orderPrev = { 2, 3, 7, 6 };
+            orderNext = { 0, 1, 5, 4 };
           }
 
-          if (isInternalFace)
+          if( isInternalFace )
           {
             // we need to consider the intersection between auxillary cells and internal cells
             localIndex const iFirstVertexPrev = cellToCPVertices( iCellPrev );
             localIndex const iFirstVertexNext = cellToCPVertices( iCellNext );
 
-//            bool isBothCellActive = true;
             // get internal faces
             // get the vertices of the previous faces
             localIndex const verticesPrevFace[4] = { cpVertexToVertex( iFirstVertexPrev + orderPrev[0] ),
@@ -752,40 +880,44 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
                                                      cpVertexToVertex( iFirstVertexNext + orderNext[2] ),
                                                      cpVertexToVertex( iFirstVertexNext + orderNext[3] ) };
 
-            if ( std::equal( std::begin( verticesPrevFace), std::end( verticesPrevFace),
-                             std::begin(verticesNextFace) ))
+            if( std::equal( std::begin( verticesPrevFace ), std::end( verticesPrevFace ),
+                            std::begin( verticesNextFace ) ))
             {
               // a conformed face is found
-              if (prevIsActive && nextIsActive)
+              if( prevIsActive && nextIsActive )
               {
                 // both cells are active
-                addConformingFace(verticesPrevFace,
+                addConformingFace( verticesPrevFace,
                                    activeCellToOwnedActiveCell( iActiveCellPrev ),
                                    activeCellToOwnedActiveCell( iActiveCellNext ),
-                                     ownedActiveCellToFaces,
-                                     faceToVertices);
+                                   ownedActiveCellToFaces,
+                                   faceToVertices );
               }
-              else if (prevIsActive || nextIsActive )
+              else if( prevIsActive || nextIsActive )
               {
                 // either prev or next cell is inactive
-                addSingleConformingFace(prevIsActive, orderPrev, orderNext, iActiveCellPrev, iActiveCellNext,
-                                          iCellPrev, iCellNext);
+                addSingleConformingFace( prevIsActive,
+                                         orderPrev, orderNext,
+                                         iActiveCellPrev, iActiveCellNext,
+                                         iCellPrev, iCellNext );
               }
             }
             else
             {
               // a faulted face is found. Need to loop over a column of cells to find all intersection points
-              addNonconformingFace( iCellPrev, k, verticesNextFace,
-                                    orderPrev, iActiveCellNext);
+              addNonConformingFace( iCellPrev, k, verticesNextFace,
+                                    orderPrev, iActiveCellNext );
 
             }
           }
-          else if (prevIsActive || nextIsActive)
+          else if( prevIsActive || nextIsActive )
           {
             // this is either: an interior face between an active cell and an inactive cell
             //             or: an boundary face at the bottom
-            addSingleConformingFace(prevIsActive, orderPrev, orderNext, iActiveCellPrev, iActiveCellNext,
-                                      iCellPrev, iCellNext);
+            addSingleConformingFace( prevIsActive,
+                                     orderPrev, orderNext,
+                                     iActiveCellPrev, iActiveCellNext,
+                                     iCellPrev, iCellNext );
 
           }
         }
@@ -794,13 +926,13 @@ void CornerPointMeshBuilder::buildVerticalFaces( string const & direction )
   }
 }
 
-void CornerPointMeshBuilder::addSingleConformingFace(bool const prevIsActive,
-                                                     const std::vector<localIndex > orderPrev,
-                                                     const std::vector<localIndex > orderNext,
-                                                     const localIndex iActiveCellPrev,
-                                                     const localIndex iActiveCellNext,
-                                                     const localIndex iCellPrev,
-                                                     const localIndex iCellNext)
+void CornerPointMeshBuilder::addSingleConformingFace( bool const prevIsActive,
+                                                      std::vector< localIndex > const & orderPrev,
+                                                      std::vector< localIndex > const & orderNext,
+                                                      localIndex const iActiveCellPrev,
+                                                      localIndex const iActiveCellNext,
+                                                      localIndex const iCellPrev,
+                                                      localIndex const iCellNext )
 {
   array1d< localIndex > const & cellToCPVertices = m_cells.m_cellToCPVertices;
   array1d< localIndex > const & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
@@ -811,7 +943,7 @@ void CornerPointMeshBuilder::addSingleConformingFace(bool const prevIsActive,
 
   localIndex const iFirstVertex = prevIsActive ? cellToCPVertices( iCellPrev ) : cellToCPVertices( iCellNext );
   localIndex const iActiveCell = prevIsActive ? iActiveCellPrev : iActiveCellNext;
-  std::vector<localIndex> vertexOrder(4);
+  std::vector< localIndex > vertexOrder( 4 );
   vertexOrder = prevIsActive ? orderPrev : orderNext;
 
   localIndex const vertices[4] = { cpVertexToVertex( iFirstVertex + vertexOrder[0] ),
@@ -828,10 +960,11 @@ void CornerPointMeshBuilder::addSingleConformingFace(bool const prevIsActive,
 
 }
 
-void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localIndex const zIdxPrev,
-                                                  localIndex const (&nextFaceVertices)[ 4 ],
-                                                  const std::vector<localIndex > orderPrev,
-                                                  localIndex const iActiveCellNext)
+void CornerPointMeshBuilder::addNonConformingFace( localIndex const iCellPrev,
+                                                   localIndex const zIdxPrev,
+                                                   localIndex const (&nextFaceVertices)[ 4 ],
+                                                   std::vector< localIndex > const & orderPrev,
+                                                   localIndex const iActiveCellNext )
 {
   // loop over the column of cells that have the same i and j values with that of the previous cell
   // loop over cells in k direction
@@ -852,17 +985,18 @@ void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localInd
 
   // vertices
   array1d< localIndex > const & cpVertexToVertex = m_vertices.m_cpVertexToVertex;
+  array2d< real64 > const & vertexPositions = m_vertices.m_vertexPositions;
 
-  localIndex firstCellAtPrevColumn = iCellPrev - zIdxPrev*nXLocal*nYLocal;
+  localIndex const firstCellAtPrevColumn = iCellPrev - zIdxPrev*nXLocal*nYLocal;
   localIndex newCellPrev = -1;
+
   // TODO: current strategy is to loop from the very top to the bottom, which might be quite inefficient since intersection often
   // occurs in a localized region
 
-
-  for (localIndex k = 0; k < nZLocal + 2; ++k)
+  for( localIndex k = 0; k < nZLocal + 2; ++k )
   {
     newCellPrev = k*nXLocal*nYLocal + firstCellAtPrevColumn;
-    const localIndex iActiveCellPrev = cellToActiveCell( newCellPrev );
+    localIndex const iActiveCellPrev = cellToActiveCell( newCellPrev );
     localIndex const iFirstVertexPrev = cellToCPVertices( newCellPrev );
     // get internal faces
     // get the vertices of the previous faces
@@ -871,28 +1005,34 @@ void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localInd
                                              cpVertexToVertex( iFirstVertexPrev + orderPrev[2] ),
                                              cpVertexToVertex( iFirstVertexPrev + orderPrev[3] ) };
 
-    std::vector<Face> adjFaceVec;
-    const bool isOKForIntesecting = checkFaceOverlap( nextFaceVertices, verticesPrevFace, adjFaceVec);
+    std::vector< Face > adjacentFaces;
+    bool const isIntersecting = internal::checkFaceOverlap( vertexPositions,
+                                                            nextFaceVertices,
+                                                            verticesPrevFace,
+                                                            adjacentFaces );
 
-    if (isOKForIntesecting && ((iActiveCellPrev != -1) || (iActiveCellNext != -1)))
+    if( isIntersecting && ((iActiveCellPrev != -1) || (iActiveCellNext != -1)) )
     {
       // TODO: we can check if the intersected faces satisfy certain conditions:
       //       1. area check
       //       2. cell volume check
 
       // TODO: we need a computational geometry function
-      std::vector<Vertex> newVertexVec;
-      const bool foundIntersection = computeFaceGeometry( adjFaceVec,  newVertexVec);
+      std::vector< Vertex > newVertices;
+      bool const foundIntersection = internal::computeFaceGeometry( adjacentFaces,
+                                                                    newVertices );
 
       localIndex const iOwnedActiveCellPrev = (iActiveCellPrev != -1) ? activeCellToOwnedActiveCell( iActiveCellPrev ) : -1;
       localIndex const iOwnedActiveCellNext = (iActiveCellNext != -1) ? activeCellToOwnedActiveCell( iActiveCellNext ) : -1;
 
-      if(foundIntersection)
+      if( foundIntersection )
       {
-        updateVerticalFaceMaps(newVertexVec,
-                               iOwnedActiveCellPrev, iOwnedActiveCellNext,
-                               ownedActiveCellToFaces,
-                               faceToVertices);
+        internal::updateVerticalFaceMaps( iOwnedActiveCellPrev,
+                                          iOwnedActiveCellNext,
+                                          ownedActiveCellToFaces,
+                                          faceToVertices,
+                                          newVertices,
+                                          m_vertices.m_uniqueVerticesHelper );
       }
       else
       {
@@ -900,96 +1040,14 @@ void CornerPointMeshBuilder::addNonconformingFace(localIndex iCellPrev, localInd
       }
     }
     else
+    {
       continue; // two faces are impossible to intersect with each other
+    }
   }
-}
-
-bool CornerPointMeshBuilder::computeFaceGeometry( const std::vector<Face>& adjFaceVec,
-                                                  std::vector<Vertex>& newVertexVector)
-{
-  //  Performs 3D geometrical calculation for two intersected faces, both of which are represented by multiple points
-  //  face0 and face1 contain sequences of 3D points
-
-  bool isValid;
-  newVertexVector = adjFaceVec[0].findIntersectionPoints(adjFaceVec[1], isValid);
-  if (!isValid)
-    return false;
-  return true;
-}
-
-bool CornerPointMeshBuilder::checkFaceOverlap(localIndex const (&nextfaceVertices)[ 4 ],
-                                              localIndex const (&prevfaceVertices)[ 4 ],
-                                              std::vector<Face> & adjFaceVec)
-{
-  // coordinates (no duplicated)
-  array2d< real64 > const & vertexPositions = m_vertices.m_vertexPositions;
-  // TODO: this is super ugly. at some corner cases, the algorithm might fail
-  // edges of next cell
-  Vertex pointNext0 = { vertexPositions(nextfaceVertices[0], 0),
-                        vertexPositions(nextfaceVertices[0], 1),
-                        vertexPositions(nextfaceVertices[0], 2)};
-
-  Vertex pointNext2 = { vertexPositions(nextfaceVertices[1], 0),
-                        vertexPositions(nextfaceVertices[1], 1),
-                        vertexPositions(nextfaceVertices[1], 2)};
-  const Line nextEdge02( pointNext0, pointNext2);
-
-  Vertex pointNext4 = { vertexPositions(nextfaceVertices[2], 0),
-                        vertexPositions(nextfaceVertices[2], 1),
-                        vertexPositions(nextfaceVertices[2], 2)};
-
-  Vertex pointNext6 = { vertexPositions(nextfaceVertices[3], 0),
-                        vertexPositions(nextfaceVertices[3], 1),
-                        vertexPositions(nextfaceVertices[3], 2)};
-
-  const Line nextEdge46( pointNext4, pointNext6);
-
-  // edges of previous cell
-  Vertex pointPrev1 = { vertexPositions(prevfaceVertices[0], 0),
-                        vertexPositions(prevfaceVertices[0], 1),
-                        vertexPositions(prevfaceVertices[0], 2)};
-
-  Vertex pointPrev3 = { vertexPositions(prevfaceVertices[1], 0),
-                        vertexPositions(prevfaceVertices[1], 1),
-                        vertexPositions(prevfaceVertices[1], 2)};
-
-  const Line prevEdge13( pointPrev1, pointPrev3);
-
-  Vertex pointPrev5 = { vertexPositions(prevfaceVertices[2], 0),
-                        vertexPositions(prevfaceVertices[2], 1),
-                        vertexPositions(prevfaceVertices[2], 2)};
-
-  Vertex pointPrev7 = { vertexPositions(prevfaceVertices[3], 0),
-                        vertexPositions(prevfaceVertices[3], 1),
-                        vertexPositions(prevfaceVertices[3], 2)};
-
-  const Line prevEdge57( pointPrev5, pointPrev7);
-  // TODO: is there a better way to compare the position between two cells
-
-  bool isPrevCellHigher = prevEdge13.compare(nextEdge46);
-  bool isPrevCellLower = nextEdge02.compare(prevEdge57);
-
-  if (isPrevCellHigher || isPrevCellLower)
-  {
-    return false;
-  }
-  else
-  {
-    Face faceNext(pointNext0, pointNext2, pointNext4, pointNext6);
-    Face facePrev(pointPrev1, pointPrev3, pointPrev5, pointPrev7);
-
-    faceNext.setIndexForFacePoints( nextfaceVertices );
-    facePrev.setIndexForFacePoints( prevfaceVertices );
-
-    adjFaceVec.emplace_back(faceNext);
-    adjFaceVec.emplace_back(facePrev);
-  }
-  return true;
 }
 
 void CornerPointMeshBuilder::buildHorizontalFaces()
 {
-  // not ready for review, in construction
   localIndex const nXLocal = m_dims.nXLocal();
   localIndex const nYLocal = m_dims.nYLocal();
   localIndex const nZLocal = m_dims.nZLocal() + 2;
@@ -1087,56 +1145,6 @@ void CornerPointMeshBuilder::buildHorizontalFaces()
   }
 }
 
-void CornerPointMeshBuilder::updateVerticalFaceMaps( std::vector<Vertex>& newVertexVector,
-                                                     localIndex const iOwnedActiveCellPrev,
-                                                     localIndex const iOwnedActiveCellNext,
-                                                     ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
-                                                     ArrayOfArrays< localIndex > & faceToVertices)
-{
-  //  some new points might be created when two faces intersect with each other. split these points, which latter
-  //  be added to coord array and update corner index
-//  array2d< real64 > & vertexPositions = m_vertices.m_vertexPositions;
-  std::set<Vertex> & uniqueVerticesHelper = m_vertices.m_uniqueVerticesHelper;
-
-  localIndex const newFaceId = faceToVertices.size();
-  localIndex const newFaceNodeNum = newVertexVector.size();
-  faceToVertices.appendArray( newVertexVector.size() );
-  localIndex count(0);
-  for (auto iter = newVertexVector.begin(); iter != newVertexVector.end(); iter ++)
-  {
-    if ((*iter).m_localIndex < 0)
-    {
-      // find  a possible newly created vertex
-      if ( uniqueVerticesHelper.find( (*iter)) != uniqueVerticesHelper.end())
-      {
-        // already existed and get the index
-        const localIndex oldLocalIdx = (*uniqueVerticesHelper.find( (*iter))).m_localIndex;
-        (*iter).setIndex( oldLocalIdx );
-      }
-      else
-      {
-        // a newly created point
-        const localIndex newLocalIdx = uniqueVerticesHelper.size();
-        (*iter).setIndex( newLocalIdx );
-        uniqueVerticesHelper.insert( (*iter) );
-      }
-    }
-
-    faceToVertices( newFaceId, count ) = (*iter).m_localIndex;
-    count ++;
-  }
-
-  // populate the cell-to-face map
-  if( iOwnedActiveCellPrev != -1 )
-  {
-    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellPrev, newFaceId );
-  }
-  if( iOwnedActiveCellNext != -1 )
-  {
-    ownedActiveCellToFaces.emplaceBack( iOwnedActiveCellNext, newFaceId );
-  }
-
-}
 
 void CornerPointMeshBuilder::addConformingFace( localIndex const (&faceVertices)[ 4 ],
                                                 localIndex const iOwnedActiveCellPrev,

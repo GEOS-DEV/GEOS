@@ -60,7 +60,6 @@ set( mesh_headers
      generators/cornerPointMesh/CornerPointMeshPartition.hpp
      generators/cornerPointMesh/CornerPointMeshData.hpp
      generators/cornerPointMesh/utilities/OutputUtilities.hpp
-     generators/cornerPointMesh/utilities/StringUtilities.hpp
      generators/cornerPointMesh/utilities/GeometryUtilities.hpp
    )
 
@@ -115,7 +114,6 @@ set( mesh_sources
      generators/cornerPointMesh/CornerPointMeshParser.cpp
      generators/cornerPointMesh/CornerPointMeshBuilder.cpp
      generators/cornerPointMesh/CornerPointMeshPartition.cpp
-     generators/cornerPointMesh/utilities/StringUtilities.cpp
    )
 
 set( dependencyList schema dataRepository constitutive metis )

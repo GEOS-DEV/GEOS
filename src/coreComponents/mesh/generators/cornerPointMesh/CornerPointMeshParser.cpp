@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergies
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -17,9 +17,10 @@
  */
 
 #include "CornerPointMeshParser.hpp"
-#include "mesh/generators/cornerPointMesh/utilities/StringUtilities.hpp"
 
 #include "common/GEOS_RAJA_Interface.hpp"
+#include "codingUtilities/StringUtilities.hpp"
+
 #include <iostream>
 
 namespace geosx
@@ -32,6 +33,92 @@ CornerPointMeshParser::CornerPointMeshParser( string const & name )
   : m_meshName( name )
 {}
 
+namespace internal
+{
+
+std::string extractDataBelowKeyword( std::istringstream & stringBlock )
+{
+  char keywordEnd = '/';
+  std::string chunk;
+  std::streampos pos;
+  std::vector< std::string > res;
+  getline( stringBlock, chunk, keywordEnd );
+  stringBlock.clear();
+
+  chunk = stringutilities::removeStringAndFollowingContent( chunk, "--" );
+  chunk = stringutilities::removeTab( chunk );
+  chunk = stringutilities::removeEndOfLine( chunk );
+  chunk = stringutilities::trim( chunk, " " );
+  res.push_back( chunk );
+  stringBlock.ignore( 10, '\n' );
+  getline( stringBlock, chunk );
+  chunk = stringutilities::removeTab( chunk );
+  chunk = stringutilities::removeEndOfLine( chunk );
+  return res[0];
+}
+
+void eclipseDataBufferToVector( string & inputBuffer, std::vector< double > & v )
+{
+  string const star( "*" );
+  localIndex positionOfStar( 0 );
+  localIndex nRepetitions( 0 );
+  double repeatedValue( 0. );
+
+  // split the inputBuffer in chunks of information (spaces are used to split)
+  std::istringstream splitBuffer( inputBuffer );
+  string chunk;
+
+  // Traverse through all chunks
+  do
+  {
+    // Read a chunk from the buffer
+    splitBuffer >> chunk;
+    if( chunk.size() > 0 )
+    {
+      // does this word contain a star "*"
+      positionOfStar = static_cast< localIndex >( chunk.find( star ) );
+      if( positionOfStar > 0 )
+      {
+        string const nTimesValueIsRepeated( chunk.substr( 0, positionOfStar ) );
+        string const valueAsString( chunk.substr( positionOfStar+1, chunk.size() ) );
+        nRepetitions = std::stoi( nTimesValueIsRepeated );
+        repeatedValue = std::stod( valueAsString );
+        std::fill_n( back_inserter( v ), nRepetitions, repeatedValue ); // append nRepetitions of the repeatedValue as double
+      }
+      else
+      {
+        // The value is only present once (no repetition)
+        repeatedValue = std::stod( chunk ); // conversion to double
+        v.push_back( repeatedValue ); // append the repeatedValue once
+      }
+    }
+    // While there is more to read
+  }
+  while (splitBuffer);
+}
+
+string fileToString( const string filePath )
+{
+  std::ifstream meshFile;
+  string fileContent( "A" );
+
+  //Open file
+  meshFile.open( filePath );
+  GEOSX_THROW_IF( !meshFile.is_open(),
+                  "File could not be open",
+                  InputError );
+
+  //Transfer file content into string for easing broadcast
+  std::stringstream buffer;
+  buffer << meshFile.rdbuf();
+  fileContent = buffer.str();
+
+  //Close file
+  meshFile.close();
+  return fileContent;
+}
+
+}
 
 void CornerPointMeshParser::readNumberOfCells( Path const & filePath,
                                                localIndex & nX,
@@ -40,7 +127,7 @@ void CornerPointMeshParser::readNumberOfCells( Path const & filePath,
 {
   // Note: This is definitely not what we want to do (reading the full file into a string)
   //       For now, to get a quick start, I ported this from PAMELA. I will improve that in a second step
-  string const fileContent = cornerPointMeshStringUtilities::fileToString( filePath );
+  string const fileContent = internal::fileToString( filePath );
   std::istringstream meshFile;
   meshFile.str( fileContent );
 
@@ -52,16 +139,16 @@ void CornerPointMeshParser::readNumberOfCells( Path const & filePath,
   std::string line, buffer;
   while( getline( meshFile, line ) )
   {
-    cornerPointMeshStringUtilities::removeStringAndFollowingContentFromLine( "--", line );
-    cornerPointMeshStringUtilities::removeExtraSpaces( line );
-    cornerPointMeshStringUtilities::removeEndOfLine( line );
-    cornerPointMeshStringUtilities::removeTab( line );
-    cornerPointMeshStringUtilities::trim( line );
+    line = stringutilities::removeStringAndFollowingContent( line, "--" );
+    line = stringutilities::removeExtraSpaces( line );
+    line = stringutilities::removeEndOfLine( line );
+    line = stringutilities::removeTab( line );
+    line = stringutilities::trim( line, " " );
     if( line == "SPECGRID" || line == "DIMENS" )
     {
-      std::vector< localIndex > bufInt;
-      buffer = extractDataBelowKeyword( meshFile );
-      cornerPointMeshStringUtilities::fromStringTo( buffer, bufInt );
+      buffer = internal::extractDataBelowKeyword( meshFile );
+      array1d< localIndex > const bufInt =
+        stringutilities::fromStringToArray< localIndex >( buffer );
 
       nX = bufInt[0];
       nY = bufInt[1];
@@ -79,7 +166,7 @@ void CornerPointMeshParser::readMesh( Path const & filePath,
 {
   // Note: This is definitely not what we want to do (reading the full file into a string)
   //       For now, to get a quick start, I ported this from PAMELA. I will improve that in a second step
-  string const fileContent = cornerPointMeshStringUtilities::fileToString( filePath );
+  string const fileContent = internal::fileToString( filePath );
   std::istringstream meshFile;
   meshFile.str( fileContent );
 
@@ -94,11 +181,11 @@ void CornerPointMeshParser::readMesh( Path const & filePath,
   std::string line;
   while( getline( meshFile, line ) )
   {
-    cornerPointMeshStringUtilities::removeStringAndFollowingContentFromLine( "--", line );
-    cornerPointMeshStringUtilities::removeExtraSpaces( line );
-    cornerPointMeshStringUtilities::removeEndOfLine( line );
-    cornerPointMeshStringUtilities::removeTab( line );
-    cornerPointMeshStringUtilities::trim( line );
+    line = stringutilities::removeStringAndFollowingContent( line, "--" );
+    line = stringutilities::removeExtraSpaces( line );
+    line = stringutilities::removeEndOfLine( line );
+    line = stringutilities::removeTab( line );
+    line = stringutilities::trim( line, " " );
 
     // TODO: shorten, there must be a way to factorize all these functions
     //       at least, we shoud be able to merge readLocalACTNUM and readLocalPROP
@@ -183,8 +270,8 @@ void CornerPointMeshParser::readLocalCOORD( std::istringstream & meshFile,
   std::vector< real64 > tmp;
   tmp.reserve( maxSize );
 
-  string buffer = extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
-  cornerPointMeshStringUtilities::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
+  string buffer = internal::extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
+  internal::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
 
   localIndex const nXLocal = dims.nXLocal();
   localIndex const nYLocal = dims.nYLocal();
@@ -221,8 +308,8 @@ void CornerPointMeshParser::readLocalZCORN( std::istringstream & meshFile,
   std::vector< real64 > tmp;
   tmp.reserve( maxSize );
 
-  string buffer = extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
-  cornerPointMeshStringUtilities::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
+  string buffer = internal::extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
+  internal::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
 
   localIndex const nXLocal = dims.nXLocal();
   localIndex const nYLocal = dims.nYLocal();
@@ -275,8 +362,8 @@ void CornerPointMeshParser::readLocalACTNUM( std::istringstream & meshFile,
   std::vector< real64 > tmp;
   tmp.reserve( maxSize );
 
-  string buffer = extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
-  cornerPointMeshStringUtilities::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
+  string buffer = internal::extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
+  internal::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
   std::replace( tmp.begin(), tmp.end(), 2, 0 );
   std::replace( tmp.begin(), tmp.end(), 3, 0 );
 
@@ -300,7 +387,7 @@ void CornerPointMeshParser::readLocalACTNUM( std::istringstream & meshFile,
       {
         localIndex const eiLocal = k*nXLocal*nYLocal + j*nXLocal + i;
         localIndex const ei = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + i+iMinLocal;
-        m_actnum( eiLocal + auxCellOffset) = tmp[ ei ];
+        m_actnum( eiLocal + auxCellOffset ) = tmp[ ei ];
       }
     }
   }
@@ -319,8 +406,8 @@ void CornerPointMeshParser::readLocalPROP( std::istringstream & meshFile,
   std::vector< real64 > tmp;
   tmp.reserve( maxSize );
 
-  string buffer = extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
-  cornerPointMeshStringUtilities::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
+  string buffer = internal::extractDataBelowKeyword( meshFile ); // TODO: change to save only what is necessary
+  internal::eclipseDataBufferToVector( buffer, tmp ); // TODO: change to save only what is necessary
 
   localIndex const nXLocal = dims.nXLocal();
   localIndex const nYLocal = dims.nYLocal();
@@ -344,7 +431,7 @@ void CornerPointMeshParser::readLocalPROP( std::istringstream & meshFile,
         localIndex const eiLocal = k*nXLocal*nYLocal + j*nXLocal + i;
         localIndex const ei = (k+kMinLocal)*nX*nY + (j+jMinLocal)*nX + i+iMinLocal;
 
-        prop( eiLocal + auxCellOffset) = tmp[ ei ];
+        prop( eiLocal + auxCellOffset ) = tmp[ ei ];
       }
     }
   }
@@ -381,27 +468,6 @@ template
 void CornerPointMeshParser::fillLocalPROP< localIndex >( CornerPointMeshDimensions const & dims,
                                                          array1d< localIndex > & prop,
                                                          localIndex defaultValue );
-
-std::string CornerPointMeshParser::extractDataBelowKeyword( std::istringstream & stringBlock )
-{
-  char keywordEnd = '/';
-  std::string chunk;
-  std::streampos pos;
-  std::vector< std::string > res;
-  getline( stringBlock, chunk, keywordEnd );
-  stringBlock.clear();
-
-  cornerPointMeshStringUtilities::removeStringAndFollowingContentFromLine( "--", chunk );
-  cornerPointMeshStringUtilities::removeTab( chunk );
-  cornerPointMeshStringUtilities::removeEndOfLine( chunk );
-  cornerPointMeshStringUtilities::trim( chunk );
-  res.push_back( chunk );
-  stringBlock.ignore( 10, '\n' );
-  getline( stringBlock, chunk );
-  cornerPointMeshStringUtilities::removeTab( chunk );
-  cornerPointMeshStringUtilities::removeEndOfLine( chunk );
-  return res[0];
-}
 
 REGISTER_CATALOG_ENTRY( CornerPointMeshParser, CornerPointMeshParser, string const & )
 

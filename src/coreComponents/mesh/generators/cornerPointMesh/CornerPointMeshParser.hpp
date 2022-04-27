@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2018-2020 Lawrence Livermore National Security LLC
  * Copyright (c) 2018-2020 The Board of Trustees of the Leland Stanford Junior University
- * Copyright (c) 2018-2020 Total, S.A
+ * Copyright (c) 2018-2020 TotalEnergiesxs
  * Copyright (c) 2019-     GEOSX Contributors
  * All rights reserved
  *
@@ -183,13 +183,6 @@ public:
 
 
 private:
-
-  /**
-   * @brief Utility (temporary) functions that reads all the data below a keyword
-   * @details This is a carry-over from PAMELA, but this function should go if we want to load only local data
-   * (i.e., data corresponding to the MPI domain owned by each rank)
-   */
-  static std::string extractDataBelowKeyword( std::istringstream & stringBlock );
 
   /**
    * @brief Read the local content of the COORD keyword (i.e, data corresponding to the MPI domain owned by each rank)

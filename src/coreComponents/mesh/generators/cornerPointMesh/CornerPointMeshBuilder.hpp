@@ -218,6 +218,17 @@ private:
   void buildFaces();
 
   /**
+   * @brief append top and bottom auxillary layers for processing outer boundary at faults
+   * @detail the method manipulates m_parser.zcorn and m_parser.actnum
+   */
+  void appendAuxillaryLayer();
+
+  /**
+   * @brief fill the auxiliary layer with default (0) porosity and permeability
+   */
+  void appendCellDataForAuxillaryLayer();
+
+  /**
    * @brief For the non-conforming case, build vertical faces
    * @param[in] direction the direction considered (either X or Y)
    */
@@ -229,54 +240,7 @@ private:
   void buildHorizontalFaces();
 
   /**
-   * @brief Using ZCORN and COORD, compute the position of the eight corner-point vertices in cell (i,j,k)
-   * @param[in] i index in the x-direction
-   * @param[in] j index in the y-direction
-   * @param[in] k index in the z-direction
-   * @param[in] nXLocal number of cells in the x-direction on my rank
-   * @param[in] nYLocal number of cells in the y-direction on my rank
-   * @param[in] coord local content of the COORD keyword
-   * @param[in] zcorn local content of the ZCORN keyword
-   * @param[out] xPos x-position of the eight corner-point vertices
-   * @param[out] yPos y-position of the eight corner-point vertices
-   * @param[out] zPos z-position of the eight corner-point vertices
-   * @param[out] cpVertexIsIndex vector specifying if each corner-point vertex is inside the partition
-   * @return true if the cell is valid, and false otherwise
-   */
-  static bool computeCellCoordinates( localIndex const i,
-                                      localIndex const j,
-                                      localIndex const k,
-                                      localIndex const nXLocal,
-                                      localIndex const nYLocal,
-                                      localIndex const iMinOverlap,
-                                      localIndex const iMaxOverlap,
-                                      localIndex const jMinOverlap,
-                                      localIndex const jMaxOverlap,
-                                      array1d< real64 > const & coord,
-                                      array1d< real64 > const & zcorn,
-                                      array1d< real64 > & xPos,
-                                      array1d< real64 > & yPos,
-                                      array1d< real64 > & zPos,
-                                      array1d< bool > & cpVertexIsInside );
-
-  /**
-   * @brief Populate the "reverse maps" from cellToActiveCell and activeCellToOwnedActiveCell
-   * @param[in] nCells number of cells in the MPI partition
-   * @param[in] nActiveCells number of active cells in the MPI partition
-   * @param[in] activeCellToCell
-   * @param[in] ownedActiveCellToActiveCell
-   * @param[out] cellToActiveCell
-   * @param[out] activeCellToOwnedActiveCell
-   */
-  static void populateReverseCellMaps( localIndex const nCells,
-                                       localIndex const nActiveCells,
-                                       array1d< localIndex > const & activeCellToCell,
-                                       array1d< localIndex > const & ownedActiveCellToActiveCell,
-                                       array1d< localIndex > & cellToActiveCell,
-                                       array1d< localIndex > & activeCellToOwnedActiveCell );
-
-  /**
-   * @brief add a conforming face made of four vertices to the maps
+   * @brief Add a conforming face made of four vertices to the maps
    * @param[in] faceVertices the four vertices of face k
    * @param[in] iOwnedActiveCellPrev index of the owned active cell before the face (k-1)
    * @param[in] iOwnedActiveCellNext index of the owned active cell after the face (k)
@@ -289,65 +253,43 @@ private:
                                  ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
                                  ArrayOfArrays< localIndex > & faceToVertices );
 
-
+  /**
+   * @brief Find connections between two non-conforming faces. Faulted faces are split and new nodes are introduced
+   * @param[in] iCellPrev index of the previous cell
+   * @param[in] zIdxPrev
+   * @param[in] nextFaceVertices
+   * @param[in] orderPrev
+   * @param[in] iActiveCellNext
+   */
+  void addNonConformingFace( localIndex const iCellPrev,
+                             localIndex const zIdxPrev,
+                             localIndex const (&nextFaceVertices)[ 4 ],
+                             std::vector< localIndex > const & orderPrev,
+                             localIndex const iActiveCellNext );
 
   /**
-   * @brief add a vertical face made of varying number of vertices, ranging from 3 to 6, to the maps
-   * @param[in] faceVertices the vertices of face k
-   * @param[in] iOwnedActiveCellPrev index of the owned active cell before the face (k-1)
-   * @param[in] iOwnedActiveCellNext index of the owned active cell after the face (k)
-   * @param[out] ownedActiveCellToFaces map from owned active cell to faces
-   * @param[out] faceToVertices map from face to vertices
+   * @brief Add a one-sided conforming face made of four vertices to the maps
+   * @param[in] prevIsActive
+   * @param[in] orderPrev
+   * @param[in] orderNext
+   * @param[in] iActiveCellPrev
+   * @param[in] iActiveCellNext
+   * @param[in] iCellPrev
+   * @param[in] iCellNext
    */
-  static void addVerticalFace();
+  void addSingleConformingFace( bool const prevIsActive,
+                                std::vector< localIndex > const & orderPrev,
+                                std::vector< localIndex > const & orderNext,
+                                localIndex const iActiveCellPrev,
+                                localIndex const iActiveCellNext,
+                                localIndex const iCellPrev,
+                                localIndex const iCellNext );
 
   /**
-   * @brief append top and bottom auxillary layers for processing outer boundary at faults
-   * @brief the method will manipulate m_parser.zcorn and m_parser.actnum
+   * @brief update the (unique) vertex list after building the faces
+   * @detail this is needed because we may introduce new vertices when building the faces
    */
-  void appendAuxillaryLayer();
-
-  void appendCellDataForAuxillaryLayer();
-
-  //  Find connections between two faces. If two faces overlap entirely, they are conforming internal faces. If otherwise, they are
-  //  on faulted surface. As for faulted faces, new nodes will be introduced, which results in cases with more or less stanford 4 points face.
-  //  For example, face could be consisted of either  3 points (minimum), 5 points or 6 points (maximum).
-  //  Once a faulted face is inputed, the whole pillar of faces should be assessed for intersections.
-  //
-  // Input:
-  // the whole cell column where the previous cell locates
-  // vertex of next face
-  //
-  //  Output
-  //  This method should update faceToVertex map
-
-  void addNonconformingFace(localIndex iCellPrev, localIndex const zIdxPrev,
-                            localIndex const (&nextFaceVertices)[ 4 ],
-                            const std::vector<localIndex > orderPrev,
-                            localIndex const iActiveCellNext);
-
-  bool computeFaceGeometry(const std::vector<geometryUtilities::Face>& adjFaceVec,
-                           std::vector<geometryUtilities::Vertex>& newVertexVector);
-
-  void updateVerticalFaceMaps(std::vector<geometryUtilities::Vertex>& newVertexVector,
-                              localIndex const iOwnedActiveCellPrev,
-                              localIndex const iOwnedActiveCellNext,
-                              ArrayOfArrays< localIndex > & ownedActiveCellToFaces,
-                              ArrayOfArrays< localIndex > & faceToVertices);
-
-  bool checkFaceOverlap(localIndex const (&nextfaceVertices)[ 4 ],
-                        localIndex const (&prevfaceVertices)[ 4 ], std::vector<geometryUtilities::Face> & adjFaceVec);
-
-  // a temporary method for updating vertexes for visualization
-  void updateVertex();
-
-  void addSingleConformingFace(bool const prevIsActive,
-                               const std::vector<localIndex > orderPrev,
-                               const std::vector<localIndex > orderNext,
-                               const localIndex iActiveCellPrev,
-                               const localIndex iActiveCellNext,
-                               const localIndex iCellPrev,
-                               const localIndex iCellNext);
+  void updateVerticesAfterFaceBuilding();
 
   /// Object holding the mesh (and MPI partition) dimensions
   CornerPointMeshDimensions m_dims;
