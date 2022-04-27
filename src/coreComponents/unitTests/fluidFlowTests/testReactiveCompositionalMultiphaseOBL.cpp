@@ -216,23 +216,23 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
 
       arrayView1d< string const > const & components = solver.componentNames();
 
-      arrayView1d< real64 > & pres =
+      arrayView1d< real64 > const & pres =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
 
-      arrayView1d< real64 > & dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
+      arrayView1d< real64 const > const & pres_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure_n >();
 
-      arrayView2d< real64, compflow::USD_COMP > & compFrac =
+      arrayView2d< real64, compflow::USD_COMP > const & compFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
 
-      arrayView2d< real64, compflow::USD_COMP > & dCompFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
+      arrayView2d< real64 const, compflow::USD_COMP > const & compFrac_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction_n >();
 
       arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >();
 
-      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLValsOld =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >();
+      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLVals_n =
+        subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >();
 
       arrayView3d< real64 const, compflow::USD_OBL_DER > const & OBLDers =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >();
@@ -246,7 +246,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-          dPres[ei] = dP;
+          pres[ei] += dP;
         } );
 
         // recompute operators
@@ -260,10 +260,11 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
           // get all pressure derivatives of every operator for current element in a 1d array
           auto dOp_dP = getPressureDerivative( OBLDers[ei].toSliceConst(), NOPS );
 
+          real64 const delta = pres[ei] - pres_n[ei];
           checkDerivative( OBLVals[ei].toSliceConst(),
-                           OBLValsOld[ei].toSliceConst(),
+                           OBLVals_n[ei].toSliceConst(),
                            dOp_dP.toSliceConst(),
-                           dPres[ei],
+                           delta,
                            relTol,
                            "operator",
                            "Pres",
@@ -281,7 +282,7 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
         forAll< serialPolicy >( subRegion.size(), [=] ( localIndex const ei )
         {
           real64 const dZ = perturbParameter * ( compFrac[ei][jc] + perturbParameter );
-          dCompFrac[ei][jc] = dZ;
+          compFrac[ei][jc] += dZ;
         } );
 
         // recompute operators
@@ -296,10 +297,11 @@ void testOperatorsNumericalDerivatives( ReactiveCompositionalMultiphaseOBL & sol
           auto dOp_dZ = getCompFracDerivative( OBLDers[ei].toSliceConst(), NOPS, NC );
           string var = "compFrac[" + components[jc] + "]";
 
+          real64 const delta = compFrac[ei][jc] - compFrac_n[ei][jc];
           checkDerivative( OBLVals[ei].toSliceConst(),
-                           OBLValsOld[ei].toSliceConst(),
+                           OBLVals_n[ei].toSliceConst(),
                            dOp_dZ[jc].toSliceConst(),
-                           dCompFrac[ei][jc],
+                           delta,
                            relTol,
                            "operator",
                            var,
@@ -357,19 +359,13 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
       arrayView1d< globalIndex const > const & dofNumber =
         subRegion.getReference< array1d< globalIndex > >( dofKey );
 
-      arrayView1d< real64 const > const & pres =
+      arrayView1d< real64 > const & pres =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >();
       pres.move( LvArray::MemorySpace::host, false );
 
-      arrayView1d< real64 > const & dPres =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >();
-
-      arrayView2d< real64 const, compflow::USD_COMP > const & compFrac =
+      arrayView2d< real64, compflow::USD_COMP > const & compFrac =
         subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >();
       compFrac.move( LvArray::MemorySpace::host, false );
-
-      arrayView2d< real64, compflow::USD_COMP > const & dCompFrac =
-        subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >();
 
       for( localIndex ei = 0; ei < subRegion.size(); ++ei )
       {
@@ -382,13 +378,12 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
+          pres.move( LvArray::MemorySpace::host, true );
           real64 const dP = perturbParameter * ( pres[ei] + perturbParameter );
-          dPres.move( LvArray::MemorySpace::host, true );
-          dPres[ei] = dP;
+          pres[ei] += dP;
 #if defined(GEOSX_USE_CUDA)
-          dPres.move( LvArray::MemorySpace::cuda, false );
+          pres.move( LvArray::MemorySpace::cuda, false );
 #endif
-
 
           solver.forMeshTargets( domain.getMeshBodies(),
                                  [&]( string const,
@@ -419,8 +414,12 @@ void testNumericalJacobian( ReactiveCompositionalMultiphaseOBL & solver,
         {
           solver.resetStateToBeginningOfStep( domain );
 
-          dCompFrac.move( LvArray::MemorySpace::host, true );
-          dCompFrac[ei][jc] = perturbParameter;
+          compFrac.move( LvArray::MemorySpace::host, true );
+          compFrac[ei][jc] += perturbParameter;
+#if defined(GEOSX_USE_CUDA)
+          compFrac.move( LvArray::MemorySpace::cuda, false );
+#endif
+
 
           solver.forMeshTargets( domain.getMeshBodies(),
                                  [&]( string const,

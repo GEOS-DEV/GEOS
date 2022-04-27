@@ -184,9 +184,6 @@ public:
     m_pressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_compFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
     m_temperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
-    m_dPressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
-    m_dCompFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >() ),
-    m_dTemperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >() ),
     m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
     m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >())
   {}
@@ -199,22 +196,21 @@ public:
   void compute( localIndex const ei ) const
   {
     arraySlice1d< real64 const, compflow::USD_COMP - 1 > const compFrac = m_compFrac[ei];
-    arraySlice1d< real64 const, compflow::USD_COMP - 1 > const dCompFrac = m_dCompFrac[ei];
     arraySlice1d< real64, compflow::USD_OBL_VAL - 1 > const & OBLVals = m_OBLOperatorValues[ei];
     arraySlice2d< real64, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
     real64 state[numDofs];
 
     // we need to convert pressure from Pa (internal unit in GEOSX) to bar (internal unit in DARTS)
-    state[0] = (m_pressure[ei] + m_dPressure[ei]) * pascalToBarMult;
+    state[0] = m_pressure[ei] * pascalToBarMult;
 
     for( integer i = 1; i < numComps; ++i )
     {
-      state[i] = compFrac[i - 1] + dCompFrac[i - 1];
+      state[i] = compFrac[i - 1];
     }
 
     if( enableEnergyBalance )
     {
-      state[numDofs - 1] = (m_temperature[ei] + m_dTemperature[ei]);
+      state[numDofs - 1] = m_temperature[ei];
     }
 
     m_OBLOperatorsTable.compute( state, OBLVals, OBLDers );
@@ -233,10 +229,6 @@ private:
   arrayView1d< real64 const > m_pressure;
   arrayView2d< real64 const, compflow::USD_COMP > m_compFrac;
   arrayView1d< real64 const > m_temperature;
-
-  arrayView1d< real64 const > m_dPressure;
-  arrayView2d< real64 const, compflow::USD_COMP > m_dCompFrac;
-  arrayView1d< real64 const > m_dTemperature;
 
   // outputs
 
@@ -353,16 +345,13 @@ public:
     m_pressure ( subRegion.getExtrinsicData< extrinsicMeshData::flow::pressure >() ),
     m_compFrac ( subRegion.getExtrinsicData< extrinsicMeshData::flow::globalCompFraction >() ),
     m_temperature ( subRegion.getExtrinsicData< extrinsicMeshData::flow::temperature >() ),
-    m_dPressure( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaPressure >() ),
-    m_dCompFrac( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaGlobalCompFraction >() ),
-    m_dTemperature( subRegion.getExtrinsicData< extrinsicMeshData::flow::deltaTemperature >() ),
     m_referencePoreVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referencePoreVolume >() ),
     m_referenceRockVolume( subRegion.getExtrinsicData< extrinsicMeshData::flow::referenceRockVolume >() ),
     m_rockVolumetricHeatCapacity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockVolumetricHeatCapacity >() ),
     m_rockThermalConductivity( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockThermalConductivity >() ),
     m_rockKineticRateFactor( subRegion.getExtrinsicData< extrinsicMeshData::flow::rockKineticRateFactor >() ),
     m_OBLOperatorValues ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues >()),
-    m_OBLOperatorValuesOld ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValuesOld >()),
+    m_OBLOperatorValues_n ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorValues_n >()),
     m_OBLOperatorDerivatives ( subRegion.getExtrinsicData< extrinsicMeshData::flow::OBLOperatorDerivatives >()),
     m_localMatrix( localMatrix ),
     m_localRhs( localRhs )
@@ -428,13 +417,13 @@ public:
                             StackVariables & stack ) const
   {
     arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLVals = m_OBLOperatorValues[ei];
-    arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLValsOld = m_OBLOperatorValuesOld[ei];
+    arraySlice1d< real64 const, compflow::USD_OBL_VAL - 1 > const & OBLVals_n = m_OBLOperatorValues_n[ei];
     arraySlice2d< real64 const, compflow::USD_OBL_DER - 1 > const & OBLDers = m_OBLOperatorDerivatives[ei];
 
     // [1] fill diagonal part for both mass (and energy equations if needed, only fluid energy is involved here)
     for( integer c = 0; c < numDofs; ++c )
     {
-      stack.localResidual[c] = m_referencePoreVolume[ei] * (OBLVals[ACC_OP + c] - OBLValsOld[ACC_OP + c]);   // acc operators
+      stack.localResidual[c] = m_referencePoreVolume[ei] * (OBLVals[ACC_OP + c] - OBLVals_n[ACC_OP + c]);   // acc operators
       // only
 
       // Add reaction term to diagonal of reservoir cells (here the volume is pore volume or block volume):
@@ -452,7 +441,7 @@ public:
     // + rock energy
     if( enableEnergyBalance )
     {
-      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLValsOld[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
+      stack.localResidual[numDofs-1] += m_referenceRockVolume[ei] * (OBLVals[RE_INTER_OP] - OBLVals_n[RE_INTER_OP]) * m_rockVolumetricHeatCapacity[ei];
 
       for( integer v = 0; v < numDofs; ++v )
       {
@@ -532,10 +521,6 @@ protected:
   arrayView2d< real64 const, compflow::USD_COMP > const m_compFrac;
   arrayView1d< real64 const > const m_temperature;
 
-  arrayView1d< real64 const > const m_dPressure;
-  arrayView2d< real64 const, compflow::USD_COMP > const m_dCompFrac;
-  arrayView1d< real64 const > const m_dTemperature;
-
   // views on solid properties
   arrayView1d< real64 const > const m_referencePoreVolume;
   arrayView1d< real64 const > const m_referenceRockVolume;
@@ -546,7 +531,7 @@ protected:
 
   // Views on OBL operators and their derivatives
   arrayView2d< real64 const, compflow::USD_OBL_VAL > const m_OBLOperatorValues;
-  arrayView2d< real64 const, compflow::USD_OBL_VAL > const m_OBLOperatorValuesOld;
+  arrayView2d< real64 const, compflow::USD_OBL_VAL > const m_OBLOperatorValues_n;
   arrayView3d< real64 const, compflow::USD_OBL_DER > const m_OBLOperatorDerivatives;
 
   // outputs
@@ -657,11 +642,8 @@ public:
     StencilAccessors< extrinsicMeshData::ghostRank,
                       extrinsicMeshData::flow::gravityCoefficient,
                       extrinsicMeshData::flow::pressure,
-                      extrinsicMeshData::flow::deltaPressure,
                       extrinsicMeshData::flow::globalCompFraction,
-                      extrinsicMeshData::flow::deltaGlobalCompFraction,
                       extrinsicMeshData::flow::temperature,
-                      extrinsicMeshData::flow::deltaTemperature,
                       extrinsicMeshData::flow::referencePorosity,
                       extrinsicMeshData::flow::rockThermalConductivity,
                       extrinsicMeshData::flow::OBLOperatorValues,
@@ -702,11 +684,8 @@ public:
     m_ghostRank( compFlowAccessors.get( extrinsicMeshData::ghostRank {} ) ),
     m_gravCoef( compFlowAccessors.get( extrinsicMeshData::flow::gravityCoefficient {} ) ),
     m_pres( compFlowAccessors.get( extrinsicMeshData::flow::pressure {} ) ),
-    m_dPres( compFlowAccessors.get( extrinsicMeshData::flow::deltaPressure {} ) ),
     m_compFrac( compFlowAccessors.get( extrinsicMeshData::flow::globalCompFraction {} ) ),
-    m_dCompFrac( compFlowAccessors.get( extrinsicMeshData::flow::deltaGlobalCompFraction {} ) ),
     m_temp( compFlowAccessors.get( extrinsicMeshData::flow::temperature {} ) ),
-    m_dTemp( compFlowAccessors.get( extrinsicMeshData::flow::deltaTemperature {} ) ),
     m_OBLOperatorValues ( compFlowAccessors.get( extrinsicMeshData::flow::OBLOperatorValues {} ) ),
     m_OBLOperatorDerivatives ( compFlowAccessors.get( extrinsicMeshData::flow::OBLOperatorDerivatives {} ) ),
     m_localMatrix( localMatrix ),
@@ -742,16 +721,12 @@ protected:
 
   /// Views on pressure
   ElementViewConst< arrayView1d< real64 const > > const m_pres;
-  ElementViewConst< arrayView1d< real64 const > > const m_dPres;
 
   /// Views on global fraction
   ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_compFrac;
-  ElementViewConst< arrayView2d< real64 const, compflow::USD_COMP > > const m_dCompFrac;
 
   /// Views on temperature
   ElementViewConst< arrayView1d< real64 const > > const m_temp;
-  ElementViewConst< arrayView1d< real64 const > > const m_dTemp;
-
 
   // Views on OBL operators and their derivatives
   ElementViewConst< arrayView2d< real64 const, compflow::USD_OBL_VAL > > const m_OBLOperatorValues;
@@ -980,23 +955,18 @@ public:
       // Take average interface porosity:
       real64 const poroAverage = (OBLValsI[PORO_OP] + OBLValsJ[PORO_OP]) * 0.5;
       transMultD = m_transMultExp * pow( poroAverage, m_transMultExp - 1 ) * 0.5;
-
-      // for( integer v = 0; v < numDofs; ++v )
-      // {
-      //   transMultDerI[v] = transMultD * OBLDersI[PORO_OP][v];
-      //   transMultDerJ[v] = transMultD * OBLDersJ[PORO_OP][v];
-      // }
       transMult = pow( poroAverage, m_transMultExp );
     }
 
 
     // apply [Pa]->[bar] conversion
-    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] + m_dPres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI] - m_dPres[erI][esrI][eiI]) * pascalToBarMult;
+    real64 const pDiff = (m_pres[erJ][esrJ][eiJ] - m_pres[erI][esrI][eiI]) * pascalToBarMult;
 
 
     // [2] fill offdiagonal part + contribute to diagonal, only fluid part is considered in energy equation
     for( integer p = 0; p < numPhases; ++p )
-    {     // loop over number of phases for convective operator
+    {
+      // loop over number of phases for convective operator
 
       // calculate gravity term for phase p
       real64 const averageDensity = (OBLValsI[GRAV_OP + p] + OBLValsJ[GRAV_OP + p]) / 2;
@@ -1284,7 +1254,7 @@ struct ResidualNormKernel
                       arrayView1d< globalIndex const > const & dofNumber,
                       arrayView1d< integer const > const & ghostRank,
                       arrayView1d< real64 const > const & refPoreVolume,
-                      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLOperatorValuesOld,
+                      arrayView2d< real64 const, compflow::USD_OBL_VAL > const & OBLOperatorValues_n,
                       real64 & localResidualNorm )
   {
     RAJA::ReduceSum< ReducePolicy< POLICY >, real64 > localSum( 0.0 );
@@ -1297,7 +1267,7 @@ struct ResidualNormKernel
 
         for( integer idof = 0; idof < numDofs; ++idof )
         {
-          real64 const val = localResidual[localRow + idof] / (OBLOperatorValuesOld[ei][idof] * refPoreVolume[ei]);
+          real64 const val = localResidual[localRow + idof] / (OBLOperatorValues_n[ei][idof] * refPoreVolume[ei]);
           localSum += val * val;
         }
       }
@@ -1360,11 +1330,8 @@ struct SolutionCheckKernel
           arrayView1d< globalIndex const > const & dofNumber,
           arrayView1d< integer const > const & ghostRank,
           arrayView1d< real64 const > const & pres,
-          arrayView1d< real64 const > const & dPres,
           arrayView2d< real64 const, compflow::USD_COMP > const & compFrac,
-          arrayView2d< real64 const, compflow::USD_COMP > const & dCompFrac,
           arrayView1d< real64 const > const & temp,
-          arrayView1d< real64 const > const & dTemp,
           integer const allowOBLChopping,
           real64 const scalingFactor )
   {
@@ -1378,7 +1345,7 @@ struct SolutionCheckKernel
       {
         localIndex const localRow = dofNumber[ei] - rankOffset;
 
-        real64 const newPres = pres[ei] + dPres[ei] + scalingFactor * localSolution[localRow];
+        real64 const newPres = pres[ei] + scalingFactor * localSolution[localRow];
         check.min( newPres >= 0.0 );
 
         // if OBL chopping is not allowed, the time step fails if a component fraction is negative
@@ -1388,7 +1355,7 @@ struct SolutionCheckKernel
         {
           for( integer ic = 0; ic < numComps - 1; ++ic )
           {
-            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            real64 const newCompFrac = compFrac[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             check.min( newCompFrac >= 0.0 );
           }
         }
@@ -1397,7 +1364,7 @@ struct SolutionCheckKernel
           real64 fracSum = 0.0;
           for( integer ic = 0; ic < numComps - 1; ++ic )
           {
-            real64 const newCompFrac = compFrac[ei][ic] + dCompFrac[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
+            real64 const newCompFrac = compFrac[ei][ic] + scalingFactor * localSolution[localRow + ic + 1];
             fracSum += (newCompFrac > 0.0) ? newCompFrac : 0.0;
           }
           check.min( fracSum >= eps );
@@ -1405,7 +1372,7 @@ struct SolutionCheckKernel
 
         if( enableThermalBalance )
         {
-          real64 const newTemp = temp[ei] + dTemp[ei] + scalingFactor * localSolution[localRow + numComps];
+          real64 const newTemp = temp[ei] + scalingFactor * localSolution[localRow + numComps];
           check.min( newTemp >= 0.0 );
         }
 

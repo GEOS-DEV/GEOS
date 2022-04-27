@@ -37,13 +37,13 @@ using array2dLayoutComp = array2d< real64, compflow::LAYOUT_COMP >;
 using array2dLayoutOBLOpVals = array2d< real64, compflow::LAYOUT_OBL_OPERATOR_VALUES >;
 using array3dLayoutOBLOpDers = array3d< real64, compflow::LAYOUT_OBL_OPERATOR_DERIVATIVES >;
 
-EXTRINSIC_MESH_DATA_TRAIT( deltaGlobalCompFraction,
-                           "deltaGlobalCompFraction",
+EXTRINSIC_MESH_DATA_TRAIT( globalCompFraction_n,
+                           "globalCompFraction_n",
                            array2dLayoutComp,
                            0,
                            NOPLOT,
                            NO_WRITE,
-                           "Accumulated global component fraction updates" );
+                           "Global component fraction at the previous converged time step" );
 
 EXTRINSIC_MESH_DATA_TRAIT( bcGlobalCompFraction,
                            "bcGlobalCompFraction",
@@ -126,8 +126,8 @@ EXTRINSIC_MESH_DATA_TRAIT( OBLOperatorDerivatives,
                            NO_WRITE,
                            "Derivatives of OBL operators with respect to all primary variables (Dofs)" );
 
-EXTRINSIC_MESH_DATA_TRAIT( OBLOperatorValuesOld,
-                           "OBLOperatorValuesOld",
+EXTRINSIC_MESH_DATA_TRAIT( OBLOperatorValues_n,
+                           "OBLOperatorValues_n",
                            array2dLayoutOBLOpVals,
                            0,
                            NOPLOT,

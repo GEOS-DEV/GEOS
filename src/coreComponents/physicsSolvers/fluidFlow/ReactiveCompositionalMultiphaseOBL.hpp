@@ -256,13 +256,6 @@ public:
     static constexpr char const * useDARTSL2NormString() { return "useDARTSL2Norm"; }
   };
 
-  /**
-   * @brief Backup current values of all constitutive fields that participate in the accumulation term
-   * @param mesh
-   * @param regionNames
-   */
-  void backupFields( MeshLevel & mesh,
-                     arrayView1d< string const > const & regionNames ) const;
 
   /**
    * @brief Function to perform checks before applying Dirichlet type BC's
