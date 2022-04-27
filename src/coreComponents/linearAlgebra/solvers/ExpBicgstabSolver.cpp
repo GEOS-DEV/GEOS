@@ -51,6 +51,9 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
   real64 const rnorm0 = r.norm2();
   real64 const absTol = rnorm0 * m_params.krylov.relTolerance;
 
+  // Set restart iteration 
+  integer iRestart = 30;//m_params.krylov.maxRestart; 
+
   // Define temporary vectors
   VectorTemp r0( r );
   VectorTemp p( r );
@@ -146,8 +149,26 @@ void ExpBicgstabSolver< VECTOR >::solve( Vector const & b,
     AMp.axpbypcz( 1.0, AMq, -omega, AMAMq, beta );
 
     // Restart
-    // TODO
+    if( k == iRestart )
+    {
+      VectorTemp realResidual = createTempVector( r );
+      m_operator.residual( x, b, realResidual );
+      VectorTemp residualError( realResidual );
+      residualError.axpy( -1.0, r );
 
+      real64 const residualRelativeError = residualError.norm2() / realResidual.norm2();
+
+      if( residualRelativeError > 0.1 )
+      {
+        r0.copy( realResidual );
+        r.copy( r0 );
+        p.copy( r0 );
+        m_precond.apply( p, Mp );
+        m_operator.apply( Mp, AMp );
+      }
+       
+      iRestart = iRestart + m_params.krylov.maxRestart; 
+    }
   }
 
 

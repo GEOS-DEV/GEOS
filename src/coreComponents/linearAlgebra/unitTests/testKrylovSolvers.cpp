@@ -53,6 +53,7 @@ LinearSolverParameters params_ExpBiCGSTAB()
   LinearSolverParameters parameters;
   parameters.krylov.relTolerance = 1e-8;
   parameters.krylov.maxIterations = 500;
+  parameters.krylov.maxRestart = 40;
   //////////
   parameters.logLevel = 2;
   //////////
@@ -138,7 +139,7 @@ protected:
   void SetUp() override
   {
     // Compute matrix and preconditioner
-    globalIndex constexpr n = 5; //100;
+    globalIndex constexpr n = 100; //5
     geosx::testing::compute2DLaplaceOperator( MPI_COMM_GEOSX, n, this->matrix );
     this->precond.setup( this->matrix );
 
