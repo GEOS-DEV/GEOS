@@ -30,34 +30,34 @@ SolidInternalEnergy::SolidInternalEnergy( string const & name, Group * const par
   ConstitutiveBase( name, parent ),
   m_internalEnergy(),
   m_dInternalEnergy_dTemperature(),
-  m_specificHeatCapacity(),
+  m_volumetricHeatCapacity(),
   m_referenceTemperature(),
   m_referenceInternalEnergy()
 {
   registerWrapper( viewKeyStruct::internalEnergyString(), &m_internalEnergy ).
     setPlotLevel( PlotLevel::LEVEL_0 ).
     setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy of the solid" );
+    setDescription( "Internal energy of the solid per unit volume [J/m^3]" );
 
-  registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_oldInternalEnergy ).
+  registerWrapper( viewKeyStruct::oldInternalEnergyString(), &m_internalEnergy_n ).
     setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy of the solid at the previous time-step" );
+    setDescription( "Internal energy of the solid per unit volume at the previous time-step [J/m^3]" );
 
   registerWrapper( viewKeyStruct::dInternalEnergy_dTemperatureString(), &m_dInternalEnergy_dTemperature ).
     setApplyDefaultValue( 0.0 ).
-    setDescription( "Derivative of the solid internal energy w.r.t. temperature" );
+    setDescription( "Derivative of the solid internal energy w.r.t. temperature [J/(m^3.K)]" );
 
-  registerWrapper( viewKeyStruct::specificHeatCapacityString(), &m_specificHeatCapacity ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Solid specific heat capacity" );
+  registerWrapper( viewKeyStruct::volumetricHeatCapacityString(), &m_volumetricHeatCapacity ).
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Solid volumetric heat capacity [J/(kg.K)]" );
 
   registerWrapper( viewKeyStruct::referenceTemperatureString(), &m_referenceTemperature ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Reference temperature" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Reference temperature [K]" );
 
   registerWrapper( viewKeyStruct::referenceInternalEnergyString(), &m_referenceInternalEnergy ).
-    setApplyDefaultValue( 0.0 ).
-    setDescription( "Internal energy at the reference temperature" );
+    setInputFlag( InputFlags::REQUIRED ).
+    setDescription( "Internal energy at the reference temperature [J/kg]" );
 }
 
 void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
@@ -65,22 +65,24 @@ void SolidInternalEnergy::allocateConstitutiveData( Group & parent,
 {
   m_internalEnergy.resize( 0, 1 );
   m_dInternalEnergy_dTemperature.resize( 0, 1 );
-  m_oldInternalEnergy.resize( 0, 1 );
+  m_internalEnergy_n.resize( 0, 1 );
 
   ConstitutiveBase::allocateConstitutiveData( parent, numConstitutivePointsPerParentIndex );
 }
 
 void SolidInternalEnergy::saveConvergedState() const
 {
-  arrayView2d< real64 const > internalEnergy = m_internalEnergy;
-  arrayView2d< real64 >       oldInternalEnergy = m_oldInternalEnergy;
+  arrayView2d< real64 const > internalEnergy   = m_internalEnergy;
+  arrayView2d< real64 >       internalEnergy_n = m_internalEnergy_n;
 
   forAll< parallelDevicePolicy<> >( internalEnergy.size( 0 ), [=] GEOSX_HOST_DEVICE ( localIndex const k )
   {
-    oldInternalEnergy[k][0] = internalEnergy[k][0];
+    internalEnergy_n[k][0] = internalEnergy[k][0];
   } );
 }
 
-}
+REGISTER_CATALOG_ENTRY( ConstitutiveBase, SolidInternalEnergy, string const &, Group * const )
 
-}
+} /* namespace constitutive */
+
+} /* namespace geosx */

@@ -41,6 +41,12 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
     setSizedFromParent( 0 ).
     setDescription( "Coordinates (x,y,z) of the sources" );
 
+  registerWrapper( viewKeyStruct::sourceValueString(), &m_sourceValue ).
+    setInputFlag( InputFlags::FALSE ).
+    setRestartFlags( RestartFlags::NO_WRITE ).
+    setSizedFromParent( 0 ).
+    setDescription( "Source Value of the sources" );
+
   registerWrapper( viewKeyStruct::timeSourceFrequencyString(), &m_timeSourceFrequency ).
     setInputFlag( InputFlags::REQUIRED ).
     setDescription( "Central frequency for the time source" );
@@ -58,7 +64,17 @@ WaveSolverBase::WaveSolverBase( const std::string & name,
   registerWrapper( viewKeyStruct::outputSeismoTraceString(), &m_outputSeismoTrace ).
     setInputFlag( InputFlags::OPTIONAL ).
     setApplyDefaultValue( 0 ).
-    setDescription( "Flag that indicates if we write the sismo trace in a file .txt, 0 no output, 1 otherwise" );
+    setDescription( "Flag that indicates if we write the seismo trace in a file .txt, 0 no output, 1 otherwise" );
+
+  registerWrapper( viewKeyStruct::dtSeismoTraceString(), &m_dtSeismoTrace ).
+    setInputFlag( InputFlags::OPTIONAL ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Time step for output pressure at receivers" );
+
+  registerWrapper( viewKeyStruct::indexSeismoTraceString(), &m_indexSeismoTrace ).
+    setInputFlag( InputFlags::FALSE ).
+    setApplyDefaultValue( 0 ).
+    setDescription( "Count for output pressure at receivers" );
 
 }
 

@@ -21,14 +21,9 @@
 namespace geosx
 {
 
-SurfaceElementStencil::SurfaceElementStencil():
-  StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >(),
-  m_meanPermCoefficient( 1.0 )
-{}
-
 void SurfaceElementStencil::move( LvArray::MemorySpace const space )
 {
-  StencilBase< SurfaceElementStencil_Traits, SurfaceElementStencil >::move( space );
+  StencilBase::move( space );
   m_cellCenterToEdgeCenters.move( space, true );
 }
 
@@ -39,10 +34,10 @@ void SurfaceElementStencil::add( localIndex const numPts,
                                  real64 const * const weights,
                                  localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
 
-  typename decltype( m_connectorIndices )::iterator iter = m_connectorIndices.find( connectorIndex );
-  if( iter==m_connectorIndices.end() )
+  auto const iter = m_connectorIndices.find( connectorIndex );
+  if( iter == m_connectorIndices.end() )
   {
     m_elementRegionIndices.appendArray( elementRegionIndices, elementRegionIndices + numPts );
     m_elementSubRegionIndices.appendArray( elementSubRegionIndices, elementSubRegionIndices + numPts );
@@ -70,10 +65,10 @@ void SurfaceElementStencil::add( localIndex const numPts,
                                  R1Tensor const * const cellCenterToEdgeCenter,
                                  localIndex const connectorIndex )
 {
-  GEOSX_ERROR_IF( numPts >= MAX_STENCIL_SIZE, "Maximum stencil size exceeded" );
+  GEOSX_ERROR_IF( numPts >= maxStencilSize, "Maximum stencil size exceeded" );
 
-  typename decltype( m_connectorIndices )::iterator iter = m_connectorIndices.find( connectorIndex );
-  if( iter==m_connectorIndices.end() )
+  auto const iter = m_connectorIndices.find( connectorIndex );
+  if( iter == m_connectorIndices.end() )
   {
     GEOSX_ERROR( "Wrong connectorIndex" );
   }
@@ -92,6 +87,31 @@ void SurfaceElementStencil::add( localIndex const numPts,
   }
 }
 
+SurfaceElementStencil::KernelWrapper
+SurfaceElementStencil::createKernelWrapper() const
+{
+  return { m_elementRegionIndices,
+           m_elementSubRegionIndices,
+           m_elementIndices,
+           m_weights,
+           m_cellCenterToEdgeCenters,
+           m_meanPermCoefficient };
+}
 
+SurfaceElementStencilWrapper::
+  SurfaceElementStencilWrapper( IndexContainerType const & elementRegionIndices,
+                                IndexContainerType const & elementSubRegionIndices,
+                                IndexContainerType const & elementIndices,
+                                WeightContainerType const & weights,
+                                ArrayOfArrays< R1Tensor > const & cellCenterToEdgeCenters,
+                                real64 const meanPermCoefficient )
+
+  : StencilWrapperBase( elementRegionIndices,
+                        elementSubRegionIndices,
+                        elementIndices,
+                        weights ),
+  m_cellCenterToEdgeCenters( cellCenterToEdgeCenters.toView() ),
+  m_meanPermCoefficient( meanPermCoefficient )
+{}
 
 } /* namespace geosx */

@@ -57,7 +57,18 @@ public:
    *   file and data spaces/sets and output any set index metatata for the time history.
    * @note There are operations in this function that are collective on the GEOSX comm.
    */
-  virtual void initializePostSubGroups() override;
+  virtual void initializePostInitialConditionsPostSubGroups() override;
+
+  /**
+   * @brief Performs re-initialization of certain variable depending on the solver being used.
+   */
+  virtual void reinit() override;
+
+  /**
+   * @brief Set the output filename (This is usefull for pygeosx user)
+   * @param root The string name of the output file
+   */
+  void setFileName( string const & root );
 
   /**
    * @brief Writes out a time history file.
@@ -93,6 +104,14 @@ public:
     dataRepository::ViewKey timeHistoryRestart = { "restart" };
   } timeHistoryOutputViewKeys;
   /// @endcond
+
+  /**
+   * @brief Return PyHistoryOutput type.
+   * @return Return PyHistoryOutput type.
+   */
+#if defined(GEOSX_USE_PYGEOSX)
+  virtual PyTypeObject * getPythonType() const override;
+#endif
 
 private:
 

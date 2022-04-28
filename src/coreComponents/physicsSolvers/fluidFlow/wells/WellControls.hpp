@@ -117,12 +117,6 @@ public:
   ///@{
 
   /**
-   * @brief Get the well type (injector or producer).
-   * @return a well Type enum
-   */
-  Type getType() const { return m_type; }
-
-  /**
    * @brief Set the control type to BHP and set a numerical value for the control.
    * @param[in] val value for the BHP control
    */
@@ -227,11 +221,35 @@ public:
   const real64 & getSurfaceTemperature() const { return m_surfaceTemp; }
 
   /**
-   * @brief Getter for the status of the well (open or shut)
-   * @param[in] currentTime the current time
-   * @return a flag equal to true if the well is open, and false otherwise
+   * @brief Is the well an injector?
+   * @return a boolean
    */
-  bool wellIsOpen( real64 const & currentTime ) const;
+  bool isInjector() const { return ( m_type == Type::INJECTOR ); }
+
+  /**
+   * @brief Is the well a producer?
+   * @return a boolean
+   */
+  bool isProducer() const { return ( m_type == Type::PRODUCER ); }
+
+  /**
+   * @brief Is the well open (or shut) at @p currentTime?
+   * @param[in] currentTime the current time
+   * @return a boolean
+   */
+  bool isWellOpen( real64 const & currentTime ) const;
+
+  /**
+   * @brief Getter for the flag to enable crossflow
+   * @return the flag deciding whether crossflow is allowed or not
+   */
+  bool isCrossflowEnabled() const { return m_isCrossflowEnabled; }
+
+  /**
+   * @brief Getter for the initial pressure coefficient
+   * @return the initial pressure coefficient
+   */
+  real64 getInitialPressureCoefficient() const { return m_initialPressureCoefficient; }
 
   ///@}
 
@@ -271,6 +289,11 @@ public:
     static constexpr char const * targetPhaseRateTableNameString() { return "targetPhaseRateTableName"; }
     /// string key for BHP table name
     static constexpr char const * targetBHPTableNameString() { return "targetBHPTableName"; }
+    /// string key for the crossflow flag
+    static constexpr char const * enableCrossflowString() { return "enableCrossflow"; }
+    /// string key for the initial pressure coefficient
+    static constexpr char const * initialPressureCoefficientString() { return "initialPressureCoefficient"; }
+
   }
   /// ViewKey struct for the WellControls class
   viewKeysWellControls;
@@ -278,6 +301,8 @@ public:
 protected:
 
   virtual void postProcessInput() override;
+
+  virtual void initializePreSubGroups() override;
 
 private:
 
@@ -328,6 +353,12 @@ private:
 
   /// BHP table name
   string m_targetBHPTableName;
+
+  /// Flag to enable crossflow
+  integer m_isCrossflowEnabled;
+
+  /// Tuning coefficient for the initial well pressure
+  real64 m_initialPressureCoefficient;
 
   /// Total rate table
   TableFunction * m_targetTotalRateTable;

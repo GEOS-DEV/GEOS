@@ -115,11 +115,6 @@ public:
                      real64 const & dt,
                      DomainPartition & domain ) override;
 
-  virtual void
-  implicitStepComplete( real64 const & time,
-                        real64 const & dt,
-                        DomainPartition & domain ) override;
-
   /**@}*/
 
   virtual string wellElementDofName() const override { return viewKeyStruct::dofFieldString(); }
@@ -133,32 +128,32 @@ public:
   /**
    * @brief Recompute the volumetric rate that are used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateVolRateForConstraint( WellElementSubRegion & subRegion );
 
   /**
    * @brief Recompute the BHP pressure that is used in the well constraints
    * @param subRegion the well subregion containing all the primary and dependent fields
-   * @param targetIndex the targetIndex of the subRegion
    */
   virtual void updateBHPForConstraint( WellElementSubRegion & subRegion );
 
   /**
    * @brief Update fluid constitutive model state
-   * @param dataGroup group that contains the fields
-   * @param targetIndex the targetIndex of the subRegion
+   * @param subRegion the well subRegion containing the well elements and their associated fields
    */
   virtual void updateFluidModel( WellElementSubRegion & subRegion ) const;
 
+  /**
+   * @brief Recompute the perforation rates for all the wells
+   * @param domain the domain containing the mesh and fields
+   */
+  virtual void computePerforationRates( DomainPartition & domain ) override;
 
   /**
    * @brief Recompute all dependent quantities from primary variables (including constitutive models) on the well
-   * @param meshLevel the mesh level
    * @param subRegion the well subRegion containing the well elements and their associated fields
-   * @param targetIndex the targetIndex of the subRegion
    */
-  virtual void updateSubRegionState( MeshLevel const & meshLevel, WellElementSubRegion & subRegion ) override;
+  virtual void updateSubRegionState( WellElementSubRegion & subRegion ) override;
 
   /**
    * @brief assembles the flux terms for all connections between well elements
@@ -234,15 +229,9 @@ public:
 
 protected:
 
-  virtual void initializePreSubGroups() override;
+  virtual void initializePostSubGroups() override;
 
 private:
-
-  /**
-   * @brief Compute all the perforation rates for this well
-   * @param well the well with its perforations
-   */
-  void computePerforationRates( MeshLevel const & meshLevel, WellElementSubRegion & subRegion );
 
   /**
    * @brief Initialize all the primary and secondary variables in all the wells
@@ -252,7 +241,7 @@ private:
 
   /**
    * @brief Make sure that the well constraints are compatible
-   * @param meshLevel the mesh level object (to loop over wells)
+   * @param subRegion the well subRegion
    */
   void validateWellConstraints( WellElementSubRegion const & subRegion ) const;
 

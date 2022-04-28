@@ -21,7 +21,6 @@
 
 #include "linearAlgebra/DofManager.hpp"
 #include "linearAlgebra/interfaces/hypre/HypreUtils.hpp"
-#include "linearAlgebra/utilities/LinearSolverParameters.hpp"
 #include "linearAlgebra/utilities/LAIHelperFunctions.hpp"
 
 #include <_hypre_utilities.h>
@@ -44,113 +43,6 @@ struct HypreNullSpace
 
 namespace
 {
-
-HYPRE_Int getHypreAMGCycleType( LinearSolverParameters::AMG::CycleType const & type )
-{
-  static map< LinearSolverParameters::AMG::CycleType, HYPRE_Int > const typeMap =
-  {
-    { LinearSolverParameters::AMG::CycleType::V, 1 },
-    { LinearSolverParameters::AMG::CycleType::W, 2 },
-  };
-  return findOption( typeMap, type, "multigrid cycle", "HyprePreconditioner" );
-}
-
-HYPRE_Int getHypreAMGRelaxationType( LinearSolverParameters::AMG::SmootherType const & type )
-{
-  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
-  {
-    { LinearSolverParameters::AMG::SmootherType::default_, -1 },
-#ifdef GEOSX_USE_HYPRE_CUDA
-    { LinearSolverParameters::AMG::SmootherType::jacobi, 7 },
-#else
-    { LinearSolverParameters::AMG::SmootherType::jacobi, 0 },
-#endif
-    { LinearSolverParameters::AMG::SmootherType::fgs, 3 },
-    { LinearSolverParameters::AMG::SmootherType::bgs, 4 },
-    { LinearSolverParameters::AMG::SmootherType::sgs, 6 },
-    { LinearSolverParameters::AMG::SmootherType::l1sgs, 8 },
-    { LinearSolverParameters::AMG::SmootherType::chebyshev, 16 },
-    { LinearSolverParameters::AMG::SmootherType::l1jacobi, 18 },
-  };
-  return findOption( typeMap, type, "multigrid relaxation", "HyprePreconditioner" );
-}
-
-HYPRE_Int getHypreRelaxationType( LinearSolverParameters::PreconditionerType const type )
-{
-  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
-  {
-#ifdef GEOSX_USE_HYPRE_CUDA
-    { LinearSolverParameters::PreconditionerType::jacobi, 7 },
-#else
-    { LinearSolverParameters::PreconditionerType::jacobi, 0 },
-#endif
-    { LinearSolverParameters::PreconditionerType::fgs, 3 },
-    { LinearSolverParameters::PreconditionerType::bgs, 4 },
-    { LinearSolverParameters::PreconditionerType::sgs, 6 },
-    { LinearSolverParameters::PreconditionerType::l1sgs, 8 },
-    { LinearSolverParameters::PreconditionerType::chebyshev, 16 },
-    { LinearSolverParameters::PreconditionerType::l1jacobi, 18 },
-  };
-  return findOption( typeMap, type, "relaxation", "HyprePreconditioner" );
-}
-
-HYPRE_Int getHypreAMGCoarseType( LinearSolverParameters::AMG::CoarseType const & type )
-{
-  static map< LinearSolverParameters::AMG::CoarseType, HYPRE_Int > const typeMap =
-  {
-    { LinearSolverParameters::AMG::CoarseType::default_, -1 },
-#ifdef GEOSX_USE_HYPRE_CUDA
-    { LinearSolverParameters::AMG::CoarseType::jacobi, 7 },
-#else
-    { LinearSolverParameters::AMG::CoarseType::jacobi, 0 },
-#endif
-    { LinearSolverParameters::AMG::CoarseType::fgs, 3 },
-    { LinearSolverParameters::AMG::CoarseType::bgs, 4 },
-    { LinearSolverParameters::AMG::CoarseType::sgs, 6 },
-    { LinearSolverParameters::AMG::CoarseType::l1sgs, 8 },
-    { LinearSolverParameters::AMG::CoarseType::direct, 9 },
-    { LinearSolverParameters::AMG::CoarseType::chebyshev, 16 },
-    { LinearSolverParameters::AMG::CoarseType::l1jacobi, 18 },
-  };
-  return findOption( typeMap, type, "multigrid coarse solver", "HyprePreconditioner" );
-}
-
-HYPRE_Int getHypreAMGCoarseningType( string const & type )
-{
-  static map< string, HYPRE_Int > const typeMap =
-  {
-    { "CLJP", 0 },
-    { "Ruge-Stueben", 3 },
-    { "Falgout", 6 },
-    { "CLJP", 7 },
-    { "PMIS", 8 },
-    { "PMISD", 9 },
-    { "HMIS", 10 },
-    { "CGC", 21 },
-    { "CGC-E", 22 }
-  };
-  return findOption( typeMap, type, "multigrid coarsening", "HyprePreconditioner" );
-}
-
-HYPRE_Int getHypreILUType( LinearSolverParameters::PreconditionerType const type )
-{
-  static map< LinearSolverParameters::PreconditionerType, HYPRE_Int > const typeMap =
-  {
-    { LinearSolverParameters::PreconditionerType::iluk, 0 },
-    { LinearSolverParameters::PreconditionerType::ilut, 1 },
-  };
-  return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
-}
-
-HYPRE_Int getHypreILUType( LinearSolverParameters::AMG::SmootherType const type )
-{
-  static map< LinearSolverParameters::AMG::SmootherType, HYPRE_Int > const typeMap =
-  {
-    { LinearSolverParameters::AMG::SmootherType::ilu0, 0 },
-    { LinearSolverParameters::AMG::SmootherType::ilut, 1 },
-  };
-  return findOption( typeMap, type, "ILU", "HyprePreconditioner" );
-}
 
 void convertRigidBodyModes( arrayView1d< HypreVector > const & nearNullKernel,
                             array1d< HYPRE_ParVector > & nullSpacePointer )
@@ -199,7 +91,7 @@ void createAMG( LinearSolverParameters const & params,
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetMaxLevels( precond.ptr, LvArray::integerConversion< HYPRE_Int >( params.amg.maxLevels ) ) );
 
   // Set type of cycle (1: V-cycle (default); 2: W-cycle)
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( precond.ptr, getHypreAMGCycleType( params.amg.cycleType ) ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleType( precond.ptr, hypre::getAMGCycleType( params.amg.cycleType ) ) );
 
   if( params.amg.nullSpaceType == LinearSolverParameters::AMG::NullSpaceType::rigidBodyModes && !nullSpace.vectors.empty() )
   {
@@ -245,11 +137,11 @@ void createAMG( LinearSolverParameters const & params,
       params.amg.smootherType == LinearSolverParameters::AMG::SmootherType::ilut )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetSmoothType( precond.ptr, 5 ) );
-    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond.ptr, getHypreILUType( params.amg.smootherType ) ) );
+    GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond.ptr, hypre::getILUType( params.amg.smootherType ) ) );
   }
   else
   {
-    HYPRE_Int const relaxType = getHypreAMGRelaxationType( params.amg.smootherType );
+    HYPRE_Int const relaxType = hypre::getAMGRelaxationType( params.amg.smootherType );
     if( relaxType >= 0 )
     {
       GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetRelaxType( precond.ptr, relaxType ) );
@@ -266,7 +158,7 @@ void createAMG( LinearSolverParameters const & params,
   }
 
   // Coarsening options: Only PMIS is supported on GPU
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond.ptr, getHypreAMGCoarseningType( params.amg.coarseningType ) ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCoarsenType( precond.ptr, hypre::getAMGCoarseningType( params.amg.coarseningType ) ) );
 
   // Interpolation options: Use options 3, 6, 14 or 15.
   GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetInterpType( precond.ptr, params.amg.interpolationType ) );
@@ -281,17 +173,11 @@ void createAMG( LinearSolverParameters const & params,
   HYPRE_BoomerAMGSetAggInterpType( precond.ptr, 5 ); // agg_interp_type = 5,7
 
   // Set coarsest level solver
-  HYPRE_Int const coarseType = getHypreAMGCoarseType( params.amg.coarseType );
+  HYPRE_Int const coarseType = hypre::getAMGCoarseType( params.amg.coarseType );
   if( coarseType >= 0 )
   {
     GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetCycleRelaxType( precond.ptr, coarseType, 3 ) );
   }
-
-  // TODO Why does this cause a crash?
-#if !defined(GEOSX_USE_HYPRE_CUDA)
-  // (by default for coarsest grid size above 5,000 superlu_dist is used)
-  GEOSX_LAI_CHECK_ERROR( HYPRE_BoomerAMGSetDSLUThreshold( precond.ptr, 5000 ) );
-#endif
 
   // Set the number of sweeps
   switch( params.amg.preOrPostSmoothing )
@@ -338,7 +224,7 @@ void createILU( LinearSolverParameters const & params,
   // Hypre's parameters to use ParCSR ILU as a preconditioner
   GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetMaxIter( precond.ptr, 1 ) );
   GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetTol( precond.ptr, 0.0 ) );
-  GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond.ptr, getHypreILUType( params.preconditionerType ) ) );
+  GEOSX_LAI_CHECK_ERROR( HYPRE_ILUSetType( precond.ptr, hypre::getILUType( params.preconditionerType ) ) );
 
   if( params.ifact.fill >= 0 )
   {
@@ -357,10 +243,10 @@ void createILU( LinearSolverParameters const & params,
 void createRelaxation( LinearSolverParameters const & params,
                        HyprePrecWrapper & precond )
 {
-  GEOSX_LAI_CHECK_ERROR( hypre::RelaxationCreate( precond.ptr, getHypreRelaxationType( params.preconditionerType ) ) );
-  precond.setup = hypre::RelaxationSetup;
-  precond.solve = hypre::RelaxationSolve;
-  precond.destroy = hypre::RelaxationDestroy;
+  GEOSX_LAI_CHECK_ERROR( hypre::relaxationCreate( precond.ptr, hypre::getRelaxationType( params.preconditionerType ) ) );
+  precond.setup = hypre::relaxationSetup;
+  precond.solve = hypre::relaxationSolve;
+  precond.destroy = hypre::relaxationDestroy;
 }
 
 } // namespace

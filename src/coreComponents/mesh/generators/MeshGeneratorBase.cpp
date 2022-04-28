@@ -24,8 +24,12 @@ MeshGeneratorBase::MeshGeneratorBase( string const & name, Group * const parent 
   setInputFlags( InputFlags::OPTIONAL_NONUNIQUE );
 }
 
-MeshGeneratorBase::~MeshGeneratorBase()
-{}
+Group * MeshGeneratorBase::createChild( string const & childKey, string const & childName )
+{
+  // Mesh generators generally don't have child XML nodes, must override this method to enable
+  GEOSX_THROW( GEOSX_FMT( "Mesh '{}': invalid child XML node '{}' of type {}", getName(), childName, childKey ),
+               InputError );
+}
 
 MeshGeneratorBase::CatalogInterface::CatalogType & MeshGeneratorBase::getCatalog()
 {

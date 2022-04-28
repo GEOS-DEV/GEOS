@@ -9,13 +9,13 @@
       solidSolverName="lagsolve"
       stabilizationName="TPFAstabilization"
       logLevel="1"
-      activeSetMaxIter="10"
       targetRegions="{ Region, Fracture }"
       contactRelationName="fractureMaterial">
       <NonlinearSolverParameters
         newtonTol="1.0e-8"
         logLevel="2"
         newtonMaxIter="10"
+        maxNumConfigurationAttempts="10"
         lineSearchAction="Require"
         lineSearchMaxCuts="2"
         maxTimeStepCuts="2"/>
@@ -185,7 +185,7 @@
      <VTK
       name="vtkOutput"
       plotLevel="2"
-      writeBinaryData="0"/>
+      format="ascii"/>
 
     <TimeHistory
       name="timeHistoryOutput"

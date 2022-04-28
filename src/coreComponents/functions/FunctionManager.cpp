@@ -67,4 +67,4 @@ void FunctionManager::expandObjectCatalogs()
   }
 }
 
-} /* namespace ANST */
+} // end of namespace geosx

@@ -30,7 +30,7 @@ namespace conversions
 {
 
 /// @namespace Bulk modulus and shear modulus as input
-namespace BulkModAndShearMod
+namespace bulkModAndShearMod
 {
 
 /**
@@ -72,10 +72,10 @@ real64 toFirstLame( real64 const & K, real64 const & G )
   return K - 2 * G / 3;
 }
 
-} /* namespace BulkModeAndShearMod */
+} /* namespace bulkModeAndShearMod */
 
 /// @namespace Young's modulus and Poisson ratio as input
-namespace YoungModAndPoissonRatio
+namespace youngModAndPoissonRatio
 {
 
 /**
@@ -104,10 +104,10 @@ real64 toShearMod( real64 const & E, real64 const & nu )
   return E / (2 * ( 1 + nu ) );
 }
 
-} /* namespace YoungModAndPoissonRatio*/
+} /* namespace youngModAndPoissonRatio*/
 
 /// @namespace Shear modulus and Poisson's ratio as input
-namespace ShearModAndPoissonRatio
+namespace shearModAndPoissonRatio
 {
 
 /**
@@ -136,10 +136,10 @@ real64 toYoungMod( real64 const & G, real64 const & nu )
   return 2 * G * ( 1 + nu );
 }
 
-} /* namespace ShearModAndPoissonRatio*/
+} /* namespace shearModAndPoissonRatio*/
 
 /// @namespace Bulk modulus and Poisson's ratio as input
-namespace BulkModAndPoissonRatio
+namespace bulkModAndPoissonRatio
 {
 
 /**
@@ -168,10 +168,10 @@ real64 toShearMod( real64 const & K, real64 const & nu )
   return 3 * K * ( 1 - 2 * nu) / ( 2 * ( 1 + nu ) );
 }
 
-} /* namespace BulkModAndPoissonRatio */
+} /* namespace bulkModAndPoissonRatio */
 
 /// @namespace Bulk modulus and Young's modulus
-namespace BulkModAndYoungMod
+namespace bulkModAndYoungMod
 {
 
 /**
@@ -200,10 +200,10 @@ real64 toPoissonRatio( real64 const & K, real64 const & E )
   return ( 3 * K - E ) / ( 6 * K);
 }
 
-} /* namespace BulkModAndYoungMod */
+} /* namespace bulkModAndYoungMod */
 
 /// @namespace Shear modulus and Young's modulus
-namespace ShearModAndYoungMod
+namespace shearModAndYoungMod
 {
 /**
  * @brief Compute Poisson ratio
@@ -231,7 +231,7 @@ real64 toBulkMod( real64 const & G, real64 const & E )
   return E * G / ( 3 * ( 3 * G - E ) );
 }
 
-} /* namespace ShearModAndYoungMod*/
+} /* namespace shearModAndYoungMod*/
 
 } /* namespace conversions */
 

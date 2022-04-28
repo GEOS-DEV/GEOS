@@ -32,7 +32,7 @@ Description of the case
 `Chun et al. (2020) <https://www.sciencedirect.com/science/article/pii/S0920410519309441>`__ conducted slot tests on proppant transport with slickwater. As shown below, a 4 ft X 1 ft slot with 0.3 in gap width was constructed. Three fluid inlets with 0.5 in inner diameter were placed at the right side of the slot, which were three inches away from each other. One outlet was placed on the top side to allow pressure relief. The other one was located on the left side acting as a fluid sink. In their tests, to resemble a slickwater fracturing treatment, the proppant concentration was kept at 1.5 ppg and the viscosity of carrying fluid was approximately 1 cp. The slurry was mixed well and then injected into the flow channel at a constant injection rate of 6 gpm. A simulation case with the same settings is built up to mimic these slot tests. A vertical and impermeable fracture surface is assumed in this case, which eliminates the effect of fracture plane inclination and fluid leak-off. A static fracture with an uniform aperture of 0.3 in is defined and fracture propagation is not involved. 30/50 mesh proppant is injected via the three inlets and is flowed through the slot for 30 seconds.
 
 
-.. _problemSketchFig:
+.. _problemSketchProppantSlotFig:
 .. figure:: config.png
    :align: center
    :width: 500
@@ -53,7 +53,7 @@ Mesh
 The following figure shows the mesh used for solving this problem.
 
 
-.. _problemSketchFig:
+.. _problemMeshProppantSlotFig:
 .. figure:: mesh.png
    :align: center
    :width: 500
@@ -196,7 +196,7 @@ Inspecting results
 The following figure shows the modelling prediction of proppant distribution at 10 s and 30 s, which are compared with the experiments in `(Chun et al., 2020)  <https://www.sciencedirect.com/science/article/pii/S0920410519309441>`__. Due to proppant settling in low viscosity fluid, a heterogeneous proppant distribution is obtained, which evolves with injection time. Three different zones (immobile proppant bed, suspended proppant and clean fluid) are visually identified for both the presented experiment and simulation. 
 
 
-.. _problemVerificationFig:
+.. _problemVerificationProppantSlotFig:
 .. figure:: Comparison.png
    :align: center
    :width: 1000
@@ -208,76 +208,7 @@ The following figure shows the modelling prediction of proppant distribution at 
 As shown below, consistently, the modelling predictions (green curve) on proppant transport and distribution show a good agreement with the reported experimental data (red dot) at each time. 
 
 
-.. plot::
-
-   import sys
-   import matplotlib
-   import numpy as np
-   import matplotlib.pyplot as plt
-
-   def main():
-       eTime, eLength, eArea = np.loadtxt("experiment-data.txt", skiprows=0, unpack=True)
-       esTime, esArea = np.loadtxt("experiment-data2.txt", skiprows=0, unpack=True)
-
-       dTime, dLength, dArea = np.loadtxt("model-results.txt", skiprows=1, unpack=True)
-       sTime, sArea = np.loadtxt("model-results2.txt", skiprows=1, unpack=True)
-       
-       # offSize is the size of the bounday cell which should be excluded from the model domain
-       offSize = 0.0127
-
-       # slot length 4 feet = 1.2192 m
-       totalLength = 1.2192
-
-       #total cell number of the domain (excluding the bounday cells)  
-       totalCellNum = 96 * 24
-       font = {'size'   : 12}
-       matplotlib.rc('font', **font)
- 
-       fig, ax = plt.subplots(2,2,figsize=(12, 8))
-
-       ax[0,0].plot(eTime, eLength, 'ro', label='Experiment-30/50')
-       ax[0,0].plot(dTime, (dLength-offSize)/totalLength, lw=5, alpha=0.5, color= 'lime', label='GEOSX-30/50 mesh', linestyle='-')
-       ax[0,0].set_ylabel('Normalized Bank Length', multialignment='center', weight="bold")
-       ax[0,0].set_xlabel('Time (s)', weight="bold")
-       ax[0,0].set_xlim(0, 40)
-       ax[0,0].set_ylim(0.0, 1.2)
-       ax[0,0].legend(frameon=False,loc='lower right',fontsize=12)
-       ax[0,0].text(.01,.92,'(a)', horizontalalignment='left', transform=ax[0,0].transAxes, size = 15, weight = 'bold')
-
-
-       ax[0,1].plot(eTime, eArea, 'ro', label='Experiment-30/50')
-       ax[0,1].plot(dTime, dArea/totalCellNum, lw=5, alpha=0.5, color= 'lime', label='GEOSX-30/50 mesh', linestyle='-')
-       ax[0,1].set_ylabel('Normalized Bank Area', multialignment='center', weight="bold")
-       ax[0,1].set_xlabel('Time (s)', weight="bold")
-       ax[0,1].set_xlim(0, 40)
-       ax[0,1].set_ylim(0.0, 0.5)
-       ax[0,1].legend(frameon=False,loc='lower right',fontsize=12)
-       ax[0,1].text(.01,.92,'(b)', horizontalalignment='left', transform=ax[0,1].transAxes, size = 15, weight = 'bold')
-
-
-       ax[1,0].plot(esTime, esArea, 'ro', label='Experiment-30/50')
-       ax[1,0].plot(sTime, sArea/totalCellNum, lw=5, alpha=0.5, color= 'lime', label='GEOSX-30/50 mesh', linestyle='-')
-       ax[1,0].set_ylabel('Normalized Suspended Proppant Area', multialignment='center', weight="bold")
-       ax[1,0].set_xlabel('Time (s)', weight="bold")
-       ax[1,0].set_xlim(0, 40)
-       ax[1,0].set_ylim(0.0, 0.6)
-       ax[1,0].legend(frameon=False,loc='upper right',fontsize=12)
-       ax[1,0].text(.01,.92,'(c)', horizontalalignment='left', transform=ax[1,0].transAxes, size = 15, weight = 'bold')
-
-
-       ax[1,1].plot(eTime, eArea+esArea, 'ro', label='Experiment-30/50')
-       ax[1,1].plot(dTime, (dArea+sArea)/totalCellNum, lw=5, alpha=0.5, color= 'lime', label='GEOSX-30/50 mesh', linestyle='-')
-       ax[1,1].set_ylabel('Normalized Total Propped Area', multialignment='center', weight="bold")
-       ax[1,1].set_xlabel('Time (s)', weight="bold")
-       ax[1,1].set_xlim(0, 40)
-       ax[1,1].set_ylim(0.0, 1.0)
-       ax[1,1].legend(frameon=False,loc='upper right',fontsize=12)
-       ax[1,1].text(.01,.92,'(d)', horizontalalignment='left', transform=ax[1,1].transAxes, size = 15, weight = 'bold')
-
-       plt.show()
-
-   if __name__ == "__main__":
-                main()
+.. plot:: docs/sphinx/advancedExamples/validationStudies/proppantSlotTest/proppantSlotTestFigure.py
 
 
 ------------------------------------------------------------------

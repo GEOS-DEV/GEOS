@@ -25,7 +25,7 @@
 namespace geosx
 {
 
-namespace HydrofractureSolverKernels
+namespace hydrofractureSolverKernels
 {
 
 struct DeformationUpdateKernel
@@ -252,7 +252,7 @@ struct FluidMassResidualDerivativeAssemblyKernel
   }
 };
 
-} /* namespace HydrofractureSolverKernels */
+} /* namespace hydrofractureSolverKernels */
 
 } /* namespace geosx */
 

@@ -105,7 +105,7 @@ InternalMeshGenerator::InternalMeshGenerator( string const & name, Group * const
   registerWrapper( viewKeyStruct::trianglePatternString(), &m_trianglePattern ).
     setApplyDefaultValue( 0 ).
     setInputFlag( InputFlags::OPTIONAL ).
-    setDescription( "Pattern by which to decompose the hex mesh into prisms (more explanation required)" );
+    setDescription( "Pattern by which to decompose the hex mesh into wedges" );
 
   registerWrapper( viewKeyStruct::positionToleranceString(), &m_coordinatePrecision ).
     setApplyDefaultValue( 1e-10 ).
@@ -121,7 +121,7 @@ static int getNumElemPerBox( ElementType const elementType )
     case ElementType::Triangle:      return 2;
     case ElementType::Quadrilateral: return 1;
     case ElementType::Tetrahedron:   return 6;
-    case ElementType::Prism:         return 2;
+    case ElementType::Wedge:         return 2;
     case ElementType::Pyramid:       return 6;
     case ElementType::Hexahedron:    return 1;
     default:
@@ -130,23 +130,6 @@ static int getNumElemPerBox( ElementType const elementType )
       return 0;
     }
   }
-}
-
-static int getElementDim( ElementType const elementType )
-{
-  switch( elementType )
-  {
-    case ElementType::Line:          return 1;
-    case ElementType::Triangle:
-    case ElementType::Quadrilateral:
-    case ElementType::Polygon:       return 2;
-    case ElementType::Tetrahedron:
-    case ElementType::Pyramid:
-    case ElementType::Prism:
-    case ElementType::Hexahedron:
-    case ElementType::Polyhedron:    return 3;
-  }
-  return 0;
 }
 
 void InternalMeshGenerator::postProcessInput()
@@ -241,12 +224,6 @@ void InternalMeshGenerator::postProcessInput()
   m_fPerturb = 0.0;
 }
 
-Group * InternalMeshGenerator::createChild( string const & GEOSX_UNUSED_PARAM( childKey ),
-                                            string const & GEOSX_UNUSED_PARAM( childName ) )
-{
-  return nullptr;
-}
-
 /**
  * @brief Get the label mapping of element vertices indexes onto node indexes for a type of element.
  * @param[in] elementType the element type
@@ -277,7 +254,7 @@ static void getElemToNodesRelationInBox( ElementType const elementType,
       nodeIDInBox[7] = 6;
       break;
     }
-    case ElementType::Prism:
+    case ElementType::Wedge:
     {
       if( trianglePattern == 0 )
       {
@@ -754,7 +731,7 @@ void InternalMeshGenerator::generateMesh( DomainPartition & domain )
 
   cellBlockManager.setNumNodes( numNodes );
 
-  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodesPositions();
+  arrayView2d< real64, nodes::REFERENCE_POSITION_USD > X = cellBlockManager.getNodePositions();
 
   arrayView1d< globalIndex > const nodeLocalToGlobal = cellBlockManager.getNodeLocalToGlobal();
 

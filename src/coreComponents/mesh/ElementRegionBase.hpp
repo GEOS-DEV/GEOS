@@ -186,7 +186,7 @@ public:
   ///@}
 
   /**
-   * @name Functor-based loops over element subregions
+   * @name Functor-based loops over subregions
    */
   ///@{
 
@@ -288,7 +288,6 @@ public:
   }
 
   ///@}
-
 
   /**
    * @brief Struct to serve as a container for variable strings and keys.

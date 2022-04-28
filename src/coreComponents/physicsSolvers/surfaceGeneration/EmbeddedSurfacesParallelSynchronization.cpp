@@ -29,10 +29,86 @@
 namespace geosx
 {
 
+namespace  embeddedSurfacesParallelSynchronization
+{
+
 using namespace dataRepository;
 
-namespace
+namespace parallelSynchronizationHelpers
 {
+
+void packNewNodes( NeighborCommunicator * const neighbor,
+                   int commID,
+                   MeshLevel & mesh,
+                   NewObjectLists & newObjects )
+{
+  EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
+  EdgeManager const & edgeManager = mesh.getEdgeManager();
+
+  int neighborRank = neighbor->neighborRank();
+
+  localIndex_array newNodesToSend;
+
+  arrayView1d< localIndex const > const & edgeGhostsToSend = edgeManager.getNeighborData( neighbor->neighborRank() ).ghostsToSend();
+  arrayView1d< localIndex > const & parentIndex = nodeManager.getExtrinsicData< extrinsicMeshData::ParentEdgeIndex >();
+  arrayView1d< integer const > const & nodeGhostRank = nodeManager.ghostRank();
+
+  for( auto const ni : newObjects.newNodes )
+  {
+    if( nodeGhostRank[ni] == neighborRank )
+    {
+      // a node is sent if it is a ghost neighborRank
+      newNodesToSend.emplace_back( ni );
+    }
+    else
+    {
+      forAll< serialPolicy >( edgeGhostsToSend.size(), [=, &newNodesToSend] ( localIndex const a )
+      {
+        if( edgeGhostsToSend[a] == parentIndex[ni] )
+        {
+          // a node is sent if the edge on which it was created had to be sent.
+          newNodesToSend.emplace_back( ni );
+        }
+      } );
+    }
+  }
+
+  int bufferSize = 0;
+
+  bufferSize += nodeManager.packNewNodesGlobalMapsSize( newNodesToSend );
+
+  neighbor->resizeSendBuffer( commID, bufferSize );
+
+  buffer_type & sendBuffer = neighbor->sendBuffer( commID );
+  buffer_unit_type * sendBufferPtr = sendBuffer.data();
+
+  int packedSize = 0;
+
+  packedSize += nodeManager.packNewNodesGlobalMaps( sendBufferPtr, newNodesToSend );
+
+  GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
+}
+
+void unpackNewNodes( NeighborCommunicator * const neighbor,
+                     int commID,
+                     MeshLevel & mesh )
+{
+  int unpackedSize = 0;
+
+  EmbeddedSurfaceNodeManager & nodeManager = mesh.getEmbSurfNodeManager();
+
+  buffer_type const & receiveBuffer = neighbor->receiveBuffer( commID );
+  buffer_unit_type const * receiveBufferPtr = receiveBuffer.data();
+
+  localIndex_array newGhostNodes;
+
+  parallelDeviceEvents events;
+
+  unpackedSize += nodeManager.unpackNewNodesGlobalMaps( receiveBufferPtr, newGhostNodes );
+
+  waitAllDeviceEvents( events );
+}
+
 void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
                              int commID,
                              MeshLevel & mesh,
@@ -123,19 +199,17 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
     }
   }
 
-
-
   parallelDeviceEvents sizeEvents;
   int bufferSize = 0;
 
   bufferSize += nodeManager.packGlobalMapsSize( newNodesToSend, 0 );
-  bufferSize += elemManager.PackGlobalMapsSize( newElemsToSend );
+  bufferSize += elemManager.packGlobalMapsSize( newElemsToSend );
 
   bufferSize += nodeManager.packUpDownMapsSize( newNodesToSend );
-  bufferSize += elemManager.PackUpDownMapsSize( newElemsToSend );
+  bufferSize += elemManager.packUpDownMapsSize( newElemsToSend );
 
-  bufferSize += nodeManager.packSize( {}, newNodesToSend, 0, false, sizeEvents );
-  bufferSize += elemManager.PackSize( {}, newElemsToSend );
+  bufferSize += nodeManager.packSize( newNodesToSend, 0, false, sizeEvents );
+  bufferSize += elemManager.packSize( newElemsToSend );
 
   neighbor->resizeSendBuffer( commID, bufferSize );
 
@@ -146,20 +220,15 @@ void packNewObjectsToGhosts( NeighborCommunicator * const neighbor,
   int packedSize = 0;
 
   packedSize += nodeManager.packGlobalMaps( sendBufferPtr, newNodesToSend, 0 );
-  packedSize += elemManager.PackGlobalMaps( sendBufferPtr, newElemsToSend );
+  packedSize += elemManager.packGlobalMaps( sendBufferPtr, newElemsToSend );
 
   packedSize += nodeManager.packUpDownMaps( sendBufferPtr, newNodesToSend );
-  packedSize += elemManager.PackUpDownMaps( sendBufferPtr, newElemsToSend );
+  packedSize += elemManager.packUpDownMaps( sendBufferPtr, newElemsToSend );
 
-  packedSize += nodeManager.pack( sendBufferPtr, {}, newNodesToSend, 0, false, packEvents );
-  packedSize += elemManager.Pack( sendBufferPtr, {}, newElemsToSend );
-
+  packedSize += nodeManager.pack( sendBufferPtr, newNodesToSend, 0, false, packEvents );
+  packedSize += elemManager.pack( sendBufferPtr, newElemsToSend );
 
   GEOSX_ERROR_IF( bufferSize != packedSize, "Allocated Buffer Size is not equal to packed buffer size" );
-
-
-  GEOSX_UNUSED_VAR( commID );
-//  neighbor->mpiISendReceive( commID, MPI_COMM_GEOSX );
 }
 
 void unpackNewToGhosts( NeighborCommunicator * const neighbor,
@@ -180,7 +249,6 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   newGhostElems.resize( elemManager.numRegions() );
   newGhostElemsData.resize( elemManager.numRegions() );
 
-
   for( localIndex er=0; er<elemManager.numRegions(); ++er )
   {
     ElementRegionBase & elemRegion = elemManager.getRegion( er );
@@ -195,13 +263,13 @@ void unpackNewToGhosts( NeighborCommunicator * const neighbor,
   parallelDeviceEvents events;
 
   unpackedSize += nodeManager.unpackGlobalMaps( receiveBufferPtr, newGhostNodes, 0 );
-  unpackedSize += elemManager.UnpackGlobalMaps( receiveBufferPtr, newGhostElems );
+  unpackedSize += elemManager.unpackGlobalMaps( receiveBufferPtr, newGhostElems );
 
   unpackedSize += nodeManager.unpackUpDownMaps( receiveBufferPtr, newGhostNodes, true, true );
-  unpackedSize += elemManager.UnpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
+  unpackedSize += elemManager.unpackUpDownMaps( receiveBufferPtr, newGhostElems, true );
 
   unpackedSize += nodeManager.unpack( receiveBufferPtr, newGhostNodes, 0, false, events );
-  unpackedSize += elemManager.Unpack( receiveBufferPtr, newGhostElems );
+  unpackedSize += elemManager.unpack( receiveBufferPtr, newGhostElems );
 
   waitAllDeviceEvents( events );
 
@@ -309,13 +377,85 @@ void unpackFracturedToGhosts( NeighborCommunicator * const neighbor,
   waitAllDeviceEvents( events );
 }
 
+void synchronizeNewNodes( MeshLevel & mesh,
+                          std::vector< NeighborCommunicator > & neighbors,
+                          NewObjectLists & newObjects,
+                          int const mpiCommOrder )
+{
+  //************************************************************************************************
+  // We need to send over the new embedded surfaces and related objects for those whose parents are ghosts on neighbors.
+
+  MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
+  commData.resize( neighbors.size());
+  for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
+  {
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    packNewNodes( &neighbor,
+                  commData.commID(),
+                  mesh,
+                  newObjects );
+
+    neighbor.mpiISendReceiveBufferSizes( commData.commID(),
+                                         commData.mpiSendBufferSizeRequest( neighborIndex ),
+                                         commData.mpiRecvBufferSizeRequest( neighborIndex ),
+                                         MPI_COMM_GEOSX );
+
+  }
+
+  for( unsigned int count=0; count<neighbors.size(); ++count )
+  {
+    int neighborIndex;
+    MpiWrapper::waitAny( commData.size(),
+                         commData.mpiRecvBufferSizeRequest(),
+                         &neighborIndex,
+                         commData.mpiRecvBufferSizeStatus() );
+
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    neighbor.mpiISendReceiveBuffers( commData.commID(),
+                                     commData.mpiSendBufferRequest( neighborIndex ),
+                                     commData.mpiRecvBufferRequest( neighborIndex ),
+                                     MPI_COMM_GEOSX );
+  }
+
+
+  for( unsigned int count=0; count<neighbors.size(); ++count )
+  {
+
+    int neighborIndex = count;
+    if( mpiCommOrder == 0 )
+    {
+      MpiWrapper::waitAny( commData.size(),
+                           commData.mpiRecvBufferRequest(),
+                           &neighborIndex,
+                           commData.mpiRecvBufferStatus() );
+    }
+    else
+    {
+      MpiWrapper::wait( commData.mpiRecvBufferRequest() + count,
+                        commData.mpiRecvBufferStatus() + count );
+    }
+
+    NeighborCommunicator & neighbor = neighbors[neighborIndex];
+
+    unpackNewNodes( &neighbor, commData.commID(), mesh );
+  }
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferSizeRequest(),
+                       commData.mpiSendBufferSizeStatus() );
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferRequest(),
+                       commData.mpiSendBufferSizeStatus() );
 
 }
 
-void EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel & mesh,
-                                                                       std::vector< NeighborCommunicator > & neighbors,
-                                                                       NewObjectLists & newObjects,
-                                                                       int const mpiCommOrder )
+void synchronizeNewSurfaces( MeshLevel & mesh,
+                             std::vector< NeighborCommunicator > & neighbors,
+                             NewObjectLists & newObjects,
+                             int const mpiCommOrder )
 {
   //************************************************************************************************
   // We need to send over the new embedded surfaces and related objects for those whose parents are ghosts on neighbors.
@@ -376,12 +516,21 @@ void EmebeddedSurfacesParallelSynchronization::synchronizeNewSurfaces( MeshLevel
 
     unpackNewToGhosts( &neighbor, commData.commID(), mesh );
   }
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferSizeRequest(),
+                       commData.mpiSendBufferSizeStatus() );
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferRequest(),
+                       commData.mpiSendBufferSizeStatus() );
 }
 
-void EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( MeshLevel & mesh,
-                                                                             std::vector< NeighborCommunicator > & neighbors,
-                                                                             string const fractureRegionName )
+void synchronizeFracturedElements( MeshLevel & mesh,
+                                   std::vector< NeighborCommunicator > & neighbors,
+                                   string const fractureRegionName )
 {
+  MPI_iCommData commDataJunk( CommunicationTools::getInstance().getCommID() );
   MPI_iCommData commData( CommunicationTools::getInstance().getCommID() );
   commData.resize( neighbors.size());
   for( unsigned int neighborIndex=0; neighborIndex<neighbors.size(); ++neighborIndex )
@@ -431,7 +580,48 @@ void EmebeddedSurfacesParallelSynchronization::synchronizeFracturedElements( Mes
 
     unpackFracturedToGhosts( &neighbor, commData.commID(), mesh, fractureRegionName );
   }
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferSizeRequest(),
+                       commData.mpiSendBufferSizeStatus() );
+
+  MpiWrapper::waitAll( commData.size(),
+                       commData.mpiSendBufferRequest(),
+                       commData.mpiSendBufferSizeStatus() );
 }
 
+
+
+}  /* parallelSynchronizationHelpers */
+
+using namespace parallelSynchronizationHelpers;
+
+void sychronizeTopology( MeshLevel & mesh,
+                         std::vector< NeighborCommunicator > & neighbors,
+                         NewObjectLists & newObjects,
+                         int const mpiCommOrder,
+                         string const fractureRegionName )
+{
+
+  // Synchronize nodes
+  synchronizeNewNodes( mesh,
+                       neighbors,
+                       newObjects,
+                       mpiCommOrder );
+
+
+  // Synchronize embedded Surfaces
+  synchronizeNewSurfaces( mesh,
+                          neighbors,
+                          newObjects,
+                          mpiCommOrder );
+
+  synchronizeFracturedElements( mesh,
+                                neighbors,
+                                fractureRegionName );
+
+}
+
+} /* embeddedSurfacesParallelSynchronization */
 
 } /* namespace geosx */

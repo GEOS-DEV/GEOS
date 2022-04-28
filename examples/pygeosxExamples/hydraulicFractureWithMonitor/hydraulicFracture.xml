@@ -12,8 +12,8 @@
       name="table_root"
       value="../../hydraulicFracturing/heterogeneousInSituProperties/tables"/>
   </Parameters>
-  <!-- SPHINX_HYDROFRACTURE_INCLUDED_PARAMETERS_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_INCLUDED_PARAMETERS_END -->
   <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS -->
   <Outputs>
     <Python
@@ -26,6 +26,6 @@
       cycleFrequency="10"
       target="/Outputs/pythonOutput"/>
   </Events>
-  <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS_END -->
 
+  <!-- SPHINX_HYDROFRACTURE_EVENTS_OUTPUTS_END -->
 </Problem>

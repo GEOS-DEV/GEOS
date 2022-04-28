@@ -107,33 +107,33 @@ void ElasticIsotropic::postProcessInput()
 
   if( nu > -0.5 && nu < 0.5 && E > 0.0 )
   {
-    K = conversions::YoungModAndPoissonRatio::toBulkMod( E, nu );
-    G = conversions::YoungModAndPoissonRatio::toShearMod( E, nu );
+    K = conversions::youngModAndPoissonRatio::toBulkMod( E, nu );
+    G = conversions::youngModAndPoissonRatio::toShearMod( E, nu );
   }
   else if( nu > -0.5 && nu < 0.5 && G > 0.0 )
   {
-    E = conversions::ShearModAndPoissonRatio::toYoungMod( G, nu );
-    K = conversions::ShearModAndPoissonRatio::toBulkMod( G, nu );
+    E = conversions::shearModAndPoissonRatio::toYoungMod( G, nu );
+    K = conversions::shearModAndPoissonRatio::toBulkMod( G, nu );
   }
   else if( nu > -0.5 && nu < 0.5 && K > 0.0 )
   {
-    E = conversions::BulkModAndPoissonRatio::toYoungMod( K, nu );
-    G = conversions::BulkModAndPoissonRatio::toShearMod( K, nu );
+    E = conversions::bulkModAndPoissonRatio::toYoungMod( K, nu );
+    G = conversions::bulkModAndPoissonRatio::toShearMod( K, nu );
   }
   else if( E > 0.0 && K > 0.0 )
   {
-    nu = conversions::BulkModAndYoungMod::toPoissonRatio( K, E );
-    G  = conversions::BulkModAndYoungMod::toShearMod( K, E );
+    nu = conversions::bulkModAndYoungMod::toPoissonRatio( K, E );
+    G  = conversions::bulkModAndYoungMod::toShearMod( K, E );
   }
   else if( E > 0.0 && G > 0.0 )
   {
-    nu = conversions::ShearModAndYoungMod::toPoissonRatio( G, E );
-    K  = conversions::ShearModAndYoungMod::toBulkMod( G, E );
+    nu = conversions::shearModAndYoungMod::toPoissonRatio( G, E );
+    K  = conversions::shearModAndYoungMod::toBulkMod( G, E );
   }
   else if( K > 0.0 && G > 0.0 )
   {
-    E  = conversions::BulkModAndShearMod::toYoungMod( K, G );
-    nu = conversions::BulkModAndShearMod::toPoissonRatio( K, G );
+    E  = conversions::bulkModAndShearMod::toYoungMod( K, G );
+    nu = conversions::bulkModAndShearMod::toPoissonRatio( K, G );
   }
   else
   {

@@ -21,7 +21,6 @@
 #define GEOSX_FINITEVOLUME_FLUXAPPROXIMATIONBASE_HPP_
 
 #include "dataRepository/Group.hpp"
-#include "finiteVolume/FluxStencil.hpp"
 #include "CellElementStencilTPFA.hpp"
 #include "SurfaceElementStencil.hpp"
 #include "FaceElementToCellStencil.hpp"
@@ -129,9 +128,6 @@ public:
     /// @return The key for targetRegions
     static constexpr char const * targetRegionsString() { return "targetRegions"; }
 
-    /// @return The key for coefficientModelNames
-    static constexpr char const * coefficientModelNamesString() { return "coefficientModelNames"; }
-
     /// @return The key for areaRelTol
     static constexpr char const * areaRelativeToleranceString() { return "areaRelTol"; }
 
@@ -165,17 +161,11 @@ public:
   array1d< string > & targetRegions( string const & meshBodyName ) { return m_targetRegions[meshBodyName]; }
 
   /**
-   * @brief get the list of the coefficient constitutive model names on a given mesh body.
-   * @param[in] meshBodyName name of the meshBody
-   * @return a list of the coefficient constitutive model names on a give meshBody.
-   */
-  array1d< string > & coefficientModelNames( string const & meshBodyName ) { return m_coefficientModelNames[meshBodyName]; }
-
-  /**
    * @brief set the name of the field.
    * @param name name of the field to be set.
    */
   void setFieldName( string const & name );
+
   /**
    * @brief set the name of the coefficient.
    * @param name name of the coefficient.
@@ -246,9 +236,6 @@ protected:
 
   /// name of the coefficient field
   string m_coeffName;
-
-  /// names of coefficient models to build the stencil for
-  map< string, array1d< string > > m_coefficientModelNames; // TODO: remove
 
   /// names of target regions to build the stencil for
   map< string, array1d< string > > m_targetRegions;

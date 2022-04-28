@@ -8,7 +8,6 @@
       solidSolverName="lagsolve"
       fluidSolverName="SinglePhaseFlow"
       surfaceGeneratorName="SurfaceGen"
-      porousMaterialNames="{ fractureFilling }"
       couplingTypeOption="FIM"
       logLevel="1"
       discretization="FE1"
@@ -172,7 +171,7 @@
     <ParallelPlatesPermeability
       name="fracturePerm"/>
 
-    <Contact
+    <FrictionlessContact
       name="fractureContact"
       penaltyStiffness="0.0e8"
       apertureTableName="apertureTable"/>

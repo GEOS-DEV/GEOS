@@ -21,7 +21,7 @@
 #include "constitutive/ConstitutivePassThruHandler.hpp"
 #include "constitutive/fluid/DeadOilFluid.hpp"
 #include "constitutive/fluid/BlackOilFluid.hpp"
-#include "constitutive/fluid/MultiPhaseMultiComponentFluid.hpp"
+#include "constitutive/fluid/CO2BrineFluid.hpp"
 
 #include "common/GeosxConfig.hpp"
 #ifdef GEOSX_USE_PVTPackage
@@ -44,7 +44,10 @@ void constitutiveUpdatePassThru( MultiFluidBase const & fluid,
                                CompositionalMultiphaseFluid,
 #endif
                                CO2BrinePhillipsFluid,
-                               CO2BrineEzrokhiFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineEzrokhiFluid,
+                               CO2BrinePhillipsThermalFluid /*, // if I uncomment the two models at the same time, the compiler segfaults on
+                                                               Lassen!
+                                                               CO2BrineEzrokhiThermalFluid*/>::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 template< typename LAMBDA >
@@ -57,7 +60,10 @@ void constitutiveUpdatePassThru( MultiFluidBase & fluid,
                                CompositionalMultiphaseFluid,
 #endif
                                CO2BrinePhillipsFluid,
-                               CO2BrineEzrokhiFluid >::execute( fluid, std::forward< LAMBDA >( lambda ) );
+                               CO2BrineEzrokhiFluid,
+                               CO2BrinePhillipsThermalFluid /*, // if I uncomment the two models at the same time, the compiler segfaults on
+                                                               Lassen!
+                                                               CO2BrineEzrokhiThermalFluid*/>::execute( fluid, std::forward< LAMBDA >( lambda ) );
 }
 
 } // namespace constitutive

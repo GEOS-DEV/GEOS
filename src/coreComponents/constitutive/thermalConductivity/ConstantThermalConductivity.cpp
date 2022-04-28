@@ -32,7 +32,7 @@ ConstantThermalConductivity::ConstantThermalConductivity( string const & name, G
   registerWrapper( viewKeyStruct::thermalConductivityComponentsString(), &m_thermalConductivityComponents ).
     setInputFlag( InputFlags::REQUIRED ).
     setRestartFlags( RestartFlags::NO_WRITE ).
-    setDescription( "xx, yy, and zz components of a diagonal thermal conductivity tensor [W/(m.K)]" );
+    setDescription( "xx, yy, and zz components of a diagonal thermal conductivity tensor [J/(s.m.K)]" );
 }
 
 std::unique_ptr< ConstitutiveBase >

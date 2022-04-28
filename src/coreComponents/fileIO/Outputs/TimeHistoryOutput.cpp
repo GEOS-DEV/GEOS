@@ -14,6 +14,10 @@
 
 #include "TimeHistoryOutput.hpp"
 
+#if defined(GEOSX_USE_PYGEOSX)
+#include "fileIO/python/PyHistoryOutputType.hpp"
+#endif
+
 namespace geosx
 {
 TimeHistoryOutput::TimeHistoryOutput( string const & name,
@@ -107,7 +111,7 @@ void TimeHistoryOutput::initCollectorParallel( DomainPartition & domain, History
   MpiWrapper::barrier( MPI_COMM_GEOSX );
 }
 
-void TimeHistoryOutput::initializePostSubGroups()
+void TimeHistoryOutput::initializePostInitialConditionsPostSubGroups()
 {
   {
     // check whether to truncate or append to the file up front so we don't have to bother during later accesses
@@ -128,6 +132,18 @@ void TimeHistoryOutput::initializePostSubGroups()
     collector.initializePostSubGroups();
     initCollectorParallel( domain, collector );
   }
+}
+
+void TimeHistoryOutput::setFileName( string const & root )
+{
+  m_filename = root;
+}
+
+void TimeHistoryOutput::reinit()
+{
+  m_recordCount = 0;
+  m_io.clear();
+  initializePostInitialConditionsPostSubGroups();
 }
 
 bool TimeHistoryOutput::execute( real64 const GEOSX_UNUSED_PARAM( time_n ),
@@ -160,6 +176,11 @@ void TimeHistoryOutput::cleanup( real64 const time_n,
     th_io->compressInFile();
   }
 }
+
+#if defined(GEOSX_USE_PYGEOSX)
+PyTypeObject * TimeHistoryOutput::getPythonType() const
+{ return python::getPyHistoryOutputType(); }
+#endif
 
 REGISTER_CATALOG_ENTRY( OutputBase, TimeHistoryOutput, string const &, Group * const )
 }
