@@ -517,9 +517,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
 
   GEOSX_LOG_RANK_0_IF( dt < epsilonLoc, "Warning! Value for dt: " << dt << "s is smaller than local threshold: " << epsilonLoc );
 
-  EventManager const & event = this->getGroupByPath< EventManager >( "/Problem/Events" );
-  real64 const & maxTime = event.getReference< real64 >( EventManager::viewKeyStruct::maxTimeString() );
-
   forMeshTargets( domain.getMeshBodies(), [&] ( string const &,
                                                 MeshLevel & mesh,
                                                 arrayView1d< string const > const & regionNames )
@@ -576,18 +573,6 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
                                   domain.getNeighbors(),
                                   true );
 
-    real64 const checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
-    if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
-    {
-      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
-      m_indexSeismoTrace++;
-    }
-
-    if(time_n + dt - epsilonLoc <= maxTime && time_n + dt + epsilonLoc >= maxTime)
-    {
-      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
-    }
-
     forAll< EXEC_POLICY >( nodeManager.size(), [=] GEOSX_HOST_DEVICE ( localIndex const a )
     {
       p_nm1[a] = p_n[a];
@@ -596,7 +581,14 @@ real64 AcousticWaveEquationSEM::explicitStep( real64 const & time_n,
       stiffnessVector[a] = 0.0;
       rhs[a] = 0.0;
     } );
-    
+
+    real64 const checkSeismo = m_dtSeismoTrace*m_indexSeismoTrace;
+    if( (time_n-epsilonLoc) <= checkSeismo && checkSeismo < (time_n + dt) )
+    {
+      computeSeismoTrace( time_n, dt, m_indexSeismoTrace, p_np1, p_n );
+      m_indexSeismoTrace++;
+    }
+
   } );
   return dt;
 }
